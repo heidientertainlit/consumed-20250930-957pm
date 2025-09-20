@@ -990,28 +990,93 @@ export default function UserProfile() {
 
               {/* Question */}
               <div className="mb-8">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6 leading-relaxed">
-                  {surveyQuestions[currentQuestion].question}
-                </h2>
+                {!isLoadingQuestions && surveyQuestions.length > 0 && currentQuestion < surveyQuestions.length && (
+                  <>
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-6 leading-relaxed">
+                      {surveyQuestions[currentQuestion].question_text}
+                    </h2>
 
-                <RadioGroup 
-                  value={getCurrentSurveyAnswer() || ""} 
-                  onValueChange={handleSurveyAnswer}
-                  className="space-y-4"
-                >
-                  {surveyQuestions[currentQuestion].options.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
-                      <RadioGroupItem value={option.value} id={option.value} />
-                      <Label 
-                        htmlFor={option.value} 
-                        className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
-                        data-testid={`option-${option.value}`}
+                    {/* Text Input */}
+                    {surveyQuestions[currentQuestion].question_type === 'text' && (
+                      <textarea
+                        value={getCurrentSurveyAnswer() || ""}
+                        onChange={(e) => handleSurveyAnswer(e.target.value)}
+                        placeholder="Please share your thoughts..."
+                        className="w-full p-4 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[120px] resize-vertical"
+                        data-testid="text-input"
+                      />
+                    )}
+
+                    {/* Single Select */}
+                    {surveyQuestions[currentQuestion].question_type === 'select' && (
+                      <RadioGroup 
+                        value={getCurrentSurveyAnswer() || ""} 
+                        onValueChange={handleSurveyAnswer}
+                        className="space-y-4"
                       >
-                        {option.label}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+                        {surveyQuestions[currentQuestion].options?.map((option, index) => (
+                          <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+                            <RadioGroupItem value={option} id={`option-${index}`} />
+                            <Label 
+                              htmlFor={`option-${index}`} 
+                              className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
+                              data-testid={`option-${option}`}
+                            >
+                              {option}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )}
+
+                    {/* Multi-Select */}
+                    {surveyQuestions[currentQuestion].question_type === 'multi-select' && (
+                      <div className="space-y-4">
+                        {surveyQuestions[currentQuestion].options?.map((option, index) => {
+                          const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? getCurrentSurveyAnswer() : [];
+                          const isChecked = currentAnswers.includes(option);
+                          
+                          return (
+                            <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+                              <input
+                                type="checkbox"
+                                id={`multi-option-${index}`}
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? [...getCurrentSurveyAnswer()] : [];
+                                  if (e.target.checked) {
+                                    currentAnswers.push(option);
+                                  } else {
+                                    const optionIndex = currentAnswers.indexOf(option);
+                                    if (optionIndex > -1) {
+                                      currentAnswers.splice(optionIndex, 1);
+                                    }
+                                  }
+                                  handleSurveyAnswer(currentAnswers);
+                                }}
+                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                data-testid={`multi-option-${option}`}
+                              />
+                              <Label 
+                                htmlFor={`multi-option-${index}`} 
+                                className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
+                              >
+                                {option}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {isLoadingQuestions && (
+                  <div className="text-center py-8">
+                    <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading survey questions...</p>
+                  </div>
+                )}
               </div>
 
               {/* Navigation */}
