@@ -60,7 +60,6 @@ export default function UserProfile() {
 
   // Entertainment DNA API Functions
   const submitSurveyResponses = async (responses: { questionId: string; answer: string }[]) => {
-    const { session } = useAuth();
     
     console.log('Auth session check:', { hasSession: !!session, hasToken: !!session?.access_token });
     console.log('Session details:', session ? { user: session.user?.id, token_length: session.access_token?.length } : 'No session');
@@ -102,7 +101,6 @@ export default function UserProfile() {
   };
 
   const generateDNAProfile = async () => {
-    const { session } = useAuth();
     
     console.log('Generating DNA profile...');
     
@@ -143,7 +141,6 @@ export default function UserProfile() {
   };
 
   const fetchDNAProfile = async () => {
-    const { session } = useAuth();
     if (!session?.access_token) {
       throw new Error('No authentication token available');
     }
