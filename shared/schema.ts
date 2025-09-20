@@ -1,80 +1,144 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+// Pure TypeScript types for Supabase (no Drizzle)
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  points: integer("points").notNull().default(0),
-  totalWinnings: integer("total_winnings").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+// User types
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  points: number;
+  totalWinnings: number;
+  createdAt: string;
+}
+
+export const insertUserSchema = z.object({
+  username: z.string().min(1),
+  email: z.string().email(),
+  points: z.number().default(0),
+  totalWinnings: z.number().default(0),
 });
 
-
-export const consumptionLogs = pgTable("consumption_logs", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
-  category: text("category").notNull(), // movies, tv, books, music, games
-  type: text("type").notNull(), // movie, episode, book, album, game
-  rating: integer("rating"), // 1-5 stars
-  review: text("review"),
-  pointsEarned: integer("points_earned").notNull().default(10),
-  consumedAt: timestamp("consumed_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const ednaResponses = pgTable("edna_responses", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  questionId: text("question_id").notNull(),
-  answer: text("answer").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const dnaProfiles = pgTable("dna_profiles", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  profileText: text("profile_text").notNull(),
-  favoriteGenres: jsonb("favorite_genres"), // Array of genre strings
-  favoriteMediaTypes: jsonb("favorite_media_types"), // Array of media types
-  favoriteSports: jsonb("favorite_sports"), // Array of sports
-  mediaConsumptionStats: text("media_consumption_stats"), // JSON string
-  isPrivate: boolean("is_private").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-});
-
-
-export const insertConsumptionLogSchema = createInsertSchema(consumptionLogs).omit({
-  id: true,
-  pointsEarned: true,
-  createdAt: true,
-});
-
-export const insertEdnaResponseSchema = createInsertSchema(ednaResponses).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertDnaProfileSchema = createInsertSchema(dnaProfiles).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type ConsumptionLog = typeof consumptionLogs.$inferSelect;
+
+// Consumption Log types
+export interface ConsumptionLog {
+  id: string;
+  userId: string;
+  title: string;
+  category: string; // movies, tv, books, music, games
+  type: string; // movie, episode, book, album, game
+  rating?: number; // 1-5 stars
+  review?: string;
+  pointsEarned: number;
+  consumedAt: string;
+  createdAt: string;
+}
+
+export const insertConsumptionLogSchema = z.object({
+  userId: z.string(),
+  title: z.string().min(1),
+  category: z.string(),
+  type: z.string(),
+  rating: z.number().min(1).max(5).optional(),
+  review: z.string().optional(),
+  consumedAt: z.string().optional(),
+});
+
 export type InsertConsumptionLog = z.infer<typeof insertConsumptionLogSchema>;
-export type EdnaResponse = typeof ednaResponses.$inferSelect;
-export type InsertEdnaResponse = z.infer<typeof insertEdnaResponseSchema>;
-export type DnaProfile = typeof dnaProfiles.$inferSelect;
+
+// DNA Profile types
+export interface DnaProfile {
+  id: string;
+  userId: string;
+  profileText: string;
+  favoriteGenres?: string[];
+  favoriteMediaTypes?: string[];
+  favoriteSports?: string[];
+  mediaConsumptionStats?: string;
+  isPrivate: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const insertDnaProfileSchema = z.object({
+  userId: z.string(),
+  profileText: z.string(),
+  favoriteGenres: z.array(z.string()).optional(),
+  favoriteMediaTypes: z.array(z.string()).optional(),
+  favoriteSports: z.array(z.string()).optional(),
+  mediaConsumptionStats: z.string().optional(),
+  isPrivate: z.boolean().default(false),
+});
+
 export type InsertDnaProfile = z.infer<typeof insertDnaProfileSchema>;
+
+// EDNA Response types
+export interface EdnaResponse {
+  id: string;
+  userId: string;
+  questionId: string;
+  answer: string;
+  createdAt: string;
+}
+
+export const insertEdnaResponseSchema = z.object({
+  userId: z.string(),
+  questionId: z.string(),
+  answer: z.string(),
+});
+
+export type InsertEdnaResponse = z.infer<typeof insertEdnaResponseSchema>;
+
+// List types for sharing functionality
+export interface List {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  visibility: 'public' | 'private';
+  isDefault: boolean;
+  isPinned: boolean;
+  isPrivate: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListItem {
+  id: string;
+  listId: string;
+  userId: string;
+  title: string;
+  description?: string;
+  externalId?: string;
+  externalSource?: string;
+  mediaType?: string;
+  imageUrl?: string;
+  rating?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const insertListSchema = z.object({
+  userId: z.string(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  visibility: z.enum(['public', 'private']).default('private'),
+  isDefault: z.boolean().default(false),
+  isPinned: z.boolean().default(false),
+  isPrivate: z.boolean().default(true),
+});
+
+export const insertListItemSchema = z.object({
+  listId: z.string(),
+  userId: z.string(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  externalId: z.string().optional(),
+  externalSource: z.string().optional(),
+  mediaType: z.string().optional(),
+  imageUrl: z.string().optional(),
+  rating: z.number().min(1).max(5).optional(),
+});
+
+export type InsertList = z.infer<typeof insertListSchema>;
+export type InsertListItem = z.infer<typeof insertListItemSchema>;
