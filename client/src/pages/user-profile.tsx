@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
@@ -21,14 +21,22 @@ export default function UserProfile() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
   // Entertainment DNA states
-  const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('has_profile'); // Mock: mockUserData has profile
+  const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
+  const [dnaProfile, setDnaProfile] = useState<any>(null);
   
   // Survey states
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [surveyAnswers, setSurveyAnswers] = useState<{ questionId: string; answer: string | string[] }[]>([]);
   const [surveyQuestions, setSurveyQuestions] = useState<any[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+
+  // Fetch DNA profile when authenticated
+  useEffect(() => {
+    if (session?.access_token) {
+      fetchDnaProfile();
+    }
+  }, [session?.access_token]);
 
   // Fetch survey questions from database
   const fetchSurveyQuestions = async () => {
@@ -51,6 +59,36 @@ export default function UserProfile() {
     } catch (error) {
       console.error('Error fetching survey questions:', error);
       return false;
+    }
+  };
+
+  // Fetch DNA profile from database
+  const fetchDnaProfile = async () => {
+    if (!session?.access_token) return;
+    
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/dna_profiles?select=*', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const profiles = await response.json();
+        if (profiles && profiles.length > 0) {
+          const profile = profiles[0];
+          setDnaProfile(profile);
+          setDnaProfileStatus('has_profile');
+          console.log('DNA profile loaded:', profile);
+        } else {
+          setDnaProfileStatus('no_profile');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch DNA profile:', error);
+      setDnaProfileStatus('no_profile');
     }
   };
 
@@ -590,7 +628,7 @@ export default function UserProfile() {
                 {/* Full AI-Generated Description */}
                 <div className="mb-6">
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    {mockUserData.entertainmentDNA.profileText}
+                    {dnaProfile?.profile_text || "Your personalized Entertainment DNA profile will appear here."}
                   </p>
                 </div>
 
@@ -598,7 +636,7 @@ export default function UserProfile() {
                 <div className="mb-6">
                   <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Favorite Genres</h5>
                   <div className="flex flex-wrap gap-2">
-                    {mockUserData.entertainmentDNA.favoriteGenres.map((genre, index) => (
+                    {(dnaProfile?.favorite_genres || []).map((genre, index) => (
                       <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
                         {genre}
                       </Badge>
@@ -610,7 +648,7 @@ export default function UserProfile() {
                 <div className="mb-6">
                   <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Favorite Media Types</h5>
                   <div className="flex flex-wrap gap-2">
-                    {mockUserData.entertainmentDNA.favoriteMediaTypes.map((type, index) => (
+                    {(dnaProfile?.favorite_media_types || []).map((type, index) => (
                       <Badge key={index} className="bg-indigo-100 text-indigo-700 text-xs">
                         {type}
                       </Badge>
