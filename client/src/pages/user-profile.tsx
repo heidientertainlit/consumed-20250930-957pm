@@ -1045,7 +1045,7 @@ export default function UserProfile() {
                         value={getCurrentSurveyAnswer() || ""}
                         onChange={(e) => handleSurveyAnswer(e.target.value)}
                         placeholder="Please share your thoughts..."
-                        className="w-full p-4 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[120px] resize-vertical"
+                        className="w-full p-4 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[120px] resize-vertical text-black bg-white placeholder:text-gray-500"
                         data-testid="text-input"
                       />
                     )}
