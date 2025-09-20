@@ -173,6 +173,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('Track media error response:', response.status, errorText);
         throw new Error(`Track media failed: ${response.status} - ${errorText}`);
       }
 
