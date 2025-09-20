@@ -1,195 +1,148 @@
-import type { Express } from 'express';
-import { validateSupabaseToken, type AuthenticatedRequest } from './middleware/auth';
-import { createClient } from '@supabase/supabase-js';
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { insertConsumptionLogSchema } from "@shared/schema";
+import { z } from "zod";
+import OpenAI from "openai";
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-if (!supabaseServiceKey) {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');
-}
+export async function registerRoutes(app: Express): Promise<Server> {
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-export function registerRoutes(app: Express) {
-  
-  // List sharing routes (requires authentication)
-  app.get('/api/lists/public', async (req, res) => {
+  // Get user
+  app.get("/api/users/:id", async (req, res) => {
     try {
-      const { data: lists, error } = await supabase
-        .from('lists')
-        .select(`
-          *,
-          list_items (*)
-        `)
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        return res.status(500).json({ error: error.message });
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
-
-      res.json(lists);
+      res.json(user);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch public lists' });
+      res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  // Get user's lists (requires authentication)
-  app.get('/api/users/:userId/lists', validateSupabaseToken, async (req: AuthenticatedRequest, res) => {
+
+  // Get user's consumption logs
+  app.get("/api/users/:userId/consumption", async (req, res) => {
     try {
-      const { userId } = req.params;
+      const logs = await storage.getConsumptionLogs(req.params.userId);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch consumption logs" });
+    }
+  });
+
+  // Create consumption log
+  app.post("/api/consumption", async (req, res) => {
+    try {
+      const logData = insertConsumptionLogSchema.parse({
+        ...req.body,
+        userId: "user-1", // Mock user for now
+        consumedAt: req.body.consumedAt ? new Date(req.body.consumedAt) : new Date(),
+      });
+
+      const log = await storage.createConsumptionLog(logData);
+      res.status(201).json(log);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid consumption log data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create consumption log" });
+    }
+  });
+
+  // Get user's consumption stats
+  app.get("/api/users/:userId/consumption/stats", async (req, res) => {
+    try {
+      const stats = await storage.getUserConsumptionStats(req.params.userId);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch consumption stats" });
+    }
+  });
+
+  // Get activity feed (all consumption logs)
+  app.get("/api/consumption/feed", async (req, res) => {
+    try {
+      const feed = await storage.getActivityFeed();
+      res.json(feed);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch activity feed" });
+    }
+  });
+
+  // Get personalized recommendations
+  app.get("/api/users/:userId/recommendations", async (req, res) => {
+    try {
+      const logs = await storage.getConsumptionLogs(req.params.userId);
       
-      // Ensure user can only access their own lists
-      if (req.user?.id !== userId) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-
-      const { data: lists, error } = await supabase
-        .from('lists')
-        .select(`
-          *,
-          list_items (*)
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-
-      res.json(lists);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch user lists' });
-    }
-  });
-
-  // Create new list (requires authentication)
-  app.post('/api/lists', validateSupabaseToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { title, description, visibility = 'private' } = req.body;
+      // For now, return curated recommendations based on consumption history
+      // TODO: Re-enable AI recommendations when OpenAI API is stable
+      const recommendations = logs.length === 0 ? [
+        {
+          id: "rec-1",
+          title: "The Bear",
+          category: "tv",
+          description: "A young chef from the fine dining world returns to Chicago to run his family's sandwich shop.",
+          reason: "Popular comedy-drama that's perfect for getting started"
+        },
+        {
+          id: "rec-2",
+          title: "Dune",
+          category: "books",
+          description: "Epic science fiction novel about politics, religion, and power on a desert planet.",
+          reason: "Essential sci-fi reading that's influenced countless other works"
+        },
+        {
+          id: "rec-3",
+          title: "Everything Everywhere All at Once",
+          category: "movies",
+          description: "A multiverse adventure about family, identity, and everything bagels.",
+          reason: "Award-winning film that blends humor with profound themes"
+        }
+      ] : [
+        {
+          id: "rec-4",
+          title: "House of the Dragon",
+          category: "tv", 
+          description: "Prequel to Game of Thrones following the Targaryen civil war.",
+          reason: "Based on your viewing history, you might enjoy this epic fantasy series"
+        },
+        {
+          id: "rec-5",
+          title: "Project Hail Mary",
+          category: "books",
+          description: "A lone astronaut must save humanity in this sci-fi thriller.",
+          reason: "Perfect follow-up to your recent reading preferences"
+        },
+        {
+          id: "rec-6",
+          title: "The Banshees of Inisherin",
+          category: "movies",
+          description: "Dark comedy about friendship on a remote Irish island.",
+          reason: "Matches your taste for character-driven stories"
+        }
+      ];
       
-      if (!title) {
-        return res.status(400).json({ error: 'Title is required' });
-      }
-
-      const { data: list, error } = await supabase
-        .from('lists')
-        .insert({
-          user_id: req.user!.id,
-          title,
-          description,
-          visibility,
-          is_default: false,
-          is_pinned: false,
-          is_private: visibility === 'private'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-
-      res.status(201).json(list);
+      return res.json(recommendations);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to create list' });
+      console.error('Recommendations error:', error);
+      res.status(500).json({ message: "Failed to generate recommendations" });
     }
   });
 
-  // Update list visibility (requires authentication)
-  app.patch('/api/lists/:listId/visibility', validateSupabaseToken, async (req: AuthenticatedRequest, res) => {
+  // Get Entertainment DNA survey questions
+  app.get("/api/edna-questions", async (req, res) => {
     try {
-      const { listId } = req.params;
-      const { visibility } = req.body;
-
-      if (!['public', 'private'].includes(visibility)) {
-        return res.status(400).json({ error: 'Invalid visibility value' });
-      }
-
-      // Ensure user owns the list
-      const { data: list, error: fetchError } = await supabase
-        .from('lists')
-        .select('user_id')
-        .eq('id', listId)
-        .single();
-
-      if (fetchError || !list) {
-        return res.status(404).json({ error: 'List not found' });
-      }
-
-      if (list.user_id !== req.user?.id) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-
-      const { data: updatedList, error } = await supabase
-        .from('lists')
-        .update({ 
-          visibility, 
-          is_private: visibility === 'private' 
-        })
-        .eq('id', listId)
-        .select()
-        .single();
-
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-
-      res.json(updatedList);
+      const result = await storage.getAllQuestions();
+      res.json(result);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update list visibility' });
+      console.error("Failed to fetch survey questions:", error);
+      res.status(500).json({ message: "Failed to fetch survey questions" });
     }
   });
 
-  // Add item to list (requires authentication)
-  app.post('/api/lists/:listId/items', validateSupabaseToken, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { listId } = req.params;
-      const { title, description, externalId, externalSource, mediaType, imageUrl, rating } = req.body;
-
-      if (!title) {
-        return res.status(400).json({ error: 'Title is required' });
-      }
-
-      // Ensure user owns the list
-      const { data: list, error: fetchError } = await supabase
-        .from('lists')
-        .select('user_id')
-        .eq('id', listId)
-        .single();
-
-      if (fetchError || !list) {
-        return res.status(404).json({ error: 'List not found' });
-      }
-
-      if (list.user_id !== req.user?.id) {
-        return res.status(403).json({ error: 'Access denied' });
-      }
-
-      const { data: item, error } = await supabase
-        .from('list_items')
-        .insert({
-          list_id: listId,
-          user_id: req.user!.id,
-          title,
-          description,
-          external_id: externalId,
-          external_source: externalSource,
-          media_type: mediaType,
-          image_url: imageUrl,
-          rating
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-
-      res.status(201).json(item);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to add item to list' });
-    }
-  });
+  const httpServer = createServer(app);
+  return httpServer;
 }
