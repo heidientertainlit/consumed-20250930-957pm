@@ -85,7 +85,7 @@ export default function UserProfile() {
           body: JSON.stringify({ 
             user_id: session.user?.id,
             question_id: questionId, 
-            answer 
+            answer_text: answer 
           }),
         });
         
