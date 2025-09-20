@@ -22,71 +22,26 @@ export default function UserProfile() {
   
   // Survey states
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [surveyAnswers, setSurveyAnswers] = useState<{ questionId: string; answer: string }[]>([]);
+  const [surveyAnswers, setSurveyAnswers] = useState<{ questionId: string; answer: string | string[] }[]>([]);
+  const [surveyQuestions, setSurveyQuestions] = useState<any[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
-  // Survey questions data
-  const surveyQuestions = [
-    {
-      id: "discovery",
-      question: "How do you usually discover new entertainment?",
-      options: [
-        { value: "social", label: "Friends and social media recommendations" },
-        { value: "algorithms", label: "Platform algorithms and trending lists" },
-        { value: "critics", label: "Professional reviews and critic scores" },
-        { value: "explore", label: "I love browsing and discovering randomly" }
-      ]
-    },
-    {
-      id: "consumption_style",
-      question: "What's your ideal entertainment consumption style?",
-      options: [
-        { value: "binge", label: "Binge everything in marathon sessions" },
-        { value: "scheduled", label: "Regular scheduled viewing/reading time" },
-        { value: "mood", label: "Whatever matches my current mood" },
-        { value: "social", label: "Only when I can share the experience with others" }
-      ]
-    },
-    {
-      id: "genre_preference",
-      question: "Which best describes your genre approach?",
-      options: [
-        { value: "loyal", label: "I stick to genres I know I love" },
-        { value: "adventurous", label: "I actively seek out new and different genres" },
-        { value: "mood_based", label: "My genre choice depends entirely on my mood" },
-        { value: "quality_first", label: "Genre doesn't matter if the quality is high" }
-      ]
-    },
-    {
-      id: "sharing_style",
-      question: "How do you like to share your entertainment experiences?",
-      options: [
-        { value: "detailed_reviews", label: "Write detailed reviews and thoughtful analysis" },
-        { value: "quick_ratings", label: "Quick ratings and short reactions" },
-        { value: "recommendations", label: "Focus on recommending to specific people" },
-        { value: "private", label: "Keep my entertainment experiences mostly private" }
-      ]
-    },
-    {
-      id: "completion_style",
-      question: "What's your approach to finishing entertainment?",
-      options: [
-        { value: "completionist", label: "I finish everything I start, no matter what" },
-        { value: "selective", label: "Life's too short for bad content - I drop things quickly" },
-        { value: "comeback", label: "I take breaks but usually come back to finish later" },
-        { value: "sampler", label: "I prefer trying many things rather than finishing everything" }
-      ]
-    },
-    {
-      id: "emotional_connection",
-      question: "What creates the strongest emotional connection for you?",
-      options: [
-        { value: "characters", label: "Deep, complex characters I can relate to" },
-        { value: "storytelling", label: "Masterful storytelling and plot construction" },
-        { value: "world_building", label: "Rich, immersive worlds I can escape into" },
-        { value: "themes", label: "Content that explores meaningful themes and ideas" }
-      ]
+  // Fetch survey questions from database
+  const fetchSurveyQuestions = async () => {
+    setIsLoadingQuestions(true);
+    try {
+      const response = await fetch('/api/edna-questions');
+      if (response.ok) {
+        const questions = await response.json();
+        setSurveyQuestions(questions);
+      } else {
+        console.error('Failed to fetch survey questions');
+      }
+    } catch (error) {
+      console.error('Error fetching survey questions:', error);
     }
-  ];
+    setIsLoadingQuestions(false);
+  };
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -175,17 +130,21 @@ export default function UserProfile() {
     return response.json();
   };
 
-  const handleTakeDNASurvey = () => {
+  const handleTakeDNASurvey = async () => {
     setCurrentQuestion(0);
     setSurveyAnswers([]);
+    await fetchSurveyQuestions();
     setIsDNASurveyOpen(true);
   };
 
   // Survey navigation functions
-  const handleSurveyAnswer = (value: string) => {
-    const newAnswers = surveyAnswers.filter(a => a.questionId !== surveyQuestions[currentQuestion].id);
+  const handleSurveyAnswer = (value: string | string[]) => {
+    const currentQ = surveyQuestions[currentQuestion];
+    if (!currentQ) return;
+    
+    const newAnswers = surveyAnswers.filter(a => a.questionId !== currentQ.id);
     newAnswers.push({
-      questionId: surveyQuestions[currentQuestion].id,
+      questionId: currentQ.id,
       answer: value
     });
     setSurveyAnswers(newAnswers);
@@ -197,7 +156,13 @@ export default function UserProfile() {
     } else {
       // Survey complete - submit to edge functions
       try {
-        await submitSurveyResponses(surveyAnswers);
+        // Convert answers to the format expected by edge functions
+        const formattedAnswers = surveyAnswers.map(answer => ({
+          questionId: answer.questionId,
+          answer: Array.isArray(answer.answer) ? answer.answer.join(', ') : answer.answer
+        }));
+        
+        await submitSurveyResponses(formattedAnswers);
         setIsDNASurveyOpen(false);
         await handleGenerateDNAProfile();
       } catch (error) {
@@ -213,7 +178,9 @@ export default function UserProfile() {
   };
 
   const getCurrentSurveyAnswer = () => {
-    return surveyAnswers.find(a => a.questionId === surveyQuestions[currentQuestion].id)?.answer;
+    const currentQ = surveyQuestions[currentQuestion];
+    if (!currentQ) return undefined;
+    return surveyAnswers.find(a => a.questionId === currentQ.id)?.answer;
   };
 
   const handleGenerateDNAProfile = async () => {
@@ -1011,13 +978,15 @@ export default function UserProfile() {
               </div>
 
               {/* Progress */}
-              <div className="mb-8">
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                  <span>Question {currentQuestion + 1} of {surveyQuestions.length}</span>
-                  <span>{Math.round(((currentQuestion + 1) / surveyQuestions.length) * 100)}% complete</span>
+              {surveyQuestions.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Question {currentQuestion + 1} of {surveyQuestions.length}</span>
+                    <span>{Math.round(((currentQuestion + 1) / surveyQuestions.length) * 100)}% complete</span>
+                  </div>
+                  <Progress value={((currentQuestion + 1) / surveyQuestions.length) * 100} className="h-3" />
                 </div>
-                <Progress value={((currentQuestion + 1) / surveyQuestions.length) * 100} className="h-3" />
-              </div>
+              )}
 
               {/* Question */}
               <div className="mb-8">
@@ -1069,12 +1038,12 @@ export default function UserProfile() {
 
                 <Button
                   onClick={handleSurveyNext}
-                  disabled={!getCurrentSurveyAnswer()}
+                  disabled={surveyQuestions.length === 0 || !getCurrentSurveyAnswer() || (Array.isArray(getCurrentSurveyAnswer()) && getCurrentSurveyAnswer().length === 0)}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-2 px-8 py-3 disabled:opacity-50"
                   data-testid="next-question-button"
                 >
-                  <span>{currentQuestion === surveyQuestions.length - 1 ? "Generate My DNA" : "Next"}</span>
-                  {currentQuestion === surveyQuestions.length - 1 ? (
+                  <span>{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Generate My DNA" : "Next"}</span>
+                  {surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? (
                     <Sparkles size={20} />
                   ) : (
                     <ChevronRight size={20} />

@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertConsumptionLogSchema } from "@shared/schema";
 import { z } from "zod";
 import OpenAI from "openai";
+import { sql } from "drizzle-orm";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -129,6 +130,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Recommendations error:', error);
       res.status(500).json({ message: "Failed to generate recommendations" });
+    }
+  });
+
+  // Get Entertainment DNA survey questions
+  app.get("/api/edna-questions", async (req, res) => {
+    try {
+      const result = await storage.db.execute(sql`
+        SELECT id, question_text, question_type, options 
+        FROM edna_questions 
+        ORDER BY question_text
+      `);
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Failed to fetch survey questions:", error);
+      res.status(500).json({ message: "Failed to fetch survey questions" });
     }
   });
 
