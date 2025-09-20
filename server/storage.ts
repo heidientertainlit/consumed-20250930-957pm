@@ -183,20 +183,8 @@ export class MemStorage implements IStorage {
   }
 
   async getAllQuestions(): Promise<any[]> {
-    // Mock survey questions data for now since we're using in-memory storage
+    // Survey questions in the exact order specified by the user
     return [
-      {
-        id: "6e3289cb-b1eb-42ea-a134-a5f7997df9ca",
-        question_text: "Do you participate in any fantasy sports leagues?",
-        question_type: "select",
-        options: ["Yes", "No", "Sometimes"]
-      },
-      {
-        id: "67394a52-6ef8-40d0-b019-121d5f9f22d9",
-        question_text: "How do you discover new content?",
-        question_type: "multi-select",
-        options: ["Personal recommendations from friends and family", "Social media posts and discussions", "Streaming platform recommendations", "Professional reviews and ratings", "Random browsing and exploration"]
-      },
       {
         id: "ece7a2a9-9ba0-4446-8d3e-a51debd36ce7",
         question_text: "How likely are you to discuss what you're watching, reading, or listening to?",
@@ -204,10 +192,10 @@ export class MemStorage implements IStorage {
         options: ["Very likely—I love sharing and discussing", "Somewhat likely—depends on the content", "Not very likely—I prefer to keep it private"]
       },
       {
-        id: "f7b837a4-cb42-4799-bc68-20cb111e5feb",
-        question_text: "What are your favorite types of entertainment?",
+        id: "1cae48c1-a5a2-40c3-b36f-87c4e3a827b8",
+        question_text: "What sports do you like to follow?",
         question_type: "multi-select",
-        options: ["Movies", "TV Shows", "Books", "Sports", "Music", "Podcasts", "Video Games", "Live Events"]
+        options: ["NFL (Football)", "NCAA Football", "NBA (Basketball)", "NCAA Basketball", "MLB (Baseball)", "NHL (Hockey)", "Soccer/Football", "Tennis", "Golf", "Other"]
       },
       {
         id: "bcb1ea4f-1d93-4851-925a-bdfe3c6344f5",
@@ -228,16 +216,22 @@ export class MemStorage implements IStorage {
         options: ["Female", "Male", "Other"]
       },
       {
-        id: "1cae48c1-a5a2-40c3-b36f-87c4e3a827b8",
-        question_text: "What sports do you like to follow?",
-        question_type: "multi-select",
-        options: ["NFL (Football)", "NCAA Football", "NBA (Basketball)", "NCAA Basketball", "MLB (Baseball)", "NHL (Hockey)", "Soccer/Football", "Tennis", "Golf", "Other"]
-      },
-      {
-        id: "71049fe4-3945-4213-a136-43d9ec6eb582",
-        question_text: "What's your go-to comfort entertainment?",
+        id: "d353e652-66d6-45dc-9088-9ffcb067fb47",
+        question_text: "Who and what do you love across entertainment?",
         question_type: "text",
         options: []
+      },
+      {
+        id: "f7b837a4-cb42-4799-bc68-20cb111e5feb",
+        question_text: "What are your favorite types of entertainment?",
+        question_type: "multi-select",
+        options: ["Movies", "TV Shows", "Books", "Sports", "Music", "Podcasts", "Video Games", "Live Events"]
+      },
+      {
+        id: "67394a52-6ef8-40d0-b019-121d5f9f22d9",
+        question_text: "How do you discover new content?",
+        question_type: "multi-select",
+        options: ["Personal recommendations from friends and family", "Social media posts and discussions", "Streaming platform recommendations", "Professional reviews and ratings", "Random browsing and exploration"]
       },
       {
         id: "e4609aa7-797a-4f02-b60e-216f0241a99a",
@@ -246,10 +240,16 @@ export class MemStorage implements IStorage {
         options: ["Action", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"]
       },
       {
-        id: "d353e652-66d6-45dc-9088-9ffcb067fb47",
-        question_text: "Who and what do you love across entertainment?",
+        id: "71049fe4-3945-4213-a136-43d9ec6eb582",
+        question_text: "What's your go-to comfort entertainment?",
         question_type: "text",
         options: []
+      },
+      {
+        id: "6e3289cb-b1eb-42ea-a134-a5f7997df9ca",
+        question_text: "Do you participate in any fantasy sports leagues?",
+        question_type: "select",
+        options: ["Yes", "No", "Sometimes"]
       }
     ];
   }
