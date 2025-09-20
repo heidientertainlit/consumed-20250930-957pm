@@ -145,16 +145,29 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
 
   const trackMediaMutation = useMutation({
     mutationFn: async (mediaData: MediaResult) => {
-      const response = await fetch("/api/consumption", {
+      if (!session?.access_token) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
-          title: mediaData.title,
-          category: mediaData.type || "movie", // Use media type as category
-          type: mediaData.type || "movie",
+          media: {
+            title: mediaData.title,
+            mediaType: mediaData.type,
+            creator: mediaData.creator,
+            imageUrl: mediaData.image,
+            externalId: mediaData.external_id,
+            externalSource: mediaData.external_source,
+            description: mediaData.description,
+          },
           rating: null,
           review: null,
-          pointsEarned: 10, // Default points for tracking
+          listId: null, // Will use "Currently Tracking" list
         }),
       });
 
