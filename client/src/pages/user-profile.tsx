@@ -87,14 +87,15 @@ export default function UserProfile() {
       }
     },
     entertainmentDNA: {
-      personality: "The Thoughtful Explorer",
-      description: "You seek meaningful narratives with complex characters and layered storytelling. Quality over quantity defines your entertainment choices.",
-      traits: [
-        { name: "Sci-Fi Enthusiast", percentage: 92, color: "from-purple-500 to-indigo-600" },
-        { name: "Character-Driven", percentage: 88, color: "from-blue-500 to-cyan-600" },
-        { name: "Indie Appreciator", percentage: 75, color: "from-green-500 to-emerald-600" },
-        { name: "Critical Thinker", percentage: 82, color: "from-yellow-500 to-orange-600" }
+      title: "The Thoughtful Explorer",
+      description: "You're a fearless discoverer of new entertainment experiences! Your DNA reveals someone who thrives on variety and surprise, seeking meaningful narratives with complex characters and layered storytelling. Quality over quantity defines your entertainment choices, and you approach content like an adventurous explorer - always pushing boundaries and seeking new experiences.",
+      superpowers: [
+        "**Genre Hopper**: No entertainment category can contain your curiosity - you seamlessly move between sci-fi epics and intimate character studies",
+        "**Hidden Gem Hunter**: You find amazing content others miss, often discovering indie masterpieces before they hit the mainstream",
+        "**Trend Pioneer**: You discover things before they become popular, making you the friend everyone turns to for fresh recommendations",
+        "**Critical Thinker**: You analyze and appreciate the deeper layers of storytelling, seeing themes and connections others might overlook"
       ],
+      meaning: "You approach entertainment like an adventurous explorer - always pushing boundaries and seeking new experiences. You're the friend who introduces everyone to their next favorite obsession, combining intellectual curiosity with pure escapism in a way that makes every recommendation feel like a treasure map.",
       topGenres: ["Science Fiction", "Drama", "Indie Films", "Literary Fiction"],
       viewingStyle: "Binge Enthusiast",
       discoverMethod: "Friend Recommendations",
@@ -248,7 +249,7 @@ export default function UserProfile() {
                     Your Entertainment DNA
                   </h2>
                   {dnaProfileStatus === 'has_profile' && (
-                    <p className="text-sm text-gray-600">{user.entertainmentDNA.personality}</p>
+                    <p className="text-sm text-gray-600">{user.entertainmentDNA.title}</p>
                   )}
                   {dnaProfileStatus === 'no_profile' && (
                     <p className="text-sm text-gray-600">Discover your unique entertainment personality</p>
@@ -358,64 +359,68 @@ export default function UserProfile() {
             )}
 
             {dnaProfileStatus === 'has_profile' && (
-              <div className="bg-white rounded-xl p-4">
-                {/* Brief Description */}
-                <p className="text-sm text-gray-600 mb-4">
-                  {user.entertainmentDNA.description.split('.')[0]}.
-                </p>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {user.entertainmentDNA.traits.slice(0, 2).map((trait, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900">{trait.name}</span>
-                        <span className="text-xs font-semibold text-gray-700">{trait.percentage}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`bg-gradient-to-r ${trait.color} h-2 rounded-full transition-all duration-500`}
-                          style={{ width: `${trait.percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
+              <div className="bg-white rounded-xl p-6">
+                {/* Full AI-Generated Description */}
+                <div className="mb-6">
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {user.entertainmentDNA.description}
+                  </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {user.entertainmentDNA.topGenres.slice(0, 3).map((genre, index) => (
-                    <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
-                      {genre}
-                    </Badge>
-                  ))}
-                </div>
-
-                {/* Expandable Section */}
-                {isDNAExpanded && (
-                  <div className="border-t border-gray-200 pt-4 mt-4 space-y-4">
-                    {/* Additional Traits */}
-                    <div>
-                      <h5 className="text-sm font-semibold text-gray-900 mb-3">All Entertainment Traits</h5>
-                      <div className="space-y-3">
-                        {user.entertainmentDNA.traits.slice(2).map((trait, index) => (
-                          <div key={index} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-900">{trait.name}</span>
-                              <span className="text-xs font-semibold text-gray-700">{trait.percentage}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className={`bg-gradient-to-r ${trait.color} h-2 rounded-full transition-all duration-500`}
-                                style={{ width: `${trait.percentage}%` }}
-                              ></div>
-                            </div>
+                {/* Superpowers Section */}
+                <div className="mb-6">
+                  <h4 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
+                    <Sparkles className="mr-2 text-purple-600" size={18} />
+                    Your Entertainment Superpowers
+                  </h4>
+                  <div className="space-y-4">
+                    {user.entertainmentDNA.superpowers.map((superpower, index) => {
+                      const [title, description] = superpower.split(': ');
+                      return (
+                        <div key={index} className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
+                          <div className="font-medium text-purple-900 mb-1">
+                            {title.replace(/\*\*/g, '')}
                           </div>
-                        ))}
+                          <div className="text-sm text-purple-700">
+                            {description}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Top Genres */}
+                <div className="mb-6">
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Top Genres</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {user.entertainmentDNA.topGenres.map((genre, index) => (
+                      <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
+                        {genre}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Expandable Meaning Section */}
+                {isDNAExpanded && (
+                  <div className="border-t border-gray-200 pt-6 mt-6 space-y-4">
+                    {/* What This Means */}
+                    <div>
+                      <h5 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                        <Brain className="mr-2 text-indigo-600" size={18} />
+                        What This Means For You
+                      </h5>
+                      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
+                        <p className="text-sm text-indigo-800 leading-relaxed">
+                          {user.entertainmentDNA.meaning}
+                        </p>
                       </div>
                     </div>
 
                     {/* Entertainment Style */}
                     <div>
-                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Entertainment Style</h5>
+                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Your Entertainment Style</h5>
                       <div className="space-y-1">
                         <p className="text-sm text-gray-600">
                           <span className="font-medium">Viewing Style:</span> {user.entertainmentDNA.viewingStyle}
@@ -425,28 +430,16 @@ export default function UserProfile() {
                         </p>
                       </div>
                     </div>
-
-                    {/* All Genres */}
-                    <div>
-                      <h5 className="text-sm font-semibold text-gray-900 mb-2">All Top Genres</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {user.entertainmentDNA.topGenres.map((genre, index) => (
-                          <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
-                            {genre}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 )}
 
                 {/* Show More/Less Button */}
                 <button
                   onClick={() => setIsDNAExpanded(!isDNAExpanded)}
-                  className="flex items-center justify-center space-x-2 w-full mt-3 py-2 text-sm text-purple-700 hover:text-purple-800 transition-colors"
+                  className="flex items-center justify-center space-x-2 w-full mt-4 py-3 text-sm text-purple-700 hover:text-purple-800 transition-colors border-t border-gray-200"
                   data-testid="button-expand-dna"
                 >
-                  <span>{isDNAExpanded ? 'Show Less' : 'Show More'}</span>
+                  <span>{isDNAExpanded ? 'Hide Details' : 'See What This Means For You'}</span>
                   {isDNAExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
               </div>
