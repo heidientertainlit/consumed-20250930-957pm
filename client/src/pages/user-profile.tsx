@@ -1,30 +1,55 @@
 import { useState } from "react";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
-import ShareUpdateDialog from "@/components/share-update-dialog";
 import ListShareModal from "@/components/list-share-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight } from "lucide-react";
+import { Star, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2 } from "lucide-react";
 
 export default function UserProfile() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedListForShare, setSelectedListForShare] = useState<{name: string, items: number, isPublic: boolean} | null>(null);
+  
+  // Entertainment DNA states
+  const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('has_profile'); // Mock: user has profile
+  const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
   };
 
-  const handleShareUpdate = () => {
-    setIsShareDialogOpen(true);
-  };
 
   const handleShareList = (listName: string, itemCount: number, isPublic: boolean) => {
     setSelectedListForShare({ name: listName, items: itemCount, isPublic });
     setShareModalOpen(true);
+  };
+
+  const handleTakeDNASurvey = () => {
+    // Will connect to dna-survey-responses edge function
+    console.log("Taking DNA Survey...");
+  };
+
+  const handleGenerateDNAProfile = () => {
+    // Will connect to generate-dna-profile edge function
+    setIsGeneratingProfile(true);
+    console.log("Generating DNA Profile...");
+    // Mock generation process
+    setTimeout(() => {
+      setIsGeneratingProfile(false);
+      setDnaProfileStatus('has_profile');
+    }, 3000);
+  };
+
+  const handleRetakeDNASurvey = () => {
+    // Will reset and show survey again
+    setDnaProfileStatus('no_profile');
+  };
+
+  const handleShareDNAProfile = () => {
+    // Will share existing DNA profile
+    console.log("Sharing DNA Profile...");
   };
 
   // Mock user data
@@ -185,13 +210,6 @@ export default function UserProfile() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-3 mt-4 md:mt-0">
-                  <Button 
-                    onClick={handleShareUpdate}
-                    className="bg-purple-700 text-white hover:bg-purple-800"
-                  >
-                    <MessageCircle size={16} className="mr-2" />
-                    Share Update
-                  </Button>
                   <Button variant="outline" className="border-gray-300">
                     <Settings size={16} className="mr-2" />
                     Edit Profile
@@ -229,111 +247,242 @@ export default function UserProfile() {
                   <h2 className="text-xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent">
                     Your Entertainment DNA
                   </h2>
-                  <p className="text-sm text-gray-600">{user.entertainmentDNA.personality}</p>
+                  {dnaProfileStatus === 'has_profile' && (
+                    <p className="text-sm text-gray-600">{user.entertainmentDNA.personality}</p>
+                  )}
+                  {dnaProfileStatus === 'no_profile' && (
+                    <p className="text-sm text-gray-600">Discover your unique entertainment personality</p>
+                  )}
+                  {dnaProfileStatus === 'generating' && (
+                    <p className="text-sm text-gray-600">Analyzing your entertainment preferences...</p>
+                  )}
                 </div>
               </div>
-              <Button 
-                size="sm"
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                data-testid="button-share-dna"
-              >
-                <Share2 size={14} className="mr-2" />
-                Share
-              </Button>
+              
+              {/* Action Buttons based on status */}
+              <div className="flex items-center space-x-2">
+                {dnaProfileStatus === 'no_profile' && (
+                  <Button 
+                    size="sm"
+                    onClick={handleTakeDNASurvey}
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                    data-testid="button-take-dna-survey"
+                  >
+                    <Brain size={14} className="mr-2" />
+                    Take DNA Survey
+                  </Button>
+                )}
+                
+                {dnaProfileStatus === 'generating' && (
+                  <Button 
+                    size="sm"
+                    disabled
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white opacity-75"
+                  >
+                    <Loader2 size={14} className="mr-2 animate-spin" />
+                    Generating...
+                  </Button>
+                )}
+                
+                {dnaProfileStatus === 'has_profile' && (
+                  <>
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRetakeDNASurvey}
+                      className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                      data-testid="button-retake-dna-survey"
+                    >
+                      <RefreshCw size={14} className="mr-2" />
+                      Retake
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={handleShareDNAProfile}
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                      data-testid="button-share-dna"
+                    >
+                      <Share2 size={14} className="mr-2" />
+                      Share
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Simplified DNA Content */}
-            <div className="bg-white rounded-xl p-4">
-              {/* Brief Description */}
-              <p className="text-sm text-gray-600 mb-4">
-                {user.entertainmentDNA.description.split('.')[0]}.
-              </p>
-
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                {user.entertainmentDNA.traits.slice(0, 2).map((trait, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900">{trait.name}</span>
-                      <span className="text-xs font-semibold text-gray-700">{trait.percentage}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`bg-gradient-to-r ${trait.color} h-2 rounded-full transition-all duration-500`}
-                        style={{ width: `${trait.percentage}%` }}
-                      ></div>
-                    </div>
+            {/* Conditional Content based on status */}
+            {dnaProfileStatus === 'no_profile' && (
+              <div className="bg-white rounded-xl p-6 text-center">
+                <div className="mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Brain className="text-white" size={32} />
                   </div>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-3">
-                {user.entertainmentDNA.topGenres.slice(0, 3).map((genre, index) => (
-                  <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
-                    {genre}
-                  </Badge>
-                ))}
-              </div>
-
-              {/* Expandable Section */}
-              {isDNAExpanded && (
-                <div className="border-t border-gray-200 pt-4 mt-4 space-y-4">
-                  {/* Additional Traits */}
-                  <div>
-                    <h5 className="text-sm font-semibold text-gray-900 mb-3">All Entertainment Traits</h5>
-                    <div className="space-y-3">
-                      {user.entertainmentDNA.traits.slice(2).map((trait, index) => (
-                        <div key={index} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-900">{trait.name}</span>
-                            <span className="text-xs font-semibold text-gray-700">{trait.percentage}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`bg-gradient-to-r ${trait.color} h-2 rounded-full transition-all duration-500`}
-                              style={{ width: `${trait.percentage}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Entertainment Style */}
-                  <div>
-                    <h5 className="text-sm font-semibold text-gray-900 mb-2">Entertainment Style</h5>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Viewing Style:</span> {user.entertainmentDNA.viewingStyle}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Discovery Method:</span> {user.entertainmentDNA.discoverMethod}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* All Genres */}
-                  <div>
-                    <h5 className="text-sm font-semibold text-gray-900 mb-2">All Top Genres</h5>
-                    <div className="flex flex-wrap gap-2">
-                      {user.entertainmentDNA.topGenres.map((genre, index) => (
-                        <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
-                          {genre}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Discover Your Entertainment DNA
+                  </h3>
+                  <p className="text-sm text-gray-600 max-w-md mx-auto">
+                    Take our comprehensive survey to unlock your unique entertainment personality profile. 
+                    Get personalized recommendations and connect with others who share your taste.
+                  </p>
                 </div>
-              )}
+                <Button 
+                  onClick={handleTakeDNASurvey}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8"
+                  data-testid="button-start-dna-survey"
+                >
+                  <Brain size={16} className="mr-2" />
+                  Start DNA Survey
+                </Button>
+                <p className="text-xs text-gray-500 mt-3">Takes about 5 minutes</p>
+              </div>
+            )}
 
-              {/* Show More/Less Button */}
-              <button
-                onClick={() => setIsDNAExpanded(!isDNAExpanded)}
-                className="flex items-center justify-center space-x-2 w-full mt-3 py-2 text-sm text-purple-700 hover:text-purple-800 transition-colors"
-                data-testid="button-expand-dna"
+            {dnaProfileStatus === 'generating' && (
+              <div className="bg-white rounded-xl p-6 text-center">
+                <div className="mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Loader2 className="text-white animate-spin" size={32} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Generating Your DNA Profile
+                  </h3>
+                  <p className="text-sm text-gray-600 max-w-md mx-auto mb-4">
+                    Our AI is analyzing your entertainment preferences and creating your unique personality profile...
+                  </p>
+                  <div className="w-full max-w-xs mx-auto bg-gray-200 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full animate-pulse" style={{ width: '75%' }}></div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">This usually takes 30-60 seconds</p>
+                </div>
+              </div>
+            )}
+
+            {dnaProfileStatus === 'has_profile' && (
+              <div className="bg-white rounded-xl p-4">
+                {/* Brief Description */}
+                <p className="text-sm text-gray-600 mb-4">
+                  {user.entertainmentDNA.description.split('.')[0]}.
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {user.entertainmentDNA.traits.slice(0, 2).map((trait, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-900">{trait.name}</span>
+                        <span className="text-xs font-semibold text-gray-700">{trait.percentage}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`bg-gradient-to-r ${trait.color} h-2 rounded-full transition-all duration-500`}
+                          style={{ width: `${trait.percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {user.entertainmentDNA.topGenres.slice(0, 3).map((genre, index) => (
+                    <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
+                      {genre}
+                    </Badge>
+                  ))}
+                </div>
+
+                {/* Expandable Section */}
+                {isDNAExpanded && (
+                  <div className="border-t border-gray-200 pt-4 mt-4 space-y-4">
+                    {/* Additional Traits */}
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3">All Entertainment Traits</h5>
+                      <div className="space-y-3">
+                        {user.entertainmentDNA.traits.slice(2).map((trait, index) => (
+                          <div key={index} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-900">{trait.name}</span>
+                              <span className="text-xs font-semibold text-gray-700">{trait.percentage}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className={`bg-gradient-to-r ${trait.color} h-2 rounded-full transition-all duration-500`}
+                                style={{ width: `${trait.percentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Entertainment Style */}
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Entertainment Style</h5>
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Viewing Style:</span> {user.entertainmentDNA.viewingStyle}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Discovery Method:</span> {user.entertainmentDNA.discoverMethod}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* All Genres */}
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-900 mb-2">All Top Genres</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {user.entertainmentDNA.topGenres.map((genre, index) => (
+                          <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
+                            {genre}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Show More/Less Button */}
+                <button
+                  onClick={() => setIsDNAExpanded(!isDNAExpanded)}
+                  className="flex items-center justify-center space-x-2 w-full mt-3 py-2 text-sm text-purple-700 hover:text-purple-800 transition-colors"
+                  data-testid="button-expand-dna"
+                >
+                  <span>{isDNAExpanded ? 'Show Less' : 'Show More'}</span>
+                  {isDNAExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Demo Controls - Remove after testing */}
+        <div className="px-4 mb-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h4 className="font-medium text-yellow-800 mb-2">Demo Controls (Testing Only)</h4>
+            <div className="flex space-x-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setDnaProfileStatus('no_profile')}
+                className={`text-xs ${dnaProfileStatus === 'no_profile' ? 'bg-yellow-200' : ''}`}
               >
-                <span>{isDNAExpanded ? 'Show Less' : 'Show More'}</span>
-                {isDNAExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
+                No Profile
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setDnaProfileStatus('generating')}
+                className={`text-xs ${dnaProfileStatus === 'generating' ? 'bg-yellow-200' : ''}`}
+              >
+                Generating
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setDnaProfileStatus('has_profile')}
+                className={`text-xs ${dnaProfileStatus === 'has_profile' ? 'bg-yellow-200' : ''}`}
+              >
+                Has Profile
+              </Button>
             </div>
           </div>
         </div>
@@ -683,10 +832,6 @@ export default function UserProfile() {
         onClose={() => setIsTrackModalOpen(false)} 
       />
 
-      <ShareUpdateDialog 
-        isOpen={isShareDialogOpen}
-        onClose={() => setIsShareDialogOpen(false)}
-      />
 
       {selectedListForShare && (
         <ListShareModal
