@@ -28,19 +28,20 @@ export default function UserProfile() {
 
   // Fetch survey questions from database
   const fetchSurveyQuestions = async () => {
-    setIsLoadingQuestions(true);
     try {
       const response = await fetch('/api/edna-questions');
       if (response.ok) {
         const questions = await response.json();
         setSurveyQuestions(questions);
+        return true;
       } else {
         console.error('Failed to fetch survey questions');
+        return false;
       }
     } catch (error) {
       console.error('Error fetching survey questions:', error);
+      return false;
     }
-    setIsLoadingQuestions(false);
   };
 
   const handleTrackConsumption = () => {
@@ -133,8 +134,15 @@ export default function UserProfile() {
   const handleTakeDNASurvey = async () => {
     setCurrentQuestion(0);
     setSurveyAnswers([]);
-    await fetchSurveyQuestions();
-    setIsDNASurveyOpen(true);
+    setIsLoadingQuestions(true);
+    setIsDNASurveyOpen(true); // Open modal first to show loading
+    
+    const success = await fetchSurveyQuestions();
+    setIsLoadingQuestions(false);
+    
+    if (!success) {
+      setIsDNASurveyOpen(false); // Close if failed to load
+    }
   };
 
   // Survey navigation functions
