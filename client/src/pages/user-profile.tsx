@@ -26,30 +26,120 @@ export default function UserProfile() {
     setShareModalOpen(true);
   };
 
-  const handleTakeDNASurvey = () => {
-    // Will connect to dna-survey-responses edge function
-    console.log("Taking DNA Survey...");
+  // Entertainment DNA API Functions
+  const submitSurveyResponses = async (responses: { questionId: string; answer: string }[]) => {
+    const session = (window as any).session; // Get from auth context
+    if (!session?.access_token) {
+      throw new Error('No authentication token available');
+    }
+
+    const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/dna-survey-responses', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ responses }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to submit survey: ${response.statusText}`);
+    }
+
+    return response.json();
   };
 
-  const handleGenerateDNAProfile = () => {
-    // Will connect to generate-dna-profile edge function
+  const generateDNAProfile = async () => {
+    const session = (window as any).session; // Get from auth context
+    if (!session?.access_token) {
+      throw new Error('No authentication token available');
+    }
+
+    const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-dna-profile', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate profile: ${response.statusText}`);
+    }
+
+    return response.json();
+  };
+
+  const fetchDNAProfile = async () => {
+    const session = (window as any).session; // Get from auth context
+    if (!session?.access_token) {
+      throw new Error('No authentication token available');
+    }
+
+    const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/dna-profile', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null; // No profile exists
+      }
+      throw new Error(`Failed to fetch profile: ${response.statusText}`);
+    }
+
+    return response.json();
+  };
+
+  const handleTakeDNASurvey = () => {
+    // Will implement survey modal/flow
+    console.log("Taking DNA Survey...");
+    // For now, submit mock responses to test the edge function
+    const mockResponses = [
+      { questionId: "discovery", answer: "explore" },
+      { questionId: "genre_preference", answer: "adventurous" },
+      { questionId: "sharing_style", answer: "detailed_reviews" },
+      { questionId: "completion_style", answer: "completionist" },
+      { questionId: "consumption_style", answer: "binge" },
+      { questionId: "emotional_connection", answer: "characters" }
+    ];
+
+    submitSurveyResponses(mockResponses)
+      .then(() => {
+        console.log("Survey submitted successfully");
+        handleGenerateDNAProfile();
+      })
+      .catch(error => {
+        console.error("Failed to submit survey:", error);
+      });
+  };
+
+  const handleGenerateDNAProfile = async () => {
     setIsGeneratingProfile(true);
-    console.log("Generating DNA Profile...");
-    // Mock generation process
-    setTimeout(() => {
-      setIsGeneratingProfile(false);
+    setDnaProfileStatus('generating');
+    
+    try {
+      await generateDNAProfile();
+      console.log("DNA Profile generated successfully");
       setDnaProfileStatus('has_profile');
-    }, 3000);
+    } catch (error) {
+      console.error("Failed to generate DNA profile:", error);
+      setDnaProfileStatus('no_profile');
+    } finally {
+      setIsGeneratingProfile(false);
+    }
   };
 
   const handleRetakeDNASurvey = () => {
-    // Will reset and show survey again
     setDnaProfileStatus('no_profile');
   };
 
   const handleShareDNAProfile = () => {
-    // Will share existing DNA profile
     console.log("Sharing DNA Profile...");
+    // Will implement sharing functionality
   };
 
   // Mock user data
