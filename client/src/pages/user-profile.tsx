@@ -63,6 +63,7 @@ export default function UserProfile() {
     const { session } = useAuth();
     
     console.log('Auth session check:', { hasSession: !!session, hasToken: !!session?.access_token });
+    console.log('Session details:', session ? { user: session.user?.id, token_length: session.access_token?.length } : 'No session');
     
     if (!session?.access_token) {
       console.log('No authentication token - using mock submission for now');
@@ -219,7 +220,8 @@ export default function UserProfile() {
         await handleGenerateDNAProfile();
       } catch (error) {
         console.error('Failed to complete survey:', error);
-        alert('Survey submission failed. Please try again.');
+        console.error('Error details:', error.message, error.stack);
+        alert(`Survey submission failed: ${error.message || 'Unknown error'}. Please try again.`);
       }
     }
   };
