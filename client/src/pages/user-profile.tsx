@@ -375,15 +375,19 @@ export default function UserProfile() {
                   </h4>
                   <div className="space-y-4">
                     {user.entertainmentDNA.superpowers.map((superpower, index) => {
-                      const [title, description] = superpower.split(': ');
+                      const parts = superpower.split(': ');
+                      const title = parts[0] || superpower;
+                      const description = parts[1] || '';
                       return (
                         <div key={index} className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
                           <div className="font-medium text-purple-900 mb-1">
                             {title.replace(/\*\*/g, '')}
                           </div>
-                          <div className="text-sm text-purple-700">
-                            {description}
-                          </div>
+                          {description && (
+                            <div className="text-sm text-purple-700">
+                              {description}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -447,38 +451,6 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Demo Controls - Remove after testing */}
-        <div className="px-4 mb-6">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <h4 className="font-medium text-yellow-800 mb-2">Demo Controls (Testing Only)</h4>
-            <div className="flex space-x-2">
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => setDnaProfileStatus('no_profile')}
-                className={`text-xs ${dnaProfileStatus === 'no_profile' ? 'bg-yellow-200' : ''}`}
-              >
-                No Profile
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => setDnaProfileStatus('generating')}
-                className={`text-xs ${dnaProfileStatus === 'generating' ? 'bg-yellow-200' : ''}`}
-              >
-                Generating
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => setDnaProfileStatus('has_profile')}
-                className={`text-xs ${dnaProfileStatus === 'has_profile' ? 'bg-yellow-200' : ''}`}
-              >
-                Has Profile
-              </Button>
-            </div>
-          </div>
-        </div>
 
         {/* Creators with Similar DNA */}
         <div className="px-4 mb-6">
