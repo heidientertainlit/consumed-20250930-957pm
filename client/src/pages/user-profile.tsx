@@ -33,20 +33,29 @@ export default function UserProfile() {
       throw new Error('No authentication token available');
     }
 
-    const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/dna-survey-responses', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ responses }),
-    });
+    // Submit each response individually to match edge function structure
+    const results = [];
+    for (const { questionId, answer } of responses) {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/dna-survey-responses', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          user_id: session.user?.id,
+          question_id: questionId, 
+          answer 
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`Failed to submit survey: ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Failed to submit survey response: ${response.statusText}`);
+      }
+      results.push(await response.json());
     }
 
-    return response.json();
+    return results;
   };
 
   const generateDNAProfile = async () => {
@@ -177,20 +186,17 @@ export default function UserProfile() {
       }
     },
     entertainmentDNA: {
-      title: "The Thoughtful Explorer",
-      description: "You're a fearless discoverer of new entertainment experiences! Your DNA reveals someone who thrives on variety and surprise, seeking meaningful narratives with complex characters and layered storytelling. Quality over quantity defines your entertainment choices, and you approach content like an adventurous explorer - always pushing boundaries and seeking new experiences.",
-      superpowers: [
-        "**Genre Hopper**: No entertainment category can contain your curiosity - you seamlessly move between sci-fi epics and intimate character studies",
-        "**Hidden Gem Hunter**: You find amazing content others miss, often discovering indie masterpieces before they hit the mainstream",
-        "**Trend Pioneer**: You discover things before they become popular, making you the friend everyone turns to for fresh recommendations",
-        "**Critical Thinker**: You analyze and appreciate the deeper layers of storytelling, seeing themes and connections others might overlook"
-      ],
-      meaning: "You approach entertainment like an adventurous explorer - always pushing boundaries and seeking new experiences. You're the friend who introduces everyone to their next favorite obsession, combining intellectual curiosity with pure escapism in a way that makes every recommendation feel like a treasure map.",
-      topGenres: ["Science Fiction", "Drama", "Indie Films", "Literary Fiction"],
-      viewingStyle: "Binge Enthusiast",
-      discoverMethod: "Friend Recommendations",
-      totalItems: 342,
-      listsCreated: 12
+      profileText: "You're a fearless discoverer of new entertainment experiences! Your DNA reveals someone who thrives on variety and surprise, seeking meaningful narratives with complex characters and layered storytelling. Quality over quantity defines your entertainment choices, and you approach content like an adventurous explorer - always pushing boundaries and seeking new experiences. You're the friend who introduces everyone to their next favorite obsession, combining intellectual curiosity with pure escapism in a way that makes every recommendation feel like a treasure map.",
+      favoriteGenres: ["Science Fiction", "Drama", "Indie Films", "Literary Fiction"],
+      favoriteMediaTypes: ["Movies", "Books", "TV Series", "Documentaries"],
+      favoriteSports: ["Basketball", "Tennis"],
+      mediaConsumptionStats: {
+        primaryMediaType: "Movies",
+        viewingStyle: "Binge Enthusiast", 
+        discoveryMethod: "Friend Recommendations",
+        socialAspect: "Loves discussing and sharing recommendations"
+      },
+      isPrivate: false
     }
   };
 
@@ -339,7 +345,7 @@ export default function UserProfile() {
                     Your Entertainment DNA
                   </h2>
                   {dnaProfileStatus === 'has_profile' && (
-                    <p className="text-sm text-gray-600">{user.entertainmentDNA.title}</p>
+                    <p className="text-sm text-gray-600">Your Entertainment Personality</p>
                   )}
                   {dnaProfileStatus === 'no_profile' && (
                     <p className="text-sm text-gray-600">Discover your unique entertainment personality</p>
@@ -453,42 +459,15 @@ export default function UserProfile() {
                 {/* Full AI-Generated Description */}
                 <div className="mb-6">
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    {user.entertainmentDNA.description}
+                    {user.entertainmentDNA.profileText}
                   </p>
                 </div>
 
-                {/* Superpowers Section */}
+                {/* Favorite Genres */}
                 <div className="mb-6">
-                  <h4 className="text-base font-semibold text-gray-900 mb-4 flex items-center">
-                    <Sparkles className="mr-2 text-purple-600" size={18} />
-                    Your Entertainment Superpowers
-                  </h4>
-                  <div className="space-y-4">
-                    {user.entertainmentDNA.superpowers.map((superpower, index) => {
-                      const parts = superpower.split(': ');
-                      const title = parts[0] || superpower;
-                      const description = parts[1] || '';
-                      return (
-                        <div key={index} className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
-                          <div className="font-medium text-purple-900 mb-1">
-                            {title.replace(/\*\*/g, '')}
-                          </div>
-                          {description && (
-                            <div className="text-sm text-purple-700">
-                              {description}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Top Genres */}
-                <div className="mb-6">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Top Genres</h5>
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Favorite Genres</h5>
                   <div className="flex flex-wrap gap-2">
-                    {user.entertainmentDNA.topGenres.map((genre, index) => (
+                    {user.entertainmentDNA.favoriteGenres.map((genre, index) => (
                       <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
                         {genre}
                       </Badge>
@@ -496,34 +475,58 @@ export default function UserProfile() {
                   </div>
                 </div>
 
-                {/* Expandable Meaning Section */}
+                {/* Favorite Media Types */}
+                <div className="mb-6">
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Favorite Media Types</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {user.entertainmentDNA.favoriteMediaTypes.map((type, index) => (
+                      <Badge key={index} className="bg-indigo-100 text-indigo-700 text-xs">
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Expandable Details Section */}
                 {isDNAExpanded && (
                   <div className="border-t border-gray-200 pt-6 mt-6 space-y-4">
-                    {/* What This Means */}
+                    {/* Media Consumption Stats */}
                     <div>
                       <h5 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
                         <Brain className="mr-2 text-indigo-600" size={18} />
-                        What This Means For You
+                        Your Entertainment Style
                       </h5>
                       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
-                        <p className="text-sm text-indigo-800 leading-relaxed">
-                          {user.entertainmentDNA.meaning}
-                        </p>
+                        <div className="space-y-2">
+                          <p className="text-sm text-indigo-800">
+                            <span className="font-medium">Primary Media:</span> {user.entertainmentDNA.mediaConsumptionStats.primaryMediaType}
+                          </p>
+                          <p className="text-sm text-indigo-800">
+                            <span className="font-medium">Viewing Style:</span> {user.entertainmentDNA.mediaConsumptionStats.viewingStyle}
+                          </p>
+                          <p className="text-sm text-indigo-800">
+                            <span className="font-medium">Discovery Method:</span> {user.entertainmentDNA.mediaConsumptionStats.discoveryMethod}
+                          </p>
+                          <p className="text-sm text-indigo-800">
+                            <span className="font-medium">Social Aspect:</span> {user.entertainmentDNA.mediaConsumptionStats.socialAspect}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Entertainment Style */}
-                    <div>
-                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Your Entertainment Style</h5>
-                      <div className="space-y-1">
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Viewing Style:</span> {user.entertainmentDNA.viewingStyle}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Discovery Method:</span> {user.entertainmentDNA.discoverMethod}
-                        </p>
+                    {/* Favorite Sports */}
+                    {user.entertainmentDNA.favoriteSports && user.entertainmentDNA.favoriteSports.length > 0 && (
+                      <div>
+                        <h5 className="text-sm font-semibold text-gray-900 mb-2">Favorite Sports</h5>
+                        <div className="flex flex-wrap gap-2">
+                          {user.entertainmentDNA.favoriteSports.map((sport, index) => (
+                            <Badge key={index} className="bg-green-100 text-green-700 text-xs">
+                              {sport}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 

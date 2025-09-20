@@ -26,7 +26,7 @@ export const consumptionLogs = pgTable("consumption_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const dnaSurveyResponses = pgTable("dna_survey_responses", {
+export const ednaResponses = pgTable("edna_responses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   questionId: text("question_id").notNull(),
@@ -37,13 +37,12 @@ export const dnaSurveyResponses = pgTable("dna_survey_responses", {
 export const dnaProfiles = pgTable("dna_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  superpowers: jsonb("superpowers").notNull(), // Array of superpower strings
-  meaning: text("meaning").notNull(),
-  topGenres: jsonb("top_genres").notNull(), // Array of genre strings
-  viewingStyle: text("viewing_style"),
-  discoverMethod: text("discover_method"),
+  profileText: text("profile_text").notNull(),
+  favoriteGenres: jsonb("favorite_genres"), // Array of genre strings
+  favoriteMediaTypes: jsonb("favorite_media_types"), // Array of media types
+  favoriteSports: jsonb("favorite_sports"), // Array of sports
+  mediaConsumptionStats: text("media_consumption_stats"), // JSON string
+  isPrivate: boolean("is_private").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -60,7 +59,7 @@ export const insertConsumptionLogSchema = createInsertSchema(consumptionLogs).om
   createdAt: true,
 });
 
-export const insertDnaSurveyResponseSchema = createInsertSchema(dnaSurveyResponses).omit({
+export const insertEdnaResponseSchema = createInsertSchema(ednaResponses).omit({
   id: true,
   createdAt: true,
 });
@@ -75,7 +74,7 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type ConsumptionLog = typeof consumptionLogs.$inferSelect;
 export type InsertConsumptionLog = z.infer<typeof insertConsumptionLogSchema>;
-export type DnaSurveyResponse = typeof dnaSurveyResponses.$inferSelect;
-export type InsertDnaSurveyResponse = z.infer<typeof insertDnaSurveyResponseSchema>;
+export type EdnaResponse = typeof ednaResponses.$inferSelect;
+export type InsertEdnaResponse = z.infer<typeof insertEdnaResponseSchema>;
 export type DnaProfile = typeof dnaProfiles.$inferSelect;
 export type InsertDnaProfile = z.infer<typeof insertDnaProfileSchema>;
