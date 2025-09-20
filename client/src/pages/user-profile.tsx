@@ -11,6 +11,7 @@ export default function UserProfile() {
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedListForShare, setSelectedListForShare] = useState<{name: string, items: number, isPublic: boolean} | null>(null);
+  const [isDNASurveyOpen, setIsDNASurveyOpen] = useState(false);
   
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('has_profile'); // Mock: user has profile
@@ -104,26 +105,7 @@ export default function UserProfile() {
   };
 
   const handleTakeDNASurvey = () => {
-    // Will implement survey modal/flow
-    console.log("Taking DNA Survey...");
-    // For now, submit mock responses to test the edge function
-    const mockResponses = [
-      { questionId: "discovery", answer: "explore" },
-      { questionId: "genre_preference", answer: "adventurous" },
-      { questionId: "sharing_style", answer: "detailed_reviews" },
-      { questionId: "completion_style", answer: "completionist" },
-      { questionId: "consumption_style", answer: "binge" },
-      { questionId: "emotional_connection", answer: "characters" }
-    ];
-
-    submitSurveyResponses(mockResponses)
-      .then(() => {
-        console.log("Survey submitted successfully");
-        handleGenerateDNAProfile();
-      })
-      .catch(error => {
-        console.error("Failed to submit survey:", error);
-      });
+    setIsDNASurveyOpen(true);
   };
 
   const handleGenerateDNAProfile = async () => {
@@ -902,6 +884,96 @@ export default function UserProfile() {
           listItems={selectedListForShare.items}
           listType="custom"
         />
+      )}
+
+      {/* Entertainment DNA Survey Modal */}
+      {isDNASurveyOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <Sparkles className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent">
+                      Entertainment DNA Survey
+                    </h2>
+                    <p className="text-sm text-gray-600">Discover your unique entertainment personality</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setIsDNASurveyOpen(false)}
+                  data-testid="button-close-survey"
+                >
+                  ×
+                </Button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="text-center py-8">
+                  <Brain className="mx-auto text-purple-600 mb-4" size={48} />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Your Entertainment DNA Awaits!
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Answer a few questions about your entertainment preferences to unlock your personalized Entertainment DNA profile with AI-powered insights.
+                  </p>
+                  
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 mb-6">
+                    <h4 className="font-semibold text-gray-900 mb-3">What you'll discover:</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
+                      <div className="flex items-center space-x-2">
+                        <Sparkles size={16} className="text-purple-600" />
+                        <span>Your entertainment personality type</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Brain size={16} className="text-indigo-600" />
+                        <span>Personalized recommendations</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Heart size={16} className="text-pink-600" />
+                        <span>Your viewing and consumption style</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Share2 size={16} className="text-green-600" />
+                        <span>How you discover new content</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button 
+                      onClick={() => {
+                        // For now, submit mock responses and start generation
+                        setIsDNASurveyOpen(false);
+                        handleGenerateDNAProfile();
+                      }}
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8"
+                      data-testid="button-begin-survey"
+                    >
+                      <Brain size={16} className="mr-2" />
+                      Begin Survey
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setIsDNASurveyOpen(false)}
+                      className="border-gray-300"
+                      data-testid="button-cancel-survey"
+                    >
+                      Maybe Later
+                    </Button>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 mt-4">Takes about 5 minutes • Your data is private and secure</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
