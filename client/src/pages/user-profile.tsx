@@ -4,7 +4,10 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Star, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function UserProfile() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
@@ -16,6 +19,74 @@ export default function UserProfile() {
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('has_profile'); // Mock: user has profile
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
+  
+  // Survey states
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [surveyAnswers, setSurveyAnswers] = useState<{ questionId: string; answer: string }[]>([]);
+
+  // Survey questions data
+  const surveyQuestions = [
+    {
+      id: "discovery",
+      question: "How do you usually discover new entertainment?",
+      options: [
+        { value: "social", label: "Friends and social media recommendations" },
+        { value: "algorithms", label: "Platform algorithms and trending lists" },
+        { value: "critics", label: "Professional reviews and critic scores" },
+        { value: "explore", label: "I love browsing and discovering randomly" }
+      ]
+    },
+    {
+      id: "consumption_style",
+      question: "What's your ideal entertainment consumption style?",
+      options: [
+        { value: "binge", label: "Binge everything in marathon sessions" },
+        { value: "scheduled", label: "Regular scheduled viewing/reading time" },
+        { value: "mood", label: "Whatever matches my current mood" },
+        { value: "social", label: "Only when I can share the experience with others" }
+      ]
+    },
+    {
+      id: "genre_preference",
+      question: "Which best describes your genre approach?",
+      options: [
+        { value: "loyal", label: "I stick to genres I know I love" },
+        { value: "adventurous", label: "I actively seek out new and different genres" },
+        { value: "mood_based", label: "My genre choice depends entirely on my mood" },
+        { value: "quality_first", label: "Genre doesn't matter if the quality is high" }
+      ]
+    },
+    {
+      id: "sharing_style",
+      question: "How do you like to share your entertainment experiences?",
+      options: [
+        { value: "detailed_reviews", label: "Write detailed reviews and thoughtful analysis" },
+        { value: "quick_ratings", label: "Quick ratings and short reactions" },
+        { value: "recommendations", label: "Focus on recommending to specific people" },
+        { value: "private", label: "Keep my entertainment experiences mostly private" }
+      ]
+    },
+    {
+      id: "completion_style",
+      question: "What's your approach to finishing entertainment?",
+      options: [
+        { value: "completionist", label: "I finish everything I start, no matter what" },
+        { value: "selective", label: "Life's too short for bad content - I drop things quickly" },
+        { value: "comeback", label: "I take breaks but usually come back to finish later" },
+        { value: "sampler", label: "I prefer trying many things rather than finishing everything" }
+      ]
+    },
+    {
+      id: "emotional_connection",
+      question: "What creates the strongest emotional connection for you?",
+      options: [
+        { value: "characters", label: "Deep, complex characters I can relate to" },
+        { value: "storytelling", label: "Masterful storytelling and plot construction" },
+        { value: "world_building", label: "Rich, immersive worlds I can escape into" },
+        { value: "themes", label: "Content that explores meaningful themes and ideas" }
+      ]
+    }
+  ];
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -105,7 +176,44 @@ export default function UserProfile() {
   };
 
   const handleTakeDNASurvey = () => {
+    setCurrentQuestion(0);
+    setSurveyAnswers([]);
     setIsDNASurveyOpen(true);
+  };
+
+  // Survey navigation functions
+  const handleSurveyAnswer = (value: string) => {
+    const newAnswers = surveyAnswers.filter(a => a.questionId !== surveyQuestions[currentQuestion].id);
+    newAnswers.push({
+      questionId: surveyQuestions[currentQuestion].id,
+      answer: value
+    });
+    setSurveyAnswers(newAnswers);
+  };
+
+  const handleSurveyNext = async () => {
+    if (currentQuestion < surveyQuestions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      // Survey complete - submit to edge functions
+      try {
+        await submitSurveyResponses(surveyAnswers);
+        setIsDNASurveyOpen(false);
+        await handleGenerateDNAProfile();
+      } catch (error) {
+        console.error('Failed to complete survey:', error);
+      }
+    }
+  };
+
+  const handleSurveyPrevious = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1);
+    }
+  };
+
+  const getCurrentSurveyAnswer = () => {
+    return surveyAnswers.find(a => a.questionId === surveyQuestions[currentQuestion].id)?.answer;
   };
 
   const handleGenerateDNAProfile = async () => {
@@ -890,86 +998,88 @@ export default function UserProfile() {
       {isDNASurveyOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                    <Sparkles className="text-white" size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent">
-                      Entertainment DNA Survey
-                    </h2>
-                    <p className="text-sm text-gray-600">Discover your unique entertainment personality</p>
-                  </div>
+            <div className="p-8">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Brain className="text-white" size={32} />
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setIsDNASurveyOpen(false)}
-                  data-testid="button-close-survey"
-                >
-                  ×
-                </Button>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Entertainment DNA Survey</h1>
+                <p className="text-gray-600 text-lg">
+                  Let's understand how you consume entertainment so we can personalize your experience
+                </p>
               </div>
 
-              <div className="space-y-6">
-                <div className="text-center py-8">
-                  <Brain className="mx-auto text-purple-600 mb-4" size={48} />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Your Entertainment DNA Awaits!
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    Answer a few questions about your entertainment preferences to unlock your personalized Entertainment DNA profile with AI-powered insights.
-                  </p>
-                  
-                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 mb-6">
-                    <h4 className="font-semibold text-gray-900 mb-3">What you'll discover:</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
-                      <div className="flex items-center space-x-2">
-                        <Sparkles size={16} className="text-purple-600" />
-                        <span>Your entertainment personality type</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Brain size={16} className="text-indigo-600" />
-                        <span>Personalized recommendations</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Heart size={16} className="text-pink-600" />
-                        <span>Your viewing and consumption style</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Share2 size={16} className="text-green-600" />
-                        <span>How you discover new content</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button 
-                      onClick={() => {
-                        // For now, submit mock responses and start generation
-                        setIsDNASurveyOpen(false);
-                        handleGenerateDNAProfile();
-                      }}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8"
-                      data-testid="button-begin-survey"
-                    >
-                      <Brain size={16} className="mr-2" />
-                      Begin Survey
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setIsDNASurveyOpen(false)}
-                      className="border-gray-300"
-                      data-testid="button-cancel-survey"
-                    >
-                      Maybe Later
-                    </Button>
-                  </div>
-                  
-                  <p className="text-xs text-gray-500 mt-4">Takes about 5 minutes • Your data is private and secure</p>
+              {/* Progress */}
+              <div className="mb-8">
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Question {currentQuestion + 1} of {surveyQuestions.length}</span>
+                  <span>{Math.round(((currentQuestion + 1) / surveyQuestions.length) * 100)}% complete</span>
                 </div>
+                <Progress value={((currentQuestion + 1) / surveyQuestions.length) * 100} className="h-3" />
+              </div>
+
+              {/* Question */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-6 leading-relaxed">
+                  {surveyQuestions[currentQuestion].question}
+                </h2>
+
+                <RadioGroup 
+                  value={getCurrentSurveyAnswer() || ""} 
+                  onValueChange={handleSurveyAnswer}
+                  className="space-y-4"
+                >
+                  {surveyQuestions[currentQuestion].options.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+                      <RadioGroupItem value={option.value} id={option.value} />
+                      <Label 
+                        htmlFor={option.value} 
+                        className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
+                        data-testid={`option-${option.value}`}
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex justify-between items-center">
+                <Button
+                  onClick={handleSurveyPrevious}
+                  disabled={currentQuestion === 0}
+                  variant="outline"
+                  className="flex items-center space-x-2 disabled:opacity-50"
+                  data-testid="previous-question-button"
+                >
+                  <ChevronLeft size={20} />
+                  <span>Previous</span>
+                </Button>
+
+                <Button
+                  onClick={() => setIsDNASurveyOpen(false)}
+                  variant="ghost"
+                  className="text-gray-500 hover:text-gray-700"
+                  data-testid="close-survey-button"
+                >
+                  Close
+                </Button>
+
+                <Button
+                  onClick={handleSurveyNext}
+                  disabled={!getCurrentSurveyAnswer()}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-2 px-8 py-3 disabled:opacity-50"
+                  data-testid="next-question-button"
+                >
+                  <span>{currentQuestion === surveyQuestions.length - 1 ? "Generate My DNA" : "Next"}</span>
+                  {currentQuestion === surveyQuestions.length - 1 ? (
+                    <Sparkles size={20} />
+                  ) : (
+                    <ChevronRight size={20} />
+                  )}
+                </Button>
               </div>
             </div>
           </div>
