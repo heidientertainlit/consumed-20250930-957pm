@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
@@ -8,16 +9,19 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Star, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { AuthModal } from "@/components/auth";
 
 export default function UserProfile() {
+  const { user, session, loading } = useAuth();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedListForShare, setSelectedListForShare] = useState<{name: string, items: number, isPublic: boolean} | null>(null);
   const [isDNASurveyOpen, setIsDNASurveyOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
   // Entertainment DNA states
-  const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('has_profile'); // Mock: user has profile
+  const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('has_profile'); // Mock: mockUserData has profile
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   
   // Survey states
@@ -56,7 +60,7 @@ export default function UserProfile() {
 
   // Entertainment DNA API Functions
   const submitSurveyResponses = async (responses: { questionId: string; answer: string }[]) => {
-    const session = (window as any).session; // Get from auth context
+    const { session } = useAuth();
     
     console.log('Auth session check:', { hasSession: !!session, hasToken: !!session?.access_token });
     
@@ -77,7 +81,7 @@ export default function UserProfile() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            user_id: session.user?.id,
+            mockUserData_id: session.mockUserData?.id,
             question_id: questionId, 
             answer 
           }),
@@ -97,7 +101,7 @@ export default function UserProfile() {
   };
 
   const generateDNAProfile = async () => {
-    const session = (window as any).session; // Get from auth context
+    const { session } = useAuth();
     
     console.log('Generating DNA profile...');
     
@@ -123,7 +127,7 @@ export default function UserProfile() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ user_id: session.user?.id }),
+        body: JSON.stringify({ mockUserData_id: session.mockUserData?.id }),
       });
 
       if (!response.ok) {
@@ -138,7 +142,7 @@ export default function UserProfile() {
   };
 
   const fetchDNAProfile = async () => {
-    const session = (window as any).session; // Get from auth context
+    const { session } = useAuth();
     if (!session?.access_token) {
       throw new Error('No authentication token available');
     }
@@ -162,6 +166,12 @@ export default function UserProfile() {
   };
 
   const handleTakeDNASurvey = async () => {
+    // Check if user is authenticated
+    if (!user || !session) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
     setCurrentQuestion(0);
     setSurveyAnswers([]);
     setIsLoadingQuestions(true);
@@ -227,6 +237,12 @@ export default function UserProfile() {
   };
 
   const handleGenerateDNAProfile = async () => {
+    // Check if user is authenticated
+    if (!user || !session) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
     setIsGeneratingProfile(true);
     setDnaProfileStatus('generating');
     
@@ -251,10 +267,10 @@ export default function UserProfile() {
     // Will implement sharing functionality
   };
 
-  // Mock user data
-  const user = {
+  // Mock mockUserData data for display
+  const mockUserData = {
     name: "Alex Thompson",
-    username: "@alexthompson",
+    mockUserDataname: "@alexthompson",
     avatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150&h=150&fit=crop&crop=face",
     followers: 1234,
     following: 567,
@@ -374,8 +390,8 @@ export default function UserProfile() {
             {/* Avatar */}
             <div className="relative">
               <img 
-                src={user.avatar}
-                alt={user.name}
+                src={mockUserData.avatar}
+                alt={mockUserData.name}
                 className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
               />
             </div>
@@ -384,23 +400,23 @@ export default function UserProfile() {
             <div className="mt-4 md:mt-0 flex-1">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h1 className="text-3xl font-semibold text-black mb-1">{user.name}</h1>
+                  <h1 className="text-3xl font-semibold text-black mb-1">{mockUserData.name}</h1>
                   <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-gray-600">{user.username}</span>
+                    <span className="text-gray-600">{mockUserData.mockUserDataname}</span>
                     <span className="text-gray-400">•</span>
-                    <span className="text-gray-600">Joined {user.joinedDate}</span>
+                    <span className="text-gray-600">Joined {mockUserData.joinedDate}</span>
                   </div>
                   <div className="flex items-center space-x-6 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <Users size={16} />
-                      <span>{user.followers.toLocaleString()} followers</span>
+                      <span>{mockUserData.followers.toLocaleString()} followers</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <span>{user.following} following</span>
+                      <span>{mockUserData.following} following</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Trophy size={16} />
-                      <span>{user.fanPoints.toLocaleString()} fan points</span>
+                      <span>{mockUserData.fanPoints.toLocaleString()} fan points</span>
                     </div>
                   </div>
                 </div>
@@ -418,12 +434,12 @@ export default function UserProfile() {
 
           {/* Bio */}
           <div className="mt-6">
-            <p className="text-gray-700 leading-relaxed">{user.bio}</p>
+            <p className="text-gray-700 leading-relaxed">{mockUserData.bio}</p>
           </div>
 
           {/* Stats */}
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(user.stats).map(([key, value]) => (
+            {Object.entries(mockUserData.stats).map(([key, value]) => (
               <div key={key} className="text-center p-3 bg-white rounded-lg border border-gray-200">
                 <div className="text-2xl font-bold text-gray-900">{value}</div>
                 <div className="text-sm text-gray-600 capitalize">{key}</div>
@@ -559,7 +575,7 @@ export default function UserProfile() {
                 {/* Full AI-Generated Description */}
                 <div className="mb-6">
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    {user.entertainmentDNA.profileText}
+                    {mockUserData.entertainmentDNA.profileText}
                   </p>
                 </div>
 
@@ -567,7 +583,7 @@ export default function UserProfile() {
                 <div className="mb-6">
                   <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Favorite Genres</h5>
                   <div className="flex flex-wrap gap-2">
-                    {user.entertainmentDNA.favoriteGenres.map((genre, index) => (
+                    {mockUserData.entertainmentDNA.favoriteGenres.map((genre, index) => (
                       <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
                         {genre}
                       </Badge>
@@ -579,7 +595,7 @@ export default function UserProfile() {
                 <div className="mb-6">
                   <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Favorite Media Types</h5>
                   <div className="flex flex-wrap gap-2">
-                    {user.entertainmentDNA.favoriteMediaTypes.map((type, index) => (
+                    {mockUserData.entertainmentDNA.favoriteMediaTypes.map((type, index) => (
                       <Badge key={index} className="bg-indigo-100 text-indigo-700 text-xs">
                         {type}
                       </Badge>
@@ -599,27 +615,27 @@ export default function UserProfile() {
                       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
                         <div className="space-y-2">
                           <p className="text-sm text-indigo-800">
-                            <span className="font-medium">Primary Media:</span> {user.entertainmentDNA.mediaConsumptionStats.primaryMediaType}
+                            <span className="font-medium">Primary Media:</span> {mockUserData.entertainmentDNA.mediaConsumptionStats.primaryMediaType}
                           </p>
                           <p className="text-sm text-indigo-800">
-                            <span className="font-medium">Viewing Style:</span> {user.entertainmentDNA.mediaConsumptionStats.viewingStyle}
+                            <span className="font-medium">Viewing Style:</span> {mockUserData.entertainmentDNA.mediaConsumptionStats.viewingStyle}
                           </p>
                           <p className="text-sm text-indigo-800">
-                            <span className="font-medium">Discovery Method:</span> {user.entertainmentDNA.mediaConsumptionStats.discoveryMethod}
+                            <span className="font-medium">Discovery Method:</span> {mockUserData.entertainmentDNA.mediaConsumptionStats.discoveryMethod}
                           </p>
                           <p className="text-sm text-indigo-800">
-                            <span className="font-medium">Social Aspect:</span> {user.entertainmentDNA.mediaConsumptionStats.socialAspect}
+                            <span className="font-medium">Social Aspect:</span> {mockUserData.entertainmentDNA.mediaConsumptionStats.socialAspect}
                           </p>
                         </div>
                       </div>
                     </div>
 
                     {/* Favorite Sports */}
-                    {user.entertainmentDNA.favoriteSports && user.entertainmentDNA.favoriteSports.length > 0 && (
+                    {mockUserData.entertainmentDNA.favoriteSports && mockUserData.entertainmentDNA.favoriteSports.length > 0 && (
                       <div>
                         <h5 className="text-sm font-semibold text-gray-900 mb-2">Favorite Sports</h5>
                         <div className="flex flex-wrap gap-2">
-                          {user.entertainmentDNA.favoriteSports.map((sport, index) => (
+                          {mockUserData.entertainmentDNA.favoriteSports.map((sport, index) => (
                             <Badge key={index} className="bg-green-100 text-green-700 text-xs">
                               {sport}
                             </Badge>
@@ -673,42 +689,42 @@ export default function UserProfile() {
           <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
             <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-4">
               <div className="text-center">
-                <div className="text-lg font-bold text-purple-700">{user.consumptionStats.moviesWatched}</div>
+                <div className="text-lg font-bold text-purple-700">{mockUserData.consumptionStats.moviesWatched}</div>
                 <div className="text-xs text-gray-600">Movies</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-pink-600">{user.consumptionStats.tvShowsWatched}</div>
+                <div className="text-lg font-bold text-pink-600">{mockUserData.consumptionStats.tvShowsWatched}</div>
                 <div className="text-xs text-gray-600">TV Shows</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-cyan-600">{user.consumptionStats.booksRead}</div>
+                <div className="text-lg font-bold text-cyan-600">{mockUserData.consumptionStats.booksRead}</div>
                 <div className="text-xs text-gray-600">Books</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-green-600">{user.consumptionStats.musicHours}h</div>
+                <div className="text-lg font-bold text-green-600">{mockUserData.consumptionStats.musicHours}h</div>
                 <div className="text-xs text-gray-600">Music</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-blue-600">{user.consumptionStats.podcastHours}h</div>
+                <div className="text-lg font-bold text-blue-600">{mockUserData.consumptionStats.podcastHours}h</div>
                 <div className="text-xs text-gray-600">Podcasts</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-orange-600">{user.consumptionStats.gamesPlayed}</div>
+                <div className="text-lg font-bold text-orange-600">{mockUserData.consumptionStats.gamesPlayed}</div>
                 <div className="text-xs text-gray-600">Games</div>
               </div>
             </div>
 
             <div className="flex justify-around border-t border-gray-200 pt-4">
               <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">{user.consumptionStats.totalHours.toLocaleString()}h</div>
+                <div className="text-lg font-bold text-gray-900">{mockUserData.consumptionStats.totalHours.toLocaleString()}h</div>
                 <div className="text-xs text-gray-600">Total Hours</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">{user.consumptionStats.averageRating}</div>
+                <div className="text-lg font-bold text-gray-900">{mockUserData.consumptionStats.averageRating}</div>
                 <div className="text-xs text-gray-600">Avg Rating</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">{user.stats.streak}</div>
+                <div className="text-lg font-bold text-gray-900">{mockUserData.stats.streak}</div>
                 <div className="text-xs text-gray-600">Day Streak</div>
               </div>
             </div>
@@ -945,13 +961,13 @@ export default function UserProfile() {
               <div key={activity.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                 <div className="flex items-start space-x-4">
                   <img 
-                    src={user.avatar}
-                    alt={user.name}
+                    src={mockUserData.avatar}
+                    alt={mockUserData.name}
                     className="w-12 h-12 rounded-full"
                   />
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-semibold text-gray-900">{user.name}</span>
+                      <span className="font-semibold text-gray-900">{mockUserData.name}</span>
                       <Badge variant="secondary">
                         {activity.type === "review" ? "Review" : "Added"}
                       </Badge>
@@ -1162,6 +1178,15 @@ export default function UserProfile() {
           </div>
         </div>
       )}
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={() => {
+          setIsAuthModalOpen(false);
+        }}
+      />
     </div>
   );
 }
