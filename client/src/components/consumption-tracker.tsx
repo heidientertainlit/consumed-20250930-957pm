@@ -52,23 +52,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
     "Sports"
   ];
 
-  const createLogMutation = useMutation({
-    mutationFn: async (data: InsertConsumptionLog) => {
-      const response = await fetch("/api/consumption", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to log consumption");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users/user-1"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/user-1/consumption"] });
-      onClose();
-      resetForm();
-    },
-  });
+  // Removed old Express API consumption logging - now using Supabase track-media edge function below
 
   const resetForm = () => {
     setSelectedCategories(["All Media"]);

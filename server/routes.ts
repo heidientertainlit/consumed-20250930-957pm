@@ -1,11 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertConsumptionLogSchema } from "@shared/schema";
-import { z } from "zod";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Removed unnecessary imports - simplified for minimal backend
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -33,24 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create consumption log
-  app.post("/api/consumption", async (req, res) => {
-    try {
-      const logData = insertConsumptionLogSchema.parse({
-        ...req.body,
-        userId: "user-1", // Mock user for now
-        consumedAt: req.body.consumedAt ? new Date(req.body.consumedAt) : new Date(),
-      });
-
-      const log = await storage.createConsumptionLog(logData);
-      res.status(201).json(log);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid consumption log data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create consumption log" });
-    }
-  });
+  // Removed: Create consumption log - Now handled by Supabase track-media edge function
 
   // Get user's consumption stats
   app.get("/api/users/:userId/consumption/stats", async (req, res) => {
@@ -62,15 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get activity feed (all consumption logs)
-  app.get("/api/consumption/feed", async (req, res) => {
-    try {
-      const feed = await storage.getActivityFeed();
-      res.json(feed);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch activity feed" });
-    }
-  });
+  // Removed: Get activity feed - Not used by frontend
 
   // Get personalized recommendations
   app.get("/api/users/:userId/recommendations", async (req, res) => {
@@ -132,16 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get Entertainment DNA survey questions
-  app.get("/api/edna-questions", async (req, res) => {
-    try {
-      const result = await storage.getAllQuestions();
-      res.json(result);
-    } catch (error) {
-      console.error("Failed to fetch survey questions:", error);
-      res.status(500).json({ message: "Failed to fetch survey questions" });
-    }
-  });
+  // Removed: Get Entertainment DNA survey questions - Not used by frontend
 
   const httpServer = createServer(app);
   return httpServer;

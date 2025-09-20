@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, UserPlus, Trash2, MoreVertical, Star, Clock, Calendar } from "lucide-react";
 import { useLocation } from "wouter";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
@@ -12,6 +15,10 @@ export default function ListDetail() {
   const [showInviteCollaborator, setShowInviteCollaborator] = useState(false);
   const [newItemTitle, setNewItemTitle] = useState("");
   const [collaboratorEmail, setCollaboratorEmail] = useState("");
+  
+  const queryClient = useQueryClient();
+  const { session } = useAuth();
+  const { toast } = useToast();
 
   // Mock list data - in real app would come from URL params/API
   const listData = {
@@ -73,12 +80,54 @@ export default function ListDetail() {
     isPublic: true
   };
 
-  const handleAddItem = () => {
-    if (newItemTitle.trim()) {
-      // In real app, would make API call to add item
-      console.log("Adding item:", newItemTitle);
+  const addItemMutation = useMutation({
+    mutationFn: async (title: string) => {
+      if (!session?.access_token) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-media-to-list", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          listId: listData.id,
+          title: title,
+          mediaType: "mixed",
+          creator: "",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to add item: ${response.status} - ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Item added!",
+        description: "Successfully added item to list.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["lists"] });
       setNewItemTitle("");
       setShowAddItem(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add item",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddItem = () => {
+    if (newItemTitle.trim()) {
+      addItemMutation.mutate(newItemTitle.trim());
     }
   };
 
@@ -96,9 +145,52 @@ export default function ListDetail() {
     console.log("Removing item:", itemId);
   };
 
+  const togglePrivacyMutation = useMutation({
+    mutationFn: async (isPublic: boolean) => {
+      if (!session?.access_token) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-list-visibility", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          listId: listData.id,
+          isPublic: isPublic,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update privacy: ${response.status} - ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Privacy updated!",
+        description: `List is now ${!isPublic ? 'public' : 'private'}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["lists"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to update privacy",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsPublic(isPublic); // Revert the UI change
+    },
+  });
+
   const handleTogglePrivacy = () => {
-    setIsPublic(!isPublic);
-    // In real app, would make API call to update privacy
+    const newPublicState = !isPublic;
+    setIsPublic(newPublicState);
+    togglePrivacyMutation.mutate(newPublicState);
   };
 
   return (
