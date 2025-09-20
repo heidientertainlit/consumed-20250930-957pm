@@ -140,11 +140,13 @@ export default function UserProfile() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ mockUserData_id: session.mockUserData?.id }),
+        body: JSON.stringify({ user_id: session.user?.id }),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to generate profile: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`DNA generation failed ${response.status}:`, errorText);
+        throw new Error(`Failed to generate profile: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       return response.json();
