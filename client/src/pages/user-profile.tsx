@@ -74,6 +74,8 @@ export default function UserProfile() {
     const results = [];
     for (const { questionId, answer } of responses) {
       try {
+        console.log(`Submitting to edge function for question ${questionId}:`, { questionId, answer: answer.substring(0, 50) + '...' });
+        
         const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/dna-survey-responses', {
           method: 'POST',
           headers: {
@@ -81,16 +83,22 @@ export default function UserProfile() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            mockUserData_id: session.mockUserData?.id,
+            user_id: session.user?.id,
             question_id: questionId, 
             answer 
           }),
         });
+        
+        console.log(`Edge function response status: ${response.status} ${response.statusText}`);
 
         if (!response.ok) {
-          throw new Error(`Failed to submit survey response: ${response.statusText}`);
+          const errorText = await response.text();
+          console.error(`Edge function error ${response.status}:`, errorText);
+          throw new Error(`Failed to submit survey response: ${response.status} ${response.statusText} - ${errorText}`);
         }
-        results.push(await response.json());
+        const responseData = await response.json();
+        console.log('Edge function success:', responseData);
+        results.push(responseData);
       } catch (error) {
         console.error(`Error submitting response for question ${questionId}:`, error);
         throw error;
