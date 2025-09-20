@@ -58,7 +58,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const { data: notificationCount = 0 } = useQuery({
     queryKey: ["notification-count", userId],
     queryFn: () => fetchNotificationCount(session, userId),
-    enabled: !!session?.access_token && !!userId,
+    enabled: false, // Disabled until edge function is set up
+    retry: false, // Don't retry on error
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
