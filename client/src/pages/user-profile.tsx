@@ -33,7 +33,13 @@ export default function UserProfile() {
   // Fetch survey questions from database
   const fetchSurveyQuestions = async () => {
     try {
-      const response = await fetch('/api/edna-questions');
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_questions?select=*', {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
+        },
+      });
       if (response.ok) {
         const questions = await response.json();
         setSurveyQuestions(questions);
