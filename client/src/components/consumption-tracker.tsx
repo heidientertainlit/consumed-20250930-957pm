@@ -8,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X, List } from "lucide-react";
 import { InsertConsumptionLog } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { AuthModal } from "./auth-modal";
 import { useToast } from "@/hooks/use-toast";
@@ -130,10 +132,19 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
   }, [searchQuery, selectedCategories]);
 
   const trackMediaMutation = useMutation({
-    mutationFn: async (mediaData: MediaResult) => {
+    mutationFn: async (mediaData: MediaResult & { listType?: string }) => {
       if (!session?.access_token) {
         throw new Error("Authentication required");
       }
+
+      // Map list types to list IDs
+      const listMapping: Record<string, string | null> = {
+        'all': null,          // Goes to general tracking
+        'currently': 'currently',
+        'finished': 'finished', 
+        'dnf': 'dnf',
+        'queue': 'queue'
+      };
 
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
         method: "POST",
@@ -153,7 +164,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           },
           rating: null,
           review: null,
-          listId: null, // Default to "Currently" list
+          listId: listMapping[mediaData.listType || 'all'],
         }),
       });
 
@@ -183,7 +194,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
     },
   });
 
-  const handleAddMedia = () => {
+  const handleAddMedia = (listType?: string) => {
     if (!selectedMedia) return;
     
     // Check if user is authenticated
@@ -192,7 +203,13 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
       return;
     }
     
-    trackMediaMutation.mutate(selectedMedia);
+    // Update the mutation to use the specified list type
+    const mediaWithList = {
+      ...selectedMedia,
+      listType: listType || 'all' // Default to 'all' for Quick Add
+    };
+    
+    trackMediaMutation.mutate(mediaWithList);
   };
 
   return (
@@ -374,13 +391,53 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleAddMedia}
-            disabled={!selectedMedia || trackMediaMutation.isPending}
-            className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400"
-          >
-            {trackMediaMutation.isPending ? "Adding..." : "Add Media"}
-          </Button>
+          
+          {/* Split Button - Quick Add with Dropdown */}
+          <div className="flex">
+            <Button
+              onClick={() => handleAddMedia('all')}
+              disabled={!selectedMedia || trackMediaMutation.isPending}
+              className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400 rounded-r-none border-r border-blue-700"
+            >
+              {trackMediaMutation.isPending ? "Adding..." : "Quick Add"}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={!selectedMedia || trackMediaMutation.isPending}
+                  className="px-2 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400 rounded-l-none"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem 
+                  onClick={() => handleAddMedia('currently')}
+                  className="cursor-pointer"
+                >
+                  Add to Currently
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleAddMedia('queue')}
+                  className="cursor-pointer"
+                >
+                  Add to Queue
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleAddMedia('finished')}
+                  className="cursor-pointer"
+                >
+                  Add to Finished
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleAddMedia('dnf')}
+                  className="cursor-pointer"
+                >
+                  Add to DNF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </DialogContent>
       
