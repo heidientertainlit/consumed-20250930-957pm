@@ -5,7 +5,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight } from "lucide-react";
+import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -75,7 +75,7 @@ export default function Track() {
     });
   };
 
-  const filterOptions = ["All", "Currently", "Read", "To Read", "Watched", "To Watch", "Listened", "To Listen", "Played", "To Play"];
+  const filterOptions = ["All", "Currently", "Finished", "Did Not Finish", "Queue"];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
