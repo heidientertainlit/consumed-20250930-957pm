@@ -38,23 +38,37 @@ export default function Track() {
 
   const { user, session } = useAuth();
   
-  // Get user's lists and media data from Supabase
+  // Get user's lists and media data - temporarily using local Express route
   const { data: userListsData, isLoading: listsLoading } = useQuery({
     queryKey: ['user-lists-with-media'],
     queryFn: async () => {
-      if (!session?.access_token) return null;
+      // Try Supabase first, fallback to local Express
+      if (session?.access_token) {
+        try {
+          const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${session.access_token}`,
+            },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.lists && data.lists.length > 1) { // More than just "All"
+              return data;
+            }
+          }
+        } catch (error) {
+          console.error('Supabase edge function failed, using fallback:', error);
+        }
+      }
       
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-      });
-      
+      // Fallback to local Express route
+      const response = await fetch("/api/user-lists-with-media");
       if (!response.ok) throw new Error('Failed to fetch user lists');
       return response.json();
     },
-    enabled: !!session?.access_token,
+    enabled: true, // Always enabled now since we have fallback
   });
 
   // Extract lists and stats from the response
