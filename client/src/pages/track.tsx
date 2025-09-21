@@ -101,8 +101,8 @@ export default function Track() {
     });
   };
 
-  // Dynamic filter options based on real lists from Supabase - prevent duplicates
-  const filterOptions = Array.from(new Set(["All", ...userLists.map((list: any) => list.title)]));
+  // Fixed filter options for the 5 standard lists
+  const filterOptions = ["All", "Currently", "Queue", "Finished", "Did Not Finish"];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
