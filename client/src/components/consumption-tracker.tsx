@@ -225,40 +225,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
-          {/* List Selection Section */}
-          <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <List className="h-5 w-5 text-gray-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Add to List (Optional)</h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-3">
-              Choose a specific list to add this media to, or leave empty to add to "Currently" by default.
-            </p>
-            <Select value={selectedList} onValueChange={setSelectedList}>
-              <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500 h-12">
-                <SelectValue placeholder="📱 Currently (Default) - or select a different status" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {defaultLists.map((list) => (
-                  <SelectItem key={list.id} value={list.id}>
-                    <div className="py-1">
-                      <div className="font-medium text-gray-900">{list.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">{list.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedList && (
-              <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                <p className="text-sm text-purple-800">
-                  ✅ Media will be added to: <strong>{defaultLists.find(l => l.id === selectedList)?.name}</strong>
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Search Media Section */}
+          {/* Search Media Section - Now First */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Media</h3>
             
@@ -370,6 +337,63 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             )}
           </div>
 
+          {/* List Selection Section - Only shown after media selection */}
+          {selectedMedia && (
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <List className="h-5 w-5 text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Choose Where to Add This</h3>
+              </div>
+              <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  {selectedMedia.image ? (
+                    <img
+                      src={selectedMedia.image}
+                      alt={selectedMedia.title}
+                      className="w-12 h-12 object-cover rounded flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                      <Search className="text-gray-400" size={20} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{selectedMedia.title}</p>
+                    {selectedMedia.creator && (
+                      <p className="text-sm text-gray-500 truncate">by {selectedMedia.creator}</p>
+                    )}
+                    <p className="text-xs text-purple-600 capitalize">{selectedMedia.type}</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                Select which list to add this to:
+              </p>
+              <Select value={selectedList} onValueChange={setSelectedList}>
+                <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500 h-12">
+                  <SelectValue placeholder="📱 Currently (Default) - or select a different status" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {defaultLists.map((list) => (
+                    <SelectItem key={list.id} value={list.id}>
+                      <div className="py-1">
+                        <div className="font-medium text-gray-900">{list.name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{list.description}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedList && (
+                <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <p className="text-sm text-purple-800">
+                    ✅ <strong>{selectedMedia.title}</strong> will be added to: <strong>{defaultLists.find(l => l.id === selectedList)?.name}</strong>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
 
         {/* Action Buttons */}
@@ -385,7 +409,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             disabled={!selectedMedia || trackMediaMutation.isPending}
             className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400"
           >
-            {trackMediaMutation.isPending ? "Adding..." : "Add Media"}
+            {trackMediaMutation.isPending ? "Adding..." : selectedMedia ? `Add "${selectedMedia.title}"` : "Select Media First"}
           </Button>
         </div>
       </DialogContent>
