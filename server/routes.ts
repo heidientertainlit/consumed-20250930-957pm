@@ -105,6 +105,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Removed: Get Entertainment DNA survey questions - Not used by frontend
 
+  // Temporary route to return correct lists until Supabase edge function is deployed
+  app.get("/api/user-lists-with-media", async (req, res) => {
+    try {
+      // Return the correct 4 standard lists structure that matches Supabase
+      const listsData = {
+        lists: [
+          {
+            id: 'all',
+            title: 'All',
+            description: 'All tracked media items',
+            items: []
+          },
+          {
+            id: 'currently',
+            title: 'Currently',
+            description: 'What you\'re consuming right now',
+            items: []
+          },
+          {
+            id: 'queue',
+            title: 'Queue',
+            description: 'Media you want to consume later',
+            items: []
+          },
+          {
+            id: 'finished',
+            title: 'Finished',
+            description: 'Media you\'ve completed',
+            items: []
+          },
+          {
+            id: 'dnf',
+            title: 'Did Not Finish',
+            description: 'Media you started but didn\'t complete',
+            items: []
+          }
+        ]
+      };
+      res.json(listsData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user lists" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
