@@ -137,14 +137,8 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
         throw new Error("Authentication required");
       }
 
-      // Map list types to list IDs
-      const listMapping: Record<string, string | null> = {
-        'all': null,          // Goes to general tracking
-        'currently': 'currently',
-        'finished': 'finished', 
-        'dnf': 'dnf',
-        'queue': 'queue'
-      };
+      // For now, send the list type as a string - we'll map to real list IDs in the edge function
+      // The edge function will need to look up the actual list ID based on the list type and user
 
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
         method: "POST",
@@ -164,7 +158,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           },
           rating: null,
           review: null,
-          listId: listMapping[mediaData.listType || 'all'],
+          listType: mediaData.listType || 'all', // Send the type, let edge function map to real list ID
         }),
       });
 

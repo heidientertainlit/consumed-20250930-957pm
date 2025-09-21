@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
+import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X } from "lucide-react";
@@ -35,21 +36,36 @@ export default function Track() {
     setLocation(`/list/${listId}`);
   };
 
-  const { data: consumptionStats = {} } = useQuery({
-    queryKey: ["/api/users/user-1/consumption/stats"],
+  const { user, session } = useAuth();
+  
+  // Get user's lists and media data from Supabase
+  const { data: userListsData, isLoading: listsLoading } = useQuery({
+    queryKey: ['user-lists-with-media'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+      
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch user lists');
+      return response.json();
+    },
+    enabled: !!session?.access_token,
   });
 
-  const { data: user = {} } = useQuery({
-    queryKey: ["/api/users/user-1"],
-  });
-
-  const { data: recentLogs } = useQuery({
-    queryKey: ["/api/users/user-1/consumption"],
-  });
-
-  const { data: recommendations = [] } = useQuery({
-    queryKey: ["/api/users/user-1/recommendations"],
-  });
+  // Extract lists and stats from the response
+  const userLists = userListsData?.lists || [];
+  const consumptionStats = {
+    totalLogged: userLists.reduce((total: number, list: any) => total + (list.items?.length || 0), 0),
+    pointsEarned: userLists.reduce((total: number, list: any) => total + (list.items?.length || 0) * 5, 0), // 5 points per item
+  };
+  
+  // Mock recommendations for now (can be replaced with real Supabase function later)
+  const recommendations: any[] = [];
 
   const getCategoryIcon = (category: string, isWhiteBg = false) => {
     const iconClass = isWhiteBg ? "text-purple-600" : "text-gray-600";
@@ -75,7 +91,8 @@ export default function Track() {
     });
   };
 
-  const filterOptions = ["All", "Currently", "Finished", "Did Not Finish", "Queue"];
+  // Dynamic filter options based on real lists from Supabase
+  const filterOptions = ["All", ...userLists.map((list: any) => list.title)];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -153,129 +170,62 @@ export default function Track() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(selectedFilter === "All" || selectedFilter === "Currently") && (
-              <div 
-                className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleListClick("Currently")}
-                data-testid="list-card-currently"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Play className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">Currently</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShareList("Currently", 0);
-                    }}
-                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-currently-list"
-                  >
-                    <CornerUpRight size={18} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">What you're consuming right now</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
+            {listsLoading ? (
+              <div className="col-span-2 text-center py-8 text-gray-500">
+                Loading your lists...
               </div>
-            )}
-
-            {/* Finished List */}
-            {(selectedFilter === "All" || selectedFilter === "Finished") && (
-              <div 
-                className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleListClick("Finished")}
-                data-testid="list-card-finished"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Star className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">Finished</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShareList("Finished", 0);
-                    }}
-                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-finished-list"
-                  >
-                    <CornerUpRight size={18} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Media you've completed</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
+            ) : userLists.length === 0 ? (
+              <div className="col-span-2 text-center py-8 text-gray-500">
+                No lists found. Create some lists to get started!
               </div>
-            )}
-
-            {/* Did Not Finish List */}
-            {(selectedFilter === "All" || selectedFilter === "Did Not Finish") && (
-              <div 
-                className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleListClick("Did-Not-Finish")}
-                data-testid="list-card-dnf"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <X className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">Did Not Finish</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShareList("Did Not Finish", 0);
-                    }}
-                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-dnf-list"
+            ) : (
+              userLists
+                .filter((list: any) => selectedFilter === "All" || list.title === selectedFilter)
+                .map((list: any) => (
+                  <div 
+                    key={list.id}
+                    className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleListClick(list.title)}
+                    data-testid={`list-card-${list.title.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    <CornerUpRight size={18} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Media you started but didn't complete</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
-              </div>
-            )}
-
-            {/* Queue List */}
-            {(selectedFilter === "All" || selectedFilter === "Queue") && (
-              <div 
-                className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => handleListClick("Queue")}
-                data-testid="list-card-queue"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Users className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">Queue</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center">
+                        {list.title === "Currently" && <Play className="text-purple-700 mr-3" size={24} />}
+                        {list.title === "Finished" && <Star className="text-purple-700 mr-3" size={24} />}
+                        {list.title === "Did Not Finish" && <X className="text-purple-700 mr-3" size={24} />}
+                        {list.title === "Queue" && <Users className="text-purple-700 mr-3" size={24} />}
+                        {list.title === "All Media" && <List className="text-purple-700 mr-3" size={24} />}
+                        {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) && 
+                          <List className="text-purple-700 mr-3" size={24} />}
+                        <h3 className="font-bold text-lg text-gray-800">{list.title}</h3>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareList(list.title, list.items?.length || 0);
+                        }}
+                        className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
+                        data-testid={`share-${list.title.toLowerCase().replace(/\s+/g, '-')}-list`}
+                      >
+                        <CornerUpRight size={18} />
+                      </Button>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {list.title === "Currently" && "What you're consuming right now"}
+                      {list.title === "Finished" && "Media you've completed"}
+                      {list.title === "Did Not Finish" && "Media you started but didn't complete"}
+                      {list.title === "Queue" && "Media you want to consume later"}
+                      {list.title === "All Media" && "All tracked media items"}
+                      {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) && 
+                        (list.description || "Your custom list")}
+                    </p>
+                    <div className="text-2xl font-bold text-purple-800">{list.items?.length || 0}</div>
+                    <div className="text-xs text-gray-500">items</div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShareList("Queue", 0);
-                    }}
-                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-queue-list"
-                  >
-                    <CornerUpRight size={18} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Media you want to consume later</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
-              </div>
+                ))
             )}
-
           </div>
         </div>
 
