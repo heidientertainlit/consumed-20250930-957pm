@@ -12,6 +12,40 @@ Preferred communication style: Simple, everyday language.
 
 The application follows a modern full-stack architecture with a clear separation between frontend and backend concerns:
 
+### Supabase Database Schema (EXACT COLUMN NAMES)
+
+**users table:**
+- id: uuid
+- email: text
+- user_name: text (NOT username!)
+- display_name: text
+- password: text
+- avatar: text
+- bio: text
+- is_admin: boolean
+- created_at: timestamp with time zone
+- first_name: text
+- last_name: text
+- computed_favorite_media_types: jsonb
+- computed_favorite_genres: jsonb
+
+**list_items table:**
+- id: uuid
+- list_id: uuid
+- user_id: uuid
+- title: text
+- type: text
+- creator: text
+- image_url: text
+- notes: text (NOT review!)
+- created_at: timestamp without time zone (NOT added_at!)
+- media_type: text
+- media_id: uuid
+
+**lists table:**
+- System lists have user_id = NULL
+- Standard lists: Currently, Queue, Finished, Did Not Finish
+
 ### Frontend Architecture
 - **React SPA**: Built with React 18 using TypeScript for type safety
 - **Routing**: Uses Wouter for lightweight client-side routing
@@ -30,10 +64,10 @@ The application follows a modern full-stack architecture with a clear separation
 ## Key Components
 
 ### Database Schema
-The application uses three main entities:
-- **Users**: Store user profiles, points balance, and total winnings in points
-- **Pools**: Prediction pools with categories, options, total points, and resolution states
-- **Predictions**: User predictions linked to pools with points spent and points won
+The application uses a simplified list-based tracking system:
+- **Users**: Store user profiles with user_name column (not username)
+- **Lists**: System default lists (user_id = NULL) for Currently, Queue, Finished, Did Not Finish
+- **List Items**: Media items with notes and created_at columns (not review/added_at)
 
 ### API Routes
 - `GET /api/pools` - Fetch all pools with optional category filtering

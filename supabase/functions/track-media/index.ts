@@ -119,16 +119,18 @@ serve(async (req) => {
       targetList = systemList;
     }
 
-    // Insert the media item (use notes instead of review, let added_at default)
+    // Insert the media item with correct Supabase column names
     const { data: mediaItem, error: mediaError } = await supabase
       .from('list_items')
       .insert({
         list_id: targetList?.id || null,
         user_id: appUser.id,
         title: title || 'Untitled',
-        media_type: mediaType || 'mixed',
+        type: mediaType || 'mixed',
+        media_type: mediaType || 'mixed', 
         creator: creator || '',
-        image_url: imageUrl || null
+        image_url: imageUrl || null,
+        notes: review || null
       })
       .select()
       .single();
