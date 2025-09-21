@@ -64,13 +64,17 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
     setSelectedList(null);
   };
 
-  // Default lists that users can add media to
+  // Default lists that users can add media to - matching the track page lists
   const defaultLists = [
-    { id: null, name: "Currently (Default)", description: "What you're consuming right now" },
-    { id: "completed", name: "Completed", description: "Things you've finished" },
-    { id: "want-to-watch", name: "Want to Watch", description: "Movies and shows on your watchlist" },
-    { id: "want-to-read", name: "Want to Read", description: "Books you plan to read" },
-    { id: "favorites", name: "Favorites", description: "Your all-time favorites" }
+    { id: null, name: "Currently (Default)", description: "What you're watching, reading, or playing right now" },
+    { id: "read", name: "Read", description: "Books, comics, and articles you've finished" },
+    { id: "to-read", name: "To Read", description: "Books and articles on your reading list" },
+    { id: "watched", name: "Watched", description: "Movies, shows, and videos you've completed" },
+    { id: "to-watch", name: "To Watch", description: "Movies and shows on your watchlist" },
+    { id: "listened", name: "Listened", description: "Albums, podcasts, and audio content you've heard" },
+    { id: "to-listen", name: "To Listen", description: "Music and podcasts on your listening list" },
+    { id: "played", name: "Played", description: "Games you've completed or finished" },
+    { id: "to-play", name: "To Play", description: "Games you want to play" }
   ];
 
   const searchMedia = async (query: string, type?: string) => {
@@ -230,23 +234,40 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <List className="h-5 w-5 text-gray-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Choose List (Optional)</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Add to List (Optional)</h3>
             </div>
+            <p className="text-sm text-gray-600 mb-3">
+              Choose a specific list to add this media to, or leave empty to add to "Currently" by default.
+            </p>
             <Select value={selectedList || ""} onValueChange={(value) => setSelectedList(value || null)}>
-              <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500">
-                <SelectValue placeholder="Select a list or leave empty for 'Currently'" />
+              <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500 h-12">
+                <SelectValue placeholder="🎯 Currently (Default) - or select a different list" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-60">
                 {defaultLists.map((list) => (
                   <SelectItem key={list.id || "default"} value={list.id || ""}>
-                    <div>
-                      <div className="font-medium">{list.name}</div>
-                      <div className="text-xs text-gray-500">{list.description}</div>
+                    <div className="py-1">
+                      <div className="font-medium text-gray-900">{list.name}</div>
+                      <div className="text-xs text-gray-500 mt-1">{list.description}</div>
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {selectedList && (
+              <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <p className="text-sm text-purple-800">
+                  ✅ Media will be added to: <strong>{defaultLists.find(l => l.id === selectedList)?.name}</strong>
+                </p>
+              </div>
+            )}
+            {!selectedList && (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  📱 Media will be added to: <strong>Currently</strong> (default)
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Search Media Section */}
