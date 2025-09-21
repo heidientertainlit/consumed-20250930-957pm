@@ -38,37 +38,33 @@ export default function Track() {
 
   const { user, session } = useAuth();
   
-  // Get user's lists and media data - temporarily using local Express route
-  const { data: userListsData, isLoading: listsLoading } = useQuery({
+  // Get user's lists and media data from Supabase
+  const { data: userListsData, isLoading: listsLoading, error: listsError } = useQuery({
     queryKey: ['user-lists-with-media'],
     queryFn: async () => {
-      // Try Supabase first, fallback to local Express
-      if (session?.access_token) {
-        try {
-          const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
-            method: "GET",
-            headers: {
-              "Authorization": `Bearer ${session.access_token}`,
-            },
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.lists && data.lists.length > 1) { // More than just "All"
-              return data;
-            }
-          }
-        } catch (error) {
-          console.error('Supabase edge function failed, using fallback:', error);
-        }
+      if (!session?.access_token) {
+        console.log('No session token available');
+        return null;
       }
       
-      // Fallback to local Express route
-      const response = await fetch("/api/user-lists-with-media");
-      if (!response.ok) throw new Error('Failed to fetch user lists');
-      return response.json();
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Supabase lists fetch failed:', response.status, errorText);
+        throw new Error('Failed to fetch user lists');
+      }
+      
+      const data = await response.json();
+      console.log('Supabase lists data:', data);
+      return data;
     },
-    enabled: true, // Always enabled now since we have fallback
+    enabled: !!session?.access_token,
   });
 
   // Extract lists and stats from the response
@@ -105,8 +101,8 @@ export default function Track() {
     });
   };
 
-  // Dynamic filter options based on real lists from Supabase
-  const filterOptions = ["All", ...userLists.map((list: any) => list.title)];
+  // Dynamic filter options based on real lists from Supabase - prevent duplicates
+  const filterOptions = Array.from(new Set(["All", ...userLists.map((list: any) => list.title)]));
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
