@@ -35,7 +35,6 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
-  const [selectedList, setSelectedList] = useState<string>("currently");
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const queryClient = useQueryClient();
@@ -61,16 +60,8 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
     setSearchQuery("");
     setSearchResults([]);
     setSelectedMedia(null);
-    setSelectedList("currently");
   };
 
-  // Simplified 4 universal status-based lists
-  const defaultLists = [
-    { id: "currently", name: "Currently", description: "What you're consuming right now" },
-    { id: "finished", name: "Finished", description: "Media you've completed" },
-    { id: "dnf", name: "Did Not Finish", description: "Media you started but didn't complete" },
-    { id: "queue", name: "Queue", description: "Media you want to consume later" }
-  ];
 
   const searchMedia = async (query: string, type?: string) => {
     if (!query.trim()) {
@@ -162,7 +153,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           },
           rating: null,
           review: null,
-          listId: selectedList === "currently" ? null : selectedList, // Use selected list or null for "Currently"
+          listId: null, // Default to "Currently" list
         }),
       });
 
@@ -225,32 +216,6 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
-          {/* List Selection Section - Now Prominent */}
-          <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <List className="h-5 w-5 text-gray-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Add to List</h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-3">
-              Choose which list to add your selected media to:
-            </p>
-            <Select value={selectedList} onValueChange={setSelectedList}>
-              <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500 h-14">
-                <SelectValue placeholder="📱 Currently - Choose a status" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {defaultLists.map((list) => (
-                  <SelectItem key={list.id} value={list.id}>
-                    <div className="py-2">
-                      <div className="font-medium text-gray-900">{list.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">{list.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Search Media Section */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Media</h3>
@@ -398,14 +363,6 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             )}
           </div>
 
-          {/* Confirmation Section */}
-          {selectedList && selectedMedia && (
-            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <p className="text-sm text-purple-800">
-                ✅ <strong>{selectedMedia.title}</strong> will be added to: <strong>{defaultLists.find(l => l.id === selectedList)?.name}</strong>
-              </p>
-            </div>
-          )}
 
         </div>
 
