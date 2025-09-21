@@ -152,7 +152,7 @@ export default function Track() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {(selectedFilter === "All" || selectedFilter === "Currently") && (
               <div 
                 className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
@@ -177,195 +177,105 @@ export default function Track() {
                     <CornerUpRight size={18} />
                   </Button>
                 </div>
-                <p className="text-gray-600 text-sm mb-4">What you're watching, reading, or playing right now</p>
+                <p className="text-gray-600 text-sm mb-4">What you're consuming right now</p>
                 <div className="text-2xl font-bold text-purple-800">0</div>
                 <div className="text-xs text-gray-500">items</div>
               </div>
             )}
 
-            {(selectedFilter === "All" || selectedFilter === "Read") && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            {/* Finished List */}
+            {(selectedFilter === "All" || selectedFilter === "Finished") && (
+              <div 
+                className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleListClick("Finished")}
+                data-testid="list-card-finished"
+              >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
-                    <BookOpen className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">Read</h3>
+                    <Star className="text-purple-700 mr-3" size={24} />
+                    <h3 className="font-bold text-lg text-gray-800">Finished</h3>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleShareList("Read", 0)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShareList("Finished", 0);
+                    }}
                     className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-read-list"
+                    data-testid="share-finished-list"
                   >
                     <CornerUpRight size={18} />
                   </Button>
                 </div>
-                <p className="text-gray-600 text-sm mb-4">Books, comics, and articles you've finished</p>
+                <p className="text-gray-600 text-sm mb-4">Media you've completed</p>
                 <div className="text-2xl font-bold text-purple-800">0</div>
                 <div className="text-xs text-gray-500">items</div>
               </div>
             )}
 
-            {(selectedFilter === "All" || selectedFilter === "To Read") && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            {/* Did Not Finish List */}
+            {(selectedFilter === "All" || selectedFilter === "Did Not Finish") && (
+              <div 
+                className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleListClick("Did-Not-Finish")}
+                data-testid="list-card-dnf"
+              >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
-                    <BookOpen className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">To Read</h3>
+                    <X className="text-purple-700 mr-3" size={24} />
+                    <h3 className="font-bold text-lg text-gray-800">Did Not Finish</h3>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleShareList("To Read", 0)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShareList("Did Not Finish", 0);
+                    }}
                     className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-to-read-list"
+                    data-testid="share-dnf-list"
                   >
                     <CornerUpRight size={18} />
                   </Button>
                 </div>
-                <p className="text-gray-600 text-sm mb-4">Books and articles on your reading list</p>
+                <p className="text-gray-600 text-sm mb-4">Media you started but didn't complete</p>
                 <div className="text-2xl font-bold text-purple-800">0</div>
                 <div className="text-xs text-gray-500">items</div>
               </div>
             )}
 
-            {(selectedFilter === "All" || selectedFilter === "Watched") && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            {/* Queue List */}
+            {(selectedFilter === "All" || selectedFilter === "Queue") && (
+              <div 
+                className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleListClick("Queue")}
+                data-testid="list-card-queue"
+              >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
-                    <Eye className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">Watched</h3>
+                    <Users className="text-purple-700 mr-3" size={24} />
+                    <h3 className="font-bold text-lg text-gray-800">Queue</h3>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleShareList("Watched", 0)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShareList("Queue", 0);
+                    }}
                     className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-watched-list"
+                    data-testid="share-queue-list"
                   >
                     <CornerUpRight size={18} />
                   </Button>
                 </div>
-                <p className="text-gray-600 text-sm mb-4">Movies, shows, and videos you've completed</p>
+                <p className="text-gray-600 text-sm mb-4">Media you want to consume later</p>
                 <div className="text-2xl font-bold text-purple-800">0</div>
                 <div className="text-xs text-gray-500">items</div>
               </div>
             )}
 
-            {(selectedFilter === "All" || selectedFilter === "To Watch") && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Eye className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">To Watch</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShareList("To Watch", 0)}
-                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-to-watch-list"
-                  >
-                    <CornerUpRight size={18} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Movies and shows on your watchlist</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
-              </div>
-            )}
-
-            {(selectedFilter === "All" || selectedFilter === "Listened") && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Headphones className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">Listened</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShareList("Listened", 0)}
-                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-listened-list"
-                  >
-                    <CornerUpRight size={18} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Albums, podcasts, and audio content you've heard</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
-              </div>
-            )}
-
-            {(selectedFilter === "All" || selectedFilter === "To Listen") && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Headphones className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">To Listen</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShareList("To Listen", 0)}
-                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-to-listen-list"
-                  >
-                    <CornerUpRight size={18} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Music and podcasts on your listening queue</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
-              </div>
-            )}
-
-            {(selectedFilter === "All" || selectedFilter === "Played") && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Gamepad2 className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">Played</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShareList("Played", 0)}
-                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
-                    data-testid="share-played-list"
-                  >
-                    <CornerUpRight size={18} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Games you've completed or finished</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
-              </div>
-            )}
-
-            {(selectedFilter === "All" || selectedFilter === "To Play") && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Gamepad2 className="text-purple-700 mr-3" size={24} />
-                    <h3 className="font-bold text-lg text-gray-800">To Play</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleShareList("To Play", 0)}
-                    className="text-gray-500 hover:text-purple-700"
-                    data-testid="share-to-play-list"
-                  >
-                    <Share2 size={16} />
-                  </Button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Games in your backlog waiting to be played</p>
-                <div className="text-2xl font-bold text-purple-800">0</div>
-                <div className="text-xs text-gray-500">items</div>
-              </div>
-            )}
           </div>
         </div>
 

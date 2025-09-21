@@ -64,17 +64,12 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
     setSelectedList("currently");
   };
 
-  // Default lists that users can add media to - matching the track page lists
+  // Simplified 4 universal status-based lists
   const defaultLists = [
-    { id: "currently", name: "Currently (Default)", description: "What you're watching, reading, or playing right now" },
-    { id: "read", name: "Read", description: "Books, comics, and articles you've finished" },
-    { id: "to-read", name: "To Read", description: "Books and articles on your reading list" },
-    { id: "watched", name: "Watched", description: "Movies, shows, and videos you've completed" },
-    { id: "to-watch", name: "To Watch", description: "Movies and shows on your watchlist" },
-    { id: "listened", name: "Listened", description: "Albums, podcasts, and audio content you've heard" },
-    { id: "to-listen", name: "To Listen", description: "Music and podcasts on your listening list" },
-    { id: "played", name: "Played", description: "Games you've completed or finished" },
-    { id: "to-play", name: "To Play", description: "Games you want to play" }
+    { id: "currently", name: "Currently (Default)", description: "What you're consuming right now" },
+    { id: "finished", name: "Finished", description: "Media you've completed" },
+    { id: "dnf", name: "Did Not Finish (DNF)", description: "Media you started but didn't complete" },
+    { id: "queue", name: "Queue", description: "Media you want to consume later" }
   ];
 
   const searchMedia = async (query: string, type?: string) => {
@@ -241,7 +236,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             </p>
             <Select value={selectedList} onValueChange={setSelectedList}>
               <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500 h-12">
-                <SelectValue placeholder="🎯 Currently (Default) - or select a different list" />
+                <SelectValue placeholder="📱 Currently (Default) - or select a different status" />
               </SelectTrigger>
               <SelectContent className="max-h-60">
                 {defaultLists.map((list) => (
