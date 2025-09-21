@@ -90,12 +90,18 @@ serve(async (req) => {
     // Get user's media items if authenticated
     let userItems = [];
     if (appUser) {
-      const { data: items } = await supabase
+      const { data: items, error: itemsError } = await supabase
         .from('list_items')
-        .select('id, list_id, title, media_type, creator, image_url, review, added_at')
+        .select('id, list_id, title, media_type, creator, image_url, added_at')
         .eq('user_id', appUser.id)
         .order('added_at', { ascending: false });
-      userItems = items || [];
+      
+      if (itemsError) {
+        console.error('Error fetching user items:', itemsError);
+        userItems = [];
+      } else {
+        userItems = items || [];
+      }
       console.log("User items count:", userItems.length);
     }
 
@@ -105,7 +111,6 @@ serve(async (req) => {
       if (!acc[listId]) acc[listId] = [];
       acc[listId].push({
         ...item,
-        notes: item.review,
         created_at: item.added_at
       });
       return acc;
@@ -124,7 +129,6 @@ serve(async (req) => {
       title: 'All',
       items: userItems.map(item => ({
         ...item,
-        notes: item.review,
         created_at: item.added_at
       }))
     };
