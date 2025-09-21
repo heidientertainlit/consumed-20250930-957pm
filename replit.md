@@ -46,6 +46,22 @@ The application follows a modern full-stack architecture with a clear separation
 - System lists have user_id = NULL
 - Standard lists: Currently, Queue, Finished, Did Not Finish
 
+### Working Edge Function Patterns (CRITICAL REFERENCE)
+
+**Database structure:** System default lists have user_id = NULL, list_id = NULL represents "All Media"/general tracking
+**Authentication pattern:** Supabase auth users must be auto-created in custom users table on first use to bridge auth.users and application users tables
+**Database schema:** users table uses user_name column (not username), list_items table uses notes and created_at columns (not review/added_at)
+**RLS Requirements:** Must have policy allowing SELECT on lists where user_id IS NULL for authenticated users
+**Edge function deployment:** All edge functions require user_name column references and auto-create logic
+
+**Successful Implementation:**
+- ✅ Auto-create users on first authentication
+- ✅ Use exact Supabase column names: notes, created_at, type, media_type, image_url
+- ✅ Query system lists with user_id IS NULL
+- ✅ Handle list_id = NULL for "All" category
+- ✅ Include proper error logging and handling
+- ✅ RLS policy: CREATE POLICY "Allow reading system lists" ON public.lists FOR SELECT TO authenticated USING (user_id IS NULL)
+
 ### Frontend Architecture
 - **React SPA**: Built with React 18 using TypeScript for type safety
 - **Routing**: Uses Wouter for lightweight client-side routing
