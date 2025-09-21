@@ -66,9 +66,9 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
 
   // Simplified 4 universal status-based lists
   const defaultLists = [
-    { id: "currently", name: "Currently (Default)", description: "What you're consuming right now" },
+    { id: "currently", name: "Currently", description: "What you're consuming right now" },
     { id: "finished", name: "Finished", description: "Media you've completed" },
-    { id: "dnf", name: "Did Not Finish (DNF)", description: "Media you started but didn't complete" },
+    { id: "dnf", name: "Did Not Finish", description: "Media you started but didn't complete" },
     { id: "queue", name: "Queue", description: "Media you want to consume later" }
   ];
 
@@ -236,7 +236,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             </p>
             <Select value={selectedList} onValueChange={setSelectedList}>
               <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500 h-14">
-                <SelectValue placeholder="📱 Currently (Default) - Choose a status" />
+                <SelectValue placeholder="📱 Currently - Choose a status" />
               </SelectTrigger>
               <SelectContent className="max-h-60">
                 {defaultLists.map((list) => (
