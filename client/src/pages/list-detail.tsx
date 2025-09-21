@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, UserPlus, Trash2, MoreVertical, Star, Clock, Calendar } from "lucide-react";
 import { useLocation } from "wouter";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,65 +20,78 @@ export default function ListDetail() {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  // Mock list data - in real app would come from URL params/API
-  const listData = {
-    id: "currently-list",
-    name: "Currently",
-    description: "What you're watching, reading, or playing right now",
-    items: [
-      {
-        id: 1,
-        title: "The Seven Moons of Maali Almeida",
-        creator: "Shehan Karunatilaka",
-        type: "Book",
-        artwork: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop",
-        progress: 68,
-        addedDate: "2024-01-10",
-        addedBy: "You"
-      },
-      {
-        id: 2,
-        title: "The Bear Season 3",
-        creator: "Christopher Storer",
-        type: "TV Show",
-        artwork: "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=80&h=80&fit=crop",
-        progress: 40,
-        addedDate: "2024-01-08",
-        addedBy: "You"
-      },
-      {
-        id: 3,
-        title: "Folklore",
-        creator: "Taylor Swift",
-        type: "Album",
-        artwork: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=80&h=80&fit=crop",
-        progress: 90,
-        addedDate: "2024-01-05",
-        addedBy: "You"
+  // Get real list data from Supabase
+  const { data: userListsData, isLoading: listsLoading } = useQuery({
+    queryKey: ['user-lists-with-media'],
+    queryFn: async () => {
+      if (!session?.access_token) {
+        console.log('No session token available');
+        return null;
       }
-    ],
-    collaborators: [
-      {
-        id: 1,
-        name: "Sarah Chen",
-        email: "sarah@example.com",
-        avatar: "https://images.unsplash.com/photo-1494790108755-2616c6c46c06?w=40&h=40&fit=crop&crop=face",
-        role: "editor"
-      },
-      {
-        id: 2,
-        name: "Mike Rodriguez",
-        email: "mike@example.com", 
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
-        role: "viewer"
+      
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Supabase lists fetch failed:', response.status, errorText);
+        throw new Error('Failed to fetch user lists');
       }
-    ],
+      
+      const data = await response.json();
+      console.log('Supabase lists data:', data);
+      return data;
+    },
+    enabled: !!session?.access_token,
+  });
+
+  // Find the current list based on URL or default to "All"
+  const allLists = userListsData?.lists || [];
+  const currentListName = "All"; // For now, show All list - can be dynamic based on URL params later
+  const currentList = allLists.find((list: any) => list.title === currentListName) || allLists[0];
+  
+  // Format the list data for display
+  const listData = currentList ? {
+    id: currentList.id,
+    name: currentList.title,
+    description: getListDescription(currentList.title),
+    items: (currentList.items || []).map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      creator: item.creator || 'Unknown',
+      type: item.media_type ? capitalizeFirst(item.media_type) : 'Mixed',
+      artwork: item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop",
+      progress: 0, // No progress tracking yet
+      addedDate: new Date(item.created_at).toLocaleDateString(),
+      addedBy: "You"
+    })),
+    collaborators: [], // No collaborators yet
     owner: "You",
-    createdDate: "2024-01-01",
-    totalItems: 3,
-    likes: 24,
-    isPublic: true
-  };
+    createdDate: new Date().toLocaleDateString(),
+    totalItems: currentList.items?.length || 0,
+    likes: 0,
+    isPublic: false
+  } : null;
+
+  // Helper functions
+  function getListDescription(title: string) {
+    switch (title) {
+      case "All": return "All your tracked media items";
+      case "Currently": return "What you're watching, reading, or playing right now";
+      case "Queue": return "Media you want to consume later";
+      case "Finished": return "Media you've completed";
+      case "Did Not Finish": return "Media you started but didn't complete";
+      default: return "Your custom list";
+    }
+  }
+
+  function capitalizeFirst(str: string) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
 
   const addItemMutation = useMutation({
     mutationFn: async (title: string) => {
