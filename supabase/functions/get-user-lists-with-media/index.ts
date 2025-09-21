@@ -7,10 +7,10 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("get-user-lists-with-media function hit!", req.method, req.url);
+  
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: corsHeaders
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -19,132 +19,132 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
       {
         global: {
-          headers: {
-            Authorization: req.headers.get('Authorization')
-          }
+          headers: { Authorization: req.headers.get('Authorization') }
         }
       }
     );
 
     // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({
-        error: 'Unauthorized'
-      }), {
-        status: 401,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
+    console.log("Auth check result:", { user: user?.email, userError });
+    
+    let appUser = null;
+    if (user && !userError) {
+      // Look up app user by email, CREATE if doesn't exist
+      let { data: foundAppUser, error: appUserError } = await supabase
+        .from('users')
+        .select('id, email, user_name')  // FIXED: using user_name instead of username
+        .eq('email', user.email)
+        .single();
+
+      // If user doesn't exist, create them
+      if (appUserError && appUserError.code === 'PGRST116') {
+        console.log('User not found, creating new user:', user.email);
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email,
+            user_name: user.email.split('@')[0] // FIXED: using user_name
+          })
+          .select('id, email, user_name')
+          .single();
+
+        if (createError) {
+          console.error('Failed to create user:', createError);
+          // Continue without user instead of failing
+          appUser = null;
+        } else {
+          appUser = newUser;
+          console.log('Created new user:', appUser);
         }
-      });
+      } else if (!appUserError) {
+        appUser = foundAppUser;
+        console.log("App user lookup:", { appUser: appUser?.email });
+      }
     }
 
-    // Look up app user by email  
-    const { data: appUser, error: appUserError } = await supabase
-      .from('users')
-      .select('id, user_name, display_name, avatar, email')
-      .eq('email', user.email)
-      .single();
-
-    if (appUserError || !appUser) {
-      return new Response(JSON.stringify({
-        error: 'User not found in application database'
-      }), {
-        status: 401,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      });
-    }
-
-    // Get system default lists (user_id = NULL) - these are the standard lists everyone gets
+    // Get ALL system default lists (user_id = NULL)
+    console.log("Fetching system default lists...");
     const { data: systemLists, error: systemListsError } = await supabase
       .from('lists')
-      .select('id, title, description')
+      .select('id, title')
       .is('user_id', null)
       .order('title');
 
+    console.log("System lists result:", { 
+      count: systemLists?.length, 
+      systemListsError,
+      lists: systemLists?.map(l => l.title)
+    });
+
     if (systemListsError) {
-      console.error('Error fetching system lists:', systemListsError);
       return new Response(JSON.stringify({
-        error: 'Failed to fetch system lists'
+        error: 'Failed to fetch system lists: ' + systemListsError.message
       }), {
         status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Get user's media items and group them by list_id
-    const { data: userItems, error: itemsError } = await supabase
-      .from('list_items')
-      .select('id, list_id, title, media_type, creator, image_url, notes, created_at')
-      .eq('user_id', appUser.id)
-      .order('created_at', { ascending: false });
-
-    if (itemsError) {
-      console.error('Error fetching user items:', itemsError);
-      return new Response(JSON.stringify({
-        error: 'Failed to fetch user items'
-      }), {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      });
+    // Get user's media items if authenticated
+    let userItems = [];
+    if (appUser) {
+      const { data: items } = await supabase
+        .from('list_items')
+        .select('id, list_id, title, media_type, creator, image_url, review, added_at')
+        .eq('user_id', appUser.id)
+        .order('added_at', { ascending: false });
+      userItems = items || [];
+      console.log("User items count:", userItems.length);
     }
 
     // Group items by list_id
-    const itemsByListId = userItems.reduce((acc: any, item: any) => {
-      const listId = item.list_id || 'all'; // NULL list_id becomes 'all'
-      if (!acc[listId]) {
-        acc[listId] = [];
-      }
-      acc[listId].push(item);
+    const itemsByListId = userItems.reduce((acc, item) => {
+      const listId = item.list_id || 'all';
+      if (!acc[listId]) acc[listId] = [];
+      acc[listId].push({
+        ...item,
+        notes: item.review,
+        created_at: item.added_at
+      });
       return acc;
     }, {});
 
-    // Create lists with their items
-    const listsWithItems = systemLists.map((list: any) => ({
+    // Convert system lists to expected format
+    const listsWithItems = (systemLists || []).map(list => ({
       id: list.id,
       title: list.title,
-      description: list.description,
       items: itemsByListId[list.id] || []
     }));
 
-    // Add "All" category that includes items with list_id = NULL plus all other items
-    const allItems = userItems; // All user items regardless of list
+    // Add "All" category at the beginning
     const allList = {
       id: 'all',
       title: 'All',
-      description: 'All tracked media items',
-      items: allItems
+      items: userItems.map(item => ({
+        ...item,
+        notes: item.review,
+        created_at: item.added_at
+      }))
     };
 
-    return new Response(JSON.stringify({
-      lists: [allList, ...listsWithItems]
-    }), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
+    const finalLists = [allList, ...listsWithItems];
+    
+    console.log("Returning final lists:", finalLists.map(l => `${l.title} (${l.items.length} items)`));
+
+    return new Response(JSON.stringify({ lists: finalLists }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Get user lists error:', error);
+    console.error('Function error:', error);
     return new Response(JSON.stringify({
-      error: error.message
+      error: 'Internal server error: ' + error.message
     }), {
       status: 500,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
