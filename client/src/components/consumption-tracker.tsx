@@ -35,7 +35,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
-  const [selectedList, setSelectedList] = useState<string | null>(null);
+  const [selectedList, setSelectedList] = useState<string>("currently");
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const queryClient = useQueryClient();
@@ -61,12 +61,12 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
     setSearchQuery("");
     setSearchResults([]);
     setSelectedMedia(null);
-    setSelectedList(null);
+    setSelectedList("currently");
   };
 
   // Default lists that users can add media to - matching the track page lists
   const defaultLists = [
-    { id: null, name: "Currently (Default)", description: "What you're watching, reading, or playing right now" },
+    { id: "currently", name: "Currently (Default)", description: "What you're watching, reading, or playing right now" },
     { id: "read", name: "Read", description: "Books, comics, and articles you've finished" },
     { id: "to-read", name: "To Read", description: "Books and articles on your reading list" },
     { id: "watched", name: "Watched", description: "Movies, shows, and videos you've completed" },
@@ -167,7 +167,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           },
           rating: null,
           review: null,
-          listId: selectedList, // Use selected list or default to "Currently"
+          listId: selectedList === "currently" ? null : selectedList, // Use selected list or null for "Currently"
         }),
       });
 
@@ -239,13 +239,13 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             <p className="text-sm text-gray-600 mb-3">
               Choose a specific list to add this media to, or leave empty to add to "Currently" by default.
             </p>
-            <Select value={selectedList || ""} onValueChange={(value) => setSelectedList(value || null)}>
+            <Select value={selectedList} onValueChange={setSelectedList}>
               <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500 h-12">
                 <SelectValue placeholder="🎯 Currently (Default) - or select a different list" />
               </SelectTrigger>
               <SelectContent className="max-h-60">
                 {defaultLists.map((list) => (
-                  <SelectItem key={list.id || "default"} value={list.id || ""}>
+                  <SelectItem key={list.id} value={list.id}>
                     <div className="py-1">
                       <div className="font-medium text-gray-900">{list.name}</div>
                       <div className="text-xs text-gray-500 mt-1">{list.description}</div>
@@ -258,13 +258,6 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
               <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
                 <p className="text-sm text-purple-800">
                   ✅ Media will be added to: <strong>{defaultLists.find(l => l.id === selectedList)?.name}</strong>
-                </p>
-              </div>
-            )}
-            {!selectedList && (
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  📱 Media will be added to: <strong>Currently</strong> (default)
                 </p>
               </div>
             )}
