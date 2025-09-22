@@ -25,8 +25,6 @@ import { useToast } from "@/hooks/use-toast";
 export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("Currently");
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [selectedListForShare, setSelectedListForShare] = useState<{name: string, items: number} | null>(null);
   const [, setLocation] = useLocation();
 
   const handleTrackConsumption = () => {
@@ -34,8 +32,38 @@ export default function Track() {
   };
 
   const handleShareList = (listName: string, itemCount: number) => {
-    setSelectedListForShare({ name: listName, items: itemCount });
-    setShareModalOpen(true);
+    const listId = listName.toLowerCase().replace(/\s+/g, '-');
+    const shareUrl = `${window.location.origin}/list/${listId}`;
+    
+    if (navigator.share) {
+      // Use native sharing if available (mobile)
+      navigator.share({
+        title: `Check out my ${listName} list`,
+        text: `Take a look at my entertainment list: ${listName} (${itemCount} items)`,
+        url: shareUrl,
+      }).catch(() => {
+        // Fallback to clipboard
+        fallbackCopyToClipboard(shareUrl);
+      });
+    } else {
+      // Fallback to clipboard copy
+      fallbackCopyToClipboard(shareUrl);
+    }
+  };
+
+  const fallbackCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Link copied!",
+        description: "List link has been copied to your clipboard.",
+      });
+    }).catch(() => {
+      toast({
+        title: "Share failed",
+        description: "Unable to copy link. Please try again.",
+        variant: "destructive",
+      });
+    });
   };
 
   const handleListClick = (listName: string) => {
@@ -44,8 +72,8 @@ export default function Track() {
   };
 
   const { user, session } = useAuth();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Get user's lists and media data from Supabase
   const { data: userListsData, isLoading: listsLoading, error: listsError } = useQuery({
@@ -301,16 +329,16 @@ export default function Track() {
                         <h3 className="font-bold text-lg text-gray-800">{list.title}</h3>
                       </div>
                       <Button
-                        variant="ghost"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleShareList(list.title, list.items?.length || 0);
                         }}
-                        className="text-gray-700 hover:text-purple-600 hover:bg-purple-50"
+                        className="bg-black text-white hover:bg-gray-800 rounded-lg px-3 py-2 flex items-center gap-2"
                         data-testid={`share-${list.title.toLowerCase().replace(/\s+/g, '-')}-list`}
                       >
-                        <CornerUpRight size={18} />
+                        <Share2 size={16} />
+                        Share
                       </Button>
                     </div>
                     <p className="text-gray-600 text-sm mb-4">
@@ -438,18 +466,6 @@ export default function Track() {
         onClose={() => setIsTrackModalOpen(false)} 
       />
       
-      {selectedListForShare && (
-        <ListShareModal
-          isOpen={shareModalOpen}
-          onClose={() => {
-            setShareModalOpen(false);
-            setSelectedListForShare(null);
-          }}
-          listName={selectedListForShare.name}
-          listItems={selectedListForShare.items}
-          listType="default"
-        />
-      )}
     </div>
   );
 }
