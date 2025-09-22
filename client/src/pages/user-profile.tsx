@@ -512,26 +512,9 @@ export default function UserProfile() {
     }
   ];
 
-  const currentlyConsuming = [
-    {
-      title: "The Seven Moons of Maali Almeida",
-      type: "Book",
-      progress: 68,
-      artwork: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop"
-    },
-    {
-      title: "The Bear Season 3",
-      type: "TV Show",
-      progress: 40,
-      artwork: "https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=80&h=80&fit=crop"
-    },
-    {
-      title: "Folklore",
-      type: "Album",
-      progress: 90,
-      artwork: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=80&h=80&fit=crop"
-    }
-  ];
+  // Get currently consuming items from the "Currently" list
+  const currentlyList = userLists.find(list => list.title === 'Currently');
+  const currentlyConsuming = currentlyList?.items || [];
 
 
   return (
@@ -896,26 +879,72 @@ export default function UserProfile() {
         {/* Currently Consuming */}
         <div className="px-4 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Currently Consuming</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {currentlyConsuming.map((item, index) => (
-              <div key={index} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-                <div className="flex items-start space-x-4">
-                  <img src={item.artwork} alt={item.title} className="w-16 h-16 rounded-lg object-cover" />
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-1">{item.title}</h4>
-                    <p className="text-sm text-gray-600 mb-3">{item.type}</p>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-purple-700 h-2 rounded-full" 
-                        style={{ width: `${item.progress}%` }}
-                      ></div>
+          {isLoadingLists ? (
+            <div className="text-center py-8">
+              <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
+              <p className="text-gray-600 mt-2">Loading your current media...</p>
+            </div>
+          ) : currentlyConsuming.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {currentlyConsuming.map((item) => (
+                <div key={item.id} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+                  <div className="flex items-start space-x-4">
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url} 
+                        alt={item.title} 
+                        className="w-16 h-16 rounded-lg object-cover" 
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
+                        <span className="text-2xl">
+                          {item.media_type === 'movie' ? '🎬' : 
+                           item.media_type === 'tv' ? '📺' : 
+                           item.media_type === 'book' ? '📚' : 
+                           item.media_type === 'music' ? '🎵' : 
+                           item.media_type === 'podcast' ? '🎧' : 
+                           item.media_type === 'game' ? '🎮' : '🎭'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">{item.title}</h4>
+                      <p className="text-sm text-gray-600 mb-1">
+                        {item.media_type === 'tv' ? 'TV Show' : 
+                         item.media_type === 'movie' ? 'Movie' : 
+                         item.media_type === 'book' ? 'Book' : 
+                         item.media_type === 'music' ? 'Music' : 
+                         item.media_type === 'podcast' ? 'Podcast' : 
+                         item.media_type === 'game' ? 'Game' : item.type}
+                      </p>
+                      {item.creator && (
+                        <p className="text-xs text-gray-500">by {item.creator}</p>
+                      )}
+                      {item.notes && (
+                        <p className="text-xs text-gray-600 mt-2 italic">"{item.notes}"</p>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">{item.progress}% complete</p>
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-white rounded-2xl border border-gray-200">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">📺</span>
               </div>
-            ))}
-          </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Nothing Currently Consuming</h3>
+              <p className="text-gray-600 mb-4">Start tracking what you're watching, reading, or listening to</p>
+              <Button 
+                onClick={handleTrackConsumption}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                data-testid="button-start-tracking"
+              >
+                <Plus size={16} className="mr-2" />
+                Track Media
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Favorite Creators */}
