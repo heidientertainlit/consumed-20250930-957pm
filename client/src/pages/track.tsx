@@ -326,7 +326,7 @@ export default function Track() {
         </div>
 
         {/* Recommendations Section */}
-        {Array.isArray(recommendations) && recommendations.length > 0 && (
+        {(recommendationsLoading || (Array.isArray(recommendations) && recommendations.length > 0)) && (
           <div className="mb-6">
             <div className="flex items-center mb-3">
               <Sparkles className="text-purple-700 mr-2" size={20} />
@@ -334,7 +334,29 @@ export default function Track() {
             </div>
             
             <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
-              {recommendations.map((rec: any) => (
+              {recommendationsLoading ? (
+                // Loading skeleton cards
+                [...Array(3)].map((_, index) => (
+                  <div key={`loading-${index}`} className="flex-shrink-0 w-80 bg-gradient-to-r from-slate-700 to-purple-700 rounded-xl p-4 text-white shadow-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <div className="bg-white/20 p-1.5 rounded-lg mr-2 animate-pulse">
+                          <div className="w-4 h-4 bg-white/30 rounded"></div>
+                        </div>
+                        <div className="bg-white/30 h-4 w-12 rounded animate-pulse"></div>
+                      </div>
+                      <div className="bg-white/30 h-8 w-20 rounded animate-pulse"></div>
+                    </div>
+                    <div className="bg-white/30 h-6 w-3/4 rounded mb-2 animate-pulse"></div>
+                    <div className="space-y-2">
+                      <div className="bg-white/20 h-3 w-full rounded animate-pulse"></div>
+                      <div className="bg-white/20 h-3 w-5/6 rounded animate-pulse"></div>
+                      <div className="bg-white/20 h-3 w-4/5 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                recommendations.map((rec: any) => (
                 <div key={rec.id} className="flex-shrink-0 w-80 bg-gradient-to-r from-slate-700 to-purple-700 rounded-xl p-4 text-white shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
@@ -397,7 +419,8 @@ export default function Track() {
                     {rec.description}
                   </p>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         )}
