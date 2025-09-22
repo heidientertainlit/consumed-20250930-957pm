@@ -8,113 +8,150 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star } from "lucide-react";
 import { Link } from "wouter";
 
-interface PredictionGame {
+interface PredictionPool {
   id: string;
   title: string;
   description: string;
-  type: "awards" | "weekly" | "vote";
+  type: "awards" | "weekly" | "vote" | "bracket";
   pointsReward: number;
   deadline: string;
   participants: number;
   status: "open" | "locked" | "completed";
   category: string;
+  icon: string;
   image?: string;
 }
 
-// Sample prediction games data
-const predictionGames: PredictionGame[] = [
+// Low Stakes Prediction Pools (Quick & Fun)
+const lowStakesPools: PredictionPool[] = [
   {
-    id: "oscars-2024",
-    title: "2024 Academy Awards",
-    description: "Predict the winners across all major categories including Best Picture, Actor, Actress, and Director.",
-    type: "awards",
-    pointsReward: 50,
-    deadline: "March 10, 2024",
+    id: "netflix-weekend",
+    title: "Netflix Top 10 This Week",
+    description: "Predict which show will be #1 on Netflix this week",
+    type: "vote",
+    pointsReward: 10,
+    deadline: "Sunday 11:59 PM",
     participants: 1247,
     status: "open",
-    category: "Movies"
+    category: "Streaming",
+    icon: "📺"
   },
   {
-    id: "emmys-2024",
-    title: "2024 Emmy Awards",
-    description: "Pick the winners for Outstanding Drama Series, Comedy Series, and Lead Actor/Actress categories.",
-    type: "awards", 
-    pointsReward: 45,
-    deadline: "September 15, 2024",
-    participants: 892,
-    status: "open",
-    category: "TV"
-  },
-  {
-    id: "box-office-weekend",
+    id: "box-office-weekend", 
     title: "Weekend Box Office Champion",
     description: "Which movie will dominate the box office this weekend?",
     type: "weekly",
-    pointsReward: 25,
-    deadline: "Friday 11:59 PM",
-    participants: 534,
+    pointsReward: 15,
+    deadline: "Friday 11:59 PM", 
+    participants: 743,
     status: "open",
-    category: "Movies"
+    category: "Movies",
+    icon: "🎬"
   },
   {
-    id: "streaming-weekly",
-    title: "Top Streaming Show This Week",
-    description: "Predict which show will be #1 on Netflix, Hulu, or Prime Video this week.",
-    type: "weekly",
-    pointsReward: 20,
-    deadline: "Sunday 11:59 PM", 
-    participants: 723,
-    status: "open",
-    category: "TV"
-  },
-  {
-    id: "netflix-original-vote",
-    title: "Best Netflix Original of 2024",
-    description: "Vote for your favorite Netflix original series or movie released this year.",
+    id: "trending-music",
+    title: "Billboard Hot 100 #1",
+    description: "Predict next week's Billboard Hot 100 #1 single",
     type: "vote",
-    pointsReward: 10,
-    deadline: "December 31, 2024",
-    participants: 2156,
+    pointsReward: 12,
+    deadline: "Monday 11:59 PM",
+    participants: 892,
+    status: "open", 
+    category: "Music",
+    icon: "🎵"
+  },
+  {
+    id: "social-buzz",
+    title: "Most Talked About Celebrity",
+    description: "Who will generate the most social media buzz this week?",
+    type: "vote",
+    pointsReward: 8,
+    deadline: "Sunday 11:59 PM",
+    participants: 654,
     status: "open",
-    category: "Streaming"
+    category: "Celebrity",
+    icon: "📱"
+  },
+  {
+    id: "tv-ratings",
+    title: "Highest Rated TV Show",
+    description: "Predict which show will have the highest ratings this week",
+    type: "vote", 
+    pointsReward: 13,
+    deadline: "Sunday 11:59 PM",
+    participants: 567,
+    status: "open",
+    category: "TV",
+    icon: "📊"
+  }
+];
+
+// High Stakes Prediction Pools (Major Events)
+const highStakesPools: PredictionPool[] = [
+  {
+    id: "dancing-with-stars",
+    title: "Dancing with the Stars Season 34",
+    description: "Predict the winner of DWTS Season 34 - Full Tournament Bracket",
+    type: "bracket",
+    pointsReward: 100,
+    deadline: "May 20, 2025", 
+    participants: 2834,
+    status: "open",
+    category: "Reality TV",
+    icon: "🏆"
+  },
+  {
+    id: "academy-awards",
+    title: "2025 Academy Awards",
+    description: "Predict winners across all major Oscar categories",
+    type: "awards",
+    pointsReward: 75,
+    deadline: "March 2, 2025",
+    participants: 4156,
+    status: "open",
+    category: "Movies", 
+    icon: "🎭"
   },
   {
     id: "big-brother-winner",
-    title: "Big Brother Season 26 Winner",
-    description: "Who will win Big Brother Season 26? Make your prediction for the final winner!",
+    title: "Big Brother Season 27 Winner",
+    description: "Who will take home the $750,000 grand prize?",
     type: "vote",
-    pointsReward: 35,
-    deadline: "October 13, 2024",
-    participants: 892,
+    pointsReward: 85,
+    deadline: "October 2025",
+    participants: 1892,
     status: "open",
-    category: "Reality TV"
+    category: "Reality TV",
+    icon: "👁️"
   },
   {
-    id: "dancing-with-stars",
-    title: "Dancing with the Stars Season 34 (2025)",
-    description: "Predict the winner of Dancing with the Stars Season 34 and who will take home the Mirrorball Trophy!",
-    type: "vote",
-    pointsReward: 50,
-    deadline: "May 20, 2025",
-    participants: 2834,
+    id: "emmys-2025",
+    title: "2025 Emmy Awards",
+    description: "Predict winners across Drama, Comedy, and Limited Series",
+    type: "awards", 
+    pointsReward: 80,
+    deadline: "September 2025",
+    participants: 3245,
     status: "open",
-    category: "Reality TV"
+    category: "TV",
+    icon: "📺"
   },
   {
-    id: "golden-globes-2024",
-    title: "2024 Golden Globe Awards",
-    description: "Make your predictions for the Golden Globes across film and television categories.",
+    id: "golden-globes-2025",
+    title: "2025 Golden Globe Awards",
+    description: "Predict winners across film and television categories",
     type: "awards",
-    pointsReward: 40,
-    deadline: "January 7, 2024",
-    participants: 967,
-    status: "completed",
-    category: "Awards"
+    pointsReward: 70,
+    deadline: "January 2025", 
+    participants: 2156,
+    status: "open",
+    category: "Movies",
+    icon: "🌟"
   }
 ];
 
 // Award Show Modal Component
-const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
+const AwardShowModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
   const [selectedPicks, setSelectedPicks] = useState<Record<string, string>>({});
 
   const categories = [
@@ -146,8 +183,8 @@ const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpe
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white border-gray-200 text-gray-800">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900">{game.title}</DialogTitle>
-          <p className="text-gray-600">{game.description}</p>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{pool.title}</DialogTitle>
+          <p className="text-gray-600">{pool.description}</p>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -181,7 +218,7 @@ const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpe
             className="bg-purple-700 hover:bg-purple-800"
             disabled={Object.keys(selectedPicks).length !== categories.length}
           >
-            Submit Predictions ({game.pointsReward} pts)
+            Submit Predictions ({pool.pointsReward} pts)
           </Button>
         </div>
       </DialogContent>
@@ -190,10 +227,10 @@ const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpe
 };
 
 // Weekly Prediction Modal Component
-const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
+const WeeklyModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
   const [selectedPick, setSelectedPick] = useState<string>("");
 
-  const options = game.id === "box-office-weekend" 
+  const options = pool.id === "box-office-weekend" 
     ? ["Dune: Part Two", "Madame Web", "Bob Marley: One Love", "Ordinary Angels"]
     : ["Avatar: The Last Airbender", "Griselda", "American Nightmare", "Nobody Wants This"];
 
@@ -201,8 +238,8 @@ const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900">{game.title}</DialogTitle>
-          <p className="text-gray-600">{game.description}</p>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{pool.title}</DialogTitle>
+          <p className="text-gray-600">{pool.description}</p>
         </DialogHeader>
 
         <div className="space-y-3 mt-6">
@@ -227,7 +264,7 @@ const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: 
             className="bg-purple-700 hover:bg-purple-800"
             disabled={!selectedPick}
           >
-            Submit Prediction ({game.pointsReward} pts)
+            Submit Prediction ({pool.pointsReward} pts)
           </Button>
         </div>
       </DialogContent>
@@ -236,7 +273,7 @@ const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: 
 };
 
 // Bracket Modal Component for Dancing with the Stars
-const BracketModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
+const BracketModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
   const [selectedWinner, setSelectedWinner] = useState<string>("");
 
   const fullCast = [
@@ -256,8 +293,8 @@ const BracketModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen:
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[85vh] overflow-y-auto bg-white border-gray-200 text-gray-800">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900">{game.title}</DialogTitle>
-          <p className="text-gray-600">{game.description}</p>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{pool.title}</DialogTitle>
+          <p className="text-gray-600">{pool.description}</p>
         </DialogHeader>
 
         <div className="mt-6">
@@ -378,7 +415,7 @@ const BracketModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen:
             className="bg-purple-700 hover:bg-purple-800"
             disabled={!selectedWinner}
           >
-            Submit Prediction ({game.pointsReward} pts)
+            Submit Prediction ({pool.pointsReward} pts)
           </Button>
         </div>
       </DialogContent>
@@ -387,7 +424,7 @@ const BracketModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen:
 };
 
 // Vote Modal Component
-const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
+const VoteModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
   const [selectedVote, setSelectedVote] = useState<string>("");
 
   const options = [
@@ -403,8 +440,8 @@ const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: bo
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900">{game.title}</DialogTitle>
-          <p className="text-gray-600">{game.description}</p>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{pool.title}</DialogTitle>
+          <p className="text-gray-600">{pool.description}</p>
         </DialogHeader>
 
         <div className="space-y-3 mt-6">
@@ -445,7 +482,7 @@ const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: bo
             className="bg-purple-700 hover:bg-purple-800"
             disabled={!selectedVote}
           >
-            Cast Vote ({game.pointsReward} pts)
+            Cast Vote ({pool.pointsReward} pts)
           </Button>
         </div>
       </DialogContent>
@@ -455,7 +492,7 @@ const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: bo
 
 export default function PredictionsPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const [selectedGame, setSelectedGame] = useState<PredictionGame | null>(null);
+  const [selectedPool, setSelectedPool] = useState<PredictionPool | null>(null);
   const [filterStatus, setFilterStatus] = useState<"open" | "completed">("open");
 
   const handleTrackConsumption = () => {
@@ -480,30 +517,30 @@ export default function PredictionsPage() {
     }
   };
 
-  const filteredGames = predictionGames.filter(game => 
-    game.status === filterStatus
+  // Combine both pool types for now (will redesign layout next)
+  const allPools = [...lowStakesPools, ...highStakesPools];
+  const filteredPools = allPools.filter(pool => 
+    pool.status === filterStatus
   );
 
-  const handleGameClick = (game: PredictionGame) => {
-    if (game.status === "open") {
-      setSelectedGame(game);
+  const handlePoolClick = (pool: PredictionPool) => {
+    if (pool.status === "open") {
+      setSelectedPool(pool);
     }
   };
 
   const renderModal = () => {
-    if (!selectedGame) return null;
+    if (!selectedPool) return null;
 
-    switch (selectedGame.type) {
+    switch (selectedPool.type) {
       case "awards":
-        return <AwardShowModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
+        return <AwardShowModal pool={selectedPool} isOpen={!!selectedPool} onClose={() => setSelectedPool(null)} />;
       case "weekly":
-        return <WeeklyModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
+        return <WeeklyModal pool={selectedPool} isOpen={!!selectedPool} onClose={() => setSelectedPool(null)} />;
+      case "bracket":
+        return <BracketModal pool={selectedPool} isOpen={!!selectedPool} onClose={() => setSelectedPool(null)} />;
       case "vote":
-        if (selectedGame.id === "dancing-with-stars") {
-          return <BracketModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
-        } else {
-          return <VoteModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
-        }
+        return <VoteModal pool={selectedPool} isOpen={!!selectedPool} onClose={() => setSelectedPool(null)} />;
       default:
         return null;
     }
@@ -532,83 +569,106 @@ export default function PredictionsPage() {
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 w-fit mb-8">
-          {[
-            { key: "open", label: "Open Pools" },
-            { key: "completed", label: "Completed" }
-          ].map((filter) => (
-            <button
-              key={filter.key}
-              onClick={() => setFilterStatus(filter.key as any)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                filterStatus === filter.key
-                  ? 'bg-white text-gray-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-700'
-              }`}
-              data-testid={`filter-${filter.key}`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Prediction Pools Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredGames.map((game) => (
-            <Card 
-              key={game.id} 
-              className={`bg-white border-gray-200 transition-all hover:shadow-md ${
-                game.status === "open" ? "cursor-pointer hover:border-purple-300" : "opacity-75"
-              }`}
-              onClick={() => handleGameClick(game)}
-              data-testid={`prediction-game-${game.id}`}
-            >
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    {getTypeIcon(game.type)}
-                    <Badge variant="outline" className="text-xs">{game.category}</Badge>
+        {/* League-Style Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Low Stakes Pools */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-purple-600 text-white px-6 py-4 rounded-t-lg">
+              <h2 className="text-lg font-semibold text-center">LOW STAKES POOLS</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {lowStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
+                <div 
+                  key={pool.id}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl">{pool.icon}</div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{pool.title}</h3>
+                      <p className="text-sm text-gray-600">{pool.description}</p>
+                      <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                        <span>{pool.pointsReward} pts</span>
+                        <span>{pool.participants.toLocaleString()} participants</span>
+                      </div>
+                    </div>
                   </div>
-                  {getStatusBadge(game.status)}
+                  <button
+                    onClick={() => handlePoolClick(pool)}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 transition-colors"
+                    data-testid={`join-pool-${pool.id}`}
+                  >
+                    Join
+                  </button>
                 </div>
-                <CardTitle className="text-lg font-semibold line-clamp-2 text-gray-900">{game.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 text-sm mb-4 line-clamp-2">{game.description}</p>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Deadline:</span>
-                    <span className="font-medium text-gray-700 flex items-center">
-                      <Clock size={14} className="mr-1" />
-                      {game.deadline}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Participants:</span>
-                    <span className="font-medium text-gray-700 flex items-center">
-                      <Users size={14} className="mr-1" />
-                      {game.participants.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Reward:</span>
-                    <span className="font-bold text-purple-700">{game.pointsReward} points</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredGames.length === 0 && (
-          <div className="text-center py-12">
-            <Trophy size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">No prediction games found</h3>
-            <p className="text-gray-600">Check back later for new prediction opportunities!</p>
+              ))}
+              <button className="w-full mt-6 px-4 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors">
+                See All Low Stakes Pools →
+              </button>
+            </div>
           </div>
-        )}
+
+          {/* High Stakes Pools */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-orange-500 text-white px-6 py-4 rounded-t-lg">
+              <h2 className="text-lg font-semibold text-center">HIGH STAKES POOLS</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {highStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
+                <div 
+                  key={pool.id}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl">{pool.icon}</div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{pool.title}</h3>
+                      <p className="text-sm text-gray-600">{pool.description}</p>
+                      <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                        <span>{pool.pointsReward} pts</span>
+                        <span>{pool.participants.toLocaleString()} participants</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handlePoolClick(pool)}
+                    className="px-4 py-2 bg-orange-500 text-white rounded-full text-sm font-medium hover:bg-orange-600 transition-colors"
+                    data-testid={`join-pool-${pool.id}`}
+                  >
+                    Join
+                  </button>
+                </div>
+              ))}
+              <button className="w-full mt-6 px-4 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors">
+                See All High Stakes Pools →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Tabs for Status */}
+        <div className="flex justify-center mt-8">
+          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+            {[
+              { key: "open", label: "Open Pools" },
+              { key: "completed", label: "Completed" }
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setFilterStatus(filter.key as any)}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                  filterStatus === filter.key
+                    ? 'bg-white text-gray-700 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-700'
+                }`}
+                data-testid={`filter-${filter.key}`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Modals */}
