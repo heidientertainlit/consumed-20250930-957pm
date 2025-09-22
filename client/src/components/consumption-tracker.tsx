@@ -398,17 +398,23 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                   {/* Star Display */}
                   <div className="flex items-center justify-center space-x-2">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
+                      <button
                         key={star}
-                        size={36}
-                        className={`${
-                          star <= Math.floor(rating)
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : star <= rating
-                            ? 'fill-yellow-200 text-yellow-200'
-                            : 'fill-gray-200 text-gray-200'
-                        } transition-colors`}
-                      />
+                        onClick={() => setRating(star === rating ? 0 : star)}
+                        className="p-1 hover:scale-110 transition-transform"
+                        data-testid={`star-${star}`}
+                      >
+                        <Star
+                          size={36}
+                          className={`${
+                            star <= Math.floor(rating)
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : star <= rating
+                              ? 'fill-yellow-200 text-yellow-200'
+                              : 'fill-gray-200 text-gray-200'
+                          } hover:fill-yellow-300 hover:text-yellow-300 transition-colors cursor-pointer`}
+                        />
+                      </button>
                     ))}
                   </div>
                   
