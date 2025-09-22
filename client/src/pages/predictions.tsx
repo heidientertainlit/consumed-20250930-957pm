@@ -304,7 +304,7 @@ const BracketModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen:
             <p className="text-sm text-gray-600">Pick your Mirrorball Trophy winner!</p>
           </div>
           
-          <div className="relative bg-gradient-to-br from-purple-50 to-teal-50 p-6 rounded-xl border border-gray-200">
+          <div className="relative bg-gradient-to-br from-purple-50 to-blue-50 p-6 rounded-xl border border-gray-200">
             {/* NCAA-Style Tournament Bracket */}
             <div className="flex justify-between items-center min-h-[500px] overflow-x-auto">
               
@@ -337,7 +337,7 @@ const BracketModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen:
               {/* Left Side - Quarterfinals */}
               <div className="flex flex-col justify-center space-y-12 min-w-[150px]">
                 <div className="text-center">
-                  <div className="bg-teal-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-6">QUARTERFINALS</div>
+                  <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-6">QUARTERFINALS</div>
                 </div>
                 <div className="space-y-16">
                   <div className="relative">
@@ -371,11 +371,11 @@ const BracketModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen:
               {/* Center - Finals */}
               <div className="flex flex-col items-center justify-center min-w-[160px] px-4">
                 <div className="text-center mb-4">
-                  <div className="bg-gradient-to-r from-yellow-400 to-teal-400 text-white px-4 py-2 rounded-full text-sm font-bold">🏆 FINALS 🏆</div>
+                  <div className="bg-gradient-to-r from-yellow-400 to-blue-400 text-white px-4 py-2 rounded-full text-sm font-bold">🏆 FINALS 🏆</div>
                 </div>
                 <div className={`w-36 h-24 rounded-xl border-4 flex flex-col items-center justify-center transition-all ${
                   selectedWinner 
-                    ? 'border-yellow-500 bg-gradient-to-br from-yellow-50 to-teal-50 shadow-lg' 
+                    ? 'border-yellow-500 bg-gradient-to-br from-yellow-50 to-blue-50 shadow-lg' 
                     : 'border-gray-300 bg-gray-50'
                 }`}>
                   <div className="text-3xl mb-1">🏆</div>
@@ -411,7 +411,7 @@ const BracketModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen:
               {/* Right Side - Quarterfinals */}
               <div className="flex flex-col justify-center space-y-12 min-w-[150px]">
                 <div className="text-center">
-                  <div className="bg-teal-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-6">QUARTERFINALS</div>
+                  <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-6">QUARTERFINALS</div>
                 </div>
                 <div className="space-y-16">
                   <div className="relative">
@@ -571,7 +571,7 @@ export default function PredictionsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "open": return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Open</Badge>;
-      case "locked": return <Badge className="bg-teal-100 text-teal-800 hover:bg-teal-100">Locked</Badge>;
+      case "locked": return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Locked</Badge>;
       case "completed": return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Completed</Badge>;
       default: return null;
     }
@@ -634,7 +634,7 @@ export default function PredictionsPage() {
           
           {/* Low Stakes Pools */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="bg-purple-600 text-white px-6 py-4 rounded-t-lg">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-4 rounded-t-lg">
               <h2 className="text-lg font-semibold text-center">LOW STAKES POOLS</h2>
             </div>
             <div className="p-6 space-y-4">
@@ -656,14 +656,14 @@ export default function PredictionsPage() {
                   </div>
                   <button
                     onClick={() => handlePoolClick(pool)}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 transition-colors"
+                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full text-sm font-medium hover:from-purple-600 hover:to-purple-700 transition-all"
                     data-testid={`join-pool-${pool.id}`}
                   >
                     Join
                   </button>
                 </div>
               ))}
-              <button className="w-full mt-6 px-4 py-3 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors">
+              <button className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-medium hover:from-purple-600 hover:to-purple-700 transition-all">
                 See All Low Stakes Pools →
               </button>
             </div>
@@ -671,7 +671,7 @@ export default function PredictionsPage() {
 
           {/* High Stakes Pools */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="bg-teal-500 text-white px-6 py-4 rounded-t-lg">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-4 rounded-t-lg">
               <h2 className="text-lg font-semibold text-center">HIGH STAKES POOLS</h2>
             </div>
             <div className="p-6 space-y-4">
@@ -693,14 +693,14 @@ export default function PredictionsPage() {
                   </div>
                   <button
                     onClick={() => handlePoolClick(pool)}
-                    className="px-4 py-2 bg-teal-500 text-white rounded-full text-sm font-medium hover:bg-teal-600 transition-colors"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all"
                     data-testid={`join-pool-${pool.id}`}
                   >
                     Join
                   </button>
                 </div>
               ))}
-              <button className="w-full mt-6 px-4 py-3 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors">
+              <button className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all">
                 See All High Stakes Pools →
               </button>
             </div>
