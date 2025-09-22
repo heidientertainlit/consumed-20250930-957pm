@@ -14,6 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
@@ -108,6 +114,42 @@ export default function Track() {
   });
 
   const recommendations = recommendationsData?.recommendations || [];
+
+  // Handle adding recommendation to a specific list
+  const handleAddRecommendation = async (recommendation: any, listType: string) => {
+    if (!session?.access_token) {
+      console.log('No session token available');
+      return;
+    }
+
+    try {
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: recommendation.title,
+          creator: recommendation.creator,
+          type: recommendation.media_type,
+          media_type: recommendation.media_type,
+          image_url: recommendation.image_url,
+          list_type: listType,
+          notes: null,
+        }),
+      });
+
+      if (response.ok) {
+        console.log(`Added ${recommendation.title} to ${listType}`);
+        // Optionally refresh the lists data
+      } else {
+        console.error('Failed to add recommendation:', response.status);
+      }
+    } catch (error) {
+      console.error('Error adding recommendation:', error);
+    }
+  };
 
   const getCategoryIcon = (category: string, isWhiteBg = false) => {
     const iconClass = isWhiteBg ? "text-purple-600" : "text-gray-600";
@@ -284,19 +326,44 @@ export default function Track() {
                     <div className="flex">
                       <Button
                         size="sm"
+                        onClick={() => handleAddRecommendation(rec, 'queue')}
                         className="bg-gray-400 hover:bg-gray-300 text-white px-3 py-1 text-xs rounded-r-none border-r border-gray-300"
-                        data-testid={`add-to-list-${rec.id}`}
+                        data-testid={`add-to-queue-${rec.id}`}
                       >
                         <Plus size={14} className="mr-1" />
-                        Add
+                        Queue
                       </Button>
-                      <Button
-                        size="sm"
-                        className="bg-gray-400 hover:bg-gray-300 text-white px-2 py-1 text-xs rounded-l-none"
-                        data-testid={`add-dropdown-${rec.id}`}
-                      >
-                        <ChevronDown size={14} />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="sm"
+                            className="bg-gray-400 hover:bg-gray-300 text-white px-2 py-1 text-xs rounded-l-none"
+                            data-testid={`add-dropdown-${rec.id}`}
+                          >
+                            <ChevronDown size={14} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem 
+                            onClick={() => handleAddRecommendation(rec, 'currently')}
+                            className="cursor-pointer"
+                          >
+                            Add to Currently
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleAddRecommendation(rec, 'finished')}
+                            className="cursor-pointer"
+                          >
+                            Add to Finished  
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleAddRecommendation(rec, 'dnf')}
+                            className="cursor-pointer"
+                          >
+                            Add to Did Not Finish
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                   
