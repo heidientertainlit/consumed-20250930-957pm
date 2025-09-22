@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, UserPlus, Trash2, MoreVertical, Star, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, Share2, Trash2, MoreVertical, Star, Clock, Calendar } from "lucide-react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -13,8 +13,6 @@ export default function ListDetail() {
   const [, setLocation] = useLocation();
   const [isPublic, setIsPublic] = useState(true);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const [showInviteCollaborator, setShowInviteCollaborator] = useState(false);
-  const [collaboratorEmail, setCollaboratorEmail] = useState("");
   
   const queryClient = useQueryClient();
   const { session } = useAuth();
@@ -103,13 +101,37 @@ export default function ListDetail() {
   }
 
 
-  const handleInviteCollaborator = () => {
-    if (collaboratorEmail.trim()) {
-      // In real app, would make API call to invite collaborator
-      console.log("Inviting collaborator:", collaboratorEmail);
-      setCollaboratorEmail("");
-      setShowInviteCollaborator(false);
+  const handleShare = () => {
+    const currentUrl = window.location.href;
+    if (navigator.share) {
+      // Use native sharing if available (mobile)
+      navigator.share({
+        title: `Check out my ${listData.name} list`,
+        text: `Take a look at my entertainment list: ${listData.name}`,
+        url: currentUrl,
+      }).catch(() => {
+        // Fallback to clipboard
+        fallbackCopyToClipboard(currentUrl);
+      });
+    } else {
+      // Fallback to clipboard copy
+      fallbackCopyToClipboard(currentUrl);
     }
+  };
+
+  const fallbackCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Link copied!",
+        description: "List link has been copied to your clipboard.",
+      });
+    }).catch(() => {
+      toast({
+        title: "Share failed",
+        description: "Unable to copy link. Please try again.",
+        variant: "destructive",
+      });
+    });
   };
 
   const handleRemoveItem = (itemId: number) => {
@@ -216,8 +238,8 @@ export default function ListDetail() {
                 <div className="text-sm text-gray-600">Likes</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{listData.collaborators.length}</div>
-                <div className="text-sm text-gray-600">Collaborators</div>
+                <div className="text-2xl font-bold text-gray-900">{listData.likes}</div>
+                <div className="text-sm text-gray-600">Shares</div>
               </div>
             </div>
 
@@ -238,11 +260,11 @@ export default function ListDetail() {
               
               <Button
                 variant="outline"
-                onClick={() => setShowInviteCollaborator(true)}
-                data-testid="button-invite-collaborator"
+                onClick={handleShare}
+                data-testid="button-share-list"
               >
-                <UserPlus size={16} className="mr-2" />
-                Invite
+                <Share2 size={16} className="mr-2" />
+                Share
               </Button>
             </div>
           </div>
@@ -328,66 +350,6 @@ export default function ListDetail() {
           </div>
         </div>
 
-        {/* Collaborators Section */}
-        <div className="bg-white rounded-2xl shadow-sm mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Collaborators</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTogglePrivacy}
-                data-testid="button-toggle-privacy"
-              >
-                {isPublic ? <Lock size={16} className="mr-2" /> : <Globe size={16} className="mr-2" />}
-                Make {isPublic ? "Private" : "Public"}
-              </Button>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="space-y-4">
-              {/* Owner */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    Y
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{listData.owner}</div>
-                    <div className="text-sm text-gray-600">Owner</div>
-                  </div>
-                </div>
-                <Badge>Owner</Badge>
-              </div>
-
-              {/* Collaborators */}
-              {listData.collaborators.map((collaborator) => (
-                <div key={collaborator.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={collaborator.avatar}
-                      alt={collaborator.name}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <div>
-                      <div className="font-medium text-gray-900">{collaborator.name}</div>
-                      <div className="text-sm text-gray-600">{collaborator.email}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="capitalize">
-                      {collaborator.role}
-                    </Badge>
-                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-red-600">
-                      <X size={14} />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Consumption Tracker Modal for Adding Media */}
@@ -396,63 +358,6 @@ export default function ListDetail() {
         onClose={() => setIsTrackModalOpen(false)} 
       />
 
-      {/* Invite Collaborator Modal */}
-      {showInviteCollaborator && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Invite Collaborator</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowInviteCollaborator(false)}>
-                <X size={20} />
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={collaboratorEmail}
-                  onChange={(e) => setCollaboratorEmail(e.target.value)}
-                  placeholder="friend@example.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  data-testid="input-collaborator-email"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Permission Level
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                  <option value="viewer">Viewer - Can see list items</option>
-                  <option value="editor">Editor - Can add/remove items</option>
-                </select>
-              </div>
-              
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleInviteCollaborator}
-                  disabled={!collaboratorEmail.trim()}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
-                  data-testid="button-send-invite"
-                >
-                  Send Invite
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowInviteCollaborator(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
