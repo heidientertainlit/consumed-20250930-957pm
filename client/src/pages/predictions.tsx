@@ -298,100 +298,160 @@ const BracketModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen:
         </DialogHeader>
 
         <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-6 text-gray-900 text-center">Season 34 Tournament Bracket - Pick Your Winner!</h3>
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">🕺💃 DANCING WITH THE STARS 💃🕺</h3>
+            <h4 className="text-lg font-semibold text-purple-700 mb-1">Season 34 Tournament Bracket</h4>
+            <p className="text-sm text-gray-600">Pick your Mirrorball Trophy winner!</p>
+          </div>
           
-          <div className="relative">
-            {/* Full Tournament Bracket Layout */}
-            <div className="grid grid-cols-15 gap-2 items-center min-h-[600px] text-xs">
+          <div className="relative bg-gradient-to-br from-purple-50 to-orange-50 p-6 rounded-xl border border-gray-200">
+            {/* NCAA-Style Tournament Bracket */}
+            <div className="flex justify-between items-center min-h-[500px] overflow-x-auto">
               
-              {/* First Round - Left Side (5 couples) */}
-              <div className="col-span-3 space-y-4">
-                <div className="text-xs font-semibold text-gray-600 mb-2 text-center">First Round</div>
-                {fullCast.slice(0, 5).map((couple) => (
-                  <button
-                    key={couple}
-                    onClick={() => setSelectedWinner(couple)}
-                    className={`w-full p-3 text-left rounded-lg border-2 transition-all ${
-                      selectedWinner === couple
-                        ? 'border-purple-500 bg-purple-50 shadow-lg'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="font-medium text-gray-800 text-xs leading-tight">{couple}</div>
-                  </button>
+              {/* Left Side - Round 1 */}
+              <div className="flex flex-col space-y-3 min-w-[200px]">
+                <div className="text-center">
+                  <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-3">ROUND 1</div>
+                </div>
+                {fullCast.slice(0, 5).map((couple, index) => (
+                  <div key={couple} className="relative">
+                    <button
+                      onClick={() => setSelectedWinner(couple)}
+                      className={`w-full p-2 text-left rounded border transition-all text-xs ${
+                        selectedWinner === couple
+                          ? 'border-purple-500 bg-purple-100 shadow-md text-purple-900'
+                          : 'border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50 text-gray-800'
+                      }`}
+                    >
+                      <div className="font-medium leading-tight">{couple.split(' & ')[0]}</div>
+                      <div className="text-xs text-gray-600">{couple.split(' & ')[1]}</div>
+                    </button>
+                    {/* Connecting line to next round */}
+                    {index < 4 && (
+                      <div className="absolute -right-6 top-1/2 w-6 h-px bg-gray-400"></div>
+                    )}
+                  </div>
                 ))}
               </div>
 
-              {/* Quarterfinals - Left Side (2-3 spots) */}
-              <div className="col-span-2 space-y-12">
-                <div className="text-xs font-semibold text-gray-600 mb-2 text-center">Quarterfinals</div>
-                <div className="space-y-8">
-                  <div className="h-12 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                    <span className="text-xs text-gray-500">Advancing Couple</span>
+              {/* Left Side - Quarterfinals */}
+              <div className="flex flex-col justify-center space-y-12 min-w-[150px]">
+                <div className="text-center">
+                  <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-6">QUARTERFINALS</div>
+                </div>
+                <div className="space-y-16">
+                  <div className="relative">
+                    <div className="h-8 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
+                      <span className="text-xs text-gray-500">TBD</span>
+                    </div>
+                    <div className="absolute -right-6 top-1/2 w-6 h-px bg-gray-400"></div>
                   </div>
-                  <div className="h-12 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                    <span className="text-xs text-gray-500">Advancing Couple</span>
+                  <div className="relative">
+                    <div className="h-8 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
+                      <span className="text-xs text-gray-500">TBD</span>
+                    </div>
+                    <div className="absolute -right-6 top-1/2 w-6 h-px bg-gray-400"></div>
                   </div>
                 </div>
               </div>
 
-              {/* Semifinals - Left Side */}
-              <div className="col-span-2 flex flex-col items-center justify-center">
-                <div className="text-xs font-semibold text-gray-600 mb-4 text-center">Semifinals</div>
-                <div className="h-16 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                  <span className="text-xs text-gray-500 text-center">Semi-Finalist</span>
+              {/* Left Side - Semifinals */}
+              <div className="flex flex-col justify-center min-w-[120px]">
+                <div className="text-center mb-6">
+                  <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold">SEMIFINALS</div>
+                </div>
+                <div className="relative">
+                  <div className="h-10 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
+                    <span className="text-xs text-gray-500">TBD</span>
+                  </div>
+                  <div className="absolute -right-6 top-1/2 w-6 h-px bg-gray-400"></div>
                 </div>
               </div>
 
-              {/* Finals */}
-              <div className="col-span-3 flex flex-col items-center justify-center">
-                <div className="text-xs font-semibold text-gray-600 mb-4 text-center">🏆 MIRRORBALL TROPHY 🏆</div>
-                <div className={`w-32 h-20 rounded-lg border-4 flex flex-col items-center justify-center ${
-                  selectedWinner ? 'border-yellow-500 bg-yellow-50' : 'border-gray-300 bg-gray-50'
+              {/* Center - Finals */}
+              <div className="flex flex-col items-center justify-center min-w-[160px] px-4">
+                <div className="text-center mb-4">
+                  <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-4 py-2 rounded-full text-sm font-bold">🏆 FINALS 🏆</div>
+                </div>
+                <div className={`w-36 h-24 rounded-xl border-4 flex flex-col items-center justify-center transition-all ${
+                  selectedWinner 
+                    ? 'border-yellow-500 bg-gradient-to-br from-yellow-50 to-orange-50 shadow-lg' 
+                    : 'border-gray-300 bg-gray-50'
                 }`}>
-                  <div className="text-2xl mb-1">🏆</div>
-                  <span className="text-xs text-center text-gray-600 leading-tight font-bold">
-                    {selectedWinner ? "WINNER!" : "Season 34 Champion"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Semifinals - Right Side */}
-              <div className="col-span-2 flex flex-col items-center justify-center">
-                <div className="text-xs font-semibold text-gray-600 mb-4 text-center">Semifinals</div>
-                <div className="h-16 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                  <span className="text-xs text-gray-500 text-center">Semi-Finalist</span>
-                </div>
-              </div>
-
-              {/* Quarterfinals - Right Side */}
-              <div className="col-span-2 space-y-12">
-                <div className="text-xs font-semibold text-gray-600 mb-2 text-center">Quarterfinals</div>
-                <div className="space-y-8">
-                  <div className="h-12 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                    <span className="text-xs text-gray-500">Advancing Couple</span>
-                  </div>
-                  <div className="h-12 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                    <span className="text-xs text-gray-500">Advancing Couple</span>
+                  <div className="text-3xl mb-1">🏆</div>
+                  <div className="text-xs text-center font-bold text-gray-700">
+                    {selectedWinner ? (
+                      <div>
+                        <div className="text-purple-700">CHAMPION</div>
+                        <div className="text-xs text-gray-600 mt-1">Mirrorball Winner</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div>MIRRORBALL</div>
+                        <div>TROPHY</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* First Round - Right Side (5 couples) */}
-              <div className="col-span-3 space-y-4">
-                <div className="text-xs font-semibold text-gray-600 mb-2 text-center">First Round</div>
-                {fullCast.slice(5, 10).map((couple) => (
-                  <button
-                    key={couple}
-                    onClick={() => setSelectedWinner(couple)}
-                    className={`w-full p-3 text-left rounded-lg border-2 transition-all ${
-                      selectedWinner === couple
-                        ? 'border-purple-500 bg-purple-50 shadow-lg'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="font-medium text-gray-800 text-xs leading-tight">{couple}</div>
-                  </button>
+              {/* Right Side - Semifinals */}
+              <div className="flex flex-col justify-center min-w-[120px]">
+                <div className="text-center mb-6">
+                  <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold">SEMIFINALS</div>
+                </div>
+                <div className="relative">
+                  <div className="h-10 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
+                    <span className="text-xs text-gray-500">TBD</span>
+                  </div>
+                  <div className="absolute -left-6 top-1/2 w-6 h-px bg-gray-400"></div>
+                </div>
+              </div>
+
+              {/* Right Side - Quarterfinals */}
+              <div className="flex flex-col justify-center space-y-12 min-w-[150px]">
+                <div className="text-center">
+                  <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-6">QUARTERFINALS</div>
+                </div>
+                <div className="space-y-16">
+                  <div className="relative">
+                    <div className="h-8 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
+                      <span className="text-xs text-gray-500">TBD</span>
+                    </div>
+                    <div className="absolute -left-6 top-1/2 w-6 h-px bg-gray-400"></div>
+                  </div>
+                  <div className="relative">
+                    <div className="h-8 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
+                      <span className="text-xs text-gray-500">TBD</span>
+                    </div>
+                    <div className="absolute -left-6 top-1/2 w-6 h-px bg-gray-400"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side - Round 1 */}
+              <div className="flex flex-col space-y-3 min-w-[200px]">
+                <div className="text-center">
+                  <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-3">ROUND 1</div>
+                </div>
+                {fullCast.slice(5, 10).map((couple, index) => (
+                  <div key={couple} className="relative">
+                    <button
+                      onClick={() => setSelectedWinner(couple)}
+                      className={`w-full p-2 text-left rounded border transition-all text-xs ${
+                        selectedWinner === couple
+                          ? 'border-purple-500 bg-purple-100 shadow-md text-purple-900'
+                          : 'border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50 text-gray-800'
+                      }`}
+                    >
+                      <div className="font-medium leading-tight">{couple.split(' & ')[0]}</div>
+                      <div className="text-xs text-gray-600">{couple.split(' & ')[1]}</div>
+                    </button>
+                    {/* Connecting line to next round */}
+                    {index < 4 && (
+                      <div className="absolute -left-6 top-1/2 w-6 h-px bg-gray-400"></div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
