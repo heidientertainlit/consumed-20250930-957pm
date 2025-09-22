@@ -6,7 +6,7 @@ import ListShareModal from "@/components/list-share-modal";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X } from "lucide-react";
+import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -281,14 +281,23 @@ export default function Track() {
                       </div>
                       <span className="text-sm font-medium capitalize opacity-90">{rec.category}</span>
                     </div>
-                    <Button
-                      size="sm"
-                      className="bg-white/20 hover:bg-white/30 text-white border-none px-3 py-1 text-xs"
-                      data-testid={`add-to-list-${rec.id}`}
-                    >
-                      <Plus size={14} className="mr-1" />
-                      Add
-                    </Button>
+                    <div className="flex">
+                      <Button
+                        size="sm"
+                        className="bg-gray-400 hover:bg-gray-300 text-white px-3 py-1 text-xs rounded-r-none border-r border-gray-300"
+                        data-testid={`add-to-list-${rec.id}`}
+                      >
+                        <Plus size={14} className="mr-1" />
+                        Add
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-gray-400 hover:bg-gray-300 text-white px-2 py-1 text-xs rounded-l-none"
+                        data-testid={`add-dropdown-${rec.id}`}
+                      >
+                        <ChevronDown size={14} />
+                      </Button>
+                    </div>
                   </div>
                   
                   <h3 className="font-bold text-lg mb-1">{rec.title}</h3>
