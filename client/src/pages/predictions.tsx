@@ -3,12 +3,96 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Calendar, Vote, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star } from "lucide-react";
 import { Link } from "wouter";
 
-// Award Show Bracket Component
-const AwardShowBracket = () => {
+interface PredictionGame {
+  id: string;
+  title: string;
+  description: string;
+  type: "awards" | "weekly" | "vote";
+  pointsReward: number;
+  deadline: string;
+  participants: number;
+  status: "open" | "locked" | "completed";
+  category: string;
+  image?: string;
+}
+
+// Sample prediction games data
+const predictionGames: PredictionGame[] = [
+  {
+    id: "oscars-2024",
+    title: "2024 Academy Awards",
+    description: "Predict the winners across all major categories including Best Picture, Actor, Actress, and Director.",
+    type: "awards",
+    pointsReward: 50,
+    deadline: "March 10, 2024",
+    participants: 1247,
+    status: "open",
+    category: "Movies"
+  },
+  {
+    id: "emmys-2024",
+    title: "2024 Emmy Awards",
+    description: "Pick the winners for Outstanding Drama Series, Comedy Series, and Lead Actor/Actress categories.",
+    type: "awards", 
+    pointsReward: 45,
+    deadline: "September 15, 2024",
+    participants: 892,
+    status: "open",
+    category: "TV"
+  },
+  {
+    id: "box-office-weekend",
+    title: "Weekend Box Office Champion",
+    description: "Which movie will dominate the box office this weekend?",
+    type: "weekly",
+    pointsReward: 25,
+    deadline: "Friday 11:59 PM",
+    participants: 534,
+    status: "open",
+    category: "Movies"
+  },
+  {
+    id: "streaming-weekly",
+    title: "Top Streaming Show This Week",
+    description: "Predict which show will be #1 on Netflix, Hulu, or Prime Video this week.",
+    type: "weekly",
+    pointsReward: 20,
+    deadline: "Sunday 11:59 PM", 
+    participants: 723,
+    status: "open",
+    category: "TV"
+  },
+  {
+    id: "netflix-original-vote",
+    title: "Best Netflix Original of 2024",
+    description: "Vote for your favorite Netflix original series or movie released this year.",
+    type: "vote",
+    pointsReward: 10,
+    deadline: "December 31, 2024",
+    participants: 2156,
+    status: "open",
+    category: "Streaming"
+  },
+  {
+    id: "golden-globes-2024",
+    title: "2024 Golden Globe Awards",
+    description: "Make your predictions for the Golden Globes across film and television categories.",
+    type: "awards",
+    pointsReward: 40,
+    deadline: "January 7, 2024",
+    participants: 967,
+    status: "completed",
+    category: "Awards"
+  }
+];
+
+// Award Show Modal Component
+const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
   const [selectedPicks, setSelectedPicks] = useState<Record<string, string>>({});
 
   const categories = [
@@ -26,11 +110,6 @@ const AwardShowBracket = () => {
       id: "best-actress", 
       title: "Best Actress",
       nominees: ["Emma Stone", "Lily Gladstone", "Carey Mulligan", "Sandra Hüller"]
-    },
-    {
-      id: "best-director",
-      title: "Best Director", 
-      nominees: ["Christopher Nolan", "Martin Scorsese", "Yorgos Lanthimos", "Justine Triet"]
     }
   ];
 
@@ -42,216 +121,215 @@ const AwardShowBracket = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">2024 Academy Awards</h2>
-        <p className="text-gray-600">Make your predictions for this year's biggest awards</p>
-      </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
+          <p className="text-gray-600">{game.description}</p>
+        </DialogHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {categories.map((category) => (
-          <Card key={category.id} className="border-gray-200">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold">{category.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {category.nominees.map((nominee) => (
-                <button
-                  key={nominee}
-                  onClick={() => handlePick(category.id, nominee)}
-                  className={`w-full p-3 text-left rounded-lg border transition-all ${
-                    selectedPicks[category.id] === nominee
-                      ? 'border-purple-500 bg-purple-50 text-purple-900'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                  data-testid={`pick-${category.id}-${nominee}`}
-                >
-                  {nominee}
-                </button>
-              ))}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="text-center pt-4">
-        <Button 
-          className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white px-8 py-3"
-          disabled={Object.keys(selectedPicks).length !== categories.length}
-          data-testid="submit-awards-predictions"
-        >
-          <Trophy size={20} className="mr-2" />
-          Submit Predictions (50 pts)
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-// Weekly Bracket Component  
-const WeeklyBracket = () => {
-  const [selectedPicks, setSelectedPicks] = useState<Record<string, string>>({});
-
-  const weeklyPredictions = [
-    {
-      id: "box-office",
-      title: "Weekend Box Office Champion",
-      description: "Which movie will top the box office this weekend?",
-      options: ["Dune: Part Two", "Madame Web", "Bob Marley: One Love", "Ordinary Angels"]
-    },
-    {
-      id: "streaming",
-      title: "Top Streaming Show",
-      description: "Which show will be #1 on Netflix this week?",
-      options: ["Avatar: The Last Airbender", "Griselda", "American Nightmare", "Nobody Wants This"]
-    },
-    {
-      id: "music",
-      title: "Billboard Hot 100 #1",
-      description: "Which song will top the charts this week?",
-      options: ["Flowers - Miley Cyrus", "Anti-Hero - Taylor Swift", "As It Was - Harry Styles", "Unholy - Sam Smith"]
-    }
-  ];
-
-  const handlePick = (predictionId: string, option: string) => {
-    setSelectedPicks(prev => ({
-      ...prev,
-      [predictionId]: option
-    }));
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Weekly Entertainment Predictions</h2>
-        <p className="text-gray-600">Predict this week's entertainment winners</p>
-      </div>
-
-      <div className="space-y-6">
-        {weeklyPredictions.map((prediction) => (
-          <Card key={prediction.id} className="border-gray-200">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">{prediction.title}</CardTitle>
-              <p className="text-gray-600">{prediction.description}</p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {prediction.options.map((option) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          {categories.map((category) => (
+            <Card key={category.id} className="border-gray-200">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">{category.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {category.nominees.map((nominee) => (
                   <button
-                    key={option}
-                    onClick={() => handlePick(prediction.id, option)}
-                    className={`p-4 text-left rounded-lg border transition-all ${
-                      selectedPicks[prediction.id] === option
+                    key={nominee}
+                    onClick={() => handlePick(category.id, nominee)}
+                    className={`w-full p-3 text-left rounded-lg border transition-all ${
+                      selectedPicks[category.id] === nominee
                         ? 'border-purple-500 bg-purple-50 text-purple-900'
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
-                    data-testid={`pick-${prediction.id}-${option}`}
                   >
-                    <div className="font-medium">{option}</div>
+                    {nominee}
                   </button>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-      <div className="text-center pt-4">
-        <Button 
-          className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white px-8 py-3"
-          disabled={Object.keys(selectedPicks).length !== weeklyPredictions.length}
-          data-testid="submit-weekly-predictions"
-        >
-          <Calendar size={20} className="mr-2" />
-          Submit Weekly Picks (25 pts)
-        </Button>
-      </div>
-    </div>
+        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800"
+            disabled={Object.keys(selectedPicks).length !== categories.length}
+          >
+            Submit Predictions ({game.pointsReward} pts)
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-// Simple Vote Component
-const SimpleVote = () => {
-  const [selectedVote, setSelectedVote] = useState<string>("");
+// Weekly Prediction Modal Component
+const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
+  const [selectedPick, setSelectedPick] = useState<string>("");
 
-  const currentVote = {
-    id: "best-netflix-2024",
-    title: "Best Netflix Original of 2024",
-    description: "Cast your vote for the best Netflix original series or movie released this year",
-    options: [
-      "Nobody Wants This",
-      "Emily in Paris (Season 4)", 
-      "The Lincoln Lawyer (Season 3)",
-      "Monsters: The Lyle and Erik Menendez Story",
-      "American Nightmare",
-      "Avatar: The Last Airbender"
-    ],
-    pointsReward: 10
-  };
+  const options = game.id === "box-office-weekend" 
+    ? ["Dune: Part Two", "Madame Web", "Bob Marley: One Love", "Ordinary Angels"]
+    : ["Avatar: The Last Airbender", "Griselda", "American Nightmare", "Nobody Wants This"];
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{currentVote.title}</h2>
-        <p className="text-gray-600">{currentVote.description}</p>
-      </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
+          <p className="text-gray-600">{game.description}</p>
+        </DialogHeader>
 
-      <Card className="border-gray-200 max-w-2xl mx-auto">
-        <CardContent className="pt-6">
-          <div className="space-y-3">
-            {currentVote.options.map((option) => (
-              <label
-                key={option}
-                className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all ${
-                  selectedVote === option
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="simple-vote"
-                  value={option}
-                  checked={selectedVote === option}
-                  onChange={(e) => setSelectedVote(e.target.value)}
-                  className="sr-only"
-                  data-testid={`vote-${option}`}
-                />
-                <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                  selectedVote === option
-                    ? 'border-purple-500 bg-purple-500'
-                    : 'border-gray-300'
-                }`}>
-                  {selectedVote === option && (
-                    <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
-                  )}
-                </div>
-                <span className="font-medium text-gray-900">{option}</span>
-              </label>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+        <div className="space-y-3 mt-6">
+          {options.map((option) => (
+            <button
+              key={option}
+              onClick={() => setSelectedPick(option)}
+              className={`w-full p-4 text-left rounded-lg border transition-all ${
+                selectedPick === option
+                  ? 'border-purple-500 bg-purple-50 text-purple-900'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <div className="font-medium">{option}</div>
+            </button>
+          ))}
+        </div>
 
-      <div className="text-center pt-4">
-        <Button 
-          className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white px-8 py-3"
-          disabled={!selectedVote}
-          data-testid="submit-simple-vote"
-        >
-          <Vote size={20} className="mr-2" />
-          Cast Your Vote ({currentVote.pointsReward} pts)
-        </Button>
-      </div>
-    </div>
+        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800"
+            disabled={!selectedPick}
+          >
+            Submit Prediction ({game.pointsReward} pts)
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Vote Modal Component
+const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
+  const [selectedVote, setSelectedVote] = useState<string>("");
+
+  const options = [
+    "Nobody Wants This",
+    "Emily in Paris (Season 4)", 
+    "The Lincoln Lawyer (Season 3)",
+    "Monsters: The Lyle and Erik Menendez Story",
+    "American Nightmare",
+    "Avatar: The Last Airbender"
+  ];
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
+          <p className="text-gray-600">{game.description}</p>
+        </DialogHeader>
+
+        <div className="space-y-3 mt-6">
+          {options.map((option) => (
+            <label
+              key={option}
+              className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all ${
+                selectedVote === option
+                  ? 'border-purple-500 bg-purple-50'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <input
+                type="radio"
+                name="vote"
+                value={option}
+                checked={selectedVote === option}
+                onChange={(e) => setSelectedVote(e.target.value)}
+                className="sr-only"
+              />
+              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                selectedVote === option
+                  ? 'border-purple-500 bg-purple-500'
+                  : 'border-gray-300'
+              }`}>
+                {selectedVote === option && (
+                  <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
+                )}
+              </div>
+              <span className="font-medium text-gray-900">{option}</span>
+            </label>
+          ))}
+        </div>
+
+        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800"
+            disabled={!selectedVote}
+          >
+            Cast Vote ({game.pointsReward} pts)
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
 export default function PredictionsPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<PredictionGame | null>(null);
+  const [filterStatus, setFilterStatus] = useState<"all" | "open" | "completed">("open");
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "awards": return <Trophy size={24} className="text-yellow-600" />;
+      case "weekly": return <Calendar size={24} className="text-blue-600" />;
+      case "vote": return <Vote size={24} className="text-green-600" />;
+      default: return <Star size={24} className="text-purple-600" />;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "open": return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Open</Badge>;
+      case "locked": return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Locked</Badge>;
+      case "completed": return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Completed</Badge>;
+      default: return null;
+    }
+  };
+
+  const filteredGames = predictionGames.filter(game => 
+    filterStatus === "all" || game.status === filterStatus
+  );
+
+  const handleGameClick = (game: PredictionGame) => {
+    if (game.status === "open") {
+      setSelectedGame(game);
+    }
+  };
+
+  const renderModal = () => {
+    if (!selectedGame) return null;
+
+    switch (selectedGame.type) {
+      case "awards":
+        return <AwardShowModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
+      case "weekly":
+        return <WeeklyModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
+      case "vote":
+        return <VoteModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -272,32 +350,93 @@ export default function PredictionsPage() {
               Predictions
             </h1>
             <p className="text-lg text-gray-600">
-              Make predictions about awards, weekly winners, and entertainment trends to earn points!
+              Join prediction games and earn points by making accurate predictions about entertainment!
             </p>
           </div>
         </div>
 
-        {/* Prediction Tabs */}
-        <Tabs defaultValue="awards" className="w-full">
-          <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto mb-8">
-            <TabsTrigger value="awards" data-testid="tab-awards">Award Shows</TabsTrigger>
-            <TabsTrigger value="weekly" data-testid="tab-weekly">Weekly</TabsTrigger>
-            <TabsTrigger value="vote" data-testid="tab-vote">Quick Vote</TabsTrigger>
-          </TabsList>
+        {/* Filter Tabs */}
+        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 w-fit mb-8">
+          {[
+            { key: "open", label: "Open Games" },
+            { key: "all", label: "All Games" },
+            { key: "completed", label: "Completed" }
+          ].map((filter) => (
+            <button
+              key={filter.key}
+              onClick={() => setFilterStatus(filter.key as any)}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                filterStatus === filter.key
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              data-testid={`filter-${filter.key}`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
 
-          <TabsContent value="awards" className="space-y-6">
-            <AwardShowBracket />
-          </TabsContent>
+        {/* Prediction Games Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredGames.map((game) => (
+            <Card 
+              key={game.id} 
+              className={`border-gray-200 transition-all hover:shadow-md ${
+                game.status === "open" ? "cursor-pointer hover:border-purple-300" : "opacity-75"
+              }`}
+              onClick={() => handleGameClick(game)}
+              data-testid={`prediction-game-${game.id}`}
+            >
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    {getTypeIcon(game.type)}
+                    <Badge variant="outline" className="text-xs">{game.category}</Badge>
+                  </div>
+                  {getStatusBadge(game.status)}
+                </div>
+                <CardTitle className="text-lg font-semibold line-clamp-2">{game.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{game.description}</p>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Deadline:</span>
+                    <span className="font-medium text-gray-900 flex items-center">
+                      <Clock size={14} className="mr-1" />
+                      {game.deadline}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Participants:</span>
+                    <span className="font-medium text-gray-900 flex items-center">
+                      <Users size={14} className="mr-1" />
+                      {game.participants.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Reward:</span>
+                    <span className="font-bold text-purple-700">{game.pointsReward} points</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-          <TabsContent value="weekly" className="space-y-6">
-            <WeeklyBracket />
-          </TabsContent>
-
-          <TabsContent value="vote" className="space-y-6">
-            <SimpleVote />
-          </TabsContent>
-        </Tabs>
+        {filteredGames.length === 0 && (
+          <div className="text-center py-12">
+            <Trophy size={48} className="mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No prediction games found</h3>
+            <p className="text-gray-600">Check back later for new prediction opportunities!</p>
+          </div>
+        )}
       </div>
+
+      {/* Modals */}
+      {renderModal()}
 
       <ConsumptionTracker 
         isOpen={isTrackModalOpen} 
