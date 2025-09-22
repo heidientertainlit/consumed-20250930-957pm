@@ -60,13 +60,13 @@ export default function UserProfile() {
       
       if (response.ok) {
         const data = await response.json();
-        // Filter out system lists and "All" list to show only user's custom lists
-        const customLists = data.lists?.filter((list: any) => 
+        // Show ONLY the system default lists (exclude "All" but include the 4 main ones)
+        const systemLists = data.lists?.filter((list: any) => 
           list.id !== 'all' && 
-          !['Currently', 'Queue', 'Finished', 'Did Not Finish'].includes(list.title)
+          ['Currently', 'Queue', 'Finished', 'Did Not Finish'].includes(list.title)
         ) || [];
-        setUserLists(customLists);
-        console.log('User lists loaded:', customLists);
+        setUserLists(systemLists);
+        console.log('User lists loaded:', systemLists);
       } else {
         console.error('Failed to fetch user lists');
         setUserLists([]);
@@ -492,12 +492,6 @@ export default function UserProfile() {
     }
   ];
 
-  const topLists = [
-    { name: "Sci-Fi Must Reads", items: 28, public: true, likes: 145 },
-    { name: "Comfort Movies", items: 15, public: true, likes: 89 },
-    { name: "Workout Playlists", items: 42, public: false, likes: 0 },
-    { name: "Oscar Winners 2024", items: 8, public: true, likes: 67 }
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -904,48 +898,6 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Top Lists */}
-        <div className="px-4 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">My Lists</h2>
-            <Button variant="outline" size="sm">
-              <Plus size={16} className="mr-2" />
-              Create List
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {topLists.map((list, index) => (
-              <div key={index} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-gray-900">{list.name}</h4>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={list.public ? "default" : "secondary"}>
-                      {list.public ? "Public" : "Private"}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleShareList(list.name, list.items, list.public)}
-                      className="text-gray-700 hover:text-purple-600 hover:bg-purple-50 p-1"
-                      data-testid={`share-list-${list.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      <CornerUpRight size={16} />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>{list.items} items</span>
-                  {list.public && (
-                    <div className="flex items-center space-x-1">
-                      <Heart size={14} />
-                      <span>{list.likes} likes</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Media History */}
         <div className="px-4 mb-8">
