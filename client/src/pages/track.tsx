@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
@@ -43,6 +44,8 @@ export default function Track() {
   };
 
   const { user, session } = useAuth();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Get user's lists and media data from Supabase
   const { data: userListsData, isLoading: listsLoading, error: listsError } = useQuery({
@@ -115,19 +118,18 @@ export default function Track() {
 
   const recommendations = recommendationsData?.recommendations || [];
 
-  // Handle adding recommendation to a specific list
-  const handleAddRecommendation = async (recommendation: any, listType: string) => {
-    if (!session?.access_token) {
-      console.log('No session token available');
-      return;
-    }
+  // React Query mutation for adding recommendations to lists
+  const addRecommendationMutation = useMutation({
+    mutationFn: async ({ recommendation, listType }: { recommendation: any; listType: string }) => {
+      if (!session?.access_token) {
+        throw new Error("Authentication required");
+      }
 
-    try {
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           title: recommendation.title,
@@ -140,15 +142,33 @@ export default function Track() {
         }),
       });
 
-      if (response.ok) {
-        console.log(`Added ${recommendation.title} to ${listType}`);
-        // Optionally refresh the lists data
-      } else {
-        console.error('Failed to add recommendation:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Add recommendation error response:', response.status, errorText);
+        throw new Error(`Failed to add recommendation: ${response.status} - ${errorText}`);
       }
-    } catch (error) {
-      console.error('Error adding recommendation:', error);
-    }
+
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Added to list!",
+        description: `${variables.recommendation.title} added to ${variables.listType === 'queue' ? 'Queue' : variables.listType === 'currently' ? 'Currently' : variables.listType === 'finished' ? 'Finished' : 'Did Not Finish'}.`,
+      });
+      // Invalidate and refetch the lists data to show the new item
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add recommendation",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddRecommendation = (recommendation: any, listType: string) => {
+    addRecommendationMutation.mutate({ recommendation, listType });
   };
 
   const getCategoryIcon = (category: string, isWhiteBg = false) => {
@@ -327,17 +347,19 @@ export default function Track() {
                       <Button
                         size="sm"
                         onClick={() => handleAddRecommendation(rec, 'queue')}
-                        className="bg-gray-400 hover:bg-gray-300 text-white px-3 py-1 text-xs rounded-r-none border-r border-gray-300"
+                        disabled={addRecommendationMutation.isPending}
+                        className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-3 py-1 text-xs rounded-r-none border-r border-gray-300"
                         data-testid={`add-to-queue-${rec.id}`}
                       >
                         <Plus size={14} className="mr-1" />
-                        Queue
+                        {addRecommendationMutation.isPending ? "Adding..." : "Queue"}
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             size="sm"
-                            className="bg-gray-400 hover:bg-gray-300 text-white px-2 py-1 text-xs rounded-l-none"
+                            disabled={addRecommendationMutation.isPending}
+                            className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-2 py-1 text-xs rounded-l-none"
                             data-testid={`add-dropdown-${rec.id}`}
                           >
                             <ChevronDown size={14} />
@@ -347,18 +369,21 @@ export default function Track() {
                           <DropdownMenuItem 
                             onClick={() => handleAddRecommendation(rec, 'currently')}
                             className="cursor-pointer"
+                            disabled={addRecommendationMutation.isPending}
                           >
                             Add to Currently
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleAddRecommendation(rec, 'finished')}
                             className="cursor-pointer"
+                            disabled={addRecommendationMutation.isPending}
                           >
                             Add to Finished  
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleAddRecommendation(rec, 'dnf')}
                             className="cursor-pointer"
+                            disabled={addRecommendationMutation.isPending}
                           >
                             Add to Did Not Finish
                           </DropdownMenuItem>
