@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, X, List, Star } from "lucide-react";
+import { Search, X, List, Star, MessageCircle } from "lucide-react";
 import { InsertConsumptionLog } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -234,7 +234,8 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
         <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
           {/* Search Media Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Media</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Search Media</h3>
+            <p className="text-sm text-gray-600 mb-4">Select media to add ratings, reviews, and organize into lists</p>
             
             {/* Category Checkboxes */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
@@ -381,13 +382,19 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
 
           {/* Rating and Review Section */}
           {selectedMedia && (
-            <div className="space-y-6">
+            <div className="space-y-6 bg-gray-50 p-6 rounded-lg border-2 border-dashed border-gray-300">
+              <div className="text-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Rate & Review</h2>
+                <p className="text-sm text-gray-600">Add your rating and thoughts about {selectedMedia.title}</p>
+              </div>
+
               {/* Clear All Button */}
               <div className="flex justify-center">
                 <Button
                   onClick={resetForm}
                   variant="outline"
-                  className="px-8 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                  size="sm"
+                  className="px-6 py-1 border-gray-300 text-gray-700 hover:bg-gray-50"
                   data-testid="button-clear-all"
                 >
                   Clear All
@@ -395,18 +402,21 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
               </div>
 
               {/* Rating Section */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Rating (Optional)</h3>
-                <div className="flex items-center space-x-1">
+              <div className="bg-white p-4 rounded-lg border">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                  <Star className="h-5 w-5 text-yellow-500 mr-2" />
+                  Rate this {selectedMedia.type}
+                </h3>
+                <div className="flex items-center justify-center space-x-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       onClick={() => setRating(star === rating ? 0 : star)}
-                      className="p-1 hover:scale-110 transition-transform"
+                      className="p-2 hover:scale-110 transition-transform"
                       data-testid={`star-${star}`}
                     >
                       <Star
-                        size={32}
+                        size={36}
                         className={`${
                           star <= rating
                             ? 'fill-yellow-400 text-yellow-400'
@@ -416,11 +426,24 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                     </button>
                   ))}
                 </div>
+                {rating > 0 && (
+                  <p className="text-center text-sm text-gray-600 mt-2">
+                    {rating} star{rating !== 1 ? 's' : ''} - 
+                    {rating === 1 && ' Awful'}
+                    {rating === 2 && ' Bad'}
+                    {rating === 3 && ' Okay'}
+                    {rating === 4 && ' Good'}
+                    {rating === 5 && ' Amazing'}
+                  </p>
+                )}
               </div>
 
               {/* Review Section */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Review (Optional)</h3>
+              <div className="bg-white p-4 rounded-lg border">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                  <MessageCircle className="h-5 w-5 text-blue-500 mr-2" />
+                  Write a review
+                </h3>
                 <Textarea
                   value={review}
                   onChange={(e) => setReview(e.target.value)}
@@ -428,12 +451,11 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                   className="min-h-[120px] resize-none border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                   data-testid="textarea-review"
                 />
+                <p className="text-xs text-gray-500 mt-2">
+                  Optional - Share your thoughts, insights, or recommendations
+                </p>
               </div>
 
-              {/* Add to Lists Section Header */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Add to Lists (Optional)</h3>
-              </div>
             </div>
           )}
 
