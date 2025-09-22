@@ -132,13 +132,18 @@ export default function Track() {
           "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          title: recommendation.title,
-          creator: recommendation.creator,
-          type: recommendation.media_type,
-          media_type: recommendation.media_type,
-          image_url: recommendation.image_url,
-          list_type: listType,
-          notes: null,
+          media: {
+            title: recommendation.title,
+            mediaType: recommendation.media_type,
+            creator: recommendation.creator,
+            imageUrl: recommendation.image_url,
+            externalId: recommendation.external_id,
+            externalSource: recommendation.external_source,
+            description: recommendation.description,
+          },
+          rating: null,
+          review: null,
+          listType: listType,
         }),
       });
 
@@ -155,8 +160,8 @@ export default function Track() {
         title: "Added to list!",
         description: `${variables.recommendation.title} added to ${variables.listType === 'queue' ? 'Queue' : variables.listType === 'currently' ? 'Currently' : variables.listType === 'finished' ? 'Finished' : 'Did Not Finish'}.`,
       });
-      // Invalidate and refetch the lists data to show the new item
-      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      // Invalidate and refetch only the lists data to show the new item - don't refetch recommendations
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
     },
     onError: (error) => {
       toast({
