@@ -4,8 +4,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, X, List } from "lucide-react";
+import { Search, X, List, Star } from "lucide-react";
 import { InsertConsumptionLog } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -38,6 +39,8 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [rating, setRating] = useState<number>(0);
+  const [review, setReview] = useState<string>("");
 
   const queryClient = useQueryClient();
   const { user, session } = useAuth();
@@ -62,6 +65,8 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
     setSearchQuery("");
     setSearchResults([]);
     setSelectedMedia(null);
+    setRating(0);
+    setReview("");
   };
 
 
@@ -156,8 +161,8 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             externalSource: mediaData.external_source,
             description: mediaData.description,
           },
-          rating: null,
-          review: null,
+          rating: rating > 0 ? rating : null,
+          review: review.trim() || null,
           listType: mediaData.listType || 'all', // Send the type, let edge function map to real list ID
         }),
       });
@@ -374,6 +379,63 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             )}
           </div>
 
+          {/* Rating and Review Section */}
+          {selectedMedia && (
+            <div className="space-y-6">
+              {/* Clear All Button */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={resetForm}
+                  variant="outline"
+                  className="px-8 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                  data-testid="button-clear-all"
+                >
+                  Clear All
+                </Button>
+              </div>
+
+              {/* Rating Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Rating (Optional)</h3>
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRating(star === rating ? 0 : star)}
+                      className="p-1 hover:scale-110 transition-transform"
+                      data-testid={`star-${star}`}
+                    >
+                      <Star
+                        size={32}
+                        className={`${
+                          star <= rating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'fill-gray-200 text-gray-200'
+                        } hover:fill-yellow-300 hover:text-yellow-300 transition-colors`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Review Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Review (Optional)</h3>
+                <Textarea
+                  value={review}
+                  onChange={(e) => setReview(e.target.value)}
+                  placeholder="Share your thoughts about this media..."
+                  className="min-h-[120px] resize-none border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                  data-testid="textarea-review"
+                />
+              </div>
+
+              {/* Add to Lists Section Header */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Add to Lists (Optional)</h3>
+              </div>
+            </div>
+          )}
 
         </div>
 
