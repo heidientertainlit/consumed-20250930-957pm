@@ -7,9 +7,12 @@ import { useAuth } from "@/lib/auth";
 
 interface LeaderboardEntry {
   user_id: string;
+  user_name: string;
   user_points: number;
   score: number;
   created_at: string;
+  total_items?: number;
+  total_reviews?: number;
 }
 
 const fetchLeaderboard = async (session: any, category: string = 'all_time', limit: number = 10): Promise<LeaderboardEntry[]> => {
@@ -112,9 +115,11 @@ export default function Leaderboard() {
                       </div>
                       <div>
                         <div className="font-medium text-lg text-gray-900" data-testid={`user-${entry.user_id}`}>
-                          {entry.user_id}
+                          {entry.user_name || 'Anonymous User'}
                         </div>
-                        <div className="text-sm text-gray-600">Score: {entry.score}</div>
+                        <div className="text-sm text-gray-600">
+                          {entry.total_items ? `${entry.total_items} items tracked` : `Score: ${entry.score}`}
+                        </div>
                       </div>
                     </div>
                     
