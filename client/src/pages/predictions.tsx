@@ -261,7 +261,7 @@ const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: bo
                   <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
                 )}
               </div>
-              <span className="font-medium text-gray-900">{option}</span>
+              <span className="font-medium text-gray-700">{option}</span>
             </label>
           ))}
         </div>
@@ -346,7 +346,7 @@ export default function PredictionsPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-semibold text-black mb-2">
+            <h1 className="text-3xl font-semibold text-gray-800 mb-2">
               Predictions
             </h1>
             <p className="text-lg text-gray-600">
@@ -367,8 +367,8 @@ export default function PredictionsPage() {
               onClick={() => setFilterStatus(filter.key as any)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 filterStatus === filter.key
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white text-gray-700 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-700'
               }`}
               data-testid={`filter-${filter.key}`}
             >
@@ -404,14 +404,14 @@ export default function PredictionsPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">Deadline:</span>
-                    <span className="font-medium text-gray-900 flex items-center">
+                    <span className="font-medium text-gray-700 flex items-center">
                       <Clock size={14} className="mr-1" />
                       {game.deadline}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">Participants:</span>
-                    <span className="font-medium text-gray-900 flex items-center">
+                    <span className="font-medium text-gray-700 flex items-center">
                       <Users size={14} className="mr-1" />
                       {game.participants.toLocaleString()}
                     </span>
@@ -429,7 +429,7 @@ export default function PredictionsPage() {
         {filteredGames.length === 0 && (
           <div className="text-center py-12">
             <Trophy size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No prediction games found</h3>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">No prediction games found</h3>
             <p className="text-gray-600">Check back later for new prediction opportunities!</p>
           </div>
         )}
