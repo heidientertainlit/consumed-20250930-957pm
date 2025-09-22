@@ -152,7 +152,7 @@ const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpe
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           {categories.map((category) => (
-            <Card key={category.id} className="border-gray-200">
+            <Card key={category.id} className="bg-white border-gray-200">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg">{category.title}</CardTitle>
               </CardHeader>
@@ -360,14 +360,14 @@ export default function PredictionsPage() {
       
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center mb-8">
+        <div className="mb-8">
           <Link href="/play">
-            <Button variant="ghost" size="sm" className="mr-4" data-testid="back-to-play">
+            <Button variant="ghost" size="sm" className="mb-4" data-testid="back-to-play">
               <ArrowLeft size={20} className="mr-2" />
               Back to Play
             </Button>
           </Link>
-          <div>
+          <div className="mb-8">
             <h1 className="text-3xl font-semibold text-gray-800 mb-2">
               Predictions
             </h1>
@@ -403,7 +403,7 @@ export default function PredictionsPage() {
           {filteredGames.map((game) => (
             <Card 
               key={game.id} 
-              className={`border-gray-200 transition-all hover:shadow-md ${
+              className={`bg-white border-gray-200 transition-all hover:shadow-md ${
                 game.status === "open" ? "cursor-pointer hover:border-purple-300" : "opacity-75"
               }`}
               onClick={() => handleGameClick(game)}
