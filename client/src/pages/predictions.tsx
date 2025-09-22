@@ -83,17 +83,13 @@ const lowStakesPools: PredictionPool[] = [
     status: "open",
     category: "TV",
     icon: "📊"
-  }
-];
-
-// High Stakes Prediction Pools (Major Events)
-const highStakesPools: PredictionPool[] = [
+  },
   {
     id: "dancing-with-stars",
     title: "Dancing with the Stars Season 34",
     description: "Predict the winner of DWTS Season 34 - Full Tournament Bracket",
     type: "bracket",
-    pointsReward: 100,
+    pointsReward: 25,
     deadline: "May 20, 2025", 
     participants: 2834,
     status: "open",
@@ -105,50 +101,15 @@ const highStakesPools: PredictionPool[] = [
     title: "2025 Academy Awards",
     description: "Predict winners across all major Oscar categories",
     type: "awards",
-    pointsReward: 75,
+    pointsReward: 20,
     deadline: "March 2, 2025",
     participants: 4156,
     status: "open",
     category: "Movies", 
     icon: "🎭"
-  },
-  {
-    id: "big-brother-winner",
-    title: "Big Brother Season 27 Winner",
-    description: "Who will take home the $750,000 grand prize?",
-    type: "vote",
-    pointsReward: 85,
-    deadline: "October 2025",
-    participants: 1892,
-    status: "open",
-    category: "Reality TV",
-    icon: "👁️"
-  },
-  {
-    id: "emmys-2025",
-    title: "2025 Emmy Awards",
-    description: "Predict winners across Drama, Comedy, and Limited Series",
-    type: "awards", 
-    pointsReward: 80,
-    deadline: "September 2025",
-    participants: 3245,
-    status: "open",
-    category: "TV",
-    icon: "📺"
-  },
-  {
-    id: "golden-globes-2025",
-    title: "2025 Golden Globe Awards",
-    description: "Predict winners across film and television categories",
-    type: "awards",
-    pointsReward: 70,
-    deadline: "January 2025", 
-    participants: 2156,
-    status: "open",
-    category: "Movies",
-    icon: "🌟"
   }
 ];
+
 
 // Award Show Modal Component
 const AwardShowModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
@@ -577,9 +538,8 @@ export default function PredictionsPage() {
     }
   };
 
-  // Combine both pool types for now (will redesign layout next)
-  const allPools = [...lowStakesPools, ...highStakesPools];
-  const filteredPools = allPools.filter(pool => 
+  // Filter pools based on status
+  const filteredPools = lowStakesPools.filter(pool => 
     pool.status === filterStatus
   );
 
@@ -629,13 +589,11 @@ export default function PredictionsPage() {
           </div>
         </div>
 
-        {/* League-Style Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Low Stakes Pools */}
+        {/* Prediction Pools */}
+        <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-4 rounded-t-lg">
-              <h2 className="text-lg font-semibold text-center">LOW STAKES POOLS</h2>
+              <h2 className="text-lg font-semibold text-center">PREDICTION POOLS</h2>
             </div>
             <div className="p-6 space-y-4">
               {lowStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
@@ -664,44 +622,7 @@ export default function PredictionsPage() {
                 </div>
               ))}
               <button className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-medium hover:from-purple-600 hover:to-purple-700 transition-all">
-                See All Low Stakes Pools →
-              </button>
-            </div>
-          </div>
-
-          {/* High Stakes Pools */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-4 rounded-t-lg">
-              <h2 className="text-lg font-semibold text-center">HIGH STAKES POOLS</h2>
-            </div>
-            <div className="p-6 space-y-4">
-              {highStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
-                <div 
-                  key={pool.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="text-2xl">{pool.icon}</div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{pool.title}</h3>
-                      <p className="text-sm text-gray-600">{pool.description}</p>
-                      <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                        <span>{pool.pointsReward} pts</span>
-                        <span>{pool.participants.toLocaleString()} participants</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handlePoolClick(pool)}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all"
-                    data-testid={`join-pool-${pool.id}`}
-                  >
-                    Join
-                  </button>
-                </div>
-              ))}
-              <button className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all">
-                See All High Stakes Pools →
+                See All Pools →
               </button>
             </div>
           </div>
