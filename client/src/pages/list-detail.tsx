@@ -18,70 +18,66 @@ export default function ListDetail() {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  // Get real list data from Supabase
-  const { data: userListsData, isLoading: listsLoading } = useQuery({
-    queryKey: ['user-lists-with-media'],
+  // Get list name from URL: /list/currently -> "currently"
+  const urlListName = window.location.pathname.split('/list/')[1];
+  
+  // Get shared list data from Supabase
+  const { data: sharedListData, isLoading: listsLoading } = useQuery({
+    queryKey: ['shared-list', urlListName],
     queryFn: async () => {
-      if (!session?.access_token) {
-        console.log('No session token available');
+      if (!urlListName) {
+        console.log('No list name in URL');
         return null;
       }
       
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+      const headers: any = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add auth header if available (for user's own lists)
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-shared-list?list_id=${encodeURIComponent(urlListName)}`, {
         method: "GET",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
+        headers,
       });
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Supabase lists fetch failed:', response.status, errorText);
-        throw new Error('Failed to fetch user lists');
+        console.error('Shared list fetch failed:', response.status, errorText);
+        throw new Error('Failed to fetch list');
       }
       
       const data = await response.json();
-      console.log('Supabase lists data:', data);
+      console.log('Shared list data:', data);
       return data;
     },
-    enabled: !!session?.access_token,
+    enabled: !!urlListName,
   });
 
-  // Find the current list based on URL or default to "All"
-  const allLists = userListsData?.lists || [];
-  // Get list name from URL: /list/currently -> "Currently"
-  const urlListName = window.location.pathname.split('/list/')[1];
-  const listNameMapping = {
-    'currently': 'Currently',
-    'queue': 'Queue', 
-    'finished': 'Finished',
-    'did-not-finish': 'Did Not Finish',
-    'all': 'All'
-  };
-  const currentListName = listNameMapping[urlListName] || "All";
-  const currentList = allLists.find((list: any) => list.title === currentListName) || allLists[0];
-  
-  // Format the list data for display
-  const listData = currentList ? {
-    id: currentList.id,
-    name: currentList.title,
-    description: getListDescription(currentList.title),
-    items: (currentList.items || []).map((item: any) => ({
+  // Update the data structure to match new response format
+  const listData = sharedListData ? {
+    id: sharedListData.id,
+    name: sharedListData.title,
+    description: getListDescription(sharedListData.title),
+    items: (sharedListData.items || []).map((item: any) => ({
       id: item.id,
       title: item.title,
       creator: item.creator || 'Unknown',
       type: item.media_type ? capitalizeFirst(item.media_type) : 'Mixed',
       artwork: item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop",
-      progress: 0, // No progress tracking yet
+      progress: 0,
       addedDate: new Date(item.created_at).toLocaleDateString(),
       addedBy: "You"
     })),
-    collaborators: [], // No collaborators yet
+    collaborators: [],
     owner: "You",
     createdDate: new Date().toLocaleDateString(),
-    totalItems: currentList.items?.length || 0,
+    totalItems: sharedListData.items?.length || 0,
     likes: 0,
-    isPublic: false
+    isPublic: sharedListData.is_public || false
   } : null;
 
   // Helper functions
