@@ -146,7 +146,7 @@ const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpe
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white border-gray-200 text-gray-800">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{game.title}</DialogTitle>
           <p className="text-gray-600">{game.description}</p>
         </DialogHeader>
 
@@ -154,7 +154,7 @@ const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpe
           {categories.map((category) => (
             <Card key={category.id} className="bg-white border-gray-200">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">{category.title}</CardTitle>
+                <CardTitle className="text-lg text-gray-900">{category.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {category.nominees.map((nominee) => (
@@ -167,7 +167,7 @@ const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpe
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
-                    {nominee}
+                    <span className="text-gray-800">{nominee}</span>
                   </button>
                 ))}
               </CardContent>
@@ -201,7 +201,7 @@ const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{game.title}</DialogTitle>
           <p className="text-gray-600">{game.description}</p>
         </DialogHeader>
 
@@ -216,7 +216,7 @@ const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: 
                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
               }`}
             >
-              <div className="font-medium">{option}</div>
+              <div className="font-medium text-gray-800">{option}</div>
             </button>
           ))}
         </div>
@@ -252,7 +252,7 @@ const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: bo
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{game.title}</DialogTitle>
           <p className="text-gray-600">{game.description}</p>
         </DialogHeader>
 
@@ -417,10 +417,10 @@ export default function PredictionsPage() {
                   </div>
                   {getStatusBadge(game.status)}
                 </div>
-                <CardTitle className="text-lg font-semibold line-clamp-2">{game.title}</CardTitle>
+                <CardTitle className="text-lg font-semibold line-clamp-2 text-gray-900">{game.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{game.description}</p>
+                <p className="text-gray-700 text-sm mb-4 line-clamp-2">{game.description}</p>
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
