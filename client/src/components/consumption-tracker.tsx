@@ -216,9 +216,9 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
       <DialogContent className="bg-white border border-gray-200 max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between pb-4 flex-shrink-0">
           <div>
-            <DialogTitle className="text-2xl font-bold text-gray-900">Add Media</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-900">Share Update</DialogTitle>
             <p className="text-gray-500 text-sm mt-1">
-              Search for media to add to your lists. List selection is optional.
+              Share your entertainment experience with your friends.
             </p>
           </div>
           <Button
@@ -232,13 +232,12 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
-          {/* Search Media Section */}
+          {/* Media Type Selection */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Search Media</h3>
-            <p className="text-sm text-gray-600 mb-4">Select media to add ratings, reviews, and organize into lists</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
             
-            {/* Category Checkboxes */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+            {/* Category Checkboxes - 2 Column Layout */}
+            <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-6">
               {categories.map((category) => {
                 const isChecked = selectedCategories.includes(category);
                 const isAllMedia = category === "All Media";
@@ -268,26 +267,32 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                       id={category}
                       checked={isChecked}
                       onCheckedChange={handleToggle}
-                      className="data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
+                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5"
                     />
                     <label
                       htmlFor={category}
                       className="text-sm font-medium text-gray-700 cursor-pointer select-none"
                     >
-                      {category}
+                      {category === "All Media" ? "All Types" : category}
                     </label>
                   </div>
                 );
               })}
             </div>
 
+          </div>
+
+          {/* Search for Media Section */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search for Media</h3>
+            
             {/* Search Input */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for movies, TV shows, books, music, podcasts, YouTube videos..."
+                placeholder="Search for movies, TV shows, books, podcasts, music..."
                 className="pl-10 py-3 text-base bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500"
               />
             </div>
@@ -380,101 +385,69 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             )}
           </div>
 
-          {/* Rating and Review Section */}
-          {selectedMedia && (
-            <div className="space-y-6 bg-gray-50 p-6 rounded-lg border-2 border-dashed border-gray-300">
-              <div className="text-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Rate & Review</h2>
-                <p className="text-sm text-gray-600">Add your rating and thoughts about {selectedMedia.title}</p>
-              </div>
-
-              {/* Rating Section */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                  <Star className="h-5 w-5 text-yellow-500 mr-2" />
-                  Rate this {selectedMedia.type}
-                </h3>
-                <div className="space-y-4">
-                  {/* Star Display */}
-                  <div className="flex items-center justify-center space-x-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => setRating(star === rating ? 0 : star)}
-                        className="p-1 hover:scale-110 transition-transform"
-                        data-testid={`star-${star}`}
-                      >
-                        <Star
-                          size={36}
-                          className={`${
-                            star <= Math.floor(rating)
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : star <= rating
-                              ? 'fill-yellow-200 text-yellow-200'
-                              : 'fill-gray-200 text-gray-200'
-                          } hover:fill-yellow-300 hover:text-yellow-300 transition-colors cursor-pointer`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  
-                  {/* Rating Input */}
-                  <div className="flex items-center justify-center space-x-3">
-                    <label className="text-sm font-medium text-gray-700">Rating:</label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="5"
-                      step="0.1"
-                      value={rating || ''}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value);
-                        if (value >= 0 && value <= 5) {
-                          setRating(value);
-                        } else if (e.target.value === '') {
-                          setRating(0);
-                        }
-                      }}
-                      className="w-20 text-center bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500"
-                      placeholder="0.0"
-                      data-testid="rating-input"
+          {/* Rating Section - Always Visible */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Rate this media (optional)</h3>
+            <div className="flex items-center space-x-4">
+              {/* Star Display */}
+              <div className="flex items-center space-x-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star === rating ? 0 : star)}
+                    className="p-1 hover:scale-110 transition-transform"
+                    data-testid={`star-${star}`}
+                  >
+                    <Star
+                      size={24}
+                      className={`${
+                        star <= Math.floor(rating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : star <= rating
+                          ? 'fill-yellow-200 text-yellow-200'
+                          : 'fill-gray-200 text-gray-200'
+                      } hover:fill-yellow-300 hover:text-yellow-300 transition-colors cursor-pointer`}
                     />
-                    <span className="text-sm text-gray-500">/ 5.0</span>
-                  </div>
-                  
-                  {rating > 0 && (
-                    <p className="text-center text-sm text-gray-600">
-                      {rating.toFixed(1)} star{rating !== 1 ? 's' : ''} - 
-                      {rating <= 1.5 && ' Awful'}
-                      {rating > 1.5 && rating <= 2.5 && ' Bad'}
-                      {rating > 2.5 && rating <= 3.5 && ' Okay'}
-                      {rating > 3.5 && rating <= 4.5 && ' Good'}
-                      {rating > 4.5 && ' Amazing'}
-                    </p>
-                  )}
-                </div>
+                  </button>
+                ))}
               </div>
-
-              {/* Review Section */}
-              <div className="bg-white p-4 rounded-lg border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                  <MessageCircle className="h-5 w-5 text-blue-500 mr-2" />
-                  Write a review
-                </h3>
-                <Textarea
-                  value={review}
-                  onChange={(e) => setReview(e.target.value)}
-                  placeholder="Share your thoughts about this media..."
-                  className="min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
-                  data-testid="textarea-review"
+              
+              {/* Rating Input */}
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={rating || ''}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (value >= 0 && value <= 5) {
+                      setRating(value);
+                    } else if (e.target.value === '') {
+                      setRating(0);
+                    }
+                  }}
+                  className="w-16 text-center bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                  placeholder="0"
+                  data-testid="rating-input"
                 />
-                <p className="text-xs text-gray-500 mt-2">
-                  Optional - Share your thoughts, insights, or recommendations
-                </p>
+                <span className="text-sm text-gray-500">(0-5)</span>
               </div>
-
             </div>
-          )}
+          </div>
+
+          {/* Review Section - Always Visible */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Thoughts (Review)</h3>
+            <Textarea
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              placeholder="Share your thoughts about this media..."
+              className="min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
+              data-testid="textarea-review"
+            />
+          </div>
 
         </div>
 
