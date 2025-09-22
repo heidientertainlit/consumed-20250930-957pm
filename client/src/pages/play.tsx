@@ -1,15 +1,21 @@
 import { useState } from "react";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
+import BlendCreator from "@/components/blend-creator";
 import { Button } from "@/components/ui/button";
 import { Play, Trophy, Brain, Gamepad2, Users } from "lucide-react";
 import { Link } from "wouter";
 
 export default function PlayPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [isBlendModalOpen, setIsBlendModalOpen] = useState(false);
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
+  };
+
+  const handleCreateBlend = () => {
+    setIsBlendModalOpen(true);
   };
 
   return (
@@ -77,6 +83,7 @@ export default function PlayPage() {
               Find media you and your partner, book club, or friends have in common so you know what to watch or read together!
             </p>
             <Button 
+              onClick={handleCreateBlend}
               className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white px-8 py-3 text-lg"
               data-testid="play-blends-button"
             >
@@ -117,6 +124,11 @@ export default function PlayPage() {
       <ConsumptionTracker 
         isOpen={isTrackModalOpen} 
         onClose={() => setIsTrackModalOpen(false)} 
+      />
+      
+      <BlendCreator 
+        isOpen={isBlendModalOpen} 
+        onClose={() => setIsBlendModalOpen(false)} 
       />
     </div>
   );
