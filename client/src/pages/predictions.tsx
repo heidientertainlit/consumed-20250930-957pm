@@ -235,6 +235,121 @@ const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: 
   );
 };
 
+// Bracket Modal Component for Dancing with the Stars
+const BracketModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
+  const [selectedWinner, setSelectedWinner] = useState<string>("");
+
+  const finalists = [
+    "Chandler Kinney & Brandon Armstrong",
+    "Ilona Maher & Alan Bersten", 
+    "Joey Graziadei & Jenna Johnson",
+    "Stephen Nedoroscik & Rylee Arnold"
+  ];
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white border-gray-200 text-gray-800">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{game.title}</DialogTitle>
+          <p className="text-gray-600">{game.description}</p>
+        </DialogHeader>
+
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-6 text-gray-900 text-center">Final Four Bracket - Pick the Winner!</h3>
+          
+          <div className="relative">
+            {/* Bracket Layout */}
+            <div className="grid grid-cols-7 gap-4 items-center min-h-[300px]">
+              
+              {/* Left Semifinals */}
+              <div className="col-span-2 space-y-8">
+                {finalists.slice(0, 2).map((finalist, index) => (
+                  <button
+                    key={finalist}
+                    onClick={() => setSelectedWinner(finalist)}
+                    className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                      selectedWinner === finalist
+                        ? 'border-purple-500 bg-purple-50 shadow-lg'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium text-gray-800 text-sm leading-tight">{finalist}</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Left Bracket Lines */}
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-8 h-0.5 bg-gray-300 mb-8"></div>
+                <div className="w-0.5 h-16 bg-gray-300"></div>
+                <div className="w-8 h-0.5 bg-gray-300 mt-8"></div>
+              </div>
+
+              {/* Center Finals */}
+              <div className="col-span-1 flex flex-col items-center justify-center">
+                <div className="text-center mb-4">
+                  <div className="text-xs font-medium text-gray-500 mb-2">🏆 CHAMPION</div>
+                  <div className={`w-24 h-16 rounded-lg border-2 flex items-center justify-center ${
+                    selectedWinner ? 'border-gold-500 bg-yellow-50' : 'border-gray-300 bg-gray-50'
+                  }`}>
+                    <span className="text-xs text-center text-gray-600 leading-tight">
+                      {selectedWinner ? "🏆" : "Winner"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Bracket Lines */}
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-8 h-0.5 bg-gray-300 mb-8"></div>
+                <div className="w-0.5 h-16 bg-gray-300"></div>
+                <div className="w-8 h-0.5 bg-gray-300 mt-8"></div>
+              </div>
+
+              {/* Right Semifinals */}
+              <div className="col-span-2 space-y-8">
+                {finalists.slice(2, 4).map((finalist, index) => (
+                  <button
+                    key={finalist}
+                    onClick={() => setSelectedWinner(finalist)}
+                    className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                      selectedWinner === finalist
+                        ? 'border-purple-500 bg-purple-50 shadow-lg'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium text-gray-800 text-sm leading-tight">{finalist}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Selected Winner Display */}
+            {selectedWinner && (
+              <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="text-center">
+                  <div className="text-sm text-purple-600 font-medium">Your Prediction:</div>
+                  <div className="text-lg font-bold text-purple-900">{selectedWinner}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800"
+            disabled={!selectedWinner}
+          >
+            Submit Prediction ({game.pointsReward} pts)
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // Vote Modal Component
 const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: boolean; onClose: () => void }) => {
   const [selectedVote, setSelectedVote] = useState<string>("");
@@ -348,7 +463,11 @@ export default function PredictionsPage() {
       case "weekly":
         return <WeeklyModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
       case "vote":
-        return <VoteModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
+        if (selectedGame.id === "dancing-with-stars") {
+          return <BracketModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
+        } else {
+          return <VoteModal game={selectedGame} isOpen={!!selectedGame} onClose={() => setSelectedGame(null)} />;
+        }
       default:
         return null;
     }
@@ -372,7 +491,7 @@ export default function PredictionsPage() {
               Predictions
             </h1>
             <p className="text-lg text-gray-600">
-              Join prediction games and earn points by making accurate predictions about entertainment!
+              Join prediction pools and earn points by making accurate predictions about entertainment!
             </p>
           </div>
         </div>
@@ -380,7 +499,7 @@ export default function PredictionsPage() {
         {/* Filter Tabs */}
         <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 w-fit mb-8">
           {[
-            { key: "open", label: "Open Games" },
+            { key: "open", label: "Open Pools" },
             { key: "completed", label: "Completed" }
           ].map((filter) => (
             <button
@@ -398,7 +517,7 @@ export default function PredictionsPage() {
           ))}
         </div>
 
-        {/* Prediction Games Grid */}
+        {/* Prediction Pools Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredGames.map((game) => (
             <Card 
