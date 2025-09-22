@@ -1,12 +1,20 @@
 import { useState } from "react";
 import Navigation from "@/components/navigation";
+import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Play, Trophy, Brain, Gamepad2, Users } from "lucide-react";
+import { Link } from "wouter";
 
 export default function PlayPage() {
+  const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+
+  const handleTrackConsumption = () => {
+    setIsTrackModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Navigation />
+      <Navigation onTrackConsumption={handleTrackConsumption} />
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
@@ -48,13 +56,15 @@ export default function PlayPage() {
             <p className="text-gray-600 mb-6">
               Make predictions about upcoming entertainment releases, awards, and trends. Win points for accurate predictions!
             </p>
-            <Button 
-              className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white px-8 py-3 text-lg"
-              data-testid="play-predictions-button"
-            >
-              <Trophy size={20} className="mr-2" />
-              Make Predictions
-            </Button>
+            <Link href="/predictions">
+              <Button 
+                className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white px-8 py-3 text-lg"
+                data-testid="play-predictions-button"
+              >
+                <Trophy size={20} className="mr-2" />
+                Make Predictions
+              </Button>
+            </Link>
           </div>
 
           {/* Blends Option */}
@@ -103,6 +113,11 @@ export default function PlayPage() {
           </div>
         </div>
       </div>
+
+      <ConsumptionTracker 
+        isOpen={isTrackModalOpen} 
+        onClose={() => setIsTrackModalOpen(false)} 
+      />
     </div>
   );
 }
