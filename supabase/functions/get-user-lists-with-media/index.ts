@@ -65,8 +65,14 @@ serve(async (req) => {
     }
 
     // Get ALL system default lists (user_id = NULL)
+    // Create a service role client for accessing system data
+    const serviceSupabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '', 
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
     console.log("Fetching system default lists...");
-    const { data: systemLists, error: systemListsError } = await supabase
+    const { data: systemLists, error: systemListsError } = await serviceSupabase
       .from('lists')
       .select('id, title')
       .is('user_id', null)
