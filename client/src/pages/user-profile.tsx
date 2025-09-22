@@ -1253,15 +1253,7 @@ export default function UserProfile() {
                 <span className="text-3xl">📚</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Media History</h3>
-              <p className="text-gray-600 mb-4">Start tracking media to build your entertainment history</p>
-              <Button 
-                onClick={handleTrackConsumption}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-                data-testid="button-start-tracking-history"
-              >
-                <Plus size={16} className="mr-2" />
-                Track Media
-              </Button>
+              <p className="text-gray-600">No media found matching your current filters</p>
             </div>
           )}
         </div>
