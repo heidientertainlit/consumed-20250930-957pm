@@ -339,9 +339,9 @@ export default function Track() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
                       <div className="bg-white/20 p-1.5 rounded-lg mr-2">
-                        {getCategoryIcon(rec.category, true)}
+                        {getCategoryIcon(rec.media_type, true)}
                       </div>
-                      <span className="text-sm font-medium capitalize opacity-90">{rec.category}</span>
+                      <span className="text-sm font-medium capitalize opacity-90">{rec.media_type}</span>
                     </div>
                     <div className="flex">
                       <Button
