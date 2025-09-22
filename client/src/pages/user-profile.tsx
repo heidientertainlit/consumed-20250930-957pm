@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
@@ -15,6 +16,7 @@ import { AuthModal } from "@/components/auth";
 export default function UserProfile() {
   const { user, session, loading } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -167,6 +169,11 @@ export default function UserProfile() {
       title: "Create List",
       description: "List creation feature coming soon!",
     });
+  };
+
+  const handleListClick = (listName: string) => {
+    const listId = listName.toLowerCase().replace(/\s+/g, '-');
+    setLocation(`/list/${listId}`);
   };
 
   // Entertainment DNA API Functions
@@ -1049,7 +1056,12 @@ export default function UserProfile() {
           ) : (
             <div className="space-y-4">
               {userLists.map((list) => (
-                <div key={list.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div 
+                  key={list.id} 
+                  className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => handleListClick(list.title)}
+                  data-testid={`list-card-${list.title.toLowerCase().replace(/\s+/g, '-')}`}
+                >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center">
                       <List className="text-purple-700 mr-3" size={24} />
