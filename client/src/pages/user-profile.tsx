@@ -38,12 +38,17 @@ export default function UserProfile() {
   // User lists states
   const [userLists, setUserLists] = useState<any[]>([]);
   const [isLoadingLists, setIsLoadingLists] = useState(false);
+  
+  // User stats states
+  const [userStats, setUserStats] = useState<any>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   // Fetch DNA profile and user lists when authenticated
   useEffect(() => {
     if (session?.access_token) {
       fetchDnaProfile();
       fetchUserLists();
+      fetchUserStats();
     }
   }, [session?.access_token]);
 
@@ -78,6 +83,35 @@ export default function UserProfile() {
       setUserLists([]);
     } finally {
       setIsLoadingLists(false);
+    }
+  };
+
+  // Fetch user stats from Supabase edge function
+  const fetchUserStats = async () => {
+    if (!session?.access_token) return;
+    
+    setIsLoadingStats(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-stats', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserStats(data.stats);
+        console.log('User stats loaded:', data.stats);
+      } else {
+        console.error('Failed to fetch user stats');
+        setUserStats(null);
+      }
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      setUserStats(null);
+    } finally {
+      setIsLoadingStats(false);
     }
   };
 
@@ -561,49 +595,64 @@ export default function UserProfile() {
           {/* Your Stats */}
           <div className="mt-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Your Stats</h3>
-            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-purple-700">{mockUserData.consumptionStats.moviesWatched}</div>
-                  <div className="text-xs text-gray-600">Movies</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-pink-600">{mockUserData.consumptionStats.tvShowsWatched}</div>
-                  <div className="text-xs text-gray-600">TV Shows</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-cyan-600">{mockUserData.consumptionStats.booksRead}</div>
-                  <div className="text-xs text-gray-600">Books</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-600">{mockUserData.consumptionStats.musicHours}h</div>
-                  <div className="text-xs text-gray-600">Music</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-600">{mockUserData.consumptionStats.podcastHours}h</div>
-                  <div className="text-xs text-gray-600">Podcasts</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-orange-600">{mockUserData.consumptionStats.gamesPlayed}</div>
-                  <div className="text-xs text-gray-600">Games</div>
+            {isLoadingStats ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+                <div className="flex items-center justify-center">
+                  <Loader2 className="animate-spin text-gray-400" size={24} />
+                  <span className="ml-2 text-gray-600">Loading your stats...</span>
                 </div>
               </div>
+            ) : userStats ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-purple-700">{userStats.moviesWatched}</div>
+                    <div className="text-xs text-gray-600">Movies</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-pink-600">{userStats.tvShowsWatched}</div>
+                    <div className="text-xs text-gray-600">TV Shows</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-cyan-600">{userStats.booksRead}</div>
+                    <div className="text-xs text-gray-600">Books</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-green-600">{userStats.musicHours}h</div>
+                    <div className="text-xs text-gray-600">Music</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-blue-600">{userStats.podcastHours}h</div>
+                    <div className="text-xs text-gray-600">Podcasts</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-orange-600">{userStats.gamesPlayed}</div>
+                    <div className="text-xs text-gray-600">Games</div>
+                  </div>
+                </div>
 
-              <div className="flex justify-around border-t border-gray-200 pt-4">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">{mockUserData.consumptionStats.totalHours.toLocaleString()}h</div>
-                  <div className="text-xs text-gray-600">Total Hours</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">{mockUserData.consumptionStats.averageRating}</div>
-                  <div className="text-xs text-gray-600">Avg Rating</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">{mockUserData.stats.streak}</div>
-                  <div className="text-xs text-gray-600">Day Streak</div>
+                <div className="flex justify-around border-t border-gray-200 pt-4">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gray-900">{userStats.totalHours}h</div>
+                    <div className="text-xs text-gray-600">Total Hours</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gray-900">{userStats.averageRating}</div>
+                    <div className="text-xs text-gray-600">Avg Rating</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-gray-900">{userStats.dayStreak}</div>
+                    <div className="text-xs text-gray-600">Day Streak</div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+                <div className="text-center text-gray-600">
+                  <p>No stats available yet. Start tracking media to see your stats!</p>
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
