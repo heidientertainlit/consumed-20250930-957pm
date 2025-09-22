@@ -1,10 +1,22 @@
+# Build & deps
 node_modules/
 dist/
 build/
+.next/
+out/
+coverage/
+
+# Big/binary & backups
 *.zip
 *.tar.gz
+downloads/
+attached_assets/
+
+# Env/secrets
 .env
 .env.*
-attached_assets/
-downloads/
+*.local
+
+# OS/editor noise
 .DS_Store
+*.log
