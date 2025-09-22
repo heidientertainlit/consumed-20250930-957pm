@@ -429,7 +429,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                           setRating(0);
                         }
                       }}
-                      className="w-20 text-center bg-white border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                      className="w-20 text-center bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                       placeholder="0.0"
                       data-testid="rating-input"
                     />
