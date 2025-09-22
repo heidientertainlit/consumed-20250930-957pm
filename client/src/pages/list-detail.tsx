@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navigation from "@/components/navigation";
+import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, UserPlus, Trash2, MoreVertical, Star, Clock, Calendar } from "lucide-react";
@@ -11,9 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 export default function ListDetail() {
   const [, setLocation] = useLocation();
   const [isPublic, setIsPublic] = useState(true);
-  const [showAddItem, setShowAddItem] = useState(false);
+  const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [showInviteCollaborator, setShowInviteCollaborator] = useState(false);
-  const [newItemTitle, setNewItemTitle] = useState("");
   const [collaboratorEmail, setCollaboratorEmail] = useState("");
   
   const queryClient = useQueryClient();
@@ -102,56 +102,6 @@ export default function ListDetail() {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  const addItemMutation = useMutation({
-    mutationFn: async (title: string) => {
-      if (!session?.access_token) {
-        throw new Error("Authentication required");
-      }
-
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-media-to-list", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          listId: listData.id,
-          title: title,
-          mediaType: "mixed",
-          creator: "",
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to add item: ${response.status} - ${errorText}`);
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Item added!",
-        description: "Successfully added item to list.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["lists"] });
-      setNewItemTitle("");
-      setShowAddItem(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to add item",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAddItem = () => {
-    if (newItemTitle.trim()) {
-      addItemMutation.mutate(newItemTitle.trim());
-    }
-  };
 
   const handleInviteCollaborator = () => {
     if (collaboratorEmail.trim()) {
@@ -278,7 +228,7 @@ export default function ListDetail() {
               </Badge>
               
               <Button
-                onClick={() => setShowAddItem(true)}
+                onClick={() => setIsTrackModalOpen(true)}
                 className="bg-purple-600 hover:bg-purple-700"
                 data-testid="button-add-item"
               >
@@ -440,53 +390,11 @@ export default function ListDetail() {
         </div>
       </div>
 
-      {/* Add Item Modal */}
-      {showAddItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Add Item to List</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowAddItem(false)}>
-                <X size={20} />
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Search for media to add
-                </label>
-                <input
-                  type="text"
-                  value={newItemTitle}
-                  onChange={(e) => setNewItemTitle(e.target.value)}
-                  placeholder="Search movies, books, shows, music..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  data-testid="input-add-item"
-                />
-              </div>
-              
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleAddItem}
-                  disabled={!newItemTitle.trim()}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
-                  data-testid="button-confirm-add-item"
-                >
-                  Add to List
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAddItem(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Consumption Tracker Modal for Adding Media */}
+      <ConsumptionTracker 
+        isOpen={isTrackModalOpen} 
+        onClose={() => setIsTrackModalOpen(false)} 
+      />
 
       {/* Invite Collaborator Modal */}
       {showInviteCollaborator && (
