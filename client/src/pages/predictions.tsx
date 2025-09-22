@@ -79,6 +79,28 @@ const predictionGames: PredictionGame[] = [
     category: "Streaming"
   },
   {
+    id: "big-brother-winner",
+    title: "Big Brother Season 26 Winner",
+    description: "Who will win Big Brother Season 26? Make your prediction for the final winner!",
+    type: "vote",
+    pointsReward: 35,
+    deadline: "October 13, 2024",
+    participants: 892,
+    status: "open",
+    category: "Reality TV"
+  },
+  {
+    id: "dancing-with-stars",
+    title: "Dancing with the Stars Season 33",
+    description: "Predict the winner of Dancing with the Stars Season 33 and who will take home the Mirrorball Trophy!",
+    type: "vote",
+    pointsReward: 30,
+    deadline: "November 26, 2024",
+    participants: 1456,
+    status: "open",
+    category: "Reality TV"
+  },
+  {
     id: "golden-globes-2024",
     title: "2024 Golden Globe Awards",
     description: "Make your predictions for the Golden Globes across film and television categories.",
@@ -122,7 +144,7 @@ const AwardShowModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white border-gray-200 text-gray-800">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
           <p className="text-gray-600">{game.description}</p>
@@ -177,7 +199,7 @@ const WeeklyModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
           <p className="text-gray-600">{game.description}</p>
@@ -228,7 +250,7 @@ const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: bo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{game.title}</DialogTitle>
           <p className="text-gray-600">{game.description}</p>
@@ -283,7 +305,7 @@ const VoteModal = ({ game, isOpen, onClose }: { game: PredictionGame; isOpen: bo
 export default function PredictionsPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState<PredictionGame | null>(null);
-  const [filterStatus, setFilterStatus] = useState<"all" | "open" | "completed">("open");
+  const [filterStatus, setFilterStatus] = useState<"open" | "completed">("open");
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -308,7 +330,7 @@ export default function PredictionsPage() {
   };
 
   const filteredGames = predictionGames.filter(game => 
-    filterStatus === "all" || game.status === filterStatus
+    game.status === filterStatus
   );
 
   const handleGameClick = (game: PredictionGame) => {
@@ -359,7 +381,6 @@ export default function PredictionsPage() {
         <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 w-fit mb-8">
           {[
             { key: "open", label: "Open Games" },
-            { key: "all", label: "All Games" },
             { key: "completed", label: "Completed" }
           ].map((filter) => (
             <button
