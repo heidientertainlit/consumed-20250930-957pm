@@ -74,8 +74,40 @@ export default function Track() {
     pointsEarned: userLists.reduce((total: number, list: any) => total + (list.items?.length || 0) * 5, 0), // 5 points per item
   };
   
-  // Mock recommendations for now (can be replaced with real Supabase function later)
-  const recommendations: any[] = [];
+  // Get personalized recommendations from Supabase
+  const { data: recommendationsData, isLoading: recommendationsLoading } = useQuery({
+    queryKey: ['media-recommendations'],
+    queryFn: async () => {
+      if (!session?.access_token) {
+        console.log('No session token available for recommendations');
+        return null;
+      }
+      
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations", {
+        method: "GET", 
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Recommendations fetch failed:', response.status, errorText);
+        // Don't throw error, just return empty to not break the page
+        return { recommendations: [] };
+      }
+      
+      const data = await response.json();
+      console.log('Recommendations data:', data);
+      return data;
+    },
+    enabled: !!session?.access_token,
+    // Cache for 10 minutes since recommendations are expensive to generate
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+  });
+
+  const recommendations = recommendationsData?.recommendations || [];
 
   const getCategoryIcon = (category: string, isWhiteBg = false) => {
     const iconClass = isWhiteBg ? "text-purple-600" : "text-gray-600";
