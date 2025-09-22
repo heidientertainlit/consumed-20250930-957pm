@@ -388,54 +388,65 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                 <p className="text-sm text-gray-600">Add your rating and thoughts about {selectedMedia.title}</p>
               </div>
 
-              {/* Clear All Button */}
-              <div className="flex justify-center">
-                <Button
-                  onClick={resetForm}
-                  variant="outline"
-                  size="sm"
-                  className="px-6 py-1 border-gray-300 text-gray-700 hover:bg-gray-50"
-                  data-testid="button-clear-all"
-                >
-                  Clear All
-                </Button>
-              </div>
-
               {/* Rating Section */}
               <div className="bg-white p-4 rounded-lg border">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                   <Star className="h-5 w-5 text-yellow-500 mr-2" />
                   Rate this {selectedMedia.type}
                 </h3>
-                <div className="flex items-center justify-center space-x-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setRating(star === rating ? 0 : star)}
-                      className="p-2 hover:scale-110 transition-transform"
-                      data-testid={`star-${star}`}
-                    >
+                <div className="space-y-4">
+                  {/* Star Display */}
+                  <div className="flex items-center justify-center space-x-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <Star
+                        key={star}
                         size={36}
                         className={`${
-                          star <= rating
+                          star <= Math.floor(rating)
                             ? 'fill-yellow-400 text-yellow-400'
+                            : star <= rating
+                            ? 'fill-yellow-200 text-yellow-200'
                             : 'fill-gray-200 text-gray-200'
-                        } hover:fill-yellow-300 hover:text-yellow-300 transition-colors`}
+                        } transition-colors`}
                       />
-                    </button>
-                  ))}
+                    ))}
+                  </div>
+                  
+                  {/* Rating Input */}
+                  <div className="flex items-center justify-center space-x-3">
+                    <label className="text-sm font-medium text-gray-700">Rating:</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      value={rating || ''}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (value >= 0 && value <= 5) {
+                          setRating(value);
+                        } else if (e.target.value === '') {
+                          setRating(0);
+                        }
+                      }}
+                      className="w-20 text-center bg-white border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                      placeholder="0.0"
+                      data-testid="rating-input"
+                    />
+                    <span className="text-sm text-gray-500">/ 5.0</span>
+                  </div>
+                  
+                  {rating > 0 && (
+                    <p className="text-center text-sm text-gray-600">
+                      {rating.toFixed(1)} star{rating !== 1 ? 's' : ''} - 
+                      {rating <= 1.5 && ' Awful'}
+                      {rating > 1.5 && rating <= 2.5 && ' Bad'}
+                      {rating > 2.5 && rating <= 3.5 && ' Okay'}
+                      {rating > 3.5 && rating <= 4.5 && ' Good'}
+                      {rating > 4.5 && ' Amazing'}
+                    </p>
+                  )}
                 </div>
-                {rating > 0 && (
-                  <p className="text-center text-sm text-gray-600 mt-2">
-                    {rating} star{rating !== 1 ? 's' : ''} - 
-                    {rating === 1 && ' Awful'}
-                    {rating === 2 && ' Bad'}
-                    {rating === 3 && ' Okay'}
-                    {rating === 4 && ' Good'}
-                    {rating === 5 && ' Amazing'}
-                  </p>
-                )}
               </div>
 
               {/* Review Section */}
@@ -448,7 +459,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                   value={review}
                   onChange={(e) => setReview(e.target.value)}
                   placeholder="Share your thoughts about this media..."
-                  className="min-h-[120px] resize-none border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                  className="min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
                   data-testid="textarea-review"
                 />
                 <p className="text-xs text-gray-500 mt-2">
