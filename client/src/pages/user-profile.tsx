@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { Star, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuthModal } from "@/components/auth";
 
 export default function UserProfile() {
   const { user, session, loading } = useAuth();
+  const { toast } = useToast();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -31,12 +33,51 @@ export default function UserProfile() {
   const [surveyQuestions, setSurveyQuestions] = useState<any[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
-  // Fetch DNA profile when authenticated
+  // User lists states
+  const [userLists, setUserLists] = useState<any[]>([]);
+  const [isLoadingLists, setIsLoadingLists] = useState(false);
+
+  // Fetch DNA profile and user lists when authenticated
   useEffect(() => {
     if (session?.access_token) {
       fetchDnaProfile();
+      fetchUserLists();
     }
   }, [session?.access_token]);
+
+  // Fetch user lists from Supabase edge function
+  const fetchUserLists = async () => {
+    if (!session?.access_token) return;
+    
+    setIsLoadingLists(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Filter out system lists and "All" list to show only user's custom lists
+        const customLists = data.lists?.filter((list: any) => 
+          list.id !== 'all' && 
+          !['Currently', 'Queue', 'Finished', 'Did Not Finish'].includes(list.title)
+        ) || [];
+        setUserLists(customLists);
+        console.log('User lists loaded:', customLists);
+      } else {
+        console.error('Failed to fetch user lists');
+        setUserLists([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user lists:', error);
+      setUserLists([]);
+    } finally {
+      setIsLoadingLists(false);
+    }
+  };
 
   // Fetch survey questions from database
   const fetchSurveyQuestions = async () => {
@@ -100,6 +141,32 @@ export default function UserProfile() {
   const handleShareList = (listName: string, itemCount: number, isPublic: boolean) => {
     setSelectedListForShare({ name: listName, items: itemCount, isPublic });
     setShareModalOpen(true);
+  };
+
+  const handleShareListDirect = async (listId: string, listTitle: string) => {
+    try {
+      const shareUrl = `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link copied!",
+        description: `Share link for "${listTitle}" copied to clipboard.`,
+      });
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      toast({
+        title: "Failed to copy link",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreateList = () => {
+    // For now, show a toast - this can be expanded to open a create list modal
+    toast({
+      title: "Create List",
+      description: "List creation feature coming soon!",
+    });
   };
 
   // Entertainment DNA API Functions
@@ -1004,6 +1071,71 @@ export default function UserProfile() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* My Lists */}
+        <div className="px-4 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">My Lists</h2>
+          </div>
+          
+          {isLoadingLists ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your lists...</p>
+            </div>
+          ) : userLists.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <List className="text-gray-400" size={32} />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Custom Lists Yet</h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                You haven't created any custom lists yet. Your system lists (Currently, Queue, Finished, Did Not Finish) are always available.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {userLists.map((list) => (
+                <div key={list.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <List className="text-purple-700 mr-3" size={24} />
+                      <h3 className="text-xl font-semibold text-gray-900">{list.title}</h3>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-purple-100 text-purple-800 hover:bg-purple-200"
+                      >
+                        Public
+                      </Badge>
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareListDirect(list.id, list.title);
+                        }}
+                        className="bg-black text-white hover:bg-gray-800 rounded-lg px-3 py-2 flex items-center gap-2"
+                        data-testid={`share-${list.title.toLowerCase().replace(/\s+/g, '-')}-list`}
+                      >
+                        <Share2 size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-6 text-sm text-gray-600">
+                      <span>{list.items?.length || 0} items</span>
+                      <div className="flex items-center space-x-1">
+                        <Heart size={16} />
+                        <span>145 likes</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Recent Activity */}
