@@ -233,14 +233,6 @@ export default function ListDetail() {
                 <div className="text-2xl font-bold text-gray-900">{listData.totalItems}</div>
                 <div className="text-sm text-gray-600">Items</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{listData.likes}</div>
-                <div className="text-sm text-gray-600">Likes</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{listData.likes}</div>
-                <div className="text-sm text-gray-600">Shares</div>
-              </div>
             </div>
 
             <div className="flex items-center gap-3">
