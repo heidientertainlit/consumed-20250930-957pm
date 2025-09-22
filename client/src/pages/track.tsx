@@ -169,14 +169,6 @@ export default function Track() {
               </Select>
             </div>
             
-            {/* Create List Button */}
-            <Button
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg shadow-sm"
-              data-testid="create-list-button"
-            >
-              <List className="mr-2" size={20} />
-              Create List
-            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
