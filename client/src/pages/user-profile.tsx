@@ -558,15 +558,6 @@ export default function UserProfile() {
             <p className="text-gray-700 leading-relaxed">{mockUserData.bio}</p>
           </div>
 
-          {/* Stats */}
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(mockUserData.stats).map(([key, value]) => (
-              <div key={key} className="text-center p-3 bg-white rounded-lg border border-gray-200">
-                <div className="text-2xl font-bold text-gray-900">{value}</div>
-                <div className="text-sm text-gray-600 capitalize">{key}</div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Entertainment DNA */}
