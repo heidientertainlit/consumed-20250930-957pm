@@ -293,7 +293,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             </div>
 
             {/* Search Results */}
-            {searchQuery.trim() && (
+            {searchQuery.trim() && !selectedMedia && (
               <div className="mt-4">
                 {isSearching ? (
                   <div className="flex items-center justify-center py-8">
