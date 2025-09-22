@@ -51,7 +51,16 @@ export default function ListDetail() {
 
   // Find the current list based on URL or default to "All"
   const allLists = userListsData?.lists || [];
-  const currentListName = "All"; // For now, show All list - can be dynamic based on URL params later
+  // Get list name from URL: /list/currently -> "Currently"
+  const urlListName = window.location.pathname.split('/list/')[1];
+  const listNameMapping = {
+    'currently': 'Currently',
+    'queue': 'Queue', 
+    'finished': 'Finished',
+    'did-not-finish': 'Did Not Finish',
+    'all': 'All'
+  };
+  const currentListName = listNameMapping[urlListName] || "All";
   const currentList = allLists.find((list: any) => list.title === currentListName) || allLists[0];
   
   // Format the list data for display
