@@ -42,6 +42,12 @@ export default function UserProfile() {
   // User stats states
   const [userStats, setUserStats] = useState<any>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  
+  // Media History filters
+  const [mediaHistorySearch, setMediaHistorySearch] = useState("");
+  const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
+  const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
+  const [mediaHistoryType, setMediaHistoryType] = useState("all");
 
   // Fetch DNA profile and user lists when authenticated
   useEffect(() => {
@@ -516,6 +522,100 @@ export default function UserProfile() {
   const currentlyList = userLists.find(list => list.title === 'Currently');
   const currentlyConsuming = currentlyList?.items || [];
 
+  // Aggregate all media items from all lists for media history
+  const getAllMediaItems = () => {
+    const allItems: any[] = [];
+    userLists.forEach(list => {
+      if (list.items) {
+        list.items.forEach((item: any) => {
+          allItems.push({
+            ...item,
+            listName: list.title
+          });
+        });
+      }
+    });
+    // Sort by created_at descending (newest first)
+    return allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  };
+
+  // Filter media history based on search and filters
+  const getFilteredMediaHistory = () => {
+    const allItems = getAllMediaItems();
+    
+    return allItems.filter(item => {
+      // Search filter
+      if (mediaHistorySearch.trim()) {
+        const searchLower = mediaHistorySearch.toLowerCase();
+        const matchesSearch = 
+          item.title?.toLowerCase().includes(searchLower) ||
+          item.creator?.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+      
+      // Media type filter
+      if (mediaHistoryType !== 'all') {
+        const typeMap: any = {
+          'movies': 'movie',
+          'tv': 'tv',
+          'books': 'book',
+          'music': 'music',
+          'podcasts': 'podcast',
+          'games': 'game'
+        };
+        if (item.media_type !== typeMap[mediaHistoryType]) return false;
+      }
+      
+      // Year filter
+      if (mediaHistoryYear !== 'all') {
+        const itemYear = new Date(item.created_at).getFullYear();
+        if (itemYear.toString() !== mediaHistoryYear) return false;
+      }
+      
+      // Month filter
+      if (mediaHistoryMonth !== 'all') {
+        const itemMonth = new Date(item.created_at).getMonth();
+        const monthNumber = parseInt(mediaHistoryMonth);
+        if (itemMonth !== monthNumber) return false;
+      }
+      
+      return true;
+    });
+  };
+
+  // Get media type counts for summary display
+  const getMediaTypeCounts = () => {
+    const allItems = getAllMediaItems();
+    const counts: any = {
+      movie: 0,
+      tv: 0,
+      book: 0,
+      music: 0,
+      podcast: 0,
+      game: 0
+    };
+    
+    allItems.forEach(item => {
+      if (counts.hasOwnProperty(item.media_type)) {
+        counts[item.media_type]++;
+      }
+    });
+    
+    return counts;
+  };
+
+  const mediaTypeCounts = getMediaTypeCounts();
+  const filteredMediaHistory = getFilteredMediaHistory();
+  
+  // Generate years and months for filter dropdowns
+  const getAvailableYears = () => {
+    const allItems = getAllMediaItems();
+    const years = new Set(allItems.map(item => new Date(item.created_at).getFullYear()));
+    return Array.from(years).sort((a, b) => b - a);
+  };
+  
+  const availableYears = getAvailableYears();
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -978,128 +1078,190 @@ export default function UserProfile() {
 
         {/* Media History */}
         <div className="px-4 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Media History</h2>
-            <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-              <option>All Media</option>
-              <option>Movies</option>
-              <option>TV Shows</option>
-              <option>Books</option>
-              <option>Music</option>
-              <option>Podcasts</option>
-              <option>Games</option>
-            </select>
-          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Media History</h2>
           
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-            <div className="divide-y divide-gray-100">
-              <div className="p-4 flex items-center space-x-4 hover:bg-gray-50">
-                <img 
-                  src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=60&h=60&fit=crop"
-                  alt="Dune"
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">Dune</h4>
-                  <p className="text-sm text-gray-600">Book by Frank Herbert</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center space-x-1 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} className={i < 5 ? "text-yellow-400 fill-current" : "text-gray-300"} />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">Jan 15, 2024</p>
-                </div>
-              </div>
+          {/* Search Bar */}
+          <div className="mb-4">
+            <Input
+              value={mediaHistorySearch}
+              onChange={(e) => setMediaHistorySearch(e.target.value)}
+              placeholder="Search your media history..."
+              className="w-full"
+              data-testid="input-media-history-search"
+            />
+          </div>
 
-              <div className="p-4 flex items-center space-x-4 hover:bg-gray-50">
-                <img 
-                  src="https://images.unsplash.com/photo-1489599314-aed0e9803726?w=60&h=60&fit=crop"
-                  alt="Oppenheimer"
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">Oppenheimer</h4>
-                  <p className="text-sm text-gray-600">Movie by Christopher Nolan</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center space-x-1 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} className={i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"} />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">Jan 12, 2024</p>
-                </div>
-              </div>
+          {/* Filter Dropdowns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Select value={mediaHistoryYear} onValueChange={setMediaHistoryYear}>
+              <SelectTrigger data-testid="select-year-filter">
+                <SelectValue placeholder="All Years" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-              <div className="p-4 flex items-center space-x-4 hover:bg-gray-50">
-                <img 
-                  src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=60&h=60&fit=crop"
-                  alt="Folklore"
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">Folklore</h4>
-                  <p className="text-sm text-gray-600">Album by Taylor Swift</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center space-x-1 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} className={i < 5 ? "text-yellow-400 fill-current" : "text-gray-300"} />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">Jan 10, 2024</p>
-                </div>
-              </div>
+            <Select value={mediaHistoryMonth} onValueChange={setMediaHistoryMonth}>
+              <SelectTrigger data-testid="select-month-filter">
+                <SelectValue placeholder="All Months" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                <SelectItem value="0">January</SelectItem>
+                <SelectItem value="1">February</SelectItem>
+                <SelectItem value="2">March</SelectItem>
+                <SelectItem value="3">April</SelectItem>
+                <SelectItem value="4">May</SelectItem>
+                <SelectItem value="5">June</SelectItem>
+                <SelectItem value="6">July</SelectItem>
+                <SelectItem value="7">August</SelectItem>
+                <SelectItem value="8">September</SelectItem>
+                <SelectItem value="9">October</SelectItem>
+                <SelectItem value="10">November</SelectItem>
+                <SelectItem value="11">December</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <div className="p-4 flex items-center space-x-4 hover:bg-gray-50">
-                <img 
-                  src="https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=60&h=60&fit=crop"
-                  alt="The Bear"
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">The Bear</h4>
-                  <p className="text-sm text-gray-600">TV Show by Christopher Storer</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center space-x-1 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} className={i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"} />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">Jan 8, 2024</p>
-                </div>
-              </div>
+            <Select value={mediaHistoryType} onValueChange={setMediaHistoryType}>
+              <SelectTrigger data-testid="select-type-filter">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="movies">Movies</SelectItem>
+                <SelectItem value="tv">TV Shows</SelectItem>
+                <SelectItem value="books">Books</SelectItem>
+                <SelectItem value="music">Music</SelectItem>
+                <SelectItem value="podcasts">Podcasts</SelectItem>
+                <SelectItem value="games">Games</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-              <div className="p-4 flex items-center space-x-4 hover:bg-gray-50">
-                <img 
-                  src="https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=60&h=60&fit=crop"
-                  alt="SmartLess"
-                  className="w-12 h-12 rounded-lg object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">SmartLess</h4>
-                  <p className="text-sm text-gray-600">Podcast by Jason Bateman</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center space-x-1 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={12} className={i < 5 ? "text-yellow-400 fill-current" : "text-gray-300"} />
-                    ))}
+          {/* Media Type Summary */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
+            <div className="p-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Overview</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <span className="text-xl">🎵</span>
+                    </div>
+                    <span className="font-medium text-gray-900">Music</span>
                   </div>
-                  <p className="text-xs text-gray-500">Jan 5, 2024</p>
+                  <span className="text-gray-600">{mediaTypeCounts.music} songs</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                      <span className="text-xl">🎬</span>
+                    </div>
+                    <span className="font-medium text-gray-900">Movies</span>
+                  </div>
+                  <span className="text-gray-600">{mediaTypeCounts.movie} watched</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <span className="text-xl">📺</span>
+                    </div>
+                    <span className="font-medium text-gray-900">TV Shows</span>
+                  </div>
+                  <span className="text-gray-600">{mediaTypeCounts.tv} series</span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                      <span className="text-xl">📚</span>
+                    </div>
+                    <span className="font-medium text-gray-900">Books</span>
+                  </div>
+                  <span className="text-gray-600">{mediaTypeCounts.book} completed</span>
                 </div>
               </div>
             </div>
-            
-            <div className="p-4 border-t border-gray-100 text-center">
-              <Button variant="outline" className="text-sm">
-                Load More History
+          </div>
+
+          {/* Detailed Media History */}
+          {isLoadingLists ? (
+            <div className="text-center py-8">
+              <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
+              <p className="text-gray-600 mt-2">Loading your media history...</p>
+            </div>
+          ) : filteredMediaHistory.length > 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+              <div className="divide-y divide-gray-100">
+                {filteredMediaHistory.map((item, index) => (
+                  <div key={`${item.id}-${index}`} className="p-4 flex items-center space-x-4 hover:bg-gray-50">
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url}
+                        alt={item.title}
+                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg">
+                          {item.media_type === 'movie' ? '🎬' : 
+                           item.media_type === 'tv' ? '📺' : 
+                           item.media_type === 'book' ? '📚' : 
+                           item.media_type === 'music' ? '🎵' : 
+                           item.media_type === 'podcast' ? '🎧' : 
+                           item.media_type === 'game' ? '🎮' : '🎭'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 truncate">{item.title}</h4>
+                      <p className="text-sm text-gray-600 truncate">
+                        {item.media_type === 'tv' ? 'TV Show' : 
+                         item.media_type === 'movie' ? 'Movie' : 
+                         item.media_type === 'book' ? 'Book' : 
+                         item.media_type === 'music' ? 'Music' : 
+                         item.media_type === 'podcast' ? 'Podcast' : 
+                         item.media_type === 'game' ? 'Game' : item.type}
+                        {item.creator && ` by ${item.creator}`}
+                      </p>
+                      <p className="text-xs text-purple-600">In {item.listName}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-xs text-gray-500">
+                        {new Date(item.created_at).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-white rounded-2xl border border-gray-200">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">📚</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Media History</h3>
+              <p className="text-gray-600 mb-4">Start tracking media to build your entertainment history</p>
+              <Button 
+                onClick={handleTrackConsumption}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                data-testid="button-start-tracking-history"
+              >
+                <Plus size={16} className="mr-2" />
+                Track Media
               </Button>
             </div>
-          </div>
+          )}
         </div>
 
         {/* My Lists */}
