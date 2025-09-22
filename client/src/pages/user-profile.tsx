@@ -558,6 +558,54 @@ export default function UserProfile() {
             <p className="text-gray-700 leading-relaxed">{mockUserData.bio}</p>
           </div>
 
+          {/* Your Stats */}
+          <div className="mt-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Your Stats</h3>
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-700">{mockUserData.consumptionStats.moviesWatched}</div>
+                  <div className="text-xs text-gray-600">Movies</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-pink-600">{mockUserData.consumptionStats.tvShowsWatched}</div>
+                  <div className="text-xs text-gray-600">TV Shows</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-cyan-600">{mockUserData.consumptionStats.booksRead}</div>
+                  <div className="text-xs text-gray-600">Books</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-green-600">{mockUserData.consumptionStats.musicHours}h</div>
+                  <div className="text-xs text-gray-600">Music</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">{mockUserData.consumptionStats.podcastHours}h</div>
+                  <div className="text-xs text-gray-600">Podcasts</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-orange-600">{mockUserData.consumptionStats.gamesPlayed}</div>
+                  <div className="text-xs text-gray-600">Games</div>
+                </div>
+              </div>
+
+              <div className="flex justify-around border-t border-gray-200 pt-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-gray-900">{mockUserData.consumptionStats.totalHours.toLocaleString()}h</div>
+                  <div className="text-xs text-gray-600">Total Hours</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-gray-900">{mockUserData.consumptionStats.averageRating}</div>
+                  <div className="text-xs text-gray-600">Avg Rating</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-gray-900">{mockUserData.stats.streak}</div>
+                  <div className="text-xs text-gray-600">Day Streak</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         {/* Entertainment DNA */}
@@ -795,53 +843,6 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Simplified Stats */}
-        <div className="px-4 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Stats</h2>
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-4">
-              <div className="text-center">
-                <div className="text-lg font-bold text-purple-700">{mockUserData.consumptionStats.moviesWatched}</div>
-                <div className="text-xs text-gray-600">Movies</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-pink-600">{mockUserData.consumptionStats.tvShowsWatched}</div>
-                <div className="text-xs text-gray-600">TV Shows</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-cyan-600">{mockUserData.consumptionStats.booksRead}</div>
-                <div className="text-xs text-gray-600">Books</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-green-600">{mockUserData.consumptionStats.musicHours}h</div>
-                <div className="text-xs text-gray-600">Music</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-blue-600">{mockUserData.consumptionStats.podcastHours}h</div>
-                <div className="text-xs text-gray-600">Podcasts</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-orange-600">{mockUserData.consumptionStats.gamesPlayed}</div>
-                <div className="text-xs text-gray-600">Games</div>
-              </div>
-            </div>
-
-            <div className="flex justify-around border-t border-gray-200 pt-4">
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">{mockUserData.consumptionStats.totalHours.toLocaleString()}h</div>
-                <div className="text-xs text-gray-600">Total Hours</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">{mockUserData.consumptionStats.averageRating}</div>
-                <div className="text-xs text-gray-600">Avg Rating</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-gray-900">{mockUserData.stats.streak}</div>
-                <div className="text-xs text-gray-600">Day Streak</div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Currently Consuming */}
         <div className="px-4 mb-8">
