@@ -571,7 +571,7 @@ export default function PredictionsPage() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
       <div className="max-w-6xl mx-auto px-4 py-6">
-        {/* Header */}
+        {/* Back Button */}
         <div className="mb-8">
           <Link href="/play">
             <Button variant="ghost" size="sm" className="mb-4" data-testid="back-to-play">
@@ -579,6 +579,11 @@ export default function PredictionsPage() {
               Back to Play
             </Button>
           </Link>
+        </div>
+
+        {/* Header and Prediction Pools */}
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-semibold text-gray-800 mb-2">
               Predictions
@@ -587,10 +592,8 @@ export default function PredictionsPage() {
               Join prediction pools and earn points by making accurate predictions about entertainment!
             </p>
           </div>
-        </div>
 
-        {/* Prediction Pools */}
-        <div className="max-w-4xl mx-auto">
+          {/* Prediction Pools */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-4 rounded-t-lg">
               <h2 className="text-lg font-semibold text-center">PREDICTION POOLS</h2>
@@ -626,28 +629,28 @@ export default function PredictionsPage() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Filter Tabs for Status */}
-        <div className="flex justify-center mt-8">
-          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-            {[
-              { key: "open", label: "Open Pools" },
-              { key: "completed", label: "Completed" }
-            ].map((filter) => (
-              <button
-                key={filter.key}
-                onClick={() => setFilterStatus(filter.key as any)}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
-                  filterStatus === filter.key
-                    ? 'bg-white text-gray-700 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-700'
-                }`}
-                data-testid={`filter-${filter.key}`}
-              >
-                {filter.label}
-              </button>
-            ))}
+          {/* Filter Tabs for Status */}
+          <div className="flex justify-center mt-8">
+            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+              {[
+                { key: "open", label: "Open Pools" },
+                { key: "completed", label: "Completed" }
+              ].map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => setFilterStatus(filter.key as any)}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                    filterStatus === filter.key
+                      ? 'bg-white text-gray-700 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-700'
+                  }`}
+                  data-testid={`filter-${filter.key}`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
