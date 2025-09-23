@@ -57,7 +57,7 @@ serve(async (req) => {
       // Check if user exists
       const { data: user, error: userError } = await supabase
         .from('users')
-        .select('id, user_name, email')
+        .select('id, username, email')
         .eq('id', userId)
         .single();
 
@@ -108,7 +108,7 @@ serve(async (req) => {
         list: {
           ...list,
           items: items || [],
-          owner: user.user_name || user.email.split('@')[0]
+          owner: user.username || user.email.split('@')[0]
         }
       }), {
         status: 200,
