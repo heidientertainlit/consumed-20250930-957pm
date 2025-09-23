@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star, Share } from "lucide-react";
+import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star, UserPlus } from "lucide-react";
 import { Link } from "wouter";
 
 interface PredictionPool {
@@ -575,10 +575,10 @@ export default function PredictionsPage() {
     });
   };
 
-  const handleShare = async (pool: PredictionPool) => {
+  const handleInviteFriends = async (pool: PredictionPool) => {
     const shareData = {
-      title: `${pool.title} - entertainlit`,
-      text: `Join me in predicting: ${pool.description}`,
+      title: `Join my prediction on entertainlit!`,
+      text: `I'm predicting "${pool.title}" - think you can beat me? Join the pool and let's see who's right! 🎯`,
       url: `${window.location.origin}/predictions#${pool.id}`
     };
 
@@ -586,17 +586,17 @@ export default function PredictionsPage() {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(shareData.url);
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
         toast({
-          title: "Link Copied!",
-          description: "Prediction link copied to clipboard",
+          title: "Invite Link Copied!",
+          description: "Share this with your friends to invite them",
         });
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error('Error inviting friends:', error);
       toast({
-        title: "Share Failed",
-        description: "Unable to share prediction",
+        title: "Invite Failed",
+        description: "Unable to create invite link",
         variant: "destructive"
       });
     }
@@ -657,11 +657,12 @@ export default function PredictionsPage() {
                         <span className="text-lg">{pool.icon}</span>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleShare(pool)}
+                            onClick={() => handleInviteFriends(pool)}
                             className="p-1 hover:bg-white hover:bg-opacity-20 rounded-md transition-all"
-                            data-testid={`share-pool-${pool.id}`}
+                            data-testid={`invite-friends-${pool.id}`}
+                            title="Invite friends to this prediction"
                           >
-                            <Share size={16} className="text-white" />
+                            <UserPlus size={16} className="text-white" />
                           </button>
                           <Badge className="bg-white bg-opacity-20 text-white hover:bg-white hover:bg-opacity-20">
                             {pool.pointsReward} pts
