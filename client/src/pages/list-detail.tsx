@@ -25,21 +25,33 @@ export default function ListDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const sharedUserId = urlParams.get('user');
   
-  // Load REAL user data - works for both your own lists and shared lists
+  // Load REAL user data - works for both your own lists and shared public lists
   const { data: userListsData, isLoading: listsLoading } = useQuery({
     queryKey: ['user-lists-with-media', sharedUserId || 'own'],
     queryFn: async () => {
-      // For shared links (has sharedUserId), try to load without auth first
-      if (sharedUserId && !session?.access_token) {
-        console.log('Loading shared list data for user:', sharedUserId);
-        // For now, return system lists - this will be enhanced to show user's public data
+      // For shared links (has sharedUserId), use public list access
+      if (sharedUserId) {
+        console.log('Loading shared public list data for user:', sharedUserId);
+        
+        const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-list?list_slug=${urlListName}&user_id=${sharedUserId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Public list fetch failed:', response.status, errorText);
+          throw new Error('Failed to fetch public list');
+        }
+        
+        const data = await response.json();
+        console.log('Public list data:', data);
+        
+        // Convert to expected format
         return {
-          lists: [
-            { id: 'currently', title: 'Currently', items: [] },
-            { id: 'queue', title: 'Queue', items: [] },
-            { id: 'finished', title: 'Finished', items: [] },
-            { id: 'did-not-finish', title: 'Did Not Finish', items: [] }
-          ]
+          lists: [data.list]
         };
       }
       
