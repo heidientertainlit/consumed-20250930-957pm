@@ -85,13 +85,7 @@ serve(async (req) => {
         });
       }
 
-      // Check if list is public
-      if (list.is_private) {
-        return new Response(JSON.stringify({ error: 'This list is private' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+      // All lists are now public for MVP - removed privacy check
 
       // Get list items
       const { data: items, error: itemsError } = await supabase
