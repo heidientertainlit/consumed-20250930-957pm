@@ -700,6 +700,13 @@ export default function PredictionsPage() {
                                 {option.length > 18 ? `${option.substring(0, 18)}...` : option}
                               </button>
                             ))}
+                            <button
+                              onClick={() => handleInviteFriends(pool)}
+                              className="w-full mt-2 py-1.5 px-2 text-xs font-medium rounded-md bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 transition-all"
+                              data-testid={`invite-inline-${pool.id}`}
+                            >
+                              Invite a friend to predict too
+                            </button>
                           </div>
                         ) : pool.status === "locked" ? (
                           <div className="w-full px-4 py-2 bg-gray-100 text-gray-500 rounded-md text-sm font-medium text-center">
