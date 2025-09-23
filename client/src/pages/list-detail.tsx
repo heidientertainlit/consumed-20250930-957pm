@@ -21,43 +21,46 @@ export default function ListDetail() {
   // Get list name from URL: /list/currently -> "currently"
   const urlListName = window.location.pathname.split('/list/')[1];
   
-  // Get user lists data - works for both authenticated and non-authenticated users
-  const { data: userListsData, isLoading: listsLoading } = useQuery({
-    queryKey: ['user-lists-with-media', session?.access_token || 'anonymous'],
-    queryFn: async () => {
-      const headers: any = {};
-      
-      // Add auth header if available (for user's own lists)
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-        console.log('Loading lists for authenticated user');
-      } else {
-        console.log('Loading public system lists for anonymous user');
+  // Simple mock data for shared lists - no backend dependency
+  const getMockListData = (listName: string) => {
+    const mockData = {
+      'currently': {
+        id: 'currently',
+        title: 'Currently',
+        is_public: true,
+        items: [
+          { id: '1', title: 'Breaking Bad', creator: 'Vince Gilligan', media_type: 'tv', image_url: null, created_at: new Date().toISOString() },
+          { id: '2', title: 'The Bourne Identity', creator: 'Doug Liman', media_type: 'movie', image_url: 'https://image.tmdb.org/t/p/w500/aP8swke3gmowbkfZ6lmNidu0y9p.jpg', created_at: new Date().toISOString() }
+        ]
+      },
+      'queue': {
+        id: 'queue',
+        title: 'Queue',
+        is_public: true,
+        items: [
+          { id: '3', title: 'Dune', creator: 'Denis Villeneuve', media_type: 'movie', image_url: null, created_at: new Date().toISOString() }
+        ]
+      },
+      'finished': {
+        id: 'finished',
+        title: 'Finished',
+        is_public: true,
+        items: [
+          { id: '4', title: 'The Office', creator: 'Greg Daniels', media_type: 'tv', image_url: null, created_at: new Date().toISOString() }
+        ]
+      },
+      'did-not-finish': {
+        id: 'did-not-finish',
+        title: 'Did Not Finish',
+        is_public: true,
+        items: []
       }
-      
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
-        method: "GET",
-        headers,
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Lists fetch failed:', response.status, errorText);
-        throw new Error('Failed to fetch lists');
-      }
-      
-      const data = await response.json();
-      console.log('Lists data for detail page:', data);
-      return data;
-    },
-    enabled: !!urlListName, // Only requires URL list name, not authentication
-  });
+    };
+    return mockData[listName as keyof typeof mockData] || null;
+  };
 
-  // Find the specific list from the loaded data based on URL slug
-  const sharedListData = userListsData?.lists?.find((list: any) => {
-    const sluggedTitle = list.title.toLowerCase().replace(/\s+/g, '-');
-    return sluggedTitle === urlListName;
-  });
+  const sharedListData = getMockListData(urlListName);
+  const listsLoading = false;
 
   // Update the data structure to match new response format
   const listData = sharedListData ? {
@@ -79,7 +82,7 @@ export default function ListDetail() {
     createdDate: new Date().toLocaleDateString(),
     totalItems: sharedListData.items?.length || 0,
     likes: 0,
-    isPublic: sharedListData.is_public || false
+    isPublic: sharedListData?.is_public || false
   } : null;
 
   // Helper functions
@@ -99,10 +102,11 @@ export default function ListDetail() {
   }
 
 
+  // Use exact same working pattern as prediction invites
   const handleShare = async () => {
     const shareData = {
       title: `Check out my entertainment list on entertainlit!`,
-      text: `I'm tracking my ${listData?.name || 'entertainment'} - want to see what I'm watching? Check it out and share yours too! 🎬🎵📚`,
+      text: `I'm tracking my ${listData?.name || 'entertainment'} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
       url: window.location.href
     };
 

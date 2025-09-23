@@ -187,6 +187,7 @@ export default function UserProfile() {
     setShareModalOpen(true);
   };
 
+  // Exact same working pattern as prediction invites  
   const handleShareListDirect = async (listId: string, listTitle: string) => {
     const shareData = {
       title: `Check out my ${listTitle} list on entertainlit!`,
