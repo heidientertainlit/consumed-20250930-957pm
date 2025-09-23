@@ -609,7 +609,7 @@ export default function PredictionsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {lowStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
               <Card key={pool.id} className="bg-white border border-gray-200 overflow-hidden">
-                <AspectRatio ratio={1.15}>
+                <AspectRatio ratio={1.3}>
                   <div className="h-full flex flex-col">
                     {/* Header Bar */}
                     <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-2">
@@ -622,12 +622,12 @@ export default function PredictionsPage() {
                     </div>
                     
                     {/* Content */}
-                    <div className="flex-1 p-4 flex flex-col">
-                      <div className="mb-3">
+                    <div className="flex-1 p-3 flex flex-col">
+                      <div className="mb-2">
                         <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1">
                           {pool.title}
                         </h3>
-                        <p className="text-xs text-gray-600 line-clamp-2">
+                        <p className="text-xs text-gray-600 line-clamp-1">
                           {pool.description}
                         </p>
                       </div>
@@ -635,12 +635,12 @@ export default function PredictionsPage() {
                       {/* Inline Options or Action Button */}
                       <div className="flex-1 flex flex-col justify-end">
                         {pool.inline && pool.options ? (
-                          <div className="space-y-2">
+                          <div className="space-y-1.5">
                             {pool.options.map((option) => (
                               <button
                                 key={option}
                                 onClick={() => handleQuickPick(pool.id, option)}
-                                className={`w-full p-2 text-xs font-medium rounded-md border transition-all ${
+                                className={`w-full py-1.5 px-2 text-xs font-medium rounded-md border transition-all ${
                                   selectedOptions[pool.id] === option
                                     ? 'border-purple-500 bg-purple-50 text-purple-700'
                                     : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
@@ -663,7 +663,7 @@ export default function PredictionsPage() {
                       </div>
                       
                       {/* Footer Info */}
-                      <div className="mt-3 pt-2 border-t border-gray-100 text-xs text-gray-500 text-center">
+                      <div className="mt-2 pt-1.5 border-t border-gray-100 text-xs text-gray-500 text-center">
                         {pool.participants.toLocaleString()} participants
                       </div>
                     </div>
