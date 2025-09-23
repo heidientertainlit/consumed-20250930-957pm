@@ -107,14 +107,11 @@ export default function ListDetail() {
     owner: "You",
     createdDate: new Date().toLocaleDateString(),
     totalItems: sharedListData.items?.length || 0,
-    likes: 0,
-    isPublic: !sharedListData?.is_private // is_private from DB, invert for isPublic
+    likes: 0
+    // All lists are public for MVP - removed isPublic property
   } : null;
 
-  // Update local state when list data loads
-  if (listData && isPublic !== listData.isPublic) {
-    setIsPublic(listData.isPublic);
-  }
+  // All lists are public for MVP - removed state update logic
 
   // Helper functions
   function getListDescription(title: string) {
