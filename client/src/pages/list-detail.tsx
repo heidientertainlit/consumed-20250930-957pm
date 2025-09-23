@@ -4,7 +4,6 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, Share2, Trash2, MoreVertical, Star, Clock, Calendar } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -12,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
-  const [isPublic, setIsPublic] = useState(false); // Initialize as private, will be updated when data loads
+  // Removed privacy state - all lists are now public for MVP
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   
   const queryClient = useQueryClient();
@@ -174,53 +173,9 @@ export default function ListDetail() {
     console.log("Removing item:", itemId);
   };
 
-  const togglePrivacyMutation = useMutation({
-    mutationFn: async (isPublic: boolean) => {
-      if (!session?.access_token) {
-        throw new Error("Authentication required");
-      }
+  // Removed privacy mutation - all lists are public for MVP
 
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-list-visibility", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          listId: sharedListData?.id, // Use original database ID
-          isPublic: isPublic,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update privacy: ${response.status} - ${errorText}`);
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Privacy updated!",
-        description: `List is now ${!isPublic ? 'public' : 'private'}.`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["lists"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to update privacy",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsPublic(isPublic); // Revert the UI change
-    },
-  });
-
-  const handleTogglePrivacy = () => {
-    const newPublicState = !isPublic;
-    setIsPublic(newPublicState);
-    togglePrivacyMutation.mutate(newPublicState);
-  };
+  // Removed privacy toggle handler - all lists are public for MVP
 
   // Show loading state instead of "List not found" during data fetch
   if (listsLoading) {
@@ -286,29 +241,10 @@ export default function ListDetail() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Public/Private Toggle */}
-              <div className="flex items-center gap-3 bg-gray-100 rounded-lg px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <Lock size={14} className={`${!isPublic ? 'text-gray-700' : 'text-gray-400'}`} />
-                  <span className={`text-sm font-medium ${!isPublic ? 'text-gray-700' : 'text-gray-400'}`}>
-                    Private
-                  </span>
-                </div>
-                
-                <Switch
-                  checked={isPublic}
-                  onCheckedChange={handleTogglePrivacy}
-                  disabled={togglePrivacyMutation.isPending}
-                  data-testid="switch-toggle-privacy"
-                  className="mx-2"
-                />
-                
-                <div className="flex items-center gap-2">
-                  <Globe size={14} className={`${isPublic ? 'text-purple-600' : 'text-gray-400'}`} />
-                  <span className={`text-sm font-medium ${isPublic ? 'text-purple-600' : 'text-gray-400'}`}>
-                    Public
-                  </span>
-                </div>
+              {/* All lists are public for MVP */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg">
+                <Globe size={14} className="text-purple-600" />
+                <span className="text-sm font-medium text-purple-600">Public List</span>
               </div>
               
               <Button
