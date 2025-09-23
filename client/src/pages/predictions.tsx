@@ -582,9 +582,9 @@ export default function PredictionsPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 pt-2 pb-6">
         {/* Back Button */}
-        <div className="mb-8">
+        <div className="mb-4">
           <Link href="/play">
             <Button variant="ghost" size="sm" className="mb-4" data-testid="back-to-play">
               <ArrowLeft size={20} className="mr-2" />
