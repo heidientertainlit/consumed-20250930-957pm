@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(false); // Initialize as private, will be updated when data loads
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   
   const queryClient = useQueryClient();
@@ -94,8 +94,13 @@ export default function ListDetail() {
     createdDate: new Date().toLocaleDateString(),
     totalItems: sharedListData.items?.length || 0,
     likes: 0,
-    isPublic: sharedListData?.is_public || false
+    isPublic: !sharedListData?.is_private // is_private from DB, invert for isPublic
   } : null;
+
+  // Update local state when list data loads
+  if (listData && isPublic !== listData.isPublic) {
+    setIsPublic(listData.isPublic);
+  }
 
   // Helper functions
   function getListDescription(title: string) {
@@ -255,6 +260,21 @@ export default function ListDetail() {
                 {isPublic ? <Globe size={12} /> : <Lock size={12} />}
                 {isPublic ? "Public" : "Private"}
               </Badge>
+              
+              {/* Toggle Privacy Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleTogglePrivacy}
+                disabled={togglePrivacyMutation.isPending}
+                className="text-gray-600 hover:text-gray-900"
+                data-testid="button-toggle-privacy"
+              >
+                {isPublic ? <Lock size={16} /> : <Globe size={16} />}
+                <span className="ml-1 text-sm">
+                  Make {isPublic ? 'Private' : 'Public'}
+                </span>
+              </Button>
               
               <Button
                 onClick={() => setIsTrackModalOpen(true)}
