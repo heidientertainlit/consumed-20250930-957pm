@@ -61,18 +61,6 @@ const lowStakesPools: PredictionPool[] = [
     icon: "🎵"
   },
   {
-    id: "social-buzz",
-    title: "Most Talked About Celebrity",
-    description: "Who will generate the most social media buzz this week?",
-    type: "vote",
-    pointsReward: 8,
-    deadline: "Sunday 11:59 PM",
-    participants: 654,
-    status: "open",
-    category: "Celebrity",
-    icon: "📱"
-  },
-  {
     id: "tv-ratings",
     title: "Highest Rated TV Show",
     description: "Predict which show will have the highest ratings this week",
