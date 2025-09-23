@@ -21,40 +21,39 @@ export default function ListDetail() {
   // Get list name from URL: /list/currently -> "currently"
   const urlListName = window.location.pathname.split('/list/')[1];
   
-  // Get shared list data from Supabase
-  const { data: sharedListData, isLoading: listsLoading } = useQuery({
-    queryKey: ['shared-list', urlListName],
+  // Get user lists data using working function (same as user-profile and track pages)
+  const { data: userListsData, isLoading: listsLoading } = useQuery({
+    queryKey: ['user-lists-with-media'],
     queryFn: async () => {
-      if (!urlListName) {
-        console.log('No list name in URL');
+      if (!session?.access_token) {
+        console.log('No session token available');
         return null;
       }
       
-      const headers: any = {
-        'Content-Type': 'application/json',
-      };
-      
-      // Add auth header if available (for user's own lists)
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-      
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-shared-list?list_id=${encodeURIComponent(urlListName)}`, {
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
         method: "GET",
-        headers,
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
       });
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Shared list fetch failed:', response.status, errorText);
-        throw new Error('Failed to fetch list');
+        console.error('User lists fetch failed:', response.status, errorText);
+        throw new Error('Failed to fetch user lists');
       }
       
       const data = await response.json();
-      console.log('Shared list data:', data);
+      console.log('User lists data for detail page:', data);
       return data;
     },
-    enabled: !!urlListName,
+    enabled: !!session?.access_token && !!urlListName,
+  });
+
+  // Find the specific list from the loaded data based on URL slug
+  const sharedListData = userListsData?.lists?.find((list: any) => {
+    const sluggedTitle = list.title.toLowerCase().replace(/\s+/g, '-');
+    return sluggedTitle === urlListName;
   });
 
   // Update the data structure to match new response format
