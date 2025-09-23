@@ -21,33 +21,36 @@ export default function ListDetail() {
   // Get list name from URL: /list/currently -> "currently"
   const urlListName = window.location.pathname.split('/list/')[1];
   
-  // Get user lists data using working function (same as user-profile and track pages)
+  // Get user lists data - works for both authenticated and non-authenticated users
   const { data: userListsData, isLoading: listsLoading } = useQuery({
-    queryKey: ['user-lists-with-media'],
+    queryKey: ['user-lists-with-media', session?.access_token || 'anonymous'],
     queryFn: async () => {
-      if (!session?.access_token) {
-        console.log('No session token available');
-        return null;
+      const headers: any = {};
+      
+      // Add auth header if available (for user's own lists)
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+        console.log('Loading lists for authenticated user');
+      } else {
+        console.log('Loading public system lists for anonymous user');
       }
       
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
         method: "GET",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
+        headers,
       });
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('User lists fetch failed:', response.status, errorText);
-        throw new Error('Failed to fetch user lists');
+        console.error('Lists fetch failed:', response.status, errorText);
+        throw new Error('Failed to fetch lists');
       }
       
       const data = await response.json();
-      console.log('User lists data for detail page:', data);
+      console.log('Lists data for detail page:', data);
       return data;
     },
-    enabled: !!session?.access_token && !!urlListName,
+    enabled: !!urlListName, // Only requires URL list name, not authentication
   });
 
   // Find the specific list from the loaded data based on URL slug
