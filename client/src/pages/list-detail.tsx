@@ -4,6 +4,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, Share2, Trash2, MoreVertical, Star, Clock, Calendar } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -85,6 +86,8 @@ export default function ListDetail() {
     const sluggedTitle = list.title.toLowerCase().replace(/\s+/g, '-');
     return sluggedTitle === urlListName;
   });
+
+  console.log('Shared list data found:', sharedListData);
 
   // Update the data structure to match new response format
   const listData = sharedListData ? {
@@ -184,7 +187,7 @@ export default function ListDetail() {
           "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          listId: listData.id,
+          listId: sharedListData?.id, // Use original database ID
           isPublic: isPublic,
         }),
       });
@@ -219,7 +222,22 @@ export default function ListDetail() {
     togglePrivacyMutation.mutate(newPublicState);
   };
 
-  if (!listData) {
+  // Show loading state instead of "List not found" during data fetch
+  if (listsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={() => {}} />
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show "List not found" if data finished loading but no list found
+  if (!listData && !listsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
         <Navigation onTrackConsumption={() => {}} />
@@ -268,25 +286,30 @@ export default function ListDetail() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Badge variant={isPublic ? "default" : "secondary"} className="flex items-center gap-1">
-                {isPublic ? <Globe size={12} /> : <Lock size={12} />}
-                {isPublic ? "Public" : "Private"}
-              </Badge>
-              
-              {/* Toggle Privacy Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleTogglePrivacy}
-                disabled={togglePrivacyMutation.isPending}
-                className="text-gray-600 hover:text-gray-900"
-                data-testid="button-toggle-privacy"
-              >
-                {isPublic ? <Lock size={16} /> : <Globe size={16} />}
-                <span className="ml-1 text-sm">
-                  Make {isPublic ? 'Private' : 'Public'}
-                </span>
-              </Button>
+              {/* Public/Private Toggle */}
+              <div className="flex items-center gap-3 bg-gray-100 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Lock size={14} className={`${!isPublic ? 'text-gray-700' : 'text-gray-400'}`} />
+                  <span className={`text-sm font-medium ${!isPublic ? 'text-gray-700' : 'text-gray-400'}`}>
+                    Private
+                  </span>
+                </div>
+                
+                <Switch
+                  checked={isPublic}
+                  onCheckedChange={handleTogglePrivacy}
+                  disabled={togglePrivacyMutation.isPending}
+                  data-testid="switch-toggle-privacy"
+                  className="mx-2"
+                />
+                
+                <div className="flex items-center gap-2">
+                  <Globe size={14} className={`${isPublic ? 'text-purple-600' : 'text-gray-400'}`} />
+                  <span className={`text-sm font-medium ${isPublic ? 'text-purple-600' : 'text-gray-400'}`}>
+                    Public
+                  </span>
+                </div>
+              </div>
               
               <Button
                 onClick={() => setIsTrackModalOpen(true)}
