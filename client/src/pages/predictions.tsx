@@ -609,7 +609,7 @@ export default function PredictionsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {lowStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
               <Card key={pool.id} className="bg-white border border-gray-200 overflow-hidden">
-                <AspectRatio ratio={1.3}>
+                <AspectRatio ratio={1.6}>
                   <div className="h-full flex flex-col">
                     {/* Header Bar */}
                     <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-2">
