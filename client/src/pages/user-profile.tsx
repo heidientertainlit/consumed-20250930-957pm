@@ -189,10 +189,15 @@ export default function UserProfile() {
 
   // Exact same working pattern as prediction invites  
   const handleShareListDirect = async (listId: string, listTitle: string) => {
+    // Add user ID to shared URL so anyone can see your real data
+    const shareUrl = session?.user?.id 
+      ? `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}?user=${session.user.id}`
+      : `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
+      
     const shareData = {
       title: `Check out my ${listTitle} list on entertainlit!`,
       text: `I'm tracking my ${listTitle} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
-      url: `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`
+      url: shareUrl
     };
 
     try {

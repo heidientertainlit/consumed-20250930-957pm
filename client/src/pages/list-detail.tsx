@@ -18,49 +18,61 @@ export default function ListDetail() {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  // Get list name from URL: /list/currently -> "currently"
+  // Get list name from URL: /list/currently -> "currently" 
   const urlListName = window.location.pathname.split('/list/')[1];
   
-  // Simple mock data for shared lists - no backend dependency
-  const getMockListData = (listName: string) => {
-    const mockData = {
-      'currently': {
-        id: 'currently',
-        title: 'Currently',
-        is_public: true,
-        items: [
-          { id: '1', title: 'Breaking Bad', creator: 'Vince Gilligan', media_type: 'tv', image_url: null, created_at: new Date().toISOString() },
-          { id: '2', title: 'The Bourne Identity', creator: 'Doug Liman', media_type: 'movie', image_url: 'https://image.tmdb.org/t/p/w500/aP8swke3gmowbkfZ6lmNidu0y9p.jpg', created_at: new Date().toISOString() }
-        ]
-      },
-      'queue': {
-        id: 'queue',
-        title: 'Queue',
-        is_public: true,
-        items: [
-          { id: '3', title: 'Dune', creator: 'Denis Villeneuve', media_type: 'movie', image_url: null, created_at: new Date().toISOString() }
-        ]
-      },
-      'finished': {
-        id: 'finished',
-        title: 'Finished',
-        is_public: true,
-        items: [
-          { id: '4', title: 'The Office', creator: 'Greg Daniels', media_type: 'tv', image_url: null, created_at: new Date().toISOString() }
-        ]
-      },
-      'did-not-finish': {
-        id: 'did-not-finish',
-        title: 'Did Not Finish',
-        is_public: true,
-        items: []
+  // Get user ID from URL parameters for shared links
+  const urlParams = new URLSearchParams(window.location.search);
+  const sharedUserId = urlParams.get('user');
+  
+  // Load REAL user data - works for both your own lists and shared lists
+  const { data: userListsData, isLoading: listsLoading } = useQuery({
+    queryKey: ['user-lists-with-media', sharedUserId || 'own'],
+    queryFn: async () => {
+      // For shared links (has sharedUserId), try to load without auth first
+      if (sharedUserId && !session?.access_token) {
+        console.log('Loading shared list data for user:', sharedUserId);
+        // For now, return system lists - this will be enhanced to show user's public data
+        return {
+          lists: [
+            { id: 'currently', title: 'Currently', items: [] },
+            { id: 'queue', title: 'Queue', items: [] },
+            { id: 'finished', title: 'Finished', items: [] },
+            { id: 'did-not-finish', title: 'Did Not Finish', items: [] }
+          ]
+        };
       }
-    };
-    return mockData[listName as keyof typeof mockData] || null;
-  };
+      
+      if (!session?.access_token) {
+        console.log('No session token available for list detail');
+        return null;
+      }
+      
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('User lists fetch failed:', response.status, errorText);
+        throw new Error('Failed to fetch user lists');
+      }
+      
+      const data = await response.json();
+      console.log('REAL user lists data for list detail:', data);
+      return data;
+    },
+    enabled: !!urlListName,
+  });
 
-  const sharedListData = getMockListData(urlListName);
-  const listsLoading = false;
+  // Find the specific list from the REAL data based on URL slug
+  const sharedListData = userListsData?.lists?.find((list: any) => {
+    const sluggedTitle = list.title.toLowerCase().replace(/\s+/g, '-');
+    return sluggedTitle === urlListName;
+  });
 
   // Update the data structure to match new response format
   const listData = sharedListData ? {
@@ -104,10 +116,15 @@ export default function ListDetail() {
 
   // Use exact same working pattern as prediction invites
   const handleShare = async () => {
+    // Add user identifier to shared URL so non-logged-in users can see the data
+    const shareUrl = session?.user?.id 
+      ? `${window.location.origin}/list/${urlListName}?user=${session.user.id}`
+      : window.location.href;
+      
     const shareData = {
       title: `Check out my entertainment list on entertainlit!`,
       text: `I'm tracking my ${listData?.name || 'entertainment'} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
-      url: window.location.href
+      url: shareUrl
     };
 
     try {
