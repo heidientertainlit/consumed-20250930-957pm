@@ -516,7 +516,7 @@ const VoteModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: bo
 export default function PredictionsPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedPool, setSelectedPool] = useState<PredictionPool | null>(null);
-  const [filterStatus, setFilterStatus] = useState<"open" | "completed">("open");
+  const [filterStatus, setFilterStatus] = useState<"open" | "my_predictions" | "completed">("open");
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
@@ -609,8 +609,7 @@ export default function PredictionsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {lowStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
               <Card key={pool.id} className="bg-white border border-gray-200 overflow-hidden">
-                <AspectRatio ratio={1.6}>
-                  <div className="h-full flex flex-col">
+                <div className="min-h-[320px] flex flex-col">
                     {/* Header Bar */}
                     <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-2">
                       <div className="flex items-center justify-between">
@@ -667,8 +666,7 @@ export default function PredictionsPage() {
                         {pool.participants.toLocaleString()} participants
                       </div>
                     </div>
-                  </div>
-                </AspectRatio>
+                </div>
               </Card>
             ))}
           </div>
@@ -678,6 +676,7 @@ export default function PredictionsPage() {
             <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
               {[
                 { key: "open", label: "Open Pools" },
+                { key: "my_predictions", label: "My Predictions" },
                 { key: "completed", label: "Completed" }
               ].map((filter) => (
                 <button
