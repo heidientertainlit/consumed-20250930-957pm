@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star } from "lucide-react";
+import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star, Share } from "lucide-react";
 import { Link } from "wouter";
 
 interface PredictionPool {
@@ -575,6 +575,33 @@ export default function PredictionsPage() {
     });
   };
 
+  const handleShare = async (pool: PredictionPool) => {
+    const shareData = {
+      title: `${pool.title} - entertainlit`,
+      text: `Join me in predicting: ${pool.description}`,
+      url: `${window.location.origin}/predictions#${pool.id}`
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        toast({
+          title: "Link Copied!",
+          description: "Prediction link copied to clipboard",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast({
+        title: "Share Failed",
+        description: "Unable to share prediction",
+        variant: "destructive"
+      });
+    }
+  };
+
   const renderModal = () => {
     if (!selectedPool) return null;
 
@@ -628,9 +655,18 @@ export default function PredictionsPage() {
                     <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-2">
                       <div className="flex items-center justify-between">
                         <span className="text-lg">{pool.icon}</span>
-                        <Badge className="bg-white bg-opacity-20 text-white hover:bg-white hover:bg-opacity-20">
-                          {pool.pointsReward} pts
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleShare(pool)}
+                            className="p-1 hover:bg-white hover:bg-opacity-20 rounded-md transition-all"
+                            data-testid={`share-pool-${pool.id}`}
+                          >
+                            <Share size={16} className="text-white" />
+                          </button>
+                          <Badge className="bg-white bg-opacity-20 text-white hover:bg-white hover:bg-opacity-20">
+                            {pool.pointsReward} pts
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                     
