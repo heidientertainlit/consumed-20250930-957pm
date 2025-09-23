@@ -86,28 +86,42 @@ const lowStakesPools: PredictionPool[] = [
   },
   {
     id: "dancing-with-stars",
-    title: "Dancing with the Stars Season 34",
-    description: "Predict the winner of DWTS Season 34 - Full Tournament Bracket",
-    type: "bracket",
-    pointsReward: 25,
-    deadline: "May 20, 2025", 
-    participants: 2834,
+    title: "Dancing with the Stars - Who Will Win This Week?",
+    description: "Predict who will be eliminated this week on DWTS",
+    type: "weekly",
+    pointsReward: 15,
+    deadline: "Tuesday 11:59 PM", 
+    participants: 1834,
     status: "open",
     category: "Reality TV",
-    icon: "🏆",
-    inline: false
+    icon: "💃",
+    inline: true,
+    options: ["Joey Graziadei", "Ilona Maher", "Stephen Nedoroscik", "Chandler Kinney"]
   },
   {
-    id: "academy-awards",
+    id: "academy-awards-2025",
     title: "2025 Academy Awards",
     description: "Predict winners across all major Oscar categories",
     type: "awards",
     pointsReward: 20,
     deadline: "March 2, 2025",
     participants: 4156,
-    status: "open",
+    status: "completed",
     category: "Movies", 
     icon: "🎭",
+    inline: false
+  },
+  {
+    id: "academy-awards-2026",
+    title: "2026 Academy Awards (Oscars)",
+    description: "Coming Soon - Stay tuned for next year's Oscar predictions!",
+    type: "awards",
+    pointsReward: 25,
+    deadline: "March 2026",
+    participants: 0,
+    status: "locked",
+    category: "Movies", 
+    icon: "🏆",
     inline: false
   }
 ];
@@ -633,7 +647,7 @@ export default function PredictionsPage() {
                       
                       {/* Inline Options or Action Button */}
                       <div className="flex-1 flex flex-col justify-end">
-                        {pool.inline && pool.options ? (
+                        {pool.inline && pool.options && pool.status === "open" ? (
                           <div className="space-y-1.5">
                             {pool.options.map((option) => (
                               <button
@@ -649,6 +663,14 @@ export default function PredictionsPage() {
                                 {option.length > 18 ? `${option.substring(0, 18)}...` : option}
                               </button>
                             ))}
+                          </div>
+                        ) : pool.status === "locked" ? (
+                          <div className="w-full px-4 py-2 bg-gray-100 text-gray-500 rounded-md text-sm font-medium text-center">
+                            Coming Soon
+                          </div>
+                        ) : pool.status === "completed" ? (
+                          <div className="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-md text-sm font-medium text-center">
+                            Results Available
                           </div>
                         ) : (
                           <button
