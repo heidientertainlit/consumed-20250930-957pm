@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,6 +10,20 @@ export const users = pgTable("users", {
   points: integer("points").notNull().default(0),
   totalWinnings: integer("total_winnings").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Lists table to match existing Supabase schema
+export const lists = pgTable("lists", {
+  id: serial("id").primaryKey(), // Keep existing serial ID
+  userId: varchar("user_id").references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  visibility: varchar("visibility").default("private"),
+  isDefault: boolean("is_default").default(false),
+  isPinned: boolean("is_pinned").default(false),
+  isPrivate: boolean("is_private").default(true), // Main public/private toggle
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 
@@ -70,8 +84,16 @@ export const insertDnaProfileSchema = createInsertSchema(dnaProfiles).omit({
   updatedAt: true,
 });
 
+export const insertListSchema = createInsertSchema(lists).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type List = typeof lists.$inferSelect;
+export type InsertList = z.infer<typeof insertListSchema>;
 export type ConsumptionLog = typeof consumptionLogs.$inferSelect;
 export type InsertConsumptionLog = z.infer<typeof insertConsumptionLogSchema>;
 export type EdnaResponse = typeof ednaResponses.$inferSelect;
