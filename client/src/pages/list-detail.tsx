@@ -97,38 +97,34 @@ export default function ListDetail() {
   }
 
 
-  const handleShare = () => {
-    const currentUrl = window.location.href;
-    if (navigator.share) {
-      // Use native sharing if available (mobile)
-      navigator.share({
-        title: `Check out my ${listData.name} list`,
-        text: `Take a look at my entertainment list: ${listData.name}`,
-        url: currentUrl,
-      }).catch(() => {
-        // Fallback to clipboard
-        fallbackCopyToClipboard(currentUrl);
+  const handleShare = async () => {
+    const shareData = {
+      title: `Check out my entertainment list on entertainlit!`,
+      text: `I'm tracking my ${listData?.name || 'entertainment'} - want to see what I'm watching? Check it out and share yours too! 🎬🎵📚`,
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        toast({
+          title: "List Link Copied!",
+          description: "Share this with your friends to show your entertainment list",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing list:', error);
+      toast({
+        title: "Share Failed",
+        description: "Unable to create share link",
+        variant: "destructive"
       });
-    } else {
-      // Fallback to clipboard copy
-      fallbackCopyToClipboard(currentUrl);
     }
   };
 
-  const fallbackCopyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      toast({
-        title: "Link copied!",
-        description: "List link has been copied to your clipboard.",
-      });
-    }).catch(() => {
-      toast({
-        title: "Share failed",
-        description: "Unable to copy link. Please try again.",
-        variant: "destructive",
-      });
-    });
-  };
+  // Removed fallbackCopyToClipboard - using same pattern as predictions
 
   const handleRemoveItem = (itemId: number) => {
     // In real app, would make API call to remove item

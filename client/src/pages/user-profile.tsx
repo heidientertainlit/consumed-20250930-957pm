@@ -188,19 +188,28 @@ export default function UserProfile() {
   };
 
   const handleShareListDirect = async (listId: string, listTitle: string) => {
+    const shareData = {
+      title: `Check out my ${listTitle} list on entertainlit!`,
+      text: `I'm tracking my ${listTitle} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
+      url: `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`
+    };
+
     try {
-      const shareUrl = `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
-      await navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: "Link copied!",
-        description: `Share link for "${listTitle}" copied to clipboard.`,
-      });
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        toast({
+          title: "List Link Copied!",
+          description: "Share this with your friends to show your entertainment list",
+        });
+      }
     } catch (error) {
-      console.error('Failed to copy link:', error);
+      console.error('Error sharing list:', error);
       toast({
-        title: "Failed to copy link",
-        description: "Please try again.",
-        variant: "destructive",
+        title: "Share Failed",
+        description: "Unable to create share link",
+        variant: "destructive"
       });
     }
   };
