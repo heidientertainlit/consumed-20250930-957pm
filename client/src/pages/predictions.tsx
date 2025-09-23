@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { useToast } from "@/hooks/use-toast";
 import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star } from "lucide-react";
 import { Link } from "wouter";
 
@@ -20,6 +22,8 @@ interface PredictionPool {
   category: string;
   icon: string;
   image?: string;
+  options?: string[];
+  inline?: boolean;
 }
 
 // Low Stakes Prediction Pools (Quick & Fun)
@@ -34,7 +38,9 @@ const lowStakesPools: PredictionPool[] = [
     participants: 1247,
     status: "open",
     category: "Streaming",
-    icon: "📺"
+    icon: "📺",
+    inline: true,
+    options: ["Nobody Wants This", "Emily in Paris S4", "Monsters: Menendez", "Avatar: Last Airbender"]
   },
   {
     id: "box-office-weekend", 
@@ -46,7 +52,9 @@ const lowStakesPools: PredictionPool[] = [
     participants: 743,
     status: "open",
     category: "Movies",
-    icon: "🎬"
+    icon: "🎬",
+    inline: true,
+    options: ["Dune: Part Two", "Madame Web", "Bob Marley: One Love", "Ordinary Angels"]
   },
   {
     id: "trending-music",
@@ -58,7 +66,9 @@ const lowStakesPools: PredictionPool[] = [
     participants: 892,
     status: "open", 
     category: "Music",
-    icon: "🎵"
+    icon: "🎵",
+    inline: true,
+    options: ["Flowers - Miley Cyrus", "Anti-Hero - Taylor Swift", "Unholy - Sam Smith", "As It Was - Harry Styles"]
   },
   {
     id: "tv-ratings",
@@ -70,7 +80,9 @@ const lowStakesPools: PredictionPool[] = [
     participants: 567,
     status: "open",
     category: "TV",
-    icon: "📊"
+    icon: "📊",
+    inline: true,
+    options: ["Sunday Night Football", "The Voice", "NCIS", "60 Minutes"]
   },
   {
     id: "dancing-with-stars",
@@ -82,7 +94,8 @@ const lowStakesPools: PredictionPool[] = [
     participants: 2834,
     status: "open",
     category: "Reality TV",
-    icon: "🏆"
+    icon: "🏆",
+    inline: false
   },
   {
     id: "academy-awards",
@@ -94,7 +107,8 @@ const lowStakesPools: PredictionPool[] = [
     participants: 4156,
     status: "open",
     category: "Movies", 
-    icon: "🎭"
+    icon: "🎭",
+    inline: false
   }
 ];
 
@@ -503,6 +517,8 @@ export default function PredictionsPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedPool, setSelectedPool] = useState<PredictionPool | null>(null);
   const [filterStatus, setFilterStatus] = useState<"open" | "completed">("open");
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -532,9 +548,17 @@ export default function PredictionsPage() {
   );
 
   const handlePoolClick = (pool: PredictionPool) => {
-    if (pool.status === "open") {
+    if (pool.status === "open" && !pool.inline) {
       setSelectedPool(pool);
     }
+  };
+
+  const handleQuickPick = (poolId: string, option: string) => {
+    setSelectedOptions(prev => ({ ...prev, [poolId]: option }));
+    toast({
+      title: "Prediction Submitted!",
+      description: `You predicted "${option}" for ${lowStakesPools.find(p => p.id === poolId)?.title}`,
+    });
   };
 
   const renderModal = () => {
@@ -581,41 +605,72 @@ export default function PredictionsPage() {
             </p>
           </div>
 
-          {/* Prediction Pools */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-4 rounded-t-lg">
-              <h2 className="text-lg font-semibold text-center">PREDICTION POOLS</h2>
-            </div>
-            <div className="p-6 space-y-4">
-              {lowStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
-                <div 
-                  key={pool.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="text-2xl">{pool.icon}</div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{pool.title}</h3>
-                      <p className="text-sm text-gray-600">{pool.description}</p>
-                      <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                        <span>{pool.pointsReward} pts</span>
-                        <span>{pool.participants.toLocaleString()} participants</span>
+          {/* Prediction Pools Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lowStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
+              <Card key={pool.id} className="bg-white border border-gray-200 overflow-hidden">
+                <AspectRatio ratio={1}>
+                  <div className="h-full flex flex-col">
+                    {/* Header Bar */}
+                    <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg">{pool.icon}</span>
+                        <Badge className="bg-white bg-opacity-20 text-white hover:bg-white hover:bg-opacity-20">
+                          {pool.pointsReward} pts
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="flex-1 p-4 flex flex-col">
+                      <div className="mb-3">
+                        <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1">
+                          {pool.title}
+                        </h3>
+                        <p className="text-xs text-gray-600 line-clamp-2">
+                          {pool.description}
+                        </p>
+                      </div>
+                      
+                      {/* Inline Options or Action Button */}
+                      <div className="flex-1 flex flex-col justify-end">
+                        {pool.inline && pool.options ? (
+                          <div className="space-y-2">
+                            {pool.options.map((option) => (
+                              <button
+                                key={option}
+                                onClick={() => handleQuickPick(pool.id, option)}
+                                className={`w-full p-2 text-xs font-medium rounded-md border transition-all ${
+                                  selectedOptions[pool.id] === option
+                                    ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                    : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
+                                }`}
+                                data-testid={`quick-pick-${pool.id}-${option}`}
+                              >
+                                {option.length > 18 ? `${option.substring(0, 18)}...` : option}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handlePoolClick(pool)}
+                            className="w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-md text-sm font-medium hover:from-purple-600 hover:to-purple-700 transition-all"
+                            data-testid={`open-pool-${pool.id}`}
+                          >
+                            Predict
+                          </button>
+                        )}
+                      </div>
+                      
+                      {/* Footer Info */}
+                      <div className="mt-3 pt-2 border-t border-gray-100 text-xs text-gray-500 text-center">
+                        {pool.participants.toLocaleString()} participants
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handlePoolClick(pool)}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full text-sm font-medium hover:from-purple-600 hover:to-purple-700 transition-all"
-                    data-testid={`join-pool-${pool.id}`}
-                  >
-                    Join
-                  </button>
-                </div>
-              ))}
-              <button className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-medium hover:from-purple-600 hover:to-purple-700 transition-all">
-                See All Pools →
-              </button>
-            </div>
+                </AspectRatio>
+              </Card>
+            ))}
           </div>
 
           {/* Filter Tabs for Status */}
