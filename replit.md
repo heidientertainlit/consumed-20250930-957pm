@@ -50,8 +50,8 @@ The application follows a modern full-stack architecture with a clear separation
 
 **Database structure:** System default lists have user_id = NULL, list_id = NULL represents "All Media"/general tracking
 **Authentication pattern:** Supabase auth users must be auto-created in custom users table on first use to bridge auth.users and application users tables
-**Database schema:** users table uses user_name column (NEVER username!), list_items table uses notes and created_at columns (not review/added_at)
-**CRITICAL NAMING CONVENTION:** Always use user_name column name, never username - this is a consistent requirement across all edge functions and database operations
+**Database schema:** users table uses user_name column (CONFIRMED via Supabase dashboard - never username!), list_items table uses notes and created_at columns (not review/added_at)
+**CRITICAL NAMING CONVENTION:** Always use user_name column name, never username - this is CONFIRMED from actual database structure and required across all edge functions and database operations
 **RLS Requirements:** Must have policy allowing SELECT on lists where user_id IS NULL for authenticated users
 **Edge function deployment:** All edge functions require user_name column references and auto-create logic
 
