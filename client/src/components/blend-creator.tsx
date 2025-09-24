@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, X, Sparkles, Heart, Loader2 } from "lucide-react";
+import { Users, X, Sparkles, Heart, Loader2, Film, BookOpen, Music, Headphones, Gamepad2, Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -108,8 +108,15 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
   });
 
   const getMediaTypeIcon = (mediaType: string) => {
-    const type = mediaTypes.find(mt => mt.id === mediaType);
-    return type?.icon || <Heart className="w-4 h-4 text-gray-500" />;
+    switch (mediaType?.toLowerCase()) {
+      case 'movie': return <Film className="w-4 h-4 text-red-600" />;
+      case 'tv': return <Trophy className="w-4 h-4 text-purple-600" />;
+      case 'book': return <BookOpen className="w-4 h-4 text-blue-600" />;
+      case 'music': return <Music className="w-4 h-4 text-green-600" />;
+      case 'podcast': return <Headphones className="w-4 h-4 text-orange-600" />;
+      case 'game': return <Gamepad2 className="w-4 h-4 text-indigo-600" />;
+      default: return <Heart className="w-4 h-4 text-gray-500" />;
+    }
   };
 
   const canCreateBlend = blendInput.trim().length > 0;
@@ -279,7 +286,7 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
               placeholder="e.g., 'Recommend movies for me and my friends john, sarah. We like sci-fi and comedy.' or 'Find books similar to Harry Potter that I haven't read yet.'"
               value={blendInput}
               onChange={(e) => setBlendInput(e.target.value)}
-              className="min-h-[120px] resize-none"
+              className="min-h-[120px] resize-none bg-white text-black border-gray-300"
               data-testid="input-blend-description"
             />
             <p className="text-xs text-gray-500 mt-1">
