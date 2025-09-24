@@ -54,10 +54,10 @@ serve(async (req) => {
 
     console.log(`Fetching public list "${listTitle}" for user ${userId}`);
     
-    // Check if user exists - using correct column name 'username'
+    // Check if user exists - using correct column name 'user_name'
     const { data: user, error: userError } = await serviceSupabase
       .from('users')
-      .select('id, username, email')
+      .select('id, user_name, email')
       .eq('id', userId)
       .single();
 
