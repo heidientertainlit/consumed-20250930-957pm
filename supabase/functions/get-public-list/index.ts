@@ -92,7 +92,7 @@ serve(async (req) => {
         .from('list_items')
         .select('*')
         .eq('list_id', list.id)
-        .order('created_at', { ascending: false });
+        .order('added_at', { ascending: false });
 
       if (itemsError) {
         console.error("Failed to fetch list items:", itemsError);
