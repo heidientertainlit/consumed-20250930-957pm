@@ -55,10 +55,10 @@ serve(async (req) => {
 
     console.log(`Fetching public list "${listTitle}" for user ${userId}`);
     
-    // Check if user exists - using correct column name 'user_name'
+    // Check if user exists - using correct column name 'username'
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, user_name, email')
+      .select('id, username, email')
       .eq('id', userId)
       .single();
 
@@ -114,7 +114,7 @@ serve(async (req) => {
         id: list.id,
         title: list.title,
         items: formattedItems,
-        owner: user.user_name || user.email.split('@')[0],
+        owner: user.username || user.email.split('@')[0],
         is_private: false // All lists are public for MVP
       }
     }), {
