@@ -41,7 +41,8 @@ serve(async (req) => {
       'currently': 'Currently',
       'queue': 'Queue',
       'finished': 'Finished',
-      'did-not-finish': 'Did Not Finish'
+      'did-not-finish': 'Did Not Finish',
+      'all': 'All'
     };
 
     const listTitle = slugToTitle[listSlug as keyof typeof slugToTitle];
@@ -54,10 +55,10 @@ serve(async (req) => {
 
     console.log(`Fetching public list "${listTitle}" for user ${userId}`);
     
-    // Check if user exists - using correct column name 'username'
+    // Check if user exists - using correct column name 'user_name'
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, username, email')
+      .select('id, user_name, email')
       .eq('id', userId)
       .single();
 
@@ -74,7 +75,7 @@ serve(async (req) => {
       .from('lists')
       .select('id, title, is_private, user_id')
       .eq('title', listTitle)
-      .eq('user_id', userId) // Look for user's actual list
+      .is('user_id', null) // System lists have user_id = null
       .single();
 
     if (listError || !list) {
@@ -87,13 +88,13 @@ serve(async (req) => {
 
     console.log("Found system list:", list);
 
-    // Get user's items from this list - using correct column name 'added_at'
+    // Get user's items from this list - using correct column name 'created_at'
     const { data: items, error: itemsError } = await supabase
       .from('list_items')
-      .select('id, title, type, media_type, creator, image_url, notes, added_at, media_id')
+      .select('id, title, type, media_type, creator, image_url, notes, created_at, media_id')
       .eq('list_id', list.id)
       .eq('user_id', userId)
-      .order('added_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (itemsError) {
       console.error("Failed to fetch list items:", itemsError);
@@ -105,18 +106,15 @@ serve(async (req) => {
 
     console.log(`Found public list with ${items?.length || 0} items`);
 
-    // Convert to expected format with created_at for frontend compatibility
-    const formattedItems = (items || []).map(item => ({
-      ...item,
-      created_at: item.added_at // Frontend expects created_at
-    }));
+    // Items already have created_at from correct column
+    const formattedItems = items || [];
 
     return new Response(JSON.stringify({
       list: {
         id: list.id,
         title: list.title,
         items: formattedItems,
-        owner: user.username || user.email.split('@')[0],
+        owner: user.user_name || user.email.split('@')[0],
         is_private: false // All lists are public for MVP
       }
     }), {
