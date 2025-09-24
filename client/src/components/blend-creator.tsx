@@ -316,24 +316,31 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
           >
             Cancel
           </Button>
-          <Button
-            onClick={() => createBlendMutation.mutate()}
-            disabled={!canCreateBlend || createBlendMutation.isPending}
-            className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white min-w-[140px]"
-            data-testid="create-blend-button"
-          >
-            {createBlendMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Create Blend
-              </>
+          <div className="flex flex-col items-end space-y-2">
+            <Button
+              onClick={() => createBlendMutation.mutate()}
+              disabled={!canCreateBlend || createBlendMutation.isPending}
+              className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white min-w-[140px]"
+              data-testid="create-blend-button"
+            >
+              {createBlendMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Create Blend
+                </>
+              )}
+            </Button>
+            {createBlendMutation.isPending && (
+              <p className="text-xs text-gray-500 text-right animate-pulse">
+                Thanks for being patient, it takes a moment! ✨
+              </p>
             )}
-          </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
