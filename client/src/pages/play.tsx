@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import BlendCreator from "@/components/blend-creator";
 import { Button } from "@/components/ui/button";
-import { Play, Trophy, Brain, Gamepad2, Users } from "lucide-react";
+import { Play, Trophy, Brain, Gamepad2, Users, Vote } from "lucide-react";
 import { Link } from "wouter";
 
 export default function PlayPage() {
