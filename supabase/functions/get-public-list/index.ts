@@ -14,10 +14,10 @@ serve(async (req) => {
   }
 
   try {
-    // Create service role client for accessing all data
-    const serviceSupabase = createClient(
+    // Create anon client for public access (no auth required)
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '', 
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
     // Parse URL parameters
@@ -55,7 +55,7 @@ serve(async (req) => {
     console.log(`Fetching public list "${listTitle}" for user ${userId}`);
     
     // Check if user exists - using correct column name 'user_name'
-    const { data: user, error: userError } = await serviceSupabase
+    const { data: user, error: userError } = await supabase
       .from('users')
       .select('id, user_name, email')
       .eq('id', userId)
@@ -70,7 +70,7 @@ serve(async (req) => {
     }
 
     // Get the specific list for this user - checking against system lists
-    const { data: list, error: listError } = await serviceSupabase
+    const { data: list, error: listError } = await supabase
       .from('lists')
       .select('id, title, is_private, user_id')
       .eq('title', listTitle)
@@ -88,7 +88,7 @@ serve(async (req) => {
     console.log("Found system list:", list);
 
     // Get user's items from this list - using correct column name 'added_at'
-    const { data: items, error: itemsError } = await serviceSupabase
+    const { data: items, error: itemsError } = await supabase
       .from('list_items')
       .select('id, title, type, media_type, creator, image_url, notes, added_at, media_id')
       .eq('list_id', list.id)
