@@ -124,8 +124,8 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
   if (step === "results" && blendResult) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-white">
-          <DialogHeader className="pb-4 border-b border-gray-100">
+        <DialogContent className="max-w-4xl max-h-[90vh] bg-white flex flex-col">
+          <DialogHeader className="pb-4 border-b border-gray-100 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-700 to-purple-800 rounded-full flex items-center justify-center">
@@ -151,7 +151,7 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-1">
+          <div className="flex-1 overflow-y-auto p-4 min-h-0">
             {/* Participants Summary */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
               <h3 className="font-semibold text-gray-900 mb-2">Blend Participants</h3>
@@ -223,7 +223,7 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
             )}
           </div>
 
-          <div className="border-t border-gray-100 pt-4 flex justify-between">
+          <div className="border-t border-gray-100 pt-4 flex justify-between flex-shrink-0">
             <Button
               variant="outline"
               onClick={() => setStep("setup")}
