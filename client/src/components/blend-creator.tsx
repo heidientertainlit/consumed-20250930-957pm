@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, X, Sparkles, Film, BookOpen, Music, Headphones, Gamepad2, Trophy, Heart, Loader2, CheckCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Users, X, Sparkles, Heart, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -37,31 +36,18 @@ interface BlendResult {
   }>;
 }
 
-const mediaTypes = [
-  { id: "movie", label: "Movies", icon: <Film className="w-4 h-4 text-red-600" /> },
-  { id: "tv", label: "TV Shows", icon: <Trophy className="w-4 h-4 text-purple-600" /> },
-  { id: "book", label: "Books", icon: <BookOpen className="w-4 h-4 text-blue-600" /> },
-  { id: "music", label: "Music", icon: <Music className="w-4 h-4 text-green-600" /> },
-  { id: "podcast", label: "Podcasts", icon: <Headphones className="w-4 h-4 text-orange-600" /> },
-  { id: "game", label: "Games", icon: <Gamepad2 className="w-4 h-4 text-indigo-600" /> }
-];
 
 export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
-  const [participantUsernames, setParticipantUsernames] = useState<string>("");
-  const [selectedMediaTypes, setSelectedMediaTypes] = useState<string[]>([]);
-  const [maxResults, setMaxResults] = useState<string>("10");
+  const [blendInput, setBlendInput] = useState<string>("");
   const [excludeConsumed, setExcludeConsumed] = useState<boolean>(true);
   const [blendResult, setBlendResult] = useState<BlendResult | null>(null);
   const [step, setStep] = useState<"setup" | "results">("setup");
 
-  const queryClient = useQueryClient();
   const { user, session } = useAuth();
   const { toast } = useToast();
 
   const resetForm = () => {
-    setParticipantUsernames("");
-    setSelectedMediaTypes([]);
-    setMaxResults("10");
+    setBlendInput("");
     setExcludeConsumed(true);
     setBlendResult(null);
     setStep("setup");
@@ -72,13 +58,6 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
     onClose();
   };
 
-  const handleMediaTypeToggle = (mediaTypeId: string) => {
-    setSelectedMediaTypes(prev => 
-      prev.includes(mediaTypeId) 
-        ? prev.filter(id => id !== mediaTypeId)
-        : [...prev, mediaTypeId]
-    );
-  };
 
   const createBlendMutation = useMutation({
     mutationFn: async () => {
@@ -86,13 +65,7 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
         throw new Error('Not authenticated');
       }
 
-      // Parse participant usernames - split by comma, newline, or semicolon
-      const participants = participantUsernames
-        .split(/[,;\n]+/)
-        .map(name => name.trim())
-        .filter(name => name.length > 0);
-
-      console.log('Creating blend with participants:', participants);
+      console.log('Creating blend with input:', blendInput);
 
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/blends", {
         method: "POST",
@@ -101,9 +74,8 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
           "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          participant_user_ids: participants, // Let backend resolve usernames to user IDs
-          max_results: parseInt(maxResults),
-          media_types: selectedMediaTypes.length > 0 ? selectedMediaTypes : undefined,
+          blend_input: blendInput,
+          max_results: 10, // Fixed at 10 recommendations
           exclude_already_consumed: excludeConsumed,
         }),
       });
@@ -140,7 +112,7 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
     return type?.icon || <Heart className="w-4 h-4 text-gray-500" />;
   };
 
-  const canCreateBlend = participantUsernames.trim().length > 0;
+  const canCreateBlend = blendInput.trim().length > 0;
 
   if (step === "results" && blendResult) {
     return (
@@ -295,88 +267,34 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Participants Input */}
+          {/* Main Input Area */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-2">
-              Participants
+              Describe what you want to find
             </label>
-            <Input
-              placeholder="Enter usernames (separated by commas)"
-              value={participantUsernames}
-              onChange={(e) => setParticipantUsernames(e.target.value)}
-              className="w-full"
-              data-testid="input-participants"
+            <Textarea
+              placeholder="e.g., 'Recommend movies for me and my friends john, sarah. We like sci-fi and comedy.' or 'Find books similar to Harry Potter that I haven't read yet.'"
+              value={blendInput}
+              onChange={(e) => setBlendInput(e.target.value)}
+              className="min-h-[120px] resize-none"
+              data-testid="input-blend-description"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Add friends' usernames separated by commas. Leave empty to create a blend for just yourself.
+              Describe what you want recommendations for, who's involved, and any preferences you have.
             </p>
           </div>
 
-          {/* Media Types Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-3">
-              Media Types (optional)
+          {/* Settings */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="exclude-consumed"
+              checked={excludeConsumed}
+              onCheckedChange={(checked) => setExcludeConsumed(checked as boolean)}
+              data-testid="checkbox-exclude-consumed"
+            />
+            <label htmlFor="exclude-consumed" className="text-sm font-medium text-gray-700 cursor-pointer">
+              Exclude already consumed
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {mediaTypes.map((mediaType) => (
-                <div
-                  key={mediaType.id}
-                  className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedMediaTypes.includes(mediaType.id)
-                      ? 'bg-purple-50 border-purple-200'
-                      : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                  }`}
-                  onClick={() => handleMediaTypeToggle(mediaType.id)}
-                >
-                  <Checkbox
-                    checked={selectedMediaTypes.includes(mediaType.id)}
-                    onChange={() => handleMediaTypeToggle(mediaType.id)}
-                    data-testid={`checkbox-${mediaType.id}`}
-                  />
-                  <div className="flex items-center space-x-2">
-                    {mediaType.icon}
-                    <span className="text-sm font-medium text-gray-700">
-                      {mediaType.label}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Leave unselected to include all media types
-            </p>
-          </div>
-
-          {/* Advanced Settings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Max Results
-              </label>
-              <Select value={maxResults} onValueChange={setMaxResults}>
-                <SelectTrigger data-testid="select-max-results">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5 recommendations</SelectItem>
-                  <SelectItem value="10">10 recommendations</SelectItem>
-                  <SelectItem value="15">15 recommendations</SelectItem>
-                  <SelectItem value="20">20 recommendations</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2 mt-6">
-              <Checkbox
-                id="exclude-consumed"
-                checked={excludeConsumed}
-                onCheckedChange={(checked) => setExcludeConsumed(checked as boolean)}
-                data-testid="checkbox-exclude-consumed"
-              />
-              <label htmlFor="exclude-consumed" className="text-sm font-medium text-gray-700 cursor-pointer">
-                Exclude already consumed
-              </label>
-            </div>
           </div>
         </div>
 
