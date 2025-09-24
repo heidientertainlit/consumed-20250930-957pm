@@ -116,7 +116,7 @@ serve(async (req) => {
         id: list.id,
         title: list.title,
         items: formattedItems,
-        owner: user.username || user.email.split('@')[0],
+        owner: user.user_name || user.email.split('@')[0],
         is_private: false // All lists are public for MVP
       }
     }), {
