@@ -26,8 +26,22 @@ interface PredictionPool {
   inline?: boolean;
 }
 
-// Low Stakes Prediction Pools (Quick & Fun)
+// Vote & Predict Pools (Quick & Fun)
 const lowStakesPools: PredictionPool[] = [
+  {
+    id: "rachel-soulmate",
+    title: "Who Would've Been Rachel's True Soulmate on Friends?",
+    description: "Vote on which character would have been Rachel's perfect match",
+    type: "vote",
+    pointsReward: 5,
+    deadline: "Always Open",
+    participants: 2847,
+    status: "open",
+    category: "TV",
+    icon: "💕",
+    inline: true,
+    options: ["Ross Geller", "Joey Tribbiani", "Someone New", "She Should Stay Single"]
+  },
   {
     id: "netflix-weekend",
     title: "Netflix Top 10 This Week",
@@ -83,6 +97,34 @@ const lowStakesPools: PredictionPool[] = [
     icon: "📊",
     inline: true,
     options: ["Sunday Night Football", "The Voice", "NCIS", "60 Minutes"]
+  },
+  {
+    id: "best-disney-villain",
+    title: "Who's the Most Iconic Disney Villain?",
+    description: "Vote for the Disney villain that left the biggest impact",
+    type: "vote",
+    pointsReward: 5,
+    deadline: "Always Open",
+    participants: 3456,
+    status: "open",
+    category: "Movies",
+    icon: "🦹‍♀️",
+    inline: true,
+    options: ["Scar (Lion King)", "Maleficent (Sleeping Beauty)", "Jafar (Aladdin)", "Ursula (Little Mermaid)"]
+  },
+  {
+    id: "office-best-episode",
+    title: "What's The Office's Greatest Episode?",
+    description: "Vote on which episode of The Office reigns supreme",
+    type: "vote",
+    pointsReward: 5,
+    deadline: "Always Open",
+    participants: 4127,
+    status: "open",
+    category: "TV",
+    icon: "📄",
+    inline: true,
+    options: ["Dinner Party", "The Dundies", "Casino Night", "Stress Relief"]
   },
   {
     id: "dancing-with-stars",
@@ -527,7 +569,7 @@ const VoteModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: bo
   );
 };
 
-export default function PredictionsPage() {
+export default function VoteAndPredictPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedPool, setSelectedPool] = useState<PredictionPool | null>(null);
   const [filterStatus, setFilterStatus] = useState<"open" | "my_predictions" | "completed">("open");
@@ -570,8 +612,8 @@ export default function PredictionsPage() {
   const handleQuickPick = (poolId: string, option: string) => {
     setSelectedOptions(prev => ({ ...prev, [poolId]: option }));
     toast({
-      title: "Prediction Submitted!",
-      description: `You predicted "${option}" for ${lowStakesPools.find(p => p.id === poolId)?.title}`,
+      title: "Vote Submitted!",
+      description: `You voted for "${option}" in ${lowStakesPools.find(p => p.id === poolId)?.title}`,
     });
   };
 
@@ -639,10 +681,10 @@ export default function PredictionsPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-semibold text-gray-800 mb-2">
-              Predictions
+              Vote & Predict
             </h1>
             <p className="text-lg text-gray-600">
-              Join prediction pools and earn points by making accurate predictions about entertainment!
+              Vote on entertainment topics and make predictions! Earn points for participation and accurate predictions.
             </p>
           </div>
 
@@ -741,9 +783,9 @@ export default function PredictionsPage() {
           <div className="flex justify-center mt-8">
             <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
               {[
-                { key: "open", label: "Open Pools" },
-                { key: "my_predictions", label: "My Predictions" },
-                { key: "completed", label: "Completed" }
+                { key: "open", label: "Open" },
+                { key: "my_predictions", label: "My Votes & Predictions" },
+                { key: "completed", label: "Results" }
               ].map((filter) => (
                 <button
                   key={filter.key}

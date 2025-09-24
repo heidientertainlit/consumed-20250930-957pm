@@ -53,22 +53,22 @@ export default function PlayPage() {
             </Button>
           </div>
 
-          {/* Predictions Option */}
+          {/* Vote & Predict Option */}
           <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-700 to-purple-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trophy className="text-white" size={32} />
+              <Vote className="text-white" size={32} />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Predictions</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Vote & Predict</h3>
             <p className="text-gray-600 mb-6">
-              Make predictions about upcoming entertainment releases, awards, and trends. Win points for accurate predictions!
+              Vote on fun entertainment topics like "Who would've been Rachel's soulmate on Friends?" and make predictions about awards and releases!
             </p>
             <Link href="/predictions">
               <Button 
                 className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white px-8 py-3 text-lg"
                 data-testid="play-predictions-button"
               >
-                <Trophy size={20} className="mr-2" />
-                Make Predictions
+                <Vote size={20} className="mr-2" />
+                Vote & Predict
               </Button>
             </Link>
           </div>

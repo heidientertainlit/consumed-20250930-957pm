@@ -72,14 +72,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xl font-bold text-white">entertainlit</span>
           </Link>
           <div className="flex items-center space-x-3">
-            <button 
+            <button
               onClick={() => setIsSearchOpen(true)}
               className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
               data-testid="search-button"
             >
               <Search className="text-white" size={18} />
             </button>
-            <button 
+            <button
               onClick={() => setIsNotificationsOpen(true)}
               className="relative w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
               data-testid="notification-bell"
@@ -91,8 +91,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 </span>
               )}
             </button>
-            <Link 
-              href="/user/user-1" 
+            <Link
+              href="/user/user-1"
               className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
               data-testid="profile-avatar"
             >
@@ -105,58 +105,64 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50">
         <div className="flex justify-around items-center h-20 px-4">
-          <Link 
-            href="/track" 
+          <Link
+            href="/track"
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/track" || location === "/" ? "bg-white/20" : ""}`}
           >
             <Plus className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Track</span>
           </Link>
-          
-          <Link 
-            href="/play" 
+
+          <Link
+            href="/play"
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/play" ? "bg-white/20" : ""}`}
           >
             <Gamepad2 className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Play</span>
           </Link>
-          
-          <Link 
-            href="/leaderboard" 
+
+          <Link
+            href="/leaderboard"
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
           >
             <BarChart3 className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Leaderboard</span>
           </Link>
-          
-          <Link 
-            href="/feed" 
+
+          <Link
+            href="/feed"
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
           >
             <Activity className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Feed</span>
           </Link>
-          
-          <Link 
-            href="/friends-creators" 
+
+          <Link
+            href="/friends-creators"
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/friends-creators" ? "bg-white/20" : ""}`}
           >
             <Users className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Friends</span>
           </Link>
+
+          <Link href="/predictions">
+              <Button variant="ghost" className="text-sm font-medium hover:bg-gray-100 hover:text-gray-900">
+                Vote & Predict
+              </Button>
+            </Link>
         </div>
       </nav>
 
       {/* Search Modal */}
-      <SearchModal 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
       />
 
       {/* Notifications Modal */}
-      <NotificationsModal 
-        isOpen={isNotificationsOpen} 
-        onClose={() => setIsNotificationsOpen(false)} 
+      <NotificationsModal
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
       />
     </>
   );
