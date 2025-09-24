@@ -270,8 +270,11 @@ export default function BlendCreator({ isOpen, onClose }: BlendCreatorProps) {
           {/* Main Input Area */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-2">
-              Describe what you want to find
+              Blend Your Tastes
             </label>
+            <p className="text-sm text-gray-600 mb-3">
+              Add a few titles you and a friend/group/partner already love (books, shows, movies, music, podcasts, or games) and we'll mix your tastes to recommend picks you'll both enjoy.
+            </p>
             <Textarea
               placeholder="e.g., 'Recommend movies for me and my friends john, sarah. We like sci-fi and comedy.' or 'Find books similar to Harry Potter that I haven't read yet.'"
               value={blendInput}
