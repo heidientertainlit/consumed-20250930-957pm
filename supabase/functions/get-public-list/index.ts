@@ -69,12 +69,12 @@ serve(async (req) => {
       });
     }
 
-    // Get the specific list for this user - checking against system lists
+    // Get the specific list for this user - checking against user's actual lists
     const { data: list, error: listError } = await supabase
       .from('lists')
       .select('id, title, is_private, user_id')
       .eq('title', listTitle)
-      .is('user_id', null) // System lists have user_id = null
+      .eq('user_id', userId) // Look for user's actual list
       .single();
 
     if (listError || !list) {

@@ -94,6 +94,7 @@ export default function ListDetail() {
     id: sharedListData.id,
     name: sharedListData.title,
     description: getListDescription(sharedListData.title),
+    isPublic: !sharedListData.is_private, // Use actual privacy setting
     items: (sharedListData.items || []).map((item: any) => ({
       id: item.id,
       title: item.title,
@@ -109,7 +110,6 @@ export default function ListDetail() {
     createdDate: new Date().toLocaleDateString(),
     totalItems: sharedListData.items?.length || 0,
     likes: 0
-    // All lists are public for MVP - removed isPublic property
   } : null;
 
   // All lists are public for MVP - removed state update logic
@@ -133,6 +133,15 @@ export default function ListDetail() {
 
   // Use exact same working pattern as prediction invites
   const handleShare = async () => {
+    if (!listData?.isPublic) {
+      toast({
+        title: "Cannot Share Private List",
+        description: "Make your list public first to share it with others",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Add user identifier to shared URL so non-logged-in users can see the data
     const shareUrl = session?.user?.id 
       ? `${window.location.origin}/list/${urlListName}?user=${session.user.id}`
@@ -171,9 +180,52 @@ export default function ListDetail() {
     console.log("Removing item:", itemId);
   };
 
-  // Removed privacy mutation - all lists are public for MVP
+  // Privacy toggle mutation
+  const privacyMutation = useMutation({
+    mutationFn: async (isPublic: boolean) => {
+      if (!session?.access_token || !sharedListData?.id) {
+        throw new Error('Authentication required');
+      }
+      
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-list-visibility", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          listId: sharedListData.id,
+          isPublic: isPublic
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update list visibility');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      toast({
+        title: "Privacy Updated",
+        description: `List is now ${listData?.isPublic ? 'private' : 'public'}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Update Failed", 
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
 
-  // Removed privacy toggle handler - all lists are public for MVP
+  const handlePrivacyToggle = () => {
+    if (listData) {
+      privacyMutation.mutate(!listData.isPublic);
+    }
+  };
 
   // Show loading state instead of "List not found" during data fetch
   if (listsLoading) {
@@ -239,11 +291,21 @@ export default function ListDetail() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* All lists are public for MVP */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg">
-                <Globe size={14} className="text-purple-600" />
-                <span className="text-sm font-medium text-purple-600">Public List</span>
-              </div>
+              {/* Show actual privacy status with toggle */}
+              <button
+                onClick={handlePrivacyToggle}
+                disabled={privacyMutation.isPending}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:opacity-80 disabled:opacity-50 ${
+                  listData.isPublic 
+                    ? 'bg-purple-50 text-purple-600' 
+                    : 'bg-gray-50 text-gray-600'
+                }`}
+              >
+                {listData.isPublic ? <Globe size={14} /> : <Lock size={14} />}
+                <span className="text-sm font-medium">
+                  {listData.isPublic ? 'Public List' : 'Private List'}
+                </span>
+              </button>
               
               <Button
                 onClick={() => setIsTrackModalOpen(true)}
