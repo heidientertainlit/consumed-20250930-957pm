@@ -77,26 +77,45 @@ serve(async (req) => {
     // Search podcasts via Spotify API
     if (!type || type === 'podcast') {
       try {
-        const spotifyToken = Deno.env.get('SPOTIFY_ACCESS_TOKEN');
-        if (spotifyToken) {
-          const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=show&limit=10`, {
+        const clientId = Deno.env.get('SPOTIFY_CLIENT_ID');
+        const clientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
+        
+        if (clientId && clientSecret) {
+          // First, get access token
+          const authResponse = await fetch('https://accounts.spotify.com/api/token', {
+            method: 'POST',
             headers: {
-              'Authorization': `Bearer ${spotifyToken}`
-            }
+              'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'grant_type=client_credentials'
           });
-          if (spotifyResponse.ok) {
-            const spotifyData = await spotifyResponse.json();
-            spotifyData.shows?.items?.forEach((podcast) => {
-              results.push({
-                title: podcast.name,
-                type: 'podcast',
-                creator: podcast.publisher,
-                image: podcast.images?.[0]?.url || '',
-                external_id: podcast.id,
-                external_source: 'spotify',
-                description: podcast.description
-              });
+          
+          if (authResponse.ok) {
+            const authData = await authResponse.json();
+            const accessToken = authData.access_token;
+            
+            // Now search for podcasts
+            const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=show&limit=10`, {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`
+              }
             });
+            
+            if (spotifyResponse.ok) {
+              const spotifyData = await spotifyResponse.json();
+              spotifyData.shows?.items?.forEach((podcast) => {
+                results.push({
+                  title: podcast.name,
+                  type: 'podcast',
+                  creator: podcast.publisher,
+                  image: podcast.images?.[0]?.url || '',
+                  external_id: podcast.id,
+                  external_source: 'spotify',
+                  description: podcast.description
+                });
+              });
+            }
           }
         }
       } catch (error) {
@@ -104,29 +123,48 @@ serve(async (req) => {
       }
     }
 
-    // Search music via Spotify API
+    // Search music via Spotify API  
     if (!type || type === 'music') {
       try {
-        const spotifyToken = Deno.env.get('SPOTIFY_ACCESS_TOKEN');
-        if (spotifyToken) {
-          const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`, {
+        const clientId = Deno.env.get('SPOTIFY_CLIENT_ID');
+        const clientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
+        
+        if (clientId && clientSecret) {
+          // First, get access token
+          const authResponse = await fetch('https://accounts.spotify.com/api/token', {
+            method: 'POST',
             headers: {
-              'Authorization': `Bearer ${spotifyToken}`
-            }
+              'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'grant_type=client_credentials'
           });
-          if (spotifyResponse.ok) {
-            const spotifyData = await spotifyResponse.json();
-            spotifyData.tracks?.items?.forEach((track) => {
-              results.push({
-                title: track.name,
-                type: 'music',
-                creator: track.artists?.[0]?.name || 'Unknown Artist',
-                image: track.album?.images?.[0]?.url || '',
-                external_id: track.id,
-                external_source: 'spotify',
-                description: `From the album ${track.album?.name || 'Unknown Album'}`
-              });
+          
+          if (authResponse.ok) {
+            const authData = await authResponse.json();
+            const accessToken = authData.access_token;
+            
+            // Now search for music
+            const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`, {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`
+              }
             });
+            
+            if (spotifyResponse.ok) {
+              const spotifyData = await spotifyResponse.json();
+              spotifyData.tracks?.items?.forEach((track) => {
+                results.push({
+                  title: track.name,
+                  type: 'music',
+                  creator: track.artists?.[0]?.name || 'Unknown Artist',
+                  image: track.album?.images?.[0]?.url || '',
+                  external_id: track.id,
+                  external_source: 'spotify',
+                  description: `From the album ${track.album?.name || 'Unknown Album'}`
+                });
+              });
+            }
           }
         }
       } catch (error) {
