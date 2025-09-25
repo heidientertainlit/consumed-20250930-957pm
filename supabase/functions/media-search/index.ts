@@ -199,23 +199,27 @@ serve(async (req) => {
       }
     }
 
-    // Search sports games/events via ESPN API - FIXED VERSION
+    // Search sports games/events via ESPN API
     if (!type || type === 'sports') {
       try {
         console.log('Searching sports for:', query);
         
-        // ESPN provides a free API - using HTTPS now
+        // Try ESPN API first
         const sports = ['football/nfl', 'basketball/nba', 'baseball/mlb', 'hockey/nhl', 'soccer/usa.1'];
         const queryLower = query.toLowerCase();
         
-        for (const sport of sports) {
+        for (const sport of sports.slice(0, 2)) { // Limit to avoid timeout
           try {
-            const espnResponse = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`);
+            const espnResponse = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              }
+            });
+            
             if (espnResponse.ok) {
               const espnData = await espnResponse.json();
-              console.log(`ESPN ${sport} data:`, espnData.events?.length || 0, 'events');
               
-              espnData.events?.slice(0, 5).forEach((game) => {
+              espnData.events?.slice(0, 3).forEach((game) => {
                 try {
                   const homeTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team;
                   const awayTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.team;
@@ -223,11 +227,19 @@ serve(async (req) => {
                   if (!homeTeam || !awayTeam) return;
                   
                   const gameTitle = `${awayTeam.displayName} @ ${homeTeam.displayName}`;
+                  const searchText = `${gameTitle} ${homeTeam.displayName} ${awayTeam.displayName}`.toLowerCase();
                   
-                  // More flexible search matching - check if query matches any part of team names
-                  const searchText = `${gameTitle} ${homeTeam.displayName} ${awayTeam.displayName} ${homeTeam.name} ${awayTeam.name}`.toLowerCase();
+                  // Match if query contains team names or vice versa
+                  const queryWords = queryLower.split(' ');
+                  const matchesQuery = queryWords.some(word => 
+                    word.length > 2 && (
+                      searchText.includes(word) ||
+                      homeTeam.displayName?.toLowerCase().includes(word) ||
+                      awayTeam.displayName?.toLowerCase().includes(word)
+                    )
+                  );
                   
-                  if (searchText.includes(queryLower) || queryLower.includes(homeTeam.name?.toLowerCase()) || queryLower.includes(awayTeam.name?.toLowerCase())) {
+                  if (matchesQuery || queryLower.length < 3) { // Include all results for short queries
                     const homeScore = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.score;
                     const awayScore = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.score;
                     
@@ -251,29 +263,31 @@ serve(async (req) => {
           }
         }
         
-        // Also search TheSportsDB for broader coverage
-        if (query.length > 2) {
-          try {
-            const sportsDbResponse = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(query)}`);
-            if (sportsDbResponse.ok) {
-              const sportsDbData = await sportsDbResponse.json();
-              console.log('SportsDB team search:', sportsDbData.teams?.length || 0, 'teams');
-              
-              sportsDbData.teams?.slice(0, 3).forEach((team) => {
-                results.push({
-                  title: team.strTeam,
-                  type: 'sports',
-                  creator: `${team.strSport} • ${team.strLeague}`,
-                  image: team.strTeamBadge || team.strTeamLogo || '',
-                  external_id: team.idTeam,
-                  external_source: 'thesportsdb',
-                  description: `${team.strStadium || ''} • ${team.strCountry || ''}`
-                });
-              });
+        // Try TheSportsDB as fallback
+        try {
+          const sportsDbResponse = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(query)}`, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
-          } catch (error) {
-            console.error('SportsDB team search error:', error);
+          });
+          
+          if (sportsDbResponse.ok) {
+            const sportsDbData = await sportsDbResponse.json();
+            
+            sportsDbData.teams?.slice(0, 3).forEach((team) => {
+              results.push({
+                title: team.strTeam,
+                type: 'sports',
+                creator: `${team.strSport} • ${team.strLeague}`,
+                image: team.strTeamBadge || team.strTeamLogo || '',
+                external_id: team.idTeam,
+                external_source: 'thesportsdb',
+                description: `${team.strStadium || ''} • ${team.strCountry || ''}`
+              });
+            });
           }
+        } catch (error) {
+          console.error('SportsDB team search error:', error);
         }
         
         console.log('Total sports results found:', results.filter(r => r.type === 'sports').length);
