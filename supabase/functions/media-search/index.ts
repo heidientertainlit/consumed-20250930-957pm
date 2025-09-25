@@ -204,11 +204,11 @@ serve(async (req) => {
       try {
         console.log('Searching sports for:', query);
         
-        // Try ESPN API first
+        // Try ESPN API for real games only - expanded coverage
         const sports = ['football/nfl', 'basketball/nba', 'baseball/mlb', 'hockey/nhl', 'soccer/usa.1'];
         const queryLower = query.toLowerCase();
         
-        for (const sport of sports.slice(0, 2)) { // Limit to avoid timeout
+        for (const sport of sports) { // Check all major sports
           try {
             const espnResponse = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`, {
               headers: {
@@ -219,7 +219,7 @@ serve(async (req) => {
             if (espnResponse.ok) {
               const espnData = await espnResponse.json();
               
-              espnData.events?.slice(0, 3).forEach((game) => {
+              espnData.events?.slice(0, 10).forEach((game) => {
                 try {
                   const homeTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team;
                   const awayTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.team;
@@ -263,133 +263,7 @@ serve(async (req) => {
           }
         }
         
-        // Improved OpenAI fallback - trigger when no ESPN results OR when query suggests specific game matchup
-        const sportsResultsCount = results.filter(r => r.type === 'sports').length;
-        const queryLooksLikeGame = /\b(vs|@|versus|against)\b/i.test(query) || 
-                                  query.split(/\s+/).length >= 2; // Two or more words likely means team names
-        
-        if (sportsResultsCount === 0 || queryLooksLikeGame) {
-          try {
-            const openaiKey = Deno.env.get('OPENAI_API_KEY');
-            if (openaiKey) {
-              console.log('Using OpenAI fallback for sports search. Query:', query);
-              
-              // Get current date info for temporal context
-              const currentDate = new Date();
-              const currentMonth = currentDate.getMonth() + 1; // 0-based, so add 1
-              const currentYear = currentDate.getFullYear();
-              
-              // Determine likely sport season context
-              let seasonContext = '';
-              if (currentMonth >= 9 || currentMonth <= 2) {
-                seasonContext = 'NFL season (September-February), NBA season (October-April), NHL season (October-April)';
-              } else if (currentMonth >= 3 && currentMonth <= 6) {
-                seasonContext = 'MLB season (March-October), NBA playoffs (April-June), NHL playoffs (April-June)';
-              } else {
-                seasonContext = 'MLB season (March-October), offseason for NFL/NBA/NHL';
-              }
-
-              const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${openaiKey}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  model: 'gpt-4o-mini',
-                  response_format: { type: "json_object" },
-                  messages: [
-                    {
-                      role: 'system',
-                      content: `You are a sports expert. Today is ${currentDate.toISOString().split('T')[0]}. Current season context: ${seasonContext}. 
-                      Generate 3-5 realistic RECENT GAMES (last 2 weeks) or UPCOMING GAMES (next 2 weeks) involving the searched team/sport.
-                      Return a JSON object with a "results" array. Each result must have: 
-                      - title: "Team A vs Team B" or "Team A @ Team B" format
-                      - creator: "NFL • Week 8" or "NBA • Regular Season" format
-                      - description: game date, score if completed, or status
-                      - type: always "sports"
-                      
-                      Example: {"results": [{"title": "Kansas City Chiefs @ Buffalo Bills", "creator": "NFL • Week 8", "description": "October 15, 2025 • Bills win 24-20", "type": "sports"}]}
-                      
-                      Focus on games involving the searched team, prioritize recent/upcoming games over historical ones.`
-                    },
-                    {
-                      role: 'user',
-                      content: `Generate recent or upcoming games for: "${query}"`
-                    }
-                  ],
-                  max_tokens: 800,
-                  temperature: 0.7,
-                }),
-              });
-
-              if (openaiResponse.ok) {
-                const openaiData = await openaiResponse.json();
-                const content = openaiData.choices?.[0]?.message?.content;
-                
-                if (content) {
-                  try {
-                    // Parse the JSON response
-                    const parsedResponse = JSON.parse(content);
-                    const aiResults = parsedResponse.results || parsedResponse; // Handle both formats
-                    
-                    if (Array.isArray(aiResults)) {
-                      console.log(`Successfully parsed ${aiResults.length} OpenAI sports results`);
-                      aiResults.slice(0, 5).forEach((item, index) => {
-                        results.push({
-                          title: item.title || `Sports Game ${index + 1}`,
-                          type: 'sports',
-                          creator: item.creator || 'Sports',
-                          image: '',
-                          external_id: `ai_sports_${Date.now()}_${index}`,
-                          external_source: 'openai',
-                          description: item.description || ''
-                        });
-                      });
-                    } else {
-                      console.error('OpenAI response not an array:', typeof aiResults);
-                    }
-                  } catch (parseError) {
-                    console.error('Error parsing OpenAI sports response. Response length:', content?.length || 0);
-                    console.error('Parse error:', parseError.message);
-                    
-                    // Fallback: try to extract JSON array from response
-                    const jsonMatch = content.match(/\[[\s\S]*\]/);
-                    if (jsonMatch) {
-                      try {
-                        const fallbackResults = JSON.parse(jsonMatch[0]);
-                        if (Array.isArray(fallbackResults)) {
-                          console.log('Successfully extracted JSON from response using fallback parsing');
-                          fallbackResults.slice(0, 5).forEach((item, index) => {
-                            results.push({
-                              title: item.title || `Sports Game ${index + 1}`,
-                              type: 'sports', 
-                              creator: item.creator || 'Sports',
-                              image: '',
-                              external_id: `ai_sports_fallback_${Date.now()}_${index}`,
-                              external_source: 'openai',
-                              description: item.description || ''
-                            });
-                          });
-                        }
-                      } catch (fallbackError) {
-                        console.error('Fallback JSON extraction also failed:', fallbackError.message);
-                      }
-                    }
-                  }
-                } else {
-                  console.error('No content in OpenAI response');
-                }
-              } else {
-                console.error('OpenAI API error:', openaiResponse.status, await openaiResponse.text());
-              }
-            } else {
-              console.error('OPENAI_API_KEY not found in environment');
-            }
-          } catch (error) {
-            console.error('OpenAI sports search error:', error);
-          }
-        }
+        // NO SYNTHETIC DATA: Only show real ESPN API results, no AI fallbacks
         
         console.log('Total sports results found:', results.filter(r => r.type === 'sports').length);
       } catch (error) {
