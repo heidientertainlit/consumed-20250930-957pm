@@ -197,6 +197,45 @@ serve(async (req) => {
       }
     }
 
+    // Search sports games/events via ESPN API
+    if (!type || type === 'sports') {
+      try {
+        // ESPN provides a free API for recent games and events
+        // Format: http://site.api.espn.com/apis/site/v2/sports/[SPORT]/[LEAGUE]/scoreboard
+        const sports = ['football/nfl', 'basketball/nba', 'baseball/mlb', 'hockey/nhl', 'soccer/eng.1'];
+        
+        for (const sport of sports) {
+          try {
+            const espnResponse = await fetch(`http://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`);
+            if (espnResponse.ok) {
+              const espnData = await espnResponse.json();
+              espnData.events?.slice(0, 3).forEach((game) => {
+                const homeTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team?.displayName;
+                const awayTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.team?.displayName;
+                const gameTitle = `${awayTeam} @ ${homeTeam}`;
+                
+                if (gameTitle.toLowerCase().includes(query.toLowerCase())) {
+                  results.push({
+                    title: gameTitle,
+                    type: 'sports',
+                    creator: game.season?.type?.name || sport.split('/')[1].toUpperCase(),
+                    image: game.competitions?.[0]?.competitors?.[0]?.team?.logo || '',
+                    external_id: game.id,
+                    external_source: 'espn',
+                    description: `${game.status?.type?.detail || 'Game'} - ${new Date(game.date).toLocaleDateString()}`
+                  });
+                }
+              });
+            }
+          } catch (sportError) {
+            console.error(`Error fetching ${sport}:`, sportError);
+          }
+        }
+      } catch (error) {
+        console.error('Sports search error:', error);
+      }
+    }
+
     return new Response(JSON.stringify({ results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

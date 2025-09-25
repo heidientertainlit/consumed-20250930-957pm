@@ -120,7 +120,8 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           "Music": "music",
           "Podcasts": "podcast",
           "YouTube": "youtube",
-          "Games": "game"
+          "Games": "game",
+          "Sports": "sports"
         };
         
         const searchType = selectedCategories.includes("All Media") 

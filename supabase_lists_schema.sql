@@ -23,16 +23,25 @@ CREATE TABLE IF NOT EXISTS list_items (
   user_id TEXT NOT NULL, -- Supabase auth.uid() as text
   title TEXT NOT NULL,
   creator TEXT,
-  media_type TEXT NOT NULL, -- movie, tv, book, music, game
+  media_type TEXT NOT NULL, -- movie, tv, book, music, game, sports
   category TEXT, -- horror, comedy, drama, etc.
   external_id TEXT,
-  external_source TEXT, -- tmdb, spotify, etc.
+  external_source TEXT, -- tmdb, spotify, espn, thesportsdb, etc.
   image_url TEXT,
   rating INTEGER CHECK (rating BETWEEN 1 AND 5),
   notes TEXT,
   date_added TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   position INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  -- Sports-specific fields
+  game_date TIMESTAMP WITH TIME ZONE,
+  home_team TEXT,
+  away_team TEXT,
+  home_score INTEGER,
+  away_score INTEGER,
+  sport_league TEXT,
+  venue TEXT,
+  game_status TEXT
 );
 
 -- Create predefined list types (9 total)
