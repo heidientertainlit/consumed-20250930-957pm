@@ -93,12 +93,64 @@ CREATE POLICY "modify_own_list_items" ON list_items
     auth.uid()::text = user_id
   );
 
+-- Social feed tables
+CREATE TABLE IF NOT EXISTS social_posts (
+  id SERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  content TEXT,
+  media_title TEXT,
+  media_type TEXT,
+  media_creator TEXT,
+  media_image_url TEXT,
+  rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS social_post_likes (
+  id SERIAL PRIMARY KEY,
+  post_id INTEGER NOT NULL REFERENCES social_posts(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(post_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS social_post_comments (
+  id SERIAL PRIMARY KEY,
+  post_id INTEGER NOT NULL REFERENCES social_posts(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS on social tables
+ALTER TABLE social_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE social_post_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE social_post_comments ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for social posts (public read, authenticated write)
+CREATE POLICY "view_social_posts" ON social_posts FOR SELECT USING (true);
+CREATE POLICY "create_own_social_posts" ON social_posts FOR INSERT WITH CHECK (auth.uid()::text = user_id);
+CREATE POLICY "update_own_social_posts" ON social_posts FOR UPDATE USING (auth.uid()::text = user_id);
+
+-- RLS policies for likes
+CREATE POLICY "view_social_likes" ON social_post_likes FOR SELECT USING (true);
+CREATE POLICY "manage_own_social_likes" ON social_post_likes FOR ALL USING (auth.uid()::text = user_id);
+
+-- RLS policies for comments
+CREATE POLICY "view_social_comments" ON social_post_comments FOR SELECT USING (true);
+CREATE POLICY "create_social_comments" ON social_post_comments FOR INSERT WITH CHECK (auth.uid()::text = user_id);
+CREATE POLICY "update_own_social_comments" ON social_post_comments FOR UPDATE USING (auth.uid()::text = user_id);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_lists_user_id ON lists(user_id);
 CREATE INDEX IF NOT EXISTS idx_lists_visibility ON lists(visibility);
 CREATE INDEX IF NOT EXISTS idx_lists_share_id ON lists(share_id);
 CREATE INDEX IF NOT EXISTS idx_list_items_list_id ON list_items(list_id);
 CREATE INDEX IF NOT EXISTS idx_list_items_user_id ON list_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_social_posts_user_id ON social_posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_social_posts_created_at ON social_posts(created_at);
+CREATE INDEX IF NOT EXISTS idx_social_post_likes_post_id ON social_post_likes(post_id);
+CREATE INDEX IF NOT EXISTS idx_social_post_comments_post_id ON social_post_comments(post_id);
 
 -- Update trigger for lists
 CREATE OR REPLACE FUNCTION update_updated_at_column()

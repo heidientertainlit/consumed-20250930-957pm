@@ -1,0 +1,127 @@
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '', 
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization') }
+        }
+      }
+    );
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (req.method === 'GET') {
+      // Get comments for a post
+      const url = new URL(req.url);
+      const post_id = url.searchParams.get('post_id');
+
+      if (!post_id) {
+        return new Response(JSON.stringify({ error: 'Missing post_id' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { data: comments, error } = await supabase
+        .from('social_post_comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id,
+          users!inner(username, email)
+        `)
+        .eq('post_id', post_id)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const transformedComments = comments?.map(comment => ({
+        ...comment,
+        username: comment.users?.username || comment.users?.email?.split('@')[0]
+      }));
+
+      return new Response(JSON.stringify({ comments: transformedComments }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (req.method === 'POST') {
+      // Add a comment
+      const body = await req.json();
+      const { post_id, content } = body;
+
+      if (!post_id || !content) {
+        return new Response(JSON.stringify({ error: 'Missing post_id or content' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { data: comment, error } = await supabase
+        .from('social_post_comments')
+        .insert({
+          post_id,
+          user_id: user.id,
+          content
+        })
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id,
+          users!inner(username, email)
+        `)
+        .single();
+
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const transformedComment = {
+        ...comment,
+        username: comment.users?.username || comment.users?.email?.split('@')[0]
+      };
+
+      return new Response(JSON.stringify({ comment: transformedComment }), {
+        status: 201,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});
