@@ -114,6 +114,7 @@ export default function Feed() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["post-comments", variables.postId] });
       setCommentInputs(prev => ({ ...prev, [variables.postId]: '' }));
     },
   });
