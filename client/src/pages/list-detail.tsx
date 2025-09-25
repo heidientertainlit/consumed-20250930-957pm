@@ -148,7 +148,7 @@ export default function ListDetail() {
       : window.location.href;
       
     const shareData = {
-      title: `Check out my entertainment list on entertainlit!`,
+      title: `Check out my entertainment list on consumed!`,
       text: `I'm tracking my ${listData?.name || 'entertainment'} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
       url: shareUrl
     };

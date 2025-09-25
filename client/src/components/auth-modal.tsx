@@ -73,7 +73,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Welcome to entertainlit</DialogTitle>
+          <DialogTitle>Welcome to consumed</DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="signin" className="w-full">

@@ -195,7 +195,7 @@ export default function UserProfile() {
       : `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
       
     const shareData = {
-      title: `Check out my ${listTitle} list on entertainlit!`,
+      title: `Check out my ${listTitle} list on consumed!`,
       text: `I'm tracking my ${listTitle} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
       url: shareUrl
     };

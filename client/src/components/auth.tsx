@@ -112,7 +112,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">Welcome to entertainlit</DialogTitle>
+          <DialogTitle className="text-center">Welcome to consumed</DialogTitle>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -175,7 +175,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
               <CardHeader>
                 <CardTitle>Create Account</CardTitle>
                 <CardDescription>
-                  Join entertainlit to discover your Entertainment DNA
+                  Join consumed to discover your Entertainment DNA
                 </CardDescription>
               </CardHeader>
               <CardContent>

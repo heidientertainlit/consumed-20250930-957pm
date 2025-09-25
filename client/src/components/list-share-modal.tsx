@@ -26,7 +26,7 @@ export default function ListShareModal({ isOpen, onClose, listName, listItems, l
   };
 
   const handleSocialShare = (platform: string) => {
-    const text = `Check out my "${listName}" list with ${listItems} items on entertainlit!`;
+    const text = `Check out my "${listName}" list with ${listItems} items on consumed!`;
     let url = '';
     
     switch (platform) {

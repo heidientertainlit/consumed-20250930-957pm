@@ -1,8 +1,8 @@
-# entertainlit - Entertainment Consumption Tracking MVP
+# consumed - Entertainment Consumption Tracking MVP
 
 ## Overview
 
-entertainlit is a simplified entertainment consumption tracking MVP called that allows users to track and share their entertainment consumption with five main pages: Track (for logging consumption), Leaderboard (for consumption-based rankings), Feed (for activity streams), Friends & Creators (for discovering and following people), and Play (for trivia, predictions, and "Blends" - finding common media for groups). The app is designed as a mobile-first application featuring a sophisticated dark gradient theme with bottom navigation, comprehensive social features including Inner Circle for Super Fan identification, and an Entertainment DNA onboarding survey.
+consumed is a simplified entertainment consumption tracking MVP that allows users to track and share their entertainment consumption with five main pages: Track (for logging consumption), Leaderboard (for consumption-based rankings), Feed (for activity streams), Friends & Creators (for discovering and following people), and Play (for trivia, predictions, and "Blends" - finding common media for groups). The app is designed as a mobile-first application featuring a sophisticated dark gradient theme with bottom navigation, comprehensive social features including Inner Circle for Super Fan identification, and an Entertainment DNA onboarding survey.
 
 ## User Preferences
 

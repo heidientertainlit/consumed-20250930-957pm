@@ -619,7 +619,7 @@ export default function VoteAndPredictPage() {
 
   const handleInviteFriends = async (pool: PredictionPool) => {
     const shareData = {
-      title: `Join my prediction on entertainlit!`,
+      title: `Join my prediction on consumed!`,
       text: `I'm predicting "${pool.title}" - think you can beat me? Join the pool and let's see who's right! 🎯`,
       url: `${window.location.origin}/predictions#${pool.id}`
     };

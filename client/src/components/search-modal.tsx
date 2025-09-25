@@ -122,7 +122,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Search entertainlit</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Search consumed</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
