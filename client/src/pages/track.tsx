@@ -439,6 +439,13 @@ export default function Track() {
                           >
                             Add to Did Not Finish
                           </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleAddRecommendation(rec, 'favorites')}
+                            className="cursor-pointer"
+                            disabled={addRecommendationMutation.isPending}
+                          >
+                            Add to Favorites
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
