@@ -145,11 +145,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xs font-medium text-white">Friends</span>
           </Link>
 
-          <Link href="/predictions">
-              <Button variant="ghost" className="text-sm font-medium hover:bg-gray-100 hover:text-gray-900">
-                Vote & Predict
-              </Button>
-            </Link>
         </div>
       </nav>
 
