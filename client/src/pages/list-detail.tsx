@@ -29,12 +29,31 @@ export default function ListDetail() {
   const { data: userListsData, isLoading: listsLoading } = useQuery({
     queryKey: ['user-lists-with-media', sharedUserId || 'own'],
     queryFn: async () => {
-      // For shared links: Instead of using problematic edge function, show a message
+      // For shared links (has sharedUserId), use public list access
       if (sharedUserId) {
-        console.log('Shared list viewing not fully implemented yet for user:', sharedUserId);
-        // For MVP: Just show your own lists when someone shares a link
-        // This avoids the edge function deployment issues
-        return null;
+        console.log('Loading shared public list data for user:', sharedUserId);
+        
+        const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-list?list_slug=${urlListName}&user_id=${sharedUserId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Public list fetch failed:', response.status, errorText);
+          throw new Error('Failed to fetch public list');
+        }
+        
+        const data = await response.json();
+        console.log('Public list data:', data);
+        
+        // Convert to expected format
+        return {
+          lists: [data.list]
+        };
       }
       
       if (!session?.access_token) {
@@ -229,16 +248,9 @@ export default function ListDetail() {
         <Navigation onTrackConsumption={() => {}} />
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              {sharedUserId ? "Shared lists coming soon!" : "List not found"}
-            </h1>
-            <p className="text-gray-600 mb-6">
-              {sharedUserId 
-                ? "List sharing is being improved. For now, please sign up to create and track your own entertainment lists!" 
-                : "This list doesn't exist or you don't have access to it."}
-            </p>
-            <Button onClick={() => setLocation("/track")} data-testid="button-back-to-track">
-              {sharedUserId ? "Start Tracking" : "Back to Track"}
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">List not found</h1>
+            <Button onClick={() => setLocation("/track")}>
+              Back to Track
             </Button>
           </div>
         </div>
