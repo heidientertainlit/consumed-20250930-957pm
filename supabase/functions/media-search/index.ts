@@ -263,35 +263,10 @@ serve(async (req) => {
           }
         }
         
-        // Try TheSportsDB as second fallback
-        try {
-          const sportsDbResponse = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(query)}`, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          });
-          
-          if (sportsDbResponse.ok) {
-            const sportsDbData = await sportsDbResponse.json();
-            
-            sportsDbData.teams?.slice(0, 3).forEach((team) => {
-              results.push({
-                title: team.strTeam,
-                type: 'sports',
-                creator: `${team.strSport} • ${team.strLeague}`,
-                image: team.strTeamBadge || team.strTeamLogo || '',
-                external_id: team.idTeam,
-                external_source: 'thesportsdb',
-                description: `${team.strStadium || ''} • ${team.strCountry || ''}`
-              });
-            });
-          }
-        } catch (error) {
-          console.error('SportsDB team search error:', error);
-        }
-        
-        // OpenAI fallback if no results found from APIs
-        if (results.filter(r => r.type === 'sports').length === 0) {
+        // Skip TheSportsDB team search - we want games, not teams
+        // Go directly to OpenAI to generate recent games
+        const sportsResultsCount = results.filter(r => r.type === 'sports').length;
+        if (sportsResultsCount === 0) {
           try {
             const openaiKey = Deno.env.get('OPENAI_API_KEY');
             if (openaiKey) {
