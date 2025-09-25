@@ -113,19 +113,19 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
-        const categoryToType = {
-          "Movies": "movie",
-          "TV Shows": "tv", 
-          "Books": "book",
-          "Music": "music",
-          "Podcasts": "podcast",
-          "YouTube": "youtube",
-          "Games": "game"
+        const idToType = {
+          "movies": "movie",
+          "tv": "tv", 
+          "books": "book",
+          "music": "music",
+          "podcasts": "podcast",
+          "youtube": "youtube",
+          "games": "game"
         };
         
         const searchType = selectedTypes.includes("all") 
           ? undefined 
-          : categoryToType[selectedTypes[0] as keyof typeof categoryToType];
+          : idToType[selectedTypes[0] as keyof typeof idToType];
         
         searchMedia(searchQuery, searchType);
       } else {
