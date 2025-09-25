@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { X, Star } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { X, Star } from "lucide-react";
 
 interface ShareUpdateDialogProps {
   isOpen: boolean;
@@ -17,12 +21,12 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
   const mediaTypes = [
     { id: "all", label: "All Types" },
-    { id: "movies", label: "Movies" },
     { id: "tv", label: "TV Shows" },
-    { id: "books", label: "Books" },
     { id: "podcasts", label: "Podcasts" },
-    { id: "music", label: "Music" },
     { id: "youtube", label: "YouTube" },
+    { id: "movies", label: "Movies" },
+    { id: "books", label: "Books" },
+    { id: "music", label: "Music" },
     { id: "sports", label: "Sports" }
   ];
 
@@ -57,144 +61,171 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-2xl p-6 mx-4 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Share Update</h2>
-          <button 
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-white border border-gray-200 max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex flex-row items-center justify-between pb-4 flex-shrink-0">
+          <div>
+            <DialogTitle className="text-2xl font-bold text-gray-900">Share Update</DialogTitle>
+            <p className="text-gray-500 text-sm mt-1">
+              Share your entertainment experience with your friends.
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full"
-            data-testid="close-share-dialog"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
           >
-            <X size={20} className="text-gray-500" />
-          </button>
-        </div>
+            <X className="h-4 w-4" />
+          </Button>
+        </DialogHeader>
 
-        <p className="text-gray-600 mb-4">Share your entertainment experience with your friends.</p>
-
-        {/* Media Types Selection */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {mediaTypes.map((type) => (
-              <label key={type.id} className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedTypes.includes(type.id)}
-                  onChange={() => handleTypeToggle(type.id)}
-                  className="w-5 h-5 text-purple-600 border-2 border-gray-300 rounded focus:ring-purple-500"
-                  data-testid={`checkbox-${type.id}`}
-                />
-                <span className="text-gray-700 font-medium">{type.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Search Input */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Search for Media</h3>
-          <input
-            type="text"
-            placeholder="Search for movies, TV shows, books, podcasts, music, sports, YouTube videos..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            data-testid="search-media-input"
-          />
-        </div>
-
-        {/* Rating Section */}
-        {searchQuery && (
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Rate this media (optional)</h3>
-          <div className="flex items-center space-x-4">
-            {/* Star Rating */}
-            <div className="flex space-x-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => handleStarClick(star)}
-                  onMouseEnter={() => setStarHover(star)}
-                  onMouseLeave={() => setStarHover(0)}
-                  className="transition-colors"
-                  data-testid={`star-${star}`}
-                >
-                  <Star
-                    size={24}
-                    className={`${
-                      star <= (starHover || parseFloat(rating) || 0)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    } transition-colors`}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Decimal Rating Input */}
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={rating}
-                onChange={(e) => handleRatingChange(e.target.value)}
-                placeholder="0"
-                className="w-16 px-3 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                data-testid="rating-input"
-              />
-              <span className="text-gray-500 text-sm">(0–5)</span>
+        <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
+          {/* Media Types Selection */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
+            
+            {/* Category Checkboxes - 2 Column Layout */}
+            <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-6">
+              {mediaTypes.map((type) => {
+                const isChecked = selectedTypes.includes(type.id);
+                const isAllTypes = type.id === "all";
+                
+                const handleToggle = () => {
+                  if (isAllTypes) {
+                    // If "All Types" is clicked, select only it
+                    setSelectedTypes(["all"]);
+                  } else {
+                    // If any specific type is clicked
+                    if (isChecked) {
+                      // Remove this type
+                      const newSelected = selectedTypes.filter(t => t !== type.id);
+                      // If no types left, default to "All Types"
+                      setSelectedTypes(newSelected.length === 0 ? ["all"] : newSelected.filter(t => t !== "all"));
+                    } else {
+                      // Add this type and remove "All Types" if it was selected
+                      const newSelected = selectedTypes.filter(t => t !== "all");
+                      setSelectedTypes([...newSelected, type.id]);
+                    }
+                  }
+                };
+                
+                return (
+                  <div key={type.id} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={type.id}
+                      checked={isChecked}
+                      onCheckedChange={handleToggle}
+                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5"
+                    />
+                    <label
+                      htmlFor={type.id}
+                      className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                    >
+                      {type.label}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-        )}
 
-        {/* Thoughts Textarea */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Thoughts (Review)</h3>
-          <div className="relative">
-            <textarea
-              placeholder="Share your thoughts about this media..."
-              value={thoughts}
-              onChange={(e) => setThoughts(e.target.value)}
-              maxLength={500}
-              rows={4}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-              data-testid="thoughts-textarea"
+          {/* Search for Media Section */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search for Media</h3>
+            
+            {/* Search Input with blue border like in screenshot */}
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for movies, TV shows, books, podcasts, music..."
+              className="py-3 text-base bg-white border-2 border-blue-500 text-gray-900 placeholder:text-gray-500 focus:border-blue-600 focus:ring-blue-600"
+              data-testid="search-media-input"
             />
-            <div className="absolute bottom-3 right-3 text-sm text-gray-400">
-              {thoughts.length}/500
+          </div>
+
+          {/* Rating Section - Always Visible */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Rate this media (optional)</h3>
+            <div className="flex items-center space-x-4">
+              {/* Star Display */}
+              <div className="flex items-center space-x-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => handleStarClick(star)}
+                    className="p-1 hover:scale-110 transition-transform"
+                    data-testid={`star-${star}`}
+                  >
+                    <Star
+                      size={24}
+                      className={`${
+                        star <= (starHover || parseFloat(rating) || 0)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'fill-gray-200 text-gray-200'
+                      } hover:fill-yellow-300 hover:text-yellow-300 transition-colors cursor-pointer`}
+                    />
+                  </button>
+                ))}
+              </div>
+              
+              {/* Rating Input */}
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="text"
+                  value={rating}
+                  onChange={(e) => handleRatingChange(e.target.value)}
+                  className="w-16 text-center bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                  placeholder="0"
+                  data-testid="rating-input"
+                />
+                <span className="text-sm text-gray-500">(0–5)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Review Section - Always Visible */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Thoughts (Review)</h3>
+            <div className="relative">
+              <Textarea
+                value={thoughts}
+                onChange={(e) => setThoughts(e.target.value)}
+                placeholder="Share your thoughts about this media..."
+                maxLength={500}
+                className="min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
+                data-testid="thoughts-textarea"
+              />
+              <div className="absolute bottom-3 right-3 text-sm text-gray-400 pointer-events-none">
+                {thoughts.length}/500
+              </div>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-3">
+        <div className="flex justify-end space-x-3 pt-4 border-t mt-4 flex-shrink-0">
           <Button
             onClick={onClose}
-            variant="outline"
-            className="flex-1 bg-purple-700 text-white hover:bg-purple-800"
+            className="px-6 bg-purple-700 text-white hover:bg-purple-800"
             data-testid="cancel-share"
           >
             Cancel
           </Button>
           <Button
             onClick={handlePost}
-            className={`flex-1 text-white ${
+            className={`px-6 text-white ${
               audience === "top-fans" 
                 ? "bg-purple-700 hover:bg-purple-800" 
-                : "bg-blue-600 hover:bg-blue-700"
+                : "bg-blue-900 hover:bg-blue-800"
             }`}
             data-testid="post-share"
           >
-            {audience === "top-fans" ? "Share to Top Fans" : "Share to All"}
+            Quick Add
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
