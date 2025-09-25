@@ -199,7 +199,7 @@ serve(async (req) => {
       }
     }
 
-    // Search sports games/events via ESPN API
+    // Search sports games/events via ESPN API and OpenAI fallback
     if (!type || type === 'sports') {
       try {
         console.log('Searching sports for:', query);
@@ -263,7 +263,7 @@ serve(async (req) => {
           }
         }
         
-        // Try TheSportsDB as fallback
+        // Try TheSportsDB as second fallback
         try {
           const sportsDbResponse = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(query)}`, {
             headers: {
@@ -288,6 +288,66 @@ serve(async (req) => {
           }
         } catch (error) {
           console.error('SportsDB team search error:', error);
+        }
+        
+        // OpenAI fallback if no results found from APIs
+        if (results.filter(r => r.type === 'sports').length === 0) {
+          try {
+            const openaiKey = Deno.env.get('OPENAI_API_KEY');
+            if (openaiKey) {
+              console.log('Using OpenAI fallback for sports search');
+              const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${openaiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: 'gpt-4o-mini',
+                  messages: [
+                    {
+                      role: 'system',
+                      content: 'You are a sports expert. Generate 3-5 realistic sports-related results based on the search query. Return ONLY a JSON array with objects containing: title, creator, description, and type (always "sports"). Focus on teams, games, or sports events related to the query.'
+                    },
+                    {
+                      role: 'user',
+                      content: `Generate sports results for search query: "${query}"`
+                    }
+                  ],
+                  max_tokens: 500,
+                  temperature: 0.7,
+                }),
+              });
+
+              if (openaiResponse.ok) {
+                const openaiData = await openaiResponse.json();
+                const content = openaiData.choices?.[0]?.message?.content;
+                
+                if (content) {
+                  try {
+                    const aiResults = JSON.parse(content);
+                    if (Array.isArray(aiResults)) {
+                      aiResults.slice(0, 5).forEach((item, index) => {
+                        results.push({
+                          title: item.title || `Sports Result ${index + 1}`,
+                          type: 'sports',
+                          creator: item.creator || 'Sports',
+                          image: '',
+                          external_id: `ai_sports_${Date.now()}_${index}`,
+                          external_source: 'openai',
+                          description: item.description || ''
+                        });
+                      });
+                    }
+                  } catch (parseError) {
+                    console.error('Error parsing OpenAI sports response:', parseError);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error('OpenAI sports search error:', error);
+          }
         }
         
         console.log('Total sports results found:', results.filter(r => r.type === 'sports').length);
