@@ -20,7 +20,6 @@ serve(async (req) => {
       });
     }
 
-    console.log('Media search:', { query, type });
     const results = [];
 
     // Search movies and TV shows via TMDB
@@ -198,7 +197,6 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Returning ${results.length} results for "${query}"`);
     return new Response(JSON.stringify({ results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

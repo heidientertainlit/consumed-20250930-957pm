@@ -8,6 +8,22 @@ consumed is a simplified entertainment consumption tracking MVP that allows user
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+**September 25, 2025 - CRITICAL FIX: Media Search Functionality**
+- **RESOLVED**: Fixed media search discrepancy between Track Media page and Share Update dialog
+- **ROOT CAUSE**: Spotify API authentication issue - function was looking for SPOTIFY_ACCESS_TOKEN but we had SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET
+- **SOLUTION**: Implemented OAuth2 client credentials flow for Spotify API authentication
+- **RESULT**: Both dialogs now return identical real API results from Spotify, TMDB, YouTube, and Open Library
+- **PROTECTED**: Cleaned up debug code and deployed stable function - NO MOCK/FALLBACK DATA as requested
+
+**Working API Integration:**
+- ✅ Spotify: OAuth2 client credentials flow using SPOTIFY_CLIENT_ID + SPOTIFY_CLIENT_SECRET
+- ✅ TMDB: Direct API key authentication using TMDB_API_KEY
+- ✅ YouTube: Direct API key authentication using YOUTUBE_API_KEY  
+- ✅ Open Library: No authentication required
+- ✅ All APIs returning real data, no synthetic content
+
 ## System Architecture
 
 The application follows a modern full-stack architecture with a clear separation between frontend and backend concerns:
