@@ -109,6 +109,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
         </div>
 
         {/* Rating Section */}
+        {searchQuery && (
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Rate this media (optional)</h3>
           <div className="flex items-center space-x-4">
@@ -150,6 +151,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
             </div>
           </div>
         </div>
+        )}
 
         {/* Thoughts Textarea */}
         <div className="mb-6">

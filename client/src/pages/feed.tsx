@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Eye, Users, BookOpen, Film } from "lucide-react";
@@ -60,6 +60,7 @@ export default function Feed() {
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const { session, user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: socialPosts, isLoading } = useQuery({
     queryKey: ["social-feed"],
@@ -526,7 +527,11 @@ export default function Feed() {
 
       <ShareUpdateDialog
         isOpen={isShareDialogOpen}
-        onClose={() => setIsShareDialogOpen(false)}
+        onClose={() => {
+          setIsShareDialogOpen(false);
+          // Refresh the social feed when dialog closes
+          queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+        }}
       />
 
     </div>
