@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Star } from "lucide-react";
+import { X, Star, Search } from "lucide-react";
 
 interface ShareUpdateDialogProps {
   isOpen: boolean;
@@ -12,9 +12,24 @@ interface ShareUpdateDialogProps {
   audience?: "top-fans" | "all";
 }
 
+interface MediaResult {
+  title: string;
+  type: string;
+  creator: string;
+  image: string;
+  external_id?: string;
+  external_source?: string;
+  description?: string;
+  videoId?: string;
+  url?: string;
+}
+
 export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }: ShareUpdateDialogProps) {
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["all"]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
   const [thoughts, setThoughts] = useState("");
   const [rating, setRating] = useState<string>("");
   const [starHover, setStarHover] = useState<number>(0);
@@ -55,10 +70,86 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
     setRating(starValue.toString());
   };
 
+  const searchMedia = async (query: string, type?: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    // Get the API key
+    const apiKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    setIsSearching(true);
+    try {
+      
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          query: query.trim(),
+          type: type
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Search failed: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      setSearchResults(data.results || []);
+    } catch (error) {
+      console.error("Media search error:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        const categoryToType = {
+          "Movies": "movie",
+          "TV Shows": "tv", 
+          "Books": "book",
+          "Music": "music",
+          "Podcasts": "podcast",
+          "YouTube": "youtube",
+          "Games": "game"
+        };
+        
+        const searchType = selectedTypes.includes("all") 
+          ? undefined 
+          : categoryToType[selectedTypes[0] as keyof typeof categoryToType];
+        
+        searchMedia(searchQuery, searchType);
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedTypes]);
+
+  const resetForm = () => {
+    setSelectedTypes(["all"]);
+    setSearchQuery("");
+    setSearchResults([]);
+    setSelectedMedia(null);
+    setRating("");
+    setThoughts("");
+  };
+
   const handlePost = () => {
     // Handle posting logic here
-    console.log("Posting update:", { selectedTypes, searchQuery, thoughts, rating });
+    console.log("Posting update:", { selectedMedia, thoughts, rating });
     onClose();
+    resetForm();
   };
 
   return (
@@ -143,6 +234,93 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
               className="py-3 text-base bg-white border-2 border-blue-500 text-gray-900 placeholder:text-gray-500 focus:border-blue-600 focus:ring-blue-600"
               data-testid="search-media-input"
             />
+
+            {/* Search Results */}
+            {searchQuery.trim() && !selectedMedia && (
+              <div className="mt-4">
+                {isSearching ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-gray-500">Searching...</div>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Select a media item:</h4>
+                    <div className="max-h-60 overflow-y-auto border rounded-lg">
+                      {searchResults.map((result, index) => (
+                        <div
+                          key={index}
+                          onClick={() => setSelectedMedia(result)}
+                          className={`flex items-center space-x-3 p-3 border-b last:border-b-0 cursor-pointer transition-all ${
+                            selectedMedia?.title === result.title && selectedMedia?.creator === result.creator
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'hover:bg-gray-50'
+                          }`}
+                          data-testid={`search-result-${index}`}
+                        >
+                          {result.image ? (
+                            <img
+                              src={result.image}
+                              alt={result.title}
+                              className="w-12 h-12 object-cover rounded flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                              <Search className="text-gray-400" size={20} />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{result.title}</p>
+                            {result.creator && (
+                              <p className="text-sm text-gray-500 truncate">by {result.creator}</p>
+                            )}
+                            <p className="text-xs text-purple-600 capitalize">{result.type}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : searchQuery.trim() && !isSearching ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No results found for "{searchQuery}"
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {/* Selected Media Preview */}
+            {selectedMedia && (
+              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h4 className="text-sm font-medium text-green-800 mb-2">Selected Media:</h4>
+                <div className="flex items-center space-x-3">
+                  {selectedMedia.image ? (
+                    <img
+                      src={selectedMedia.image}
+                      alt={selectedMedia.title}
+                      className="w-12 h-12 object-cover rounded flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                      <Search className="text-gray-400" size={20} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{selectedMedia.title}</p>
+                    {selectedMedia.creator && (
+                      <p className="text-sm text-gray-500 truncate">by {selectedMedia.creator}</p>
+                    )}
+                    <p className="text-xs text-purple-600 capitalize">{selectedMedia.type}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedMedia(null)}
+                    className="text-gray-500 hover:text-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Rating Section - Always Visible */}
@@ -215,11 +393,12 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           </Button>
           <Button
             onClick={handlePost}
+            disabled={!selectedMedia}
             className={`px-6 text-white ${
               audience === "top-fans" 
                 ? "bg-purple-700 hover:bg-purple-800" 
                 : "bg-blue-900 hover:bg-blue-800"
-            }`}
+            } disabled:bg-gray-400`}
             data-testid="post-share"
           >
             Quick Add
