@@ -92,9 +92,30 @@ serve(async (req)=>{
         });
       }
     }
-    // Search podcasts (mock data for now)
+    // Search podcasts (mock data for now - return results for any query)
     if (!type || type === 'podcast') {
-      if (query.toLowerCase().includes('joe rogan') || query.toLowerCase().includes('rogan')) {
+      // Return relevant podcast results for any search query
+      if (query.toLowerCase().includes('aspire') || query.toLowerCase().includes('entrepreneur') || query.toLowerCase().includes('business')) {
+        results.push({
+          title: 'How I Built This',
+          type: 'podcast',
+          creator: 'NPR',
+          image: '',
+          external_id: 'mock-podcast-aspire-1',
+          external_source: 'spotify',
+          description: 'Stories behind the companies you know'
+        });
+        results.push({
+          title: 'The Tim Ferriss Show',
+          type: 'podcast',
+          creator: 'Tim Ferriss',
+          image: '',
+          external_id: 'mock-podcast-aspire-2',
+          external_source: 'spotify',
+          description: 'Deconstructing world-class performers'
+        });
+      } else {
+        // Default podcast results for other queries
         results.push({
           title: 'The Joe Rogan Experience',
           type: 'podcast',
@@ -103,6 +124,15 @@ serve(async (req)=>{
           external_id: 'mock-podcast-1',
           external_source: 'spotify',
           description: 'Long form conversations'
+        });
+        results.push({
+          title: 'Serial',
+          type: 'podcast',
+          creator: 'Sarah Koenig',
+          image: '',
+          external_id: 'mock-podcast-2',
+          external_source: 'spotify',
+          description: 'Investigative journalism podcast'
         });
       }
     }
