@@ -81,7 +81,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
     setIsSearching(true);
     try {
-      
+
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
         method: "POST",
         headers: {
@@ -98,7 +98,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
         const errorText = await response.text();
         throw new Error(`Search failed: ${response.status} - ${errorText}`);
       }
-      
+
       const data = await response.json();
       setSearchResults(data.results || []);
     } catch (error) {
@@ -122,11 +122,11 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           "youtube": "youtube",
           "games": "game"
         };
-        
+
         const searchType = selectedTypes.includes("all") 
           ? undefined 
           : idToType[selectedTypes[0] as keyof typeof idToType];
-        
+
         searchMedia(searchQuery, searchType);
       } else {
         setSearchResults([]);
@@ -213,13 +213,13 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           {/* Media Types Selection */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
-            
+
             {/* Category Checkboxes - 2 Column Layout */}
             <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-6">
               {mediaTypes.map((type) => {
                 const isChecked = selectedTypes.includes(type.id);
                 const isAllTypes = type.id === "all";
-                
+
                 const handleToggle = () => {
                   if (isAllTypes) {
                     // If "All Types" is clicked, select only it
@@ -240,7 +240,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
                     }
                   }
                 };
-                
+
                 return (
                   <div key={type.id} className="flex items-center space-x-3">
                     <Checkbox
@@ -264,7 +264,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           {/* Search for Media Section */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Search for Media</h3>
-            
+
             {/* Search Input with blue border like in screenshot */}
             <Input
               value={searchQuery}
@@ -382,7 +382,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
                   </button>
                 ))}
               </div>
-              
+
               {/* Rating Input */}
               <div className="flex items-center space-x-2">
                 <Input
