@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Eye, Users, BookOpen, Film } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Eye, Users, BookOpen, Film, Send } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
+import CommentsSection from "@/components/comments-section";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
@@ -59,6 +61,9 @@ export default function Feed() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -68,12 +73,110 @@ export default function Feed() {
     enabled: !!session?.access_token,
   });
 
+  // Like mutation
+  const likeMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed-like', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post_id: postId }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to like post');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+    },
+  });
+
+  // Comment mutation
+  const commentMutation = useMutation({
+    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed-comments', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post_id: postId, content }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to add comment');
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+      setCommentInputs(prev => ({ ...prev, [variables.postId]: '' }));
+    },
+  });
+
+  // Fetch comments query
+  const fetchComments = async (postId: string) => {
+    if (!session?.access_token) throw new Error('Not authenticated');
+    
+    const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed-comments?post_id=${postId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to fetch comments');
+    return response.json();
+  };
+
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
   };
 
   const handleShareUpdate = () => {
     setIsShareDialogOpen(true);
+  };
+
+  const handleLike = (postId: string) => {
+    const isLiked = likedPosts.has(postId);
+    if (isLiked) {
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    } else {
+      setLikedPosts(prev => new Set(prev).add(postId));
+    }
+    likeMutation.mutate(postId);
+  };
+
+  const handleComment = (postId: string) => {
+    const content = commentInputs[postId]?.trim();
+    if (!content) return;
+    
+    commentMutation.mutate({ postId, content });
+  };
+
+  const toggleComments = (postId: string) => {
+    setExpandedComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleCommentInputChange = (postId: string, value: string) => {
+    setCommentInputs(prev => ({ ...prev, [postId]: value }));
   };
 
   const handleFollowCreator = (creatorName: string) => {
@@ -329,20 +432,48 @@ export default function Feed() {
                   )}
 
                   {/* Interaction Bar */}
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                    <div className="flex items-center space-x-6">
-                      <button className="flex items-center space-x-2 text-gray-500 hover:text-red-500 transition-colors">
-                        <Heart size={18} />
-                        <span className="text-sm">{post.likes}</span>
-                      </button>
-                      <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors">
-                        <MessageCircle size={18} />
-                        <span className="text-sm">{post.comments}</span>
-                      </button>
+                  <div className="pt-2 border-t border-gray-100 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-6">
+                        <button 
+                          onClick={() => handleLike(post.id)}
+                          className={`flex items-center space-x-2 transition-colors ${
+                            likedPosts.has(post.id) 
+                              ? 'text-red-500' 
+                              : 'text-gray-500 hover:text-red-500'
+                          }`}
+                        >
+                          <Heart 
+                            size={18} 
+                            fill={likedPosts.has(post.id) ? 'currentColor' : 'none'}
+                          />
+                          <span className="text-sm">{post.likes}</span>
+                        </button>
+                        <button 
+                          onClick={() => toggleComments(post.id)}
+                          className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"
+                        >
+                          <MessageCircle size={18} />
+                          <span className="text-sm">{post.comments}</span>
+                        </button>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {formatDate(post.timestamp)}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {formatDate(post.timestamp)}
-                    </div>
+
+                    {/* Comments Section */}
+                    {expandedComments.has(post.id) && (
+                      <CommentsSection 
+                        postId={post.id}
+                        fetchComments={fetchComments}
+                        session={session}
+                        commentInput={commentInputs[post.id] || ''}
+                        onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                        onSubmitComment={() => handleComment(post.id)}
+                        isSubmitting={commentMutation.isPending}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
