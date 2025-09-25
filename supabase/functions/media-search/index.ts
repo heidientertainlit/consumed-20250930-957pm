@@ -307,11 +307,11 @@ serve(async (req) => {
                   messages: [
                     {
                       role: 'system',
-                      content: 'You are a sports expert. Generate 3-5 realistic sports-related results based on the search query. Return ONLY a JSON array with objects containing: title, creator, description, and type (always "sports"). Focus on teams, games, or sports events related to the query.'
+                      content: 'You are a sports expert. Generate 3-5 realistic RECENT GAMES or upcoming games for the searched team/sport. Return ONLY a JSON array with objects containing: title (format as "Team A vs Team B" or "Team A @ Team B"), creator (league name like "NFL • Week 8"), description (game details like date, score, or status), and type (always "sports"). Focus on actual games involving the searched team, not general team info.'
                     },
                     {
                       role: 'user',
-                      content: `Generate sports results for search query: "${query}"`
+                      content: `Generate recent or upcoming games for: "${query}"`
                     }
                   ],
                   max_tokens: 500,
