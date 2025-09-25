@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Send } from "lucide-react";
+import { Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -63,8 +63,8 @@ export default function CommentsSection({
     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
       {/* Comment Input */}
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-          <span className="text-white text-sm">👤</span>
+        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+          <User size={16} className="text-gray-600" />
         </div>
         <div className="flex-1 flex items-center space-x-2">
           <Input
@@ -103,11 +103,9 @@ export default function CommentsSection({
         <div className="space-y-3">
           {comments.map((comment) => (
             <div key={comment.id} className="flex items-start space-x-2">
-              <img 
-                src={comment.user.avatar}
-                alt={comment.user.displayName}
-                className="w-8 h-8 rounded-full object-cover"
-              />
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                <User size={16} className="text-gray-600" />
+              </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-1">
                   <span className="font-medium text-sm text-gray-900">

@@ -345,11 +345,9 @@ export default function Feed() {
                 <div key={post.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                   {/* User Info and Date */}
                   <div className="flex items-center space-x-3 mb-4">
-                    <img 
-                      src={post.user.avatar} 
-                      alt={post.user.displayName}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                      <User size={24} className="text-gray-600" />
+                    </div>
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900">{post.user.displayName}</div>
                       <div className="text-sm text-gray-500">{formatFullDate(post.timestamp)}</div>

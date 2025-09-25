@@ -4,7 +4,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, ChevronDown, Brain, Target, Handshake } from "lucide-react";
+import { Star, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, ChevronDown, Brain, Target, Handshake, User } from "lucide-react";
 
 export default function CreatorProfile() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
@@ -91,11 +91,9 @@ export default function CreatorProfile() {
           <div className="flex flex-col md:flex-row md:items-end md:space-x-6 -mt-16">
             {/* Avatar */}
             <div className="relative">
-              <img 
-                src={creator.avatar}
-                alt={creator.name}
-                className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
-              />
+              <div className="w-32 h-32 bg-gray-200 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                <User size={48} className="text-gray-600" />
+              </div>
               {creator.verified && (
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-700 rounded-full flex items-center justify-center">
                   <Star className="text-white" size={16} />
@@ -297,11 +295,9 @@ export default function CreatorProfile() {
             {recentUpdates.map((update) => (
               <div key={update.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                 <div className="flex items-start space-x-4">
-                  <img 
-                    src={creator.avatar}
-                    alt={creator.name}
-                    className="w-12 h-12 rounded-full"
-                  />
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User size={24} className="text-gray-600" />
+                  </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="font-semibold text-gray-900">{creator.name}</span>

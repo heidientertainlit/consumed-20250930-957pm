@@ -644,11 +644,9 @@ export default function UserProfile() {
           <div className="flex flex-col md:flex-row md:items-end md:space-x-6">
             {/* Avatar */}
             <div className="relative">
-              <img 
-                src={mockUserData.avatar}
-                alt={mockUserData.name}
-                className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
-              />
+              <div className="w-32 h-32 bg-gray-200 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                <User size={48} className="text-gray-600" />
+              </div>
             </div>
 
             {/* Profile Info */}
@@ -1072,11 +1070,9 @@ export default function UserProfile() {
               {favoriteCreators.map((creator, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <img 
-                      src={creator.avatar}
-                      alt={creator.name}
-                      className="w-12 h-12 rounded-full"
-                    />
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                      <User size={24} className="text-gray-600" />
+                    </div>
                     <div>
                       <div className="font-semibold text-gray-900">{creator.name}</div>
                       <div className="text-sm text-gray-600">{creator.type}</div>
@@ -1350,11 +1346,9 @@ export default function UserProfile() {
             {recentActivity.map((activity) => (
               <div key={activity.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                 <div className="flex items-start space-x-4">
-                  <img 
-                    src={mockUserData.avatar}
-                    alt={mockUserData.name}
-                    className="w-12 h-12 rounded-full"
-                  />
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User size={24} className="text-gray-600" />
+                  </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="font-semibold text-gray-900">{mockUserData.name}</span>
