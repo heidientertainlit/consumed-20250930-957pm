@@ -71,7 +71,6 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
   };
 
   const searchMedia = async (query: string, type?: string) => {
-    console.log("🔍 SHARE UPDATE - searchMedia called:", { query, type });
     if (!query.trim()) {
       setSearchResults([]);
       return;
@@ -79,7 +78,6 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
     // Get the API key
     const apiKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-    console.log("🔑 SHARE UPDATE - API Key available:", !!apiKey);
 
     setIsSearching(true);
     try {
@@ -102,10 +100,9 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
       }
       
       const data = await response.json();
-      console.log("📡 SHARE UPDATE - API Response:", data);
       setSearchResults(data.results || []);
     } catch (error) {
-      console.error("❌ SHARE UPDATE - Media search error:", error);
+      console.error("Media search error:", error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -130,7 +127,6 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           ? undefined 
           : idToType[selectedTypes[0] as keyof typeof idToType];
         
-        console.log("🎯 SHARE UPDATE - Search triggered:", { query: searchQuery, selectedTypes, searchType });
         searchMedia(searchQuery, searchType);
       } else {
         setSearchResults([]);
