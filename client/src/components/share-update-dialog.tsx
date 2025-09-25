@@ -120,7 +120,8 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           "music": "music",
           "podcasts": "podcast",
           "youtube": "youtube",
-          "games": "game"
+          "games": "game",
+          "sports": "sports"
         };
 
         const searchType = selectedTypes.includes("all") 
