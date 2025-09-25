@@ -77,77 +77,87 @@ serve(async (req)=>{
         console.error('Books search error:', error);
       }
     }
-    // Search YouTube videos (limited results without API key)
+    // Search YouTube videos via YouTube API
     if (!type || type === 'youtube') {
-      // Add some mock YouTube results for now
-      if (query.toLowerCase().includes('office')) {
-        results.push({
-          title: 'The Office - Best Cold Opens',
-          type: 'youtube',
-          creator: 'The Office',
-          image: '',
-          external_id: 'mock-video-1',
-          external_source: 'youtube',
-          description: 'Compilation of the best cold opens from The Office'
-        });
+      try {
+        const youtubeKey = Deno.env.get('YOUTUBE_API_KEY');
+        if (youtubeKey) {
+          const youtubeResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=5&key=${youtubeKey}`);
+          if (youtubeResponse.ok) {
+            const youtubeData = await youtubeResponse.json();
+            youtubeData.items?.forEach((video: any) => {
+              results.push({
+                title: video.snippet.title,
+                type: 'youtube',
+                creator: video.snippet.channelTitle,
+                image: video.snippet.thumbnails?.medium?.url || '',
+                external_id: video.id.videoId,
+                external_source: 'youtube',
+                description: video.snippet.description
+              });
+            });
+          }
+        }
+      } catch (error) {
+        console.error('YouTube search error:', error);
       }
     }
-    // Search podcasts (mock data for now - return results for any query)
+    // Search podcasts via Spotify API
     if (!type || type === 'podcast') {
-      // Return relevant podcast results for any search query
-      if (query.toLowerCase().includes('aspire') || query.toLowerCase().includes('entrepreneur') || query.toLowerCase().includes('business')) {
-        results.push({
-          title: 'How I Built This',
-          type: 'podcast',
-          creator: 'NPR',
-          image: '',
-          external_id: 'mock-podcast-aspire-1',
-          external_source: 'spotify',
-          description: 'Stories behind the companies you know'
-        });
-        results.push({
-          title: 'The Tim Ferriss Show',
-          type: 'podcast',
-          creator: 'Tim Ferriss',
-          image: '',
-          external_id: 'mock-podcast-aspire-2',
-          external_source: 'spotify',
-          description: 'Deconstructing world-class performers'
-        });
-      } else {
-        // Default podcast results for other queries
-        results.push({
-          title: 'The Joe Rogan Experience',
-          type: 'podcast',
-          creator: 'Joe Rogan',
-          image: '',
-          external_id: 'mock-podcast-1',
-          external_source: 'spotify',
-          description: 'Long form conversations'
-        });
-        results.push({
-          title: 'Serial',
-          type: 'podcast',
-          creator: 'Sarah Koenig',
-          image: '',
-          external_id: 'mock-podcast-2',
-          external_source: 'spotify',
-          description: 'Investigative journalism podcast'
-        });
+      try {
+        const spotifyToken = Deno.env.get('SPOTIFY_ACCESS_TOKEN');
+        if (spotifyToken) {
+          const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=show&limit=10`, {
+            headers: {
+              'Authorization': `Bearer ${spotifyToken}`
+            }
+          });
+          if (spotifyResponse.ok) {
+            const spotifyData = await spotifyResponse.json();
+            spotifyData.shows?.items?.forEach((podcast: any) => {
+              results.push({
+                title: podcast.name,
+                type: 'podcast',
+                creator: podcast.publisher,
+                image: podcast.images?.[0]?.url || '',
+                external_id: podcast.id,
+                external_source: 'spotify',
+                description: podcast.description
+              });
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Podcast search error:', error);
       }
     }
-    // Search music (mock data for now)
+    // Search music via Spotify API
     if (!type || type === 'music') {
-      if (query.toLowerCase().includes('taylor') || query.toLowerCase().includes('swift')) {
-        results.push({
-          title: 'Anti-Hero',
-          type: 'music',
-          creator: 'Taylor Swift',
-          image: '',
-          external_id: 'mock-song-1',
-          external_source: 'spotify',
-          description: 'From the album Midnights'
-        });
+      try {
+        const spotifyToken = Deno.env.get('SPOTIFY_ACCESS_TOKEN');
+        if (spotifyToken) {
+          const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`, {
+            headers: {
+              'Authorization': `Bearer ${spotifyToken}`
+            }
+          });
+          if (spotifyResponse.ok) {
+            const spotifyData = await spotifyResponse.json();
+            spotifyData.tracks?.items?.forEach((track: any) => {
+              results.push({
+                title: track.name,
+                type: 'music',
+                creator: track.artists?.[0]?.name || 'Unknown Artist',
+                image: track.album?.images?.[0]?.url || '',
+                external_id: track.id,
+                external_source: 'spotify',
+                description: `From the album ${track.album?.name || 'Unknown Album'}`
+              });
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Music search error:', error);
       }
     }
     console.log(`Found ${results.length} results for query: ${query}`);
