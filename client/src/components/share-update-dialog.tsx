@@ -145,11 +145,48 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
     setThoughts("");
   };
 
-  const handlePost = () => {
-    // Handle posting logic here
-    console.log("Posting update:", { selectedMedia, thoughts, rating });
-    onClose();
-    resetForm();
+  const handlePost = async () => {
+    if (!selectedMedia) return;
+
+    try {
+      // Get the API key
+      const apiKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          media: {
+            title: selectedMedia.title,
+            type: selectedMedia.type,
+            creator: selectedMedia.creator,
+            image: selectedMedia.image,
+            external_id: selectedMedia.external_id,
+            external_source: selectedMedia.external_source,
+            description: selectedMedia.description,
+          },
+          rating: rating ? parseFloat(rating) : null,
+          thoughts: thoughts.trim() || null,
+          audience: audience
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Share update error response:', response.status, errorText);
+        throw new Error(`Share failed: ${response.status} - ${errorText}`);
+      }
+
+      console.log("Update shared successfully!");
+      onClose();
+      resetForm();
+    } catch (error) {
+      console.error("Error sharing update:", error);
+      // Could add toast notification here for better UX
+    }
   };
 
   return (
@@ -250,11 +287,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
                         <div
                           key={index}
                           onClick={() => setSelectedMedia(result)}
-                          className={`flex items-center space-x-3 p-3 border-b last:border-b-0 cursor-pointer transition-all ${
-                            selectedMedia?.title === result.title && selectedMedia?.creator === result.creator
-                              ? 'border-purple-500 bg-purple-50'
-                              : 'hover:bg-gray-50'
-                          }`}
+                          className="flex items-center space-x-3 p-3 border-b last:border-b-0 cursor-pointer transition-all hover:bg-gray-50"
                           data-testid={`search-result-${index}`}
                         >
                           {result.image ? (
@@ -401,7 +434,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
             } disabled:bg-gray-400`}
             data-testid="post-share"
           >
-            Quick Add
+            Post
           </Button>
         </div>
       </DialogContent>

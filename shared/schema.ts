@@ -61,6 +61,24 @@ export const dnaProfiles = pgTable("dna_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const socialPosts = pgTable("social_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  mediaTitle: text("media_title").notNull(),
+  mediaType: text("media_type").notNull(),
+  mediaCreator: text("media_creator"),
+  mediaImage: text("media_image"),
+  mediaExternalId: text("media_external_id"),
+  mediaExternalSource: text("media_external_source"),
+  mediaDescription: text("media_description"),
+  rating: decimal("rating"),
+  thoughts: text("thoughts"),
+  audience: text("audience").default("all"), // 'all' or 'top-fans'
+  likes: integer("likes").default(0),
+  comments: integer("comments").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -90,6 +108,13 @@ export const insertListSchema = createInsertSchema(lists).omit({
   updatedAt: true,
 });
 
+export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
+  id: true,
+  likes: true,
+  comments: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -100,3 +125,5 @@ export type EdnaResponse = typeof ednaResponses.$inferSelect;
 export type InsertEdnaResponse = z.infer<typeof insertEdnaResponseSchema>;
 export type DnaProfile = typeof dnaProfiles.$inferSelect;
 export type InsertDnaProfile = z.infer<typeof insertDnaProfileSchema>;
+export type SocialPost = typeof socialPosts.$inferSelect;
+export type InsertSocialPost = z.infer<typeof insertSocialPostSchema>;

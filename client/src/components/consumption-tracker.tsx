@@ -312,11 +312,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                         <div
                           key={index}
                           onClick={() => setSelectedMedia(result)}
-                          className={`flex items-center space-x-3 p-3 border-b last:border-b-0 cursor-pointer transition-all ${
-                            selectedMedia?.title === result.title && selectedMedia?.creator === result.creator
-                              ? 'border-purple-500 bg-purple-50'
-                              : 'hover:bg-gray-50'
-                          }`}
+                          className="flex items-center space-x-3 p-3 border-b last:border-b-0 cursor-pointer transition-all hover:bg-gray-50"
                           data-testid={`search-result-${index}`}
                         >
                           {result.image ? (
