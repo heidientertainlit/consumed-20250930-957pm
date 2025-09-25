@@ -1,4 +1,5 @@
 
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -198,33 +199,50 @@ serve(async (req) => {
       }
     }
 
-    // Search sports games/events via ESPN API
+    // Search sports games/events via ESPN API - FIXED VERSION
     if (!type || type === 'sports') {
       try {
-        // ESPN provides a free API for recent games and events
-        // Format: http://site.api.espn.com/apis/site/v2/sports/[SPORT]/[LEAGUE]/scoreboard
-        const sports = ['football/nfl', 'basketball/nba', 'baseball/mlb', 'hockey/nhl', 'soccer/eng.1'];
+        console.log('Searching sports for:', query);
+        
+        // ESPN provides a free API - using HTTPS now
+        const sports = ['football/nfl', 'basketball/nba', 'baseball/mlb', 'hockey/nhl', 'soccer/usa.1'];
+        const queryLower = query.toLowerCase();
         
         for (const sport of sports) {
           try {
-            const espnResponse = await fetch(`http://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`);
+            const espnResponse = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`);
             if (espnResponse.ok) {
               const espnData = await espnResponse.json();
-              espnData.events?.slice(0, 3).forEach((game) => {
-                const homeTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team?.displayName;
-                const awayTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.team?.displayName;
-                const gameTitle = `${awayTeam} @ ${homeTeam}`;
-                
-                if (gameTitle.toLowerCase().includes(query.toLowerCase())) {
-                  results.push({
-                    title: gameTitle,
-                    type: 'sports',
-                    creator: game.season?.type?.name || sport.split('/')[1].toUpperCase(),
-                    image: game.competitions?.[0]?.competitors?.[0]?.team?.logo || '',
-                    external_id: game.id,
-                    external_source: 'espn',
-                    description: `${game.status?.type?.detail || 'Game'} - ${new Date(game.date).toLocaleDateString()}`
-                  });
+              console.log(`ESPN ${sport} data:`, espnData.events?.length || 0, 'events');
+              
+              espnData.events?.slice(0, 5).forEach((game) => {
+                try {
+                  const homeTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team;
+                  const awayTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.team;
+                  
+                  if (!homeTeam || !awayTeam) return;
+                  
+                  const gameTitle = `${awayTeam.displayName} @ ${homeTeam.displayName}`;
+                  
+                  // More flexible search matching - check if query matches any part of team names
+                  const searchText = `${gameTitle} ${homeTeam.displayName} ${awayTeam.displayName} ${homeTeam.name} ${awayTeam.name}`.toLowerCase();
+                  
+                  if (searchText.includes(queryLower) || queryLower.includes(homeTeam.name?.toLowerCase()) || queryLower.includes(awayTeam.name?.toLowerCase())) {
+                    const homeScore = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.score;
+                    const awayScore = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.score;
+                    
+                    results.push({
+                      title: gameTitle,
+                      type: 'sports',
+                      creator: `${sport.split('/')[1].toUpperCase()} • ${game.season?.type?.name || 'Season'}`,
+                      image: homeTeam.logo || awayTeam.logo || '',
+                      external_id: game.id,
+                      external_source: 'espn',
+                      description: `${game.status?.type?.detail || 'Scheduled'} • ${new Date(game.date).toLocaleDateString()}${homeScore && awayScore ? ` • ${awayScore}-${homeScore}` : ''}`
+                    });
+                  }
+                } catch (gameError) {
+                  console.error(`Error processing game:`, gameError);
                 }
               });
             }
@@ -232,6 +250,33 @@ serve(async (req) => {
             console.error(`Error fetching ${sport}:`, sportError);
           }
         }
+        
+        // Also search TheSportsDB for broader coverage
+        if (query.length > 2) {
+          try {
+            const sportsDbResponse = await fetch(`https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=${encodeURIComponent(query)}`);
+            if (sportsDbResponse.ok) {
+              const sportsDbData = await sportsDbResponse.json();
+              console.log('SportsDB team search:', sportsDbData.teams?.length || 0, 'teams');
+              
+              sportsDbData.teams?.slice(0, 3).forEach((team) => {
+                results.push({
+                  title: team.strTeam,
+                  type: 'sports',
+                  creator: `${team.strSport} • ${team.strLeague}`,
+                  image: team.strTeamBadge || team.strTeamLogo || '',
+                  external_id: team.idTeam,
+                  external_source: 'thesportsdb',
+                  description: `${team.strStadium || ''} • ${team.strCountry || ''}`
+                });
+              });
+            }
+          } catch (error) {
+            console.error('SportsDB team search error:', error);
+          }
+        }
+        
+        console.log('Total sports results found:', results.filter(r => r.type === 'sports').length);
       } catch (error) {
         console.error('Sports search error:', error);
       }
