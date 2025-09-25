@@ -263,14 +263,32 @@ serve(async (req) => {
           }
         }
         
-        // Skip TheSportsDB team search - we want games, not teams
-        // Go directly to OpenAI to generate recent games
+        // Improved OpenAI fallback - trigger when no ESPN results OR when query suggests specific game matchup
         const sportsResultsCount = results.filter(r => r.type === 'sports').length;
-        if (sportsResultsCount === 0) {
+        const queryLooksLikeGame = /\b(vs|@|versus|against)\b/i.test(query) || 
+                                  query.split(/\s+/).length >= 2; // Two or more words likely means team names
+        
+        if (sportsResultsCount === 0 || queryLooksLikeGame) {
           try {
             const openaiKey = Deno.env.get('OPENAI_API_KEY');
             if (openaiKey) {
-              console.log('Using OpenAI fallback for sports search');
+              console.log('Using OpenAI fallback for sports search. Query:', query);
+              
+              // Get current date info for temporal context
+              const currentDate = new Date();
+              const currentMonth = currentDate.getMonth() + 1; // 0-based, so add 1
+              const currentYear = currentDate.getFullYear();
+              
+              // Determine likely sport season context
+              let seasonContext = '';
+              if (currentMonth >= 9 || currentMonth <= 2) {
+                seasonContext = 'NFL season (September-February), NBA season (October-April), NHL season (October-April)';
+              } else if (currentMonth >= 3 && currentMonth <= 6) {
+                seasonContext = 'MLB season (March-October), NBA playoffs (April-June), NHL playoffs (April-June)';
+              } else {
+                seasonContext = 'MLB season (March-October), offseason for NFL/NBA/NHL';
+              }
+
               const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -279,17 +297,28 @@ serve(async (req) => {
                 },
                 body: JSON.stringify({
                   model: 'gpt-4o-mini',
+                  response_format: { type: "json_object" },
                   messages: [
                     {
                       role: 'system',
-                      content: 'You are a sports expert. Generate 3-5 realistic RECENT GAMES or upcoming games for the searched team/sport. Return ONLY a JSON array with objects containing: title (format as "Team A vs Team B" or "Team A @ Team B"), creator (league name like "NFL • Week 8"), description (game details like date, score, or status), and type (always "sports"). Focus on actual games involving the searched team, not general team info.'
+                      content: `You are a sports expert. Today is ${currentDate.toISOString().split('T')[0]}. Current season context: ${seasonContext}. 
+                      Generate 3-5 realistic RECENT GAMES (last 2 weeks) or UPCOMING GAMES (next 2 weeks) involving the searched team/sport.
+                      Return a JSON object with a "results" array. Each result must have: 
+                      - title: "Team A vs Team B" or "Team A @ Team B" format
+                      - creator: "NFL • Week 8" or "NBA • Regular Season" format
+                      - description: game date, score if completed, or status
+                      - type: always "sports"
+                      
+                      Example: {"results": [{"title": "Kansas City Chiefs @ Buffalo Bills", "creator": "NFL • Week 8", "description": "October 15, 2025 • Bills win 24-20", "type": "sports"}]}
+                      
+                      Focus on games involving the searched team, prioritize recent/upcoming games over historical ones.`
                     },
                     {
                       role: 'user',
                       content: `Generate recent or upcoming games for: "${query}"`
                     }
                   ],
-                  max_tokens: 500,
+                  max_tokens: 800,
                   temperature: 0.7,
                 }),
               });
@@ -300,11 +329,15 @@ serve(async (req) => {
                 
                 if (content) {
                   try {
-                    const aiResults = JSON.parse(content);
+                    // Parse the JSON response
+                    const parsedResponse = JSON.parse(content);
+                    const aiResults = parsedResponse.results || parsedResponse; // Handle both formats
+                    
                     if (Array.isArray(aiResults)) {
+                      console.log(`Successfully parsed ${aiResults.length} OpenAI sports results`);
                       aiResults.slice(0, 5).forEach((item, index) => {
                         results.push({
-                          title: item.title || `Sports Result ${index + 1}`,
+                          title: item.title || `Sports Game ${index + 1}`,
                           type: 'sports',
                           creator: item.creator || 'Sports',
                           image: '',
@@ -313,12 +346,45 @@ serve(async (req) => {
                           description: item.description || ''
                         });
                       });
+                    } else {
+                      console.error('OpenAI response not an array:', typeof aiResults);
                     }
                   } catch (parseError) {
-                    console.error('Error parsing OpenAI sports response:', parseError);
+                    console.error('Error parsing OpenAI sports response. Response length:', content?.length || 0);
+                    console.error('Parse error:', parseError.message);
+                    
+                    // Fallback: try to extract JSON array from response
+                    const jsonMatch = content.match(/\[[\s\S]*\]/);
+                    if (jsonMatch) {
+                      try {
+                        const fallbackResults = JSON.parse(jsonMatch[0]);
+                        if (Array.isArray(fallbackResults)) {
+                          console.log('Successfully extracted JSON from response using fallback parsing');
+                          fallbackResults.slice(0, 5).forEach((item, index) => {
+                            results.push({
+                              title: item.title || `Sports Game ${index + 1}`,
+                              type: 'sports', 
+                              creator: item.creator || 'Sports',
+                              image: '',
+                              external_id: `ai_sports_fallback_${Date.now()}_${index}`,
+                              external_source: 'openai',
+                              description: item.description || ''
+                            });
+                          });
+                        }
+                      } catch (fallbackError) {
+                        console.error('Fallback JSON extraction also failed:', fallbackError.message);
+                      }
+                    }
                   }
+                } else {
+                  console.error('No content in OpenAI response');
                 }
+              } else {
+                console.error('OpenAI API error:', openaiResponse.status, await openaiResponse.text());
               }
+            } else {
+              console.error('OPENAI_API_KEY not found in environment');
             }
           } catch (error) {
             console.error('OpenAI sports search error:', error);
