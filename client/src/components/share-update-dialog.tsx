@@ -127,6 +127,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           ? undefined 
           : idToType[selectedTypes[0] as keyof typeof idToType];
         
+        console.log("🔍 SEARCH: selectedTypes =", selectedTypes, "searchType =", searchType);
         searchMedia(searchQuery, searchType);
       } else {
         setSearchResults([]);
@@ -221,8 +222,10 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
                 const isAllTypes = type.id === "all";
                 
                 const handleToggle = () => {
+                  console.log("🟦 Checkbox clicked:", type.id, "Current state:", selectedTypes);
                   if (isAllTypes) {
                     // If "All Types" is clicked, select only it
+                    console.log("🟦 Setting to All Types");
                     setSelectedTypes(["all"]);
                   } else {
                     // If any specific type is clicked
@@ -230,11 +233,15 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
                       // Remove this type
                       const newSelected = selectedTypes.filter(t => t !== type.id);
                       // If no types left, default to "All Types"
-                      setSelectedTypes(newSelected.length === 0 ? ["all"] : newSelected.filter(t => t !== "all"));
+                      const finalSelection = newSelected.length === 0 ? ["all"] : newSelected.filter(t => t !== "all");
+                      console.log("🟦 Removing type:", type.id, "New selection:", finalSelection);
+                      setSelectedTypes(finalSelection);
                     } else {
                       // Add this type and remove "All Types" if it was selected
                       const newSelected = selectedTypes.filter(t => t !== "all");
-                      setSelectedTypes([...newSelected, type.id]);
+                      const finalSelection = [...newSelected, type.id];
+                      console.log("🟦 Adding type:", type.id, "New selection:", finalSelection);
+                      setSelectedTypes(finalSelection);
                     }
                   }
                 };
