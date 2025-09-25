@@ -26,6 +26,17 @@ serve(async (req)=>{
       query,
       type
     });
+    
+    // Debug: Check which API keys are available
+    const tmdbKey = Deno.env.get('TMDB_API_KEY');
+    const spotifyToken = Deno.env.get('SPOTIFY_ACCESS_TOKEN');
+    const youtubeKey = Deno.env.get('YOUTUBE_API_KEY');
+    
+    console.log('API Keys available:', {
+      tmdb: !!tmdbKey,
+      spotify: !!spotifyToken,
+      youtube: !!youtubeKey
+    });
     const results = [];
     // Search movies and TV shows via TMDB
     if (!type || type === 'movie' || type === 'tv') {
@@ -106,14 +117,17 @@ serve(async (req)=>{
     if (!type || type === 'podcast') {
       try {
         const spotifyToken = Deno.env.get('SPOTIFY_ACCESS_TOKEN');
+        console.log('Podcast search - Spotify token available:', !!spotifyToken);
         if (spotifyToken) {
           const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=show&limit=10`, {
             headers: {
               'Authorization': `Bearer ${spotifyToken}`
             }
           });
+          console.log('Spotify podcast search response:', spotifyResponse.status);
           if (spotifyResponse.ok) {
             const spotifyData = await spotifyResponse.json();
+            console.log('Spotify podcast results count:', spotifyData.shows?.items?.length || 0);
             spotifyData.shows?.items?.forEach((podcast: any) => {
               results.push({
                 title: podcast.name,
