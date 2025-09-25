@@ -204,11 +204,15 @@ serve(async (req) => {
       try {
         console.log('Searching sports for:', query);
         
-        // Try ESPN API for real games only - expanded coverage
+        // Try ESPN API for real games only - check multiple date ranges
         const sports = ['football/nfl', 'basketball/nba', 'baseball/mlb', 'hockey/nhl', 'soccer/usa.1'];
         const queryLower = query.toLowerCase();
         
+        // Get current date for date-based searches
+        const currentDate = new Date();
+        
         for (const sport of sports) { // Check all major sports
+          // Try current scoreboard first
           try {
             const espnResponse = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard`, {
               headers: {
@@ -218,6 +222,7 @@ serve(async (req) => {
             
             if (espnResponse.ok) {
               const espnData = await espnResponse.json();
+              console.log(`ESPN ${sport} current scoreboard: ${espnData.events?.length || 0} games found`);
               
               espnData.events?.slice(0, 10).forEach((game) => {
                 try {
@@ -229,17 +234,24 @@ serve(async (req) => {
                   const gameTitle = `${awayTeam.displayName} @ ${homeTeam.displayName}`;
                   const searchText = `${gameTitle} ${homeTeam.displayName} ${awayTeam.displayName}`.toLowerCase();
                   
-                  // Match if query contains team names or vice versa
-                  const queryWords = queryLower.split(' ');
-                  const matchesQuery = queryWords.some(word => 
-                    word.length > 2 && (
-                      searchText.includes(word) ||
-                      homeTeam.displayName?.toLowerCase().includes(word) ||
-                      awayTeam.displayName?.toLowerCase().includes(word)
-                    )
-                  );
+                  // More flexible matching for team names
+                  const queryWords = queryLower.split(' ').filter(w => w.length > 1);
+                  const teamNames = [
+                    homeTeam.displayName?.toLowerCase(),
+                    homeTeam.name?.toLowerCase(),
+                    homeTeam.abbreviation?.toLowerCase(),
+                    awayTeam.displayName?.toLowerCase(), 
+                    awayTeam.name?.toLowerCase(),
+                    awayTeam.abbreviation?.toLowerCase()
+                  ].filter(Boolean);
                   
-                  if (matchesQuery || queryLower.length < 3) { // Include all results for short queries
+                  const matchesQuery = queryWords.some(word => 
+                    teamNames.some(teamName => 
+                      teamName?.includes(word) || word.includes(teamName)
+                    )
+                  ) || queryLower.length < 3;
+                  
+                  if (matchesQuery) {
                     const homeScore = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.score;
                     const awayScore = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.score;
                     
@@ -260,6 +272,73 @@ serve(async (req) => {
             }
           } catch (sportError) {
             console.error(`Error fetching ${sport}:`, sportError);
+          }
+          
+          // Also try recent past dates for this sport (limit to 2 past dates to avoid timeout)
+          for (let i = 1; i <= 2; i++) {
+            try {
+              const pastDate = new Date(currentDate);
+              pastDate.setDate(currentDate.getDate() - i);
+              const dateStr = pastDate.toISOString().split('T')[0].replace(/-/g, '');
+              
+              const pastResponse = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard?dates=${dateStr}`, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+              });
+              
+              if (pastResponse.ok) {
+                const pastData = await pastResponse.json();
+                console.log(`ESPN ${sport} past date ${dateStr}: ${pastData.events?.length || 0} games found`);
+                
+                pastData.events?.slice(0, 5).forEach((game) => {
+                  try {
+                    const homeTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team;
+                    const awayTeam = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.team;
+                    
+                    if (!homeTeam || !awayTeam) return;
+                    
+                    const gameTitle = `${awayTeam.displayName} @ ${homeTeam.displayName}`;
+                    
+                    // More flexible matching for team names
+                    const queryWords = queryLower.split(' ').filter(w => w.length > 1);
+                    const teamNames = [
+                      homeTeam.displayName?.toLowerCase(),
+                      homeTeam.name?.toLowerCase(),
+                      homeTeam.abbreviation?.toLowerCase(),
+                      awayTeam.displayName?.toLowerCase(), 
+                      awayTeam.name?.toLowerCase(),
+                      awayTeam.abbreviation?.toLowerCase()
+                    ].filter(Boolean);
+                    
+                    const matchesQuery = queryWords.some(word => 
+                      teamNames.some(teamName => 
+                        teamName?.includes(word) || word.includes(teamName)
+                      )
+                    ) || queryLower.length < 3;
+                    
+                    if (matchesQuery) {
+                      const homeScore = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.score;
+                      const awayScore = game.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.score;
+                      
+                      results.push({
+                        title: gameTitle,
+                        type: 'sports',
+                        creator: `${sport.split('/')[1].toUpperCase()} • ${game.season?.type?.name || 'Season'}`,
+                        image: homeTeam.logo || awayTeam.logo || '',
+                        external_id: game.id,
+                        external_source: 'espn',
+                        description: `${game.status?.type?.detail || 'Scheduled'} • ${new Date(game.date).toLocaleDateString()}${homeScore && awayScore ? ` • ${awayScore}-${homeScore}` : ''}`
+                      });
+                    }
+                  } catch (gameError) {
+                    console.error(`Error processing past game:`, gameError);
+                  }
+                });
+              }
+            } catch (pastError) {
+              console.error(`Error fetching past ${sport} for date -${i}:`, pastError);
+            }
           }
         }
         
