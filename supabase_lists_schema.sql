@@ -47,14 +47,10 @@ CREATE TABLE IF NOT EXISTS list_items (
 -- Create predefined list types (9 total)
 INSERT INTO lists (user_id, title, description, is_default, visibility) VALUES
   ('system', 'Currently', 'Media you are currently consuming', true, 'private'),
-  ('system', 'Read', 'Books you have finished reading', true, 'private'),
-  ('system', 'To Read', 'Books you want to read', true, 'private'),
-  ('system', 'Watched', 'Movies and TV shows you have watched', true, 'private'),
-  ('system', 'To Watch', 'Movies and TV shows you want to watch', true, 'private'),
-  ('system', 'Listened', 'Music and podcasts you have listened to', true, 'private'),
-  ('system', 'To Listen', 'Music and podcasts you want to listen to', true, 'private'),
-  ('system', 'Played', 'Games you have completed', true, 'private'),
-  ('system', 'To Play', 'Games you want to play', true, 'private')
+  ('system', 'Queue', 'Media you want to consume later', true, 'private'),
+  ('system', 'Finished', 'Media you have completed', true, 'private'),
+  ('system', 'Did Not Finish', 'Media you started but didn\'t complete', true, 'private'),
+  ('system', 'Favorites', 'Your all-time favorite media', true, 'private')
 ON CONFLICT DO NOTHING;
 
 -- Enable RLS on both tables

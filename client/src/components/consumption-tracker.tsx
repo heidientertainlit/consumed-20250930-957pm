@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -48,7 +47,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
 
   const categories = [
     "All Media",
-    "Movies", 
+    "Movies",
     "TV Shows",
     "Books",
     "Music",
@@ -81,7 +80,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
 
     setIsSearching(true);
     try {
-      
+
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
         method: "POST",
         headers: {
@@ -98,7 +97,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
         const errorText = await response.text();
         throw new Error(`Search failed: ${response.status} - ${errorText}`);
       }
-      
+
       const data = await response.json();
       setSearchResults(data.results || []);
     } catch (error) {
@@ -115,7 +114,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
       if (searchQuery.trim()) {
         const categoryToType = {
           "Movies": "movie",
-          "TV Shows": "tv", 
+          "TV Shows": "tv",
           "Books": "book",
           "Music": "music",
           "Podcasts": "podcast",
@@ -123,11 +122,11 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           "Games": "game",
           "Sports": "sports"
         };
-        
-        const searchType = selectedCategories.includes("All Media") 
-          ? undefined 
+
+        const searchType = selectedCategories.includes("All Media")
+          ? undefined
           : categoryToType[selectedCategories[0] as keyof typeof categoryToType];
-        
+
         searchMedia(searchQuery, searchType);
       } else {
         setSearchResults([]);
@@ -196,19 +195,19 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
 
   const handleAddMedia = (listType?: string) => {
     if (!selectedMedia) return;
-    
+
     // Check if user is authenticated
     if (!user || !session) {
       setShowAuthModal(true);
       return;
     }
-    
+
     // Update the mutation to use the specified list type
     const mediaWithList = {
       ...selectedMedia,
       listType: listType || 'all' // Default to 'all' for Quick Add
     };
-    
+
     trackMediaMutation.mutate(mediaWithList);
   };
 
@@ -236,13 +235,13 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           {/* Media Type Selection */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
-            
+
             {/* Category Checkboxes - 2 Column Layout */}
             <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-6">
               {categories.map((category) => {
                 const isChecked = selectedCategories.includes(category);
                 const isAllMedia = category === "All Media";
-                
+
                 const handleToggle = () => {
                   if (isAllMedia) {
                     // If "All Media" is clicked, select only it
@@ -261,7 +260,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                     }
                   }
                 };
-                
+
                 return (
                   <div key={category} className="flex items-center space-x-3">
                     <Checkbox
@@ -286,7 +285,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           {/* Search for Media Section */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Search for Media</h3>
-            
+
             {/* Search Input */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -408,7 +407,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                   </button>
                 ))}
               </div>
-              
+
               {/* Rating Input */}
               <div className="flex items-center space-x-2">
                 <Input
@@ -456,7 +455,7 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
           >
             Cancel
           </Button>
-          
+
           {/* Split Button - Quick Add with Dropdown */}
           <div className="flex">
             <Button
@@ -476,38 +475,44 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => handleAddMedia('currently')}
                   className="cursor-pointer"
                 >
-                  Add to Currently
+                  Currently
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => handleAddMedia('queue')}
                   className="cursor-pointer"
                 >
-                  Add to Queue
+                  Queue
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => handleAddMedia('finished')}
                   className="cursor-pointer"
                 >
-                  Add to Finished
+                  Finished
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => handleAddMedia('dnf')}
                   className="cursor-pointer"
                 >
-                  Add to DNF
+                  Did Not Finish
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleAddMedia('favorites')}
+                  className="cursor-pointer"
+                >
+                  Favorites
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </DialogContent>
-      
-      <AuthModal 
-        open={showAuthModal} 
+
+      <AuthModal
+        open={showAuthModal}
         onOpenChange={setShowAuthModal}
       />
     </Dialog>

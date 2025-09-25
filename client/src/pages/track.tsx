@@ -229,7 +229,7 @@ export default function Track() {
   };
 
   // Fixed filter options for the 5 standard lists
-  const filterOptions = ["All", "Currently", "Queue", "Finished", "Did Not Finish"];
+  const filterOptions = ["All", "Currently", "Queue", "Finished", "Did Not Finish", "Favorites"];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

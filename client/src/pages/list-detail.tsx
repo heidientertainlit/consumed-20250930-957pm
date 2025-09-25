@@ -13,18 +13,18 @@ export default function ListDetail() {
   const [, setLocation] = useLocation();
   // Removed privacy state - all lists are now public for MVP
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  
+
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const { toast } = useToast();
 
   // Get list name from URL: /list/currently -> "currently" 
   const urlListName = window.location.pathname.split('/list/')[1];
-  
+
   // Get user ID from URL parameters for shared links
   const urlParams = new URLSearchParams(window.location.search);
   const sharedUserId = urlParams.get('user');
-  
+
   // Load REAL user data - works for both your own lists and shared public lists
   const { data: userListsData, isLoading: listsLoading } = useQuery({
     queryKey: ['user-lists-with-media', sharedUserId || 'own'],
@@ -32,7 +32,7 @@ export default function ListDetail() {
       // For shared links (has sharedUserId), use public list access
       if (sharedUserId) {
         console.log('Loading shared public list data for user:', sharedUserId);
-        
+
         const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-list?list_slug=${urlListName}&user_id=${sharedUserId}`, {
           method: "GET",
           headers: {
@@ -40,40 +40,40 @@ export default function ListDetail() {
             "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
         });
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Public list fetch failed:', response.status, errorText);
           throw new Error('Failed to fetch public list');
         }
-        
+
         const data = await response.json();
         console.log('Public list data:', data);
-        
+
         // Convert to expected format
         return {
           lists: [data.list]
         };
       }
-      
+
       if (!session?.access_token) {
         console.log('No session token available for list detail');
         return null;
       }
-      
+
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${session.access_token}`,
         },
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('User lists fetch failed:', response.status, errorText);
         throw new Error('Failed to fetch user lists');
       }
-      
+
       const data = await response.json();
       console.log('REAL user lists data for list detail:', data);
       return data;
@@ -122,6 +122,7 @@ export default function ListDetail() {
       case "Queue": return "Media you want to consume later";
       case "Finished": return "Media you've completed";
       case "Did Not Finish": return "Media you started but didn't complete";
+      case "Favorites": return "Your favorite media items";
       default: return "Your custom list";
     }
   }
@@ -141,12 +142,12 @@ export default function ListDetail() {
       });
       return;
     }
-    
+
     // Add user identifier to shared URL so non-logged-in users can see the data
     const shareUrl = session?.user?.id 
       ? `${window.location.origin}/list/${urlListName}?user=${session.user.id}`
       : window.location.href;
-      
+
     const shareData = {
       title: `Check out my entertainment list on consumed!`,
       text: `I'm tracking my ${listData?.name || 'entertainment'} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
@@ -186,7 +187,7 @@ export default function ListDetail() {
       if (!session?.access_token || !sharedListData?.id) {
         throw new Error('Authentication required');
       }
-      
+
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-list-visibility", {
         method: "POST",
         headers: {
@@ -198,11 +199,11 @@ export default function ListDetail() {
           isPublic: isPublic
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update list visibility');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -306,7 +307,7 @@ export default function ListDetail() {
                   {listData.isPublic ? 'Public List' : 'Private List'}
                 </span>
               </button>
-              
+
               <Button
                 onClick={() => setIsTrackModalOpen(true)}
                 className="bg-purple-600 hover:bg-purple-700"
@@ -315,7 +316,7 @@ export default function ListDetail() {
                 <Plus size={16} className="mr-2" />
                 Add Item
               </Button>
-              
+
               <Button
                 variant="outline"
                 onClick={handleShare}
@@ -353,7 +354,7 @@ export default function ListDetail() {
                     alt={item.title}
                     className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                   />
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
                       <div>
@@ -363,7 +364,7 @@ export default function ListDetail() {
                           {item.type}
                         </Badge>
                       </div>
-                      
+
                       <Button
                         variant="ghost"
                         size="sm"
