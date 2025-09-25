@@ -72,7 +72,7 @@ export default function CommentsSection({
             placeholder="Write a comment..."
             value={commentInput}
             onChange={(e) => onCommentInputChange(e.target.value)}
-            className="flex-1"
+            className="flex-1 bg-white text-black placeholder:text-gray-500"
             disabled={isSubmitting}
           />
           <Button
