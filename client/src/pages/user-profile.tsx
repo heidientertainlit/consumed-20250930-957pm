@@ -10,9 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X } from "lucide-react";
 import { AuthModal } from "@/components/auth";
 
 export default function UserProfile() {
@@ -52,9 +53,73 @@ export default function UserProfile() {
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
 
-  // Highlights state (assuming this will be managed similarly to lists)
-  const [highlights, setHighlights] = useState<any[]>([]); // Placeholder for highlights state
-  const [isLoadingHighlights, setIsLoadingHighlights] = useState(false); // Placeholder for loading state
+  // Highlights state
+  const [highlights, setHighlights] = useState<any[]>([]);
+  const [isLoadingHighlights, setIsLoadingHighlights] = useState(false);
+
+  // Media search states for highlights
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(["All Media"]);
+
+  // Categories for media search
+  const categories = ["All Media", "Movies", "TV Shows", "Books", "Music", "Podcasts", "Games", "Sports", "YouTube"];
+
+  // Search mutation using React Query pattern
+  const searchMutation = {
+    isPending: false,
+    mutate: async () => {
+      // Search functionality will be implemented
+    }
+  };
+
+  // Perform search function
+  const performSearch = async () => {
+    if (!searchQuery.trim() || !session?.access_token) return;
+
+    try {
+      setSearchResults([]);
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          type: selectedCategories.includes("All Media") ? null : 
+                selectedCategories.includes("Movies") ? "movie" :
+                selectedCategories.includes("TV Shows") ? "tv" :
+                selectedCategories.includes("Books") ? "book" :
+                selectedCategories.includes("Music") ? "music" :
+                selectedCategories.includes("Podcasts") ? "podcast" :
+                selectedCategories.includes("Games") ? "game" :
+                selectedCategories.includes("Sports") ? "sports" :
+                selectedCategories.includes("YouTube") ? "youtube" : null
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data.results || []);
+      } else {
+        console.error('Search failed:', response.status);
+        toast({
+          title: "Search Failed",
+          description: "Unable to search for media. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      toast({
+        title: "Search Error",
+        description: "An error occurred while searching. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Fetch DNA profile and user lists when authenticated
   useEffect(() => {
@@ -1429,37 +1494,242 @@ export default function UserProfile() {
         onClose={() => setIsTrackModalOpen(false)} 
       />
 
-      {/* Highlight Modal (New) */}
+      {/* Highlight Modal with Media Search */}
       {isHighlightModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="text-white" size={32} />
+          <div className="bg-white rounded-2xl max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Add a Highlight</h1>
+                  <p className="text-gray-600 text-sm mt-1">Share something you're loving or have loved recently!</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsHighlightModalOpen(false)}
+                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Add a Highlight</h1>
-              <p className="text-gray-600 text-lg">Share something you're loving or have loved recently!</p>
             </div>
-            {/* Placeholder for highlight form content */}
-            <div className="text-center py-12">
-              <p className="text-gray-600">Highlight form will go here.</p>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Media Type Selection */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
+                <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-6">
+                  {categories.map((category) => {
+                    const isChecked = selectedCategories.includes(category);
+                    const isAllMedia = category === "All Media";
+                    
+                    const handleToggle = (checked: boolean) => {
+                      if (isAllMedia) {
+                        if (checked) {
+                          setSelectedCategories(categories);
+                        } else {
+                          setSelectedCategories([]);
+                        }
+                      } else {
+                        if (checked) {
+                          const newCategories = [...selectedCategories, category];
+                          if (newCategories.length === categories.length - 1) {
+                            setSelectedCategories(categories);
+                          } else {
+                            setSelectedCategories(newCategories);
+                          }
+                        } else {
+                          setSelectedCategories(prev => 
+                            prev.filter(cat => cat !== category && cat !== "All Media")
+                          );
+                        }
+                      }
+                    };
+
+                    return (
+                      <div key={category} className="flex items-center space-x-3">
+                        <Checkbox
+                          id={category}
+                          checked={isChecked}
+                          onCheckedChange={handleToggle}
+                          className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5"
+                        />
+                        <label
+                          htmlFor={category}
+                          className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                        >
+                          {category === "All Media" ? "All Types" : category}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Search for Media Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Search for Media</h3>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for movies, TV shows, books, podcasts, music..."
+                    className="pl-10 py-3 text-base bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500"
+                  />
+                </div>
+
+                {/* Search Button */}
+                {searchQuery.trim() && (
+                  <div className="mt-4">
+                    <Button
+                      onClick={performSearch}
+                      disabled={searchMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {searchMutation.isPending ? (
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="animate-spin h-4 w-4" />
+                          <span>Searching...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <Search className="h-4 w-4" />
+                          <span>Search</span>
+                        </div>
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-base font-semibold text-gray-900 mb-4">Search Results</h4>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {searchResults.map((result, index) => (
+                        <div
+                          key={index}
+                          onClick={() => setSelectedMedia(result)}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                            selectedMedia?.title === result.title && selectedMedia?.creator === result.creator
+                              ? 'border-blue-500 bg-blue-50 shadow-md'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-start space-x-4">
+                            {result.image && (
+                              <img
+                                src={result.image}
+                                alt={result.title}
+                                className="w-16 h-20 object-cover rounded flex-shrink-0"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h5 className="font-semibold text-gray-900 truncate">{result.title}</h5>
+                              <p className="text-sm text-gray-600 truncate">
+                                {result.type === 'tv' ? 'TV Show' : 
+                                 result.type === 'movie' ? 'Movie' : 
+                                 result.type === 'book' ? 'Book' : 
+                                 result.type === 'music' ? 'Music' : 
+                                 result.type === 'podcast' ? 'Podcast' : 
+                                 result.type === 'game' ? 'Game' : 
+                                 result.type === 'sports' ? 'Sports' : 
+                                 result.type === 'youtube' ? 'YouTube' : result.type}
+                              </p>
+                              {result.creator && (
+                                <p className="text-sm text-gray-500 truncate">by {result.creator}</p>
+                              )}
+                              {result.description && (
+                                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{result.description}</p>
+                              )}
+                            </div>
+                            {selectedMedia?.title === result.title && selectedMedia?.creator === result.creator && (
+                              <div className="flex-shrink-0">
+                                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Media Preview */}
+                {selectedMedia && (
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-base font-semibold text-gray-900 mb-2">Selected for Highlight</h4>
+                    <div className="flex items-center space-x-4">
+                      {selectedMedia.image && (
+                        <img
+                          src={selectedMedia.image}
+                          alt={selectedMedia.title}
+                          className="w-12 h-16 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <h5 className="font-medium text-gray-900">{selectedMedia.title}</h5>
+                        <p className="text-sm text-gray-600">
+                          {selectedMedia.type === 'tv' ? 'TV Show' : 
+                           selectedMedia.type === 'movie' ? 'Movie' : 
+                           selectedMedia.type === 'book' ? 'Book' : 
+                           selectedMedia.type === 'music' ? 'Music' : 
+                           selectedMedia.type === 'podcast' ? 'Podcast' : 
+                           selectedMedia.type === 'game' ? 'Game' : 
+                           selectedMedia.type === 'sports' ? 'Sports' : 
+                           selectedMedia.type === 'youtube' ? 'YouTube' : selectedMedia.type}
+                        </p>
+                        {selectedMedia.creator && (
+                          <p className="text-sm text-gray-500">by {selectedMedia.creator}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex justify-center mt-8">
-              <Button
-                onClick={() => setIsHighlightModalOpen(false)}
-                className="text-gray-600 hover:text-gray-800 bg-transparent border-none"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  toast({ title: "Feature Coming Soon", description: "Save your highlight!" });
-                  setIsHighlightModalOpen(false);
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-white ml-4"
-              >
-                Save Highlight
-              </Button>
+
+            {/* Footer with Add Highlight Button */}
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-end space-x-3">
+                <Button
+                  onClick={() => setIsHighlightModalOpen(false)}
+                  variant="outline"
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedMedia) {
+                      // Add the selected media to highlights
+                      setHighlights(prev => [...prev, selectedMedia]);
+                      toast({ 
+                        title: "Highlight Added!", 
+                        description: `Added "${selectedMedia.title}" to your highlights` 
+                      });
+                      setIsHighlightModalOpen(false);
+                      setSelectedMedia(null);
+                      setSearchResults([]);
+                      setSearchQuery("");
+                    }
+                  }}
+                  disabled={!selectedMedia}
+                  className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add Highlight
+                </Button>
+              </div>
             </div>
           </div>
         </div>
