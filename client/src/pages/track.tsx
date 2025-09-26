@@ -32,8 +32,17 @@ export default function Track() {
   };
 
   const handleShareList = (listName: string, itemCount: number) => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Cannot Share",
+        description: "You must be logged in to share lists",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const listId = listName.toLowerCase().replace(/\s+/g, '-');
-    const shareUrl = `${window.location.origin}/list/${listId}`;
+    const shareUrl = `${window.location.origin}/list/${listId}?user=${session.user.id}`;
     
     if (navigator.share) {
       // Use native sharing if available (mobile)

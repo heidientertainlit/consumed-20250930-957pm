@@ -144,9 +144,16 @@ export default function ListDetail() {
     }
 
     // Add user identifier to shared URL so non-logged-in users can see the data
-    const shareUrl = session?.user?.id 
-      ? `${window.location.origin}/list/${urlListName}?user=${session.user.id}`
-      : window.location.href;
+    if (!session?.user?.id) {
+      toast({
+        title: "Cannot Share",
+        description: "You must be logged in to share lists",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/list/${urlListName}?user=${session.user.id}`;
 
     const shareData = {
       title: `Check out my entertainment list on consumed!`,
