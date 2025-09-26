@@ -52,13 +52,21 @@ serve(async (req) => {
       const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
       console.log('Looking up user IDs:', userIds);
       
-      // First try public.users table
-      const { data: users, error: usersError } = await supabase
+      // Try using service role for better access
+      const serviceSupabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '', 
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
+      );
+      
+      // First try public.users table with service role
+      const { data: users, error: usersError } = await serviceSupabase
         .from('users')
         .select('id, user_name, display_name, email, avatar')
         .in('id', userIds);
 
+      console.log('Public users query error:', usersError);
       console.log('Public users found:', users?.length || 0);
+      console.log('Public users data:', JSON.stringify(users, null, 2));
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
       // Find missing user IDs and fetch from auth.users as fallback
@@ -67,12 +75,19 @@ serve(async (req) => {
 
       if (missingUserIds.length > 0) {
         // Use service role to access auth.users
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        const { data: authUsers, error: authError } = await serviceSupabase.auth.admin.listUsers();
+        console.log('Auth users query error:', authError);
         console.log('Auth users fetched:', authUsers?.users?.length || 0);
         
         if (authUsers?.users) {
           authUsers.users.forEach(authUser => {
             if (missingUserIds.includes(authUser.id)) {
+              console.log('Processing auth user:', JSON.stringify({
+                id: authUser.id,
+                email: authUser.email,
+                user_metadata: authUser.user_metadata
+              }, null, 2));
+              
               userMap.set(authUser.id, {
                 id: authUser.id,
                 user_name: authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
