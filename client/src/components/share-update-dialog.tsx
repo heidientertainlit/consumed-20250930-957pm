@@ -180,18 +180,12 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          media: {
-            title: selectedMedia.title,
-            type: selectedMedia.type,
-            creator: selectedMedia.creator,
-            image: selectedMedia.image,
-            external_id: selectedMedia.external_id,
-            external_source: selectedMedia.external_source,
-            description: selectedMedia.description,
-          },
-          rating: rating ? parseFloat(rating) : null,
-          thoughts: thoughts.trim() || null,
-          audience: audience
+          content: thoughts.trim() || null,
+          media_title: selectedMedia.title,
+          media_type: selectedMedia.type,
+          media_creator: selectedMedia.creator,
+          media_image_url: selectedMedia.image,
+          rating: rating ? parseFloat(rating) : null
         }),
       });
 
