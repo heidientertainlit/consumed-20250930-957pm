@@ -15,8 +15,8 @@ export default function FriendsCreatorsPage() {
     queryKey: ['friends'],
     queryFn: async () => {
       if (!session?.access_token) return { friends: [] };
-      
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -24,7 +24,7 @@ export default function FriendsCreatorsPage() {
         },
         body: JSON.stringify({ action: 'getFriends' }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to fetch friends');
       return response.json();
     },
@@ -36,8 +36,8 @@ export default function FriendsCreatorsPage() {
     queryKey: ['pending-requests'],
     queryFn: async () => {
       if (!session?.access_token) return { requests: [] };
-      
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -45,7 +45,7 @@ export default function FriendsCreatorsPage() {
         },
         body: JSON.stringify({ action: 'getPendingRequests' }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to fetch pending requests');
       return response.json();
     },
@@ -57,8 +57,8 @@ export default function FriendsCreatorsPage() {
     queryKey: ['user-search', searchQuery],
     queryFn: async () => {
       if (!session?.access_token || !searchQuery.trim()) return { users: [] };
-      
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -66,7 +66,7 @@ export default function FriendsCreatorsPage() {
         },
         body: JSON.stringify({ action: 'searchUsers', query: searchQuery }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to search users');
       return response.json();
     },
@@ -77,8 +77,8 @@ export default function FriendsCreatorsPage() {
   const sendRequestMutation = useMutation({
     mutationFn: async (friendId: string) => {
       if (!session?.access_token) throw new Error('Not authenticated');
-      
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -86,7 +86,7 @@ export default function FriendsCreatorsPage() {
         },
         body: JSON.stringify({ action: 'sendRequest', friendId }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to send friend request');
       return response.json();
     },
@@ -99,8 +99,8 @@ export default function FriendsCreatorsPage() {
   const acceptRequestMutation = useMutation({
     mutationFn: async (friendId: string) => {
       if (!session?.access_token) throw new Error('Not authenticated');
-      
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -108,7 +108,7 @@ export default function FriendsCreatorsPage() {
         },
         body: JSON.stringify({ action: 'acceptRequest', friendId }),
       });
-      
+
       if (!response.ok) throw new Error('Failed to accept friend request');
       return response.json();
     },
@@ -124,6 +124,12 @@ export default function FriendsCreatorsPage() {
 
   const handleAcceptRequest = (friendId: string) => {
     acceptRequestMutation.mutate(friendId);
+  };
+
+  // Dummy function for handleFollowFriend, as it's used in the template but not defined
+  const handleFollowFriend = (friendId: string) => {
+    console.log("Follow friend clicked for:", friendId);
+    // In a real application, this would involve a mutation to follow a user.
   };
 
   return (
@@ -258,7 +264,7 @@ export default function FriendsCreatorsPage() {
               )}
             </div>
           </div>
-          
+
           {/* Share DNA with Friends */}
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
             <div className="flex items-center space-x-2 mb-4">
@@ -314,7 +320,7 @@ export default function FriendsCreatorsPage() {
               Friends who complete their Entertainment DNA will appear here with compatibility scores
             </div>
           </div>
-          
+
           {/* Recommended for You Section - Friends */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200 p-6 shadow-sm">
             <div className="flex items-center space-x-2 mb-4">
@@ -382,9 +388,9 @@ export default function FriendsCreatorsPage() {
                       <span className="text-xs font-medium">{friend.compatibility}</span>
                     </div>
                   </div>
-                  
+
                   <div className="text-sm text-gray-600 mb-3">{friend.reason}</div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">{friend.mutualFriends} mutual connections</span>
                     {friend.isFollowing ? (
