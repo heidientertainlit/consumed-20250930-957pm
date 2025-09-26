@@ -79,8 +79,8 @@ const leaderboardCategories = [
     isSelected: false
   },
   {
-    id: "sports_fanatic",
-    title: "Sports Fanatic",
+    id: "sports_fan",
+    title: "Sports Fan",
     icon: <Target className="w-5 h-5 text-blue-600" />,
     isSelected: false
   },

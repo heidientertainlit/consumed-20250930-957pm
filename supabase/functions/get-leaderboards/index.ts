@@ -102,7 +102,7 @@ serve(async (req) => {
           categoryScore = music.length * 1;
         } else if (category === 'podster') {
           categoryScore = podcasts.length * 3;
-        } else if (category === 'sports_fanatic') {
+        } else if (category === 'sports_fan') {
           const sports = listItems.filter(item => item.media_type === 'sports');
           categoryScore = sports.length * 5; // 5 points per sports event tracked
         } else if (category === 'top_critic') {
