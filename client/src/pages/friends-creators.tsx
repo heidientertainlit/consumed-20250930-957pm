@@ -157,7 +157,7 @@ export default function FriendsCreatorsPage() {
                 placeholder="Search by username or name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-sm text-black placeholder-gray-500"
                 data-testid="input-friend-search"
               />
             </div>
