@@ -2,7 +2,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame } from "lucide-react";
+import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 interface LeaderboardEntry {
@@ -94,6 +94,12 @@ const leaderboardCategories = [
     id: "streaker",
     title: "Streaker",
     icon: <Flame className="w-5 h-5 text-blue-600" />,
+    isSelected: false
+  },
+  {
+    id: "friend_inviter",
+    title: "Friend Inviter",
+    icon: <Users className="w-5 h-5 text-green-600" />,
     isSelected: false
   }
 ];

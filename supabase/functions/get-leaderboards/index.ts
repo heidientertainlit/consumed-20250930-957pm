@@ -87,22 +87,58 @@ serve(async (req) => {
         // Count items with reviews (notes field)
         const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
 
-        // Calculate total points
-        const totalPoints = 
-          (books.length * 15) +      // Books: 15 pts each
-          (movies.length * 8) +      // Movies: 8 pts each
-          (tv.length * 10) +         // TV Shows: 10 pts each
-          (music.length * 1) +       // Music: 1 pt each
-          (podcasts.length * 3) +    // Podcasts: 3 pts each
-          (games.length * 5) +       // Games: 5 pts each
-          (reviews.length * 10);     // Reviews: 10 pts each
+        // Calculate category-specific scores
+        let categoryScore = 0;
+        let totalPoints = 0;
 
-        if (totalPoints > 0) {
+        if (category === 'bookworm') {
+          categoryScore = books.length * 15;
+        } else if (category === 'cinephile') {
+          categoryScore = movies.length * 8;
+        } else if (category === 'series_slayer') {
+          categoryScore = tv.length * 10;
+        } else if (category === 'track_star') {
+          categoryScore = music.length * 1;
+        } else if (category === 'podster') {
+          categoryScore = podcasts.length * 3;
+        } else if (category === 'top_critic') {
+          categoryScore = reviews.length * 10;
+        } else if (category === 'superstar') {
+          // Superstar = users with high activity across all categories
+          categoryScore = (books.length > 0 ? 1 : 0) + 
+                         (movies.length > 0 ? 1 : 0) + 
+                         (tv.length > 0 ? 1 : 0) + 
+                         (music.length > 0 ? 1 : 0) + 
+                         (podcasts.length > 0 ? 1 : 0) + 
+                         (games.length > 0 ? 1 : 0);
+          categoryScore = categoryScore * 20; // 20 points per category participated in
+        } else if (category === 'streaker') {
+          // Streaker = consistency (simplified as total items for now)
+          categoryScore = listItems.length * 2;
+        } else if (category === 'friend_inviter') {
+          // Friend inviter = placeholder for future friend invitation system
+          // For now, users with more diverse content get points (encourages sharing)
+          const uniqueCreators = new Set(listItems.map(item => item.creator)).size;
+          categoryScore = uniqueCreators * 5; // 5 points per unique creator (diversity bonus)
+        } else {
+          // Calculate total points for all_time category
+          totalPoints = 
+            (books.length * 15) +      // Books: 15 pts each
+            (movies.length * 8) +      // Movies: 8 pts each
+            (tv.length * 10) +         // TV Shows: 10 pts each
+            (music.length * 1) +       // Music: 1 pt each
+            (podcasts.length * 3) +    // Podcasts: 3 pts each
+            (games.length * 5) +       // Games: 5 pts each
+            (reviews.length * 10);     // Reviews: 10 pts each
+          categoryScore = totalPoints;
+        }
+
+        if (categoryScore > 0) {
           leaderboardData.push({
             user_id: user.id,
             user_name: user.user_name,
-            user_points: totalPoints,
-            score: totalPoints, // For compatibility with frontend interface
+            user_points: categoryScore,
+            score: categoryScore, // For compatibility with frontend interface
             created_at: new Date().toISOString(),
             // Additional data for frontend display
             total_items: listItems.length,
