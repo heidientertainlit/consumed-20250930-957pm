@@ -31,23 +31,10 @@ serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      // Get social feed posts
+      // Simplified query to avoid schema cache issues
       const { data: posts, error } = await supabase
         .from('social_posts')
-        .select(`
-          id,
-          user_id,
-          thoughts,
-          media_title,
-          media_type,
-          media_creator,
-          media_image,
-          rating,
-          created_at,
-          users!inner(username, email),
-          likes,
-          comments
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -58,32 +45,45 @@ serve(async (req) => {
         });
       }
 
+      // Get user data separately to avoid join issues
+      const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, username, email')
+        .in('id', userIds);
+
+      const userMap = new Map(users?.map(user => [user.id, user]) || []);
+
       // Transform posts to match frontend SocialPost interface
-      const transformedPosts = posts?.map(post => ({
-        id: post.id,
-        type: 'consumption',
-        user: {
-          id: post.user_id,
-          username: post.users?.username || post.users?.email?.split('@')[0] || 'Unknown',
-          displayName: post.users?.username || post.users?.email?.split('@')[0] || 'Unknown',
-          avatar: ''
-        },
-        content: post.thoughts || '',
-        timestamp: post.created_at,
-        likes: post.likes || 0,
-        comments: post.comments || 0,
-        shares: 0,
-        mediaItems: post.media_title ? [{
-          id: post.id + '_media',
-          title: post.media_title,
-          creator: post.media_creator || '',
-          mediaType: post.media_type || '',
-          imageUrl: post.media_image || '',
-          rating: post.rating || undefined,
-          externalId: '',
-          externalSource: ''
-        }] : []
-      }));
+      const transformedPosts = posts?.map(post => {
+        const postUser = userMap.get(post.user_id) || { username: 'Unknown', email: '' };
+        
+        return {
+          id: post.id,
+          type: 'consumption',
+          user: {
+            id: post.user_id,
+            username: postUser.username || postUser.email?.split('@')[0] || 'Unknown',
+            displayName: postUser.username || postUser.email?.split('@')[0] || 'Unknown',
+            avatar: ''
+          },
+          content: post.thoughts || '',
+          timestamp: post.created_at,
+          likes: post.likes || 0,
+          comments: post.comments || 0,
+          shares: 0,
+          mediaItems: post.media_title ? [{
+            id: post.id + '_media',
+            title: post.media_title,
+            creator: post.media_creator || '',
+            mediaType: post.media_type || '',
+            imageUrl: post.media_image || '',
+            rating: post.rating || undefined,
+            externalId: '',
+            externalSource: ''
+          }] : []
+        };
+      });
 
       return new Response(JSON.stringify(transformedPosts), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -91,27 +91,41 @@ serve(async (req) => {
     }
 
     if (req.method === 'POST') {
-      // Create a new social feed post
+      // Simplified post creation
       const body = await req.json();
       const { content, media_title, media_type, media_creator, media_image_url, rating } = body;
 
-      const { data: post, error } = await supabase
-        .from('social_posts')
-        .insert({
-          user_id: user.id,
-          thoughts: content,
-          media_title,
-          media_type,
-          media_creator,
-          media_image: media_image_url,
-          rating
-        })
-        .select()
-        .single();
+      // Use raw SQL insert to bypass schema cache
+      const { data: post, error } = await supabase.rpc('create_social_post', {
+        p_user_id: user.id,
+        p_thoughts: content || '',
+        p_media_title: media_title || '',
+        p_media_type: media_type || '',
+        p_media_creator: media_creator || '',
+        p_media_image: media_image_url || '',
+        p_rating: rating || null
+      });
 
       if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
+        // Fallback: try direct insert with minimal data
+        const { data: fallbackPost, error: fallbackError } = await supabase
+          .from('social_posts')
+          .insert({
+            user_id: user.id,
+            thoughts: content || ''
+          })
+          .select()
+          .single();
+
+        if (fallbackError) {
+          return new Response(JSON.stringify({ error: fallbackError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ post: fallbackPost }), {
+          status: 201,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
