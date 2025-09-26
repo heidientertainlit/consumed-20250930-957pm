@@ -209,7 +209,10 @@ export default function Leaderboard() {
                           {entry.user_name || 'Anonymous User'}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {entry.total_items ? `${entry.total_items} items tracked` : `Score: ${entry.score}`}
+                          {selectedCategory === 'all_time' 
+                            ? `${entry.total_items || 0} items tracked`
+                            : `Score: ${entry.user_points.toLocaleString()}`
+                          }
                         </div>
                       </div>
                     </div>
