@@ -55,7 +55,7 @@ serve(async (req) => {
       // First try public.users table
       const { data: users, error: usersError } = await supabase
         .from('users')
-        .select('id, username, email')
+        .select('id, user_name, display_name, email, avatar')
         .in('id', userIds);
 
       console.log('Public users found:', users?.length || 0);
@@ -75,8 +75,10 @@ serve(async (req) => {
             if (missingUserIds.includes(authUser.id)) {
               userMap.set(authUser.id, {
                 id: authUser.id,
-                username: authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'Unknown',
-                email: authUser.email || ''
+                user_name: authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
+                display_name: authUser.user_metadata?.display_name || authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
+                email: authUser.email || '',
+                avatar: authUser.user_metadata?.avatar || ''
               });
             }
           });
@@ -86,16 +88,16 @@ serve(async (req) => {
 
       // Transform posts to match frontend SocialPost interface
       const transformedPosts = posts?.map(post => {
-        const postUser = userMap.get(post.user_id) || { username: 'Unknown', email: '' };
+        const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
         return {
           id: post.id,
           type: 'consumption',
           user: {
             id: post.user_id,
-            username: (postUser as any)?.username || 'Unknown',
-            displayName: (postUser as any)?.username || 'Unknown',
-            avatar: ''
+            username: (postUser as any)?.user_name || 'Unknown',
+            displayName: (postUser as any)?.display_name || (postUser as any)?.user_name || 'Unknown',
+            avatar: (postUser as any)?.avatar || ''
           },
           content: post.thoughts || '',
           timestamp: post.created_at,
