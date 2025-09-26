@@ -115,7 +115,7 @@ serve(async (req) => {
             displayName: (postUser as any)?.user_name || 'Unknown',
             avatar: (postUser as any)?.avatar || ''
           },
-          content: post.thoughts || '',
+          content: post.content || '',
           timestamp: post.created_at,
           likes: post.likes || 0,
           comments: post.comments || 0,
@@ -148,7 +148,7 @@ serve(async (req) => {
       // Use raw SQL insert to bypass schema cache
       const { data: post, error } = await supabase.rpc('create_social_post', {
         p_user_id: user.id,
-        p_thoughts: content || '',
+        p_content: content || '',
         p_media_title: media_title || '',
         p_media_type: media_type || '',
         p_media_creator: media_creator || '',
@@ -162,7 +162,7 @@ serve(async (req) => {
           .from('social_posts')
           .insert({
             user_id: user.id,
-            thoughts: content || ''
+            content: content || ''
           })
           .select()
           .single();
