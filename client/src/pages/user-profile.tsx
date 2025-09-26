@@ -25,12 +25,13 @@ export default function UserProfile() {
   const [selectedListForShare, setSelectedListForShare] = useState<{name: string, items: number, isPublic: boolean} | null>(null);
   const [isDNASurveyOpen, setIsDNASurveyOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  
+  const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false); // Added state for highlight modal
+
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   const [dnaProfile, setDnaProfile] = useState<any>(null);
-  
+
   // Survey states
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [surveyAnswers, setSurveyAnswers] = useState<{ questionId: string; answer: string | string[] }[]>([]);
@@ -40,16 +41,20 @@ export default function UserProfile() {
   // User lists states
   const [userLists, setUserLists] = useState<any[]>([]);
   const [isLoadingLists, setIsLoadingLists] = useState(false);
-  
+
   // User stats states
   const [userStats, setUserStats] = useState<any>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
-  
+
   // Media History filters
   const [mediaHistorySearch, setMediaHistorySearch] = useState("");
   const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
+
+  // Highlights state (assuming this will be managed similarly to lists)
+  const [highlights, setHighlights] = useState<any[]>([]); // Placeholder for highlights state
+  const [isLoadingHighlights, setIsLoadingHighlights] = useState(false); // Placeholder for loading state
 
   // Fetch DNA profile and user lists when authenticated
   useEffect(() => {
@@ -57,13 +62,14 @@ export default function UserProfile() {
       fetchDnaProfile();
       fetchUserLists();
       fetchUserStats();
+      // fetchHighlights(); // Uncomment when fetchHighlights is implemented
     }
   }, [session?.access_token]);
 
   // Fetch user lists from Supabase edge function
   const fetchUserLists = async () => {
     if (!session?.access_token) return;
-    
+
     setIsLoadingLists(true);
     try {
       const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media', {
@@ -72,7 +78,7 @@ export default function UserProfile() {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         // Show ONLY the system default lists (exclude "All" but include the 4 main ones)
@@ -97,7 +103,7 @@ export default function UserProfile() {
   // Fetch user stats from Supabase edge function
   const fetchUserStats = async () => {
     if (!session?.access_token) return;
-    
+
     setIsLoadingStats(true);
     try {
       const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-stats', {
@@ -106,7 +112,7 @@ export default function UserProfile() {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setUserStats(data.stats);
@@ -150,7 +156,7 @@ export default function UserProfile() {
   // Fetch DNA profile from database
   const fetchDnaProfile = async () => {
     if (!session?.access_token) return;
-    
+
     try {
       const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/dna_profiles?select=*', {
         headers: {
@@ -159,7 +165,7 @@ export default function UserProfile() {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         const profiles = await response.json();
         if (profiles && profiles.length > 0) {
@@ -193,7 +199,7 @@ export default function UserProfile() {
     const shareUrl = session?.user?.id 
       ? `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}?user=${session.user.id}`
       : `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
-      
+
     const shareData = {
       title: `Check out my ${listTitle} list on consumed!`,
       text: `I'm tracking my ${listTitle} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
@@ -235,10 +241,10 @@ export default function UserProfile() {
 
   // Entertainment DNA API Functions
   const submitSurveyResponses = async (responses: { questionId: string; answer: string }[]) => {
-    
+
     console.log('Auth session check:', { hasSession: !!session, hasToken: !!session?.access_token });
     console.log('Session details:', session ? { user: session.user?.id, token_length: session.access_token?.length } : 'No session');
-    
+
     if (!session?.access_token) {
       console.log('No authentication token - using mock submission for now');
       // For now, mock the submission and proceed with profile generation
@@ -250,7 +256,7 @@ export default function UserProfile() {
     for (const { questionId, answer } of responses) {
       try {
         console.log(`Submitting to edge function for question ${questionId}:`, { questionId, answer: answer.substring(0, 50) + '...' });
-        
+
         const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/dna-survey-responses', {
           method: 'POST',
           headers: {
@@ -263,7 +269,7 @@ export default function UserProfile() {
             answer_text: answer 
           }),
         });
-        
+
         console.log(`Edge function response status: ${response.status} ${response.statusText}`);
 
         if (!response.ok) {
@@ -284,9 +290,9 @@ export default function UserProfile() {
   };
 
   const generateDNAProfile = async () => {
-    
+
     console.log('Generating DNA profile...');
-    
+
     if (!session?.access_token) {
       console.log('No authentication token - using mock profile generation');
       // Mock DNA profile generation for now
@@ -309,7 +315,7 @@ export default function UserProfile() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ user_id: session.user?.id }),
+        body: JSON.JSON.stringify({ user_id: session.user?.id }),
       });
 
       if (!response.ok) {
@@ -354,15 +360,15 @@ export default function UserProfile() {
       setIsAuthModalOpen(true);
       return;
     }
-    
+
     setCurrentQuestion(0);
     setSurveyAnswers([]);
     setIsLoadingQuestions(true);
     setIsDNASurveyOpen(true); // Open modal first to show loading
-    
+
     const success = await fetchSurveyQuestions();
     setIsLoadingQuestions(false);
-    
+
     if (!success) {
       setIsDNASurveyOpen(false); // Close if failed to load
     }
@@ -372,7 +378,7 @@ export default function UserProfile() {
   const handleSurveyAnswer = (value: string | string[]) => {
     const currentQ = surveyQuestions[currentQuestion];
     if (!currentQ) return;
-    
+
     const newAnswers = surveyAnswers.filter(a => a.questionId !== currentQ.id);
     newAnswers.push({
       questionId: currentQ.id,
@@ -388,15 +394,15 @@ export default function UserProfile() {
       // Survey complete - submit to edge functions
       try {
         console.log('Survey completed with answers:', surveyAnswers);
-        
+
         // Convert answers to the format expected by edge functions
         const formattedAnswers = surveyAnswers.map(answer => ({
           questionId: answer.questionId,
           answer: Array.isArray(answer.answer) ? answer.answer.join(', ') : answer.answer
         }));
-        
+
         console.log('Formatted answers for submission:', formattedAnswers);
-        
+
         await submitSurveyResponses(formattedAnswers);
         setIsDNASurveyOpen(false);
         await handleGenerateDNAProfile();
@@ -426,10 +432,10 @@ export default function UserProfile() {
       setIsAuthModalOpen(true);
       return;
     }
-    
+
     setIsGeneratingProfile(true);
     setDnaProfileStatus('generating');
-    
+
     try {
       await generateDNAProfile();
       console.log("DNA Profile generated successfully");
@@ -559,7 +565,7 @@ export default function UserProfile() {
   // Filter media history based on search and filters
   const getFilteredMediaHistory = () => {
     const allItems = getAllMediaItems();
-    
+
     return allItems.filter(item => {
       // Search filter
       if (mediaHistorySearch.trim()) {
@@ -569,7 +575,7 @@ export default function UserProfile() {
           item.creator?.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
-      
+
       // Media type filter
       if (mediaHistoryType !== 'all') {
         const typeMap: any = {
@@ -582,20 +588,20 @@ export default function UserProfile() {
         };
         if (item.media_type !== typeMap[mediaHistoryType]) return false;
       }
-      
+
       // Year filter
       if (mediaHistoryYear !== 'all') {
         const itemYear = new Date(item.created_at).getFullYear();
         if (itemYear.toString() !== mediaHistoryYear) return false;
       }
-      
+
       // Month filter
       if (mediaHistoryMonth !== 'all') {
         const itemMonth = new Date(item.created_at).getMonth();
         const monthNumber = parseInt(mediaHistoryMonth);
         if (itemMonth !== monthNumber) return false;
       }
-      
+
       return true;
     });
   };
@@ -611,26 +617,26 @@ export default function UserProfile() {
       podcast: 0,
       game: 0
     };
-    
+
     allItems.forEach(item => {
       if (counts.hasOwnProperty(item.media_type)) {
         counts[item.media_type]++;
       }
     });
-    
+
     return counts;
   };
 
   const mediaTypeCounts = getMediaTypeCounts();
   const filteredMediaHistory = getFilteredMediaHistory();
-  
+
   // Generate years and months for filter dropdowns
   const getAvailableYears = () => {
     const allItems = getAllMediaItems();
     const years = new Set(allItems.map(item => new Date(item.created_at).getFullYear()));
     return Array.from(years).sort((a, b) => b - a);
   };
-  
+
   const availableYears = getAvailableYears();
 
 
@@ -755,79 +761,68 @@ export default function UserProfile() {
 
         </div>
 
-        {/* What I'm Loving Right Now */}
+        {/* Highlights Section */}
         <div className="px-4 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">What I'm Loving Right Now</h2>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Highlights</h2>
+                <p className="text-sm text-gray-600 mt-1">Share what you're loving or have loved recently</p>
+              </div>
               <Button
-                size="sm"
-                onClick={() => toast({ title: "Feature Coming Soon", description: "Add your current favorites!" })}
+                onClick={() => setIsHighlightModalOpen(true)}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
-                <Plus size={16} className="mr-2" />
-                Add Favorite
+                <Plus className="w-4 h-4 mr-2" />
+                Add Highlight
               </Button>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Placeholder for featured favorites */}
-              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-100 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="text-purple-600" size={24} />
+
+            {highlights.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Star className="w-8 h-8 text-purple-600" />
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Pin Your First Favorite</h4>
-                <p className="text-sm text-gray-600 mb-4">Share what you're obsessing over right now - a show, book, song, or anything!</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Add Your First Highlight</h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Share what you're loving or have loved recently - a show, book, song, or anything!
+                </p>
                 <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toast({ title: "Feature Coming Soon", description: "Pin your favorites to share with friends!" })}
-                  className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                  onClick={() => setIsHighlightModalOpen(true)}
+                  className="bg-black text-white hover:bg-gray-800"
                 >
-                  <Plus size={14} className="mr-2" />
-                  Pin Favorite
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Highlight
                 </Button>
               </div>
-              
-              <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6 border border-pink-100 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart className="text-pink-600" size={24} />
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Second Favorite</h4>
-                <p className="text-sm text-gray-600 mb-4">Add another obsession to your featured collection</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toast({ title: "Feature Coming Soon", description: "Feature your top picks!" })}
-                  className="border-pink-200 text-pink-700 hover:bg-pink-50"
-                >
-                  <Plus size={14} className="mr-2" />
-                  Pin Favorite
-                </Button>
+            ) : (
+              // Render highlights here if any exist
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {highlights.map((highlight, index) => (
+                  <div key={index} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-100 text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Star className="text-purple-600" size={24} />
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2">{highlight.title}</h4>
+                    <p className="text-sm text-gray-600 mb-4">{highlight.description}</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toast({ title: "Feature Coming Soon", description: "Manage your highlights!" })}
+                      className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                    >
+                      <Plus size={14} className="mr-2" />
+                      Edit Highlight
+                    </Button>
+                  </div>
+                ))}
               </div>
-              
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-100 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="text-indigo-600" size={24} />
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Third Favorite</h4>
-                <p className="text-sm text-gray-600 mb-4">Complete your trio of current obsessions</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toast({ title: "Feature Coming Soon", description: "Show off your current favorites!" })}
-                  className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-                >
-                  <Plus size={14} className="mr-2" />
-                  Pin Favorite
-                </Button>
-              </div>
-            </div>
-            
+            )}
+
             <div className="mt-6 p-4 bg-gray-50 rounded-xl">
               <p className="text-sm text-gray-600 text-center">
                 <Sparkles className="inline w-4 h-4 mr-1 text-purple-600" />
-                Featured favorites appear on your profile and help friends discover what you're currently obsessing over
+                Featured highlights appear on your profile and help friends discover your taste
               </p>
             </div>
           </div>
@@ -856,7 +851,7 @@ export default function UserProfile() {
                   )}
                 </div>
               </div>
-              
+
               {/* Action Buttons based on status */}
               <div className="flex items-center space-x-2">
                 {dnaProfileStatus === 'no_profile' && (
@@ -870,7 +865,7 @@ export default function UserProfile() {
                     Take DNA Survey
                   </Button>
                 )}
-                
+
                 {dnaProfileStatus === 'generating' && (
                   <Button 
                     size="sm"
@@ -881,7 +876,7 @@ export default function UserProfile() {
                     Generating...
                   </Button>
                 )}
-                
+
                 {dnaProfileStatus === 'has_profile' && (
                   <>
                     <Button 
@@ -1046,7 +1041,7 @@ export default function UserProfile() {
         </div>
 
 
-        
+
 
 
         {/* Currently Consuming */}
@@ -1150,7 +1145,7 @@ export default function UserProfile() {
         {/* Media History */}
         <div className="px-4 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Media History</h2>
-          
+
           {/* Search Bar */}
           <div className="mb-4">
             <Input
@@ -1227,7 +1222,7 @@ export default function UserProfile() {
                   </div>
                   <span className="text-gray-600">{mediaTypeCounts.music} songs</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
@@ -1237,7 +1232,7 @@ export default function UserProfile() {
                   </div>
                   <span className="text-gray-600">{mediaTypeCounts.movie} watched</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -1247,7 +1242,7 @@ export default function UserProfile() {
                   </div>
                   <span className="text-gray-600">{mediaTypeCounts.tv} series</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
@@ -1332,7 +1327,7 @@ export default function UserProfile() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">My Lists</h2>
           </div>
-          
+
           {isLoadingLists ? (
             <div className="text-center py-8">
               <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -1448,6 +1443,42 @@ export default function UserProfile() {
         onClose={() => setIsTrackModalOpen(false)} 
       />
 
+      {/* Highlight Modal (New) */}
+      {isHighlightModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="text-white" size={32} />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Add a Highlight</h1>
+              <p className="text-gray-600 text-lg">Share something you're loving or have loved recently!</p>
+            </div>
+            {/* Placeholder for highlight form content */}
+            <div className="text-center py-12">
+              <p className="text-gray-600">Highlight form will go here.</p>
+            </div>
+            <div className="flex justify-center mt-8">
+              <Button
+                onClick={() => setIsHighlightModalOpen(false)}
+                className="text-gray-600 hover:text-gray-800 bg-transparent border-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  toast({ title: "Feature Coming Soon", description: "Save your highlight!" });
+                  setIsHighlightModalOpen(false);
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white ml-4"
+              >
+                Save Highlight
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {selectedListForShare && (
         <ListShareModal
@@ -1536,7 +1567,7 @@ export default function UserProfile() {
                         {surveyQuestions[currentQuestion].options?.map((option, index) => {
                           const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? getCurrentSurveyAnswer() : [];
                           const isChecked = currentAnswers.includes(option);
-                          
+
                           return (
                             <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
                               <input
