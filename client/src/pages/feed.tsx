@@ -53,7 +53,9 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     throw new Error(`Failed to fetch social feed: ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('🔍 DEBUG: Edge function returned:', JSON.stringify(data.slice(0, 2), null, 2));
+  return data;
 };
 
 export default function Feed() {
