@@ -79,6 +79,14 @@ export const socialPosts = pgTable("social_posts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const socialPostComments = pgTable("social_post_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => socialPosts.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -115,6 +123,11 @@ export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
   createdAt: true,
 });
 
+export const insertSocialPostCommentSchema = createInsertSchema(socialPostComments).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -127,3 +140,5 @@ export type DnaProfile = typeof dnaProfiles.$inferSelect;
 export type InsertDnaProfile = z.infer<typeof insertDnaProfileSchema>;
 export type SocialPost = typeof socialPosts.$inferSelect;
 export type InsertSocialPost = z.infer<typeof insertSocialPostSchema>;
+export type SocialPostComment = typeof socialPostComments.$inferSelect;
+export type InsertSocialPostComment = z.infer<typeof insertSocialPostCommentSchema>;
