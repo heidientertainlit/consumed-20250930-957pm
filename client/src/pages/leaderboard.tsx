@@ -79,6 +79,12 @@ const leaderboardCategories = [
     isSelected: false
   },
   {
+    id: "sports_fanatic",
+    title: "Sports Fanatic",
+    icon: <Target className="w-5 h-5 text-blue-600" />,
+    isSelected: false
+  },
+  {
     id: "top_critic",
     title: "Top Critic",
     icon: <Star className="w-5 h-5 text-yellow-600" />,

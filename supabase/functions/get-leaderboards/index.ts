@@ -102,6 +102,9 @@ serve(async (req) => {
           categoryScore = music.length * 1;
         } else if (category === 'podster') {
           categoryScore = podcasts.length * 3;
+        } else if (category === 'sports_fanatic') {
+          const sports = listItems.filter(item => item.media_type === 'sports');
+          categoryScore = sports.length * 5; // 5 points per sports event tracked
         } else if (category === 'top_critic') {
           categoryScore = reviews.length * 10;
         } else if (category === 'superstar') {
@@ -111,7 +114,8 @@ serve(async (req) => {
                          (tv.length > 0 ? 1 : 0) + 
                          (music.length > 0 ? 1 : 0) + 
                          (podcasts.length > 0 ? 1 : 0) + 
-                         (games.length > 0 ? 1 : 0);
+                         (games.length > 0 ? 1 : 0) + 
+                         (listItems.filter(item => item.media_type === 'sports').length > 0 ? 1 : 0);
           categoryScore = categoryScore * 20; // 20 points per category participated in
         } else if (category === 'streaker') {
           // Streaker = consistency (simplified as total items for now)
@@ -130,6 +134,7 @@ serve(async (req) => {
             (music.length * 1) +       // Music: 1 pt each
             (podcasts.length * 3) +    // Podcasts: 3 pts each
             (games.length * 5) +       // Games: 5 pts each
+            (listItems.filter(item => item.media_type === 'sports').length * 5) + // Sports: 5 pts each
             (reviews.length * 10);     // Reviews: 10 pts each
           categoryScore = totalPoints;
         }
