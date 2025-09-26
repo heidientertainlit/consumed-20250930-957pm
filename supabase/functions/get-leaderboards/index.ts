@@ -51,7 +51,7 @@ serve(async (req) => {
     // Get all users
     const { data: users, error: usersError } = await supabase
       .from('users')
-      .select('id, username, email');
+      .select('id, user_name, email');
 
     if (usersError) {
       return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
@@ -137,7 +137,7 @@ serve(async (req) => {
         if (categoryScore > 0) {
           leaderboardData.push({
             user_id: user.id,
-            user_name: user.username,
+            user_name: user.user_name,
             user_points: categoryScore,
             score: categoryScore, // For compatibility with frontend interface
             created_at: new Date().toISOString(),
