@@ -37,14 +37,10 @@ interface SocialPost {
 }
 
 const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
-  console.log('🔍 fetchSocialFeed called with session:', !!session?.access_token);
-  
   if (!session?.access_token) {
-    console.log('❌ No authentication token available');
     throw new Error('No authentication token available');
   }
 
-  console.log('📡 Making request to social-feed endpoint...');
   const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed', {
     method: 'GET',
     headers: {
@@ -53,16 +49,11 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     },
   });
 
-  console.log('📬 Response status:', response.status);
-  
   if (!response.ok) {
-    console.log('❌ Response failed:', response.statusText);
     throw new Error(`Failed to fetch social feed: ${response.statusText}`);
   }
 
-  const data = await response.json();
-  console.log('📝 Received data:', data);
-  return data;
+  return response.json();
 };
 
 export default function Feed() {
@@ -76,19 +67,11 @@ export default function Feed() {
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: socialPosts, isLoading, error } = useQuery({
+  const { data: socialPosts, isLoading } = useQuery({
     queryKey: ["social-feed"],
     queryFn: () => fetchSocialFeed(session),
     enabled: !!session?.access_token,
-    staleTime: 0, // Force fresh data
-    cacheTime: 0, // Don't cache
   });
-
-  // Debug logging
-  console.log('🎯 Feed component - socialPosts:', socialPosts);
-  console.log('🎯 Feed component - isLoading:', isLoading);
-  console.log('🎯 Feed component - error:', error);
-  console.log('🎯 Feed component - session:', !!session?.access_token);
 
   // Like mutation
   const likeMutation = useMutation({

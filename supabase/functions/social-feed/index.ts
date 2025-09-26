@@ -54,7 +54,7 @@ serve(async (req) => {
       
       const { data: users, error: usersError } = await supabase
         .from('users')
-        .select('id, username, email')
+        .select('id, user_name, display_name, email, avatar')
         .in('id', userIds);
 
       console.log('Users query error:', usersError);
@@ -65,16 +65,16 @@ serve(async (req) => {
 
       // Transform posts to match frontend SocialPost interface
       const transformedPosts = posts?.map(post => {
-        const postUser = userMap.get(post.user_id) || { username: 'Unknown', email: '' };
+        const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '' };
         
         return {
           id: post.id,
           type: 'consumption',
           user: {
             id: post.user_id,
-            username: (postUser as any)?.username || (postUser as any)?.email?.split('@')[0] || 'Unknown',
-            displayName: (postUser as any)?.username || (postUser as any)?.email?.split('@')[0] || 'Unknown',
-            avatar: ''
+            username: (postUser as any)?.user_name || (postUser as any)?.email?.split('@')[0] || 'Unknown',
+            displayName: (postUser as any)?.display_name || (postUser as any)?.user_name || 'Unknown',
+            avatar: (postUser as any)?.avatar || ''
           },
           content: post.thoughts || '',
           timestamp: post.created_at,
