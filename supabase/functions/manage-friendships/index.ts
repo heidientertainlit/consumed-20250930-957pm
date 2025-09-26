@@ -135,17 +135,53 @@ serve(async (req) => {
           console.log('Searching for users with query:', query, 'excluding user:', appUser.id);
 
           // Search for users by username or email
+          const searchPattern = `%${query}%`;
           const { data: users, error } = await supabase
             .from('users')
             .select('id, user_name, email')
-            .or(`user_name.ilike.%${query}%,email.ilike.%${query}%`)
+            .or(`user_name.ilike.${searchPattern},email.ilike.${searchPattern}`)
             .neq('id', appUser.id)
             .limit(10);
 
-          console.log('Search results:', { users, error, userCount: users?.length || 0 });
+          console.log('Primary search results:', { users, error, userCount: users?.length || 0 });
 
-          if (error) {
-            console.error('Search error:', error);
+          // If primary search fails or returns no results, try a different approach
+          if (error || !users || users.length === 0) {
+            console.log('Primary search failed, trying fallback search...');
+            
+            // Try a simpler search approach
+            const { data: fallbackUsers, error: fallbackError } = await supabase
+              .from('users')
+              .select('id, user_name, email')
+              .neq('id', appUser.id)
+              .limit(50); // Get more users to filter manually
+            
+            console.log('Fallback search results:', { 
+              users: fallbackUsers, 
+              error: fallbackError, 
+              userCount: fallbackUsers?.length || 0 
+            });
+
+            if (fallbackError) {
+              console.error('Fallback search error:', fallbackError);
+              return new Response(JSON.stringify({ error: fallbackError.message }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+
+            // Filter results manually if database search fails
+            const filteredUsers = (fallbackUsers || []).filter(user => 
+              user.user_name?.toLowerCase().includes(query.toLowerCase()) ||
+              user.email?.toLowerCase().includes(query.toLowerCase())
+            ).slice(0, 10);
+
+            console.log('Manually filtered users:', filteredUsers);
+            users = filteredUsers;
+          }
+
+          if (error && (!users || users.length === 0)) {
+            console.error('All search methods failed:', error);
             return new Response(JSON.stringify({ error: error.message }), {
               status: 500,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
