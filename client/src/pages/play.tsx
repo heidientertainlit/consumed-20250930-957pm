@@ -36,12 +36,12 @@ export default function PlayPage() {
         {/* Game Options */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Trivia Option */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all flex flex-col h-full">
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-700 to-purple-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <Brain className="text-white" size={32} />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Trivia</h3>
-            <p className="text-gray-600 mb-6 flex-grow">
+            <p className="text-gray-600 mb-6">
               Test your knowledge about movies, TV shows, books, and pop culture. Earn points for correct answers!
             </p>
             <Button 
@@ -54,12 +54,12 @@ export default function PlayPage() {
           </div>
 
           {/* Vote & Predict Option */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all flex flex-col h-full">
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-700 to-purple-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <Vote className="text-white" size={32} />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Vote & Predict</h3>
-            <p className="text-gray-600 mb-6 flex-grow">
+            <p className="text-gray-600 mb-6">
               Vote on fun entertainment topics like "Who would've been Rachel's soulmate on Friends?" and make predictions about awards and releases!
             </p>
             <Link href="/predictions">
@@ -74,12 +74,12 @@ export default function PlayPage() {
           </div>
 
           {/* Blends Option */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all flex flex-col h-full">
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-700 to-purple-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <Users className="text-white" size={32} />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Blends</h3>
-            <p className="text-gray-600 mb-6 flex-grow">
+            <p className="text-gray-600 mb-6">
               Find media you and your partner, book club, or friends have in common so you know what to watch or read together!
             </p>
             <Button 
