@@ -50,12 +50,16 @@ serve(async (req) => {
 
       // Get user data separately to avoid join issues
       const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
-      const { data: users } = await supabase
+      console.log('Looking up user IDs:', userIds);
+      
+      const { data: users, error: usersError } = await supabase
         .from('users')
         .select('id, username, email')
         .in('id', userIds);
 
+      console.log('Users query error:', usersError);
       console.log('Users data:', JSON.stringify(users, null, 2));
+      console.log('User count found:', users?.length || 0);
 
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
