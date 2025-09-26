@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -36,26 +37,7 @@ serve(async (req) => {
       });
     }
 
-    // Map list slug to actual list title
-    const slugToTitle = {
-      'currently': 'Currently',
-      'queue': 'Queue',
-      'finished': 'Finished',
-      'did-not-finish': 'Did Not Finish',
-      'all': 'All'
-    };
-
-    const listTitle = slugToTitle[listSlug as keyof typeof slugToTitle];
-    if (!listTitle) {
-      return new Response(JSON.stringify({ error: 'Invalid list slug' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    console.log(`Fetching public list "${listTitle}" for user ${userId}`);
-    
-    // Check if user exists - using correct column name 'user_name'
+    // Check if user exists
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('id, user_name, email')
@@ -75,64 +57,80 @@ serve(async (req) => {
 
     console.log("User found:", { userId: user.id, username: user.user_name });
 
-    // Get the specific list for this user - checking against user's actual lists
-    const { data: list, error: listError } = await supabase
-      .from('lists')
-      .select('id, title, is_private, user_id')
-      .eq('title', listTitle)
-      .is('user_id', null) // System lists have user_id = null
-      .single();
+    // Map list slug to actual list title for filtering
+    const slugToTitle = {
+      'currently': 'Currently',
+      'queue': 'Queue',
+      'finished': 'Finished',
+      'did-not-finish': 'Did Not Finish',
+      'all': 'All'
+    };
 
-    if (listError || !list) {
-      console.error("System list not found:", { listError, listTitle, availableLists: 'checking...' });
-      
-      // Debug: Check what lists exist
-      const { data: allLists } = await supabase
-        .from('lists')
-        .select('id, title, user_id')
-        .is('user_id', null);
-      
-      console.error("Available system lists:", allLists);
-      
-      return new Response(JSON.stringify({ 
-        error: 'List not found',
-        requested_list: listTitle,
-        available_lists: allLists?.map(l => l.title) || [],
-        details: listError?.message || 'No list data returned'
-      }), {
-        status: 404,
+    const listTitle = slugToTitle[listSlug as keyof typeof slugToTitle];
+    if (!listTitle) {
+      return new Response(JSON.stringify({ error: 'Invalid list slug' }), {
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log("Found system list:", list);
+    console.log(`Fetching public list "${listTitle}" for user ${userId}`);
 
-    // Get user's items from this list - using correct column name 'created_at'
-    const { data: items, error: itemsError } = await supabase
+    // Get ALL user's items first
+    const { data: allItems, error: itemsError } = await supabase
       .from('list_items')
-      .select('id, title, type, media_type, creator, image_url, notes, created_at, media_id')
-      .eq('list_id', list.id)
+      .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (itemsError) {
-      console.error("Failed to fetch list items:", itemsError);
-      return new Response(JSON.stringify({ error: 'Failed to fetch list items' }), {
+      console.error("Failed to fetch user items:", itemsError);
+      return new Response(JSON.stringify({ error: 'Failed to fetch user items' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log(`Found public list with ${items?.length || 0} items`);
+    console.log(`Found ${allItems?.length || 0} total items for user`);
 
-    // Items already have created_at from correct column
-    const formattedItems = items || [];
+    let filteredItems = [];
+
+    if (listTitle === 'All') {
+      // For "All", return all items
+      filteredItems = allItems || [];
+    } else {
+      // For specific lists, we need to find the system list and filter by it
+      const { data: systemList, error: systemListError } = await supabase
+        .from('lists')
+        .select('id, title')
+        .is('user_id', null)
+        .eq('title', listTitle)
+        .single();
+
+      if (systemListError || !systemList) {
+        console.error("System list not found:", { systemListError, listTitle });
+        return new Response(JSON.stringify({ 
+          error: 'List not found',
+          requested_list: listTitle
+        }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      console.log("Found system list:", systemList);
+
+      // Filter items that belong to this list
+      filteredItems = (allItems || []).filter(item => item.list_id === systemList.id);
+    }
+
+    console.log(`Filtered to ${filteredItems.length} items for list "${listTitle}"`);
 
     return new Response(JSON.stringify({
       list: {
-        id: list.id,
-        title: list.title,
-        items: formattedItems,
+        id: listTitle.toLowerCase().replace(/\s+/g, '-'),
+        title: listTitle,
+        items: filteredItems,
         owner: user.user_name || user.email.split('@')[0],
         is_private: false // All lists are public for MVP
       }
