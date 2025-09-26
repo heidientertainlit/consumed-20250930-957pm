@@ -53,9 +53,7 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     throw new Error(`Failed to fetch social feed: ${response.statusText}`);
   }
 
-  const data = await response.json();
-  console.log('🔍 DEBUG: Edge function returned:', JSON.stringify(data.slice(0, 2), null, 2));
-  return data;
+  return response.json();
 };
 
 export default function Feed() {
@@ -352,7 +350,7 @@ export default function Feed() {
                       <User size={24} className="text-gray-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">{post.user.displayName}</div>
+                      <div className="font-semibold text-gray-900">{post.user.username}</div>
                       <div className="text-sm text-gray-500">{formatFullDate(post.timestamp)}</div>
                     </div>
                   </div>
