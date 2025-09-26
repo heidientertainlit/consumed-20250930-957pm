@@ -41,6 +41,7 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     throw new Error('No authentication token available');
   }
 
+  console.log('🔄 Making fresh request to social-feed...');
   const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed`, {
     method: 'GET',
     headers: {
@@ -49,11 +50,17 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     },
   });
 
+  console.log('📬 Response:', response.status);
+  
   if (!response.ok) {
+    const errorText = await response.text();
+    console.log('❌ Error response:', errorText);
     throw new Error(`Failed to fetch social feed: ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('📝 Latest feed data:', data);
+  return data;
 };
 
 export default function Feed() {
@@ -71,6 +78,8 @@ export default function Feed() {
     queryKey: ["social-feed"],
     queryFn: () => fetchSocialFeed(session),
     enabled: !!session?.access_token,
+    staleTime: 0, // Force fresh data
+    gcTime: 0, // Don't cache
   });
 
   // Like mutation
