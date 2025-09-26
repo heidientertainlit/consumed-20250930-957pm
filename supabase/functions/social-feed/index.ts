@@ -37,7 +37,7 @@ serve(async (req) => {
         .select(`
           id,
           user_id,
-          content,
+          thoughts,
           media_title,
           media_type,
           media_creator,
@@ -68,7 +68,7 @@ serve(async (req) => {
           displayName: post.users?.user_name || post.users?.email?.split('@')[0] || 'Unknown',
           avatar: ''
         },
-        content: post.content || '',
+        content: post.thoughts || '',
         timestamp: post.created_at,
         likes: post.likes || 0,
         comments: post.comments || 0,
@@ -99,7 +99,7 @@ serve(async (req) => {
         .from('social_posts')
         .insert({
           user_id: user.id,
-          content,
+          thoughts: content,
           media_title,
           media_type,
           media_creator,
