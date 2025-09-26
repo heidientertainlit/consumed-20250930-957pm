@@ -108,15 +108,16 @@ serve(async (req) => {
         } else if (category === 'critic_leader') {
           categoryScore = reviews.length * 10;
         } else if (category === 'superstar') {
-          // Superstar = users with high activity across all categories
-          categoryScore = (books.length > 0 ? 1 : 0) + 
-                         (movies.length > 0 ? 1 : 0) + 
-                         (tv.length > 0 ? 1 : 0) + 
-                         (music.length > 0 ? 1 : 0) + 
-                         (podcasts.length > 0 ? 1 : 0) + 
-                         (games.length > 0 ? 1 : 0) + 
-                         (sports.length > 0 ? 1 : 0);
-          categoryScore = categoryScore * 50; // 50 points per category participated in
+          // Superstar = users with highest total activity across all media types
+          categoryScore = 
+            (books.length * 15) +      // Books: 15 pts each
+            (movies.length * 8) +      // Movies: 8 pts each
+            (tv.length * 10) +         // TV Shows: 10 pts each
+            (music.length * 1) +       // Music: 1 pt each
+            (podcasts.length * 3) +    // Podcasts: 3 pts each
+            (games.length * 5) +       // Games: 5 pts each
+            (sports.length * 5) +      // Sports: 5 pts each
+            (reviews.length * 10);     // Reviews: 10 pts each
         } else if (category === 'streaker') {
           // Streaker = consistency (simplified as total items for now)
           categoryScore = listItems.length * 20; // 20 points per consecutive day

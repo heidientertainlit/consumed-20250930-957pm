@@ -188,7 +188,7 @@ export default function Leaderboard() {
                 {selectedCategory === 'podcast_leader' && 'Points from podcasts only (3 pts each)'}
                 {selectedCategory === 'sports_leader' && 'Points from sports events only (5 pts each)'}
                 {selectedCategory === 'critic_leader' && 'Points from reviews only (10 pts each)'}
-                {selectedCategory === 'superstar' && 'Variety bonus (50 pts per media type + total items)'}
+                {selectedCategory === 'superstar' && 'Total points from all media types (same as All-Time Leader)'}
                 {selectedCategory === 'streaker' && 'Consecutive days streak (20 pts per day)'}
                 {selectedCategory === 'friend_inviter' && '25 points for every successful friend that joins and uses the app'}
               </p>
