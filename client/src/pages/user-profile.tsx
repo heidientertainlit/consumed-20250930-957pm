@@ -755,6 +755,84 @@ export default function UserProfile() {
 
         </div>
 
+        {/* What I'm Loving Right Now */}
+        <div className="px-4 mb-8">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">What I'm Loving Right Now</h2>
+              <Button
+                size="sm"
+                onClick={() => toast({ title: "Feature Coming Soon", description: "Add your current favorites!" })}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <Plus size={16} className="mr-2" />
+                Add Favorite
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Placeholder for featured favorites */}
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-100 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Star className="text-purple-600" size={24} />
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2">Pin Your First Favorite</h4>
+                <p className="text-sm text-gray-600 mb-4">Share what you're obsessing over right now - a show, book, song, or anything!</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toast({ title: "Feature Coming Soon", description: "Pin your favorites to share with friends!" })}
+                  className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                >
+                  <Plus size={14} className="mr-2" />
+                  Pin Favorite
+                </Button>
+              </div>
+              
+              <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6 border border-pink-100 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="text-pink-600" size={24} />
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2">Second Favorite</h4>
+                <p className="text-sm text-gray-600 mb-4">Add another obsession to your featured collection</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toast({ title: "Feature Coming Soon", description: "Feature your top picks!" })}
+                  className="border-pink-200 text-pink-700 hover:bg-pink-50"
+                >
+                  <Plus size={14} className="mr-2" />
+                  Pin Favorite
+                </Button>
+              </div>
+              
+              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-100 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="text-indigo-600" size={24} />
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2">Third Favorite</h4>
+                <p className="text-sm text-gray-600 mb-4">Complete your trio of current obsessions</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toast({ title: "Feature Coming Soon", description: "Show off your current favorites!" })}
+                  className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                >
+                  <Plus size={14} className="mr-2" />
+                  Pin Favorite
+                </Button>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+              <p className="text-sm text-gray-600 text-center">
+                <Sparkles className="inline w-4 h-4 mr-1 text-purple-600" />
+                Featured favorites appear on your profile and help friends discover what you're currently obsessing over
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Entertainment DNA */}
         <div className="px-4 mb-8">
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
@@ -968,27 +1046,7 @@ export default function UserProfile() {
         </div>
 
 
-        {/* Creators with Similar DNA */}
-        <div className="px-4 mb-6">
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Creators with Similar DNA</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                { name: "Christopher Nolan", type: "Director", match: "94%", avatar: "🎬" },
-                { name: "Denis Villeneuve", type: "Director", match: "89%", avatar: "🎭" },
-                { name: "Andy Weir", type: "Author", match: "87%", avatar: "📚" },
-                { name: "Rian Johnson", type: "Director", match: "85%", avatar: "🎪" }
-              ].map((creator, index) => (
-                <div key={index} className="text-center p-3 bg-gray-50 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">
-                  <div className="text-2xl mb-1">{creator.avatar}</div>
-                  <div className="font-medium text-gray-900 text-sm">{creator.name}</div>
-                  <div className="text-xs text-gray-500 mb-1">{creator.type}</div>
-                  <div className="text-xs font-semibold text-purple-600">{creator.match} match</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        
 
 
         {/* Currently Consuming */}
