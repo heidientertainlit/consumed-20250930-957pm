@@ -45,12 +45,17 @@ serve(async (req) => {
         });
       }
 
+      // Debug logging
+      console.log('Raw posts from database:', JSON.stringify(posts, null, 2));
+
       // Get user data separately to avoid join issues
       const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
       const { data: users } = await supabase
         .from('users')
         .select('id, username, email')
         .in('id', userIds);
+
+      console.log('Users data:', JSON.stringify(users, null, 2));
 
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
@@ -84,6 +89,8 @@ serve(async (req) => {
           }] : []
         };
       });
+
+      console.log('Transformed posts:', JSON.stringify(transformedPosts, null, 2));
 
       return new Response(JSON.stringify(transformedPosts), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
