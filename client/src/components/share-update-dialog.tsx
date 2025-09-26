@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Star, Search } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface ShareUpdateDialogProps {
   isOpen: boolean;
@@ -25,6 +27,8 @@ interface MediaResult {
 }
 
 export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }: ShareUpdateDialogProps) {
+  const { session } = useAuth();
+  const { toast } = useToast();
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["all"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
@@ -33,6 +37,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
   const [thoughts, setThoughts] = useState("");
   const [rating, setRating] = useState<string>("");
   const [starHover, setStarHover] = useState<number>(0);
+  const [isPosting, setIsPosting] = useState(false);
 
   const mediaTypes = [
     { id: "all", label: "All Types" },
@@ -76,17 +81,19 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
       return;
     }
 
-    // Get the API key
-    const apiKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!session?.access_token) {
+      console.error("No session token available for search");
+      setSearchResults([]);
+      return;
+    }
 
     setIsSearching(true);
     try {
-
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           query: query.trim(),
@@ -104,6 +111,12 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
     } catch (error) {
       console.error("Media search error:", error);
       setSearchResults([]);
+      
+      toast({
+        title: "Search Failed",
+        description: "Unable to search for media. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSearching(false);
     }
@@ -149,15 +162,22 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
   const handlePost = async () => {
     if (!selectedMedia) return;
 
-    try {
-      // Get the API key
-      const apiKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!session?.access_token) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to share updates.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setIsPosting(true);
+    try {
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           media: {
@@ -178,15 +198,35 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Share update error response:', response.status, errorText);
+        
+        let errorMessage = "Failed to share update. Please try again.";
+        if (response.status === 401) {
+          errorMessage = "Authentication failed. Please log in again.";
+        } else if (response.status === 500) {
+          errorMessage = "Server error. Please try again later.";
+        }
+        
+        toast({
+          title: "Share Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        
         throw new Error(`Share failed: ${response.status} - ${errorText}`);
       }
+
+      toast({
+        title: "Success!",
+        description: "Your update has been shared successfully.",
+      });
 
       console.log("Update shared successfully!");
       onClose();
       resetForm();
     } catch (error) {
       console.error("Error sharing update:", error);
-      // Could add toast notification here for better UX
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -429,7 +469,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           </Button>
           <Button
             onClick={handlePost}
-            disabled={!selectedMedia}
+            disabled={!selectedMedia || isPosting}
             className={`px-6 text-white ${
               audience === "top-fans" 
                 ? "bg-purple-700 hover:bg-purple-800" 
@@ -437,7 +477,14 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
             } disabled:bg-gray-400`}
             data-testid="post-share"
           >
-            Post
+            {isPosting ? (
+              <>
+                <Search className="h-4 w-4 animate-spin mr-2" />
+                Posting...
+              </>
+            ) : (
+              "Post"
+            )}
           </Button>
         </div>
       </DialogContent>
