@@ -63,12 +63,17 @@ serve(async (req) => {
       .single();
 
     if (userError || !user) {
-      console.error("User not found:", userError);
-      return new Response(JSON.stringify({ error: 'User not found' }), {
+      console.error("User not found:", { userError, userId });
+      return new Response(JSON.stringify({ 
+        error: 'User not found',
+        details: userError?.message || 'No user data returned'
+      }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    console.log("User found:", { userId: user.id, username: user.user_name });
 
     // Get the specific list for this user - checking against user's actual lists
     const { data: list, error: listError } = await supabase
@@ -79,8 +84,22 @@ serve(async (req) => {
       .single();
 
     if (listError || !list) {
-      console.error("System list not found:", listError);
-      return new Response(JSON.stringify({ error: 'List not found' }), {
+      console.error("System list not found:", { listError, listTitle, availableLists: 'checking...' });
+      
+      // Debug: Check what lists exist
+      const { data: allLists } = await supabase
+        .from('lists')
+        .select('id, title, user_id')
+        .is('user_id', null);
+      
+      console.error("Available system lists:", allLists);
+      
+      return new Response(JSON.stringify({ 
+        error: 'List not found',
+        requested_list: listTitle,
+        available_lists: allLists?.map(l => l.title) || [],
+        details: listError?.message || 'No list data returned'
+      }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
