@@ -44,7 +44,7 @@ serve(async (req) => {
           media_image,
           rating,
           created_at,
-          users!inner(user_name, email),
+          users!inner(username, email),
           likes,
           comments
         `)
@@ -64,8 +64,8 @@ serve(async (req) => {
         type: 'consumption',
         user: {
           id: post.user_id,
-          username: post.users?.user_name || post.users?.email?.split('@')[0] || 'Unknown',
-          displayName: post.users?.user_name || post.users?.email?.split('@')[0] || 'Unknown',
+          username: post.users?.username || post.users?.email?.split('@')[0] || 'Unknown',
+          displayName: post.users?.username || post.users?.email?.split('@')[0] || 'Unknown',
           avatar: ''
         },
         content: post.thoughts || '',
