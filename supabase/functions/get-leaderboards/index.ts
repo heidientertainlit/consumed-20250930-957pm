@@ -84,6 +84,7 @@ serve(async (req) => {
         const music = listItems.filter(item => item.media_type === 'music');
         const podcasts = listItems.filter(item => item.media_type === 'podcast');
         const games = listItems.filter(item => item.media_type === 'game');
+        const sports = listItems.filter(item => item.media_type === 'sports');
         
         // Count items with reviews (notes field)
         const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
@@ -92,20 +93,19 @@ serve(async (req) => {
         let categoryScore = 0;
         let totalPoints = 0;
 
-        if (category === 'bookworm') {
+        if (category === 'book_leader') {
           categoryScore = books.length * 15;
-        } else if (category === 'cinephile') {
+        } else if (category === 'movie_leader') {
           categoryScore = movies.length * 8;
-        } else if (category === 'series_slayer') {
+        } else if (category === 'tv_leader') {
           categoryScore = tv.length * 10;
-        } else if (category === 'track_star') {
+        } else if (category === 'music_leader') {
           categoryScore = music.length * 1;
-        } else if (category === 'podster') {
+        } else if (category === 'podcast_leader') {
           categoryScore = podcasts.length * 3;
-        } else if (category === 'sports_fan') {
-          const sports = listItems.filter(item => item.media_type === 'sports');
-          categoryScore = sports.length * 5; // 5 points per sports event tracked
-        } else if (category === 'top_critic') {
+        } else if (category === 'sports_leader') {
+          categoryScore = sports.length * 5;
+        } else if (category === 'critic_leader') {
           categoryScore = reviews.length * 10;
         } else if (category === 'superstar') {
           // Superstar = users with high activity across all categories
@@ -115,16 +115,16 @@ serve(async (req) => {
                          (music.length > 0 ? 1 : 0) + 
                          (podcasts.length > 0 ? 1 : 0) + 
                          (games.length > 0 ? 1 : 0) + 
-                         (listItems.filter(item => item.media_type === 'sports').length > 0 ? 1 : 0);
-          categoryScore = categoryScore * 20; // 20 points per category participated in
+                         (sports.length > 0 ? 1 : 0);
+          categoryScore = categoryScore * 50; // 50 points per category participated in
         } else if (category === 'streaker') {
           // Streaker = consistency (simplified as total items for now)
-          categoryScore = listItems.length * 2;
+          categoryScore = listItems.length * 20; // 20 points per consecutive day
         } else if (category === 'friend_inviter') {
           // Friend inviter = placeholder for future friend invitation system
           // For now, users with more diverse content get points (encourages sharing)
           const uniqueCreators = new Set(listItems.map(item => item.creator)).size;
-          categoryScore = uniqueCreators * 5; // 5 points per unique creator (diversity bonus)
+          categoryScore = uniqueCreators * 25; // 25 points per successful friend invite
         } else {
           // Calculate total points for all_time category
           totalPoints = 
@@ -134,7 +134,7 @@ serve(async (req) => {
             (music.length * 1) +       // Music: 1 pt each
             (podcasts.length * 3) +    // Podcasts: 3 pts each
             (games.length * 5) +       // Games: 5 pts each
-            (listItems.filter(item => item.media_type === 'sports').length * 5) + // Sports: 5 pts each
+            (sports.length * 5) +      // Sports: 5 pts each
             (reviews.length * 10);     // Reviews: 10 pts each
           categoryScore = totalPoints;
         }
