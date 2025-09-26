@@ -49,50 +49,50 @@ const leaderboardCategories = [
     isSelected: true
   },
   {
-    id: "bookworm",
-    title: "Bookworm",
+    id: "book_leader",
+    title: "Book Leader",
     icon: <Book className="w-5 h-5 text-blue-600" />,
     isSelected: false
   },
   {
-    id: "cinephile",
-    title: "Cinephile",
+    id: "movie_leader",
+    title: "Movie Leader",
     icon: <Film className="w-5 h-5 text-red-600" />,
     isSelected: false
   },
   {
-    id: "series_slayer",
-    title: "Series Slayer",
+    id: "tv_leader",
+    title: "TV Leader",
     icon: <Tv className="w-5 h-5 text-purple-600" />,
     isSelected: false
   },
   {
-    id: "track_star",
-    title: "Track Star",
+    id: "music_leader",
+    title: "Music Leader",
     icon: <Music className="w-5 h-5 text-green-600" />,
     isSelected: false
   },
   {
-    id: "podster",
-    title: "Podster",
+    id: "podcast_leader",
+    title: "Podcast Leader",
     icon: <Headphones className="w-5 h-5 text-orange-600" />,
     isSelected: false
   },
   {
-    id: "sports_fan",
-    title: "Sports Fan",
+    id: "sports_leader",
+    title: "Sports Leader",
     icon: <Target className="w-5 h-5 text-blue-600" />,
     isSelected: false
   },
   {
-    id: "top_critic",
-    title: "Top Critic",
+    id: "critic_leader",
+    title: "Critic Leader",
     icon: <Star className="w-5 h-5 text-yellow-600" />,
     isSelected: false
   },
   {
     id: "superstar",
-    title: "Superstar(er)",
+    title: "Superstar",
     icon: <Award className="w-5 h-5 text-pink-600" />,
     isSelected: false
   },
@@ -181,13 +181,13 @@ export default function Leaderboard() {
               </div>
               <p className="text-gray-700 text-sm">
                 {selectedCategory === 'all_time' && 'Total points from all media types'}
-                {selectedCategory === 'bookworm' && 'Points from books only (15 pts each)'}
-                {selectedCategory === 'cinephile' && 'Points from movies only (8 pts each)'}
-                {selectedCategory === 'series_slayer' && 'Points from TV shows only (10 pts each)'}
-                {selectedCategory === 'track_star' && 'Points from music only (1 pt each)'}
-                {selectedCategory === 'podster' && 'Points from podcasts only (3 pts each)'}
-                {selectedCategory === 'sports_fan' && 'Points from sports events only (5 pts each)'}
-                {selectedCategory === 'top_critic' && 'Points from reviews only (10 pts each)'}
+                {selectedCategory === 'book_leader' && 'Points from books only (15 pts each)'}
+                {selectedCategory === 'movie_leader' && 'Points from movies only (8 pts each)'}
+                {selectedCategory === 'tv_leader' && 'Points from TV shows only (10 pts each)'}
+                {selectedCategory === 'music_leader' && 'Points from music only (1 pt each)'}
+                {selectedCategory === 'podcast_leader' && 'Points from podcasts only (3 pts each)'}
+                {selectedCategory === 'sports_leader' && 'Points from sports events only (5 pts each)'}
+                {selectedCategory === 'critic_leader' && 'Points from reviews only (10 pts each)'}
                 {selectedCategory === 'superstar' && 'Variety bonus (50 pts per media type + total items)'}
                 {selectedCategory === 'streaker' && 'Consecutive days streak (20 pts per day)'}
                 {selectedCategory === 'friend_inviter' && '25 points for every successful friend that joins and uses the app'}
