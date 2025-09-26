@@ -123,11 +123,16 @@ serve(async (req) => {
         }
 
         case 'searchUsers': {
+          console.log('Search users called with query:', query);
+          
           if (!query || query.length < 2) {
+            console.log('Query too short, returning empty results');
             return new Response(JSON.stringify({ users: [] }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
+
+          console.log('Searching for users with query:', query, 'excluding user:', appUser.id);
 
           // Search for users by username or email
           const { data: users, error } = await supabase
@@ -137,12 +142,22 @@ serve(async (req) => {
             .neq('id', appUser.id)
             .limit(10);
 
+          console.log('Search results:', { users, error, userCount: users?.length || 0 });
+
           if (error) {
+            console.error('Search error:', error);
             return new Response(JSON.stringify({ error: error.message }), {
               status: 500,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
+
+          // For debugging: let's also see all users in the database
+          const { data: allUsers } = await supabase
+            .from('users')
+            .select('id, user_name, email')
+            .limit(5);
+          console.log('Sample of all users in database:', allUsers);
 
           // Filter out users who are already friends or have pending requests
           const { data: existingRelations } = await supabase
@@ -151,12 +166,16 @@ serve(async (req) => {
             .or(`and(user_id.eq.${appUser.id},friend_id.in.(${(users || []).map(u => u.id).join(',')})),and(friend_id.eq.${appUser.id},user_id.in.(${(users || []).map(u => u.id).join(',')}))`)
             .in('status', ['pending', 'accepted']);
 
+          console.log('Existing relations:', existingRelations);
+
           const relatedUserIds = new Set([
             ...(existingRelations || []).map(r => r.friend_id),
             ...(existingRelations || []).map(r => r.user_id)
           ]);
 
           const filteredUsers = (users || []).filter(user => !relatedUserIds.has(user.id));
+          
+          console.log('Filtered users being returned:', filteredUsers);
 
           return new Response(JSON.stringify({ users: filteredUsers }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
