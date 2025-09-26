@@ -763,68 +763,54 @@ export default function UserProfile() {
 
         {/* Highlights Section */}
         <div className="px-4 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Highlights</h2>
-                <p className="text-sm text-gray-600 mt-1">Share what you're loving or have loved recently</p>
+                <h2 className="text-lg font-bold text-gray-900">Highlights</h2>
+                <p className="text-xs text-gray-600">Share what you're loving or have loved recently</p>
               </div>
               <Button
                 onClick={() => setIsHighlightModalOpen(true)}
+                size="sm"
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Highlight
+                <Plus className="w-3 h-3 mr-1" />
+                Add
               </Button>
             </div>
 
             {highlights.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="w-8 h-8 text-purple-600" />
+              <div className="text-center py-6 bg-gray-50 rounded-lg">
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Star className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Add Your First Highlight</h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Share what you're loving or have loved recently - a show, book, song, or anything!
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Add Your First Highlight</h3>
+                <p className="text-xs text-gray-600 mb-4 max-w-xs mx-auto">
+                  Share what you're loving - a show, book, song, or anything!
                 </p>
                 <Button
                   onClick={() => setIsHighlightModalOpen(true)}
+                  size="sm"
                   className="bg-black text-white hover:bg-gray-800"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-3 h-3 mr-1" />
                   Add Highlight
                 </Button>
               </div>
             ) : (
-              // Render highlights here if any exist
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {highlights.map((highlight, index) => (
-                  <div key={index} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-100 text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Star className="text-purple-600" size={24} />
+              // Render highlights in a compact 3-column grid
+              <div className="grid grid-cols-3 gap-3">
+                {highlights.slice(0, 3).map((highlight, index) => (
+                  <div key={index} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100 text-center">
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Star className="text-purple-600" size={16} />
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">{highlight.title}</h4>
-                    <p className="text-sm text-gray-600 mb-4">{highlight.description}</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toast({ title: "Feature Coming Soon", description: "Manage your highlights!" })}
-                      className="border-purple-200 text-purple-700 hover:bg-purple-50"
-                    >
-                      <Plus size={14} className="mr-2" />
-                      Edit Highlight
-                    </Button>
+                    <h4 className="font-medium text-gray-900 text-xs truncate">{highlight.title}</h4>
+                    <p className="text-xs text-gray-600 mt-1 truncate">{highlight.creator || highlight.type}</p>
                   </div>
                 ))}
               </div>
             )}
-
-            <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-              <p className="text-sm text-gray-600 text-center">
-                <Sparkles className="inline w-4 h-4 mr-1 text-purple-600" />
-                Featured highlights appear on your profile and help friends discover your taste
-              </p>
-            </div>
           </div>
         </div>
 
