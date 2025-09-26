@@ -1,20 +1,129 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Search, Check, UserPlus, Star, Sparkles, Users } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export default function FriendsCreatorsPage() {
-  const mockFriends = [
-    { id: "friend-1", username: "AlexMovieFan", name: "Alex Johnson", mutualFriends: 12, isFollowing: false },
-    { id: "friend-2", username: "BookwormSarah", name: "Sarah Chen", mutualFriends: 8, isFollowing: true },
-    { id: "friend-3", username: "MusicLover23", name: "Mike Davis", mutualFriends: 15, isFollowing: false },
-    { id: "friend-4", username: "TVSeriesAddict", name: "Jessica Liu", mutualFriends: 6, isFollowing: true },
-    { id: "friend-5", username: "GameMaster", name: "Tyler Kim", mutualFriends: 9, isFollowing: false }
-  ];
+  const [searchQuery, setSearchQuery] = useState("");
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
 
-  const handleFollowFriend = (friendId: string) => {
-    // In a real app, this would update the backend
-    console.log(`Following friend ${friendId}`);
+  // Get friends list
+  const { data: friendsData, isLoading: friendsLoading } = useQuery({
+    queryKey: ['friends'],
+    queryFn: async () => {
+      if (!session?.access_token) return { friends: [] };
+      
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'getFriends' }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch friends');
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+  });
+
+  // Get pending friend requests
+  const { data: pendingData } = useQuery({
+    queryKey: ['pending-requests'],
+    queryFn: async () => {
+      if (!session?.access_token) return { requests: [] };
+      
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'getPendingRequests' }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch pending requests');
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+  });
+
+  // Search users
+  const { data: searchResults, isLoading: searchLoading } = useQuery({
+    queryKey: ['user-search', searchQuery],
+    queryFn: async () => {
+      if (!session?.access_token || !searchQuery.trim()) return { users: [] };
+      
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'searchUsers', query: searchQuery }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to search users');
+      return response.json();
+    },
+    enabled: !!session?.access_token && searchQuery.length > 2,
+  });
+
+  // Send friend request mutation
+  const sendRequestMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'sendRequest', friendId }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to send friend request');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-search'] });
+    },
+  });
+
+  // Accept friend request mutation
+  const acceptRequestMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'acceptRequest', friendId }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to accept friend request');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
+    },
+  });
+
+  const handleSendRequest = (friendId: string) => {
+    sendRequestMutation.mutate(friendId);
+  };
+
+  const handleAcceptRequest = (friendId: string) => {
+    acceptRequestMutation.mutate(friendId);
   };
 
   return (
@@ -46,42 +155,107 @@ export default function FriendsCreatorsPage() {
               <input
                 type="text"
                 placeholder="Search by username or name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-sm"
                 data-testid="input-friend-search"
               />
             </div>
 
-            {/* Suggested Friends */}
-            <div className="space-y-3">
-              {mockFriends.map((friend) => (
-                <div key={friend.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-lg">👤</span>
+            {/* Pending Friend Requests */}
+            {pendingData?.requests?.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-md font-semibold mb-3 text-gray-700">Pending Requests</h4>
+                <div className="space-y-3">
+                  {pendingData.requests.map((request: any) => (
+                    <div key={request.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-blue-50">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-lg">👤</span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">{request.sender?.user_name || 'Unknown User'}</div>
+                          <div className="text-sm text-gray-500">{request.sender?.email}</div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleAcceptRequest(request.user_id)}
+                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-medium px-4 py-2 text-sm rounded-full"
+                      >
+                        <Check size={14} className="mr-1" />
+                        Accept
+                      </Button>
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{friend.name}</div>
-                      <div className="text-sm text-gray-500">@{friend.username}</div>
-                      <div className="text-xs text-gray-400">{friend.mutualFriends} mutual connections</div>
-                    </div>
-                  </div>
-                  {friend.isFollowing ? (
-                    <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
-                      <Check size={14} />
-                      <span>Following</span>
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={() => handleFollowFriend(friend.id)}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-4 py-2 text-sm rounded-full"
-                      data-testid={`button-follow-friend-${friend.id}`}
-                    >
-                      <UserPlus size={14} className="mr-1" />
-                      Follow
-                    </Button>
-                  )}
+                  ))}
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Search Results */}
+            <div className="space-y-3">
+              {searchQuery.length > 2 ? (
+                searchLoading ? (
+                  <div className="text-center py-4">
+                    <div className="text-gray-500">Searching...</div>
+                  </div>
+                ) : searchResults?.users?.length > 0 ? (
+                  searchResults.users.map((user: any) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-lg">👤</span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">{user.user_name}</div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleSendRequest(user.id)}
+                        disabled={sendRequestMutation.isPending}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-4 py-2 text-sm rounded-full"
+                      >
+                        <UserPlus size={14} className="mr-1" />
+                        {sendRequestMutation.isPending ? 'Sending...' : 'Add Friend'}
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-gray-500">No users found</div>
+                  </div>
+                )
+              ) : (
+                // Show existing friends when not searching
+                friendsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="text-gray-500">Loading friends...</div>
+                  </div>
+                ) : friendsData?.friends?.length > 0 ? (
+                  friendsData.friends.map((friendship: any) => (
+                    <div key={friendship.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-lg">👤</span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">{friendship.friend?.user_name || 'Unknown User'}</div>
+                          <div className="text-sm text-gray-500">{friendship.friend?.email}</div>
+                          <div className="text-xs text-gray-400">Friends since {new Date(friendship.accepted_at).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
+                        <Check size={14} />
+                        <span>Friends</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-gray-500">No friends yet. Search above to find people to connect with!</div>
+                  </div>
+                )
+              )}
             </div>
           </div>
           
