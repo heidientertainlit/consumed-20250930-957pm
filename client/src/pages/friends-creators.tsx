@@ -16,7 +16,7 @@ export default function FriendsCreatorsPage() {
     queryFn: async () => {
       if (!session?.access_token) return { friends: [] };
 
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -37,7 +37,7 @@ export default function FriendsCreatorsPage() {
     queryFn: async () => {
       if (!session?.access_token) return { requests: [] };
 
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -58,7 +58,7 @@ export default function FriendsCreatorsPage() {
     queryFn: async () => {
       if (!session?.access_token || !searchQuery.trim()) return { users: [] };
 
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -78,7 +78,7 @@ export default function FriendsCreatorsPage() {
     mutationFn: async (friendId: string) => {
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -100,7 +100,7 @@ export default function FriendsCreatorsPage() {
     mutationFn: async (friendId: string) => {
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/friends`, {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
