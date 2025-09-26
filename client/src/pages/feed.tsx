@@ -98,6 +98,7 @@ export default function Feed() {
   // Comment mutation
   const commentMutation = useMutation({
     mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      console.log('🔥 Submitting comment:', { postId, content });
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments`, {
@@ -109,13 +110,24 @@ export default function Feed() {
         body: JSON.stringify({ post_id: postId, content }),
       });
       
-      if (!response.ok) throw new Error('Failed to add comment');
-      return response.json();
+      console.log('📬 Comment response:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('❌ Comment error:', errorText);
+        throw new Error('Failed to add comment');
+      }
+      const result = await response.json();
+      console.log('✅ Comment success:', result);
+      return result;
     },
     onSuccess: (data, variables) => {
+      console.log('🔄 Invalidating queries for comment success');
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
       queryClient.invalidateQueries({ queryKey: ["post-comments", variables.postId] });
       setCommentInputs(prev => ({ ...prev, [variables.postId]: '' }));
+    },
+    onError: (error) => {
+      console.log('💥 Comment mutation error:', error);
     },
   });
 
