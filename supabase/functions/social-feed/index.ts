@@ -111,7 +111,7 @@ serve(async (req) => {
           user: {
             id: post.user_id,
             username: (postUser as any)?.user_name || 'Unknown',
-            displayName: (postUser as any)?.display_name || (postUser as any)?.user_name || 'Unknown',
+            displayName: (postUser as any)?.user_name || 'Unknown',
             avatar: (postUser as any)?.avatar || ''
           },
           content: post.thoughts || '',
