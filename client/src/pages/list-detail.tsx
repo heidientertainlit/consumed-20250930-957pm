@@ -50,10 +50,13 @@ export default function ListDetail() {
         const data = await response.json();
         console.log('Public list data:', data);
 
-        // Convert to expected format
-        return {
-          lists: [data.list]
-        };
+        // Convert to expected format - ensure we have the right structure
+        if (data.list) {
+          return {
+            lists: [data.list]
+          };
+        }
+        return { lists: [] };
       }
 
       if (!session?.access_token) {
@@ -82,10 +85,12 @@ export default function ListDetail() {
   });
 
   // Find the specific list from the REAL data based on URL slug
-  const sharedListData = userListsData?.lists?.find((list: any) => {
-    const sluggedTitle = list.title.toLowerCase().replace(/\s+/g, '-');
-    return sluggedTitle === urlListName;
-  });
+  const sharedListData = sharedUserId 
+    ? userListsData?.lists?.[0] // For shared links, get the first (and only) list returned
+    : userListsData?.lists?.find((list: any) => {
+        const sluggedTitle = list.title.toLowerCase().replace(/\s+/g, '-');
+        return sluggedTitle === urlListName;
+      });
 
   console.log('Shared list data found:', sharedListData);
 
