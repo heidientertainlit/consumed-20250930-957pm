@@ -52,16 +52,39 @@ serve(async (req) => {
       const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
       console.log('Looking up user IDs:', userIds);
       
+      // First try public.users table
       const { data: users, error: usersError } = await supabase
         .from('users')
         .select('id, user_name, display_name, email, avatar')
         .in('id', userIds);
 
-      console.log('Users query error:', usersError);
-      console.log('Users data:', JSON.stringify(users, null, 2));
-      console.log('User count found:', users?.length || 0);
-
+      console.log('Public users found:', users?.length || 0);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
+
+      // Find missing user IDs and fetch from auth.users as fallback
+      const missingUserIds = userIds.filter(id => !userMap.has(id));
+      console.log('Missing user IDs from public.users:', missingUserIds);
+
+      if (missingUserIds.length > 0) {
+        // Use service role to access auth.users
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        console.log('Auth users fetched:', authUsers?.users?.length || 0);
+        
+        if (authUsers?.users) {
+          authUsers.users.forEach(authUser => {
+            if (missingUserIds.includes(authUser.id)) {
+              userMap.set(authUser.id, {
+                id: authUser.id,
+                user_name: authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
+                display_name: authUser.user_metadata?.display_name || authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
+                email: authUser.email || '',
+                avatar: authUser.user_metadata?.avatar || ''
+              });
+            }
+          });
+          console.log('Total users after auth fallback:', userMap.size);
+        }
+      }
 
       // Transform posts to match frontend SocialPost interface
       const transformedPosts = posts?.map(post => {

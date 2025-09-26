@@ -41,7 +41,7 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     throw new Error('No authentication token available');
   }
 
-  const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed', {
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${session.access_token}`,
@@ -78,7 +78,7 @@ export default function Feed() {
     mutationFn: async (postId: string) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed-like', {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-like`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -100,7 +100,7 @@ export default function Feed() {
     mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed-comments', {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -123,7 +123,7 @@ export default function Feed() {
   const fetchComments = async (postId: string) => {
     if (!session?.access_token) throw new Error('Not authenticated');
     
-    const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed-comments?post_id=${postId}`, {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
