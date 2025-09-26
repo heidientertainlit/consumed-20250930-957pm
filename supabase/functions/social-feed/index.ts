@@ -41,12 +41,12 @@ serve(async (req) => {
           media_title,
           media_type,
           media_creator,
-          media_image_url,
+          media_image,
           rating,
           created_at,
-          users!inner(username, email),
-          social_post_likes(count),
-          social_post_comments(count)
+          users!inner(user_name, email),
+          likes,
+          comments
         `)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -58,15 +58,34 @@ serve(async (req) => {
         });
       }
 
-      // Transform posts to include like/comment counts
+      // Transform posts to match frontend SocialPost interface
       const transformedPosts = posts?.map(post => ({
-        ...post,
-        username: post.users?.username || post.users?.email?.split('@')[0],
-        like_count: post.social_post_likes?.[0]?.count || 0,
-        comment_count: post.social_post_comments?.[0]?.count || 0
+        id: post.id,
+        type: 'consumption',
+        user: {
+          id: post.user_id,
+          username: post.users?.user_name || post.users?.email?.split('@')[0] || 'Unknown',
+          displayName: post.users?.user_name || post.users?.email?.split('@')[0] || 'Unknown',
+          avatar: ''
+        },
+        content: post.content || '',
+        timestamp: post.created_at,
+        likes: post.likes || 0,
+        comments: post.comments || 0,
+        shares: 0,
+        mediaItems: post.media_title ? [{
+          id: post.id + '_media',
+          title: post.media_title,
+          creator: post.media_creator || '',
+          mediaType: post.media_type || '',
+          imageUrl: post.media_image || '',
+          rating: post.rating || undefined,
+          externalId: '',
+          externalSource: ''
+        }] : []
       }));
 
-      return new Response(JSON.stringify({ posts: transformedPosts }), {
+      return new Response(JSON.stringify(transformedPosts), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
