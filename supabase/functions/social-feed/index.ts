@@ -63,8 +63,8 @@ serve(async (req) => {
           type: 'consumption',
           user: {
             id: post.user_id,
-            username: postUser.username || postUser.email?.split('@')[0] || 'Unknown',
-            displayName: postUser.username || postUser.email?.split('@')[0] || 'Unknown',
+            username: (postUser as any)?.username || (postUser as any)?.email?.split('@')[0] || 'Unknown',
+            displayName: (postUser as any)?.username || (postUser as any)?.email?.split('@')[0] || 'Unknown',
             avatar: ''
           },
           content: post.thoughts || '',
