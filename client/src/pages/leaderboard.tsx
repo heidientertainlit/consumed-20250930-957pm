@@ -169,6 +169,31 @@ export default function Leaderboard() {
           </div>
         </div>
 
+        {/* Category Description */}
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-100 p-6 mb-6">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="text-purple-600">
+              {leaderboardCategories.find(cat => cat.id === selectedCategory)?.icon}
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {leaderboardCategories.find(cat => cat.id === selectedCategory)?.title}
+            </h3>
+          </div>
+          <p className="text-gray-700">
+            {selectedCategory === 'all_time' && 'Total points from all media types'}
+            {selectedCategory === 'bookworm' && 'Points from books only (15 pts each)'}
+            {selectedCategory === 'cinephile' && 'Points from movies only (8 pts each)'}
+            {selectedCategory === 'series_slayer' && 'Points from TV shows only (10 pts each)'}
+            {selectedCategory === 'track_star' && 'Points from music only (1 pt each)'}
+            {selectedCategory === 'podster' && 'Points from podcasts only (3 pts each)'}
+            {selectedCategory === 'sports_fan' && 'Points from sports events only (5 pts each)'}
+            {selectedCategory === 'top_critic' && 'Points from reviews only (10 pts each)'}
+            {selectedCategory === 'superstar' && 'Variety bonus (50 pts per media type + total items)'}
+            {selectedCategory === 'streaker' && 'Consecutive days streak (20 pts per day)'}
+            {selectedCategory === 'friend_inviter' && '25 points for every successful friend that joins and uses the app'}
+          </p>
+        </div>
+
         {/* Full Leaderboard */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="p-6 border-b border-gray-100 bg-gray-50">
