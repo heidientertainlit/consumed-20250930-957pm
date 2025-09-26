@@ -53,7 +53,14 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     throw new Error(`Failed to fetch social feed: ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('🔍 Posts received:', data.slice(0, 2).map(p => ({ 
+    id: p.id, 
+    content: p.content, 
+    mediaItems: p.mediaItems,
+    user: p.user.username
+  })));
+  return data;
 };
 
 export default function Feed() {
