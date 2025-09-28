@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, X, Sparkles, User, Film, Music, BookOpen, Tv, Gamepad2, Loader2, Star, Clock } from "lucide-react";
+import { Search, X, Sparkles, User, Film, Music, BookOpen, Tv, Gamepad2, Loader2, Star, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 
@@ -86,23 +86,26 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
   const searchExamples = [
     {
-      category: "Recommendations",
+      category: "Personal Recommendations",
       icon: <Sparkles className="text-purple-600" size={16} />,
       examples: [
-        "Movies like Inception but more romantic"
+        "Movies like Inception but more romantic",
+        "Books similar to Harry Potter that I haven't read"
       ]
     },
     {
-      category: "Creators",
-      icon: <User className="text-blue-600" size={16} />,
+      category: "Group Recommendations (Blends)",
+      icon: <Users className="text-green-600" size={16} />,
       examples: [
-        "Christopher Nolan"
+        "Recommend movies for me and my partner - we love sci-fi",
+        "Find shows for our friend group to watch together"
       ]
     },
     {
-      category: "Media",
-      icon: <Film className="text-green-600" size={16} />,
+      category: "Search Media & Creators",
+      icon: <Film className="text-blue-600" size={16} />,
       examples: [
+        "Christopher Nolan",
         "Dune"
       ]
     }
@@ -138,7 +141,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             <Search className="absolute left-3 top-3 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Ask for recommendations, search creators, or find media..."
+              placeholder="Ask for recommendations, create group blends, or search media..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-lg text-black placeholder-gray-500"
@@ -319,10 +322,10 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               <div className="mt-6 p-4 bg-purple-50 rounded-lg">
                 <h4 className="font-medium text-purple-900 mb-2">Search Tips</h4>
                 <ul className="text-sm text-purple-700 space-y-1">
-                  <li>• Be specific about what you're looking for</li>
-                  <li>• Include context like "for someone who liked..." or "similar to..."</li>
-                  <li>• Try natural language: "What should I watch next?"</li>
-                  <li>• Search by mood: "something uplifting" or "dark and mysterious"</li>
+                  <li>• <strong>Personal recs:</strong> "Movies like Inception but more romantic"</li>
+                  <li>• <strong>Group blends:</strong> "Recommend shows for me and my partner"</li>
+                  <li>• <strong>Search media:</strong> "Christopher Nolan" or "Dune"</li>
+                  <li>• <strong>By mood:</strong> "Something uplifting" or "dark and mysterious"</li>
                 </ul>
               </div>
             </div>

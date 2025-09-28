@@ -1,21 +1,15 @@
 import { useState } from "react";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
-import BlendCreator from "@/components/blend-creator";
 import { Button } from "@/components/ui/button";
-import { Play, Trophy, Brain, Gamepad2, Users, Vote } from "lucide-react";
+import { Play, Trophy, Brain, Gamepad2, Vote } from "lucide-react";
 import { Link } from "wouter";
 
 export default function PlayPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const [isBlendModalOpen, setIsBlendModalOpen] = useState(false);
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
-  };
-
-  const handleCreateBlend = () => {
-    setIsBlendModalOpen(true);
   };
 
   return (
@@ -29,12 +23,12 @@ export default function PlayPage() {
             Play
           </h1>
           <p className="text-lg text-gray-600">
-            Play games, earn points, and show off your fandom. Trivia, Predictions, and Blends help you prove what you know and discover what to enjoy together.
+            Play games, earn points, and show off your fandom. Use the search bar above for personalized recommendations and group blends!
           </p>
         </div>
 
         {/* Game Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Trivia Option */}
           <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-700 to-purple-800 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -72,25 +66,6 @@ export default function PlayPage() {
               </Button>
             </Link>
           </div>
-
-          {/* Blends Option */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm hover:shadow-md transition-all">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-700 to-purple-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="text-white" size={32} />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Blends</h3>
-            <p className="text-gray-600 mb-6">
-              Find media you and your partner, book club, or friends have in common so you know what to watch or read together!
-            </p>
-            <Button 
-              onClick={handleCreateBlend}
-              className="bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 text-white px-8 py-3 text-lg"
-              data-testid="play-blends-button"
-            >
-              <Users size={20} className="mr-2" />
-              Create Blend
-            </Button>
-          </div>
         </div>
 
         {/* Stats Section */}
@@ -124,11 +99,6 @@ export default function PlayPage() {
       <ConsumptionTracker 
         isOpen={isTrackModalOpen} 
         onClose={() => setIsTrackModalOpen(false)} 
-      />
-      
-      <BlendCreator 
-        isOpen={isBlendModalOpen} 
-        onClose={() => setIsBlendModalOpen(false)} 
       />
     </div>
   );
