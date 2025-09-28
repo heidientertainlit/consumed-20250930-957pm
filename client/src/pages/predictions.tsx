@@ -34,17 +34,16 @@ function useSubmitPrediction() {
     mutationFn: async ({ poolId, prediction }: { poolId: string; prediction: string }) => {
       const response = await apiRequest('/api/predictions/predict', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           pool_id: poolId,
           prediction: prediction
         })
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to submit prediction');
-      }
-      
-      return response.json();
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
@@ -83,7 +82,7 @@ const VoteModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: bo
     );
   };
 
-  const options = Array.isArray(pool.options) ? pool.options : [];
+  const options: string[] = Array.isArray(pool.options) ? pool.options : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -154,7 +153,7 @@ const WeeklyModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: 
     );
   };
 
-  const options = Array.isArray(pool.options) ? pool.options : [];
+  const options: string[] = Array.isArray(pool.options) ? pool.options : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -225,7 +224,7 @@ const BracketModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen:
     );
   };
 
-  const options = Array.isArray(pool.options) ? pool.options : [];
+  const options: string[] = Array.isArray(pool.options) ? pool.options : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
