@@ -87,6 +87,40 @@ export const socialPostComments = pgTable("social_post_comments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Existing prediction system tables (align with production)
+export const predictionPools = pgTable("prediction_pools", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // "vote", "weekly", "awards", "bracket"
+  pointsReward: integer("points_reward").notNull(),
+  deadline: text("deadline").notNull(),
+  status: text("status").notNull(), // "open", "locked", "completed"
+  category: text("category").notNull(),
+  icon: text("icon").notNull(),
+  options: jsonb("options"), // Array of options
+  inline: boolean("inline"),
+  participants: integer("participants"),
+  createdAt: timestamp("created_at"),
+});
+
+export const predictionResults = pgTable("prediction_results", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  poolId: text("pool_id").notNull().references(() => predictionPools.id),
+  winningOption: text("winning_option").notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const userPredictions = pgTable("user_predictions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  poolId: text("pool_id").notNull().references(() => predictionPools.id),
+  prediction: text("prediction").notNull(),
+  pointsEarned: integer("points_earned"),
+  isWinner: boolean("is_winner"),
+  createdAt: timestamp("created_at"),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -128,6 +162,21 @@ export const insertSocialPostCommentSchema = createInsertSchema(socialPostCommen
   createdAt: true,
 });
 
+export const insertPredictionPoolSchema = createInsertSchema(predictionPools).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPredictionResultSchema = createInsertSchema(predictionResults).omit({
+  id: true,
+  completedAt: true,
+});
+
+export const insertUserPredictionSchema = createInsertSchema(userPredictions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -142,3 +191,9 @@ export type SocialPost = typeof socialPosts.$inferSelect;
 export type InsertSocialPost = z.infer<typeof insertSocialPostSchema>;
 export type SocialPostComment = typeof socialPostComments.$inferSelect;
 export type InsertSocialPostComment = z.infer<typeof insertSocialPostCommentSchema>;
+export type PredictionPool = typeof predictionPools.$inferSelect;
+export type InsertPredictionPool = z.infer<typeof insertPredictionPoolSchema>;
+export type PredictionResult = typeof predictionResults.$inferSelect;
+export type InsertPredictionResult = z.infer<typeof insertPredictionResultSchema>;
+export type UserPrediction = typeof userPredictions.$inferSelect;
+export type InsertUserPrediction = z.infer<typeof insertUserPredictionSchema>;

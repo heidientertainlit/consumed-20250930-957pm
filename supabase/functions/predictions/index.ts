@@ -70,129 +70,102 @@ serve(async (req) => {
 
     const { pathname } = new URL(req.url);
 
-    // GET /slates - List all slates (active or all)
-    if (req.method === 'GET' && pathname.endsWith('/slates')) {
+    // GET /pools - List all prediction pools (active or all)
+    if (req.method === 'GET' && pathname.endsWith('/pools')) {
       const { searchParams } = new URL(req.url);
       const id = searchParams.get('id');
       const activeOnly = searchParams.get('active') === '1';
 
       if (id) {
-        // Get single slate with predictions
-        const { data: slate, error: slateError } = await supabase
-          .from('slates')
+        // Get single pool
+        const { data: pool, error: poolError } = await supabase
+          .from('prediction_pools')
           .select('*')
           .eq('id', id)
           .single();
 
-        if (slateError || !slate) {
-          return new Response(JSON.stringify({ error: 'Slate not found' }), {
+        if (poolError || !pool) {
+          return new Response(JSON.stringify({ error: 'Pool not found' }), {
             status: 404,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
-        const { data: predictions } = await supabase
-          .from('predictions')
-          .select('id, slate_id, type, prompt, options, points, status')
-          .eq('slate_id', id)
-          .order('created_at', { ascending: true });
-
-        return new Response(JSON.stringify({ 
-          slate, 
-          predictions: predictions || [] 
-        }), {
+        return new Response(JSON.stringify({ pool }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } else {
-        // Get all slates
+        // Get all pools
         let query = supabase
-          .from('slates')
+          .from('prediction_pools')
           .select('*')
-          .order('locks_at', { ascending: true });
+          .order('created_at', { ascending: false });
         
         if (activeOnly) {
-          query = query.eq('is_active', true);
+          query = query.eq('status', 'open');
         }
 
-        const { data: slates, error: slatesError } = await query;
-        if (slatesError) {
-          return new Response(JSON.stringify({ error: slatesError.message }), {
+        const { data: pools, error: poolsError } = await query;
+        if (poolsError) {
+          return new Response(JSON.stringify({ error: poolsError.message }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
-        return new Response(JSON.stringify({ slates: slates || [] }), {
+        return new Response(JSON.stringify({ pools: pools || [] }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
     }
 
-    // POST /lock - User submits predictions before lock time
-    if (req.method === 'POST' && pathname.endsWith('/lock')) {
-      const { slate_id, picks } = await req.json();
+    // POST /predict - User submits a prediction
+    if (req.method === 'POST' && pathname.endsWith('/predict')) {
+      const { pool_id, prediction } = await req.json();
       
-      if (!slate_id || !Array.isArray(picks) || picks.length === 0) {
+      if (!pool_id || !prediction) {
         return new Response(JSON.stringify({ 
-          error: 'slate_id and picks[] are required' 
+          error: 'pool_id and prediction are required' 
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Check if slate is still open for predictions
-      const { data: slate } = await supabase
-        .from('slates')
-        .select('locks_at')
-        .eq('id', slate_id)
+      // Check if pool is still open for predictions
+      const { data: pool } = await supabase
+        .from('prediction_pools')
+        .select('status, points_reward')
+        .eq('id', pool_id)
         .single();
 
-      if (!slate) {
-        return new Response(JSON.stringify({ error: 'Slate not found' }), {
+      if (!pool) {
+        return new Response(JSON.stringify({ error: 'Pool not found' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      if (new Date() > new Date(slate.locks_at)) {
-        return new Response(JSON.stringify({ error: 'Predictions are locked' }), {
+      if (pool.status !== 'open') {
+        return new Response(JSON.stringify({ error: 'Predictions are closed for this pool' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Validate predictions belong to this slate
-      const predictionIds = picks.map((p: any) => p.prediction_id);
-      const { data: predictions } = await supabase
-        .from('predictions')
-        .select('id, slate_id, status')
-        .in('id', predictionIds);
-
-      const validPredictions = (predictions || []).every(
-        p => p.slate_id === slate_id && p.status === 'open'
-      );
-
-      if (!validPredictions) {
-        return new Response(JSON.stringify({ 
-          error: 'Invalid predictions for this slate' 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Insert user picks
-      const rows = picks.map((p: any) => ({
-        prediction_id: p.prediction_id,
-        user_id: appUser.id,
-        choice: String(p.choice),
-        locked_at: new Date().toISOString()
-      }));
-
+      // Insert or update user prediction
       const { error: insertError } = await supabase
-        .from('user_picks')
-        .upsert(rows, { onConflict: 'user_id,prediction_id' });
+        .from('user_predictions')
+        .upsert({
+          user_id: appUser.id,
+          pool_id: pool_id,
+          prediction: prediction,
+          points_earned: pool.points_reward, // Award points immediately for participation
+          created_at: new Date().toISOString()
+        }, { 
+          onConflict: 'user_id,pool_id',
+          ignoreDuplicates: false 
+        });
 
       if (insertError) {
         return new Response(JSON.stringify({ error: insertError.message }), {
@@ -201,38 +174,40 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        points_earned: pool.points_reward 
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // GET /user-picks - Get user's predictions for a slate
-    if (req.method === 'GET' && pathname.endsWith('/user-picks')) {
+    // GET /user-predictions - Get user's predictions
+    if (req.method === 'GET' && pathname.endsWith('/user-predictions')) {
       const { searchParams } = new URL(req.url);
-      const slate_id = searchParams.get('slate_id');
+      const pool_id = searchParams.get('pool_id');
 
-      if (!slate_id) {
-        return new Response(JSON.stringify({ 
-          error: 'slate_id parameter required' 
-        }), {
-          status: 400,
+      let query = supabase
+        .from('user_predictions')
+        .select('*')
+        .eq('user_id', appUser.id);
+
+      if (pool_id) {
+        query = query.eq('pool_id', pool_id);
+      }
+
+      const { data: userPredictions, error: predictionError } = await query
+        .order('created_at', { ascending: false });
+
+      if (predictionError) {
+        return new Response(JSON.stringify({ error: predictionError.message }), {
+          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      const { data: userPicks } = await supabase
-        .from('user_picks')
-        .select('prediction_id, choice, locked_at, points_awarded')
-        .eq('user_id', appUser.id)
-        .in('prediction_id', 
-          supabase
-            .from('predictions')
-            .select('id')
-            .eq('slate_id', slate_id)
-        );
-
       return new Response(JSON.stringify({ 
-        user_picks: userPicks || [] 
+        user_predictions: userPredictions || [] 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });

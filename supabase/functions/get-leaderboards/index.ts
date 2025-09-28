@@ -64,17 +64,30 @@ serve(async (req) => {
     const leaderboardData = [];
 
     for (const user of users || []) {
-      let query = supabase
+      let listQuery = supabase
         .from('list_items')
         .select('*')
         .eq('user_id', user.id);
 
       // Apply date filter if needed
       if (dateFilter) {
-        query = query.gte('created_at', dateFilter);
+        listQuery = listQuery.gte('created_at', dateFilter);
       }
 
-      const { data: listItems } = await query;
+      const { data: listItems } = await listQuery;
+
+      // Get user's prediction points
+      let predictionQuery = supabase
+        .from('user_predictions')
+        .select('points_earned')
+        .eq('user_id', user.id);
+
+      // Apply date filter to predictions too
+      if (dateFilter) {
+        predictionQuery = predictionQuery.gte('created_at', dateFilter);
+      }
+
+      const { data: predictions } = await predictionQuery;
 
       if (listItems) {
         // Count items by media type
@@ -88,6 +101,10 @@ serve(async (req) => {
         
         // Count items with reviews (notes field)
         const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
+
+        // Calculate prediction points
+        const predictionPoints = (predictions || [])
+          .reduce((sum, pred) => sum + (pred.points_earned || 0), 0);
 
         // Calculate category-specific scores
         let categoryScore = 0;
@@ -108,7 +125,7 @@ serve(async (req) => {
         } else if (category === 'critic_leader') {
           categoryScore = reviews.length * 10;
         } else if (category === 'superstar') {
-          // Superstar = users with highest total activity across all media types
+          // Superstar = users with highest total activity across all media types + predictions
           categoryScore = 
             (books.length * 15) +      // Books: 15 pts each
             (movies.length * 8) +      // Movies: 8 pts each
@@ -117,7 +134,8 @@ serve(async (req) => {
             (podcasts.length * 3) +    // Podcasts: 3 pts each
             (games.length * 5) +       // Games: 5 pts each
             (sports.length * 5) +      // Sports: 5 pts each
-            (reviews.length * 10);     // Reviews: 10 pts each
+            (reviews.length * 10) +    // Reviews: 10 pts each
+            predictionPoints;          // Prediction points
         } else if (category === 'streaker') {
           // Streaker = consistency (simplified as total items for now)
           categoryScore = listItems.length * 20; // 20 points per consecutive day
@@ -127,7 +145,7 @@ serve(async (req) => {
           const uniqueCreators = new Set(listItems.map(item => item.creator)).size;
           categoryScore = uniqueCreators * 25; // 25 points per successful friend invite
         } else {
-          // Calculate total points for all_time category
+          // Calculate total points for all_time category including predictions
           totalPoints = 
             (books.length * 15) +      // Books: 15 pts each
             (movies.length * 8) +      // Movies: 8 pts each
@@ -136,7 +154,8 @@ serve(async (req) => {
             (podcasts.length * 3) +    // Podcasts: 3 pts each
             (games.length * 5) +       // Games: 5 pts each
             (sports.length * 5) +      // Sports: 5 pts each
-            (reviews.length * 10);     // Reviews: 10 pts each
+            (reviews.length * 10) +    // Reviews: 10 pts each
+            predictionPoints;          // Prediction points
           categoryScore = totalPoints;
         }
 
@@ -149,7 +168,9 @@ serve(async (req) => {
             created_at: new Date().toISOString(),
             // Additional data for frontend display
             total_items: listItems.length,
-            total_reviews: reviews.length
+            total_reviews: reviews.length,
+            prediction_points: predictionPoints,
+            total_predictions: (predictions || []).length
           });
         }
       }
