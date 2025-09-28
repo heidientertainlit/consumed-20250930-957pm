@@ -9,225 +9,103 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star, UserPlus } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import type { PredictionPool } from "@shared/schema";
 
-interface PredictionPool {
-  id: string;
-  title: string;
-  description: string;
-  type: "awards" | "weekly" | "vote" | "bracket";
-  pointsReward: number;
-  deadline: string;
-  participants: number;
-  status: "open" | "locked" | "completed";
-  category: string;
-  icon: string;
-  image?: string;
-  options?: string[];
-  inline?: boolean;
+// Data fetching hooks
+function usePredictionPools() {
+  return useQuery({
+    queryKey: ['/api/predictions/pools'],
+    queryFn: async () => {
+      const response = await fetch('/api/predictions/pools?active=1');
+      const data = await response.json();
+      return data.pools || [];
+    },
+    enabled: true
+  });
 }
 
-// Vote & Predict Pools (Quick & Fun)
-const lowStakesPools: PredictionPool[] = [
-  {
-    id: "rachel-soulmate",
-    title: "Who Would've Been Rachel's True Soulmate on Friends?",
-    description: "Vote on which character would have been Rachel's perfect match",
-    type: "vote",
-    pointsReward: 5,
-    deadline: "Always Open",
-    participants: 2847,
-    status: "open",
-    category: "TV",
-    icon: "💕",
-    inline: true,
-    options: ["Ross Geller", "Joey Tribbiani", "Someone New", "She Should Stay Single"]
-  },
-  {
-    id: "netflix-weekend",
-    title: "Netflix Top 10 This Week",
-    description: "Predict which show will be #1 on Netflix this week",
-    type: "vote",
-    pointsReward: 10,
-    deadline: "Sunday 11:59 PM",
-    participants: 1247,
-    status: "open",
-    category: "Streaming",
-    icon: "📺",
-    inline: true,
-    options: ["Nobody Wants This", "Emily in Paris S4", "Monsters: Menendez", "Avatar: Last Airbender"]
-  },
-  {
-    id: "box-office-weekend", 
-    title: "Weekend Box Office Champion",
-    description: "Which movie will dominate the box office this weekend?",
-    type: "weekly",
-    pointsReward: 15,
-    deadline: "Friday 11:59 PM", 
-    participants: 743,
-    status: "open",
-    category: "Movies",
-    icon: "🎬",
-    inline: true,
-    options: ["Dune: Part Two", "Madame Web", "Bob Marley: One Love", "Ordinary Angels"]
-  },
-  {
-    id: "trending-music",
-    title: "Billboard Hot 100 #1",
-    description: "Predict next week's Billboard Hot 100 #1 single",
-    type: "vote",
-    pointsReward: 12,
-    deadline: "Monday 11:59 PM",
-    participants: 892,
-    status: "open", 
-    category: "Music",
-    icon: "🎵",
-    inline: true,
-    options: ["Flowers - Miley Cyrus", "Anti-Hero - Taylor Swift", "Unholy - Sam Smith", "As It Was - Harry Styles"]
-  },
-  {
-    id: "tv-ratings",
-    title: "Highest Rated TV Show",
-    description: "Predict which show will have the highest ratings this week",
-    type: "vote", 
-    pointsReward: 13,
-    deadline: "Sunday 11:59 PM",
-    participants: 567,
-    status: "open",
-    category: "TV",
-    icon: "📊",
-    inline: true,
-    options: ["Sunday Night Football", "The Voice", "NCIS", "60 Minutes"]
-  },
-  {
-    id: "best-disney-villain",
-    title: "Who's the Most Iconic Disney Villain?",
-    description: "Vote for the Disney villain that left the biggest impact",
-    type: "vote",
-    pointsReward: 5,
-    deadline: "Always Open",
-    participants: 3456,
-    status: "open",
-    category: "Movies",
-    icon: "🦹‍♀️",
-    inline: true,
-    options: ["Scar (Lion King)", "Maleficent (Sleeping Beauty)", "Jafar (Aladdin)", "Ursula (Little Mermaid)"]
-  },
-  {
-    id: "office-best-episode",
-    title: "What's The Office's Greatest Episode?",
-    description: "Vote on which episode of The Office reigns supreme",
-    type: "vote",
-    pointsReward: 5,
-    deadline: "Always Open",
-    participants: 4127,
-    status: "open",
-    category: "TV",
-    icon: "📄",
-    inline: true,
-    options: ["Dinner Party", "The Dundies", "Casino Night", "Stress Relief"]
-  },
-  {
-    id: "dancing-with-stars",
-    title: "Dancing with the Stars - Who Will Win This Week?",
-    description: "Predict who will be eliminated this week on DWTS",
-    type: "weekly",
-    pointsReward: 15,
-    deadline: "Tuesday 11:59 PM", 
-    participants: 1834,
-    status: "open",
-    category: "Reality TV",
-    icon: "💃",
-    inline: true,
-    options: ["Joey Graziadei", "Ilona Maher", "Stephen Nedoroscik", "Chandler Kinney"]
-  },
-  {
-    id: "academy-awards-2025",
-    title: "2025 Academy Awards",
-    description: "Predict winners across all major Oscar categories",
-    type: "awards",
-    pointsReward: 20,
-    deadline: "March 2, 2025",
-    participants: 4156,
-    status: "completed",
-    category: "Movies", 
-    icon: "🎭",
-    inline: false
-  },
-  {
-    id: "academy-awards-2026",
-    title: "2026 Academy Awards (Oscars)",
-    description: "Coming Soon - Stay tuned for next year's Oscar predictions!",
-    type: "awards",
-    pointsReward: 25,
-    deadline: "March 2026",
-    participants: 0,
-    status: "locked",
-    category: "Movies", 
-    icon: "🏆",
-    inline: false
-  }
-];
-
-
-// Award Show Modal Component
-const AwardShowModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
-  const [selectedPicks, setSelectedPicks] = useState<Record<string, string>>({});
-
-  const categories = [
-    {
-      id: "best-picture",
-      title: "Best Picture",
-      nominees: ["Oppenheimer", "Killers of the Flower Moon", "Barbie", "Poor Things"]
+// Vote submission mutation
+function useSubmitPrediction() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ poolId, prediction }: { poolId: string; prediction: string }) => {
+      const response = await apiRequest('/api/predictions/predict', {
+        method: 'POST',
+        body: JSON.stringify({
+          pool_id: poolId,
+          prediction: prediction
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to submit prediction');
+      }
+      
+      return response.json();
     },
-    {
-      id: "best-actor",
-      title: "Best Actor",
-      nominees: ["Cillian Murphy", "Paul Giamatti", "Bradley Cooper", "Jeffrey Wright"]
-    },
-    {
-      id: "best-actress", 
-      title: "Best Actress",
-      nominees: ["Emma Stone", "Lily Gladstone", "Carey Mulligan", "Sandra Hüller"]
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
     }
-  ];
+  });
+}
 
-  const handlePick = (categoryId: string, nominee: string) => {
-    setSelectedPicks(prev => ({
-      ...prev,
-      [categoryId]: nominee
-    }));
+// Vote Modal Component
+const VoteModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
+  const [selectedVote, setSelectedVote] = useState<string>("");
+  const submitPrediction = useSubmitPrediction();
+  const { toast } = useToast();
+
+  const handleSubmit = () => {
+    if (!selectedVote) return;
+    
+    submitPrediction.mutate(
+      { poolId: pool.id, prediction: selectedVote },
+      {
+        onSuccess: (data) => {
+          toast({
+            title: "Vote Submitted!",
+            description: `You voted for "${selectedVote}" and earned ${data.points_earned} points!`,
+          });
+          onClose();
+        },
+        onError: () => {
+          toast({
+            title: "Submission Failed",
+            description: "Could not submit your vote. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    );
   };
+
+  const options = Array.isArray(pool.options) ? pool.options : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white border-gray-200 text-gray-800">
+      <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-gray-900">{pool.title}</DialogTitle>
           <p className="text-gray-600">{pool.description}</p>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          {categories.map((category) => (
-            <Card key={category.id} className="bg-white border-gray-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg text-gray-900">{category.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {category.nominees.map((nominee) => (
-                  <button
-                    key={nominee}
-                    onClick={() => handlePick(category.id, nominee)}
-                    className={`w-full p-3 text-left rounded-lg border transition-all ${
-                      selectedPicks[category.id] === nominee
-                        ? 'border-purple-500 bg-purple-50 text-purple-900'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <span className="text-gray-800">{nominee}</span>
-                  </button>
-                ))}
-              </CardContent>
-            </Card>
+        <div className="space-y-3 mt-6">
+          {options.map((option) => (
+            <button
+              key={option}
+              onClick={() => setSelectedVote(option)}
+              className={`w-full p-4 text-left rounded-lg border transition-all ${
+                selectedVote === option
+                  ? 'border-purple-500 bg-purple-50 text-purple-900'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <div className="font-medium text-gray-800">{option}</div>
+            </button>
           ))}
         </div>
 
@@ -235,9 +113,10 @@ const AwardShowModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpe
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button 
             className="bg-purple-700 hover:bg-purple-800"
-            disabled={Object.keys(selectedPicks).length !== categories.length}
+            disabled={!selectedVote || submitPrediction.isPending}
+            onClick={handleSubmit}
           >
-            Submit Predictions ({pool.pointsReward} pts)
+            {submitPrediction.isPending ? 'Submitting...' : `Cast Vote (${pool.pointsReward} pts)`}
           </Button>
         </div>
       </DialogContent>
@@ -248,10 +127,34 @@ const AwardShowModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpe
 // Weekly Prediction Modal Component
 const WeeklyModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
   const [selectedPick, setSelectedPick] = useState<string>("");
+  const submitPrediction = useSubmitPrediction();
+  const { toast } = useToast();
 
-  const options = pool.id === "box-office-weekend" 
-    ? ["Dune: Part Two", "Madame Web", "Bob Marley: One Love", "Ordinary Angels"]
-    : ["Avatar: The Last Airbender", "Griselda", "American Nightmare", "Nobody Wants This"];
+  const handleSubmit = () => {
+    if (!selectedPick) return;
+    
+    submitPrediction.mutate(
+      { poolId: pool.id, prediction: selectedPick },
+      {
+        onSuccess: (data) => {
+          toast({
+            title: "Prediction Submitted!",
+            description: `You predicted "${selectedPick}" and earned ${data.points_earned} points!`,
+          });
+          onClose();
+        },
+        onError: () => {
+          toast({
+            title: "Submission Failed",
+            description: "Could not submit your prediction. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    );
+  };
+
+  const options = Array.isArray(pool.options) ? pool.options : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -281,9 +184,10 @@ const WeeklyModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: 
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button 
             className="bg-purple-700 hover:bg-purple-800"
-            disabled={!selectedPick}
+            disabled={!selectedPick || submitPrediction.isPending}
+            onClick={handleSubmit}
           >
-            Submit Prediction ({pool.pointsReward} pts)
+            {submitPrediction.isPending ? 'Submitting...' : `Submit Prediction (${pool.pointsReward} pts)`}
           </Button>
         </div>
       </DialogContent>
@@ -291,267 +195,59 @@ const WeeklyModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: 
   );
 };
 
-// Bracket Modal Component for Dancing with the Stars
+// Bracket Modal Component
 const BracketModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
   const [selectedWinner, setSelectedWinner] = useState<string>("");
+  const submitPrediction = useSubmitPrediction();
+  const { toast } = useToast();
 
-  const fullCast = [
-    "Ariana Grande & Choreographer Val Chmerkovskiy",
-    "Glen Powell & Choreographer Jenna Johnson", 
-    "Sabrina Carpenter & Choreographer Derek Hough",
-    "Barry Keoghan & Choreographer Emma Slater",
-    "Zendaya & Choreographer Brandon Armstrong",
-    "Jacob Elordi & Choreographer Daniella Karagach",
-    "Sydney Sweeney & Choreographer Alan Bersten",
-    "Paul Mescal & Choreographer Witney Carson",
-    "Anya Taylor-Joy & Choreographer Gleb Savchenko",
-    "Timothée Chalamet & Choreographer Rylee Arnold"
-  ];
+  const handleSubmit = () => {
+    if (!selectedWinner) return;
+    
+    submitPrediction.mutate(
+      { poolId: pool.id, prediction: selectedWinner },
+      {
+        onSuccess: (data) => {
+          toast({
+            title: "Bracket Submitted!",
+            description: `You picked "${selectedWinner}" and earned ${data.points_earned} points!`,
+          });
+          onClose();
+        },
+        onError: () => {
+          toast({
+            title: "Submission Failed",
+            description: "Could not submit your bracket. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    );
+  };
+
+  const options = Array.isArray(pool.options) ? pool.options : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[85vh] overflow-y-auto bg-white border-gray-200 text-gray-800">
+      <DialogContent className="max-w-4xl bg-white border-gray-200 text-gray-800">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-gray-900">{pool.title}</DialogTitle>
           <p className="text-gray-600">{pool.description}</p>
         </DialogHeader>
 
-        <div className="mt-6">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">🕺💃 DANCING WITH THE STARS 💃🕺</h3>
-            <h4 className="text-lg font-semibold text-purple-700 mb-1">Season 34 Tournament Bracket</h4>
-            <p className="text-sm text-gray-600">Pick your Mirrorball Trophy winner!</p>
-          </div>
-          
-          <div className="relative bg-gradient-to-br from-purple-50 to-blue-50 p-6 rounded-xl border border-gray-200">
-            {/* NCAA-Style Tournament Bracket */}
-            <div className="flex justify-between items-center min-h-[500px] overflow-x-auto">
-              
-              {/* Left Side - Round 1 */}
-              <div className="flex flex-col space-y-3 min-w-[200px]">
-                <div className="text-center">
-                  <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-3">ROUND 1</div>
-                </div>
-                {fullCast.slice(0, 5).map((couple, index) => (
-                  <div key={couple} className="relative">
-                    <button
-                      onClick={() => setSelectedWinner(couple)}
-                      className={`w-full p-2 text-left rounded border transition-all text-xs ${
-                        selectedWinner === couple
-                          ? 'border-purple-500 bg-purple-100 shadow-md text-purple-900'
-                          : 'border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50 text-gray-800'
-                      }`}
-                    >
-                      <div className="font-medium leading-tight">{couple.split(' & ')[0]}</div>
-                      <div className="text-xs text-gray-600">{couple.split(' & ')[1]}</div>
-                    </button>
-                    {/* Connecting line to next round */}
-                    {index < 4 && (
-                      <div className="absolute -right-6 top-1/2 w-6 h-px bg-gray-400"></div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Left Side - Quarterfinals */}
-              <div className="flex flex-col justify-center space-y-12 min-w-[150px]">
-                <div className="text-center">
-                  <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-6">QUARTERFINALS</div>
-                </div>
-                <div className="space-y-16">
-                  <div className="relative">
-                    <div className="h-8 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                      <span className="text-xs text-gray-500">TBD</span>
-                    </div>
-                    <div className="absolute -right-6 top-1/2 w-6 h-px bg-gray-400"></div>
-                  </div>
-                  <div className="relative">
-                    <div className="h-8 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                      <span className="text-xs text-gray-500">TBD</span>
-                    </div>
-                    <div className="absolute -right-6 top-1/2 w-6 h-px bg-gray-400"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Left Side - Semifinals */}
-              <div className="flex flex-col justify-center min-w-[120px]">
-                <div className="text-center mb-6">
-                  <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold">SEMIFINALS</div>
-                </div>
-                <div className="relative">
-                  <div className="h-10 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                    <span className="text-xs text-gray-500">TBD</span>
-                  </div>
-                  <div className="absolute -right-6 top-1/2 w-6 h-px bg-gray-400"></div>
-                </div>
-              </div>
-
-              {/* Center - Finals */}
-              <div className="flex flex-col items-center justify-center min-w-[160px] px-4">
-                <div className="text-center mb-4">
-                  <div className="bg-gradient-to-r from-yellow-400 to-blue-400 text-white px-4 py-2 rounded-full text-sm font-bold">🏆 FINALS 🏆</div>
-                </div>
-                <div className={`w-36 h-24 rounded-xl border-4 flex flex-col items-center justify-center transition-all ${
-                  selectedWinner 
-                    ? 'border-yellow-500 bg-gradient-to-br from-yellow-50 to-blue-50 shadow-lg' 
-                    : 'border-gray-300 bg-gray-50'
-                }`}>
-                  <div className="text-3xl mb-1">🏆</div>
-                  <div className="text-xs text-center font-bold text-gray-700">
-                    {selectedWinner ? (
-                      <div>
-                        <div className="text-purple-700">CHAMPION</div>
-                        <div className="text-xs text-gray-600 mt-1">Mirrorball Winner</div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div>MIRRORBALL</div>
-                        <div>TROPHY</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side - Semifinals */}
-              <div className="flex flex-col justify-center min-w-[120px]">
-                <div className="text-center mb-6">
-                  <div className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold">SEMIFINALS</div>
-                </div>
-                <div className="relative">
-                  <div className="h-10 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                    <span className="text-xs text-gray-500">TBD</span>
-                  </div>
-                  <div className="absolute -left-6 top-1/2 w-6 h-px bg-gray-400"></div>
-                </div>
-              </div>
-
-              {/* Right Side - Quarterfinals */}
-              <div className="flex flex-col justify-center space-y-12 min-w-[150px]">
-                <div className="text-center">
-                  <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold mb-6">QUARTERFINALS</div>
-                </div>
-                <div className="space-y-16">
-                  <div className="relative">
-                    <div className="h-8 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                      <span className="text-xs text-gray-500">TBD</span>
-                    </div>
-                    <div className="absolute -left-6 top-1/2 w-6 h-px bg-gray-400"></div>
-                  </div>
-                  <div className="relative">
-                    <div className="h-8 bg-gray-100 rounded border border-gray-300 flex items-center justify-center">
-                      <span className="text-xs text-gray-500">TBD</span>
-                    </div>
-                    <div className="absolute -left-6 top-1/2 w-6 h-px bg-gray-400"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side - Round 1 */}
-              <div className="flex flex-col space-y-3 min-w-[200px]">
-                <div className="text-center">
-                  <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold mb-3">ROUND 1</div>
-                </div>
-                {fullCast.slice(5, 10).map((couple, index) => (
-                  <div key={couple} className="relative">
-                    <button
-                      onClick={() => setSelectedWinner(couple)}
-                      className={`w-full p-2 text-left rounded border transition-all text-xs ${
-                        selectedWinner === couple
-                          ? 'border-purple-500 bg-purple-100 shadow-md text-purple-900'
-                          : 'border-gray-300 bg-white hover:border-purple-300 hover:bg-purple-50 text-gray-800'
-                      }`}
-                    >
-                      <div className="font-medium leading-tight">{couple.split(' & ')[0]}</div>
-                      <div className="text-xs text-gray-600">{couple.split(' & ')[1]}</div>
-                    </button>
-                    {/* Connecting line to next round */}
-                    {index < 4 && (
-                      <div className="absolute -left-6 top-1/2 w-6 h-px bg-gray-400"></div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Selected Winner Display */}
-            {selectedWinner && (
-              <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="text-center">
-                  <div className="text-sm text-purple-600 font-medium">Your Season 34 Champion Prediction:</div>
-                  <div className="text-lg font-bold text-purple-900">{selectedWinner}</div>
-                  <div className="text-xs text-purple-600 mt-1">Will take home the Mirrorball Trophy!</div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button 
-            className="bg-purple-700 hover:bg-purple-800"
-            disabled={!selectedWinner}
-          >
-            Submit Prediction ({pool.pointsReward} pts)
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-// Vote Modal Component
-const VoteModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
-  const [selectedVote, setSelectedVote] = useState<string>("");
-
-  const options = [
-    "Nobody Wants This",
-    "Emily in Paris (Season 4)", 
-    "The Lincoln Lawyer (Season 3)",
-    "Monsters: The Lyle and Erik Menendez Story",
-    "American Nightmare",
-    "Avatar: The Last Airbender"
-  ];
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900">{pool.title}</DialogTitle>
-          <p className="text-gray-600">{pool.description}</p>
-        </DialogHeader>
-
-        <div className="space-y-3 mt-6">
+        <div className="grid grid-cols-2 gap-4 mt-6">
           {options.map((option) => (
-            <label
+            <button
               key={option}
-              className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all ${
-                selectedVote === option
-                  ? 'border-purple-500 bg-purple-50'
+              onClick={() => setSelectedWinner(option)}
+              className={`p-4 text-left rounded-lg border transition-all ${
+                selectedWinner === option
+                  ? 'border-purple-500 bg-purple-50 text-purple-900'
                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
               }`}
             >
-              <input
-                type="radio"
-                name="vote"
-                value={option}
-                checked={selectedVote === option}
-                onChange={(e) => setSelectedVote(e.target.value)}
-                className="sr-only"
-              />
-              <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
-                selectedVote === option
-                  ? 'border-purple-500 bg-purple-500'
-                  : 'border-gray-300'
-              }`}>
-                {selectedVote === option && (
-                  <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
-                )}
-              </div>
-              <span className="font-medium text-gray-700">{option}</span>
-            </label>
+              <div className="font-medium text-gray-800">{option}</div>
+            </button>
           ))}
         </div>
 
@@ -559,9 +255,93 @@ const VoteModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: bo
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button 
             className="bg-purple-700 hover:bg-purple-800"
-            disabled={!selectedVote}
+            disabled={!selectedWinner || submitPrediction.isPending}
+            onClick={handleSubmit}
           >
-            Cast Vote ({pool.pointsReward} pts)
+            {submitPrediction.isPending ? 'Submitting...' : `Submit Pick (${pool.pointsReward} pts)`}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Awards Show Modal Component
+const AwardShowModal = ({ pool, isOpen, onClose }: { pool: PredictionPool; isOpen: boolean; onClose: () => void }) => {
+  const [selectedPicks, setSelectedPicks] = useState<Record<string, string>>({});
+  const submitPrediction = useSubmitPrediction();
+  const { toast } = useToast();
+
+  const categories = [
+    { id: "best-picture", name: "Best Picture", options: ["Oppenheimer", "Killers of the Flower Moon", "Barbie", "Past Lives"] },
+    { id: "best-actor", name: "Best Actor", options: ["Cillian Murphy", "Paul Giamatti", "Jeffrey Wright", "Bradley Cooper"] },
+    { id: "best-actress", name: "Best Actress", options: ["Emma Stone", "Lily Gladstone", "Sandra Hüller", "Annette Bening"] },
+  ];
+
+  const handleSubmit = () => {
+    const picks = Object.values(selectedPicks);
+    if (picks.length !== categories.length) return;
+    
+    submitPrediction.mutate(
+      { poolId: pool.id, prediction: JSON.stringify(selectedPicks) },
+      {
+        onSuccess: (data) => {
+          toast({
+            title: "Awards Predictions Submitted!",
+            description: `You submitted predictions for all categories and earned ${data.points_earned} points!`,
+          });
+          onClose();
+        },
+        onError: () => {
+          toast({
+            title: "Submission Failed",
+            description: "Could not submit your predictions. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    );
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl bg-white border-gray-200 text-gray-800">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-gray-900">{pool.title}</DialogTitle>
+          <p className="text-gray-600">{pool.description}</p>
+        </DialogHeader>
+
+        <div className="space-y-6 mt-6">
+          {categories.map((category) => (
+            <div key={category.id}>
+              <h3 className="text-lg font-semibold mb-3">{category.name}</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {category.options.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setSelectedPicks(prev => ({ ...prev, [category.id]: option }))}
+                    className={`p-3 text-left rounded-lg border transition-all ${
+                      selectedPicks[category.id] === option
+                        ? 'border-purple-500 bg-purple-50 text-purple-900'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium text-gray-800">{option}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button 
+            className="bg-purple-700 hover:bg-purple-800"
+            disabled={Object.keys(selectedPicks).length !== categories.length || submitPrediction.isPending}
+            onClick={handleSubmit}
+          >
+            {submitPrediction.isPending ? 'Submitting...' : `Submit All Picks (${pool.pointsReward} pts)`}
           </Button>
         </div>
       </DialogContent>
@@ -575,6 +355,10 @@ export default function VoteAndPredictPage() {
   const [filterStatus, setFilterStatus] = useState<"open" | "my_predictions" | "completed">("open");
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  
+  // Fetch real prediction pools
+  const { data: pools = [], isLoading, error } = usePredictionPools();
+  const submitPrediction = useSubmitPrediction();
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -599,7 +383,7 @@ export default function VoteAndPredictPage() {
   };
 
   // Filter pools based on status
-  const filteredPools = lowStakesPools.filter(pool => 
+  const filteredPools = pools.filter((pool: PredictionPool) => 
     pool.status === filterStatus
   );
 
@@ -610,11 +394,25 @@ export default function VoteAndPredictPage() {
   };
 
   const handleQuickPick = (poolId: string, option: string) => {
-    setSelectedOptions(prev => ({ ...prev, [poolId]: option }));
-    toast({
-      title: "Vote Submitted!",
-      description: `You voted for "${option}" in ${lowStakesPools.find(p => p.id === poolId)?.title}`,
-    });
+    submitPrediction.mutate(
+      { poolId, prediction: option },
+      {
+        onSuccess: (data) => {
+          setSelectedOptions(prev => ({ ...prev, [poolId]: option }));
+          toast({
+            title: "Vote Submitted!",
+            description: `You voted for "${option}" and earned ${data.points_earned} points!`,
+          });
+        },
+        onError: () => {
+          toast({
+            title: "Submission Failed",
+            description: "Could not submit your vote. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    );
   };
 
   const handleInviteFriends = async (pool: PredictionPool) => {
@@ -661,6 +459,33 @@ export default function VoteAndPredictPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={handleTrackConsumption} />
+        <div className="max-w-6xl mx-auto px-4 pt-2 pb-6">
+          <div className="text-center py-20">
+            <div className="text-xl">Loading prediction pools...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={handleTrackConsumption} />
+        <div className="max-w-6xl mx-auto px-4 pt-2 pb-6">
+          <div className="text-center py-20">
+            <div className="text-xl text-red-600">Failed to load prediction pools</div>
+            <div className="text-gray-600 mt-2">Please try again later</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
@@ -676,105 +501,105 @@ export default function VoteAndPredictPage() {
           </Link>
         </div>
 
-        {/* Header and Prediction Pools */}
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-gray-800 mb-2">
-              Vote & Predict
-            </h1>
-            <p className="text-lg text-gray-600">
-              Vote on entertainment topics and make predictions! Earn points for participation and accurate predictions.
-            </p>
-          </div>
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Vote & Predict</h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Cast your votes on fun topics and make predictions about awards, releases, and entertainment trends. Earn points for participation and accuracy!
+          </p>
+        </div>
 
+        <div className="space-y-8">
           {/* Prediction Pools Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lowStakesPools.filter(pool => pool.status === filterStatus).map((pool) => (
-              <Card key={pool.id} className="bg-white border border-gray-200 overflow-hidden">
-                <div className="min-h-[320px] flex flex-col">
-                    {/* Header Bar */}
-                    <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg">{pool.icon}</span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleInviteFriends(pool)}
-                            className="p-1 hover:bg-white hover:bg-opacity-20 rounded-md transition-all"
-                            data-testid={`invite-friends-${pool.id}`}
-                            title="Invite friends to this prediction"
-                          >
-                            <UserPlus size={16} className="text-white" />
-                          </button>
-                          <Badge className="bg-white bg-opacity-20 text-white hover:bg-white hover:bg-opacity-20">
-                            {pool.pointsReward} pts
-                          </Badge>
-                        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPools.map((pool: PredictionPool) => (
+              <Card key={pool.id} className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => handlePoolClick(pool)}>
+                <CardHeader className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-3xl">{pool.icon}</div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg text-gray-900 leading-tight">{pool.title}</CardTitle>
                       </div>
                     </div>
-                    
-                    {/* Content */}
-                    <div className="flex-1 p-3 flex flex-col">
-                      <div className="mb-2">
-                        <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1">
-                          {pool.title}
-                        </h3>
-                        <p className="text-xs text-gray-600 line-clamp-1">
-                          {pool.description}
-                        </p>
+                    {getStatusBadge(pool.status)}
+                  </div>
+                  <p className="text-gray-600 text-sm">{pool.description}</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-1">
+                        <Star size={16} className="text-purple-600" />
+                        <span className="font-medium text-purple-600">{pool.pointsReward} pts</span>
                       </div>
-                      
-                      {/* Inline Options or Action Button */}
-                      <div className="flex-1 flex flex-col justify-end">
-                        {pool.inline && pool.options && pool.status === "open" ? (
-                          <div className="space-y-1.5">
-                            {pool.options.map((option) => (
-                              <button
-                                key={option}
-                                onClick={() => handleQuickPick(pool.id, option)}
-                                className={`w-full py-1.5 px-2 text-xs font-medium rounded-md border transition-all ${
-                                  selectedOptions[pool.id] === option
-                                    ? 'border-purple-500 bg-purple-50 text-purple-700'
-                                    : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
-                                }`}
-                                data-testid={`quick-pick-${pool.id}-${option}`}
-                              >
-                                {option.length > 18 ? `${option.substring(0, 18)}...` : option}
-                              </button>
-                            ))}
-                            <button
-                              onClick={() => handleInviteFriends(pool)}
-                              className="w-full mt-2 py-1.5 px-2 text-xs font-medium rounded-md bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 transition-all"
-                              data-testid={`invite-inline-${pool.id}`}
-                            >
-                              Invite a friend to predict too
-                            </button>
-                          </div>
-                        ) : pool.status === "locked" ? (
-                          <div className="w-full px-4 py-2 bg-gray-100 text-gray-500 rounded-md text-sm font-medium text-center">
-                            Coming Soon
-                          </div>
-                        ) : pool.status === "completed" ? (
-                          <div className="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-md text-sm font-medium text-center">
-                            Results Available
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handlePoolClick(pool)}
-                            className="w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-md text-sm font-medium hover:from-purple-600 hover:to-purple-700 transition-all"
-                            data-testid={`open-pool-${pool.id}`}
-                          >
-                            Predict
-                          </button>
-                        )}
-                      </div>
-                      
-                      {/* Footer Info */}
-                      <div className="mt-2 pt-1.5 border-t border-gray-100 text-xs text-gray-500 text-center">
-                        {pool.participants.toLocaleString()} participants
+                      <div className="flex items-center space-x-1">
+                        <Users size={16} className="text-gray-500" />
+                        <span className="text-gray-600">{pool.participants || 0}</span>
                       </div>
                     </div>
-                </div>
+                    <div className="flex items-center space-x-1">
+                      <Clock size={16} className="text-gray-500" />
+                      <span className="text-gray-600 text-xs">{pool.deadline}</span>
+                    </div>
+                  </div>
+
+                  {/* Quick Pick Options (for inline polls) */}
+                  {pool.inline && pool.options && (
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-gray-700">Quick Pick:</div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {pool.options.map((option) => (
+                          <button
+                            key={option}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickPick(pool.id, option);
+                            }}
+                            disabled={submitPrediction.isPending}
+                            className={`p-2 text-sm rounded-md border transition-all text-left ${
+                              selectedOptions[pool.id] === option
+                                ? 'border-purple-500 bg-purple-50 text-purple-900'
+                                : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                            } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex space-x-2">
+                    {!pool.inline && pool.status === "open" && (
+                      <Button 
+                        size="sm" 
+                        className="flex-1 bg-purple-700 hover:bg-purple-800 text-white"
+                        data-testid={`predict-${pool.id}`}
+                      >
+                        {getTypeIcon(pool.type)}
+                        <span className="ml-2">
+                          {pool.type === "vote" ? "Vote" : 
+                           pool.type === "weekly" ? "Predict" :
+                           pool.type === "awards" ? "Pick Winners" : 
+                           "Fill Bracket"}
+                        </span>
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInviteFriends(pool);
+                      }}
+                      data-testid={`invite-${pool.id}`}
+                    >
+                      <UserPlus size={16} />
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
