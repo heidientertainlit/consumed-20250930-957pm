@@ -157,23 +157,35 @@ serve(async (req) => {
       });
 
       if (error) {
-        // Fallback: try direct insert with minimal data
+        console.log('create_social_post function failed, using direct insert:', error);
+        
+        // Fallback: direct insert with all media data
         const { data: fallbackPost, error: fallbackError } = await supabase
           .from('social_posts')
           .insert({
             user_id: user.id,
-            content: content || ''
+            media_title: media_title || '',
+            media_type: media_type || '',
+            media_creator: media_creator || '',
+            media_image: media_image_url || '',
+            rating: rating || null,
+            thoughts: content || '',
+            audience: 'all',
+            likes: 0,
+            comments: 0
           })
           .select()
           .single();
 
         if (fallbackError) {
+          console.log('Fallback insert also failed:', fallbackError);
           return new Response(JSON.stringify({ error: fallbackError.message }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
+        console.log('Successfully created post with fallback insert:', fallbackPost);
         return new Response(JSON.stringify({ post: fallbackPost }), {
           status: 201,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
