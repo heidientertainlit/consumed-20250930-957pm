@@ -89,24 +89,30 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       category: "Personal Recommendations",
       icon: <Sparkles className="text-purple-600" size={16} />,
       examples: [
-        "Movies like Inception but more romantic",
-        "Books similar to Harry Potter that I haven't read"
+        "Movies like the book The Seven Husbands of Evelyn Hugo",
+        "Something uplifting after a hard day",
+        "Books similar to Harry Potter that I haven't read",
+        "Dark and mysterious like True Detective"
       ]
     },
     {
-      category: "Group Recommendations (Blends)",
+      category: "Group Blends - Find What Everyone Will Love",
       icon: <Users className="text-green-600" size={16} />,
       examples: [
-        "Recommend movies for me and my partner - we love sci-fi",
-        "Find shows for our friend group to watch together"
+        "Something I can watch with my family, kids ages 8 and 12",
+        "Recommendations for my book club based on our love of historical fiction",
+        "Movies for me and my partner - we both love sci-fi and comedy",
+        "Shows for our friend group that likes mystery and true crime"
       ]
     },
     {
       category: "Search Media & Creators",
       icon: <Film className="text-blue-600" size={16} />,
       examples: [
-        "Christopher Nolan",
-        "Dune"
+        "Christopher Nolan filmography",
+        "Taylor Swift albums",
+        "Books by Colleen Hoover",
+        "Marvel movies in chronological order"
       ]
     }
   ];
@@ -125,7 +131,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
       <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Search consumed</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Search & Discover</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
@@ -141,7 +147,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             <Search className="absolute left-3 top-3 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Ask for recommendations, create group blends, or search media..."
+              placeholder="Get personal recs, create group blends, or search media & creators..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-lg text-black placeholder-gray-500"
@@ -293,7 +299,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             </div>
           ) : (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Try searching for:</h3>
+              <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Multiple Ways to Search</h3>
+                <p className="text-sm text-gray-700">
+                  Our AI-powered search understands natural language. You can search for specific media, get personalized recommendations, or create group blends to find entertainment everyone will love.
+                </p>
+              </div>
               
               <div className="space-y-6">
                 {searchExamples.map((section, index) => (
@@ -320,12 +331,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
               {/* Search Tips */}
               <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-                <h4 className="font-medium text-purple-900 mb-2">Search Tips</h4>
-                <ul className="text-sm text-purple-700 space-y-1">
-                  <li>• <strong>Personal recs:</strong> "Movies like Inception but more romantic"</li>
-                  <li>• <strong>Group blends:</strong> "Recommend shows for me and my partner"</li>
-                  <li>• <strong>Search media:</strong> "Christopher Nolan" or "Dune"</li>
-                  <li>• <strong>By mood:</strong> "Something uplifting" or "dark and mysterious"</li>
+                <h4 className="font-medium text-purple-900 mb-2">How to Search</h4>
+                <ul className="text-sm text-purple-700 space-y-2">
+                  <li>• <strong>Personal recommendations:</strong> "Movies like the book XYZ" or "Something like Breaking Bad but lighter"</li>
+                  <li>• <strong>Group blends:</strong> "Find something for me and my partner who loves horror" or "Books for my family with teens"</li>
+                  <li>• <strong>Specific searches:</strong> "Christopher Nolan" or "Taylor Swift discography"</li>
+                  <li>• <strong>Mood-based:</strong> "Something uplifting for a tough week" or "Cozy mystery books"</li>
                 </ul>
               </div>
             </div>
