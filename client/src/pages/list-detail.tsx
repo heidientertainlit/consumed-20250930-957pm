@@ -159,9 +159,8 @@ export default function ListDetail() {
       return;
     }
 
-    // Get the Supabase URL for the share function
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const shareUrl = `${supabaseUrl}/functions/v1/share-invite?type=list&id=${urlListName}&user_id=${session.user.id}`;
+    // Use the share-invite function URL
+    const shareUrl = `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-invite?type=list&id=${urlListName}&user_id=${session.user.id}`;
 
     try {
       await navigator.clipboard.writeText(shareUrl);
