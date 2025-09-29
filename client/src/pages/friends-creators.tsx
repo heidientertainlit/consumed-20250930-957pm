@@ -4,11 +4,14 @@ import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Search, Check, UserPlus, Star, Sparkles, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function FriendsCreatorsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { session } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Get friends list
   const { data: friendsData, isLoading: friendsLoading } = useQuery({
@@ -87,12 +90,28 @@ export default function FriendsCreatorsPage() {
         body: JSON.stringify({ action: 'sendRequest', friendId }),
       });
 
-      if (!response.ok) throw new Error('Failed to send friend request');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send friend request');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-search'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
+      toast({
+        title: "Friend Request Sent!",
+        description: "Your friend request has been sent successfully.",
+      });
     },
+    onError: (error) => {
+      console.error('Failed to send friend request:', error);
+      toast({
+        title: "Failed to Send Request",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    }
   });
 
   // Accept friend request mutation
@@ -115,6 +134,18 @@ export default function FriendsCreatorsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
+      toast({
+        title: "Friend Request Accepted!",
+        description: "You are now friends and can share your entertainment lists.",
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to accept friend request:', error);
+      toast({
+        title: "Failed to Accept Request",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
     },
   });
 
@@ -126,15 +157,49 @@ export default function FriendsCreatorsPage() {
     acceptRequestMutation.mutate(friendId);
   };
 
-  // Dummy function for handleFollowFriend, as it's used in the template but not defined
+  // Follow friend mutation for recommended friends
+  const followFriendMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'sendRequest', friendId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send friend request');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Friend Request Sent!",
+        description: "Your friend request has been sent to this user.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to Send Request",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleFollowFriend = (friendId: string) => {
-    console.log("Follow friend clicked for:", friendId);
-    // In a real application, this would involve a mutation to follow a user.
+    followFriendMutation.mutate(friendId);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation />
+      <Toaster />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
@@ -202,7 +267,10 @@ export default function FriendsCreatorsPage() {
               {searchQuery.length > 2 ? (
                 searchLoading ? (
                   <div className="text-center py-4">
-                    <div className="text-gray-500">Searching...</div>
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                      <div className="text-gray-500">Searching...</div>
+                    </div>
                   </div>
                 ) : searchResults?.users?.length > 0 ? (
                   searchResults.users.map((user: any) => (
@@ -219,7 +287,7 @@ export default function FriendsCreatorsPage() {
                       <Button
                         onClick={() => handleSendRequest(user.id)}
                         disabled={sendRequestMutation.isPending}
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-4 py-2 text-sm rounded-full"
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-4 py-2 text-sm rounded-full disabled:opacity-50"
                       >
                         <UserPlus size={14} className="mr-1" />
                         {sendRequestMutation.isPending ? 'Sending...' : 'Add Friend'}
@@ -228,7 +296,12 @@ export default function FriendsCreatorsPage() {
                   ))
                 ) : (
                   <div className="text-center py-4">
-                    <div className="text-gray-500">No users found</div>
+                    <div className="text-gray-500">
+                      {searchQuery.length < 3 ? 'Type at least 3 characters to search' : 'No users found matching your search'}
+                    </div>
+                    <div className="text-sm text-gray-400 mt-1">
+                      Try searching by username or email
+                    </div>
                   </div>
                 )
               ) : (
@@ -289,6 +362,24 @@ export default function FriendsCreatorsPage() {
                   </div>
                 </div>
                 <Button 
+                  onClick={async () => {
+                    try {
+                      const shareData = {
+                        title: 'Check out my Entertainment DNA!',
+                        text: 'I just discovered my entertainment personality on consumed. Come see what yours is!',
+                        url: `${window.location.origin}/dna/${session?.user?.id}`
+                      };
+                      
+                      if (navigator.share) {
+                        await navigator.share(shareData);
+                      } else {
+                        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                        alert('DNA share link copied to clipboard!');
+                      }
+                    } catch (error) {
+                      console.error('Error sharing DNA:', error);
+                    }
+                  }}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                   data-testid="button-share-my-dna"
                 >
