@@ -24,7 +24,7 @@ function Router() {
       <Route path="/track" component={Track} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/feed" component={Feed} />
-      <Route path="/friends-creators" component={FriendsCreators} />
+      <Route path="/friends" component={FriendsCreators} />
       <Route path="/play" component={Play} />
       <Route path="/predictions" component={Predictions} />
       <Route path="/onboarding" component={Onboarding} />
