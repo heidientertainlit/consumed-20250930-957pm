@@ -61,7 +61,7 @@ export default function ListDetail() {
 
       if (!session?.access_token) {
         console.log('No session token available for list detail');
-        return null;
+        throw new Error('Authentication required');
       }
 
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
@@ -81,7 +81,7 @@ export default function ListDetail() {
       console.log('REAL user lists data for list detail:', data);
       return data;
     },
-    enabled: !!urlListName,
+    enabled: !!urlListName && (sharedUserId ? true : !!session?.access_token),
   });
 
   // Find the specific list from the REAL data based on URL slug
