@@ -81,7 +81,12 @@ const fetchLeaderboard = async (session: any, category: string = 'all_time', lim
     predictions.forEach((prediction: any) => {
       if (gameIds.includes(prediction.pool_id)) {
         const userId = prediction.user_id;
-        userPoints[userId] = (userPoints[userId] || 0) + prediction.points_earned;
+        // For predict games, show 0 points until they're resolved (all predictions are pending)
+        if (gameType === 'predict') {
+          userPoints[userId] = (userPoints[userId] || 0) + 0; // Always 0 for predict games
+        } else {
+          userPoints[userId] = (userPoints[userId] || 0) + prediction.points_earned;
+        }
       }
     });
 
