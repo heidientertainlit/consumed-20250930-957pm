@@ -31,7 +31,7 @@ serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      // Direct query with explicit column selection to avoid join issues
+      // Explicit column selection to avoid auto-join issues
       const { data: posts, error } = await supabase
         .from('social_posts')
         .select(`
@@ -41,8 +41,12 @@ serve(async (req) => {
           media_type,
           media_creator,
           media_image,
+          media_external_id,
+          media_external_source,
+          media_description,
           rating,
           thoughts,
+          audience,
           likes,
           comments,
           created_at
@@ -51,56 +55,40 @@ serve(async (req) => {
         .limit(20);
 
       if (error) {
+        console.log('Query error:', error);
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Debug logging
-      console.log('Raw posts from database:', JSON.stringify(posts, null, 2));
-      console.log('First post full structure:', posts?.[0] ? Object.keys(posts[0]) : 'No posts');
+      console.log('Raw posts from database:', posts?.length || 0, 'posts');
 
       // Get user data separately to avoid join issues
       const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
-      console.log('Looking up user IDs:', userIds);
       
-      // Try using service role for better access
+      // Use service role for better access
       const serviceSupabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '', 
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
       );
       
-      // First try public.users table with service role
       const { data: users, error: usersError } = await serviceSupabase
         .from('users')
         .select('id, user_name, display_name, email, avatar')
         .in('id', userIds);
 
-      console.log('Public users query error:', usersError);
-      console.log('Public users found:', users?.length || 0);
-      console.log('Public users data:', JSON.stringify(users, null, 2));
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
       // Find missing user IDs and fetch from auth.users as fallback
       const missingUserIds = userIds.filter(id => !userMap.has(id));
-      console.log('Missing user IDs from public.users:', missingUserIds);
 
       if (missingUserIds.length > 0) {
-        // Use service role to access auth.users
         const { data: authUsers, error: authError } = await serviceSupabase.auth.admin.listUsers();
-        console.log('Auth users query error:', authError);
-        console.log('Auth users fetched:', authUsers?.users?.length || 0);
         
         if (authUsers?.users) {
           authUsers.users.forEach(authUser => {
             if (missingUserIds.includes(authUser.id)) {
-              console.log('Processing auth user:', JSON.stringify({
-                id: authUser.id,
-                email: authUser.email,
-                user_metadata: authUser.user_metadata
-              }, null, 2));
-              
               userMap.set(authUser.id, {
                 id: authUser.id,
                 user_name: authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
@@ -110,7 +98,6 @@ serve(async (req) => {
               });
             }
           });
-          console.log('Total users after auth fallback:', userMap.size);
         }
       }
 
@@ -118,14 +105,21 @@ serve(async (req) => {
       const transformedPosts = posts?.map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
+        console.log('Processing post:', {
+          id: post.id,
+          media_title: post.media_title,
+          media_image: post.media_image,
+          has_media: !!post.media_title
+        });
+        
         return {
           id: post.id,
           type: 'consumption',
           user: {
             id: post.user_id,
-            username: (postUser as any)?.user_name || 'Unknown',
-            displayName: (postUser as any)?.user_name || 'Unknown',
-            avatar: (postUser as any)?.avatar || ''
+            username: postUser?.user_name || 'Unknown',
+            displayName: postUser?.user_name || 'Unknown',
+            avatar: postUser?.avatar || ''
           },
           content: post.thoughts || '',
           timestamp: post.created_at,
@@ -145,18 +139,8 @@ serve(async (req) => {
         };
       });
 
-      console.log('Raw posts from database:', JSON.stringify(posts?.map(p => ({
-        id: p.id,
-        media_title: p.media_title,
-        media_image: p.media_image,
-        media_type: p.media_type,
-        thoughts: p.thoughts
-      })), null, 2));
-      console.log('Transformed posts:', JSON.stringify(transformedPosts?.map(p => ({
-        id: p.id,
-        content: p.content,
-        mediaItems: p.mediaItems
-      })), null, 2));
+      console.log('Transformed posts:', transformedPosts?.length || 0, 'posts');
+      console.log('Posts with media:', transformedPosts?.filter(p => p.mediaItems.length > 0).length || 0);
 
       return new Response(JSON.stringify(transformedPosts), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -204,6 +188,7 @@ serve(async (req) => {
     }
 
   } catch (error) {
+    console.log('Function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
