@@ -159,8 +159,8 @@ export default function ListDetail() {
       return;
     }
 
-    // Use the share-invite function URL
-    const shareUrl = `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-invite?type=list&id=${urlListName}&user_id=${session.user.id}`;
+    // Use direct app URL for simple sharing
+    const shareUrl = `${window.location.origin}/list/${urlListName}?user=${session.user.id}`;
 
     try {
       await navigator.clipboard.writeText(shareUrl);
