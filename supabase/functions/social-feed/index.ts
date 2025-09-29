@@ -141,57 +141,39 @@ serve(async (req) => {
     }
 
     if (req.method === 'POST') {
-      // Simplified post creation
+      // Create new post with full media data
       const body = await req.json();
       const { content, media_title, media_type, media_creator, media_image_url, rating } = body;
 
-      // Use raw SQL insert to bypass schema cache
-      const { data: post, error } = await supabase.rpc('create_social_post', {
-        p_user_id: user.id,
-        p_content: content || '',
-        p_media_title: media_title || '',
-        p_media_type: media_type || '',
-        p_media_creator: media_creator || '',
-        p_media_image: media_image_url || '',
-        p_rating: rating || null
-      });
+      console.log('Creating post with data:', { content, media_title, media_type, media_creator, media_image_url, rating });
+
+      // Direct insert with all media data
+      const { data: post, error } = await supabase
+        .from('social_posts')
+        .insert({
+          user_id: user.id,
+          media_title: media_title || '',
+          media_type: media_type || '',
+          media_creator: media_creator || '',
+          media_image: media_image_url || '',
+          rating: rating || null,
+          thoughts: content || '',
+          audience: 'all',
+          likes: 0,
+          comments: 0
+        })
+        .select()
+        .single();
 
       if (error) {
-        console.log('create_social_post function failed, using direct insert:', error);
-        
-        // Fallback: direct insert with all media data
-        const { data: fallbackPost, error: fallbackError } = await supabase
-          .from('social_posts')
-          .insert({
-            user_id: user.id,
-            media_title: media_title || '',
-            media_type: media_type || '',
-            media_creator: media_creator || '',
-            media_image: media_image_url || '',
-            rating: rating || null,
-            thoughts: content || '',
-            audience: 'all',
-            likes: 0,
-            comments: 0
-          })
-          .select()
-          .single();
-
-        if (fallbackError) {
-          console.log('Fallback insert also failed:', fallbackError);
-          return new Response(JSON.stringify({ error: fallbackError.message }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-
-        console.log('Successfully created post with fallback insert:', fallbackPost);
-        return new Response(JSON.stringify({ post: fallbackPost }), {
-          status: 201,
+        console.log('Failed to create post:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
+      console.log('Successfully created post:', post);
       return new Response(JSON.stringify({ post }), {
         status: 201,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
