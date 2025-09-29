@@ -9,7 +9,7 @@ import Feed from "@/pages/feed";
 import Leaderboard from "@/pages/leaderboard";
 import Play from "@/pages/play";
 import Predictions from "@/pages/predictions";
-import FriendsCreators from "@/pages/friends-creators";
+import Friends from "@/pages/friends";
 import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
 import MediaDetail from "@/pages/media-detail";
@@ -24,7 +24,7 @@ function Router() {
       <Route path="/track" component={Track} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/feed" component={Feed} />
-      <Route path="/friends" component={FriendsCreators} />
+      <Route path="/friends" component={Friends} />
       <Route path="/play" component={Play} />
       <Route path="/predictions" component={Predictions} />
       <Route path="/onboarding" component={Onboarding} />
