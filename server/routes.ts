@@ -105,6 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Removed: Get Entertainment DNA survey questions - Not used by frontend
 
+
   // Temporary route to return correct lists until Supabase edge function is deployed
   app.get("/api/user-lists-with-media", async (req, res) => {
     try {

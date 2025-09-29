@@ -14,38 +14,35 @@ import { useToast } from "@/hooks/use-toast";
 // All game data now comes from the database via API
 
 
-// Fetch prediction pools directly from Supabase edge function
+// Fetch prediction pools directly from Supabase database (NO EXPRESS!)
 function usePredictionPools() {
   return useQuery({
     queryKey: ['/api/predictions/pools'],
     queryFn: async () => {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qkdsbpksibgichhhnglt.supabase.co';
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      console.log('🎮 Fetching games directly from Supabase database...');
       
-      // Get current user's token from localStorage
-      const authData = localStorage.getItem('sb-ajupflwlekqbfqfyiepn-auth-token');
-      const authToken = authData ? JSON.parse(authData)?.access_token : null;
+      // Import Supabase client
+      const { createClient } = await import('@supabase/supabase-js');
       
-      console.log('🎮 Fetching games from Supabase:', `${supabaseUrl}/functions/v1/predictions/pools?active=1`);
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
       
-      const response = await fetch(`${supabaseUrl}/functions/v1/predictions/pools?active=1`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${authToken || supabaseAnonKey}`
-        }
-      });
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Failed to fetch prediction pools:', response.status, errorText);
+      // Query prediction_pools table directly
+      const { data: pools, error } = await supabase
+        .from('prediction_pools')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('❌ Supabase query error:', error);
         throw new Error('Failed to fetch prediction pools');
       }
       
-      const data = await response.json();
-      console.log('✅ Games loaded from Supabase:', data);
-      return data.pools || [];
+      console.log('✅ Games loaded directly from Supabase:', pools);
+      return pools || [];
     },
     enabled: true
   });
@@ -57,7 +54,7 @@ function useSubmitPrediction() {
   
   return useMutation({
     mutationFn: async ({ poolId, prediction }: { poolId: string; prediction: string }) => {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://qkdsbpksibgichhhnglt.supabase.co';
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
       
       // Get current user's token from localStorage
