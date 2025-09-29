@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
@@ -162,22 +162,24 @@ export default function PlayPage() {
     }
   };
 
-  // Use only real games from the database API
-  const allGames = (predictionPools || [])
-    .filter((pool: any) => pool.status === 'open' && pool.options && pool.options.length === 2)
-    .map((pool: any) => ({
-      id: pool.id,
-      type: pool.type,
-      title: pool.title,
-      description: pool.description,
-      points: pool.points_reward || pool.pointsReward,
-      participants: pool.participants,
-      deadline: pool.deadline,
-      icon: pool.icon,
-      mediaType: pool.category,
-      options: pool.options
-    }))
-    .sort(() => Math.random() - 0.5); // Randomize order
+  // Use only real games from the database API - shuffle ONLY once when data loads
+  const allGames = useMemo(() => {
+    return (predictionPools || [])
+      .filter((pool: any) => pool.status === 'open' && pool.options && pool.options.length === 2)
+      .map((pool: any) => ({
+        id: pool.id,
+        type: pool.type,
+        title: pool.title,
+        description: pool.description,
+        points: pool.points_reward || pool.pointsReward,
+        participants: pool.participants,
+        deadline: pool.deadline,
+        icon: pool.icon,
+        mediaType: pool.category,
+        options: pool.options
+      }))
+      .sort(() => Math.random() - 0.5); // Randomize order ONLY once
+  }, [predictionPools]);
 
   if (isLoading) {
     return (
