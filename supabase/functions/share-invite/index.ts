@@ -19,8 +19,8 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // Get app URL from environment variable or fallback to Replit domain
-  const appUrl = Deno.env.get('APP_URL') || 'https://b8e97142-1e2f-4984-85d7-841fe132d810-00-374h314pc4rux.picard.replit.dev';
+  // Get app URL from environment variable or fallback to current Replit domain
+  const appUrl = Deno.env.get('APP_URL') || 'https://37484c68-df10-48e6-be32-5ff5c9dcbef0-00-26i5x5uq7gxlc.picard.replit.dev';
 
   // Defaults
   let title = "consumed";
