@@ -14,12 +14,33 @@ import { useToast } from "@/hooks/use-toast";
 // All game data now comes from the database via API
 
 
-// Fetch prediction pools
+// Fetch prediction pools directly from Supabase edge function
 function usePredictionPools() {
   return useQuery({
     queryKey: ['/api/predictions/pools'],
     queryFn: async () => {
-      const response = await fetch('/api/predictions/pools?active=1');
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      // Get current user's token from localStorage
+      const authData = localStorage.getItem('sb-ajupflwlekqbfqfyiepn-auth-token');
+      const authToken = authData ? JSON.parse(authData)?.access_token : null;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/predictions/pools?active=1`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${authToken || supabaseAnonKey}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch prediction pools:', errorText);
+        throw new Error('Failed to fetch prediction pools');
+      }
+      
       const data = await response.json();
       return data.pools || [];
     },
@@ -27,16 +48,25 @@ function usePredictionPools() {
   });
 }
 
-// Vote submission mutation
+// Vote submission mutation - directly to Supabase edge function
 function useSubmitPrediction() {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ poolId, prediction }: { poolId: string; prediction: string }) => {
-      const response = await fetch('/api/predictions/predict', {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      // Get current user's token from localStorage
+      const authData = localStorage.getItem('sb-ajupflwlekqbfqfyiepn-auth-token');
+      const authToken = authData ? JSON.parse(authData)?.access_token : null;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/predictions/predict`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${authToken || supabaseAnonKey}`
         },
         body: JSON.stringify({
           pool_id: poolId,
@@ -45,6 +75,8 @@ function useSubmitPrediction() {
       });
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to submit prediction:', errorText);
         throw new Error('Failed to submit prediction');
       }
       
