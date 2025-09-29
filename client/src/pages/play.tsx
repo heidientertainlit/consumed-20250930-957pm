@@ -255,7 +255,7 @@ export default function PlayPage() {
             <Card key={game.id} className="bg-white border border-gray-200 shadow-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 flex-1">
                     <div className="text-xl">{game.icon}</div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
@@ -280,6 +280,17 @@ export default function PlayPage() {
                       <p className="text-gray-600 text-sm">{game.description}</p>
                     </div>
                   </div>
+                  {/* Invite to Play button - upper right */}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleInviteFriends(game)}
+                    className="ml-3 px-3 py-1 text-xs border-gray-300 hover:border-gray-400"
+                    data-testid={`invite-${game.id}`}
+                  >
+                    <UserPlus size={12} className="mr-1" />
+                    Invite to Play
+                  </Button>
                 </div>
 
                 {/* Stats Row */}
@@ -345,16 +356,6 @@ export default function PlayPage() {
                   </>
                 )}
 
-                {/* Invite Button */}
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleInviteFriends(game)}
-                  className="w-full bg-black text-white hover:bg-gray-800 border-black"
-                  data-testid={`invite-${game.id}`}
-                >
-                  <UserPlus size={16} className="mr-2" />
-                  Invite
-                </Button>
               </CardContent>
             </Card>
           ))}
