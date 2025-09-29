@@ -41,6 +41,8 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     throw new Error('No authentication token available');
   }
 
+  console.log('🔥 Fetching social feed with token:', session.access_token ? 'Present' : 'Missing');
+  
   const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed`, {
     method: 'GET',
     headers: {
@@ -49,11 +51,19 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     },
   });
 
+  console.log('📡 Social feed response status:', response.status);
+
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Social feed error:', response.status, errorText);
     throw new Error(`Failed to fetch social feed: ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('📊 Social feed data received:', JSON.stringify(data, null, 2));
+  console.log('📋 Posts with media items:', data.filter((post: any) => post.mediaItems && post.mediaItems.length > 0));
+  
+  return data;
 };
 
 export default function Feed() {
