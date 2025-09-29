@@ -11,88 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock trivia questions - now with only 2 options each
-const mockTriviaQuestions = [
-  {
-    id: "trivia-1",
-    type: "trivia",
-    title: "Marvel vs DC Superhero Knowledge",
-    description: "Which superhero franchise has better villains?",
-    points: 15,
-    participants: 2847,
-    difficulty: "Medium",
-    icon: "🦸‍♂️",
-    mediaType: "Movies",
-    options: ["A) Marvel", "B) DC"]
-  },
-  {
-    id: "trivia-2", 
-    type: "trivia",
-    title: "Friends TV Show Deep Cuts",
-    description: "Who said 'We were on a break!'?",
-    points: 10,
-    participants: 1923,
-    difficulty: "Easy",
-    icon: "☕",
-    mediaType: "TV Show",
-    options: ["A) Ross", "B) Rachel"]
-  }
-];
-
-// Mock simple predictions - now with only 2 options each
-const mockSimplePredictions = [
-  {
-    id: "simple-pred-1",
-    type: "prediction",
-    title: "Weekend Box Office Champion",
-    description: "Which movie will dominate this weekend's box office?",
-    points: 15,
-    participants: 892,
-    deadline: "Friday 11:59 PM",
-    icon: "🎬",
-    mediaType: "Movie",
-    options: ["A) Dune: Part Two", "B) Madame Web"]
-  },
-  {
-    id: "simple-pred-2", 
-    type: "prediction",
-    title: "Grammy Best New Artist",
-    description: "Who will take home the Grammy for Best New Artist?",
-    points: 25,
-    participants: 1543,
-    deadline: "Sunday 8:00 PM",
-    icon: "🏆",
-    mediaType: "Music",
-    options: ["A) Ice Spice", "B) Jelly Roll"]
-  }
-];
-
-// Mock vote games - now with only 2 options each
-const mockVoteGames = [
-  {
-    id: "vote-1",
-    type: "vote",
-    title: "Best Marvel Movie of All Time",
-    description: "Cast your vote for the greatest MCU film ever made!",
-    points: 10,
-    participants: 2847,
-    deadline: "Tomorrow 11:59 PM",
-    icon: "🦸‍♂️",
-    options: ["Avengers: Endgame", "Black Panther"]
-  },
-  {
-    id: "vote-2",
-    type: "vote", 
-    title: "The Summer I Turned Pretty Season 3",
-    description: "Who will Belly choose in Season 3?",
-    points: 15,
-    participants: 1923,
-    deadline: "Friday 11:59 PM",
-    icon: "💕",
-    mediaType: "TV Show",
-    options: ["A) Conrad", "B) Jeremiah"]
-  }
-];
+// All game data now comes from the database via API
 
 
 // Fetch prediction pools
@@ -213,13 +132,22 @@ export default function PlayPage() {
     }
   };
 
-  // Combine all game types into one feed - only games with 2 options
-  const allGames = [
-    ...mockTriviaQuestions,
-    ...mockSimplePredictions,
-    ...mockVoteGames,
-    ...predictionPools.filter((pool: any) => pool.status === 'open' && pool.options && pool.options.length === 2)
-  ].sort(() => Math.random() - 0.5); // Randomize order
+  // Use only real games from the database API
+  const allGames = (predictionPools || [])
+    .filter((pool: any) => pool.status === 'open' && pool.options && pool.options.length === 2)
+    .map((pool: any) => ({
+      id: pool.id,
+      type: pool.type,
+      title: pool.title,
+      description: pool.description,
+      points: pool.points_reward || pool.pointsReward,
+      participants: pool.participants,
+      deadline: pool.deadline,
+      icon: pool.icon,
+      mediaType: pool.category,
+      options: pool.options
+    }))
+    .sort(() => Math.random() - 0.5); // Randomize order
 
   if (isLoading) {
     return (
