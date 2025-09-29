@@ -2,7 +2,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame, Users } from "lucide-react";
+import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame, Users, Vote, Brain, TrendingUp } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 interface LeaderboardEntry {
@@ -107,6 +107,24 @@ const leaderboardCategories = [
     title: "Friend Inviter",
     icon: <Users className="w-5 h-5 text-green-600" />,
     isSelected: false
+  },
+  {
+    id: "vote_leader",
+    title: "Vote Leader",
+    icon: <Vote className="w-5 h-5 text-green-600" />,
+    isSelected: false
+  },
+  {
+    id: "predict_leader",
+    title: "Predict Leader", 
+    icon: <TrendingUp className="w-5 h-5 text-purple-600" />,
+    isSelected: false
+  },
+  {
+    id: "trivia_leader",
+    title: "Trivia Leader",
+    icon: <Brain className="w-5 h-5 text-blue-600" />,
+    isSelected: false
   }
 ];
 
@@ -191,6 +209,9 @@ export default function Leaderboard() {
                 {selectedCategory === 'superstar' && 'Total points from all media types (same as All-Time Leader)'}
                 {selectedCategory === 'streaker' && 'Consecutive days streak (20 pts per day)'}
                 {selectedCategory === 'friend_inviter' && '25 points for every successful friend that joins and uses the app'}
+                {selectedCategory === 'vote_leader' && 'Points from voting games only (10 pts each)'}
+                {selectedCategory === 'predict_leader' && 'Points from prediction games only (20 pts each)'}
+                {selectedCategory === 'trivia_leader' && 'Points from trivia games only (15 pts each)'}
               </p>
             </div>
           </div>
