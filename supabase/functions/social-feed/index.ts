@@ -31,22 +31,10 @@ serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      // Query posts and join with media data from social_posts_media table
+      // Get posts directly with all media data stored in social_posts table
       const { data: posts, error } = await supabase
         .from('social_posts')
-        .select(`
-          *,
-          social_posts_media (
-            id,
-            media_title,
-            media_type,
-            media_creator,
-            media_image_url,
-            media_external_id,
-            media_external_source,
-            rating
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -119,17 +107,17 @@ serve(async (req) => {
       const transformedPosts = posts?.map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
-        // Get media items from the joined social_posts_media table
-        const mediaItems = post.social_posts_media ? post.social_posts_media.map((media: any) => ({
-          id: media.id,
-          title: media.media_title || '',
-          creator: media.media_creator || '',
-          mediaType: media.media_type || '',
-          imageUrl: media.media_image_url || '',
-          rating: media.rating || undefined,
-          externalId: media.media_external_id || '',
-          externalSource: media.media_external_source || ''
-        })) : [];
+        // Create media items from the post data directly
+        const mediaItems = post.media_title ? [{
+          id: post.id + '_media',
+          title: post.media_title,
+          creator: post.media_creator || '',
+          mediaType: post.media_type || '',
+          imageUrl: post.media_image || '',
+          rating: post.rating || undefined,
+          externalId: post.media_external_id || '',
+          externalSource: post.media_external_source || ''
+        }] : [];
         
         return {
           id: post.id,
@@ -168,17 +156,24 @@ serve(async (req) => {
     }
 
     if (req.method === 'POST') {
-      // Create new post with media data in separate tables
+      // Create new post with media data directly in social_posts table
       const body = await req.json();
       const { content, media_title, media_type, media_creator, media_image_url, rating } = body;
 
       console.log('Creating post with data:', { content, media_title, media_type, media_creator, media_image_url, rating });
 
-      // First create the social post
+      // Create the social post with all media data
       const { data: post, error: postError } = await supabase
         .from('social_posts')
         .insert({
           user_id: user.id,
+          media_title: media_title || '',
+          media_type: media_type || '',
+          media_creator: media_creator || '',
+          media_image: media_image_url || '',
+          media_external_id: '',
+          media_external_source: '',
+          rating: rating || null,
           thoughts: content || '',
           audience: 'all',
           likes: 0,
@@ -196,30 +191,6 @@ serve(async (req) => {
       }
 
       console.log('Successfully created post:', post);
-
-      // If there's media data, create the media record
-      if (media_title && media_type) {
-        const { data: mediaRecord, error: mediaError } = await supabase
-          .from('social_posts_media')
-          .insert({
-            post_id: post.id,
-            media_title: media_title,
-            media_type: media_type,
-            media_creator: media_creator || '',
-            media_image_url: media_image_url || '',
-            rating: rating || null
-          })
-          .select()
-          .single();
-
-        if (mediaError) {
-          console.log('Failed to create media record:', mediaError);
-          // Don't fail the whole request, just log the error
-        } else {
-          console.log('Successfully created media record:', mediaRecord);
-        }
-      }
-
       return new Response(JSON.stringify({ post }), {
         status: 201,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
