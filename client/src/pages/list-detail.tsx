@@ -148,7 +148,6 @@ export default function ListDetail() {
       return;
     }
 
-    // Add user identifier to shared URL so non-logged-in users can see the data
     if (!session?.user?.id) {
       toast({
         title: "Cannot Share",
@@ -158,10 +157,11 @@ export default function ListDetail() {
       return;
     }
 
-    const shareUrl = `${window.location.origin}/list/${urlListName}?user=${session.user.id}`;
+    // Use share function for proper Open Graph previews
+    const shareUrl = `${window.location.origin}/functions/v1/share?type=list&id=${urlListName}&user_id=${session.user.id}`;
 
     const shareData = {
-      title: `Check out my entertainment list on consumed!`,
+      title: `Check out my ${listData?.name || 'entertainment'} list on consumed!`,
       text: `I'm tracking my ${listData?.name || 'entertainment'} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
       url: shareUrl
     };
