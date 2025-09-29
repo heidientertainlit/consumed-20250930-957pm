@@ -159,12 +159,6 @@ const leaderboardCategories = [
     isSelected: false
   },
   {
-    id: "superstar",
-    title: "Superstar",
-    icon: <Award className="w-5 h-5 text-pink-600" />,
-    isSelected: false
-  },
-  {
     id: "streaker",
     title: "Streaker",
     icon: <Flame className="w-5 h-5 text-blue-600" />,
@@ -274,7 +268,6 @@ export default function Leaderboard() {
                 {selectedCategory === 'podcast_leader' && 'Points from podcasts only (3 pts each)'}
                 {selectedCategory === 'sports_leader' && 'Points from sports events only (5 pts each)'}
                 {selectedCategory === 'critic_leader' && 'Points from reviews only (10 pts each)'}
-                {selectedCategory === 'superstar' && 'Total points from all media types (same as All-Time Leader)'}
                 {selectedCategory === 'streaker' && 'Consecutive days streak (20 pts per day)'}
                 {selectedCategory === 'friend_inviter' && '25 points for every successful friend that joins and uses the app'}
                 {selectedCategory === 'vote_leader' && 'Points from voting games only (10 pts each)'}
