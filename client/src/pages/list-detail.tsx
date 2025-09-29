@@ -251,12 +251,23 @@ export default function ListDetail() {
 
   // Only show "List not found" if data finished loading but no list found
   if (!listData && !listsLoading) {
+    console.log('List not found - Debug info:', {
+      sharedUserId,
+      urlListName,
+      userListsData,
+      sharedListData,
+      hasSession: !!session
+    });
+    
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
         <Navigation onTrackConsumption={() => {}} />
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">List not found</h1>
+            <p className="text-gray-600 mb-4">
+              {sharedUserId ? 'This list may be private or does not exist.' : 'Please log in to view your lists.'}
+            </p>
             <Button onClick={() => setLocation("/track")}>
               Back to Track
             </Button>
