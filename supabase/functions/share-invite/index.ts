@@ -31,8 +31,8 @@ serve(async (req) => {
   try {
     switch (type) {
       case "list": {
-        // Verify this is a PUBLIC list before sharing
-        if (userId) {
+        // Public share access - no authentication required
+        if (userId && id) {
           const { data: user } = await supabase
             .from("users")
             .select("user_name, email")
