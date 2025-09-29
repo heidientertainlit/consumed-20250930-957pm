@@ -38,46 +38,60 @@ const fetchLeaderboard = async (session: any, category: string = 'all_time', lim
     else if (category === 'predict_leader') gameType = 'predict';  
     else if (category === 'trivia_leader') gameType = 'trivia';
     
-    // Query user_predictions joined with prediction_pools to get game types
-    const { data, error } = await supabase
+    // Step 1: Get all predictions from this game type
+    const { data: predictions, error: predictionsError } = await supabase
       .from('user_predictions')
-      .select(`
-        user_id,
-        points_earned,
-        prediction_pools!inner(type),
-        users!inner(user_name)
-      `)
-      .eq('prediction_pools.type', gameType)
-      .order('points_earned', { ascending: false })
-      .limit(limit);
+      .select('user_id, points_earned, pool_id');
       
-    if (error) {
-      console.error('❌ Error fetching game leaderboard:', error);
-      throw new Error('Failed to fetch game leaderboard');
+    if (predictionsError) {
+      console.error('❌ Error fetching predictions:', predictionsError);
+      throw new Error('Failed to fetch predictions');
     }
 
-    // Aggregate points by user
-    const userPoints: { [key: string]: { user_name: string; total_points: number; user_id: string } } = {};
+    // Step 2: Get all games to filter by type
+    const { data: games, error: gamesError } = await supabase
+      .from('prediction_pools')
+      .select('id, type')
+      .eq('type', gameType);
+      
+    if (gamesError) {
+      console.error('❌ Error fetching games:', gamesError);
+      throw new Error('Failed to fetch games');
+    }
+
+    // Step 3: Get all users for user names
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, user_name');
+      
+    if (usersError) {
+      console.error('❌ Error fetching users:', usersError);
+      throw new Error('Failed to fetch users');
+    }
+
+    // Step 4: Filter predictions by game type and aggregate by user
+    const gameIds = games.map(g => g.id);
+    const userMap = users.reduce((acc: any, user: any) => {
+      acc[user.id] = user.user_name;
+      return acc;
+    }, {});
+
+    const userPoints: { [key: string]: number } = {};
     
-    data.forEach((entry: any) => {
-      const userId = entry.user_id;
-      if (!userPoints[userId]) {
-        userPoints[userId] = {
-          user_id: userId,
-          user_name: entry.users.user_name,
-          total_points: 0
-        };
+    predictions.forEach((prediction: any) => {
+      if (gameIds.includes(prediction.pool_id)) {
+        const userId = prediction.user_id;
+        userPoints[userId] = (userPoints[userId] || 0) + prediction.points_earned;
       }
-      userPoints[userId].total_points += entry.points_earned;
     });
 
-    // Convert to leaderboard format and sort by total points
-    const leaderboard = Object.values(userPoints)
-      .map(user => ({
-        user_id: user.user_id,
-        user_name: user.user_name,
-        user_points: user.total_points,
-        score: user.total_points,
+    // Step 5: Convert to leaderboard format
+    const leaderboard = Object.entries(userPoints)
+      .map(([userId, points]) => ({
+        user_id: userId,
+        user_name: userMap[userId] || 'Anonymous',
+        user_points: points as number,
+        score: points as number,
         created_at: new Date().toISOString()
       }))
       .sort((a, b) => b.user_points - a.user_points)
