@@ -285,7 +285,7 @@ export default function Leaderboard() {
                 {selectedCategory === 'streaker' && 'Consecutive days streak (20 pts per day)'}
                 {selectedCategory === 'friend_inviter' && '25 points for every successful friend that joins and uses the app'}
                 {selectedCategory === 'vote_leader' && 'Points from voting games only (10 pts each)'}
-                {selectedCategory === 'predict_leader' && 'Points from prediction games only (20 pts each)'}
+                {selectedCategory === 'predict_leader' && 'Pending points for correct predictions (20 pts each when resolved)'}
                 {selectedCategory === 'trivia_leader' && 'Points from trivia games only (15 pts each)'}
               </p>
             </div>

@@ -73,7 +73,7 @@ function useSubmitPrediction() {
       // Get the game details to know how many points to award
       const { data: game, error: gameError } = await supabase
         .from('prediction_pools')
-        .select('points_reward')
+        .select('points_reward, type')
         .eq('id', poolId)
         .single();
         
@@ -81,6 +81,18 @@ function useSubmitPrediction() {
         throw new Error('Game not found');
       }
       
+      // Determine points to award immediately (only Vote and Trivia get points now)
+      const gameType = game.type;
+      let immediatePoints = 0;
+      
+      if (gameType === 'vote' || gameType === 'trivia') {
+        // Award points immediately for Vote (10) and Trivia (15)
+        immediatePoints = game.points_reward;
+      } else if (gameType === 'predict') {
+        // Predict games get 0 points until resolution
+        immediatePoints = 0;
+      }
+
       // Save the prediction to user_predictions table
       const { data, error } = await supabase
         .from('user_predictions')
@@ -88,7 +100,7 @@ function useSubmitPrediction() {
           user_id: user.id,
           pool_id: poolId,
           prediction: prediction,
-          points_earned: game.points_reward,
+          points_earned: immediatePoints,
           created_at: new Date().toISOString()
         })
         .select()
@@ -103,9 +115,10 @@ function useSubmitPrediction() {
       
       return { 
         success: true, 
-        points_earned: game.points_reward,
+        points_earned: immediatePoints,
         pool_id: poolId,
-        prediction: prediction
+        prediction: prediction,
+        game_type: gameType
       };
     },
     onSuccess: () => {
@@ -149,10 +162,24 @@ export default function PlayPage() {
       {
         onSuccess: (data: any) => {
           setSelectedOptions(prev => ({ ...prev, [game.id]: selectedOption }));
-          const actualPoints = game.points || 10; // Use the game's actual point value
+          
+          let title = '';
+          let description = '';
+          
+          if (game.type === 'vote') {
+            title = 'Vote Submitted!';
+            description = `You selected "${selectedOption}" and earned ${data.points_earned} points!`;
+          } else if (game.type === 'trivia') {
+            title = 'Answer Submitted!';
+            description = `You selected "${selectedOption}" and earned ${data.points_earned} points!`;
+          } else if (game.type === 'predict') {
+            title = 'Prediction Submitted!';
+            description = `You predicted "${selectedOption}" - points will be awarded when the result is known!`;
+          }
+          
           toast({
-            title: `${game.type === 'vote' ? 'Vote' : game.type === 'prediction' ? 'Prediction' : 'Answer'} Submitted!`,
-            description: `You selected "${selectedOption}" and earned ${actualPoints} points!`,
+            title,
+            description,
           });
         },
         onError: () => {
