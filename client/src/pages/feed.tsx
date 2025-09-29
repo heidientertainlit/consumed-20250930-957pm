@@ -73,7 +73,7 @@ export default function Feed() {
     enabled: !!session?.access_token,
   });
 
-  // Like mutation
+  // Like mutation with optimistic updates
   const likeMutation = useMutation({
     mutationFn: async (postId: string) => {
       console.log('❤️ Submitting like:', { postId });
@@ -98,12 +98,50 @@ export default function Feed() {
       console.log('✅ Like success:', result);
       return result;
     },
-    onSuccess: (data, variables) => {
-      console.log('🔄 Invalidating social feed for like success');
-      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+    onMutate: async (postId) => {
+      // Optimistic update - immediately update UI
+      console.log('⚡ Optimistic like update for:', postId);
+      
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["social-feed"] });
+      
+      // Snapshot previous value
+      const previousPosts = queryClient.getQueryData(["social-feed"]);
+      
+      // Optimistically update posts
+      queryClient.setQueryData(["social-feed"], (old: SocialPost[] | undefined) => {
+        if (!old) return old;
+        return old.map(post => 
+          post.id === postId 
+            ? { ...post, likes: (post.likes || 0) + 1 }
+            : post
+        );
+      });
+      
+      // Update local like state
+      setLikedPosts(prev => new Set(prev).add(postId));
+      
+      return { previousPosts };
     },
-    onError: (error) => {
-      console.log('💥 Like mutation error:', error);
+    onError: (err, postId, context) => {
+      console.log('💥 Like mutation error - reverting optimistic update:', err);
+      
+      // Revert optimistic update
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["social-feed"], context.previousPosts);
+      }
+      
+      // Revert local like state
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    },
+    onSettled: () => {
+      // Always refetch after mutation (success or error)
+      console.log('🔄 Refetching social feed after like mutation');
+      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
     },
   });
 
