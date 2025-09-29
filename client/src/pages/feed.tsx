@@ -135,6 +135,7 @@ export default function Feed() {
   const fetchComments = async (postId: string) => {
     if (!session?.access_token) throw new Error('Not authenticated');
     
+    console.log('🔍 Fetching comments for post:', postId);
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}`, {
       method: 'GET',
       headers: {
@@ -143,8 +144,31 @@ export default function Feed() {
       },
     });
     
-    if (!response.ok) throw new Error('Failed to fetch comments');
-    return response.json();
+    console.log('📡 Comments response status:', response.status);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log('❌ Comments fetch error:', errorText);
+      throw new Error('Failed to fetch comments');
+    }
+    
+    const result = await response.json();
+    console.log('✅ Comments fetch success:', result);
+    
+    // Transform the response to match frontend interface
+    const transformedComments = result.comments?.map((comment: any) => ({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.created_at, // Transform created_at to createdAt
+      user: {
+        id: comment.user_id,
+        username: comment.username,
+        displayName: comment.username, // Use username as displayName for now
+        avatar: ''
+      }
+    })) || [];
+    
+    console.log('🔄 Transformed comments:', transformedComments);
+    return transformedComments;
   };
 
   const handleTrackConsumption = () => {
