@@ -136,7 +136,7 @@ serve(async (req) => {
 
           // Search for users by username or email
           const searchPattern = `%${query}%`;
-          const { data: users, error } = await supabase
+          let { data: users, error } = await supabase
             .from('users')
             .select('id, user_name, email')
             .or(`user_name.ilike.${searchPattern},email.ilike.${searchPattern}`)
