@@ -31,10 +31,22 @@ serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      // Simplified query to avoid schema cache issues
+      // Direct query with explicit column selection to avoid join issues
       const { data: posts, error } = await supabase
         .from('social_posts')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          media_title,
+          media_type,
+          media_creator,
+          media_image,
+          rating,
+          thoughts,
+          likes,
+          comments,
+          created_at
+        `)
         .order('created_at', { ascending: false })
         .limit(20);
 
