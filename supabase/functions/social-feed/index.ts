@@ -115,7 +115,7 @@ serve(async (req) => {
             displayName: (postUser as any)?.user_name || 'Unknown',
             avatar: (postUser as any)?.avatar || ''
           },
-          content: post.content || '',
+          content: post.thoughts || '',
           timestamp: post.created_at,
           likes: post.likes || 0,
           comments: post.comments || 0,
@@ -133,7 +133,18 @@ serve(async (req) => {
         };
       });
 
-      console.log('Transformed posts:', JSON.stringify(transformedPosts, null, 2));
+      console.log('Raw posts from database:', JSON.stringify(posts?.map(p => ({
+        id: p.id,
+        media_title: p.media_title,
+        media_image: p.media_image,
+        media_type: p.media_type,
+        thoughts: p.thoughts
+      })), null, 2));
+      console.log('Transformed posts:', JSON.stringify(transformedPosts?.map(p => ({
+        id: p.id,
+        content: p.content,
+        mediaItems: p.mediaItems
+      })), null, 2));
 
       return new Response(JSON.stringify(transformedPosts), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
