@@ -45,6 +45,47 @@ const mockTriviaQuestions = [
   }
 ];
 
+// Mock simple predictions with options for inline actions
+const mockSimplePredictions = [
+  {
+    id: "simple-pred-1",
+    type: "prediction",
+    title: "Weekend Box Office Champion",
+    description: "Which movie will dominate this weekend's box office?",
+    points: 15,
+    participants: 892,
+    deadline: "Friday 11:59 PM",
+    icon: "🎬",
+    options: ["Dune: Part Two", "Madame Web", "Ordinary Angels", "Lisa Frankenstein"]
+  },
+  {
+    id: "simple-pred-2", 
+    type: "prediction",
+    title: "Grammy Best New Artist",
+    description: "Who will take home the Grammy for Best New Artist?",
+    points: 25,
+    participants: 1543,
+    deadline: "Sunday 8:00 PM",
+    icon: "🏆",
+    options: ["Ice Spice", "Jelly Roll", "Coco Jones", "Noah Kahan"]
+  }
+];
+
+// Mock complex prediction (many options - should link to detail page)
+const mockComplexPredictions = [
+  {
+    id: "complex-pred-1",
+    type: "prediction", 
+    title: "2024 Oscar Predictions",
+    description: "Predict winners across 24 Academy Award categories",
+    points: 100,
+    participants: 5429,
+    deadline: "March 10th 6:00 PM",
+    icon: "🏆",
+    options: null // Many categories, needs detail page
+  }
+];
+
 // Fetch prediction pools
 function usePredictionPools() {
   return useQuery({
@@ -146,6 +187,8 @@ export default function PlayPage() {
   // Combine all game types into one feed
   const allGames = [
     ...mockTriviaQuestions,
+    ...mockSimplePredictions,
+    ...mockComplexPredictions,
     ...predictionPools.filter((pool: any) => pool.status === 'open')
   ].sort(() => Math.random() - 0.5); // Randomize order
 
@@ -261,48 +304,94 @@ export default function PlayPage() {
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex space-x-2">
-                  {game.type === 'trivia' ? (
-                    <Button 
-                      size="sm" 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                      data-testid={`play-trivia-${game.id}`}
-                    >
-                      <Play size={16} className="mr-2" />
-                      Play Now
-                    </Button>
-                  ) : game.type === 'vote' && !game.inline ? (
-                    <Button 
-                      size="sm" 
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                      data-testid={`vote-${game.id}`}
-                    >
-                      <Vote size={16} className="mr-2" />
-                      Vote
-                    </Button>
-                  ) : !game.inline && (
-                    <Link href="/predictions">
+                {/* Inline Actions for simple games */}
+                {game.type === 'trivia' && (
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-gray-700">Quick Actions:</div>
+                    <div className="grid grid-cols-2 gap-2">
                       <Button 
                         size="sm" 
-                        className="flex-1 bg-purple-700 hover:bg-purple-800 text-white"
-                        data-testid={`predict-${game.id}`}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        data-testid={`play-trivia-${game.id}`}
                       >
-                        <Trophy size={16} className="mr-2" />
-                        Make Prediction
+                        <Play size={14} className="mr-1" />
+                        Play Now
                       </Button>
-                    </Link>
-                  )}
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleInviteFriends(game)}
-                    data-testid={`invite-${game.id}`}
-                  >
-                    <UserPlus size={16} />
-                  </Button>
-                </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleInviteFriends(game)}
+                        data-testid={`invite-${game.id}`}
+                      >
+                        <UserPlus size={14} className="mr-1" />
+                        Invite
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inline Actions for simple predictions */}
+                {game.type !== 'trivia' && game.type !== 'vote' && game.options && game.options.length <= 4 && (
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-gray-700">Quick Predict:</div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {game.options.slice(0, 4).map((option: string) => (
+                        <button
+                          key={option}
+                          onClick={() => handleQuickVote(game.id, option)}
+                          disabled={submitPrediction.isPending}
+                          className={`p-2 text-sm rounded-md border transition-all text-left ${
+                            selectedOptions[game.id] === option
+                              ? 'border-purple-500 bg-purple-50 text-purple-900'
+                              : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                          } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleInviteFriends(game)}
+                        className="flex-1"
+                        data-testid={`invite-${game.id}`}
+                      >
+                        <UserPlus size={14} className="mr-1" />
+                        Invite
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Complex predictions - link to detail page */}
+                {game.type !== 'trivia' && game.type !== 'vote' && (!game.options || game.options.length > 4) && (
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-gray-700">Complex Prediction:</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link href="/predictions" className="flex-1">
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-purple-700 hover:bg-purple-800 text-white"
+                          data-testid={`predict-${game.id}`}
+                        >
+                          <Trophy size={14} className="mr-1" />
+                          Predict
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleInviteFriends(game)}
+                        data-testid={`invite-${game.id}`}
+                      >
+                        <UserPlus size={14} className="mr-1" />
+                        Invite
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
