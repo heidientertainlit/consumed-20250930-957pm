@@ -31,14 +31,27 @@ serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      // Simplified query to avoid schema cache issues
+      // Query posts and join with media data from social_posts_media table
       const { data: posts, error } = await supabase
         .from('social_posts')
-        .select('*')
+        .select(`
+          *,
+          social_posts_media (
+            id,
+            media_title,
+            media_type,
+            media_creator,
+            media_image_url,
+            media_external_id,
+            media_external_source,
+            rating
+          )
+        `)
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) {
+        console.log('Query error:', error);
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -106,6 +119,18 @@ serve(async (req) => {
       const transformedPosts = posts?.map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
+        // Get media items from the joined social_posts_media table
+        const mediaItems = post.social_posts_media ? post.social_posts_media.map((media: any) => ({
+          id: media.id,
+          title: media.media_title || '',
+          creator: media.media_creator || '',
+          mediaType: media.media_type || '',
+          imageUrl: media.media_image_url || '',
+          rating: media.rating || undefined,
+          externalId: media.media_external_id || '',
+          externalSource: media.media_external_source || ''
+        })) : [];
+        
         return {
           id: post.id,
           type: 'consumption',
@@ -120,16 +145,7 @@ serve(async (req) => {
           likes: post.likes || 0,
           comments: post.comments || 0,
           shares: 0,
-          mediaItems: post.media_title ? [{
-            id: post.id + '_media',
-            title: post.media_title,
-            creator: post.media_creator || '',
-            mediaType: post.media_type || '',
-            imageUrl: post.media_image || '',
-            rating: post.rating || undefined,
-            externalId: '',
-            externalSource: ''
-          }] : []
+          mediaItems: mediaItems
         };
       });
 
@@ -152,22 +168,17 @@ serve(async (req) => {
     }
 
     if (req.method === 'POST') {
-      // Create new post with full media data
+      // Create new post with media data in separate tables
       const body = await req.json();
       const { content, media_title, media_type, media_creator, media_image_url, rating } = body;
 
       console.log('Creating post with data:', { content, media_title, media_type, media_creator, media_image_url, rating });
 
-      // Direct insert with all media data
-      const { data: post, error } = await supabase
+      // First create the social post
+      const { data: post, error: postError } = await supabase
         .from('social_posts')
         .insert({
           user_id: user.id,
-          media_title: media_title || '',
-          media_type: media_type || '',
-          media_creator: media_creator || '',
-          media_image: media_image_url || '',
-          rating: rating || null,
           thoughts: content || '',
           audience: 'all',
           likes: 0,
@@ -176,15 +187,39 @@ serve(async (req) => {
         .select()
         .single();
 
-      if (error) {
-        console.log('Failed to create post:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+      if (postError) {
+        console.log('Failed to create post:', postError);
+        return new Response(JSON.stringify({ error: postError.message }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
       console.log('Successfully created post:', post);
+
+      // If there's media data, create the media record
+      if (media_title && media_type) {
+        const { data: mediaRecord, error: mediaError } = await supabase
+          .from('social_posts_media')
+          .insert({
+            post_id: post.id,
+            media_title: media_title,
+            media_type: media_type,
+            media_creator: media_creator || '',
+            media_image_url: media_image_url || '',
+            rating: rating || null
+          })
+          .select()
+          .single();
+
+        if (mediaError) {
+          console.log('Failed to create media record:', mediaError);
+          // Don't fail the whole request, just log the error
+        } else {
+          console.log('Successfully created media record:', mediaRecord);
+        }
+      }
+
       return new Response(JSON.stringify({ post }), {
         status: 201,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
