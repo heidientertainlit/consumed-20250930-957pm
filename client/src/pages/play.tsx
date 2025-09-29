@@ -54,7 +54,7 @@ function useSubmitPrediction() {
   
   return useMutation({
     mutationFn: async ({ poolId, prediction }: { poolId: string; prediction: string }) => {
-      console.log('🚀 Submitting directly to Supabase database...');
+      console.log('🚀 Saving submission to user_predictions table...');
       
       // Import Supabase client
       const { createClient } = await import('@supabase/supabase-js');
@@ -64,14 +64,46 @@ function useSubmitPrediction() {
       
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
       
-      // For now, just return success with correct points from the game
-      // This allows the UI to work properly and show the "✅ Submitted" confirmation
-      console.log('✅ Submission successful (simulated):', { poolId, prediction });
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Must be logged in to submit predictions');
+      }
       
-      // Note: To make submissions go to leaderboard, we need to actually save to user_predictions table
+      // Get the game details to know how many points to award
+      const { data: game, error: gameError } = await supabase
+        .from('prediction_pools')
+        .select('points_reward')
+        .eq('id', poolId)
+        .single();
+        
+      if (gameError || !game) {
+        throw new Error('Game not found');
+      }
+      
+      // Save the prediction to user_predictions table
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .insert({
+          user_id: user.id,
+          pool_id: poolId,
+          prediction: prediction,
+          points_earned: game.points_reward,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('❌ Error saving prediction:', error);
+        throw new Error('Failed to save prediction');
+      }
+      
+      console.log('✅ Prediction saved successfully:', data);
+      
       return { 
         success: true, 
-        points_earned: 'PLACEHOLDER_POINTS', // This will be replaced by actual game points
+        points_earned: game.points_reward,
         pool_id: poolId,
         prediction: prediction
       };
