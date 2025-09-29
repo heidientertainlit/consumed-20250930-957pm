@@ -161,6 +161,9 @@ export default function ListDetail() {
 
     // Use direct app URL for simple sharing
     const shareUrl = `${window.location.origin}/list/${urlListName}?user=${session.user.id}`;
+    
+    console.log('📋 Copying share URL:', shareUrl);
+    console.log('Session user ID:', session.user.id);
 
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -169,7 +172,7 @@ export default function ListDetail() {
       
       toast({
         title: "Link Copied!",
-        description: "Share this link with your friends to show your list",
+        description: shareUrl,
       });
     } catch (error) {
       console.error('Error copying link:', error);
