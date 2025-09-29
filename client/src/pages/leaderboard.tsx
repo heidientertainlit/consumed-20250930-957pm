@@ -20,6 +20,74 @@ const fetchLeaderboard = async (session: any, category: string = 'all_time', lim
     throw new Error('No authentication token available');
   }
 
+  // Import Supabase client for direct database calls
+  const { createClient } = await import('@supabase/supabase-js');
+  
+  const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+  
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // Handle game prediction categories directly from user_predictions table
+  if (category === 'vote_leader' || category === 'predict_leader' || category === 'trivia_leader') {
+    console.log(`🏆 Fetching ${category} leaderboard directly from Supabase...`);
+    
+    // Determine game type filter
+    let gameType = '';
+    if (category === 'vote_leader') gameType = 'vote';
+    else if (category === 'predict_leader') gameType = 'predict';  
+    else if (category === 'trivia_leader') gameType = 'trivia';
+    
+    // Query user_predictions joined with prediction_pools to get game types
+    const { data, error } = await supabase
+      .from('user_predictions')
+      .select(`
+        user_id,
+        points_earned,
+        prediction_pools!inner(type),
+        users!inner(user_name)
+      `)
+      .eq('prediction_pools.type', gameType)
+      .order('points_earned', { ascending: false })
+      .limit(limit);
+      
+    if (error) {
+      console.error('❌ Error fetching game leaderboard:', error);
+      throw new Error('Failed to fetch game leaderboard');
+    }
+
+    // Aggregate points by user
+    const userPoints: { [key: string]: { user_name: string; total_points: number; user_id: string } } = {};
+    
+    data.forEach((entry: any) => {
+      const userId = entry.user_id;
+      if (!userPoints[userId]) {
+        userPoints[userId] = {
+          user_id: userId,
+          user_name: entry.users.user_name,
+          total_points: 0
+        };
+      }
+      userPoints[userId].total_points += entry.points_earned;
+    });
+
+    // Convert to leaderboard format and sort by total points
+    const leaderboard = Object.values(userPoints)
+      .map(user => ({
+        user_id: user.user_id,
+        user_name: user.user_name,
+        user_points: user.total_points,
+        score: user.total_points,
+        created_at: new Date().toISOString()
+      }))
+      .sort((a, b) => b.user_points - a.user_points)
+      .slice(0, limit);
+
+    console.log(`✅ ${category} leaderboard loaded:`, leaderboard);
+    return leaderboard;
+  }
+
+  // For non-game categories, fall back to edge function
   const params = new URLSearchParams({
     category,
     limit: limit.toString(),
