@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, Share2, Trash2, MoreVertical, Star, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, Share2, Trash2, MoreVertical, Star, Clock, Calendar, Check } from "lucide-react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -137,7 +137,9 @@ export default function ListDetail() {
   }
 
 
-  // Use exact same working pattern as prediction invites
+  const [copied, setCopied] = useState(false);
+
+  // Simple copy link functionality
   const handleShare = async () => {
     if (!listData?.isPublic) {
       toast({
@@ -161,27 +163,20 @@ export default function ListDetail() {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const shareUrl = `${supabaseUrl}/functions/v1/share?type=list&id=${urlListName}&user_id=${session.user.id}`;
 
-    const shareData = {
-      title: `Check out my ${listData?.name || 'entertainment'} list on consumed!`,
-      text: `I'm tracking my ${listData?.name || 'entertainment'} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
-      url: shareUrl
-    };
-
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        toast({
-          title: "List Link Copied!",
-          description: "Share this with your friends to show your entertainment list",
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing list:', error);
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      
       toast({
-        title: "Share Failed",
-        description: "Unable to create share link",
+        title: "Link Copied!",
+        description: "Share this link with your friends to show your list",
+      });
+    } catch (error) {
+      console.error('Error copying link:', error);
+      toast({
+        title: "Copy Failed",
+        description: "Unable to copy link to clipboard",
         variant: "destructive"
       });
     }
@@ -334,9 +329,19 @@ export default function ListDetail() {
                 variant="outline"
                 onClick={handleShare}
                 data-testid="button-share-list"
+                className={copied ? "bg-green-50 border-green-200 text-green-700" : ""}
               >
-                <Share2 size={16} className="mr-2" />
-                Share
+                {copied ? (
+                  <>
+                    <Check size={16} className="mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Share2 size={16} className="mr-2" />
+                    Copy Link
+                  </>
+                )}
               </Button>
             </div>
           </div>
