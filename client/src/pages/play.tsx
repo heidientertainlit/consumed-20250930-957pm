@@ -308,26 +308,38 @@ export default function PlayPage() {
                   )}
                 </div>
 
-                {/* Show inline voting for all vote-type games with options */}
+                {/* Inline voting for vote games - enhanced design */}
                 {game.type === 'vote' && game.options && (
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">Quick Vote:</div>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-3">
                       {game.options.slice(0, 4).map((option: string) => (
                         <button
                           key={option}
                           onClick={() => handleQuickVote(game.id, option)}
                           disabled={submitPrediction.isPending}
-                          className={`p-3 text-sm rounded-lg border transition-all text-center ${
+                          className={`p-4 text-left rounded-xl border-2 transition-all hover:shadow-sm ${
                             selectedOptions[game.id] === option
-                              ? 'border-green-500 bg-green-50 text-green-900 font-medium'
+                              ? 'border-green-500 bg-green-50 text-green-900 font-medium shadow-sm'
                               : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
-                          } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}
+                          data-testid={`vote-option-${game.id}-${option}`}
                         >
-                          {option}
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{option}</span>
+                            {selectedOptions[game.id] === option && (
+                              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full" />
+                              </div>
+                            )}
+                          </div>
                         </button>
                       ))}
                     </div>
+                    {selectedOptions[game.id] && (
+                      <div className="text-center py-2">
+                        <div className="text-sm text-green-700 font-medium">✓ Vote submitted for "{selectedOptions[game.id]}"</div>
+                      </div>
+                    )}
                     <div className="flex space-x-2">
                       <Button 
                         variant="outline" 
@@ -343,52 +355,72 @@ export default function PlayPage() {
                   </div>
                 )}
 
-                {/* Inline Actions for simple games */}
+                {/* Trivia game actions - enhanced design */}
                 {game.type === 'trivia' && (
                   <div className="space-y-3">
-                    <div className="text-sm font-medium text-gray-700">Quick Actions:</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        size="sm" 
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                        data-testid={`play-trivia-${game.id}`}
-                      >
-                        <Play size={14} className="mr-1" />
-                        Play Now
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleInviteFriends(game)}
-                        data-testid={`invite-${game.id}`}
-                      >
-                        <UserPlus size={14} className="mr-1" />
-                        Invite
-                      </Button>
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-sm font-medium text-blue-900">Ready to test your knowledge?</div>
+                        <Badge variant="outline" className="text-blue-700 border-blue-300">
+                          {game.difficulty}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 hover:bg-blue-700 text-white hover:scale-105 transition-all"
+                          data-testid={`play-trivia-${game.id}`}
+                        >
+                          <Play size={14} className="mr-1" />
+                          Play Now
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleInviteFriends(game)}
+                          data-testid={`invite-${game.id}`}
+                          className="hover:scale-105 transition-all"
+                        >
+                          <UserPlus size={14} className="mr-1" />
+                          Invite
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Inline voting for simple predictions (2-4 options) */}
+                {/* Inline predictions for simple options */}
                 {game.type === 'prediction' && game.options && game.options.length <= 4 && (
                   <div className="space-y-3">
-                    <div className="text-sm font-medium text-gray-700">Quick Predict:</div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 gap-3">
                       {game.options.slice(0, 4).map((option: string) => (
                         <button
                           key={option}
                           onClick={() => handleQuickVote(game.id, option)}
                           disabled={submitPrediction.isPending}
-                          className={`p-3 text-sm rounded-lg border transition-all text-center ${
+                          className={`p-4 text-left rounded-xl border-2 transition-all hover:shadow-sm ${
                             selectedOptions[game.id] === option
-                              ? 'border-purple-500 bg-purple-50 text-purple-900 font-medium'
+                              ? 'border-purple-500 bg-purple-50 text-purple-900 font-medium shadow-sm'
                               : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
-                          } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}`}
+                          data-testid={`predict-option-${game.id}-${option}`}
                         >
-                          {option}
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{option}</span>
+                            {selectedOptions[game.id] === option && (
+                              <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                                <div className="w-2 h-2 bg-white rounded-full" />
+                              </div>
+                            )}
+                          </div>
                         </button>
                       ))}
                     </div>
+                    {selectedOptions[game.id] && (
+                      <div className="text-center py-2">
+                        <div className="text-sm text-purple-700 font-medium">✓ Prediction submitted for "{selectedOptions[game.id]}"</div>
+                      </div>
+                    )}
                     <div className="flex space-x-2">
                       <Button 
                         variant="outline" 
@@ -404,40 +436,6 @@ export default function PlayPage() {
                   </div>
                 )}
 
-                {/* Inline voting for vote-type games */}
-                {game.type === 'vote' && game.options && (
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium text-gray-700">Quick Vote:</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {game.options.slice(0, 4).map((option: string) => (
-                        <button
-                          key={option}
-                          onClick={() => handleQuickVote(game.id, option)}
-                          disabled={submitPrediction.isPending}
-                          className={`p-3 text-sm rounded-lg border transition-all text-center ${
-                            selectedOptions[game.id] === option
-                              ? 'border-green-500 bg-green-50 text-green-900 font-medium'
-                              : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
-                          } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleInviteFriends(game)}
-                        className="flex-1"
-                        data-testid={`invite-${game.id}`}
-                      >
-                        <UserPlus size={14} className="mr-1" />
-                        Invite
-                      </Button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Complex predictions - link to detail page */}
                 {game.type !== 'trivia' && game.type !== 'vote' && (!game.options || game.options.length > 4) && (
