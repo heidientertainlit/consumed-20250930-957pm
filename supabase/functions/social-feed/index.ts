@@ -29,23 +29,30 @@ serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      console.log('Getting social posts...');
+      console.log('Getting social posts with media items...');
       
-      // First, reload schema cache to clear stale relationships
-      try {
-        await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/?reload=true`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` }
-        });
-        console.log('Schema cache reloaded');
-      } catch (reloadError) {
-        console.log('Schema reload failed:', reloadError);
-      }
-      
-      // Simple direct query - only social_posts table
+      // Query with proper join to media_items
       const { data: posts, error } = await supabase
         .from('social_posts')
-        .select('id, user_id, media_title, media_type, media_creator, media_image, rating, thoughts, likes, comments, created_at')
+        .select(`
+          id,
+          user_id,
+          thoughts,
+          likes,
+          comments,
+          created_at,
+          media_items (
+            id,
+            title,
+            media_type,
+            creator,
+            image_url,
+            external_id,
+            external_source,
+            description,
+            year
+          )
+        `)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -59,32 +66,65 @@ serve(async (req) => {
 
       console.log('Found posts:', posts?.length || 0);
 
-      // Transform posts for frontend (simple version)
-      const transformedPosts = posts?.map(post => ({
-        id: post.id,
-        type: 'consumption',
-        user: {
-          id: post.user_id,
-          username: 'User',
-          displayName: 'User',
-          avatar: ''
-        },
-        content: post.thoughts || '',
-        timestamp: post.created_at,
-        likes: post.likes || 0,
-        comments: post.comments || 0,
-        shares: 0,
-        mediaItems: post.media_title ? [{
-          id: post.id + '_media',
-          title: post.media_title,
-          creator: post.media_creator || '',
-          mediaType: post.media_type || '',
-          imageUrl: post.media_image || '',
-          rating: post.rating || undefined,
-          externalId: '',
-          externalSource: ''
-        }] : []
-      })) || [];
+      // Get user data separately to avoid complex joins
+      const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, user_name, display_name, email, avatar')
+        .in('id', userIds);
+
+      const userMap = new Map(users?.map(user => [user.id, user]) || []);
+
+      // Find missing user IDs and fetch from auth.users as fallback
+      const missingUserIds = userIds.filter(id => !userMap.has(id));
+      if (missingUserIds.length > 0) {
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        
+        if (authUsers?.users) {
+          authUsers.users.forEach(authUser => {
+            if (missingUserIds.includes(authUser.id)) {
+              userMap.set(authUser.id, {
+                id: authUser.id,
+                user_name: authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
+                display_name: authUser.user_metadata?.display_name || authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
+                email: authUser.email || '',
+                avatar: authUser.user_metadata?.avatar || ''
+              });
+            }
+          });
+        }
+      }
+
+      // Transform posts for frontend
+      const transformedPosts = posts?.map(post => {
+        const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+        
+        return {
+          id: post.id,
+          type: 'consumption',
+          user: {
+            id: post.user_id,
+            username: postUser?.user_name || 'Unknown',
+            displayName: postUser?.display_name || postUser?.user_name || 'Unknown',
+            avatar: postUser?.avatar || ''
+          },
+          content: post.thoughts || '',
+          timestamp: post.created_at,
+          likes: post.likes || 0,
+          comments: post.comments || 0,
+          shares: 0,
+          mediaItems: post.media_items ? [{
+            id: post.media_items.id,
+            title: post.media_items.title,
+            creator: post.media_items.creator || '',
+            mediaType: post.media_items.media_type || '',
+            imageUrl: post.media_items.image_url || '',
+            rating: undefined,
+            externalId: post.media_items.external_id || '',
+            externalSource: post.media_items.external_source || ''
+          }] : []
+        };
+      }) || [];
 
       console.log('Returning posts:', transformedPosts.length);
       console.log('Posts with media:', transformedPosts.filter(p => p.mediaItems.length > 0).length);
@@ -98,17 +138,42 @@ serve(async (req) => {
       const body = await req.json();
       const { content, media_title, media_type, media_creator, media_image_url, rating } = body;
 
-      console.log('Creating post:', { content, media_title, media_type, media_creator, media_image_url, rating });
+      console.log('Creating post with media:', { content, media_title, media_type, media_creator, media_image_url, rating });
 
+      let mediaId = null;
+      
+      // First create media item if media data provided
+      if (media_title) {
+        const { data: mediaItem, error: mediaError } = await supabase
+          .from('media_items')
+          .insert({
+            title: media_title,
+            media_type: media_type || 'unknown',
+            creator: media_creator || '',
+            image_url: media_image_url || '',
+            external_id: '',
+            external_source: ''
+          })
+          .select('id')
+          .single();
+
+        if (mediaError) {
+          console.log('Failed to create media item:', mediaError);
+          return new Response(JSON.stringify({ error: 'Failed to create media: ' + mediaError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        mediaId = mediaItem.id;
+      }
+
+      // Then create social post with reference to media item
       const { data: post, error } = await supabase
         .from('social_posts')
         .insert({
           user_id: user.id,
-          media_title: media_title || '',
-          media_type: media_type || '',
-          media_creator: media_creator || '',
-          media_image: media_image_url || '',
-          rating: rating || null,
+          media_id: mediaId,
           thoughts: content || '',
           audience: 'all',
           likes: 0,
