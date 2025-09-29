@@ -166,7 +166,7 @@ export default function PlayPage() {
     const shareData = {
       title: `Join me on consumed!`,
       text: `I'm playing "${item.title}" - think you can beat me? Join the game and let's see who wins! 🎯`,
-      url: `${window.location.origin}/functions/v1/share?type=pool&id=${item.id}`
+      url: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-invite?type=pool&id=${item.id}`
     };
 
     try {
