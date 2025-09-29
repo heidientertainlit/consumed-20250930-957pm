@@ -82,9 +82,7 @@ function useSubmitPrediction() {
       
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
-    }
+    // No need to refresh the games list after submission
   });
 }
 
@@ -294,8 +292,8 @@ export default function PlayPage() {
                           onClick={() => handleOptionSelect(game.id, option)}
                           className={`p-4 text-left rounded-lg border-2 transition-all ${
                             selectedAnswers[game.id] === option
-                              ? 'border-gray-400 bg-gray-50'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                           }`}
                           data-testid={`option-${game.id}-${index}`}
                         >
