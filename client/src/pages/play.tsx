@@ -131,7 +131,7 @@ function useSubmitPrediction() {
   
   return useMutation({
     mutationFn: async ({ poolId, prediction }: { poolId: string; prediction: string }) => {
-      const response = await apiRequest('/api/predictions/predict', {
+      const response = await fetch('/api/predictions/predict', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -142,7 +142,11 @@ function useSubmitPrediction() {
         })
       });
       
-      return response;
+      if (!response.ok) {
+        throw new Error('Failed to submit prediction');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
@@ -165,11 +169,11 @@ export default function PlayPage() {
     submitPrediction.mutate(
       { poolId, prediction: option },
       {
-        onSuccess: (data) => {
+        onSuccess: (data: any) => {
           setSelectedOptions(prev => ({ ...prev, [poolId]: option }));
           toast({
             title: "Vote Submitted!",
-            description: `You voted for "${option}" and earned ${data.points_earned} points!`,
+            description: `You voted for "${option}" and earned ${data.points_earned || 10} points!`,
           });
         },
         onError: () => {
