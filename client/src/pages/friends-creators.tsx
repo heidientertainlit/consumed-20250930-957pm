@@ -56,11 +56,16 @@ export default function FriendsCreatorsPage() {
   });
 
   // Search users
-  const { data: searchResults, isLoading: searchLoading } = useQuery({
+  const { data: searchResults, isLoading: searchLoading, error: searchError } = useQuery({
     queryKey: ['user-search', searchQuery],
     queryFn: async () => {
-      if (!session?.access_token || !searchQuery.trim()) return { users: [] };
+      console.log('🔍 Searching for users with query:', searchQuery);
+      if (!session?.access_token || !searchQuery.trim()) {
+        console.log('❌ Search skipped - no session or empty query');
+        return { users: [] };
+      }
 
+      console.log('📡 Calling manage-friendships API...');
       const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
         method: 'POST',
         headers: {
@@ -70,11 +75,20 @@ export default function FriendsCreatorsPage() {
         body: JSON.stringify({ action: 'searchUsers', query: searchQuery }),
       });
 
-      if (!response.ok) throw new Error('Failed to search users');
-      return response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Search failed:', response.status, errorText);
+        throw new Error('Failed to search users');
+      }
+      
+      const result = await response.json();
+      console.log('✅ Search results:', result);
+      return result;
     },
     enabled: !!session?.access_token && searchQuery.length > 2,
   });
+  
+  console.log('Search state:', { searchQuery, searchResults, searchLoading, searchError, enabled: !!session?.access_token && searchQuery.length > 2 });
 
   // Send friend request mutation
   const sendRequestMutation = useMutation({
