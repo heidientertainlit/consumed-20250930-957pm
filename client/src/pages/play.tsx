@@ -108,7 +108,11 @@ function useSubmitPrediction() {
         prediction: prediction
       };
     },
-    // No need to refresh the games list after submission
+    onSuccess: () => {
+      // Invalidate leaderboard cache to show updated points immediately
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      console.log('🔄 Leaderboard cache invalidated - points will update immediately');
+    }
   });
 }
 
