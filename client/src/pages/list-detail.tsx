@@ -157,8 +157,9 @@ export default function ListDetail() {
       return;
     }
 
-    // Use share function for proper Open Graph previews
-    const shareUrl = `${window.location.origin}/functions/v1/share?type=list&id=${urlListName}&user_id=${session.user.id}`;
+    // Get the Supabase URL for the share function
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const shareUrl = `${supabaseUrl}/functions/v1/share?type=list&id=${urlListName}&user_id=${session.user.id}`;
 
     const shareData = {
       title: `Check out my ${listData?.name || 'entertainment'} list on consumed!`,
