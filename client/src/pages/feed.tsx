@@ -76,6 +76,7 @@ export default function Feed() {
   // Like mutation
   const likeMutation = useMutation({
     mutationFn: async (postId: string) => {
+      console.log('❤️ Submitting like:', { postId });
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-like`, {
@@ -87,11 +88,22 @@ export default function Feed() {
         body: JSON.stringify({ post_id: postId }),
       });
       
-      if (!response.ok) throw new Error('Failed to like post');
-      return response.json();
+      console.log('💗 Like response status:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('❌ Like error:', errorText);
+        throw new Error('Failed to like post');
+      }
+      const result = await response.json();
+      console.log('✅ Like success:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log('🔄 Invalidating social feed for like success');
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+    },
+    onError: (error) => {
+      console.log('💥 Like mutation error:', error);
     },
   });
 
