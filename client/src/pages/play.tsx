@@ -330,20 +330,55 @@ export default function PlayPage() {
                   </div>
                 )}
 
-                {/* Inline Actions for simple predictions */}
-                {game.type !== 'trivia' && game.type !== 'vote' && game.options && game.options.length <= 4 && (
+                {/* Inline voting for simple predictions (2-4 options) */}
+                {game.type === 'prediction' && game.options && game.options.length <= 4 && (
                   <div className="space-y-3">
                     <div className="text-sm font-medium text-gray-700">Quick Predict:</div>
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       {game.options.slice(0, 4).map((option: string) => (
                         <button
                           key={option}
                           onClick={() => handleQuickVote(game.id, option)}
                           disabled={submitPrediction.isPending}
-                          className={`p-2 text-sm rounded-md border transition-all text-left ${
+                          className={`p-3 text-sm rounded-lg border transition-all text-center ${
                             selectedOptions[game.id] === option
-                              ? 'border-purple-500 bg-purple-50 text-purple-900'
+                              ? 'border-purple-500 bg-purple-50 text-purple-900 font-medium'
                               : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                          } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleInviteFriends(game)}
+                        className="flex-1"
+                        data-testid={`invite-${game.id}`}
+                      >
+                        <UserPlus size={14} className="mr-1" />
+                        Invite
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inline voting for vote-type games */}
+                {game.type === 'vote' && game.options && (
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-gray-700">Quick Vote:</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {game.options.slice(0, 4).map((option: string) => (
+                        <button
+                          key={option}
+                          onClick={() => handleQuickVote(game.id, option)}
+                          disabled={submitPrediction.isPending}
+                          className={`p-3 text-sm rounded-lg border transition-all text-center ${
+                            selectedOptions[game.id] === option
+                              ? 'border-green-500 bg-green-50 text-green-900 font-medium'
+                              : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
                           } ${submitPrediction.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           {option}
