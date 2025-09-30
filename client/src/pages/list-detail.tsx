@@ -133,6 +133,18 @@ export default function ListDetail() {
     }
   }
 
+  function getListTypeFromTitle(title: string): string {
+    const typeMap: { [key: string]: string } = {
+      'All': 'all',
+      'Currently': 'currently',
+      'Queue': 'queue',
+      'Finished': 'finished',
+      'Did Not Finish': 'dnf',
+      'Favorites': 'favorites'
+    };
+    return typeMap[title] || 'all';
+  }
+
   function capitalizeFirst(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
@@ -447,7 +459,8 @@ export default function ListDetail() {
       {/* Consumption Tracker Modal for Adding Media */}
       <ConsumptionTracker 
         isOpen={isTrackModalOpen} 
-        onClose={() => setIsTrackModalOpen(false)} 
+        onClose={() => setIsTrackModalOpen(false)}
+        defaultListType={listData?.name && listData.name !== 'All' ? getListTypeFromTitle(listData.name) : undefined}
       />
 
     </div>

@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 interface ConsumptionTrackerProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultListType?: string; // Auto-select this list when provided
 }
 
 interface MediaResult {
@@ -31,7 +32,7 @@ interface MediaResult {
   url?: string;
 }
 
-export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrackerProps) {
+export default function ConsumptionTracker({ isOpen, onClose, defaultListType }: ConsumptionTrackerProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["All Media"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
@@ -56,6 +57,19 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
     "Games",
     "Sports"
   ];
+
+  // Helper to get display name from list type
+  const getListDisplayName = (listType: string): string => {
+    const nameMap: { [key: string]: string } = {
+      'all': 'All',
+      'currently': 'Currently',
+      'queue': 'Queue',
+      'finished': 'Finished',
+      'dnf': 'Did Not Finish',
+      'favorites': 'Favorites'
+    };
+    return nameMap[listType] || listType;
+  };
 
   // Removed old Express API consumption logging - now using Supabase track-media edge function below
 
@@ -480,58 +494,69 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
             Cancel
           </Button>
 
-          {/* Split Button - Quick Add with Dropdown */}
-          <div className="flex">
+          {/* Conditional Button: Direct add if defaultListType provided, otherwise show dropdown */}
+          {defaultListType ? (
             <Button
-              onClick={() => handleAddMedia('all')}
+              onClick={() => handleAddMedia(defaultListType)}
               disabled={!selectedMedia || trackMediaMutation.isPending}
-              className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400 rounded-r-none border-r border-blue-700"
+              className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400"
+              data-testid="button-add-to-list"
             >
-              {trackMediaMutation.isPending ? "Adding..." : "Quick Add"}
+              {trackMediaMutation.isPending ? "Adding..." : `Add to ${getListDisplayName(defaultListType)}`}
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  disabled={!selectedMedia || trackMediaMutation.isPending}
-                  className="px-2 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400 rounded-l-none"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => handleAddMedia('currently')}
-                  className="cursor-pointer"
-                >
-                  Currently
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleAddMedia('queue')}
-                  className="cursor-pointer"
-                >
-                  Queue
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleAddMedia('finished')}
-                  className="cursor-pointer"
-                >
-                  Finished
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleAddMedia('dnf')}
-                  className="cursor-pointer"
-                >
-                  Did Not Finish
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleAddMedia('favorites')}
-                  className="cursor-pointer"
-                >
-                  Favorites
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          ) : (
+            <div className="flex">
+              <Button
+                onClick={() => handleAddMedia('all')}
+                disabled={!selectedMedia || trackMediaMutation.isPending}
+                className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400 rounded-r-none border-r border-blue-700"
+              >
+                {trackMediaMutation.isPending ? "Adding..." : "Quick Add"}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    disabled={!selectedMedia || trackMediaMutation.isPending}
+                    className="px-2 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400 rounded-l-none"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => handleAddMedia('currently')}
+                    className="cursor-pointer"
+                  >
+                    Currently
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAddMedia('queue')}
+                    className="cursor-pointer"
+                  >
+                    Queue
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAddMedia('finished')}
+                    className="cursor-pointer"
+                  >
+                    Finished
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAddMedia('dnf')}
+                    className="cursor-pointer"
+                  >
+                    Did Not Finish
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAddMedia('favorites')}
+                    className="cursor-pointer"
+                  >
+                    Favorites
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </div>
       </DialogContent>
 
