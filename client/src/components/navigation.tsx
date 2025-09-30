@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, Search } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import SearchModal from "./search-modal";
@@ -135,6 +135,20 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <Activity className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Feed</span>
+          </Link>
+
+          <Link
+            href="/user/user-1"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location.startsWith("/user") ? "bg-white/20" : ""}`}
+          >
+            <div className="relative">
+              <User className="text-white" size={24} />
+              <svg className="absolute -right-1 -bottom-1 w-3 h-3 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22C12 22 16 18 16 12C16 6 12 2 12 2Z" />
+                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22" opacity="0.5" />
+              </svg>
+            </div>
+            <span className="text-xs font-medium text-white">Profile</span>
           </Link>
 
         </div>
