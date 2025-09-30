@@ -93,10 +93,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             </button>
             <Link
               href="/user/user-1"
-              className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              className="relative w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
               data-testid="profile-avatar"
             >
-              <span className="text-sm font-bold text-white">JD</span>
+              <User className="text-white" size={16} />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center">
+                <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22C12 22 16 18 16 12C16 6 12 2 12 2Z" />
+                  <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22" opacity="0.5" />
+                </svg>
+              </div>
             </Link>
           </div>
         </div>
