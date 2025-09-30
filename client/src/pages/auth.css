@@ -1,0 +1,25 @@
+/* Surgical override for login form text colors */
+/* Double selector bumps specificity above body rule with !important */
+
+#auth #auth .form-input,
+#auth #auth input[type="email"],
+#auth #auth input[type="password"] {
+  color: #000 !important;
+}
+
+/* placeholders */
+#auth #auth .form-input::placeholder,
+#auth #auth input::placeholder {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+/* labels/text above fields */
+#auth #auth .form-label {
+  color: #000 !important;
+}
+
+/* Safari/Chrome autofill */
+#auth #auth input:-webkit-autofill {
+  -webkit-text-fill-color: #000 !important;
+  transition: background-color 9999s ease-out 0s;
+}

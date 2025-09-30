@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import "./auth.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -114,11 +115,8 @@ export default function LoginPage() {
         
         {/* Auth form */}
         <div 
+          id="auth"
           className="bg-white rounded-2xl p-8 shadow-2xl border border-purple-200"
-          style={{ 
-            '--foreground': 'hsl(0, 0%, 0%)',
-            '--muted-foreground': 'hsl(0, 0%, 45%)'
-          } as React.CSSProperties}
         >
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6 bg-gradient-to-r from-purple-600 to-purple-800">
@@ -141,7 +139,7 @@ export default function LoginPage() {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-email" className="form-label">Email</Label>
                   <Input
                     id="signin-email"
                     type="email"
@@ -149,11 +147,11 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     data-testid="input-signin-email"
-                    className="bg-white text-black placeholder:text-gray-500"
+                    className="form-input bg-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <Label htmlFor="signin-password" className="form-label">Password</Label>
                   <Input
                     id="signin-password"
                     type="password"
@@ -161,7 +159,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     data-testid="input-signin-password"
-                    className="bg-white text-black placeholder:text-gray-500"
+                    className="form-input bg-white"
                   />
                 </div>
                 <Button
@@ -178,7 +176,7 @@ export default function LoginPage() {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email" className="form-label">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -186,11 +184,11 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     data-testid="input-signup-email"
-                    className="bg-white text-black placeholder:text-gray-500"
+                    className="form-input bg-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password" className="form-label">Password</Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -198,7 +196,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     data-testid="input-signup-password"
-                    className="bg-white text-black placeholder:text-gray-500"
+                    className="form-input bg-white"
                   />
                 </div>
                 <Button
