@@ -34,7 +34,11 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       <div className="bg-gradient-to-r from-slate-900 to-purple-900 sticky top-0 z-50">
         <div className="flex justify-between items-center h-16 px-4">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-white">consumed</span>
+            <img
+              src="/consumed-logo.png"
+              alt="consumed"
+              className="h-8 w-auto"
+            />
           </Link>
           <div className="flex items-center space-x-3">
             <button
