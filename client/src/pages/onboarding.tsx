@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, Sparkles, Dna } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Dna, Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 interface SurveyAnswer {
   questionId: string;
-  answer: string;
+  answer: string | string[];
 }
 
 interface DNAProfile {
@@ -16,69 +18,6 @@ interface DNAProfile {
   superpowers: string[];
   meaning: string;
 }
-
-const surveyQuestions = [
-  {
-    id: "discovery",
-    question: "How do you usually discover new entertainment?",
-    options: [
-      { value: "social", label: "Friends and social media recommendations" },
-      { value: "algorithms", label: "Platform algorithms and trending lists" },
-      { value: "critics", label: "Professional reviews and critic scores" },
-      { value: "explore", label: "I love browsing and discovering randomly" }
-    ]
-  },
-  {
-    id: "consumption_style",
-    question: "What's your ideal entertainment consumption style?",
-    options: [
-      { value: "binge", label: "Binge everything in marathon sessions" },
-      { value: "scheduled", label: "Regular scheduled viewing/reading time" },
-      { value: "mood", label: "Whatever matches my current mood" },
-      { value: "social", label: "Only when I can share the experience with others" }
-    ]
-  },
-  {
-    id: "genre_preference",
-    question: "Which best describes your genre approach?",
-    options: [
-      { value: "loyal", label: "I stick to genres I know I love" },
-      { value: "adventurous", label: "I actively seek out new and different genres" },
-      { value: "mood_based", label: "My genre choice depends entirely on my mood" },
-      { value: "quality_first", label: "Genre doesn't matter if the quality is high" }
-    ]
-  },
-  {
-    id: "sharing_style",
-    question: "How do you like to share your entertainment experiences?",
-    options: [
-      { value: "detailed_reviews", label: "Write detailed reviews and thoughtful analysis" },
-      { value: "quick_ratings", label: "Quick ratings and short reactions" },
-      { value: "recommendations", label: "Focus on recommending to specific people" },
-      { value: "private", label: "Keep my entertainment experiences mostly private" }
-    ]
-  },
-  {
-    id: "completion_style",
-    question: "What's your approach to finishing entertainment?",
-    options: [
-      { value: "completionist", label: "I finish everything I start, no matter what" },
-      { value: "selective", label: "Life's too short for bad content - I drop things quickly" },
-      { value: "comeback", label: "I take breaks but usually come back to finish later" },
-      { value: "sampler", label: "I prefer trying many things rather than finishing everything" }
-    ]
-  },
-  {
-    id: "emotional_connection",
-    question: "What creates the strongest emotional connection for you?",
-    options: [
-      { value: "characters", label: "Deep, complex characters I can relate to" },
-      { value: "storytelling", label: "Masterful storytelling and plot construction" },
-      { value: "world_building", label: "Rich, immersive worlds I can escape into" },
-      { value: "themes", label: "Content that explores meaningful themes and ideas" }
-    ]
-  }
-];
 
 const generateDNAProfile = (answers: SurveyAnswer[]): DNAProfile => {
   // Analyze answers to determine personality type
@@ -159,12 +98,44 @@ const generateDNAProfile = (answers: SurveyAnswer[]): DNAProfile => {
 };
 
 export default function OnboardingPage() {
+  const { session } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<SurveyAnswer[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [dnaProfile, setDNAProfile] = useState<DNAProfile | null>(null);
+  const [surveyQuestions, setSurveyQuestions] = useState<any[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
 
-  const handleAnswer = (value: string) => {
+  // Fetch survey questions from database
+  useEffect(() => {
+    const fetchSurveyQuestions = async () => {
+      try {
+        const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_questions?select=*&order=display_order.asc', {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (response.ok) {
+          const questions = await response.json();
+          setSurveyQuestions(questions);
+        } else {
+          console.error('Failed to fetch survey questions');
+        }
+      } catch (error) {
+        console.error('Error fetching survey questions:', error);
+      } finally {
+        setIsLoadingQuestions(false);
+      }
+    };
+
+    fetchSurveyQuestions();
+  }, [session?.access_token]);
+
+  const handleAnswer = (value: string | string[]) => {
+    if (surveyQuestions.length === 0) return;
+    
     const newAnswers = answers.filter(a => a.questionId !== surveyQuestions[currentQuestion].id);
     newAnswers.push({
       questionId: surveyQuestions[currentQuestion].id,
@@ -191,10 +162,28 @@ export default function OnboardingPage() {
   };
 
   const getCurrentAnswer = () => {
+    if (surveyQuestions.length === 0) return undefined;
     return answers.find(a => a.questionId === surveyQuestions[currentQuestion].id)?.answer;
   };
 
-  const progress = ((currentQuestion + 1) / surveyQuestions.length) * 100;
+  const progress = surveyQuestions.length > 0 ? ((currentQuestion + 1) / surveyQuestions.length) * 100 : 0;
+
+  // Show loading state while fetching questions
+  if (isLoadingQuestions) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Loader2 className="text-white animate-spin" size={40} />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Loading Your Entertainment DNA Survey</h1>
+          <p className="text-gray-600 text-lg">
+            Preparing your personalized questions...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (showResults && dnaProfile) {
     return (
@@ -279,28 +268,85 @@ export default function OnboardingPage() {
 
         {/* Question */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6 leading-relaxed">
-            {surveyQuestions[currentQuestion].question}
-          </h2>
+          {surveyQuestions.length > 0 && currentQuestion < surveyQuestions.length && (
+            <>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6 leading-relaxed">
+                {surveyQuestions[currentQuestion].question_text}
+              </h2>
 
-          <RadioGroup 
-            value={getCurrentAnswer() || ""} 
-            onValueChange={handleAnswer}
-            className="space-y-4"
-          >
-            {surveyQuestions[currentQuestion].options.map((option) => (
-              <div key={option.value} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
-                <RadioGroupItem value={option.value} id={option.value} />
-                <Label 
-                  htmlFor={option.value} 
-                  className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
-                  data-testid={`option-${option.value}`}
+              {/* Text Input */}
+              {surveyQuestions[currentQuestion].question_type === 'text' && (
+                <textarea
+                  value={getCurrentAnswer() || ""}
+                  onChange={(e) => handleAnswer(e.target.value)}
+                  placeholder="Please share your thoughts..."
+                  className="w-full p-4 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[120px] resize-vertical text-black bg-white placeholder:text-gray-500"
+                  data-testid="text-input"
+                />
+              )}
+
+              {/* Single Select */}
+              {surveyQuestions[currentQuestion].question_type === 'select' && (
+                <RadioGroup 
+                  value={getCurrentAnswer() || ""} 
+                  onValueChange={handleAnswer}
+                  className="space-y-4"
                 >
-                  {option.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
+                  {surveyQuestions[currentQuestion].options?.map((option, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+                      <RadioGroupItem value={option} id={`option-${index}`} />
+                      <Label 
+                        htmlFor={`option-${index}`} 
+                        className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
+                        data-testid={`option-${option}`}
+                      >
+                        {option}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              )}
+
+              {/* Multi-Select */}
+              {surveyQuestions[currentQuestion].question_type === 'multi-select' && (
+                <div className="space-y-4">
+                  {surveyQuestions[currentQuestion].options?.map((option, index) => {
+                    const currentAnswers = Array.isArray(getCurrentAnswer()) ? getCurrentAnswer() : [];
+                    const isChecked = currentAnswers.includes(option);
+
+                    return (
+                      <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+                        <Checkbox
+                          id={`multi-option-${index}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            const currentAnswers = Array.isArray(getCurrentAnswer()) ? [...getCurrentAnswer()] : [];
+                            if (checked) {
+                              currentAnswers.push(option);
+                            } else {
+                              const optionIndex = currentAnswers.indexOf(option);
+                              if (optionIndex > -1) {
+                                currentAnswers.splice(optionIndex, 1);
+                              }
+                            }
+                            handleAnswer(currentAnswers);
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <Label 
+                          htmlFor={`multi-option-${index}`} 
+                          className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
+                          data-testid={`multi-option-${option}`}
+                        >
+                          {option}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Navigation */}
@@ -318,12 +364,12 @@ export default function OnboardingPage() {
 
           <Button
             onClick={handleNext}
-            disabled={!getCurrentAnswer()}
+            disabled={surveyQuestions.length === 0 || !getCurrentAnswer() || (Array.isArray(getCurrentAnswer()) && getCurrentAnswer().length === 0)}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-2 px-8 py-3 disabled:opacity-50"
             data-testid="next-question-button"
           >
-            <span>{currentQuestion === surveyQuestions.length - 1 ? "Discover My DNA" : "Next"}</span>
-            {currentQuestion === surveyQuestions.length - 1 ? (
+            <span>{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Discover My DNA" : "Next"}</span>
+            {surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? (
               <Sparkles size={20} />
             ) : (
               <ChevronRight size={20} />
