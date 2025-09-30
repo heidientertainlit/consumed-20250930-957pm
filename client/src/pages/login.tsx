@@ -119,7 +119,7 @@ export default function LoginPage() {
           className="bg-white rounded-2xl p-8 shadow-2xl border border-purple-200"
         >
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gradient-to-r from-purple-600 to-purple-800">
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gradient-to-r from-purple-600 to-purple-800 relative">
               <TabsTrigger 
                 value="signin" 
                 data-testid="tab-signin"
@@ -127,6 +127,7 @@ export default function LoginPage() {
               >
                 Sign In
               </TabsTrigger>
+              <div className="absolute left-1/2 top-2 bottom-2 w-px bg-white/30"></div>
               <TabsTrigger 
                 value="signup" 
                 data-testid="tab-signup"
