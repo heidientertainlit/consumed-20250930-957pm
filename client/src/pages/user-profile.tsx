@@ -2303,16 +2303,17 @@ export default function UserProfile() {
                           return (
                             <div 
                               key={index} 
+                              onClick={() => handleSurveyAnswer(option)}
                               className={`flex items-center space-x-2 px-3 py-2.5 rounded-full border-2 transition-all cursor-pointer ${
                                 isSelected 
                                   ? 'border-purple-500 bg-purple-100 shadow-sm' 
                                   : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
                               }`}
                             >
-                              <RadioGroupItem value={option} id={`option-${index}`} className="flex-shrink-0" />
+                              <RadioGroupItem value={option} id={`option-${index}`} className="flex-shrink-0 pointer-events-none" />
                               <Label 
                                 htmlFor={`option-${index}`} 
-                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium"
+                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium pointer-events-none"
                                 data-testid={`option-${option}`}
                               >
                                 {option}
@@ -2332,7 +2333,19 @@ export default function UserProfile() {
 
                           return (
                             <div 
-                              key={index} 
+                              key={index}
+                              onClick={() => {
+                                const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? [...getCurrentSurveyAnswer()] : [];
+                                if (isChecked) {
+                                  const optionIndex = currentAnswers.indexOf(option);
+                                  if (optionIndex > -1) {
+                                    currentAnswers.splice(optionIndex, 1);
+                                  }
+                                } else {
+                                  currentAnswers.push(option);
+                                }
+                                handleSurveyAnswer(currentAnswers);
+                              }}
                               className={`flex items-center space-x-2 px-3 py-2.5 rounded-full border-2 transition-all cursor-pointer ${
                                 isChecked 
                                   ? 'border-purple-500 bg-purple-100 shadow-sm' 
@@ -2343,24 +2356,13 @@ export default function UserProfile() {
                                 type="checkbox"
                                 id={`multi-option-${index}`}
                                 checked={isChecked}
-                                onChange={(e) => {
-                                  const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? [...getCurrentSurveyAnswer()] : [];
-                                  if (e.target.checked) {
-                                    currentAnswers.push(option);
-                                  } else {
-                                    const optionIndex = currentAnswers.indexOf(option);
-                                    if (optionIndex > -1) {
-                                      currentAnswers.splice(optionIndex, 1);
-                                    }
-                                  }
-                                  handleSurveyAnswer(currentAnswers);
-                                }}
-                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                                onChange={() => {}} // Empty onChange to avoid React warning
+                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0 pointer-events-none"
                                 data-testid={`multi-option-${option}`}
                               />
                               <Label 
                                 htmlFor={`multi-option-${index}`} 
-                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium"
+                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium pointer-events-none"
                               >
                                 {option}
                               </Label>
