@@ -101,15 +101,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <div className="relative">
               <User className="text-white" size={24} />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
-                <svg className="w-2 h-2 text-white" viewBox="0 0 12 12" fill="none">
-                  <path d="M3 1.5C3 1.5 6 3 6 6C6 9 3 10.5 3 10.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                  <path d="M9 1.5C9 1.5 6 3 6 6C6 9 9 10.5 9 10.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                  <circle cx="3" cy="2" r="0.4" fill="currentColor" />
-                  <circle cx="9" cy="2" r="0.4" fill="currentColor" />
-                  <circle cx="6" cy="6" r="0.4" fill="currentColor" />
-                  <circle cx="3" cy="10" r="0.4" fill="currentColor" />
-                  <circle cx="9" cy="10" r="0.4" fill="currentColor" />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M4 2C4 2 8 4 8 8C8 12 4 14 4 14" />
+                  <path d="M12 2C12 2 8 4 8 8C8 12 12 14 12 14" />
+                  <circle cx="4" cy="3" r="0.5" fill="currentColor" />
+                  <circle cx="12" cy="3" r="0.5" fill="currentColor" />
+                  <circle cx="8" cy="8" r="0.5" fill="currentColor" />
+                  <circle cx="4" cy="13" r="0.5" fill="currentColor" />
+                  <circle cx="12" cy="13" r="0.5" fill="currentColor" />
                 </svg>
               </div>
             </div>
