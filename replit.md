@@ -10,6 +10,21 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**September 30, 2025 - Production Architecture Cleanup**
+- **UNIFIED LEADERBOARD SYSTEM**: Moved ALL leaderboard categories to single edge function for consistency and Vercel deployment
+  - All categories (media-based, game-based, fan points) now use `get-leaderboards` edge function
+  - Removed direct frontend database queries for cleaner architecture
+  - Centralized authentication and data aggregation logic
+  - Better performance with server-side processing
+- **UI IMPROVEMENTS**: Removed profile icon from top bar (kept in bottom navigation only)
+  - Cleaner top navigation with just search and notifications
+  - Profile access via bottom navigation maintains consistency
+- **EDIT PROFILE**: Implemented profile editing with display name and username changes
+  - Username validation: 3-20 characters, alphanumeric + underscores
+  - Real-time uniqueness checking
+  - Direct Supabase updates with error handling
+  - Auto-refresh after successful update
+
 **September 30, 2025 - Profile Page Improvements: Real Favorite Creators & Compact Overview**
 - **FAVORITE CREATORS**: Now computed from actual user media consumption instead of mock data
   - Aggregates creators across all tracked media (deduped by media_id)

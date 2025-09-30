@@ -36,7 +36,154 @@ serve(async (req) => {
       });
     }
 
-    // Calculate leaderboard based on actual list_items data
+    // Handle game-specific categories
+    if (category === 'vote_leader' || category === 'predict_leader' || category === 'trivia_leader') {
+      // Determine game type filter
+      let gameType = '';
+      if (category === 'vote_leader') gameType = 'vote';
+      else if (category === 'predict_leader') gameType = 'predict';  
+      else if (category === 'trivia_leader') gameType = 'trivia';
+      
+      // Get all predictions
+      const { data: predictions, error: predictionsError } = await supabase
+        .from('user_predictions')
+        .select('user_id, points_earned, pool_id');
+        
+      if (predictionsError) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch predictions' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get all games to filter by type
+      const { data: games, error: gamesError } = await supabase
+        .from('prediction_pools')
+        .select('id, type')
+        .eq('type', gameType);
+        
+      if (gamesError) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch games' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get all users for user names
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, user_name');
+        
+      if (usersError) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Filter predictions by game type and aggregate by user
+      const gameIds = games.map(g => g.id);
+      const userMap = users.reduce((acc: any, user: any) => {
+        acc[user.id] = user.user_name;
+        return acc;
+      }, {});
+
+      const userPoints: { [key: string]: number } = {};
+      
+      predictions.forEach((prediction: any) => {
+        if (gameIds.includes(prediction.pool_id)) {
+          const userId = prediction.user_id;
+          // For predict games, show 0 points until they're resolved (all predictions are pending)
+          if (gameType === 'predict') {
+            userPoints[userId] = (userPoints[userId] || 0) + 0; // Always 0 for predict games
+          } else {
+            userPoints[userId] = (userPoints[userId] || 0) + prediction.points_earned;
+          }
+        }
+      });
+
+      // Convert to leaderboard format
+      const leaderboard = Object.entries(userPoints)
+        .map(([userId, points]) => ({
+          user_id: userId,
+          user_name: userMap[userId] || 'Anonymous',
+          user_points: points as number,
+          score: points as number,
+          created_at: new Date().toISOString()
+        }))
+        .sort((a, b) => b.user_points - a.user_points)
+        .slice(0, limit);
+
+      return new Response(JSON.stringify(leaderboard), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Handle fan points category
+    if (category === 'fan_points') {
+      // Get all creator stats
+      const { data: creatorStats, error: statsError } = await supabase
+        .from('user_creator_stats')
+        .select('user_id, creator_name, fan_points, role');
+        
+      if (statsError) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch creator stats' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get all users for user names
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, user_name');
+        
+      if (usersError) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Find highest fan points per user
+      const userMap = users.reduce((acc: any, user: any) => {
+        acc[user.id] = user.user_name;
+        return acc;
+      }, {});
+
+      const userMaxPoints: { [key: string]: { points: number; creator: string; role: string } } = {};
+      
+      creatorStats.forEach((stat: any) => {
+        const userId = stat.user_id;
+        if (!userMaxPoints[userId] || stat.fan_points > userMaxPoints[userId].points) {
+          userMaxPoints[userId] = {
+            points: stat.fan_points,
+            creator: stat.creator_name,
+            role: stat.role
+          };
+        }
+      });
+
+      // Convert to leaderboard format
+      const leaderboard = Object.entries(userMaxPoints)
+        .map(([userId, data]) => ({
+          user_id: userId,
+          user_name: userMap[userId] || 'Anonymous',
+          user_points: data.points,
+          score: data.points,
+          created_at: new Date().toISOString(),
+          creator_name: data.creator,
+          creator_role: data.role
+        }))
+        .sort((a, b) => b.user_points - a.user_points)
+        .slice(0, limit);
+
+      return new Response(JSON.stringify(leaderboard), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Handle standard media-based categories
     let dateFilter = '';
     const now = new Date();
     
