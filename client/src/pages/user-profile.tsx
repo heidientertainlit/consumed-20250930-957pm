@@ -28,6 +28,10 @@ export default function UserProfile() {
   const [isDNASurveyOpen, setIsDNASurveyOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false); // Added state for highlight modal
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
@@ -147,6 +151,97 @@ export default function UserProfile() {
       // fetchHighlights(); // Uncomment when fetchHighlights is implemented
     }
   }, [session?.access_token]);
+
+  // Handle save profile
+  const handleSaveProfile = async () => {
+    if (!session?.access_token || !user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to edit your profile",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate username
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    if (editUsername && !usernameRegex.test(editUsername)) {
+      toast({
+        title: "Invalid Username",
+        description: "Username must be 3-20 characters and contain only letters, numbers, and underscores",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        'https://mahpgcogwpawvviapqza.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c'
+      );
+
+      // Check if username is already taken (if changed)
+      if (editUsername !== user.user_metadata?.user_name) {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('user_name', editUsername)
+          .single();
+
+        if (existingUser) {
+          toast({
+            title: "Username Taken",
+            description: "This username is already in use. Please choose another.",
+            variant: "destructive"
+          });
+          setIsSavingProfile(false);
+          return;
+        }
+      }
+
+      // Update users table
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          user_name: editUsername,
+          display_name: editDisplayName || null
+        })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        toast({
+          title: "Update Failed",
+          description: "Failed to update profile. Please try again.",
+          variant: "destructive"
+        });
+        setIsSavingProfile(false);
+        return;
+      }
+
+      // Success!
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully"
+      });
+
+      // Close modal and refresh page to show new data
+      setIsEditProfileOpen(false);
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Save profile error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   // Fetch user lists from Supabase edge function
   const fetchUserLists = async () => {
@@ -809,7 +904,16 @@ export default function UserProfile() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-3 mt-4 md:mt-0">
-                  <Button variant="outline" className="border-gray-300">
+                  <Button 
+                    variant="outline" 
+                    className="border-gray-300"
+                    onClick={() => {
+                      setEditDisplayName(user?.user_metadata?.display_name || '');
+                      setEditUsername(user?.user_metadata?.user_name || '');
+                      setIsEditProfileOpen(true);
+                    }}
+                    data-testid="button-edit-profile"
+                  >
                     <Settings size={16} className="mr-2" />
                     Edit Profile
                   </Button>
@@ -2137,6 +2241,90 @@ export default function UserProfile() {
                     <Sparkles size={20} />
                   ) : (
                     <ChevronRight size={20} />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Edit Profile</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditProfileOpen(false)}
+                className="h-8 w-8 p-0"
+                data-testid="button-close-edit-profile"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Display Name */}
+              <div>
+                <Label htmlFor="display-name" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Display Name
+                </Label>
+                <Input
+                  id="display-name"
+                  value={editDisplayName}
+                  onChange={(e) => setEditDisplayName(e.target.value)}
+                  placeholder="Your display name"
+                  className="w-full"
+                  data-testid="input-display-name"
+                />
+                <p className="text-xs text-gray-500 mt-1">This is your public-facing name</p>
+              </div>
+
+              {/* Username */}
+              <div>
+                <Label htmlFor="username" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Username
+                </Label>
+                <Input
+                  id="username"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value.toLowerCase())}
+                  placeholder="username"
+                  className="w-full"
+                  data-testid="input-username"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  3-20 characters, letters, numbers, and underscores only
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="flex-1"
+                  disabled={isSavingProfile}
+                  data-testid="button-cancel-edit"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveProfile}
+                  className="flex-1 bg-black text-white hover:bg-gray-800"
+                  disabled={isSavingProfile || !editUsername}
+                  data-testid="button-save-profile"
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
                   )}
                 </Button>
               </div>
