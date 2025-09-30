@@ -99,28 +99,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             href="/user/user-1"
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location.startsWith("/user") ? "bg-white/20" : ""}`}
           >
-            <div className="relative">
-              <User className="text-white" size={24} />
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="none">
-                  {/* Infinity DNA strand - figure 8 pattern */}
-                  <path 
-                    d="M3 5 Q8 2 13 5 Q8 8 13 11 Q8 14 3 11 Q8 8 3 5" 
-                    stroke="currentColor" 
-                    strokeWidth="1" 
-                    fill="none" 
-                    opacity="0.9"
-                  />
-                  
-                  {/* Connection nodes at crossover points */}
-                  <circle cx="8" cy="8" r="0.8" fill="currentColor" />
-                  <circle cx="3" cy="5" r="0.6" fill="currentColor" />
-                  <circle cx="13" cy="5" r="0.6" fill="currentColor" />
-                  <circle cx="3" cy="11" r="0.6" fill="currentColor" />
-                  <circle cx="13" cy="11" r="0.6" fill="currentColor" />
-                </svg>
-              </div>
-            </div>
+            <User className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Profile</span>
           </Link>
 
