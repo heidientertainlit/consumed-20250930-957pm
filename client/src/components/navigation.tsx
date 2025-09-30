@@ -137,14 +137,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xs font-medium text-white">Feed</span>
           </Link>
 
-          <Link
-            href="/friends"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/friends" ? "bg-white/20" : ""}`}
-          >
-            <Users className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Friends</span>
-          </Link>
-
         </div>
       </nav>
 
