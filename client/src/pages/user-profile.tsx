@@ -1717,10 +1717,6 @@ export default function UserProfile() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-6 text-sm text-gray-600">
                       <span>{list.items?.length || 0} items</span>
-                      <div className="flex items-center space-x-1">
-                        <Heart size={16} />
-                        <span>145 likes</span>
-                      </div>
                     </div>
                   </div>
                 </div>
