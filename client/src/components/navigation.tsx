@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,57 +11,22 @@ interface NavigationProps {
   onTrackConsumption?: () => void;
 }
 
-// Function to fetch notification count
-const fetchNotificationCount = async (session: any, userId: string): Promise<number> => {
-  if (!session?.access_token || !userId) {
-    return 0;
-  }
-
-  try {
-    const params = new URLSearchParams({
-      userId: userId,
-    });
-
-    const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/notifications?${params}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      return 0;
-    }
-
-    const notifications = await response.json();
-    return notifications.filter((n: any) => !n.read).length;
-  } catch (error) {
-    console.error('Failed to fetch notification count:', error);
-    return 0;
-  }
-};
-
 export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const [location] = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const { session } = useAuth();
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const { data: user } = useQuery({
     queryKey: ["/api/users/user-1"],
   });
 
-  // For demo purposes, using a hardcoded user ID - in real app this would come from auth
-  const userId = "user-1";
-
-  const { data: notificationCount = 0 } = useQuery({
-    queryKey: ["notification-count", userId],
-    queryFn: () => fetchNotificationCount(session, userId),
-    enabled: false, // Disabled until edge function is set up
-    retry: false, // Don't retry on error
-    refetchInterval: 30000, // Refetch every 30 seconds
-  });
+  // Check for undismissed static notifications
+  useEffect(() => {
+    const dismissed = JSON.parse(localStorage.getItem("nudges.dismissed") || "[]");
+    const totalNudges = 2; // We have 2 static nudges
+    setNotificationCount(totalNudges - dismissed.length);
+  }, [isNotificationsOpen]); // Recheck when modal closes
 
   return (
     <>
