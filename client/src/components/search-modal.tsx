@@ -143,23 +143,40 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
         {/* Search Input */}
         <div className="p-6 border-b border-gray-200">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Get personal recs, create group blends, or search media & creators..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && searchQuery.trim() && !isSearching && session) {
-                  handleSearch();
-                }
-              }}
-              className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-lg text-black placeholder-gray-500"
-              data-testid="search-input"
-              autoFocus
-            />
-          </div>
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Get personal recs, create group blends, or search media & creators..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim() && !isSearching && session) {
+                    handleSearch();
+                  }
+                }}
+                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-lg text-black placeholder-gray-500"
+                data-testid="search-input"
+                autoFocus
+              />
+            </div>
+            <Button
+              onClick={handleSearch}
+              disabled={!searchQuery.trim() || isSearching || !session}
+              className="bg-purple-700 hover:bg-purple-800 text-white disabled:opacity-50 px-6 py-3 text-lg"
+              data-testid="search-submit-button"
+            >
+              {isSearching ? (
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="animate-spin" size={16} />
+                  <span>Searching...</span>
+                </div>
+              ) : (
+                'Search'
+              )}
+            </Button>
+          </div></div>
 
           {/* Quick Filters */}
           <div className="flex space-x-2 mt-4 overflow-x-auto pb-2">
