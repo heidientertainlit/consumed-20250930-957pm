@@ -346,7 +346,7 @@ export default function UserProfile() {
   // Fetch survey questions from database
   const fetchSurveyQuestions = async () => {
     try {
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_questions?select=*', {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_questions?select=*&order=display_order.asc', {
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
