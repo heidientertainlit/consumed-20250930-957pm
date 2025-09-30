@@ -1282,6 +1282,22 @@ export default function UserProfile() {
 
             {dnaProfileStatus === 'has_profile' && (
               <div className="bg-white rounded-xl p-6">
+                {/* Entertainment DNA Label & Tagline */}
+                {(dnaProfile?.label || dnaProfile?.tagline) && (
+                  <div className="mb-6 text-center">
+                    {dnaProfile?.label && (
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent mb-2">
+                        {dnaProfile.label}
+                      </h3>
+                    )}
+                    {dnaProfile?.tagline && (
+                      <p className="text-gray-600 italic text-lg">
+                        {dnaProfile.tagline}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Full AI-Generated Description */}
                 <div className="mb-6">
                   <p className="text-sm text-gray-700 leading-relaxed">
@@ -1312,6 +1328,20 @@ export default function UserProfile() {
                     ))}
                   </div>
                 </div>
+
+                {/* Flavor Notes */}
+                {dnaProfile?.flavor_notes && dnaProfile.flavor_notes.length > 0 && (
+                  <div className="mb-6">
+                    <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Entertainment Style</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {dnaProfile.flavor_notes.map((note, index) => (
+                        <Badge key={index} className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 text-xs">
+                          {note}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Expandable Details Section */}
                 {isDNAExpanded && dnaProfile && (
@@ -2303,17 +2333,16 @@ export default function UserProfile() {
                           return (
                             <div 
                               key={index} 
-                              onClick={() => handleSurveyAnswer(option)}
                               className={`flex items-center space-x-2 px-3 py-2.5 rounded-full border-2 transition-all cursor-pointer ${
                                 isSelected 
                                   ? 'border-purple-500 bg-purple-100 shadow-sm' 
                                   : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
                               }`}
                             >
-                              <RadioGroupItem value={option} id={`option-${index}`} className="flex-shrink-0 pointer-events-none" />
+                              <RadioGroupItem value={option} id={`option-${index}`} className="flex-shrink-0" />
                               <Label 
                                 htmlFor={`option-${index}`} 
-                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium pointer-events-none"
+                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium"
                                 data-testid={`option-${option}`}
                               >
                                 {option}
@@ -2333,19 +2362,7 @@ export default function UserProfile() {
 
                           return (
                             <div 
-                              key={index}
-                              onClick={() => {
-                                const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? [...getCurrentSurveyAnswer()] : [];
-                                if (isChecked) {
-                                  const optionIndex = currentAnswers.indexOf(option);
-                                  if (optionIndex > -1) {
-                                    currentAnswers.splice(optionIndex, 1);
-                                  }
-                                } else {
-                                  currentAnswers.push(option);
-                                }
-                                handleSurveyAnswer(currentAnswers);
-                              }}
+                              key={index} 
                               className={`flex items-center space-x-2 px-3 py-2.5 rounded-full border-2 transition-all cursor-pointer ${
                                 isChecked 
                                   ? 'border-purple-500 bg-purple-100 shadow-sm' 
@@ -2356,13 +2373,24 @@ export default function UserProfile() {
                                 type="checkbox"
                                 id={`multi-option-${index}`}
                                 checked={isChecked}
-                                onChange={() => {}} // Empty onChange to avoid React warning
-                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0 pointer-events-none"
+                                onChange={(e) => {
+                                  const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? [...getCurrentSurveyAnswer()] : [];
+                                  if (e.target.checked) {
+                                    currentAnswers.push(option);
+                                  } else {
+                                    const optionIndex = currentAnswers.indexOf(option);
+                                    if (optionIndex > -1) {
+                                      currentAnswers.splice(optionIndex, 1);
+                                    }
+                                  }
+                                  handleSurveyAnswer(currentAnswers);
+                                }}
+                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
                                 data-testid={`multi-option-${option}`}
                               />
                               <Label 
                                 htmlFor={`multi-option-${index}`} 
-                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium pointer-events-none"
+                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium"
                               >
                                 {option}
                               </Label>

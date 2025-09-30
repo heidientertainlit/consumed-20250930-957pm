@@ -84,24 +84,44 @@ serve(async (req) => {
         .map((r) => `Q: ${r.edna_questions.question_text}\nA: ${r.answer_text}`)
         .join('\n\n');
 
-      // Create OpenAI prompt with actual questions and answers
-      const prompt = `Based on the following entertainment survey responses, create a personalized Entertainment DNA profile that SPECIFICALLY reflects their actual answers. Pay close attention to their exact preferences mentioned.
+      // Create OpenAI prompt using improved Entertainment DNA specification
+      const prompt = `You'll receive Entertainment DNA survey answers. Produce:
+
+1. **Archetype Label** — 2–5 words, punchy and specific. Compose as \`modifier + base\` when helpful (e.g., "Cozy Completionist," "Twist-Hunting Sleuth," "Vibe-Forward Aesthete," "Canon Keeper," "Lore Librarian," "Hype Surfer," "Sideline Strategist"). If sports are prominent, you may append a tasteful modifier (e.g., "• NBA Edition"). Avoid bland words like "Enthusiast/Explorer."
+2. **One-Line Tag** — ≤120 characters, playful, riffs on the label.
+3. **Bio Paragraph** — 90–130 words. Address the user as "You…". Reference **Entertainment DNA** by name. Weave **2–4 specifics** from their inputs (genres, named favorites, comfort picks, drivers, discovery habits, sports/teams). Use **one** rhetorical device (metaphor, contrast, micro-story, or a crisp claim). No clichés; don't repeat the same opener across users; never invent titles they didn't list.
+4. **3 Flavor Notes** — bullets, 3–5 words each, crisp traits.
+
+**Archetype logic**
+* **Primary axis = Drivers** → map to base nouns:
+  * feel something → *Heart-First* / *Emotion-Seeker*
+  * escape → *World-Hopper* / *Escape Artist*
+  * connect with others → *Social Watcher* / *Clubhouse Fan*
+  * visuals/vibe → *Aesthete* / *Vibe Curator*
+  * easy to unwind → *Cozy Sipper*
+  * figure things out → *Sleuth* / *Puzzle-Solver*
+  * curious about people → *Human-Story Scout*
+  * fun/action → *Adrenaline Chaser*
+* **Modifiers** from top genres, mediums, discovery methods, comfort preferences, or sports.
+
+**Style guardrails**
+* Always say **Entertainment DNA** (not just "DNA").
+* Keep it human; one wink of humor max; no sales pitch.
+* Vary openings; ban these repeated phrases: "you're the kind of person who," "from bingeing to," "at the end of the day."
+* If inputs are sparse, write a shorter bio (≤100 words) without guessing.
 
 Survey Responses:
 ${formattedResponses}
 
-Create a profile that directly reflects their specific answers about:
-- Their favorite sports teams/players mentioned
-- Their exact genre preferences listed
-- Their comfort shows and entertainment mentioned
-- Their discovery methods and social preferences
-
 Please provide a JSON response with the following structure:
 {
-  "profileText": "A 2-3 paragraph personalized profile that directly references their specific answers (teams, shows, genres, etc.)",
-  "favoriteGenres": ["extract exact genres they mentioned"],
-  "favoriteMediaTypes": ["extract exact media types they prefer"],
-  "favoriteSports": ["extract sports they mentioned"] (if applicable),
+  "label": "string (2–5 words archetype label)",
+  "tagline": "string (≤120 chars one-line tag)",
+  "profileText": "string (90–130 words bio paragraph using 'Entertainment DNA')",
+  "favoriteGenres": ["extract exact genres mentioned"],
+  "favoriteMediaTypes": ["extract exact media types mentioned"],
+  "favoriteSports": ["extract sports mentioned if applicable"],
+  "flavorNotes": ["3–5 words", "3–5 words", "3–5 words"],
   "mediaConsumptionStats": {
     "primaryMediaType": "based on their media type answers",
     "viewingStyle": "based on their consumption patterns mentioned",
@@ -110,7 +130,7 @@ Please provide a JSON response with the following structure:
   }
 }
 
-Make sure the profile specifically mentions their actual preferences like teams, shows, genres they listed, not generic entertainment descriptions.`;
+Reference their specific answers about teams, shows, genres, and comfort entertainment. Make it personal and varied.`;
 
       // Call OpenAI API
       const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -124,7 +144,7 @@ Make sure the profile specifically mentions their actual preferences like teams,
           messages: [
             {
               role: 'system',
-              content: 'You are an expert entertainment analyst who creates highly personalized Entertainment DNA profiles based on specific user responses. Always reference their exact answers and preferences. Respond only with valid JSON.'
+              content: 'You are a brand copywriter for **Consumed** ("entertainment — with benefits"). Voice: witty, warm, smart, fun—not cheesy. Always write **Entertainment DNA** exactly. Keep things positive and human. Avoid politics/religion takes. Use gender only if explicitly relevant to entertainment identity. Vary syntax so outputs don\'t feel templated. Respond only with valid JSON.'
             },
             {
               role: 'user',
@@ -132,8 +152,8 @@ Make sure the profile specifically mentions their actual preferences like teams,
             }
           ],
           response_format: { type: "json_object" },
-          max_tokens: 1000,
-          temperature: 0.7
+          max_tokens: 1200,
+          temperature: 0.9
         })
       });
 
@@ -162,6 +182,7 @@ Make sure the profile specifically mentions their actual preferences like teams,
             favorite_media_types: generatedProfile.favoriteMediaTypes,
             favorite_sports: generatedProfile.favoriteSports,
             media_consumption_stats: JSON.stringify(generatedProfile.mediaConsumptionStats),
+            // Store new fields in profile_text for now to avoid schema changes
             updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id)
@@ -171,7 +192,14 @@ Make sure the profile specifically mentions their actual preferences like teams,
         if (error) {
           throw error;
         }
-        profileData = updatedProfile;
+        
+        // Add the new fields to the response
+        profileData = {
+          ...updatedProfile,
+          label: generatedProfile.label,
+          tagline: generatedProfile.tagline,
+          flavor_notes: generatedProfile.flavorNotes
+        };
       } else {
         // Create new profile
         const { data: newProfile, error } = await supabaseClient
@@ -191,7 +219,14 @@ Make sure the profile specifically mentions their actual preferences like teams,
         if (error) {
           throw error;
         }
-        profileData = newProfile;
+        
+        // Add the new fields to the response
+        profileData = {
+          ...newProfile,
+          label: generatedProfile.label,
+          tagline: generatedProfile.tagline,
+          flavor_notes: generatedProfile.flavorNotes
+        };
       }
 
       return new Response(JSON.stringify(profileData), {
