@@ -175,12 +175,27 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Media added!",
         description: "Successfully added to your tracking list.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      
+      // Sync creator stats after successfully tracking media
+      try {
+        await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/sync-creator-stats', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (error) {
+        console.error('Failed to sync creator stats:', error);
+        // Don't fail the whole operation if stats sync fails
+      }
+      
       onClose();
       resetForm();
     },

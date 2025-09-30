@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
@@ -619,59 +619,42 @@ export default function UserProfile() {
     return allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   };
 
-  // Compute favorite creators from actual media consumption
-  const favoriteCreators = useMemo(() => {
-    const items = getAllMediaItems();
-    const seen = new Set<string>();
-    const counts: Record<string, { name: string; total: number; byType: Record<string, number> }> = {};
+  // Fetch favorite creators from database instead of computing
+  const [favoriteCreators, setFavoriteCreators] = useState<any[]>([]);
 
-    items.forEach((item) => {
-      // Dedupe by media_id or title+type combination
-      const key = item.media_id ?? `${item.title}|${item.media_type}`;
-      if (seen.has(key)) return;
-      seen.add(key);
+  useEffect(() => {
+    const fetchCreatorStats = async () => {
+      if (!session?.access_token) return;
 
-      // Parse creators from the creator field (may have multiple separated by commas, &, or "and")
-      const creatorText = item.creator ?? '';
-      const creators = creatorText
-        .split(/,|&| and /i)
-        .map((s: string) => s.trim())
-        .filter(Boolean);
+      try {
+        const response = await fetch(
+          'https://mahpgcogwpawvviapqza.supabase.co/rest/v1/user_creator_stats?select=*&order=fan_points.desc&limit=3',
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      creators.forEach((creator: string) => {
-        const k = creator.toLowerCase();
-        if (!counts[k]) {
-          counts[k] = { name: creator, total: 0, byType: {} };
+        if (response.ok) {
+          const stats = await response.json();
+          setFavoriteCreators(
+            stats.map((s: any) => ({
+              name: s.creator_name,
+              type: s.role,
+              points: s.fan_points,
+            }))
+          );
         }
-        counts[k].total += 1;
-        counts[k].byType[item.media_type] = (counts[k].byType[item.media_type] ?? 0) + 1;
-      });
-    });
-
-    // Determine role based on most common media type
-    const roleFor = (byType: Record<string, number>) => {
-      const entries = Object.entries(byType);
-      if (entries.length === 0) return 'Creator';
-      
-      const [topType] = entries.sort((a, b) => b[1] - a[1])[0];
-      
-      if (topType === 'movie' || topType === 'tv') return 'Director';
-      if (topType === 'book') return 'Author';
-      if (topType === 'music') return 'Artist';
-      if (topType === 'podcast') return 'Podcaster';
-      if (topType === 'game') return 'Studio';
-      return 'Creator';
+      } catch (error) {
+        console.error('Error fetching creator stats:', error);
+      }
     };
 
-    return Object.values(counts)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 3)
-      .map((x) => ({
-        name: x.name,
-        type: roleFor(x.byType),
-        points: x.total
-      }));
-  }, [userLists]);
+    fetchCreatorStats();
+  }, [session?.access_token]);
 
   const recentActivity = [
     {
