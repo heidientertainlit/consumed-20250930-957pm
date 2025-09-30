@@ -103,18 +103,23 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               <User className="text-white" size={24} />
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="none">
-                  {/* DNA strand connections */}
-                  <line x1="3" y1="3" x2="13" y2="5" stroke="currentColor" strokeWidth="0.8" opacity="0.7" />
-                  <line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" strokeWidth="0.8" opacity="0.7" />
-                  <line x1="3" y1="13" x2="13" y2="11" stroke="currentColor" strokeWidth="0.8" opacity="0.7" />
+                  {/* DNA double helix strands */}
+                  <path d="M2 2 Q8 6 14 4" stroke="currentColor" strokeWidth="0.6" fill="none" opacity="0.8" />
+                  <path d="M2 8 Q8 4 14 8" stroke="currentColor" strokeWidth="0.6" fill="none" opacity="0.8" />
+                  <path d="M2 14 Q8 10 14 12" stroke="currentColor" strokeWidth="0.6" fill="none" opacity="0.8" />
                   
-                  {/* DNA nodes */}
-                  <circle cx="3" cy="3" r="1.2" fill="currentColor" />
-                  <circle cx="13" cy="5" r="1.2" fill="currentColor" />
-                  <circle cx="3" cy="8" r="1.2" fill="currentColor" />
-                  <circle cx="13" cy="8" r="1.2" fill="currentColor" />
-                  <circle cx="3" cy="13" r="1.2" fill="currentColor" />
-                  <circle cx="13" cy="11" r="1.2" fill="currentColor" />
+                  {/* Cross connections */}
+                  <line x1="4" y1="3" x2="12" y2="5" stroke="currentColor" strokeWidth="0.4" opacity="0.6" />
+                  <line x1="6" y1="6" x2="10" y2="6" stroke="currentColor" strokeWidth="0.4" opacity="0.6" />
+                  <line x1="4" y1="11" x2="12" y2="9" stroke="currentColor" strokeWidth="0.4" opacity="0.6" />
+                  
+                  {/* DNA base nodes */}
+                  <circle cx="2" cy="2" r="0.8" fill="currentColor" />
+                  <circle cx="14" cy="4" r="0.8" fill="currentColor" />
+                  <circle cx="2" cy="8" r="0.8" fill="currentColor" />
+                  <circle cx="14" cy="8" r="0.8" fill="currentColor" />
+                  <circle cx="2" cy="14" r="0.8" fill="currentColor" />
+                  <circle cx="14" cy="12" r="0.8" fill="currentColor" />
                 </svg>
               </div>
             </div>
