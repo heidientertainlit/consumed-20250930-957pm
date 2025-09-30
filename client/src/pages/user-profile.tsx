@@ -518,7 +518,7 @@ export default function UserProfile() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.JSON.stringify({ user_id: session.user?.id }),
+        body: JSON.stringify({ user_id: session.user?.id }),
       });
 
       if (!response.ok) {
