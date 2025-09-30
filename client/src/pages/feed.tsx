@@ -428,18 +428,20 @@ export default function Feed() {
             </div>
           ) : socialPosts && socialPosts.length > 0 ? (
             <div className="space-y-4">
-              {socialPosts.map((post: SocialPost) => (
-                <div key={post.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                  {/* User Info and Date */}
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User size={24} className="text-gray-600" />
+              {socialPosts.map((post: SocialPost, postIndex: number) => (
+                <div key={`post-wrapper-${postIndex}`}>
+                  {/* Original Post */}
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                    {/* User Info and Date */}
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                        <User size={24} className="text-gray-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900">{post.user.username}</div>
+                        <div className="text-sm text-gray-500">{formatFullDate(post.timestamp)}</div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900">{post.user.username}</div>
-                      <div className="text-sm text-gray-500">{formatFullDate(post.timestamp)}</div>
-                    </div>
-                  </div>
 
                   {/* Post Content */}
                   {post.content && (
@@ -560,6 +562,47 @@ export default function Feed() {
                       />
                     )}
                   </div>
+                  </div>
+
+                  {/* Insert Coming to Screen card after 3rd post */}
+                  {postIndex === 2 && (
+                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm mt-4">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+                          <Eye className="text-white" size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-900">Coming to Screen</div>
+                          <div className="text-sm text-gray-500">Which book adaptations would you like to see?</div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {[
+                          { book: "The Seven Husbands of Evelyn Hugo", author: "Taylor Jenkins Reid" },
+                          { book: "A Court of Thorns and Roses", author: "Sarah J. Maas" },
+                          { book: "The Song of Achilles", author: "Madeline Miller" },
+                          { book: "The Night Circus", author: "Erin Morgenstern" },
+                          { book: "Red Rising", author: "Pierce Brown" },
+                          { book: "House of Earth and Blood", author: "Sarah J. Maas" }
+                        ].map((item, index) => (
+                          <button
+                            key={index}
+                            className="w-full bg-white rounded-lg p-3 border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer text-left"
+                            onClick={() => {}}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <BookOpen className="text-purple-500 flex-shrink-0" size={16} />
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900 text-sm">{item.book}</div>
+                                <div className="text-xs text-gray-500">by {item.author}</div>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 
@@ -601,51 +644,6 @@ export default function Feed() {
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                   <div className="text-sm text-gray-600">4.2k votes • Earn 5 points for participating</div>
                   <div className="text-sm text-blue-600 font-medium">+5 points</div>
-                </div>
-              </div>
-
-
-              {/* Book-to-Screen Discovery */}
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
-                    <Eye className="text-white" size={18} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-900">Coming to Screen</div>
-                    <div className="text-sm text-gray-500">Books getting adaptations</div>
-                  </div>
-                </div>
-
-                <div className="space-y-3 mb-4">
-                  {[
-                    { book: "Fourth Wing", author: "Rebecca Ross", platform: "Amazon Prime", status: "In Production" },
-                    { book: "It Ends with Us", author: "Colleen Hoover", platform: "Sony Pictures", status: "Coming Aug 2024" },
-                    { book: "The Atlas Six", author: "Olivie Blake", platform: "Netflix", status: "Early Development" }
-                  ].map((item, index) => (
-                    <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <BookOpen className="text-purple-500" size={16} />
-                          <div>
-                            <div className="font-medium text-gray-900 text-sm">{item.book}</div>
-                            <div className="text-xs text-gray-500">by {item.author}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs text-purple-600 font-medium">{item.platform}</div>
-                          <div className="text-xs text-gray-500">{item.status}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <div className="text-sm text-gray-600">Track these adaptations</div>
-                  <button className="text-sm text-purple-600 font-medium hover:text-purple-700">
-                    Add to watchlist
-                  </button>
                 </div>
               </div>
 
