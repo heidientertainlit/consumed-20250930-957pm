@@ -108,7 +108,7 @@ export default function LoginPage() {
           </div>
           <p className="text-purple-300 text-lg italic mb-6">entertainment ... with benefits</p>
           <p className="text-purple-100 text-sm max-w-lg mx-auto">
-            Track what you consume, discover your entertainment DNA, and connect with fellow fans. Play games, make predictions, and earn points and rewards just for being entertained.
+            Track your entertainment, discover your Entertainment DNA, connect with fellow fans, play games, make predictions, and rack up points and rewards just for enjoying the entertainment you love.
           </p>
         </div>
         
