@@ -566,6 +566,53 @@ export default function Feed() {
                   </div>
                   </div>
 
+                  {/* Insert Quick Poll after 1st post */}
+                  {postIndex === 0 && (
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200 p-6 shadow-sm mt-4">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                          <Vote className="text-white" size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <div className="font-semibold text-gray-900">Quick Poll</div>
+                            <Badge className="bg-blue-100 text-blue-700 text-xs px-2 py-1">Sponsored</Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <h3 className="font-semibold text-lg text-gray-900 mb-2">Best Batman villain portrayal ever?</h3>
+                        
+                        <div className="space-y-2">
+                          {[
+                            "Heath Ledger's Joker",
+                            "Michelle Pfeiffer's Catwoman",
+                            "Tom Hardy's Bane",
+                            "Paul Dano's Riddler",
+                            "Colin Farrell's Penguin"
+                          ].map((option, index) => (
+                            <button 
+                              key={index}
+                              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-purple-300 transition-colors"
+                              data-testid={`poll-option-${index}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-800">{option}</span>
+                                <span className="text-sm text-gray-500">{Math.floor(Math.random() * 30 + 10)}%</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                        <div className="text-sm text-gray-600">4.2k votes • Earn 5 points for participating</div>
+                        <div className="text-sm text-blue-600 font-medium">+5 points</div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Insert Coming to Screen card after 3rd post */}
                   {postIndex === 2 && !booksSubmitted && (
                     <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm mt-4">
@@ -640,47 +687,6 @@ export default function Feed() {
                   )}
                 </div>
               ))}
-
-              {/* Sponsor Survey Question */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200 p-6 shadow-sm">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                    <Vote className="text-white" size={18} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <div className="font-semibold text-gray-900">Quick Poll</div>
-                      <Badge className="bg-blue-100 text-blue-700 text-xs px-2 py-1">Sponsored</Badge>
-                    </div>
-                    <div className="text-sm text-gray-500">Netflix • 5 minutes ago</div>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <h3 className="font-semibold text-lg text-gray-900 mb-2">Who should play The Joker in the new Batman series?</h3>
-                  <p className="text-gray-600 text-sm mb-4">Help us understand fan preferences for upcoming castings</p>
-                  
-                  <div className="space-y-2">
-                    {['Willem Dafoe', 'Barry Keoghan', 'Joe Keery', 'Someone completely new'].map((option, index) => (
-                      <button 
-                        key={index}
-                        className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-purple-300 transition-colors"
-                        data-testid={`poll-option-${index}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-800">{option}</span>
-                          <span className="text-sm text-gray-500">{Math.floor(Math.random() * 30 + 10)}%</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <div className="text-sm text-gray-600">4.2k votes • Earn 5 points for participating</div>
-                  <div className="text-sm text-blue-600 font-medium">+5 points</div>
-                </div>
-              </div>
 
             </div>
           ) : (
