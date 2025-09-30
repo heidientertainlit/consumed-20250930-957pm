@@ -64,6 +64,8 @@ export default function Feed() {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set());
+  const [booksSubmitted, setBooksSubmitted] = useState(false);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -565,7 +567,7 @@ export default function Feed() {
                   </div>
 
                   {/* Insert Coming to Screen card after 3rd post */}
-                  {postIndex === 2 && (
+                  {postIndex === 2 && !booksSubmitted && (
                     <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm mt-4">
                       <div className="flex items-center space-x-3 mb-4">
                         <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
@@ -577,7 +579,7 @@ export default function Feed() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2 mb-4">
                         {[
                           { book: "The Seven Husbands of Evelyn Hugo", author: "Taylor Jenkins Reid" },
                           { book: "A Court of Thorns and Roses", author: "Sarah J. Maas" },
@@ -585,22 +587,55 @@ export default function Feed() {
                           { book: "The Night Circus", author: "Erin Morgenstern" },
                           { book: "Red Rising", author: "Pierce Brown" },
                           { book: "House of Earth and Blood", author: "Sarah J. Maas" }
-                        ].map((item, index) => (
-                          <button
-                            key={index}
-                            className="w-full bg-white rounded-lg p-3 border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer text-left"
-                            onClick={() => {}}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <BookOpen className="text-purple-500 flex-shrink-0" size={16} />
-                              <div className="flex-1">
-                                <div className="font-medium text-gray-900 text-sm">{item.book}</div>
-                                <div className="text-xs text-gray-500">by {item.author}</div>
+                        ].map((item, index) => {
+                          const isSelected = selectedBooks.has(item.book);
+                          return (
+                            <button
+                              key={index}
+                              className={`w-full rounded-lg p-3 border-2 transition-all cursor-pointer text-left ${
+                                isSelected 
+                                  ? 'bg-purple-100 border-purple-500' 
+                                  : 'bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                              }`}
+                              onClick={() => {
+                                const newSelected = new Set(selectedBooks);
+                                if (isSelected) {
+                                  newSelected.delete(item.book);
+                                } else {
+                                  newSelected.add(item.book);
+                                }
+                                setSelectedBooks(newSelected);
+                              }}
+                              data-testid={`book-option-${index}`}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                  isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-300'
+                                }`}>
+                                  {isSelected && <Check className="text-white" size={14} />}
+                                </div>
+                                <BookOpen className="text-purple-500 flex-shrink-0" size={16} />
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900 text-sm">{item.book}</div>
+                                  <div className="text-xs text-gray-500">by {item.author}</div>
+                                </div>
                               </div>
-                            </div>
-                          </button>
-                        ))}
+                            </button>
+                          );
+                        })}
                       </div>
+
+                      <Button
+                        onClick={() => {
+                          console.log('Selected books:', Array.from(selectedBooks));
+                          setBooksSubmitted(true);
+                        }}
+                        disabled={selectedBooks.size === 0}
+                        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-testid="button-submit-books"
+                      >
+                        Submit ({selectedBooks.size} selected)
+                      </Button>
                     </div>
                   )}
                 </div>
