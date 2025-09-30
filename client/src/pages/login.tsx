@@ -99,16 +99,19 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         {/* Logo and welcome section */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-4">
             <img 
               src="/consumed-logo-white.png" 
               alt="consumed" 
               className="h-16 w-auto"
             />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">Welcome Back</h1>
-          <p className="text-purple-200 text-base">
-            Track your entertainment, discover your DNA, and connect with fellow fans
+          <p className="text-purple-300 text-lg italic mb-6">entertainment ... with benefits</p>
+          <p className="text-purple-100 text-sm mb-3 max-w-lg mx-auto">
+            Track what you consume, discover your entertainment DNA, and connect with fellow fans.
+          </p>
+          <p className="text-purple-100 text-sm max-w-lg mx-auto">
+            Play games, make predictions, and earn points and rewards just for being entertained.
           </p>
         </div>
         
