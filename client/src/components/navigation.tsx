@@ -68,6 +68,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50">
         <div className="flex justify-around items-center h-20 px-4">
           <Link
+            href="/feed"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
+          >
+            <Activity className="text-white" size={24} />
+            <span className="text-xs font-medium text-white">Feed</span>
+          </Link>
+
+          <Link
             href="/track"
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/track" || location === "/" ? "bg-white/20" : ""}`}
           >
@@ -89,14 +97,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <BarChart3 className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Leaderboard</span>
-          </Link>
-
-          <Link
-            href="/feed"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
-          >
-            <Activity className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Feed</span>
           </Link>
 
           <Link
