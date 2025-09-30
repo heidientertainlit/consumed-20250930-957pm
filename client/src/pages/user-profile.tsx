@@ -449,7 +449,7 @@ export default function UserProfile() {
         kind: 'list',
         id: listId
       });
-      
+
       toast({
         title: "List Link Copied!",
         description: "Share this with your friends to show your entertainment list",
@@ -705,7 +705,7 @@ export default function UserProfile() {
         kind: 'edna',
         id: dnaProfile.id
       });
-      
+
       toast({
         title: "DNA Profile Link Copied!",
         description: "Share your Entertainment DNA with friends",
@@ -933,6 +933,9 @@ export default function UserProfile() {
 
   const availableYears = getAvailableYears();
 
+  // Calculate total items logged from all lists
+  const totalItemsLogged = userLists.reduce((acc, list) => acc + (list.items?.length || 0), 0);
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -959,7 +962,7 @@ export default function UserProfile() {
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-gray-600">@{userProfileData?.user_name || 'user'}</span>
                   </div>
-                  
+
                   {/* Total Points Display */}
                   <div className="flex items-center space-x-2 mb-2">
                     {isLoadingPoints ? (
@@ -974,6 +977,15 @@ export default function UserProfile() {
                         <span className="text-gray-600">total points</span>
                       </div>
                     ) : null}
+                  </div>
+
+                  {/* Quick Stats Matching Track Page */}
+                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                    <div className="flex items-center space-x-1">
+                      <TrendingUp size={16} className="text-purple-600" />
+                      <span className="font-medium">{totalItemsLogged}</span>
+                      <span>items logged</span>
+                    </div>
                   </div>
                 </div>
 
@@ -1528,7 +1540,7 @@ export default function UserProfile() {
                 data-testid="input-media-history-search"
               />
             </div>
-            
+
             {/* Search Results - Show when searching */}
             {mediaHistorySearch.trim() && filteredMediaHistory.length > 0 && (
               <div className="mt-2 bg-white rounded-xl border border-gray-200 shadow-sm max-h-96 overflow-y-auto">
@@ -1566,7 +1578,7 @@ export default function UserProfile() {
                 </div>
               </div>
             )}
-            
+
             {/* No Results Message */}
             {mediaHistorySearch.trim() && filteredMediaHistory.length === 0 && (
               <div className="mt-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
@@ -2007,7 +2019,7 @@ export default function UserProfile() {
                   {categories.map((category) => {
                     const isChecked = selectedCategories.includes(category);
                     const isAllMedia = category === "All Media";
-                    
+
                     const handleToggle = (checked: boolean) => {
                       if (isAllMedia) {
                         if (checked) {

@@ -115,9 +115,32 @@ export default function Track() {
 
   // Extract lists and stats from the response
   const userLists = userListsData?.lists || [];
+  
+  // Get actual user points from Supabase
+  const { data: userPointsData } = useQuery({
+    queryKey: ['user-points'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+      
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      }
+      return null;
+    },
+    enabled: !!session?.access_token,
+  });
+
   const consumptionStats = {
     totalLogged: userLists.reduce((total: number, list: any) => total + (list.items?.length || 0), 0),
-    pointsEarned: userLists.reduce((total: number, list: any) => total + (list.items?.length || 0) * 5, 0), // 5 points per item
+    pointsEarned: userPointsData?.points?.all_time || 0, // Use actual points from Supabase
   };
   
   // Get personalized recommendations from Supabase
