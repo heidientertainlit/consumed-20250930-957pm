@@ -326,29 +326,15 @@ export default function Track() {
                     onClick={() => handleListClick(list.title)}
                     data-testid={`list-card-${list.title.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center">
-                        {list.title === "Currently" && <Play className="text-purple-700 mr-3" size={24} />}
-                        {list.title === "Finished" && <Star className="text-purple-700 mr-3" size={24} />}
-                        {list.title === "Did Not Finish" && <X className="text-purple-700 mr-3" size={24} />}
-                        {list.title === "Queue" && <Users className="text-purple-700 mr-3" size={24} />}
-                        {list.title === "All Media" && <List className="text-purple-700 mr-3" size={24} />}
-                        {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) && 
-                          <List className="text-purple-700 mr-3" size={24} />}
-                        <h3 className="font-bold text-lg text-gray-800">{list.title}</h3>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShareList(list.title, list.items?.length || 0);
-                        }}
-                        className="bg-black text-white hover:bg-gray-800 rounded-lg px-3 py-2 flex items-center gap-2"
-                        data-testid={`share-${list.title.toLowerCase().replace(/\s+/g, '-')}-list`}
-                      >
-                        <Share2 size={16} />
-                        Share
-                      </Button>
+                    <div className="flex items-center mb-4">
+                      {list.title === "Currently" && <Play className="text-purple-700 mr-3" size={24} />}
+                      {list.title === "Finished" && <Star className="text-purple-700 mr-3" size={24} />}
+                      {list.title === "Did Not Finish" && <X className="text-purple-700 mr-3" size={24} />}
+                      {list.title === "Queue" && <Users className="text-purple-700 mr-3" size={24} />}
+                      {list.title === "All Media" && <List className="text-purple-700 mr-3" size={24} />}
+                      {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) && 
+                        <List className="text-purple-700 mr-3" size={24} />}
+                      <h3 className="font-bold text-lg text-gray-800">{list.title}</h3>
                     </div>
                     <p className="text-gray-600 text-sm mb-4">
                       {list.title === "Currently" && "What you're consuming right now"}
