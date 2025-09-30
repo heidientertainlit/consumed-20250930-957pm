@@ -222,7 +222,7 @@ export default function Leaderboard() {
                 {selectedCategory === 'vote_leader' && 'Points from voting games only (10 pts each)'}
                 {selectedCategory === 'predict_leader' && 'Pending points for correct predictions (20 pts each when resolved)'}
                 {selectedCategory === 'trivia_leader' && 'Points from trivia games only (15 pts each)'}
-                {selectedCategory === 'fan_points' && 'Ranked by highest fan points for a single creator (1 pt per media item consumed)'}
+                {selectedCategory === 'fan_points' && 'Your top creators ranked by fan points (1 pt per media item consumed)'}
               </p>
             </div>
           </div>

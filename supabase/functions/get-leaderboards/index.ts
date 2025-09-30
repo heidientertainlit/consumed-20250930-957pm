@@ -145,7 +145,51 @@ serve(async (req) => {
         });
       }
 
-      // Find highest fan points per user (their top creator)
+      // Determine role based on media types
+      const determineRole = (mediaTypes: string[]): string => {
+        if (mediaTypes.includes('movie')) return 'Director';
+        if (mediaTypes.includes('tv')) return 'Showrunner';
+        if (mediaTypes.includes('book')) return 'Author';
+        if (mediaTypes.includes('music')) return 'Artist';
+        if (mediaTypes.includes('podcast')) return 'Podcaster';
+        return 'Creator';
+      };
+
+      // Check if there's only one user (the current user)
+      const uniqueUserIds = new Set(creatorStats.map((s: any) => s.user_id));
+      const isSingleUser = uniqueUserIds.size === 1 && uniqueUserIds.has(user.id);
+
+      if (isSingleUser) {
+        // Single user: Show all their creators ranked by fan points
+        const userStats = creatorStats
+          .filter((stat: any) => {
+            const creatorName = stat.creator_name;
+            // Skip generic/unknown creator names
+            return creatorName && 
+              creatorName.toLowerCase() !== 'unknown' && 
+              creatorName.toLowerCase() !== 'tv show' &&
+              creatorName.toLowerCase() !== 'podcast' &&
+              creatorName.toLowerCase() !== 'game' &&
+              creatorName.toLowerCase() !== 'sports';
+          })
+          .map((stat: any) => ({
+            user_id: `${user.id}-${stat.creator_name}`, // Composite key
+            user_name: stat.creator_name,
+            user_points: stat.fan_points,
+            score: stat.fan_points,
+            created_at: new Date().toISOString(),
+            creator_name: stat.creator_name,
+            creator_role: determineRole(stat.media_types || [])
+          }))
+          .sort((a, b) => b.user_points - a.user_points)
+          .slice(0, limit);
+
+        return new Response(JSON.stringify(userStats), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Multi-user: Show users ranked by their top creator
       const userMap = users.reduce((acc: any, user: any) => {
         acc[user.id] = user.user_name;
         return acc;
@@ -175,16 +219,6 @@ serve(async (req) => {
           };
         }
       });
-
-      // Determine role based on media types
-      const determineRole = (mediaTypes: string[]): string => {
-        if (mediaTypes.includes('movie')) return 'Director';
-        if (mediaTypes.includes('tv')) return 'Showrunner';
-        if (mediaTypes.includes('book')) return 'Author';
-        if (mediaTypes.includes('music')) return 'Artist';
-        if (mediaTypes.includes('podcast')) return 'Podcaster';
-        return 'Creator';
-      };
 
       // Convert to leaderboard format - show users ranked by their top creator
       const leaderboard = Object.entries(userMaxPoints)
