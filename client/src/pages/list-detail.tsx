@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { shareThing } from "@/lib/share";
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
@@ -139,7 +140,7 @@ export default function ListDetail() {
 
   const [copied, setCopied] = useState(false);
 
-  // Simple copy link functionality
+  // Share functionality using unified share system
   const handleShare = async () => {
     if (!listData?.isPublic) {
       toast({
@@ -150,35 +151,38 @@ export default function ListDetail() {
       return;
     }
 
-    if (!session?.user?.id) {
+    if (!sharedListData?.id || !sharedListData?.title) {
       toast({
         title: "Cannot Share",
-        description: "You must be logged in to share lists",
+        description: "List information not available",
         variant: "destructive"
       });
       return;
     }
 
-    // Use direct app URL for simple sharing
-    const shareUrl = `${window.location.origin}/list/${urlListName}?user=${session.user.id}`;
-    
-    console.log('📋 Copying share URL:', shareUrl);
-    console.log('Session user ID:', session.user.id);
-
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      
-      toast({
-        title: "Link Copied!",
-        description: shareUrl,
+      const result = await shareThing({
+        kind: 'list',
+        id: sharedListData.id,
+        title: sharedListData.title
       });
+
+      if (result === 'copied') {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast({
+          title: "Link Copied!",
+          description: "Share this with your friends to show your list",
+        });
+      } else {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
     } catch (error) {
-      console.error('Error copying link:', error);
+      console.error('Error sharing list:', error);
       toast({
-        title: "Copy Failed",
-        description: "Unable to copy link to clipboard",
+        title: "Share Failed",
+        description: "Unable to share list",
         variant: "destructive"
       });
     }
@@ -352,7 +356,7 @@ export default function ListDetail() {
                 ) : (
                   <>
                     <Share2 size={16} className="mr-2" />
-                    Copy Link
+                    Share
                   </>
                 )}
               </Button>
