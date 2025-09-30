@@ -1197,67 +1197,116 @@ export default function UserProfile() {
         <div className="px-4 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Media History</h2>
 
-          {/* Search Bar */}
-          <div className="mb-4">
+          {/* Search Bar with Icon */}
+          <div className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <Input
               value={mediaHistorySearch}
               onChange={(e) => setMediaHistorySearch(e.target.value)}
               placeholder="Search your media history..."
-              className="w-full"
+              className="w-full pl-10"
               data-testid="input-media-history-search"
             />
           </div>
 
-          {/* Filter Dropdowns */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Select value={mediaHistoryYear} onValueChange={setMediaHistoryYear}>
-              <SelectTrigger data-testid="select-year-filter">
-                <SelectValue placeholder="All Years" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Years</SelectItem>
-                {availableYears.map(year => (
-                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <button
+              onClick={() => {
+                const yearMenu = document.getElementById('year-menu');
+                if (yearMenu) yearMenu.classList.toggle('hidden');
+              }}
+              className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+              data-testid="button-year-filter"
+            >
+              {mediaHistoryYear === "all" ? "Year" : mediaHistoryYear}
+            </button>
 
-            <Select value={mediaHistoryMonth} onValueChange={setMediaHistoryMonth}>
-              <SelectTrigger data-testid="select-month-filter">
-                <SelectValue placeholder="All Months" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Months</SelectItem>
-                <SelectItem value="0">January</SelectItem>
-                <SelectItem value="1">February</SelectItem>
-                <SelectItem value="2">March</SelectItem>
-                <SelectItem value="3">April</SelectItem>
-                <SelectItem value="4">May</SelectItem>
-                <SelectItem value="5">June</SelectItem>
-                <SelectItem value="6">July</SelectItem>
-                <SelectItem value="7">August</SelectItem>
-                <SelectItem value="8">September</SelectItem>
-                <SelectItem value="9">October</SelectItem>
-                <SelectItem value="10">November</SelectItem>
-                <SelectItem value="11">December</SelectItem>
-              </SelectContent>
-            </Select>
+            <button
+              onClick={() => {
+                const monthMenu = document.getElementById('month-menu');
+                if (monthMenu) monthMenu.classList.toggle('hidden');
+              }}
+              className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+              data-testid="button-month-filter"
+            >
+              {mediaHistoryMonth === "all" ? "Month" : 
+                ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][parseInt(mediaHistoryMonth)]}
+            </button>
 
-            <Select value={mediaHistoryType} onValueChange={setMediaHistoryType}>
-              <SelectTrigger data-testid="select-type-filter">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="movies">Movies</SelectItem>
-                <SelectItem value="tv">TV Shows</SelectItem>
-                <SelectItem value="books">Books</SelectItem>
-                <SelectItem value="music">Music</SelectItem>
-                <SelectItem value="podcasts">Podcasts</SelectItem>
-                <SelectItem value="games">Games</SelectItem>
-              </SelectContent>
-            </Select>
+            <button
+              onClick={() => {
+                const typeMenu = document.getElementById('type-menu');
+                if (typeMenu) typeMenu.classList.toggle('hidden');
+              }}
+              className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+              data-testid="button-type-filter"
+            >
+              {mediaHistoryType === "all" ? "Type" : 
+                mediaHistoryType === "movies" ? "Movies" :
+                mediaHistoryType === "tv" ? "TV Shows" :
+                mediaHistoryType === "books" ? "Books" :
+                mediaHistoryType === "music" ? "Music" :
+                mediaHistoryType === "podcasts" ? "Podcasts" :
+                "Games"}
+            </button>
+
+            {(mediaHistoryYear !== "all" || mediaHistoryMonth !== "all" || mediaHistoryType !== "all") && (
+              <button
+                onClick={() => {
+                  setMediaHistoryYear("all");
+                  setMediaHistoryMonth("all");
+                  setMediaHistoryType("all");
+                }}
+                className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                data-testid="button-clear-filters"
+              >
+                Clear all
+              </button>
+            )}
           </div>
+
+          {/* Active Filters */}
+          {(mediaHistoryYear !== "all" || mediaHistoryMonth !== "all" || mediaHistoryType !== "all") && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className="text-sm text-gray-600">Active filters:</span>
+              {mediaHistoryYear !== "all" && (
+                <button
+                  onClick={() => setMediaHistoryYear("all")}
+                  className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-sm font-medium flex items-center gap-1"
+                  data-testid="active-filter-year"
+                >
+                  {mediaHistoryYear}
+                  <X size={14} />
+                </button>
+              )}
+              {mediaHistoryMonth !== "all" && (
+                <button
+                  onClick={() => setMediaHistoryMonth("all")}
+                  className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-sm font-medium flex items-center gap-1"
+                  data-testid="active-filter-month"
+                >
+                  {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][parseInt(mediaHistoryMonth)]}
+                  <X size={14} />
+                </button>
+              )}
+              {mediaHistoryType !== "all" && (
+                <button
+                  onClick={() => setMediaHistoryType("all")}
+                  className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-sm font-medium flex items-center gap-1"
+                  data-testid="active-filter-type"
+                >
+                  {mediaHistoryType === "movies" ? "Movies" :
+                   mediaHistoryType === "tv" ? "TV Shows" :
+                   mediaHistoryType === "books" ? "Books" :
+                   mediaHistoryType === "music" ? "Music" :
+                   mediaHistoryType === "podcasts" ? "Podcasts" :
+                   "Games"}
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Media Type Summary */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
