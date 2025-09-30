@@ -90,6 +90,29 @@ export default function FriendsCreatorsPage() {
   
   console.log('Search state:', { searchQuery, searchResults, searchLoading, searchError, enabled: !!session?.access_token && searchQuery.length > 2 });
 
+  // Get recommended users (users who aren't friends yet)
+  const { data: recommendedData, isLoading: recommendedLoading } = useQuery({
+    queryKey: ['recommended-users'],
+    queryFn: async () => {
+      if (!session?.access_token) return { users: [] };
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'searchUsers', query: '' }),
+      });
+
+      if (!response.ok) return { users: [] };
+      const data = await response.json();
+      // Return just first 4 users for recommendations
+      return { users: (data.users || []).slice(0, 4) };
+    },
+    enabled: !!session?.access_token,
+  });
+
   // Send friend request mutation
   const sendRequestMutation = useMutation({
     mutationFn: async (friendId: string) => {
@@ -365,83 +388,49 @@ export default function FriendsCreatorsPage() {
             <p className="text-sm text-gray-600 mb-4">Friends with similar entertainment tastes</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                {
-                  id: "rec-friend-1",
-                  username: "SciFiFanatic",
-                  name: "Emma Rodriguez",
-                  reason: "Both love sci-fi shows and Dune series",
-                  compatibility: "94% match",
-                  mutualFriends: 18,
-                  isFollowing: false
-                },
-                {
-                  id: "rec-friend-2",
-                  username: "BookClubQueen",
-                  name: "Olivia Park",
-                  reason: "Shares your love for romance novels",
-                  compatibility: "91% match",
-                  mutualFriends: 12,
-                  isFollowing: false
-                },
-                {
-                  id: "rec-friend-3",
-                  username: "IndieVibes",
-                  name: "Jordan Martinez",
-                  reason: "Similar music taste - indie and alternative",
-                  compatibility: "87% match",
-                  mutualFriends: 7,
-                  isFollowing: false
-                },
-                {
-                  id: "rec-friend-4",
-                  username: "CinemaLover24",
-                  name: "Taylor Brooks",
-                  reason: "You both rate A24 films highly",
-                  compatibility: "89% match",
-                  mutualFriends: 14,
-                  isFollowing: false
-                }
-              ].map((friend) => (
-                <div key={friend.id} className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+              {recommendedLoading ? (
+                <div className="col-span-2 text-center py-4">
+                  <div className="text-gray-500">Finding people for you to connect with...</div>
+                </div>
+              ) : recommendedData?.users && recommendedData.users.length > 0 ? (
+                recommendedData.users.map((user: any) => (
+                <div key={user.id} className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
                         <span className="text-white text-sm">👤</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{friend.name}</div>
-                        <div className="text-sm text-gray-500">@{friend.username}</div>
+                        <div className="font-medium text-gray-900">{user.user_name}</div>
+                        <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-1 text-blue-600">
                       <Star className="fill-current" size={14} />
-                      <span className="text-xs font-medium">{friend.compatibility}</span>
+                      <span className="text-xs font-medium">New user</span>
                     </div>
                   </div>
 
-                  <div className="text-sm text-gray-600 mb-3">{friend.reason}</div>
+                  <div className="text-sm text-gray-600 mb-3">Connect to see their entertainment profile</div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">{friend.mutualFriends} mutual connections</span>
-                    {friend.isFollowing ? (
-                      <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
-                        <Check size={14} />
-                        <span>Following</span>
-                      </div>
-                    ) : (
-                      <Button
-                        onClick={() => handleFollowFriend(friend.id)}
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-3 py-1 text-sm rounded-full"
-                        data-testid={`button-follow-recommended-friend-${friend.id}`}
-                      >
-                        <UserPlus size={12} className="mr-1" />
-                        Follow
-                      </Button>
-                    )}
+                    <span className="text-xs text-gray-500">Discover together</span>
+                    <Button
+                      onClick={() => handleSendRequest(user.id)}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-3 py-1 text-sm rounded-full"
+                      data-testid={`button-follow-recommended-friend-${user.id}`}
+                    >
+                      <UserPlus size={12} className="mr-1" />
+                      Add Friend
+                    </Button>
                   </div>
                 </div>
-              ))}
+              ))
+              ) : (
+                <div className="col-span-2 text-center py-4">
+                  <div className="text-gray-500">No recommendations available at the moment</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
