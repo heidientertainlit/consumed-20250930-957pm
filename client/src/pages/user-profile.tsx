@@ -407,24 +407,30 @@ export default function UserProfile() {
     if (!session?.access_token) return;
 
     try {
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/dna_profiles?select=*', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Content-Type': 'application/json',
-        },
-      });
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY
+      );
 
-      if (response.ok) {
-        const profiles = await response.json();
-        if (profiles && profiles.length > 0) {
-          const profile = profiles[0];
-          setDnaProfile(profile);
-          setDnaProfileStatus('has_profile');
-          console.log('DNA profile loaded:', profile);
-        } else {
-          setDnaProfileStatus('no_profile');
-        }
+      const { data: profiles, error } = await supabase
+        .from('dna_profiles')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (error) {
+        console.error('Error fetching DNA profile:', error);
+        setDnaProfileStatus('no_profile');
+        return;
+      }
+
+      if (profiles && profiles.length > 0) {
+        const profile = profiles[0];
+        setDnaProfile(profile);
+        setDnaProfileStatus('has_profile');
+        console.log('DNA profile loaded:', profile);
+      } else {
+        setDnaProfileStatus('no_profile');
       }
     } catch (error) {
       console.error('Failed to fetch DNA profile:', error);
@@ -677,6 +683,8 @@ export default function UserProfile() {
     try {
       await generateDNAProfile();
       console.log("DNA Profile generated successfully");
+      // Refresh the profile data from the database
+      await fetchDnaProfile();
       setDnaProfileStatus('has_profile');
     } catch (error) {
       console.error("Failed to generate DNA profile:", error);
