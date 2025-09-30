@@ -173,7 +173,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
     setIsPosting(true);
     try {
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/social-feed", {
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
