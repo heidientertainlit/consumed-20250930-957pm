@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./lib/auth";
+import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import Leaderboard from "@/pages/leaderboard";
@@ -21,19 +22,71 @@ import NotFoundPage from "./pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Track} />
-      <Route path="/track" component={Track} />
-      <Route path="/leaderboard" component={Leaderboard} />
-      <Route path="/feed" component={Feed} />
-      <Route path="/friends" component={Friends} />
-      <Route path="/play" component={Play} />
-      <Route path="/predictions" component={Predictions} />
-      <Route path="/onboarding" component={OnboardingPage} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/media/:id" component={MediaDetail} />
-      <Route path="/list/:id" component={ListDetail} />
-      <Route path="/creator/:id" component={CreatorProfile} />
-      <Route path="/user/:id" component={UserProfile} />
+      <Route path="/login">
+        <PublicOnlyRoute>
+          <LoginPage />
+        </PublicOnlyRoute>
+      </Route>
+      <Route path="/onboarding">
+        <ProtectedRoute>
+          <OnboardingPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/">
+        <ProtectedRoute>
+          <Track />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/track">
+        <ProtectedRoute>
+          <Track />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/leaderboard">
+        <ProtectedRoute>
+          <Leaderboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/feed">
+        <ProtectedRoute>
+          <Feed />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/friends">
+        <ProtectedRoute>
+          <Friends />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/play">
+        <ProtectedRoute>
+          <Play />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/predictions">
+        <ProtectedRoute>
+          <Predictions />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/media/:id">
+        <ProtectedRoute>
+          <MediaDetail />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/list/:id">
+        <ProtectedRoute>
+          <ListDetail />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/creator/:id">
+        <ProtectedRoute>
+          <CreatorProfile />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/user/:id">
+        <ProtectedRoute>
+          <UserProfile />
+        </ProtectedRoute>
+      </Route>
       <Route component={NotFoundPage} />
     </Switch>
   );
