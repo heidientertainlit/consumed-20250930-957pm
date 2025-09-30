@@ -155,6 +155,18 @@ serve(async (req) => {
       
       creatorStats.forEach((stat: any) => {
         const userId = stat.user_id;
+        const creatorName = stat.creator_name;
+        
+        // Skip generic/unknown creator names
+        if (!creatorName || 
+            creatorName.toLowerCase() === 'unknown' || 
+            creatorName.toLowerCase() === 'tv show' ||
+            creatorName.toLowerCase() === 'podcast' ||
+            creatorName.toLowerCase() === 'game' ||
+            creatorName.toLowerCase() === 'sports') {
+          return;
+        }
+        
         if (!userMaxPoints[userId] || stat.fan_points > userMaxPoints[userId].points) {
           userMaxPoints[userId] = {
             points: stat.fan_points,
