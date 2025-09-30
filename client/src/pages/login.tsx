@@ -38,11 +38,13 @@ export default function LoginPage() {
           </p>
         </div>
         
-        {/* Force the modal to always be open for debugging */}
-        <AuthModal 
-          open={true} 
-          onOpenChange={handleAuthModalClose}
-        />
+        {/* Render modal content directly without Dialog wrapper */}
+        <div className="bg-white rounded-lg p-6 shadow-xl">
+          <AuthModal 
+            open={true} 
+            onOpenChange={handleAuthModalClose}
+          />
+        </div>
       </div>
     </div>
   );
