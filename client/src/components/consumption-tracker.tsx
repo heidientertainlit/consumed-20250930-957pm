@@ -184,13 +184,22 @@ export default function ConsumptionTracker({ isOpen, onClose }: ConsumptionTrack
       
       // Sync creator stats after successfully tracking media
       try {
-        await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/sync-creator-stats', {
+        const syncResponse = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/sync-creator-stats', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json',
           },
         });
+        
+        if (syncResponse.ok) {
+          const result = await syncResponse.json();
+          console.log('✅ Creator stats synced:', result);
+          // Invalidate leaderboard queries so Fan Points updates
+          queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+        } else {
+          console.error('Sync response error:', await syncResponse.text());
+        }
       } catch (error) {
         console.error('Failed to sync creator stats:', error);
         // Don't fail the whole operation if stats sync fails
