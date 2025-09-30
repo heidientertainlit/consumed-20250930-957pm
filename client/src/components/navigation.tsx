@@ -98,9 +98,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             >
               <User className="text-white" size={16} />
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center">
-                <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22C12 22 16 18 16 12C16 6 12 2 12 2Z" />
-                  <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22" opacity="0.5" />
+                <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M4 2C4 2 8 4 8 8C8 12 4 14 4 14" />
+                  <path d="M12 2C12 2 8 4 8 8C8 12 12 14 12 14" />
+                  <circle cx="4" cy="3" r="0.5" fill="currentColor" />
+                  <circle cx="12" cy="3" r="0.5" fill="currentColor" />
+                  <circle cx="8" cy="8" r="0.5" fill="currentColor" />
+                  <circle cx="4" cy="13" r="0.5" fill="currentColor" />
+                  <circle cx="12" cy="13" r="0.5" fill="currentColor" />
                 </svg>
               </div>
             </Link>
@@ -149,9 +154,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <div className="relative">
               <User className="text-white" size={24} />
-              <svg className="absolute -right-1 -bottom-1 w-3 h-3 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22C12 22 16 18 16 12C16 6 12 2 12 2Z" />
-                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22" opacity="0.5" />
+              <svg className="absolute -right-1 -bottom-1 w-3 h-3 text-purple-300" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M4 2C4 2 8 4 8 8C8 12 4 14 4 14" />
+                <path d="M12 2C12 2 8 4 8 8C8 12 12 14 12 14" />
+                <circle cx="4" cy="3" r="0.5" fill="currentColor" />
+                <circle cx="12" cy="3" r="0.5" fill="currentColor" />
+                <circle cx="8" cy="8" r="0.5" fill="currentColor" />
+                <circle cx="4" cy="13" r="0.5" fill="currentColor" />
+                <circle cx="12" cy="13" r="0.5" fill="currentColor" />
               </svg>
             </div>
             <span className="text-xs font-medium text-white">Profile</span>
