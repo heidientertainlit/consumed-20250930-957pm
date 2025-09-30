@@ -1442,51 +1442,6 @@ export default function UserProfile() {
             </div>
           )}
         </div>
-
-        {/* Recent Activity */}
-        <div className="px-4 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Activity</h2>
-          <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User size={24} className="text-gray-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-semibold text-gray-900">{mockUserData.name}</span>
-                      <Badge variant="secondary">
-                        {activity.type === "review" ? "Review" : "Added"}
-                      </Badge>
-                      <span className="text-sm text-gray-500">{activity.timestamp}</span>
-                    </div>
-                    <p className="text-gray-800 mb-2">{activity.content}</p>
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2">
-                        {activity.category === "books" && <BookOpen className="text-purple-700" size={16} />}
-                        {activity.category === "movies" && <Film className="text-purple-700" size={16} />}
-                        {activity.category === "music" && <Music className="text-purple-700" size={16} />}
-                        <span className="font-medium text-gray-900">{activity.media}</span>
-                      </div>
-                      {activity.rating && (
-                        <div className="flex items-center space-x-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star 
-                              key={i} 
-                              size={14} 
-                              className={i < activity.rating ? "text-yellow-400 fill-current" : "text-gray-300"}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       <ConsumptionTracker 
