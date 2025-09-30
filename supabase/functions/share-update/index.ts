@@ -81,11 +81,11 @@ serve(async (req) => {
         .from('social_posts')
         .insert({
           user_id: appUser.id,
-          thoughts: content,
+          content,
           media_title,
           media_type,
           media_creator,
-          media_image: media_image_url,
+          image_url: media_image_url,
           rating
         })
         .select()
