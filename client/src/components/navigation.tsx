@@ -102,14 +102,19 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <div className="relative">
               <User className="text-white" size={24} />
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M4 2C4 2 8 4 8 8C8 12 4 14 4 14" />
-                  <path d="M12 2C12 2 8 4 8 8C8 12 12 14 12 14" />
-                  <circle cx="4" cy="3" r="0.5" fill="currentColor" />
-                  <circle cx="12" cy="3" r="0.5" fill="currentColor" />
-                  <circle cx="8" cy="8" r="0.5" fill="currentColor" />
-                  <circle cx="4" cy="13" r="0.5" fill="currentColor" />
-                  <circle cx="12" cy="13" r="0.5" fill="currentColor" />
+                <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="none">
+                  {/* DNA strand connections */}
+                  <line x1="3" y1="3" x2="13" y2="5" stroke="currentColor" strokeWidth="0.8" opacity="0.7" />
+                  <line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" strokeWidth="0.8" opacity="0.7" />
+                  <line x1="3" y1="13" x2="13" y2="11" stroke="currentColor" strokeWidth="0.8" opacity="0.7" />
+                  
+                  {/* DNA nodes */}
+                  <circle cx="3" cy="3" r="1.2" fill="currentColor" />
+                  <circle cx="13" cy="5" r="1.2" fill="currentColor" />
+                  <circle cx="3" cy="8" r="1.2" fill="currentColor" />
+                  <circle cx="13" cy="8" r="1.2" fill="currentColor" />
+                  <circle cx="3" cy="13" r="1.2" fill="currentColor" />
+                  <circle cx="13" cy="11" r="1.2" fill="currentColor" />
                 </svg>
               </div>
             </div>
