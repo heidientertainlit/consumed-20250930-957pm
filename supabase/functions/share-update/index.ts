@@ -85,7 +85,7 @@ serve(async (req) => {
           media_title,
           media_type,
           media_creator,
-          media_image: media_image_url,
+          image_url: media_image_url,
           rating
         })
         .select()
