@@ -84,6 +84,15 @@
 }
 
 @layer utilities {
+  /* Form text override with !important */
+  .form-text-black {
+    color: #000 !important;
+  }
+  
+  .form-placeholder-black::placeholder {
+    color: #6b7280 !important;
+  }
+
   .bg-dark-primary {
     background-color: var(--dark-primary);
   }

@@ -139,7 +139,7 @@ export default function LoginPage() {
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email" className="form-label">Email</Label>
+                  <Label htmlFor="signin-email" className="form-text-black">Email</Label>
                   <Input
                     id="signin-email"
                     type="email"
@@ -147,11 +147,11 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     data-testid="input-signin-email"
-                    className="form-input bg-white"
+                    className="bg-white form-text-black form-placeholder-black"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password" className="form-label">Password</Label>
+                  <Label htmlFor="signin-password" className="form-text-black">Password</Label>
                   <Input
                     id="signin-password"
                     type="password"
@@ -159,7 +159,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     data-testid="input-signin-password"
-                    className="form-input bg-white"
+                    className="bg-white form-text-black form-placeholder-black"
                   />
                 </div>
                 <Button
@@ -176,7 +176,7 @@ export default function LoginPage() {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="form-label">Email</Label>
+                  <Label htmlFor="signup-email" className="form-text-black">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -184,11 +184,11 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     data-testid="input-signup-email"
-                    className="form-input bg-white"
+                    className="bg-white form-text-black form-placeholder-black"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="form-label">Password</Label>
+                  <Label htmlFor="signup-password" className="form-text-black">Password</Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -196,7 +196,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     data-testid="input-signup-password"
-                    className="form-input bg-white"
+                    className="bg-white form-text-black form-placeholder-black"
                   />
                 </div>
                 <Button
