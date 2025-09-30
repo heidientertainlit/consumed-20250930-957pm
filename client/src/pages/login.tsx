@@ -131,7 +131,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     data-testid="input-signin-email"
-                    className="bg-white"
+                    className="bg-white text-gray-900"
                   />
                 </div>
                 <div className="space-y-2">
@@ -143,7 +143,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     data-testid="input-signin-password"
-                    className="bg-white"
+                    className="bg-white text-gray-900"
                   />
                 </div>
                 <Button
@@ -168,7 +168,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     data-testid="input-signup-email"
-                    className="bg-white"
+                    className="bg-white text-gray-900"
                   />
                 </div>
                 <div className="space-y-2">
@@ -180,7 +180,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     data-testid="input-signup-password"
-                    className="bg-white"
+                    className="bg-white text-gray-900"
                   />
                 </div>
                 <Button
