@@ -102,7 +102,7 @@ export default function FriendsCreatorsPage() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action: 'searchUsers', query: '' }),
+        body: JSON.stringify({ action: 'searchUsers', query: 'a' }),
       });
 
       if (!response.ok) return { users: [] };
