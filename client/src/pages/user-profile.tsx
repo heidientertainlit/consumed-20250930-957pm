@@ -923,21 +923,6 @@ export default function UserProfile() {
                   </h1>
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-gray-600">@{userProfileData?.user_name || 'user'}</span>
-                    <span className="text-gray-400">•</span>
-                    <span className="text-gray-600">Joined {mockUserData.joinedDate}</span>
-                  </div>
-                  <div className="flex items-center space-x-6 text-sm text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <Users size={16} />
-                      <span>{mockUserData.followers.toLocaleString()} followers</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span>{mockUserData.following} following</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Trophy size={16} />
-                      <span>{mockUserData.fanPoints.toLocaleString()} fan points</span>
-                    </div>
                   </div>
                 </div>
 
