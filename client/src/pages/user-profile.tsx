@@ -52,6 +52,9 @@ export default function UserProfile() {
   const [userStats, setUserStats] = useState<any>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
+  // User profile data from custom users table
+  const [userProfileData, setUserProfileData] = useState<any>(null);
+
   // Media History filters
   const [mediaHistorySearch, setMediaHistorySearch] = useState("");
   const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
@@ -142,6 +145,35 @@ export default function UserProfile() {
     }
   }, [openFilterDropdown]);
 
+  // Fetch user profile data from custom users table
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!session?.access_token || !user?.id) return;
+
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_ANON_KEY
+        );
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('user_name, display_name')
+          .eq('id', user.id)
+          .single();
+
+        if (!error && data) {
+          setUserProfileData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [session?.access_token, user?.id]);
+
   // Fetch DNA profile and user lists when authenticated
   useEffect(() => {
     if (session?.access_token) {
@@ -178,12 +210,12 @@ export default function UserProfile() {
     try {
       const { createClient } = await import('@supabase/supabase-js');
       const supabase = createClient(
-        'https://mahpgcogwpawvviapqza.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c'
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY
       );
 
       // Check if username is already taken (if changed)
-      if (editUsername !== user.user_metadata?.user_name) {
+      if (editUsername !== userProfileData?.user_name) {
         const { data: existingUser } = await supabase
           .from('users')
           .select('id')
@@ -221,15 +253,20 @@ export default function UserProfile() {
         return;
       }
 
+      // Update local state with new profile data
+      setUserProfileData({
+        user_name: editUsername,
+        display_name: editDisplayName || null
+      });
+
       // Success!
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully"
       });
 
-      // Close modal and refresh page to show new data
+      // Close modal - no reload needed!
       setIsEditProfileOpen(false);
-      window.location.reload();
 
     } catch (error) {
       console.error('Save profile error:', error);
@@ -881,9 +918,11 @@ export default function UserProfile() {
             <div className="mt-4 md:mt-0 flex-1">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h1 className="text-3xl font-semibold text-black mb-1">{mockUserData.name}</h1>
+                  <h1 className="text-3xl font-semibold text-black mb-1">
+                    {userProfileData?.display_name || userProfileData?.user_name || 'User'}
+                  </h1>
                   <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-gray-600">{mockUserData.mockUserDataname}</span>
+                    <span className="text-gray-600">@{userProfileData?.user_name || 'user'}</span>
                     <span className="text-gray-400">•</span>
                     <span className="text-gray-600">Joined {mockUserData.joinedDate}</span>
                   </div>
@@ -908,8 +947,8 @@ export default function UserProfile() {
                     variant="outline" 
                     className="border-gray-300"
                     onClick={() => {
-                      setEditDisplayName(user?.user_metadata?.display_name || '');
-                      setEditUsername(user?.user_metadata?.user_name || '');
+                      setEditDisplayName(userProfileData?.display_name || '');
+                      setEditUsername(userProfileData?.user_name || '');
                       setIsEditProfileOpen(true);
                     }}
                     data-testid="button-edit-profile"
