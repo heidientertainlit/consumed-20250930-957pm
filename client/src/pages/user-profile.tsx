@@ -2325,7 +2325,7 @@ export default function UserProfile() {
 
                     {/* Multi-Select */}
                     {surveyQuestions[currentQuestion].question_type === 'multi-select' && (
-                      <div className="space-y-2.5">
+                      <div className="space-y-2">
                         {surveyQuestions[currentQuestion].options?.map((option, index) => {
                           const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? getCurrentSurveyAnswer() : [];
                           const isChecked = currentAnswers.includes(option);
@@ -2333,9 +2333,9 @@ export default function UserProfile() {
                           return (
                             <div 
                               key={index} 
-                              className={`flex items-center space-x-2.5 px-4 py-3 rounded-full border-2 transition-all cursor-pointer ${
+                              className={`flex items-center space-x-2 px-3 py-2.5 rounded-full border-2 transition-all cursor-pointer ${
                                 isChecked 
-                                  ? 'border-purple-500 bg-purple-100 shadow-md' 
+                                  ? 'border-purple-500 bg-purple-100 shadow-sm' 
                                   : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
                               }`}
                             >
@@ -2360,7 +2360,7 @@ export default function UserProfile() {
                               />
                               <Label 
                                 htmlFor={`multi-option-${index}`} 
-                                className="text-gray-900 text-sm leading-snug cursor-pointer flex-1 font-medium"
+                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium"
                               >
                                 {option}
                               </Label>
@@ -2373,32 +2373,32 @@ export default function UserProfile() {
                 )}
 
                 {isLoadingQuestions && (
-                  <div className="text-center py-6">
-                    <div className="animate-spin w-7 h-7 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-3"></div>
-                    <p className="text-gray-600 text-sm">Loading survey questions...</p>
+                  <div className="text-center py-5">
+                    <div className="animate-spin w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-2"></div>
+                    <p className="text-gray-600 text-xs">Loading questions...</p>
                   </div>
                 )}
               </div>
 
               {/* Navigation */}
-              <div className="flex justify-between items-center gap-2">
+              <div className="flex justify-between items-center gap-1.5">
                 <Button
                   onClick={handleSurveyPrevious}
                   disabled={currentQuestion === 0}
                   variant="outline"
                   size="sm"
-                  className="flex items-center space-x-1 disabled:opacity-50"
+                  className="flex items-center space-x-1 disabled:opacity-50 px-2.5 py-1.5 h-8"
                   data-testid="previous-question-button"
                 >
-                  <ChevronLeft size={16} />
-                  <span className="text-sm">Previous</span>
+                  <ChevronLeft size={14} />
+                  <span className="text-xs">Prev</span>
                 </Button>
 
                 <Button
                   onClick={() => setIsDNASurveyOpen(false)}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  className="text-gray-500 hover:text-gray-700 text-xs px-2 py-1.5 h-8"
                   data-testid="close-survey-button"
                 >
                   Close
@@ -2408,14 +2408,14 @@ export default function UserProfile() {
                   onClick={handleSurveyNext}
                   disabled={surveyQuestions.length === 0 || !getCurrentSurveyAnswer() || (Array.isArray(getCurrentSurveyAnswer()) && getCurrentSurveyAnswer().length === 0)}
                   size="sm"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-1 disabled:opacity-50"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-1 disabled:opacity-50 px-2.5 py-1.5 h-8"
                   data-testid="next-question-button"
                 >
-                  <span className="text-sm">{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Generate My DNA" : "Next"}</span>
+                  <span className="text-xs">{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Generate" : "Next"}</span>
                   {surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? (
-                    <Sparkles size={16} />
+                    <Sparkles size={14} />
                   ) : (
-                    <ChevronRight size={16} />
+                    <ChevronRight size={14} />
                   )}
                 </Button>
               </div>
