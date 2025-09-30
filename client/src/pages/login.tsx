@@ -121,9 +121,21 @@ export default function LoginPage() {
           } as React.CSSProperties}
         >
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="signin" data-testid="tab-signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup" data-testid="tab-signup">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gradient-to-r from-purple-600 to-purple-800">
+              <TabsTrigger 
+                value="signin" 
+                data-testid="tab-signin"
+                className="data-[state=active]:bg-black data-[state=active]:text-white text-purple-200"
+              >
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger 
+                value="signup" 
+                data-testid="tab-signup"
+                className="data-[state=active]:bg-black data-[state=active]:text-white text-purple-200"
+              >
+                Sign Up
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
@@ -137,7 +149,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     data-testid="input-signin-email"
-                    className="bg-white"
+                    className="bg-white text-black"
                   />
                 </div>
                 <div className="space-y-2">
@@ -149,7 +161,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     data-testid="input-signin-password"
-                    className="bg-white"
+                    className="bg-white text-black"
                   />
                 </div>
                 <Button
@@ -174,7 +186,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     data-testid="input-signup-email"
-                    className="bg-white"
+                    className="bg-white text-black"
                   />
                 </div>
                 <div className="space-y-2">
@@ -186,7 +198,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     data-testid="input-signup-password"
-                    className="bg-white"
+                    className="bg-white text-black"
                   />
                 </div>
                 <Button
