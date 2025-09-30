@@ -38,8 +38,9 @@ export default function LoginPage() {
           </p>
         </div>
         
+        {/* Force the modal to always be open for debugging */}
         <AuthModal 
-          open={showAuthModal} 
+          open={true} 
           onOpenChange={handleAuthModalClose}
         />
       </div>
