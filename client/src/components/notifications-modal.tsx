@@ -42,8 +42,10 @@ export default function NotificationsModal({ isOpen, onClose }: NotificationsMod
       actionLabel: "Invite friends",
       onAction: async () => {
         try {
-          // Use the proper share link system for invite
-          await copyLink({ kind: 'list', obj: { id: 'invite' } });
+          // Use base app URL for general invite
+          const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://consumedapp.com';
+          const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
+          await navigator.clipboard.writeText(BASE);
           toast({
             title: "Link copied!",
             description: "Share this link with your friends to invite them.",
