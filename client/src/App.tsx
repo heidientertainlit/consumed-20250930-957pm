@@ -14,8 +14,9 @@ import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
 import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
-import Onboarding from "@/pages/onboarding";
-import NotFound from "@/pages/not-found";
+import OnboardingPage from "./pages/onboarding";
+import LoginPage from "./pages/login";
+import NotFoundPage from "./pages/not-found";
 
 function Router() {
   return (
@@ -27,12 +28,13 @@ function Router() {
       <Route path="/friends" component={Friends} />
       <Route path="/play" component={Play} />
       <Route path="/predictions" component={Predictions} />
-      <Route path="/onboarding" component={Onboarding} />
+      <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/media/:id" component={MediaDetail} />
       <Route path="/list/:id" component={ListDetail} />
       <Route path="/creator/:id" component={CreatorProfile} />
       <Route path="/user/:id" component={UserProfile} />
-      <Route component={NotFound} />
+      <Route component={NotFoundPage} />
     </Switch>
   );
 }
