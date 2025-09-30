@@ -604,43 +604,6 @@ export default function Feed() {
                 </div>
               </div>
 
-              {/* Discovery Content - Trending */}
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-6 shadow-sm">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                    <TrendingUp className="text-white" size={18} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-900">Trending Now</div>
-                    <div className="text-sm text-gray-500">What everyone's talking about</div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {[
-                    { title: "House of the Dragon S2", category: "TV", trend: "+340%" },
-                    { title: "Deadpool & Wolverine", category: "Movies", trend: "+250%" },
-                    { title: "The Summer I Turned Pretty", category: "Books", trend: "+180%" },
-                    { title: "Sabrina Carpenter", category: "Music", trend: "+420%" }
-                  ].map((item, index) => (
-                    <div key={index} className="bg-white rounded-lg p-3 border border-gray-200">
-                      <div className="font-medium text-gray-900 text-sm">{item.title}</div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs text-gray-500">{item.category}</span>
-                        <span className="text-xs text-green-600 font-medium">{item.trend}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <div className="text-sm text-gray-600">Based on community activity</div>
-                  <button className="text-sm text-green-600 font-medium hover:text-green-700">
-                    See all trends
-                  </button>
-                </div>
-              </div>
-
               {/* Creator Update Card - More Subtle */}
               <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                 {/* Creator Info and Date */}
