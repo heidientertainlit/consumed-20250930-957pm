@@ -40,12 +40,15 @@ serve(async (req) => {
       // If user doesn't exist, create them
       if (appUserError && appUserError.code === 'PGRST116') {
         console.log('User not found, creating new user:', user.email);
-        const { data: newUser, error: createError } = await supabase
+        const { data: newUser, error: createError} = await supabase
           .from('users')
           .insert({
             id: user.id,
             email: user.email,
-            user_name: user.email.split('@')[0] // FIXED: using user_name
+            user_name: user.user_metadata?.user_name || user.email.split('@')[0],
+            display_name: user.user_metadata?.display_name || user.email.split('@')[0] || 'User',
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || ''
           })
           .select('id, email, user_name')
           .single();

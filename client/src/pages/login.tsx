@@ -12,6 +12,9 @@ import "./auth.css";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { user, loading, signIn, signUp } = useAuth();
   const [, setLocation] = useLocation();
@@ -51,7 +54,11 @@ export default function LoginPage() {
     e.preventDefault();
     setSubmitting(true);
     
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email, password, {
+      firstName,
+      lastName,
+      username
+    });
     
     if (error) {
       toast({
@@ -66,6 +73,9 @@ export default function LoginPage() {
       });
       setEmail("");
       setPassword("");
+      setFirstName("");
+      setLastName("");
+      setUsername("");
     }
     
     setSubmitting(false);
@@ -176,6 +186,44 @@ export default function LoginPage() {
             
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-firstname" className="form-text-black">First Name</Label>
+                    <Input
+                      id="signup-firstname"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      data-testid="input-signup-firstname"
+                      className="bg-white form-text-black form-placeholder-black"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-lastname" className="form-text-black">Last Name</Label>
+                    <Input
+                      id="signup-lastname"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      data-testid="input-signup-lastname"
+                      className="bg-white form-text-black form-placeholder-black"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-username" className="form-text-black">Username</Label>
+                  <Input
+                    id="signup-username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    data-testid="input-signup-username"
+                    className="bg-white form-text-black form-placeholder-black"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email" className="form-text-black">Email</Label>
                   <Input
