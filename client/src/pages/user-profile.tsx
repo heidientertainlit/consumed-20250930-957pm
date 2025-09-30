@@ -1198,15 +1198,62 @@ export default function UserProfile() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Media History</h2>
 
           {/* Search Bar with Icon */}
-          <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              value={mediaHistorySearch}
-              onChange={(e) => setMediaHistorySearch(e.target.value)}
-              placeholder="Search your media history..."
-              className="w-full pl-10"
-              data-testid="input-media-history-search"
-            />
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-900" size={18} />
+              <Input
+                value={mediaHistorySearch}
+                onChange={(e) => setMediaHistorySearch(e.target.value)}
+                placeholder="Search your media history..."
+                className="w-full pl-10 bg-white text-gray-900 placeholder:text-gray-500"
+                data-testid="input-media-history-search"
+              />
+            </div>
+            
+            {/* Search Results - Show when searching */}
+            {mediaHistorySearch.trim() && filteredMediaHistory.length > 0 && (
+              <div className="mt-2 bg-white rounded-xl border border-gray-200 shadow-sm max-h-96 overflow-y-auto">
+                <div className="divide-y divide-gray-100">
+                  {filteredMediaHistory.slice(0, 10).map((item, index) => (
+                    <div key={`${item.id}-${index}`} className="p-4 flex items-center space-x-4 hover:bg-gray-50">
+                      {item.image_url ? (
+                        <img 
+                          src={item.image_url}
+                          alt={item.title}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          {item.media_type === "movie" && <Film size={24} className="text-gray-600" />}
+                          {item.media_type === "tv" && <Film size={24} className="text-gray-600" />}
+                          {item.media_type === "book" && <BookOpen size={24} className="text-gray-600" />}
+                          {item.media_type === "music" && <Music size={24} className="text-gray-600" />}
+                          {item.media_type === "podcast" && <Music size={24} className="text-gray-600" />}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 truncate">{item.title}</div>
+                        <div className="text-sm text-gray-600 truncate">{item.creator}</div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-xs text-gray-500 capitalize">{item.media_type}</span>
+                          <span className="text-xs text-gray-400">•</span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(item.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* No Results Message */}
+            {mediaHistorySearch.trim() && filteredMediaHistory.length === 0 && (
+              <div className="mt-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
+                <p className="text-gray-600">No media found matching "{mediaHistorySearch}"</p>
+              </div>
+            )}
           </div>
 
           {/* Filter Pills */}
