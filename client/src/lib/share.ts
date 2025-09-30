@@ -21,16 +21,7 @@ export async function shareThing(opts: { kind: ShareKind; id: string; title: str
     }
   }
 
-  // Replit-safe fallbacks: mobile share sheet (text) → clipboard
-  if (navigator.share) { 
-    try { 
-      await navigator.share({ text }); 
-      return 'shared';
-    } catch {
-      // Fall through to clipboard
-    }
-  }
-  
+  // On Replit (FEATURE_SHARES=false): just copy to clipboard
   await navigator.clipboard.writeText(text);
   return 'copied';
 }
