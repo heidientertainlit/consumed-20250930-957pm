@@ -37,7 +37,7 @@ interface SearchResult {
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
+  
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const { session } = useAuth();
@@ -117,14 +117,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
   ];
 
-  const quickFilters = [
-    { id: "all", label: "All", icon: <Search size={16} /> },
-    { id: "movies", label: "Movies", icon: <Film size={16} /> },
-    { id: "tv", label: "TV Shows", icon: <Tv size={16} /> },
-    { id: "books", label: "Books", icon: <BookOpen size={16} /> },
-    { id: "music", label: "Music", icon: <Music size={16} /> },
-    { id: "games", label: "Games", icon: <Gamepad2 size={16} /> }
-  ];
+  
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-16">
@@ -176,25 +169,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 'Search'
               )}
             </Button>
-          </div></div>
-
-          {/* Quick Filters */}
-          <div className="flex space-x-2 mt-4 overflow-x-auto pb-2">
-            {quickFilters.map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveTab(filter.id)}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeTab === filter.id
-                    ? "bg-purple-700 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                data-testid={`filter-${filter.id}`}
-              >
-                {filter.icon}
-                <span>{filter.label}</span>
-              </button>
-            ))}
           </div>
         </div>
 
