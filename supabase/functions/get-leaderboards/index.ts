@@ -124,7 +124,7 @@ serve(async (req) => {
       // Get all creator stats
       const { data: creatorStats, error: statsError } = await supabase
         .from('user_creator_stats')
-        .select('user_id, creator_name, fan_points, role');
+        .select('user_id, creator_name, fan_points, media_types');
         
       if (statsError) {
         return new Response(JSON.stringify({ error: 'Failed to fetch creator stats' }), {
@@ -145,13 +145,13 @@ serve(async (req) => {
         });
       }
 
-      // Find highest fan points per user
+      // Find highest fan points per user (their top creator)
       const userMap = users.reduce((acc: any, user: any) => {
         acc[user.id] = user.user_name;
         return acc;
       }, {});
 
-      const userMaxPoints: { [key: string]: { points: number; creator: string; role: string } } = {};
+      const userMaxPoints: { [key: string]: { points: number; creator: string; mediaTypes: string[] } } = {};
       
       creatorStats.forEach((stat: any) => {
         const userId = stat.user_id;
@@ -171,12 +171,22 @@ serve(async (req) => {
           userMaxPoints[userId] = {
             points: stat.fan_points,
             creator: stat.creator_name,
-            role: stat.role
+            mediaTypes: stat.media_types || []
           };
         }
       });
 
-      // Convert to leaderboard format
+      // Determine role based on media types
+      const determineRole = (mediaTypes: string[]): string => {
+        if (mediaTypes.includes('movie')) return 'Director';
+        if (mediaTypes.includes('tv')) return 'Showrunner';
+        if (mediaTypes.includes('book')) return 'Author';
+        if (mediaTypes.includes('music')) return 'Artist';
+        if (mediaTypes.includes('podcast')) return 'Podcaster';
+        return 'Creator';
+      };
+
+      // Convert to leaderboard format - show users ranked by their top creator
       const leaderboard = Object.entries(userMaxPoints)
         .map(([userId, data]) => ({
           user_id: userId,
@@ -185,7 +195,7 @@ serve(async (req) => {
           score: data.points,
           created_at: new Date().toISOString(),
           creator_name: data.creator,
-          creator_role: data.role
+          creator_role: determineRole(data.mediaTypes)
         }))
         .sort((a, b) => b.user_points - a.user_points)
         .slice(0, limit);
