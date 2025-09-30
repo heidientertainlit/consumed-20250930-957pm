@@ -13,6 +13,8 @@ interface LeaderboardEntry {
   created_at: string;
   total_items?: number;
   total_reviews?: number;
+  creator_name?: string;
+  creator_role?: string;
 }
 
 const fetchLeaderboard = async (session: any, category: string = 'all_time', limit: number = 10): Promise<LeaderboardEntry[]> => {
@@ -27,6 +29,67 @@ const fetchLeaderboard = async (session: any, category: string = 'all_time', lim
   const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
   
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // Handle fan points category directly from user_creator_stats table
+  if (category === 'fan_points') {
+    console.log('🌟 Fetching fan points leaderboard directly from Supabase...');
+    
+    // Step 1: Get all creator stats
+    const { data: creatorStats, error: statsError } = await supabase
+      .from('user_creator_stats')
+      .select('user_id, creator_name, fan_points, role');
+      
+    if (statsError) {
+      console.error('❌ Error fetching creator stats:', statsError);
+      throw new Error('Failed to fetch creator stats');
+    }
+
+    // Step 2: Get all users for user names
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, user_name');
+      
+    if (usersError) {
+      console.error('❌ Error fetching users:', usersError);
+      throw new Error('Failed to fetch users');
+    }
+
+    // Step 3: Find highest fan points per user
+    const userMap = users.reduce((acc: any, user: any) => {
+      acc[user.id] = user.user_name;
+      return acc;
+    }, {});
+
+    const userMaxPoints: { [key: string]: { points: number; creator: string; role: string } } = {};
+    
+    creatorStats.forEach((stat: any) => {
+      const userId = stat.user_id;
+      if (!userMaxPoints[userId] || stat.fan_points > userMaxPoints[userId].points) {
+        userMaxPoints[userId] = {
+          points: stat.fan_points,
+          creator: stat.creator_name,
+          role: stat.role
+        };
+      }
+    });
+
+    // Step 4: Convert to leaderboard format
+    const leaderboard = Object.entries(userMaxPoints)
+      .map(([userId, data]) => ({
+        user_id: userId,
+        user_name: userMap[userId] || 'Anonymous',
+        user_points: data.points,
+        score: data.points,
+        created_at: new Date().toISOString(),
+        creator_name: data.creator,
+        creator_role: data.role
+      }))
+      .sort((a, b) => b.user_points - a.user_points)
+      .slice(0, limit);
+
+    console.log('✅ Fan points leaderboard loaded:', leaderboard);
+    return leaderboard;
+  }
 
   // Handle game prediction categories directly from user_predictions table
   if (category === 'vote_leader' || category === 'predict_leader' || category === 'trivia_leader') {
@@ -206,6 +269,12 @@ const leaderboardCategories = [
     title: "Trivia Leader",
     icon: <Brain className="w-5 h-5 text-blue-600" />,
     isSelected: false
+  },
+  {
+    id: "fan_points",
+    title: "Fan Points",
+    icon: <Star className="w-5 h-5 text-pink-600" />,
+    isSelected: false
   }
 ];
 
@@ -292,6 +361,7 @@ export default function Leaderboard() {
                 {selectedCategory === 'vote_leader' && 'Points from voting games only (10 pts each)'}
                 {selectedCategory === 'predict_leader' && 'Pending points for correct predictions (20 pts each when resolved)'}
                 {selectedCategory === 'trivia_leader' && 'Points from trivia games only (15 pts each)'}
+                {selectedCategory === 'fan_points' && 'Ranked by highest fan points for a single creator (1 pt per media item consumed)'}
               </p>
             </div>
           </div>
@@ -336,6 +406,8 @@ export default function Leaderboard() {
                         <div className="text-sm text-gray-600">
                           {selectedCategory === 'all_time' 
                             ? `${entry.total_items || 0} items tracked`
+                            : selectedCategory === 'fan_points' && entry.creator_name
+                            ? `${entry.creator_name} (${entry.creator_role})`
                             : `Score: ${entry.user_points.toLocaleString()}`
                           }
                         </div>
