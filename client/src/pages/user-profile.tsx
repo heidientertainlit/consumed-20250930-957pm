@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut } from "lucide-react";
 import { copyLink } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
+import { queryClient } from "@/lib/queryClient";
 
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
@@ -953,6 +954,7 @@ export default function UserProfile() {
                           variant: "destructive"
                         });
                       } else {
+                        queryClient.clear();
                         toast({
                           title: "Logged out",
                           description: "You have been successfully logged out."
