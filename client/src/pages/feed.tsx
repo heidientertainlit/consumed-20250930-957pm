@@ -604,42 +604,6 @@ export default function Feed() {
                 </div>
               </div>
 
-              {/* Creator Update Card - More Subtle */}
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                {/* Creator Info and Date */}
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-lg">🎵</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <div className="font-semibold text-gray-900">Ariana Grande</div>
-                      <Badge className="bg-purple-100 text-purple-700 text-xs px-2 py-1">Official</Badge>
-                    </div>
-                    <div className="text-sm text-gray-500">2 hours ago</div>
-                  </div>
-                </div>
-
-                {/* Creator Update */}
-                <div className="mb-4">
-                  <p className="text-gray-800">Just finished recording my new album! The vocals are insane and I can't wait for you all to hear it. 💜</p>
-                </div>
-
-                {/* Interaction Bar */}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <div className="flex items-center space-x-6">
-                    <button className="flex items-center space-x-2 text-gray-500 hover:text-red-500 transition-colors">
-                      <Heart size={18} />
-                      <span className="text-sm">1.2k</span>
-                    </button>
-                    <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors">
-                      <MessageCircle size={18} />
-                      <span className="text-sm">89</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
 
               {/* Book-to-Screen Discovery */}
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
