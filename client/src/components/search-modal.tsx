@@ -150,6 +150,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
               placeholder="Get personal recs, create group blends, or search media & creators..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim() && !isSearching && session) {
+                  handleSearch();
+                }
+              }}
               className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-700 focus:border-transparent text-lg text-black placeholder-gray-500"
               data-testid="search-input"
               autoFocus
