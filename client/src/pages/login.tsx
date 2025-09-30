@@ -15,10 +15,11 @@ export default function LoginPage() {
     }
   }, [user, setLocation]);
 
-  const handleAuthModalClose = () => {
-    setShowAuthModal(false);
-    // Redirect to home or feed when modal is closed
-    setLocation('/');
+  const handleAuthModalClose = (open: boolean) => {
+    if (!open) {
+      // Redirect to home when modal is closed
+      setLocation('/');
+    }
   };
 
   return (
