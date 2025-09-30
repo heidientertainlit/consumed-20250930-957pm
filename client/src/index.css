@@ -72,8 +72,9 @@
   }
 
   body {
-    @apply font-sans antialiased bg-[var(--dark-primary)] text-foreground;
+    @apply font-sans antialiased bg-[var(--dark-primary)];
     font-family: 'Poppins', sans-serif;
+    color: hsl(0, 0%, 98%);
   }
 
   /* Ensure all elements use Poppins */
