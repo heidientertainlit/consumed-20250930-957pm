@@ -11,20 +11,20 @@ import { useToast } from "@/hooks/use-toast";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { user, signIn, signUp } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const { user, loading, signIn, signUp } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (!loading && user) {
       setLocation('/feed');
     }
-  }, [user, setLocation]);
+  }, [user, loading, setLocation]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     
     const { error } = await signIn(email, password);
     
@@ -43,12 +43,12 @@ export default function LoginPage() {
       setPassword("");
     }
     
-    setLoading(false);
+    setSubmitting(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     
     const { error } = await signUp(email, password);
     
@@ -67,16 +67,28 @@ export default function LoginPage() {
       setPassword("");
     }
     
-    setLoading(false);
+    setSubmitting(false);
   };
 
-  // If user is already logged in, show loading state while redirecting
+  // Show loading spinner while auth state is being determined
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="text-white text-sm mt-4">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is logged in, show redirecting message (useEffect will redirect)
   if (user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-white text-xl mb-4">Redirecting to Feed...</div>
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="text-white text-xl mt-4">Redirecting to Feed...</div>
         </div>
       </div>
     );
@@ -137,10 +149,10 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   className="w-full bg-purple-600 hover:bg-purple-700"
-                  disabled={loading}
+                  disabled={submitting}
                   data-testid="button-signin"
                 >
-                  {loading ? "Signing in..." : "Sign In"}
+                  {submitting ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </TabsContent>
@@ -174,10 +186,10 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   className="w-full bg-purple-600 hover:bg-purple-700"
-                  disabled={loading}
+                  disabled={submitting}
                   data-testid="button-signup"
                 >
-                  {loading ? "Creating account..." : "Sign Up"}
+                  {submitting ? "Creating account..." : "Sign Up"}
                 </Button>
               </form>
             </TabsContent>
