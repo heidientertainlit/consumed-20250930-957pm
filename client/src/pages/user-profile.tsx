@@ -2247,36 +2247,36 @@ export default function UserProfile() {
 
       {/* Entertainment DNA Survey Modal */}
       {isDNASurveyOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-5 md:p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 md:p-5">
               {/* Header */}
-              <div className="text-center mb-5">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Brain className="text-white" size={24} />
+              <div className="text-center mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <Brain className="text-white" size={20} />
                 </div>
-                <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">Entertainment DNA Survey</h1>
-                <p className="text-gray-600 text-sm md:text-base">
-                  Let's understand how you consume entertainment so we can personalize your experience
+                <h1 className="text-lg md:text-xl font-bold text-gray-900 mb-1">Entertainment DNA Survey</h1>
+                <p className="text-gray-600 text-xs md:text-sm">
+                  Let's understand how you consume entertainment
                 </p>
               </div>
 
               {/* Progress */}
               {surveyQuestions.length > 0 && (
-                <div className="mb-5">
-                  <div className="flex justify-between text-xs md:text-sm text-gray-600 mb-1.5">
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-gray-600 mb-1.5">
                     <span>Question {currentQuestion + 1} of {surveyQuestions.length}</span>
-                    <span>{Math.round(((currentQuestion + 1) / surveyQuestions.length) * 100)}% complete</span>
+                    <span>{Math.round(((currentQuestion + 1) / surveyQuestions.length) * 100)}%</span>
                   </div>
-                  <Progress value={((currentQuestion + 1) / surveyQuestions.length) * 100} className="h-2" />
+                  <Progress value={((currentQuestion + 1) / surveyQuestions.length) * 100} className="h-1.5" />
                 </div>
               )}
 
               {/* Question */}
-              <div className="mb-5">
+              <div className="mb-4">
                 {!isLoadingQuestions && surveyQuestions.length > 0 && currentQuestion < surveyQuestions.length && (
                   <>
-                    <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 leading-snug">
+                    <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-3 leading-snug">
                       {surveyQuestions[currentQuestion].question_text}
                     </h2>
 
@@ -2286,7 +2286,7 @@ export default function UserProfile() {
                         value={getCurrentSurveyAnswer() || ""}
                         onChange={(e) => handleSurveyAnswer(e.target.value)}
                         placeholder="Please share your thoughts..."
-                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-purple-300 focus:ring-purple-300 min-h-[100px] resize-vertical text-sm text-black bg-white placeholder:text-gray-500"
+                        className="w-full p-2.5 border border-gray-200 rounded-lg focus:border-purple-300 focus:ring-purple-300 min-h-[90px] resize-vertical text-sm text-black bg-white placeholder:text-gray-500"
                         data-testid="text-input"
                       />
                     )}
@@ -2296,23 +2296,23 @@ export default function UserProfile() {
                       <RadioGroup 
                         value={getCurrentSurveyAnswer() || ""} 
                         onValueChange={handleSurveyAnswer}
-                        className="space-y-2.5"
+                        className="space-y-2"
                       >
                         {surveyQuestions[currentQuestion].options?.map((option, index) => {
                           const isSelected = getCurrentSurveyAnswer() === option;
                           return (
                             <div 
                               key={index} 
-                              className={`flex items-center space-x-2.5 px-4 py-3 rounded-full border-2 transition-all cursor-pointer ${
+                              className={`flex items-center space-x-2 px-3 py-2.5 rounded-full border-2 transition-all cursor-pointer ${
                                 isSelected 
-                                  ? 'border-purple-500 bg-purple-100 shadow-md' 
+                                  ? 'border-purple-500 bg-purple-100 shadow-sm' 
                                   : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
                               }`}
                             >
                               <RadioGroupItem value={option} id={`option-${index}`} className="flex-shrink-0" />
                               <Label 
                                 htmlFor={`option-${index}`} 
-                                className="text-gray-900 text-sm leading-snug cursor-pointer flex-1 font-medium"
+                                className="text-gray-900 text-sm leading-tight cursor-pointer flex-1 font-medium"
                                 data-testid={`option-${option}`}
                               >
                                 {option}
