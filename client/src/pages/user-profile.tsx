@@ -946,6 +946,8 @@ export default function UserProfile() {
                     variant="outline" 
                     className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300"
                     onClick={async () => {
+                      await queryClient.cancelQueries();
+                      queryClient.clear();
                       const { error } = await signOut();
                       if (error) {
                         toast({
@@ -954,7 +956,6 @@ export default function UserProfile() {
                           variant: "destructive"
                         });
                       } else {
-                        queryClient.clear();
                         toast({
                           title: "Logged out",
                           description: "You have been successfully logged out."
