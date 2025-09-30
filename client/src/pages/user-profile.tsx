@@ -53,6 +53,10 @@ export default function UserProfile() {
   const [userStats, setUserStats] = useState<any>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
+  // User points states
+  const [userPoints, setUserPoints] = useState<any>(null);
+  const [isLoadingPoints, setIsLoadingPoints] = useState(false);
+
   // User profile data from custom users table
   const [userProfileData, setUserProfileData] = useState<any>(null);
 
@@ -181,6 +185,7 @@ export default function UserProfile() {
       fetchDnaProfile();
       fetchUserLists();
       fetchUserStats();
+      fetchUserPoints();
       // fetchHighlights(); // Uncomment when fetchHighlights is implemented
     }
   }, [session?.access_token]);
@@ -341,6 +346,35 @@ export default function UserProfile() {
       setUserStats(null);
     } finally {
       setIsLoadingStats(false);
+    }
+  };
+
+  // Fetch user points from Supabase edge function
+  const fetchUserPoints = async () => {
+    if (!session?.access_token) return;
+
+    setIsLoadingPoints(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserPoints(data.points);
+        console.log('User points loaded:', data.points);
+      } else {
+        console.error('Failed to fetch user points');
+        setUserPoints(null);
+      }
+    } catch (error) {
+      console.error('Error fetching user points:', error);
+      setUserPoints(null);
+    } finally {
+      setIsLoadingPoints(false);
     }
   };
 
@@ -924,6 +958,22 @@ export default function UserProfile() {
                   </h1>
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-gray-600">@{userProfileData?.user_name || 'user'}</span>
+                  </div>
+                  
+                  {/* Total Points Display */}
+                  <div className="flex items-center space-x-2 mb-2">
+                    {isLoadingPoints ? (
+                      <div className="flex items-center space-x-2">
+                        <Trophy className="text-amber-500" size={20} />
+                        <span className="text-gray-600">Loading points...</span>
+                      </div>
+                    ) : userPoints ? (
+                      <div className="flex items-center space-x-2">
+                        <Trophy className="text-amber-500" size={20} />
+                        <span className="text-lg font-bold text-amber-600">{userPoints.all_time || 0}</span>
+                        <span className="text-gray-600">total points</span>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
