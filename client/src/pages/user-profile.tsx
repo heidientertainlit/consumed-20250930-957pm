@@ -2298,18 +2298,28 @@ export default function UserProfile() {
                         onValueChange={handleSurveyAnswer}
                         className="space-y-2.5"
                       >
-                        {surveyQuestions[currentQuestion].options?.map((option, index) => (
-                          <div key={index} className="flex items-center space-x-2.5 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
-                            <RadioGroupItem value={option} id={`option-${index}`} />
-                            <Label 
-                              htmlFor={`option-${index}`} 
-                              className="text-gray-700 text-sm leading-snug cursor-pointer flex-1"
-                              data-testid={`option-${option}`}
+                        {surveyQuestions[currentQuestion].options?.map((option, index) => {
+                          const isSelected = getCurrentSurveyAnswer() === option;
+                          return (
+                            <div 
+                              key={index} 
+                              className={`flex items-center space-x-2.5 px-4 py-3 rounded-full border-2 transition-all cursor-pointer ${
+                                isSelected 
+                                  ? 'border-purple-500 bg-purple-100 shadow-md' 
+                                  : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
+                              }`}
                             >
-                              {option}
-                            </Label>
-                          </div>
-                        ))}
+                              <RadioGroupItem value={option} id={`option-${index}`} className="flex-shrink-0" />
+                              <Label 
+                                htmlFor={`option-${index}`} 
+                                className="text-gray-900 text-sm leading-snug cursor-pointer flex-1 font-medium"
+                                data-testid={`option-${option}`}
+                              >
+                                {option}
+                              </Label>
+                            </div>
+                          );
+                        })}
                       </RadioGroup>
                     )}
 
@@ -2321,7 +2331,14 @@ export default function UserProfile() {
                           const isChecked = currentAnswers.includes(option);
 
                           return (
-                            <div key={index} className="flex items-center space-x-2.5 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+                            <div 
+                              key={index} 
+                              className={`flex items-center space-x-2.5 px-4 py-3 rounded-full border-2 transition-all cursor-pointer ${
+                                isChecked 
+                                  ? 'border-purple-500 bg-purple-100 shadow-md' 
+                                  : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
+                              }`}
+                            >
                               <input
                                 type="checkbox"
                                 id={`multi-option-${index}`}
@@ -2338,12 +2355,12 @@ export default function UserProfile() {
                                   }
                                   handleSurveyAnswer(currentAnswers);
                                 }}
-                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
                                 data-testid={`multi-option-${option}`}
                               />
                               <Label 
                                 htmlFor={`multi-option-${index}`} 
-                                className="text-gray-700 text-sm leading-snug cursor-pointer flex-1"
+                                className="text-gray-900 text-sm leading-snug cursor-pointer flex-1 font-medium"
                               >
                                 {option}
                               </Label>
