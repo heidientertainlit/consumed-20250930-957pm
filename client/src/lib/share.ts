@@ -1,27 +1,25 @@
-const BASE = import.meta.env.VITE_APP_URL!;
-const FEATURE_SHARES = import.meta.env.VITE_FEATURE_SHARES === 'true';
+const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://consumedapp.com';
+const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
 
 export type ShareKind = 'list' | 'media' | 'prediction' | 'post' | 'edna';
 
-export function urlFor(kind: ShareKind, id: string) {
+function listPath(input: { id?: string; user_id?: string; isCurrently?: boolean }) {
+  if (input?.isCurrently && input?.user_id) return `/list/currently?user=${input.user_id}`;
+  if (input?.id) return `/list/${input.id}`;
+  return '/list';
+}
+
+export function urlFor(kind: ShareKind, arg: any) {
+  if (kind === 'list') return `${BASE}${listPath(arg)}`;
+  const id = typeof arg === 'string' ? arg : arg?.id;
   return `${BASE}/${kind}/${id}`;
 }
 
-export async function shareThing(opts: { kind: ShareKind; id: string; title: string; }) {
-  const url = urlFor(opts.kind, opts.id);
-  const text = `I'm on Consumed — ${opts.title}. Join me: ${url}`;
+export async function copyLink(opts: { kind: ShareKind; id?: string; obj?: any }) {
+  const url = opts.kind === 'list'
+    ? urlFor('list', opts.obj ?? { id: opts.id })
+    : urlFor(opts.kind, opts.id!);
 
-  // When FEATURE_SHARES is ON (post-Vercel), try native share with a URL
-  if (FEATURE_SHARES && navigator.share) {
-    try { 
-      await navigator.share({ title: opts.title, url }); 
-      return 'shared';
-    } catch {
-      // User cancelled or share failed
-    }
-  }
-
-  // On Replit (FEATURE_SHARES=false): just copy to clipboard
-  await navigator.clipboard.writeText(text);
-  return 'copied';
+  await navigator.clipboard.writeText(url);
+  return url;
 }

@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X } from "lucide-react";
-import { shareThing } from "@/lib/share";
+import { copyLink } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
 
 export default function UserProfile() {
@@ -278,18 +278,15 @@ export default function UserProfile() {
   // Share list using unified helper
   const handleShareListDirect = async (listId: string, listTitle: string) => {
     try {
-      const result = await shareThing({
+      await copyLink({
         kind: 'list',
-        id: listId,
-        title: listTitle
+        id: listId
       });
       
-      if (result === 'copied') {
-        toast({
-          title: "List Link Copied!",
-          description: "Share this with your friends to show your entertainment list",
-        });
-      }
+      toast({
+        title: "List Link Copied!",
+        description: "Share this with your friends to show your entertainment list",
+      });
     } catch (error) {
       console.error('Error sharing list:', error);
       toast({
@@ -537,18 +534,15 @@ export default function UserProfile() {
     }
 
     try {
-      const result = await shareThing({
+      await copyLink({
         kind: 'edna',
-        id: dnaProfile.id,
-        title: 'my Entertainment DNA'
+        id: dnaProfile.id
       });
       
-      if (result === 'copied') {
-        toast({
-          title: "DNA Profile Link Copied!",
-          description: "Share your Entertainment DNA with friends",
-        });
-      }
+      toast({
+        title: "DNA Profile Link Copied!",
+        description: "Share your Entertainment DNA with friends",
+      });
     } catch (error) {
       console.error('Error sharing DNA:', error);
       toast({

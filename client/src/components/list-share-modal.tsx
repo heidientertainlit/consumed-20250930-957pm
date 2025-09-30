@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Copy, Check, Share2, Link, Facebook, Twitter, MessageCircle } from "lucide-react";
-import { shareThing, urlFor } from "@/lib/share";
+import { copyLink, urlFor } from "@/lib/share";
 
 interface ListShareModalProps {
   isOpen: boolean;
@@ -31,16 +31,9 @@ export default function ListShareModal({ isOpen, onClose, listName, listItems, l
   const handleShare = async () => {
     if (listId) {
       try {
-        const result = await shareThing({
-          kind: 'list',
-          id: listId,
-          title: listName
-        });
-        
-        if (result === 'copied') {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }
+        await copyLink({ kind: 'list', id: listId });
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch (err) {
         console.error('Failed to share:', err);
       }

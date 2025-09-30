@@ -8,7 +8,7 @@ import { useLocation } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { shareThing } from "@/lib/share";
+import { copyLink } from "@/lib/share";
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
@@ -151,7 +151,7 @@ export default function ListDetail() {
       return;
     }
 
-    if (!sharedListData?.id || !sharedListData?.title) {
+    if (!sharedListData?.id) {
       toast({
         title: "Cannot Share",
         description: "List information not available",
@@ -161,23 +161,21 @@ export default function ListDetail() {
     }
 
     try {
-      const result = await shareThing({
-        kind: 'list',
-        id: sharedListData.id,
-        title: sharedListData.title
+      await copyLink({ 
+        kind: 'list', 
+        obj: { 
+          id: sharedListData.id,
+          isCurrently: sharedListData.title === 'Currently',
+          user_id: session?.user?.id
+        } 
       });
 
-      if (result === 'copied') {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-        toast({
-          title: "Link Copied!",
-          description: "Share this with your friends to show your list",
-        });
-      } else {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "Link Copied!",
+        description: "Share this with your friends to show your list",
+      });
     } catch (error) {
       console.error('Error sharing list:', error);
       toast({

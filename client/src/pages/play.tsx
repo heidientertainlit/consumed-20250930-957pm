@@ -10,7 +10,7 @@ import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { shareThing } from "@/lib/share";
+import { copyLink } from "@/lib/share";
 
 // All game data now comes from the database via API
 
@@ -196,18 +196,13 @@ export default function PlayPage() {
 
   const handleInviteFriends = async (item: any) => {
     try {
-      const result = await shareThing({
-        kind: 'prediction',
-        id: item.id,
-        title: item.title || 'Play this with me'
-      });
+      const { copyLink } = await import('@/lib/share');
+      await copyLink({ kind: 'prediction', id: item.id });
       
-      if (result === 'copied') {
-        toast({
-          title: "Invite Link Copied!",
-          description: "Share this with your friends to invite them",
-        });
-      }
+      toast({
+        title: "Invite Link Copied!",
+        description: "Share this with your friends to invite them to play",
+      });
     } catch (error) {
       console.error('Error inviting friends:', error);
       toast({
