@@ -2249,34 +2249,34 @@ export default function UserProfile() {
       {isDNASurveyOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-8">
+            <div className="p-5 md:p-6">
               {/* Header */}
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Brain className="text-white" size={32} />
+              <div className="text-center mb-5">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Brain className="text-white" size={24} />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Entertainment DNA Survey</h1>
-                <p className="text-gray-600 text-lg">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">Entertainment DNA Survey</h1>
+                <p className="text-gray-600 text-sm md:text-base">
                   Let's understand how you consume entertainment so we can personalize your experience
                 </p>
               </div>
 
               {/* Progress */}
               {surveyQuestions.length > 0 && (
-                <div className="mb-8">
-                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                <div className="mb-5">
+                  <div className="flex justify-between text-xs md:text-sm text-gray-600 mb-1.5">
                     <span>Question {currentQuestion + 1} of {surveyQuestions.length}</span>
                     <span>{Math.round(((currentQuestion + 1) / surveyQuestions.length) * 100)}% complete</span>
                   </div>
-                  <Progress value={((currentQuestion + 1) / surveyQuestions.length) * 100} className="h-3" />
+                  <Progress value={((currentQuestion + 1) / surveyQuestions.length) * 100} className="h-2" />
                 </div>
               )}
 
               {/* Question */}
-              <div className="mb-8">
+              <div className="mb-5">
                 {!isLoadingQuestions && surveyQuestions.length > 0 && currentQuestion < surveyQuestions.length && (
                   <>
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-6 leading-relaxed">
+                    <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 leading-snug">
                       {surveyQuestions[currentQuestion].question_text}
                     </h2>
 
@@ -2286,7 +2286,7 @@ export default function UserProfile() {
                         value={getCurrentSurveyAnswer() || ""}
                         onChange={(e) => handleSurveyAnswer(e.target.value)}
                         placeholder="Please share your thoughts..."
-                        className="w-full p-4 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[120px] resize-vertical text-black bg-white placeholder:text-gray-500"
+                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-purple-300 focus:ring-purple-300 min-h-[100px] resize-vertical text-sm text-black bg-white placeholder:text-gray-500"
                         data-testid="text-input"
                       />
                     )}
@@ -2296,14 +2296,14 @@ export default function UserProfile() {
                       <RadioGroup 
                         value={getCurrentSurveyAnswer() || ""} 
                         onValueChange={handleSurveyAnswer}
-                        className="space-y-4"
+                        className="space-y-2.5"
                       >
                         {surveyQuestions[currentQuestion].options?.map((option, index) => (
-                          <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+                          <div key={index} className="flex items-center space-x-2.5 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
                             <RadioGroupItem value={option} id={`option-${index}`} />
                             <Label 
                               htmlFor={`option-${index}`} 
-                              className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
+                              className="text-gray-700 text-sm leading-snug cursor-pointer flex-1"
                               data-testid={`option-${option}`}
                             >
                               {option}
@@ -2315,13 +2315,13 @@ export default function UserProfile() {
 
                     {/* Multi-Select */}
                     {surveyQuestions[currentQuestion].question_type === 'multi-select' && (
-                      <div className="space-y-4">
+                      <div className="space-y-2.5">
                         {surveyQuestions[currentQuestion].options?.map((option, index) => {
                           const currentAnswers = Array.isArray(getCurrentSurveyAnswer()) ? getCurrentSurveyAnswer() : [];
                           const isChecked = currentAnswers.includes(option);
 
                           return (
-                            <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
+                            <div key={index} className="flex items-center space-x-2.5 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
                               <input
                                 type="checkbox"
                                 id={`multi-option-${index}`}
@@ -2343,7 +2343,7 @@ export default function UserProfile() {
                               />
                               <Label 
                                 htmlFor={`multi-option-${index}`} 
-                                className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
+                                className="text-gray-700 text-sm leading-snug cursor-pointer flex-1"
                               >
                                 {option}
                               </Label>
@@ -2356,30 +2356,32 @@ export default function UserProfile() {
                 )}
 
                 {isLoadingQuestions && (
-                  <div className="text-center py-8">
-                    <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading survey questions...</p>
+                  <div className="text-center py-6">
+                    <div className="animate-spin w-7 h-7 border-2 border-purple-600 border-t-transparent rounded-full mx-auto mb-3"></div>
+                    <p className="text-gray-600 text-sm">Loading survey questions...</p>
                   </div>
                 )}
               </div>
 
               {/* Navigation */}
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-2">
                 <Button
                   onClick={handleSurveyPrevious}
                   disabled={currentQuestion === 0}
                   variant="outline"
-                  className="flex items-center space-x-2 disabled:opacity-50"
+                  size="sm"
+                  className="flex items-center space-x-1 disabled:opacity-50"
                   data-testid="previous-question-button"
                 >
-                  <ChevronLeft size={20} />
-                  <span>Previous</span>
+                  <ChevronLeft size={16} />
+                  <span className="text-sm">Previous</span>
                 </Button>
 
                 <Button
                   onClick={() => setIsDNASurveyOpen(false)}
                   variant="ghost"
-                  className="text-gray-500 hover:text-gray-700"
+                  size="sm"
+                  className="text-gray-500 hover:text-gray-700 text-sm"
                   data-testid="close-survey-button"
                 >
                   Close
@@ -2388,14 +2390,15 @@ export default function UserProfile() {
                 <Button
                   onClick={handleSurveyNext}
                   disabled={surveyQuestions.length === 0 || !getCurrentSurveyAnswer() || (Array.isArray(getCurrentSurveyAnswer()) && getCurrentSurveyAnswer().length === 0)}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-2 px-8 py-3 disabled:opacity-50"
+                  size="sm"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-1 disabled:opacity-50"
                   data-testid="next-question-button"
                 >
-                  <span>{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Generate My DNA" : "Next"}</span>
+                  <span className="text-sm">{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Generate My DNA" : "Next"}</span>
                   {surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? (
-                    <Sparkles size={20} />
+                    <Sparkles size={16} />
                   ) : (
-                    <ChevronRight size={20} />
+                    <ChevronRight size={16} />
                   )}
                 </Button>
               </div>
