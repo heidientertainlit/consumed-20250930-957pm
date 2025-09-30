@@ -1,24 +1,24 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { AuthModal } from "@/components/auth-modal";
 
 export default function LoginPage() {
   const [showAuthModal, setShowAuthModal] = useState(true);
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (user) {
-      navigate('/feed');
+      setLocation('/feed');
     }
-  }, [user, navigate]);
+  }, [user, setLocation]);
 
   const handleAuthModalClose = () => {
     setShowAuthModal(false);
     // Redirect to home or feed when modal is closed
-    navigate('/');
+    setLocation('/');
   };
 
   return (
