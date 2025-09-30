@@ -35,7 +35,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         <div className="flex justify-between items-center h-16 px-4">
           <Link href="/" className="flex items-center space-x-2">
             <img
-              src="/consumed-logo.png"
+              src="/consumed-logo.svg"
               alt="consumed"
               className="h-8 w-auto"
             />
