@@ -52,6 +52,7 @@ export default function UserProfile() {
   const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
+  const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
 
   // Highlights state
   const [highlights, setHighlights] = useState<any[]>([]);
@@ -120,6 +121,21 @@ export default function UserProfile() {
       });
     }
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.filter-dropdown-container')) {
+        setOpenFilterDropdown(null);
+      }
+    };
+
+    if (openFilterDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [openFilterDropdown]);
 
   // Fetch DNA profile and user lists when authenticated
   useEffect(() => {
@@ -1258,45 +1274,162 @@ export default function UserProfile() {
 
           {/* Filter Pills */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <button
-              onClick={() => {
-                const yearMenu = document.getElementById('year-menu');
-                if (yearMenu) yearMenu.classList.toggle('hidden');
-              }}
-              className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
-              data-testid="button-year-filter"
-            >
-              {mediaHistoryYear === "all" ? "Year" : mediaHistoryYear}
-            </button>
+            {/* Year Filter */}
+            <div className="relative filter-dropdown-container">
+              <button
+                onClick={() => setOpenFilterDropdown(openFilterDropdown === 'year' ? null : 'year')}
+                className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                data-testid="button-year-filter"
+              >
+                {mediaHistoryYear === "all" ? "Year" : mediaHistoryYear}
+              </button>
+              {openFilterDropdown === 'year' && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[120px]">
+                  <button
+                    onClick={() => {
+                      setMediaHistoryYear("all");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    All Years
+                  </button>
+                  {availableYears.map(year => (
+                    <button
+                      key={year}
+                      onClick={() => {
+                        setMediaHistoryYear(year.toString());
+                        setOpenFilterDropdown(null);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            <button
-              onClick={() => {
-                const monthMenu = document.getElementById('month-menu');
-                if (monthMenu) monthMenu.classList.toggle('hidden');
-              }}
-              className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
-              data-testid="button-month-filter"
-            >
-              {mediaHistoryMonth === "all" ? "Month" : 
-                ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][parseInt(mediaHistoryMonth)]}
-            </button>
+            {/* Month Filter */}
+            <div className="relative filter-dropdown-container">
+              <button
+                onClick={() => setOpenFilterDropdown(openFilterDropdown === 'month' ? null : 'month')}
+                className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                data-testid="button-month-filter"
+              >
+                {mediaHistoryMonth === "all" ? "Month" : 
+                  ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][parseInt(mediaHistoryMonth)]}
+              </button>
+              {openFilterDropdown === 'month' && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[140px]">
+                  <button
+                    onClick={() => {
+                      setMediaHistoryMonth("all");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    All Months
+                  </button>
+                  {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((month, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setMediaHistoryMonth(index.toString());
+                        setOpenFilterDropdown(null);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                    >
+                      {month}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            <button
-              onClick={() => {
-                const typeMenu = document.getElementById('type-menu');
-                if (typeMenu) typeMenu.classList.toggle('hidden');
-              }}
-              className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
-              data-testid="button-type-filter"
-            >
-              {mediaHistoryType === "all" ? "Type" : 
-                mediaHistoryType === "movies" ? "Movies" :
-                mediaHistoryType === "tv" ? "TV Shows" :
-                mediaHistoryType === "books" ? "Books" :
-                mediaHistoryType === "music" ? "Music" :
-                mediaHistoryType === "podcasts" ? "Podcasts" :
-                "Games"}
-            </button>
+            {/* Type Filter */}
+            <div className="relative filter-dropdown-container">
+              <button
+                onClick={() => setOpenFilterDropdown(openFilterDropdown === 'type' ? null : 'type')}
+                className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                data-testid="button-type-filter"
+              >
+                {mediaHistoryType === "all" ? "Type" : 
+                  mediaHistoryType === "movies" ? "Movies" :
+                  mediaHistoryType === "tv" ? "TV Shows" :
+                  mediaHistoryType === "books" ? "Books" :
+                  mediaHistoryType === "music" ? "Music" :
+                  mediaHistoryType === "podcasts" ? "Podcasts" :
+                  "Games"}
+              </button>
+              {openFilterDropdown === 'type' && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[140px]">
+                  <button
+                    onClick={() => {
+                      setMediaHistoryType("all");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    All Types
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMediaHistoryType("movies");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    Movies
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMediaHistoryType("tv");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    TV Shows
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMediaHistoryType("books");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    Books
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMediaHistoryType("music");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    Music
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMediaHistoryType("podcasts");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    Podcasts
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMediaHistoryType("games");
+                      setOpenFilterDropdown(null);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    Games
+                  </button>
+                </div>
+              )}
+            </div>
 
             {(mediaHistoryYear !== "all" || mediaHistoryMonth !== "all" || mediaHistoryType !== "all") && (
               <button
