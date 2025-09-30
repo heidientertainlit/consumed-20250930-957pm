@@ -136,11 +136,19 @@ export default function Leaderboard() {
   const [selectedCategory, setSelectedCategory] = useState("all_time");
   const { session } = useAuth();
 
-  const { data: leaderboardData, isLoading } = useQuery({
+  const { data: leaderboardData, isLoading, error } = useQuery({
     queryKey: ["leaderboard", selectedCategory],
     queryFn: () => fetchLeaderboard(session, selectedCategory, 10),
     enabled: !!session?.access_token,
   });
+
+  // Log leaderboard data for debugging
+  if (leaderboardData) {
+    console.log(`📊 Leaderboard data for ${selectedCategory}:`, leaderboardData);
+  }
+  if (error) {
+    console.error(`❌ Leaderboard error for ${selectedCategory}:`, error);
+  }
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
