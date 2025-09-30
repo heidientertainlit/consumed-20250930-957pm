@@ -10,6 +10,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**September 30, 2025 - Profile Page Improvements: Real Favorite Creators & Compact Overview**
+- **FAVORITE CREATORS**: Now computed from actual user media consumption instead of mock data
+  - Aggregates creators across all tracked media (deduped by media_id)
+  - Calculates "fan points" based on consumption count per creator
+  - Determines role (Director, Author, Artist, Podcaster, Studio) from dominant media type
+  - Shows top 3 creators with empty state when no data available
+  - Added data-testid attributes for testing: `text-creator-name-{index}`, `text-creator-points-{index}`
+- **COMPACT OVERVIEW**: Redesigned Media History overview section for better space efficiency
+  - Reduced from large card-based layout to compact pill-shaped badges
+  - Only shows media types with counts > 0
+  - Reduced vertical space by ~60% to improve filtered media visibility
+  - Maintains responsive wrapping for mobile devices
+- **IMPLEMENTATION**: Uses useMemo for performance, handles edge cases (missing creators, multiple creators per item, null values)
+
 **September 30, 2025 - Unified Share System with Feature Flags**
 - **IMPLEMENTED**: Created unified sharing system (`/src/lib/share.ts`) for all share actions across the app
 - **FEATURE FLAG**: VITE_FEATURE_SHARES environment variable controls share behavior (false on Replit, true on Vercel)

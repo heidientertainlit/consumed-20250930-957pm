@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
@@ -602,11 +602,76 @@ export default function UserProfile() {
     }
   };
 
-  const favoriteCreators = [
-    { name: "Christopher Nolan", type: "Director", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face", points: 1250 },
-    { name: "Taylor Jenkins Reid", type: "Author", avatar: "https://images.unsplash.com/photo-1494790108755-2616c6c46c06?w=50&h=50&fit=crop&crop=face", points: 890 },
-    { name: "Phoebe Wallen-Bridge", type: "Writer", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face", points: 723 }
-  ];
+  // Aggregate all media items from all lists for media history
+  const getAllMediaItems = () => {
+    const allItems: any[] = [];
+    userLists.forEach(list => {
+      if (list.items) {
+        list.items.forEach((item: any) => {
+          allItems.push({
+            ...item,
+            listName: list.title
+          });
+        });
+      }
+    });
+    // Sort by created_at descending (newest first)
+    return allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  };
+
+  // Compute favorite creators from actual media consumption
+  const favoriteCreators = useMemo(() => {
+    const items = getAllMediaItems();
+    const seen = new Set<string>();
+    const counts: Record<string, { name: string; total: number; byType: Record<string, number> }> = {};
+
+    items.forEach((item) => {
+      // Dedupe by media_id or title+type combination
+      const key = item.media_id ?? `${item.title}|${item.media_type}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      // Parse creators from the creator field (may have multiple separated by commas, &, or "and")
+      const creatorText = item.creator ?? '';
+      const creators = creatorText
+        .split(/,|&| and /i)
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+
+      creators.forEach((creator: string) => {
+        const k = creator.toLowerCase();
+        if (!counts[k]) {
+          counts[k] = { name: creator, total: 0, byType: {} };
+        }
+        counts[k].total += 1;
+        counts[k].byType[item.media_type] = (counts[k].byType[item.media_type] ?? 0) + 1;
+      });
+    });
+
+    // Determine role based on most common media type
+    const roleFor = (byType: Record<string, number>) => {
+      const entries = Object.entries(byType);
+      if (entries.length === 0) return 'Creator';
+      
+      const [topType] = entries.sort((a, b) => b[1] - a[1])[0];
+      
+      if (topType === 'movie' || topType === 'tv') return 'Director';
+      if (topType === 'book') return 'Author';
+      if (topType === 'music') return 'Artist';
+      if (topType === 'podcast') return 'Podcaster';
+      if (topType === 'game') return 'Studio';
+      return 'Creator';
+    };
+
+    return Object.values(counts)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 3)
+      .map((x) => ({
+        name: x.name,
+        type: roleFor(x.byType),
+        points: x.total
+      }));
+  }, [userLists]);
 
   const recentActivity = [
     {
@@ -640,23 +705,6 @@ export default function UserProfile() {
   // Get currently consuming items from the "Currently" list
   const currentlyList = userLists.find(list => list.title === 'Currently');
   const currentlyConsuming = currentlyList?.items || [];
-
-  // Aggregate all media items from all lists for media history
-  const getAllMediaItems = () => {
-    const allItems: any[] = [];
-    userLists.forEach(list => {
-      if (list.items) {
-        list.items.forEach((item: any) => {
-          allItems.push({
-            ...item,
-            listName: list.title
-          });
-        });
-      }
-    });
-    // Sort by created_at descending (newest first)
-    return allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  };
 
   // Filter media history based on search and filters
   const getFilteredMediaHistory = () => {
@@ -1200,27 +1248,37 @@ export default function UserProfile() {
         {/* Favorite Creators */}
         <div className="px-4 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Favorite Creators</h2>
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="space-y-4">
-              {favoriteCreators.map((creator, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User size={24} className="text-gray-600" />
+          {favoriteCreators.length > 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              <div className="space-y-4">
+                {favoriteCreators.map((creator, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                        <User size={24} className="text-gray-600" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900" data-testid={`text-creator-name-${index}`}>{creator.name}</div>
+                        <div className="text-sm text-gray-600">{creator.type}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-semibold text-gray-900">{creator.name}</div>
-                      <div className="text-sm text-gray-600">{creator.type}</div>
+                    <div className="text-right">
+                      <div className="font-bold text-purple-700" data-testid={`text-creator-points-${index}`}>{creator.points}</div>
+                      <div className="text-xs text-gray-500">fan pts</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-purple-700">{creator.points}</div>
-                    <div className="text-xs text-gray-500">fan pts</div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-8 bg-white rounded-2xl border border-gray-200">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">⭐</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Favorite Creators Yet</h3>
+              <p className="text-gray-600">Track more media to discover your favorite creators</p>
+            </div>
+          )}
         </div>
 
 
@@ -1503,51 +1561,52 @@ export default function UserProfile() {
             </div>
           )}
 
-          {/* Media Type Summary */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Overview</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <span className="text-xl">🎵</span>
-                    </div>
-                    <span className="font-medium text-gray-900">Music</span>
-                  </div>
-                  <span className="text-gray-600">{mediaTypeCounts.music} songs</span>
+          {/* Media Type Summary - Compact */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 p-3">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Overview</h3>
+            <div className="flex flex-wrap gap-2">
+              {mediaTypeCounts.music > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 rounded-full border border-purple-100">
+                  <span className="text-sm">🎵</span>
+                  <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.music}</span>
+                  <span className="text-xs text-gray-600">songs</span>
                 </div>
-
-                <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-                      <span className="text-xl">🎬</span>
-                    </div>
-                    <span className="font-medium text-gray-900">Movies</span>
-                  </div>
-                  <span className="text-gray-600">{mediaTypeCounts.movie} watched</span>
+              )}
+              {mediaTypeCounts.movie > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 rounded-full border border-teal-100">
+                  <span className="text-sm">🎬</span>
+                  <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.movie}</span>
+                  <span className="text-xs text-gray-600">watched</span>
                 </div>
-
-                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <span className="text-xl">📺</span>
-                    </div>
-                    <span className="font-medium text-gray-900">TV Shows</span>
-                  </div>
-                  <span className="text-gray-600">{mediaTypeCounts.tv} series</span>
+              )}
+              {mediaTypeCounts.tv > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 rounded-full border border-orange-100">
+                  <span className="text-sm">📺</span>
+                  <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.tv}</span>
+                  <span className="text-xs text-gray-600">series</span>
                 </div>
-
-                <div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-                      <span className="text-xl">📚</span>
-                    </div>
-                    <span className="font-medium text-gray-900">Books</span>
-                  </div>
-                  <span className="text-gray-600">{mediaTypeCounts.book} completed</span>
+              )}
+              {mediaTypeCounts.book > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100">
+                  <span className="text-sm">📚</span>
+                  <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.book}</span>
+                  <span className="text-xs text-gray-600">completed</span>
                 </div>
-              </div>
+              )}
+              {mediaTypeCounts.podcast > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 rounded-full border border-blue-100">
+                  <span className="text-sm">🎧</span>
+                  <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.podcast}</span>
+                  <span className="text-xs text-gray-600">podcasts</span>
+                </div>
+              )}
+              {mediaTypeCounts.game > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-full border border-indigo-100">
+                  <span className="text-sm">🎮</span>
+                  <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.game}</span>
+                  <span className="text-xs text-gray-600">games</span>
+                </div>
+              )}
             </div>
           </div>
 
