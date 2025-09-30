@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Copy, Check, Share2, Link, Facebook, Twitter, MessageCircle } from "lucide-react";
+import { shareThing, urlFor } from "@/lib/share";
 
 interface ListShareModalProps {
   isOpen: boolean;
@@ -8,12 +9,14 @@ interface ListShareModalProps {
   listName: string;
   listItems: number;
   listType?: "default" | "custom";
+  listId?: string;
 }
 
-export default function ListShareModal({ isOpen, onClose, listName, listItems, listType = "default" }: ListShareModalProps) {
+export default function ListShareModal({ isOpen, onClose, listName, listItems, listType = "default", listId }: ListShareModalProps) {
   const [copied, setCopied] = useState(false);
   
-  const shareUrl = `${window.location.origin}/list/${listName.toLowerCase().replace(/\s+/g, '-')}`;
+  // Use the new URL format
+  const shareUrl = listId ? urlFor('list', listId) : `${window.location.origin}/list/${listName.toLowerCase().replace(/\s+/g, '-')}`;
   
   const handleCopyLink = async () => {
     try {
@@ -22,6 +25,27 @@ export default function ListShareModal({ isOpen, onClose, listName, listItems, l
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy link');
+    }
+  };
+
+  const handleShare = async () => {
+    if (listId) {
+      try {
+        const result = await shareThing({
+          kind: 'list',
+          id: listId,
+          title: listName
+        });
+        
+        if (result === 'copied') {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+      } catch (err) {
+        console.error('Failed to share:', err);
+      }
+    } else {
+      handleCopyLink();
     }
   };
 

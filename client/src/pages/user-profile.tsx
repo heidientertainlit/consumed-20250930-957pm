@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X } from "lucide-react";
+import { shareThing } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
 
 export default function UserProfile() {
@@ -274,24 +275,16 @@ export default function UserProfile() {
     setShareModalOpen(true);
   };
 
-  // Exact same working pattern as prediction invites  
+  // Share list using unified helper
   const handleShareListDirect = async (listId: string, listTitle: string) => {
-    // Add user ID to shared URL so anyone can see your real data
-    const shareUrl = session?.user?.id 
-      ? `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}?user=${session.user.id}`
-      : `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
-
-    const shareData = {
-      title: `Check out my ${listTitle} list on consumed!`,
-      text: `I'm tracking my ${listTitle} - want to see what I'm consuming? Check it out and share yours too! 🎬🎵📚`,
-      url: shareUrl
-    };
-
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+      const result = await shareThing({
+        kind: 'list',
+        id: listId,
+        title: listTitle
+      });
+      
+      if (result === 'copied') {
         toast({
           title: "List Link Copied!",
           description: "Share this with your friends to show your entertainment list",
@@ -533,9 +526,37 @@ export default function UserProfile() {
     setDnaProfileStatus('no_profile');
   };
 
-  const handleShareDNAProfile = () => {
-    console.log("Sharing DNA Profile...");
-    // Will implement sharing functionality
+  const handleShareDNAProfile = async () => {
+    if (!dnaProfile?.id) {
+      toast({
+        title: "Cannot Share",
+        description: "Generate your Entertainment DNA first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const result = await shareThing({
+        kind: 'edna',
+        id: dnaProfile.id,
+        title: 'my Entertainment DNA'
+      });
+      
+      if (result === 'copied') {
+        toast({
+          title: "DNA Profile Link Copied!",
+          description: "Share your Entertainment DNA with friends",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing DNA:', error);
+      toast({
+        title: "Share Failed",
+        description: "Unable to create share link",
+        variant: "destructive"
+      });
+    }
   };
 
   // Mock mockUserData data for display

@@ -10,6 +10,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**September 30, 2025 - Unified Share System with Feature Flags**
+- **IMPLEMENTED**: Created unified sharing system (`/src/lib/share.ts`) for all share actions across the app
+- **FEATURE FLAG**: VITE_FEATURE_SHARES environment variable controls share behavior (false on Replit, true on Vercel)
+- **SHARE TYPES**: Supports 5 share kinds - list, media, prediction, post, edna (Entertainment DNA)
+- **URL FORMAT**: Clean, human-readable URLs like `/list/{id}`, `/prediction/{id}`, `/edna/{id}`
+- **REPLIT MODE**: Shares text blurbs with formatted URLs via mobile share sheet or clipboard
+- **VERCEL MODE**: Will share real deep links with preview cards when VITE_FEATURE_SHARES=true
+- **UPDATED COMPONENTS**: Play page (Invite to Play), User Profile (Share List, Share DNA), List Share Modal
+- **NO BREAKING CHANGES**: All existing edge functions preserved, share-update in Feed untouched as requested
+
+**Environment Variables Required:**
+- ✅ VITE_SUPABASE_URL: Supabase project URL
+- ✅ VITE_SUPABASE_ANON_KEY: Supabase anon key
+- ✅ VITE_APP_URL: Public app URL (Replit or Vercel)
+- ✅ VITE_FEATURE_SHARES: "false" on Replit, "true" on Vercel for deep link sharing
+
 **September 25, 2025 - CRITICAL FIX: Media Search Functionality**
 - **RESOLVED**: Fixed media search discrepancy between Track Media page and Share Update dialog
 - **ROOT CAUSE**: Spotify API authentication issue - function was looking for SPOTIFY_ACCESS_TOKEN but we had SPOTIFY_CLIENT_ID/SPOTIFY_CLIENT_SECRET
