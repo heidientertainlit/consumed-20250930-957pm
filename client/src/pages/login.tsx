@@ -123,14 +123,14 @@ export default function LoginPage() {
               <TabsTrigger 
                 value="signin" 
                 data-testid="tab-signin"
-                className="data-[state=active]:bg-black data-[state=active]:text-white text-purple-200"
+                className="data-[state=active]:bg-purple-700 data-[state=active]:text-white data-[state=active]:opacity-100 data-[state=inactive]:opacity-50 text-white transition-opacity"
               >
                 Sign In
               </TabsTrigger>
               <TabsTrigger 
                 value="signup" 
                 data-testid="tab-signup"
-                className="data-[state=active]:bg-black data-[state=active]:text-white text-purple-200"
+                className="data-[state=active]:bg-purple-700 data-[state=active]:text-white data-[state=active]:opacity-100 data-[state=inactive]:opacity-50 text-white transition-opacity"
               >
                 Sign Up
               </TabsTrigger>
