@@ -16,11 +16,17 @@ export default function LoginPage() {
   }, [user, setLocation]);
 
   const handleAuthModalClose = (open: boolean) => {
+    setShowAuthModal(open);
     if (!open) {
       // Redirect to home when modal is closed
       setLocation('/');
     }
   };
+
+  // If user is already logged in, don't show anything (will redirect)
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 flex items-center justify-center p-4">
