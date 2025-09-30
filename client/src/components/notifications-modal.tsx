@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { X, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { copyLink } from "@/lib/share";
 
 interface NotificationsModalProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ type Nudge = {
 export default function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
   const [dismissed, setDismissed] = useState<string[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const s = localStorage.getItem("nudges.dismissed");
@@ -38,12 +41,22 @@ export default function NotificationsModal({ isOpen, onClose }: NotificationsMod
       body: "Share Consumed with a friend and rack up points toward perks.",
       actionLabel: "Invite friends",
       onAction: async () => {
-        const url = `${window.location.origin}/play`;
-        await navigator.clipboard.writeText(`Join me on Consumed: ${url}`);
-        toast({
-          title: "Link copied!",
-          description: "Share this link with your friends to invite them.",
-        });
+        try {
+          const BASE = import.meta.env.VITE_APP_URL || window.location.origin;
+          const url = BASE.startsWith('http') ? BASE : `https://${BASE}`;
+          await navigator.clipboard.writeText(url);
+          toast({
+            title: "Link copied!",
+            description: "Share this link with your friends to invite them.",
+          });
+        } catch (error) {
+          console.error('Error copying invite link:', error);
+          toast({
+            title: "Copy failed",
+            description: "Unable to copy link",
+            variant: "destructive"
+          });
+        }
       },
     },
     {
@@ -52,12 +65,28 @@ export default function NotificationsModal({ isOpen, onClose }: NotificationsMod
       body: "Post your DNA and tag a friend to compare tastes.",
       actionLabel: "Share my DNA",
       onAction: async () => {
-        const url = `${window.location.origin}/user/user-1`;
-        await navigator.clipboard.writeText(`Check out my Entertainment DNA: ${url}`);
-        toast({
-          title: "DNA link copied!",
-          description: "Share this link to show your Entertainment DNA.",
-        });
+        try {
+          if (!user?.id) {
+            toast({
+              title: "Not logged in",
+              description: "Please log in to share your DNA",
+              variant: "destructive"
+            });
+            return;
+          }
+          await copyLink({ kind: 'edna', id: user.id });
+          toast({
+            title: "DNA link copied!",
+            description: "Share this link to show your Entertainment DNA.",
+          });
+        } catch (error) {
+          console.error('Error sharing DNA:', error);
+          toast({
+            title: "Share failed",
+            description: "Unable to create share link",
+            variant: "destructive"
+          });
+        }
       },
     },
   ];
