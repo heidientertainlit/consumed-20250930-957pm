@@ -1225,38 +1225,80 @@ export default function UserProfile() {
                 </div>
 
                 {/* Expandable Details Section */}
-                {isDNAExpanded && (
+                {isDNAExpanded && dnaProfile && (
                   <div className="border-t border-gray-200 pt-6 mt-6 space-y-4">
                     {/* Media Consumption Stats */}
-                    <div>
-                      <h5 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
-                        <Brain className="mr-2 text-indigo-600" size={18} />
-                        Your Entertainment Style
-                      </h5>
-                      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
-                        <div className="space-y-2">
-                          <p className="text-sm text-indigo-800">
-                            <span className="font-medium">Primary Media:</span> {mockUserData.entertainmentDNA.mediaConsumptionStats.primaryMediaType}
-                          </p>
-                          <p className="text-sm text-indigo-800">
-                            <span className="font-medium">Viewing Style:</span> {mockUserData.entertainmentDNA.mediaConsumptionStats.viewingStyle}
-                          </p>
-                          <p className="text-sm text-indigo-800">
-                            <span className="font-medium">Discovery Method:</span> {mockUserData.entertainmentDNA.mediaConsumptionStats.discoveryMethod}
-                          </p>
-                          <p className="text-sm text-indigo-800">
-                            <span className="font-medium">Social Aspect:</span> {mockUserData.entertainmentDNA.mediaConsumptionStats.socialAspect}
-                          </p>
+                    {dnaProfile.media_consumption_stats && (
+                      <div>
+                        <h5 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                          <Brain className="mr-2 text-indigo-600" size={18} />
+                          Your Entertainment Style
+                        </h5>
+                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
+                          <div className="space-y-2">
+                            {typeof dnaProfile.media_consumption_stats === 'string' ? (
+                              (() => {
+                                const stats = JSON.parse(dnaProfile.media_consumption_stats);
+                                return (
+                                  <>
+                                    {stats.primaryMediaType && (
+                                      <p className="text-sm text-indigo-800">
+                                        <span className="font-medium">Primary Media:</span> {stats.primaryMediaType}
+                                      </p>
+                                    )}
+                                    {stats.viewingStyle && (
+                                      <p className="text-sm text-indigo-800">
+                                        <span className="font-medium">Viewing Style:</span> {stats.viewingStyle}
+                                      </p>
+                                    )}
+                                    {stats.discoveryMethod && (
+                                      <p className="text-sm text-indigo-800">
+                                        <span className="font-medium">Discovery Method:</span> {stats.discoveryMethod}
+                                      </p>
+                                    )}
+                                    {stats.socialAspect && (
+                                      <p className="text-sm text-indigo-800">
+                                        <span className="font-medium">Social Aspect:</span> {stats.socialAspect}
+                                      </p>
+                                    )}
+                                  </>
+                                );
+                              })()
+                            ) : (
+                              <>
+                                {dnaProfile.media_consumption_stats.primaryMediaType && (
+                                  <p className="text-sm text-indigo-800">
+                                    <span className="font-medium">Primary Media:</span> {dnaProfile.media_consumption_stats.primaryMediaType}
+                                  </p>
+                                )}
+                                {dnaProfile.media_consumption_stats.viewingStyle && (
+                                  <p className="text-sm text-indigo-800">
+                                    <span className="font-medium">Viewing Style:</span> {dnaProfile.media_consumption_stats.viewingStyle}
+                                  </p>
+                                )}
+                                {dnaProfile.media_consumption_stats.discoveryMethod && (
+                                  <p className="text-sm text-indigo-800">
+                                    <span className="font-medium">Discovery Method:</span> {dnaProfile.media_consumption_stats.discoveryMethod}
+                                  </p>
+                                )}
+                                {dnaProfile.media_consumption_stats.socialAspect && (
+                                  <p className="text-sm text-indigo-800">
+                                    <span className="font-medium">Social Aspect:</span> {dnaProfile.media_consumption_stats.socialAspect}
+                                  </p>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Favorite Sports */}
-                    {mockUserData.entertainmentDNA.favoriteSports && mockUserData.entertainmentDNA.favoriteSports.length > 0 && (
+                    {dnaProfile.favorite_sports && dnaProfile.favorite_sports.length > 0 && (
                       <div>
                         <h5 className="text-sm font-semibold text-gray-900 mb-2">Favorite Sports</h5>
                         <div className="flex flex-wrap gap-2">
-                          {mockUserData.entertainmentDNA.favoriteSports.map((sport, index) => (
+                          {dnaProfile.favorite_sports.map((sport, index) => (
                             <Badge key={index} className="bg-green-100 text-green-700 text-xs">
                               {sport}
                             </Badge>
