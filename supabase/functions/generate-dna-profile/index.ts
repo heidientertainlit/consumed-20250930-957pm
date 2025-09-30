@@ -182,7 +182,9 @@ Reference their specific answers about teams, shows, genres, and comfort enterta
             favorite_media_types: generatedProfile.favoriteMediaTypes,
             favorite_sports: generatedProfile.favoriteSports,
             media_consumption_stats: JSON.stringify(generatedProfile.mediaConsumptionStats),
-            // Store new fields in profile_text for now to avoid schema changes
+            label: generatedProfile.label,
+            tagline: generatedProfile.tagline,
+            flavor_notes: generatedProfile.flavorNotes,
             updated_at: new Date().toISOString()
           })
           .eq('user_id', user.id)
@@ -193,13 +195,7 @@ Reference their specific answers about teams, shows, genres, and comfort enterta
           throw error;
         }
         
-        // Add the new fields to the response
-        profileData = {
-          ...updatedProfile,
-          label: generatedProfile.label,
-          tagline: generatedProfile.tagline,
-          flavor_notes: generatedProfile.flavorNotes
-        };
+        profileData = updatedProfile;
       } else {
         // Create new profile
         const { data: newProfile, error } = await supabaseClient
@@ -211,6 +207,9 @@ Reference their specific answers about teams, shows, genres, and comfort enterta
             favorite_media_types: generatedProfile.favoriteMediaTypes,
             favorite_sports: generatedProfile.favoriteSports,
             media_consumption_stats: JSON.stringify(generatedProfile.mediaConsumptionStats),
+            label: generatedProfile.label,
+            tagline: generatedProfile.tagline,
+            flavor_notes: generatedProfile.flavorNotes,
             is_private: false
           })
           .select()
@@ -220,13 +219,7 @@ Reference their specific answers about teams, shows, genres, and comfort enterta
           throw error;
         }
         
-        // Add the new fields to the response
-        profileData = {
-          ...newProfile,
-          label: generatedProfile.label,
-          tagline: generatedProfile.tagline,
-          flavor_notes: generatedProfile.flavorNotes
-        };
+        profileData = newProfile;
       }
 
       return new Response(JSON.stringify(profileData), {
