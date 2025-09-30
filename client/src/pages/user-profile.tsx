@@ -13,12 +13,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut } from "lucide-react";
 import { copyLink } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
 
 export default function UserProfile() {
-  const { user, session, loading } = useAuth();
+  const { user, session, loading, signOut } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
@@ -940,6 +940,30 @@ export default function UserProfile() {
                   >
                     <Settings size={16} className="mr-2" />
                     Edit Profile
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300"
+                    onClick={async () => {
+                      const { error } = await signOut();
+                      if (error) {
+                        toast({
+                          title: "Error",
+                          description: "Failed to log out. Please try again.",
+                          variant: "destructive"
+                        });
+                      } else {
+                        toast({
+                          title: "Logged out",
+                          description: "You have been successfully logged out."
+                        });
+                        setLocation('/login');
+                      }
+                    }}
+                    data-testid="button-logout"
+                  >
+                    <LogOut size={16} className="mr-2" />
+                    Logout
                   </Button>
                 </div>
               </div>
