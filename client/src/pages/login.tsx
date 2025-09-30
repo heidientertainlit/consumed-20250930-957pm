@@ -70,9 +70,16 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  // If user is already logged in, don't show anything (will redirect)
+  // If user is already logged in, show loading state while redirecting
   if (user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-white text-xl mb-4">Redirecting to Feed...</div>
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
