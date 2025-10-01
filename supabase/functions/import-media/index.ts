@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { parse } from "https://deno.land/std@0.168.0/encoding/csv.ts";
-import { readZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -204,11 +202,33 @@ serve(async (req) => {
     
     // Handle ZIP files
     if (file.name.endsWith('.zip')) {
-      const decoder = new TextDecoder('utf-8');
-      const zipData = decoder.decode(bytes);
-      
-      // Simple CSV extraction from ZIP (fallback to treating as CSV)
-      mediaItems = parseImportFile(zipData, file.name);
+      try {
+        // Import JSZip for proper ZIP extraction
+        const JSZip = (await import("https://esm.sh/jszip@3.10.1")).default;
+        const zip = await JSZip.loadAsync(bytes);
+        
+        // Find and extract CSV files from ZIP
+        const csvFiles: string[] = [];
+        for (const [filename, fileData] of Object.entries(zip.files)) {
+          if (filename.endsWith('.csv') && !fileData.dir) {
+            const content = await fileData.async('text');
+            csvFiles.push(content);
+          }
+        }
+        
+        if (csvFiles.length === 0) {
+          throw new Error('No CSV files found in ZIP archive');
+        }
+        
+        // Parse all CSV files found in ZIP
+        for (const csvContent of csvFiles) {
+          const items = parseImportFile(csvContent, file.name);
+          mediaItems.push(...items);
+        }
+      } catch (zipError) {
+        console.error('ZIP extraction error:', zipError);
+        throw new Error('Failed to extract CSV from ZIP file: ' + zipError.message);
+      }
     } else {
       // Handle CSV files
       const decoder = new TextDecoder('utf-8');
