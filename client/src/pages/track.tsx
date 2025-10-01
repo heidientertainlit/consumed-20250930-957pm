@@ -671,10 +671,10 @@ export default function Track() {
 
       {/* Help Dialog - How to Download */}
       <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg bg-white text-black">
           <DialogHeader>
-            <DialogTitle>How to Import Your History</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-black">How to Import Your History</DialogTitle>
+            <DialogDescription className="text-gray-600">
               To bring your viewing and reading history into Consumed, you'll need to download your data from each service first. This process is easiest on desktop.
             </DialogDescription>
           </DialogHeader>
