@@ -240,7 +240,7 @@ serve(async (req) => {
 
     if (mediaItems.length === 0) {
       return new Response(JSON.stringify({ 
-        error: 'No valid items found in file' 
+        error: 'No valid items found in file. Please ensure the file contains properly formatted media data.' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
