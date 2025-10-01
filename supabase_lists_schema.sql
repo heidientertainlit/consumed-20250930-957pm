@@ -49,7 +49,7 @@ INSERT INTO lists (user_id, title, description, is_default, visibility) VALUES
   ('system', 'Currently', 'Media you are currently consuming', true, 'private'),
   ('system', 'Queue', 'Media you want to consume later', true, 'private'),
   ('system', 'Finished', 'Media you have completed', true, 'private'),
-  ('system', 'Did Not Finish', 'Media you started but didn\'t complete', true, 'private'),
+  ('system', 'Did Not Finish', 'Media you started but didn''t complete', true, 'private'),
   ('system', 'Favorites', 'Your all-time favorite media', true, 'private')
 ON CONFLICT DO NOTHING;
 
