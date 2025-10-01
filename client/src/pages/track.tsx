@@ -6,7 +6,7 @@ import ListShareModal from "@/components/list-share-modal";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown } from "lucide-react";
+import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown, Upload } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,10 +20,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("Currently");
   const [, setLocation] = useLocation();
 
@@ -236,6 +246,77 @@ export default function Track() {
     addRecommendationMutation.mutate({ recommendation, listType });
   };
 
+  // Handle file upload for media import
+  const handleFileUpload = async () => {
+    if (!uploadFile || !session?.access_token) {
+      toast({
+        title: "Error",
+        description: "Please select a file and ensure you're logged in",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/import-media", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Import failed: ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Import successful!",
+        description: `Imported ${result.imported} items${result.failed > 0 ? ` (${result.failed} failed)` : ''}`,
+      });
+
+      // Refresh lists
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      
+      // Close modal and reset
+      setIsUploadModalOpen(false);
+      setUploadFile(null);
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import failed",
+        description: error.message || "Failed to import media",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.name.endsWith('.csv') && !file.name.endsWith('.zip')) {
+        toast({
+          title: "Invalid file",
+          description: "Please select a CSV or ZIP file",
+          variant: "destructive",
+        });
+        return;
+      }
+      setUploadFile(file);
+    }
+  };
+
   const getCategoryIcon = (category: string, isWhiteBg = false) => {
     const iconClass = isWhiteBg ? "text-purple-600" : "text-gray-600";
     const iconSize = 16;
@@ -286,6 +367,14 @@ export default function Track() {
             >
               <Plus className="mr-3" size={24} />
               Track Media
+            </Button>
+            <Button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-bold px-8 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200"
+              data-testid="button-upload-media"
+            >
+              <Upload className="mr-3" size={24} />
+              Upload Media
             </Button>
           </div>
         </div>
@@ -480,6 +569,97 @@ export default function Track() {
         isOpen={isTrackModalOpen} 
         onClose={() => setIsTrackModalOpen(false)} 
       />
+
+      {/* Upload Media Dialog */}
+      <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload Media</DialogTitle>
+            <DialogDescription>
+              Import your entertainment history from Netflix, Goodreads, or Letterboxd. Upload a CSV or ZIP file to get started.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col gap-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <span className="text-sm font-medium text-gray-700">
+                    {uploadFile ? uploadFile.name : 'Click to select file'}
+                  </span>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept=".csv,.zip"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    data-testid="input-upload-file"
+                  />
+                </label>
+                <p className="text-xs text-gray-500 mt-2">
+                  Supported: Netflix, Goodreads, Letterboxd (CSV or ZIP)
+                </p>
+              </div>
+
+              {uploadFile && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Film className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-900">
+                        {uploadFile.name}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUploadFile(null)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Ready to import
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsUploadModalOpen(false);
+                  setUploadFile(null);
+                }}
+                className="flex-1"
+                disabled={isUploading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleFileUpload}
+                disabled={!uploadFile || isUploading}
+                className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
+                data-testid="button-import"
+              >
+                {isUploading ? (
+                  <>
+                    <span className="mr-2">Importing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       
     </div>
   );
