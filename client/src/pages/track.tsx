@@ -652,36 +652,23 @@ export default function Track() {
               )}
             </div>
 
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsUploadModalOpen(false);
-                  setUploadFile(null);
-                }}
-                className="flex-1 text-gray-900 border-gray-300 hover:bg-gray-100"
-                disabled={isUploading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleFileUpload}
-                disabled={!uploadFile || isUploading}
-                className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
-                data-testid="button-import"
-              >
-                {isUploading ? (
-                  <>
-                    <span className="mr-2">Importing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Import
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={handleFileUpload}
+              disabled={!uploadFile || isUploading}
+              className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
+              data-testid="button-import"
+            >
+              {isUploading ? (
+                <>
+                  <span className="mr-2">Importing...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
