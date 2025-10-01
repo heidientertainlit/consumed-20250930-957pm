@@ -594,7 +594,7 @@ export default function Track() {
           <DialogHeader>
             <DialogTitle className="text-black">Import History</DialogTitle>
             <DialogDescription className="text-gray-600">
-              Import your entertainment history from Netflix, Goodreads, or Letterboxd. Upload a CSV or ZIP file to get started.
+              Import your entertainment history from Netflix or Goodreads. Upload a CSV or ZIP file to get started.
               <button
                 onClick={() => setIsHelpModalOpen(true)}
                 className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-700 underline"
@@ -623,7 +623,7 @@ export default function Track() {
                   />
                 </label>
                 <p className="text-xs text-gray-500 mt-2">
-                  Supported: Netflix, Goodreads, Letterboxd (CSV or ZIP)
+                  Supported: Netflix, Goodreads (CSV or ZIP)
                 </p>
               </div>
 
@@ -727,12 +727,6 @@ export default function Track() {
                     >
                       Export here
                     </a>
-                  </div>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-medium text-gray-700 min-w-[100px]">Letterboxd:</span>
-                  <div className="text-sm text-gray-600">
-                    Go to Settings → Import & Export → Export Your Data
                   </div>
                 </li>
               </ul>
