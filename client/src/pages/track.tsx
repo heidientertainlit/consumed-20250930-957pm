@@ -6,7 +6,7 @@ import ListShareModal from "@/components/list-share-modal";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown, Upload, HelpCircle } from "lucide-react";
+import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown, Upload, HelpCircle, Info } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -33,6 +33,7 @@ export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isChallengeRulesOpen, setIsChallengeRulesOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("Currently");
@@ -352,8 +353,14 @@ export default function Track() {
       {/* Launch Challenge Banner - Compact Bar */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4" data-testid="launch-challenge-banner">
         <div className="max-w-4xl mx-auto text-center text-xs sm:text-sm">
-          <span className="font-semibold">🏆 Launch Challenge:</span> Race to 15,000 points! First 3 users win 🥇$50 🥈$30 🥉$20 gift cards. Plus: First to reach a 7-day streak wins $20! 
-          <a href="https://consumedapp.com/launch-challenge-rules" target="_blank" rel="noopener noreferrer" className="underline ml-2 hover:text-purple-100" data-testid="link-challenge-rules">Rules</a>
+          <span className="font-semibold">🏆 Launch Challenge:</span> Race to 20,000 points! First 3 users win 🥇$50 🥈$30 🥉$20 gift cards. Plus: First to reach a 7-day streak wins $20! 
+          <button 
+            onClick={() => setIsChallengeRulesOpen(true)} 
+            className="underline ml-2 hover:text-purple-100" 
+            data-testid="button-challenge-rules"
+          >
+            Rules
+          </button>
           <span className="mx-1">•</span>
           <a href="mailto:heidi@consumedapp.com" className="underline hover:text-purple-100" data-testid="link-contact-email">Contact</a>
         </div>
@@ -652,7 +659,7 @@ export default function Track() {
                   setIsUploadModalOpen(false);
                   setUploadFile(null);
                 }}
-                className="flex-1 text-gray-900 hover:bg-gray-100"
+                className="flex-1"
                 disabled={isUploading}
               >
                 Cancel
@@ -752,6 +759,89 @@ export default function Track() {
               className="w-full"
             >
               Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Launch Challenge Rules Dialog */}
+      <Dialog open={isChallengeRulesOpen} onOpenChange={setIsChallengeRulesOpen}>
+        <DialogContent className="sm:max-w-lg bg-white text-black">
+          <DialogHeader>
+            <DialogTitle className="text-black flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-purple-600" />
+              Launch Challenge Rules
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Race to 20,000 points and win prizes!
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+              <h3 className="font-bold text-purple-800 mb-2">🎯 Challenge Goal</h3>
+              <p className="text-purple-700 text-sm">Race to 20,000 points!</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">🏆 Prizes</h3>
+              <ul className="space-y-1 text-sm text-gray-600">
+                <li>🥇 1st: $50 gift card (Netflix, Audible, or Barnes & Noble)</li>
+                <li>🥈 2nd: $30 gift card</li>
+                <li>🥉 3rd: $20 gift card</li>
+                <li>⚡ First to 7-day streak: $20 gift card</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">📝 How to Enter & Earn</h3>
+              <p className="text-sm text-gray-600">
+                Create an account on Consumed and complete in-app actions (tracking your entertainment, predictions, games, etc.) to earn points. No purchase necessary.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">⏰ Timing</h3>
+              <p className="text-sm text-gray-600">
+                Starts October 1, 2025 12:01am MT and ends October 30, 2025 11:59 pm MT (or when the first user reaches 20,000 points). America/Denver time.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">🏅 Winners</h3>
+              <p className="text-sm text-gray-600">
+                Top three point totals at end of contest win; first user to achieve a 7-day consecutive activity streak during the contest period gets the streak bonus. Ties: earliest timestamp wins.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-2">🎁 Prize Delivery</h3>
+              <p className="text-sm text-gray-600">
+                Digital gift cards delivered within 14 days.
+              </p>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-800">
+                <strong>Eligibility:</strong> 18+, US only. Void where prohibited. Not affiliated with or endorsed by Netflix, Audible, or Barnes & Noble.
+              </p>
+            </div>
+
+            <div className="text-sm text-gray-600 text-center">
+              Questions? Contact us at{' '}
+              <a 
+                href="mailto:heidi@consumedapp.com" 
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                heidi@consumedapp.com
+              </a>
+            </div>
+
+            <Button
+              onClick={() => setIsChallengeRulesOpen(false)}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              Got it - Let's compete!
             </Button>
           </div>
         </DialogContent>
