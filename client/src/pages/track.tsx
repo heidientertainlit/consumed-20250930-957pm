@@ -729,6 +729,12 @@ export default function Track() {
                     </a>
                   </div>
                 </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium text-gray-700 min-w-[100px]">Other:</span>
+                  <div className="text-sm text-gray-600">
+                    If you have other media history data you want to enter from any other media platform not listed above, please feel free to email it to us and we can import it for you.
+                  </div>
+                </li>
               </ul>
             </div>
 
@@ -741,10 +747,10 @@ export default function Track() {
             <div className="text-sm text-gray-600 text-center">
               Need help? We're here for you at{' '}
               <a 
-                href="mailto:binge@consumedapp.com" 
+                href="mailto:import@consumedapp.com" 
                 className="text-blue-600 hover:text-blue-700 underline"
               >
-                binge@consumedapp.com
+                import@consumedapp.com
               </a>
             </div>
 
