@@ -573,10 +573,10 @@ export default function Track() {
 
       {/* Import History Dialog */}
       <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white text-black">
           <DialogHeader>
-            <DialogTitle>Import History</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-black">Import History</DialogTitle>
+            <DialogDescription className="text-gray-600">
               Import your entertainment history from Netflix, Goodreads, or Letterboxd. Upload a CSV or ZIP file to get started.
               <button
                 onClick={() => setIsHelpModalOpen(true)}

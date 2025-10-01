@@ -66,15 +66,33 @@ function parseLetterboxd(csvText: string): MediaItem[] {
   const lines = csvText.split('\n').filter(line => line.trim());
   const items: MediaItem[] = [];
   
-  // Find header indices
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
+  // Letterboxd exports have metadata rows before the actual data
+  // Find the row that starts with "Position,Name,Year" which is the real header
+  let headerIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const lower = lines[i].toLowerCase();
+    if (lower.includes('position') && lower.includes('name') && lower.includes('year')) {
+      headerIdx = i;
+      break;
+    }
+  }
+  
+  if (headerIdx === -1) {
+    console.log('Letterboxd: Could not find header row with Position,Name,Year');
+    return items;
+  }
+  
+  // Parse header to find column indices
+  const header = lines[headerIdx].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
   const nameIdx = header.indexOf('name');
   const yearIdx = header.indexOf('year');
   
-  // Parse data rows
-  for (let i = 1; i < lines.length; i++) {
+  console.log(`Letterboxd: Found header at line ${headerIdx}, name=${nameIdx}, year=${yearIdx}`);
+  
+  // Parse data rows (starting after the header)
+  for (let i = headerIdx + 1; i < lines.length; i++) {
     const fields = lines[i].split(',').map(f => f.trim().replace(/^"|"$/g, ''));
-    if (fields[nameIdx]) {
+    if (fields[nameIdx] && fields[nameIdx] !== 'Name') {
       const title = fields[yearIdx] ? `${fields[nameIdx]} (${fields[yearIdx]})` : fields[nameIdx];
       items.push({
         title,
@@ -84,6 +102,7 @@ function parseLetterboxd(csvText: string): MediaItem[] {
     }
   }
   
+  console.log(`Letterboxd: Parsed ${items.length} movies`);
   return items;
 }
 
