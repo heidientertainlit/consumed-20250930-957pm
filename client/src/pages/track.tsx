@@ -374,7 +374,7 @@ export default function Track() {
               data-testid="button-upload-media"
             >
               <Upload className="mr-3" size={24} />
-              Upload Media
+              Import History
             </Button>
           </div>
         </div>
@@ -570,11 +570,11 @@ export default function Track() {
         onClose={() => setIsTrackModalOpen(false)} 
       />
 
-      {/* Upload Media Dialog */}
+      {/* Import History Dialog */}
       <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Upload Media</DialogTitle>
+            <DialogTitle>Import History</DialogTitle>
             <DialogDescription>
               Import your entertainment history from Netflix, Goodreads, or Letterboxd. Upload a CSV or ZIP file to get started.
             </DialogDescription>
