@@ -10,6 +10,23 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 1, 2025 - EMERGENCY DATABASE ROLLBACK: Fixed Critical RLS Policy Issues**
+- **CRITICAL ISSUE**: Bad database constraints and duplicate RLS policies broke media tracking functionality
+- **ROOT CAUSE**: Accidentally added `unique_user_list_type` constraint on lists table preventing users from tracking media
+- **SYMPTOMS**: "Failed to create user: duplicate key value violates unique constraint" errors on all media tracking attempts
+- **RESOLUTION STEPS TAKEN**:
+  1. Dropped bad constraint: `ALTER TABLE lists DROP CONSTRAINT unique_user_list_type`
+  2. Made display_name nullable: `ALTER TABLE users ALTER COLUMN display_name DROP NOT NULL`
+  3. Removed 20+ duplicate/conflicting RLS policies from list_items and lists tables
+  4. Kept only 4 clean policies: `final_lists_select`, `final_lists_modify`, `final_items_select`, `final_items_modify`
+- **WORKING RLS POLICIES** (DO NOT MODIFY THESE):
+  - Lists SELECT: Allow auth.uid() = user_id OR visibility = 'public' OR user_id IS NULL (for system lists)
+  - Lists MODIFY: Allow auth.uid() = user_id only
+  - List Items SELECT: Allow auth.uid() = user_id OR list_id in public/system lists
+  - List Items MODIFY: Allow auth.uid() = user_id only
+- **LESSON LEARNED**: Never add unique constraints on (user_id, title) or (user_id, media_type) - users need to track the same media/lists multiple times
+- **STATUS**: ✅ All functionality restored and tested - Track, Lists, Feed, Share, Profile all working
+
 **September 30, 2025 - Production Architecture Cleanup**
 - **UNIFIED LEADERBOARD SYSTEM**: Moved ALL leaderboard categories to single edge function for consistency and Vercel deployment
   - All categories (media-based, game-based, fan points) now use `get-leaderboards` edge function
