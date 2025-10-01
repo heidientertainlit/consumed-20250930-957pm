@@ -51,7 +51,7 @@ function parseGoodreads(csvText: string): MediaItem[] {
     if (fields[titleIdx]) {
       items.push({
         title: fields[titleIdx],
-        mediaType: 'books',
+        mediaType: 'book',
         creator: fields[authorIdx] || '',
         listType: 'finished'
       });
@@ -78,7 +78,7 @@ function parseLetterboxd(csvText: string): MediaItem[] {
       const title = fields[yearIdx] ? `${fields[nameIdx]} (${fields[yearIdx]})` : fields[nameIdx];
       items.push({
         title,
-        mediaType: 'movies',
+        mediaType: 'movie',
         listType: 'finished'
       });
     }
