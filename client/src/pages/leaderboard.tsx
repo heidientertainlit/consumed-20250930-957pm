@@ -171,7 +171,7 @@ export default function Leaderboard() {
       {/* Launch Challenge Banner - Compact Bar */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4" data-testid="launch-challenge-banner">
         <div className="max-w-4xl mx-auto text-center text-xs sm:text-sm">
-          <span className="font-semibold">🏆 Launch Race:</span> First 3 to 1,000 pts win 🥇$50 🥈$20 🥉$10 + 7-day streak = $20! 
+          <span className="font-semibold">🏆 Launch Challenge:</span> Race to 15,000 points! First 3 users win 🥇$50 🥈$30 🥉$20 gift cards. Plus: First to reach a 7-day streak wins $20! 
           <a href="https://consumedapp.com/launch-challenge-rules" target="_blank" rel="noopener noreferrer" className="underline ml-2 hover:text-purple-100" data-testid="link-challenge-rules">Rules</a>
           <span className="mx-1">•</span>
           <a href="mailto:heidi@consumedapp.com" className="underline hover:text-purple-100" data-testid="link-contact-email">Contact</a>
