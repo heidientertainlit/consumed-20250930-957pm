@@ -6,7 +6,7 @@ import ListShareModal from "@/components/list-share-modal";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown, Upload } from "lucide-react";
+import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown, Upload, HelpCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("Currently");
@@ -577,6 +578,13 @@ export default function Track() {
             <DialogTitle>Import History</DialogTitle>
             <DialogDescription>
               Import your entertainment history from Netflix, Goodreads, or Letterboxd. Upload a CSV or ZIP file to get started.
+              <button
+                onClick={() => setIsHelpModalOpen(true)}
+                className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-700 underline"
+              >
+                <HelpCircle className="h-3 w-3 mr-1" />
+                How to download
+              </button>
             </DialogDescription>
           </DialogHeader>
           
@@ -657,6 +665,84 @@ export default function Track() {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Help Dialog - How to Download */}
+      <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>How to Import Your History</DialogTitle>
+            <DialogDescription>
+              To bring your viewing and reading history into Consumed, you'll need to download your data from each service first. This process is easiest on desktop.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Where to download:</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <span className="font-medium text-gray-700 min-w-[100px]">Netflix:</span>
+                  <div className="text-sm text-gray-600">
+                    Go to your Account → Security → Personal Info Access → Request.{' '}
+                    <a 
+                      href="https://www.netflix.com/account/getmyinfo" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 underline"
+                    >
+                      Request here
+                    </a>
+                    {' '}(This requests your personal info and it will be sent to you once it's approved)
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium text-gray-700 min-w-[100px]">Goodreads:</span>
+                  <div className="text-sm text-gray-600">
+                    Visit your Import/Export page and click "Export Library".{' '}
+                    <a 
+                      href="https://www.goodreads.com/review/import" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 underline"
+                    >
+                      Export here
+                    </a>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium text-gray-700 min-w-[100px]">Letterboxd:</span>
+                  <div className="text-sm text-gray-600">
+                    Go to Settings → Import & Export → Export Your Data
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-900">
+                Once you've downloaded your files, come back here and click "Import History" to upload them.
+              </p>
+            </div>
+
+            <div className="text-sm text-gray-600 text-center">
+              Need help? We're here for you at{' '}
+              <a 
+                href="mailto:binge@consumedapp.com" 
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                binge@consumedapp.com
+              </a>
+            </div>
+
+            <Button
+              onClick={() => setIsHelpModalOpen(false)}
+              className="w-full"
+            >
+              Got it
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
