@@ -659,7 +659,7 @@ export default function Track() {
                   setIsUploadModalOpen(false);
                   setUploadFile(null);
                 }}
-                className="flex-1"
+                className="flex-1 text-gray-900 border-gray-300 hover:bg-gray-100"
                 disabled={isUploading}
               >
                 Cancel
