@@ -58,7 +58,7 @@ export default function LoginPage() {
     e.preventDefault();
     setSubmitting(true);
     
-    const { error } = await signUp(email, password, {
+    const { error, data } = await signUp(email, password, {
       firstName,
       lastName,
       username
@@ -72,14 +72,11 @@ export default function LoginPage() {
       });
     } else {
       toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
+        title: "Welcome to consumed!",
+        description: "Let's discover your Entertainment DNA.",
       });
-      setEmail("");
-      setPassword("");
-      setFirstName("");
-      setLastName("");
-      setUsername("");
+      // Redirect new users to DNA survey
+      setLocation('/onboarding');
     }
     
     setSubmitting(false);

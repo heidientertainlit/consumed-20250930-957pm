@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -173,11 +174,11 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Loader2 className="text-white animate-spin" size={40} />
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Loader2 className="text-white animate-spin" size={32} />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Loading Your Entertainment DNA Survey</h1>
-          <p className="text-gray-600 text-lg">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Your Entertainment DNA Survey</h1>
+          <p className="text-gray-600">
             Preparing your personalized questions...
           </p>
         </div>
@@ -188,54 +189,54 @@ export default function OnboardingPage() {
   if (showResults && dnaProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Dna className="text-white" size={40} />
+        <div className="max-w-2xl w-full bg-white rounded-3xl p-6 shadow-2xl">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Dna className="text-white" size={32} />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Entertainment DNA</h1>
-            <div className="w-16 h-1 bg-gradient-to-r from-purple-600 to-pink-600 mx-auto rounded-full"></div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Entertainment DNA</h1>
+            <div className="w-12 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 mx-auto rounded-full"></div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div className="text-center">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
                 {dnaProfile.title}
               </h2>
-              <p className="text-gray-700 text-lg leading-relaxed">
+              <p className="text-gray-700 leading-relaxed">
                 {dnaProfile.description}
               </p>
             </div>
 
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <Sparkles className="mr-2 text-purple-600" size={24} />
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5">
+              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                <Sparkles className="mr-2 text-purple-600" size={20} />
                 Your Entertainment Superpowers:
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {dnaProfile.superpowers.map((power, index) => (
-                  <li key={index} className="text-gray-700 text-base leading-relaxed">
+                  <li key={index} className="text-gray-700 text-sm leading-relaxed">
                     • {power}
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">🔮 What This Means:</h3>
-              <p className="text-gray-700 text-base leading-relaxed">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-5">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">🔮 What This Means:</h3>
+              <p className="text-gray-700 text-sm leading-relaxed">
                 {dnaProfile.meaning}
               </p>
             </div>
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-6 text-center">
             <Button 
-              onClick={() => window.location.href = '/dashboard'}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-12 py-4 text-lg rounded-full shadow-lg"
+              onClick={() => window.location.href = '/feed'}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-base"
               data-testid="complete-onboarding-button"
             >
-              Start Exploring Entertainlit!
+              Start Exploring consumed!
             </Button>
           </div>
         </div>
@@ -245,32 +246,32 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl">
+      <div className="max-w-2xl w-full bg-white rounded-3xl p-6 shadow-2xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Dna className="text-white" size={32} />
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Dna className="text-white" size={24} />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Discover Your Entertainment DNA</h1>
-          <p className="text-gray-600 text-lg">
-            Let's understand how you consume entertainment so we can personalize your experience
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Discover Your Entertainment DNA</h1>
+          <p className="text-gray-600 text-sm">
+            Let's understand how you consume entertainment
           </p>
         </div>
 
         {/* Progress */}
-        <div className="mb-8">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
+        <div className="mb-6">
+          <div className="flex justify-between text-xs text-gray-600 mb-2">
             <span>Question {currentQuestion + 1} of {surveyQuestions.length}</span>
             <span>{Math.round(progress)}% complete</span>
           </div>
-          <Progress value={progress} className="h-3" />
+          <Progress value={progress} className="h-2" />
         </div>
 
         {/* Question */}
-        <div className="mb-8">
+        <div className="mb-6">
           {surveyQuestions.length > 0 && currentQuestion < surveyQuestions.length && (
             <>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6 leading-relaxed">
+              <h2 className="text-xl font-semibold text-gray-900 mb-5 leading-relaxed">
                 {surveyQuestions[currentQuestion].question_text}
               </h2>
 
@@ -280,67 +281,74 @@ export default function OnboardingPage() {
                   value={getCurrentAnswer() || ""}
                   onChange={(e) => handleAnswer(e.target.value)}
                   placeholder="Please share your thoughts..."
-                  className="w-full p-4 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[120px] resize-vertical text-black bg-white placeholder:text-gray-500"
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[100px] resize-vertical text-black bg-white placeholder:text-gray-500 text-sm"
                   data-testid="text-input"
                 />
               )}
 
-              {/* Single Select */}
+              {/* Single Select - Pill Buttons */}
               {surveyQuestions[currentQuestion].question_type === 'select' && (
-                <RadioGroup 
-                  value={getCurrentAnswer() || ""} 
-                  onValueChange={handleAnswer}
-                  className="space-y-4"
-                >
-                  {surveyQuestions[currentQuestion].options?.map((option, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
-                      <RadioGroupItem value={option} id={`option-${index}`} />
-                      <Label 
-                        htmlFor={`option-${index}`} 
-                        className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
+                <div className="space-y-2">
+                  {surveyQuestions[currentQuestion].options?.map((option, index) => {
+                    const isSelected = getCurrentAnswer() === option;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleAnswer(option)}
+                        className={`w-full p-3 rounded-full border-2 transition-all text-left text-sm ${
+                          isSelected
+                            ? 'border-purple-600 bg-gradient-to-r from-purple-50 to-pink-50 text-gray-900 font-medium'
+                            : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
+                        }`}
                         data-testid={`option-${option}`}
                       >
                         {option}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
+                      </button>
+                    );
+                  })}
+                </div>
               )}
 
-              {/* Multi-Select */}
+              {/* Multi-Select - Pill Checkboxes */}
               {surveyQuestions[currentQuestion].question_type === 'multi-select' && (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {surveyQuestions[currentQuestion].options?.map((option, index) => {
                     const currentAnswers = Array.isArray(getCurrentAnswer()) ? getCurrentAnswer() : [];
                     const isChecked = currentAnswers.includes(option);
 
                     return (
-                      <div key={index} className="flex items-center space-x-3 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all cursor-pointer">
-                        <Checkbox
-                          id={`multi-option-${index}`}
-                          checked={isChecked}
-                          onCheckedChange={(checked) => {
-                            const currentAnswers = Array.isArray(getCurrentAnswer()) ? [...getCurrentAnswer()] : [];
-                            if (checked) {
-                              currentAnswers.push(option);
-                            } else {
-                              const optionIndex = currentAnswers.indexOf(option);
-                              if (optionIndex > -1) {
-                                currentAnswers.splice(optionIndex, 1);
-                              }
+                      <button
+                        key={index}
+                        onClick={() => {
+                          const currentAnswers = Array.isArray(getCurrentAnswer()) ? [...getCurrentAnswer()] : [];
+                          if (isChecked) {
+                            const optionIndex = currentAnswers.indexOf(option);
+                            if (optionIndex > -1) {
+                              currentAnswers.splice(optionIndex, 1);
                             }
-                            handleAnswer(currentAnswers);
-                          }}
-                          className="w-4 h-4"
-                        />
-                        <Label 
-                          htmlFor={`multi-option-${index}`} 
-                          className="text-gray-700 text-base leading-relaxed cursor-pointer flex-1"
-                          data-testid={`multi-option-${option}`}
-                        >
-                          {option}
-                        </Label>
-                      </div>
+                          } else {
+                            currentAnswers.push(option);
+                          }
+                          handleAnswer(currentAnswers);
+                        }}
+                        className={`w-full p-3 rounded-full border-2 transition-all text-left text-sm flex items-center ${
+                          isChecked
+                            ? 'border-purple-600 bg-gradient-to-r from-purple-50 to-pink-50 text-gray-900 font-medium'
+                            : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
+                        }`}
+                        data-testid={`multi-option-${option}`}
+                      >
+                        <div className={`w-4 h-4 rounded border-2 mr-3 flex items-center justify-center flex-shrink-0 ${
+                          isChecked ? 'bg-purple-600 border-purple-600' : 'border-gray-300'
+                        }`}>
+                          {isChecked && (
+                            <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                              <path d="M5 13l4 4L19 7"></path>
+                            </svg>
+                          )}
+                        </div>
+                        {option}
+                      </button>
                     );
                   })}
                 </div>
@@ -355,24 +363,24 @@ export default function OnboardingPage() {
             onClick={handlePrevious}
             disabled={currentQuestion === 0}
             variant="outline"
-            className="flex items-center space-x-2 disabled:opacity-50"
+            className="flex items-center space-x-2 disabled:opacity-50 rounded-full px-6 py-2"
             data-testid="previous-question-button"
           >
-            <ChevronLeft size={20} />
-            <span>Previous</span>
+            <ChevronLeft size={18} />
+            <span className="text-sm">Previous</span>
           </Button>
 
           <Button
             onClick={handleNext}
             disabled={surveyQuestions.length === 0 || !getCurrentAnswer() || (Array.isArray(getCurrentAnswer()) && getCurrentAnswer().length === 0)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-2 px-8 py-3 disabled:opacity-50"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-2 px-8 py-2 disabled:opacity-50 rounded-full"
             data-testid="next-question-button"
           >
-            <span>{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Discover My DNA" : "Next"}</span>
+            <span className="text-sm">{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Discover My DNA" : "Next"}</span>
             {surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? (
-              <Sparkles size={20} />
+              <Sparkles size={18} />
             ) : (
-              <ChevronRight size={20} />
+              <ChevronRight size={18} />
             )}
           </Button>
         </div>
