@@ -20,7 +20,13 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
   // Check if user has completed DNA survey (skip check on onboarding page)
   useEffect(() => {
     const checkDNAProfile = async () => {
-      if (!user || !session || location === '/onboarding') {
+      if (!user || !session) {
+        setCheckingDNA(false);
+        return;
+      }
+
+      // Skip check if already on onboarding page
+      if (location === '/onboarding') {
         setCheckingDNA(false);
         return;
       }
@@ -38,8 +44,9 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
 
         if (response.ok) {
           const data = await response.json();
+          // Redirect to onboarding if DNA profile is not set
           if (data.length > 0 && !data[0].dna_profile_title) {
-            // User hasn't completed DNA survey
+            console.log('No DNA profile found, redirecting to onboarding');
             setLocation('/onboarding');
           }
         }

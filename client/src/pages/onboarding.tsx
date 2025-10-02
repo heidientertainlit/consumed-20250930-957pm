@@ -232,7 +232,32 @@ export default function OnboardingPage() {
 
           <div className="mt-6 text-center">
             <Button 
-              onClick={() => window.location.href = '/feed'}
+              onClick={async () => {
+                // Save DNA profile to database
+                if (session?.access_token && dnaProfile) {
+                  try {
+                    const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/users?select=id', {
+                      method: 'PATCH',
+                      headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                      },
+                      body: JSON.stringify({
+                        dna_profile_title: dnaProfile.title
+                      })
+                    });
+                    
+                    if (response.ok) {
+                      console.log('DNA profile saved successfully');
+                    }
+                  } catch (error) {
+                    console.error('Error saving DNA profile:', error);
+                  }
+                }
+                window.location.href = '/feed';
+              }}
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-base"
               data-testid="complete-onboarding-button"
             >

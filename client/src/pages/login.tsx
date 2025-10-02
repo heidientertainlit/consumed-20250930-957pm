@@ -70,16 +70,19 @@ export default function LoginPage() {
         description: error.message,
         variant: "destructive",
       });
+      setSubmitting(false);
     } else {
       toast({
         title: "Welcome to consumed!",
         description: "Let's discover your Entertainment DNA.",
       });
-      // Redirect new users to DNA survey
-      setLocation('/onboarding');
+      
+      // Wait a moment for auth state to update
+      setTimeout(() => {
+        setLocation('/onboarding');
+        setSubmitting(false);
+      }, 500);
     }
-    
-    setSubmitting(false);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
