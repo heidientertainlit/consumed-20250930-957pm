@@ -112,12 +112,12 @@ serve(async (req) => {
             .from('friendships')
             .select(`
               id,
-              accepted_at,
+              created_at,
               friend:friend_id(id, user_name, email)
             `)
             .eq('user_id', appUser.id)
             .eq('status', 'accepted')
-            .order('accepted_at', { ascending: false });
+            .order('created_at', { ascending: false });
 
           if (error) {
             return new Response(JSON.stringify({ error: error.message }), {
@@ -316,14 +316,12 @@ serve(async (req) => {
           }
 
           // Create accepted friendship for current user (this we can definitely do)
-          const now = new Date().toISOString();
           const { error: insertError1 } = await supabase
             .from('friendships')
             .insert({
               user_id: appUser.id,
               friend_id: friendId,
-              status: 'accepted',
-              accepted_at: now
+              status: 'accepted'
             });
 
           if (insertError1) {
@@ -339,8 +337,7 @@ serve(async (req) => {
             .insert({
               user_id: friendId,
               friend_id: appUser.id,
-              status: 'accepted',
-              accepted_at: now
+              status: 'accepted'
             });
 
           if (insertError2) {
