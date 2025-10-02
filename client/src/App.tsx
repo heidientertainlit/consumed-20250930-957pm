@@ -22,89 +22,89 @@ import NotFoundPage from "./pages/not-found";
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/login">
-        <PublicOnlyRoute>
-          <LoginPage />
-        </PublicOnlyRoute>
-      </Route>
-      <Route path="/reset-password">
-        <ResetPasswordPage />
-      </Route>
-      <Route path="/onboarding">
-        <ProtectedRoute>
-          <OnboardingPage />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/">
-        <ProtectedRoute>
-          <Track />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/track">
-        <ProtectedRoute>
-          <Track />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/leaderboard">
-        <ProtectedRoute>
-          <Leaderboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/feed">
-        <ProtectedRoute>
-          <Feed />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/friends">
-        <ProtectedRoute>
-          <Friends />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/play">
-        <ProtectedRoute>
-          <Play />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/predictions">
-        <ProtectedRoute>
-          <Predictions />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/media/:id">
-        <ProtectedRoute>
-          <MediaDetail />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/list/:id">
-        <ProtectedRoute>
-          <ListDetail />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/creator/:id">
-        <ProtectedRoute>
-          <CreatorProfile />
-        </ProtectedRoute>
-      </Route>
-      <Route path="/user/:id">
-        <ProtectedRoute>
-          <UserProfile />
-        </ProtectedRoute>
-      </Route>
-      <Route component={NotFoundPage} />
-    </Switch>
+    <AuthProvider>
+      <Switch>
+        <Route path="/login">
+          <PublicOnlyRoute>
+            <LoginPage />
+          </PublicOnlyRoute>
+        </Route>
+        <Route path="/reset-password">
+          <ResetPasswordPage />
+        </Route>
+        <Route path="/onboarding">
+          <ProtectedRoute>
+            <OnboardingPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/">
+          <ProtectedRoute>
+            <Track />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/track">
+          <ProtectedRoute>
+            <Track />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/leaderboard">
+          <ProtectedRoute>
+            <Leaderboard />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/feed">
+          <ProtectedRoute>
+            <Feed />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/friends">
+          <ProtectedRoute>
+            <Friends />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/play">
+          <ProtectedRoute>
+            <Play />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/predictions">
+          <ProtectedRoute>
+            <Predictions />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/media/:id">
+          <ProtectedRoute>
+            <MediaDetail />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/list/:id">
+          <ProtectedRoute>
+            <ListDetail />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/creator/:id">
+          <ProtectedRoute>
+            <CreatorProfile />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/user/:id">
+          <ProtectedRoute>
+            <UserProfile />
+          </ProtectedRoute>
+        </Route>
+        <Route component={NotFoundPage} />
+      </Switch>
+    </AuthProvider>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </AuthProvider>
+      <TooltipProvider>
+        <Router />
+        <Toaster />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
