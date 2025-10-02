@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Search, Check, UserPlus, Users, X, Share2 } from "lucide-react";
@@ -330,21 +331,27 @@ export default function FriendsPage() {
             friendsData?.friends && friendsData.friends.length > 0 ? (
               <div className="space-y-3">
                 {friendsData.friends.map((friendship: any) => (
-                  <div key={friendship.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm">👤</span>
+                  <Link 
+                    key={friendship.id} 
+                    href={`/user/${friendship.friend?.id}`}
+                    className="block"
+                  >
+                    <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm">👤</span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">{friendship.friend?.user_name || 'Unknown User'}</div>
+                          <div className="text-sm text-gray-500">{friendship.friend?.email}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{friendship.friend?.user_name || 'Unknown User'}</div>
-                        <div className="text-sm text-gray-500">{friendship.friend?.email}</div>
+                      <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
+                        <Check size={14} />
+                        <span>Friends</span>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
-                      <Check size={14} />
-                      <span>Friends</span>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
