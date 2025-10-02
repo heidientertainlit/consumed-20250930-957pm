@@ -137,89 +137,75 @@ serve(async (req) => {
 
           console.log('Searching for users with query:', query, 'excluding user:', appUser.id);
 
-          // Search for users by username or email
-          const searchPattern = `%${query}%`;
-          let { data: users, error } = await supabase
+          // Get all users except current user, then filter manually for better control
+          const { data: allUsers, error: fetchError } = await supabase
             .from('users')
             .select('id, user_name, email, display_name, first_name, last_name')
-            .or(`user_name.ilike.${searchPattern},email.ilike.${searchPattern},display_name.ilike.${searchPattern}`)
-            .neq('id', appUser.id)
-            .limit(10);
+            .neq('id', appUser.id);
 
-          console.log('Primary search results:', { users, error, userCount: users?.length || 0 });
+          console.log('Fetched all users:', { count: allUsers?.length || 0, error: fetchError });
 
-          // If primary search fails or returns no results, try a different approach
-          if (error || !users || users.length === 0) {
-            console.log('Primary search failed, trying fallback search...');
-            
-            // Try a simpler search approach
-            const { data: fallbackUsers, error: fallbackError } = await supabase
-              .from('users')
-              .select('id, user_name, email, display_name, first_name, last_name')
-              .neq('id', appUser.id)
-              .limit(50); // Get more users to filter manually
-            
-            console.log('Fallback search results:', { 
-              users: fallbackUsers, 
-              error: fallbackError, 
-              userCount: fallbackUsers?.length || 0 
-            });
-
-            if (fallbackError) {
-              console.error('Fallback search error:', fallbackError);
-              return new Response(JSON.stringify({ error: fallbackError.message }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-              });
-            }
-
-            // Filter results manually if database search fails
-            const filteredUsers = (fallbackUsers || []).filter(user => 
-              user.user_name?.toLowerCase().includes(query.toLowerCase()) ||
-              user.email?.toLowerCase().includes(query.toLowerCase()) ||
-              user.display_name?.toLowerCase().includes(query.toLowerCase()) ||
-              user.first_name?.toLowerCase().includes(query.toLowerCase()) ||
-              user.last_name?.toLowerCase().includes(query.toLowerCase())
-            ).slice(0, 10);
-
-            console.log('Manually filtered users:', filteredUsers);
-            users = filteredUsers;
-          }
-
-          if (error && (!users || users.length === 0)) {
-            console.error('All search methods failed:', error);
-            return new Response(JSON.stringify({ error: error.message }), {
+          if (fetchError) {
+            console.error('User fetch error:', fetchError);
+            return new Response(JSON.stringify({ error: fetchError.message }), {
               status: 500,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
-          // For debugging: let's also see all users in the database
-          const { data: allUsers } = await supabase
-            .from('users')
-            .select('id, user_name, email')
-            .limit(5);
-          console.log('Sample of all users in database:', allUsers);
+          // Manual filter to handle null values properly
+          const queryLower = query.toLowerCase();
+          const matchedUsers = (allUsers || []).filter(user => {
+            const userName = (user.user_name || '').toLowerCase();
+            const email = (user.email || '').toLowerCase();
+            const displayName = (user.display_name || '').toLowerCase();
+            const firstName = (user.first_name || '').toLowerCase();
+            const lastName = (user.last_name || '').toLowerCase();
+            const fullName = `${firstName} ${lastName}`.trim();
+            
+            return userName.includes(queryLower) ||
+                   email.includes(queryLower) ||
+                   displayName.includes(queryLower) ||
+                   firstName.includes(queryLower) ||
+                   lastName.includes(queryLower) ||
+                   fullName.includes(queryLower);
+          }).slice(0, 20); // Get top 20 matches
+
+          console.log('Matched users before filtering relations:', matchedUsers.length);
+
+          if (matchedUsers.length === 0) {
+            return new Response(JSON.stringify({ users: [] }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
 
           // Filter out users who are already friends or have pending requests
-          const { data: existingRelations } = await supabase
-            .from('friendships')
-            .select('friend_id, user_id')
-            .or(`and(user_id.eq.${appUser.id},friend_id.in.(${(users || []).map(u => u.id).join(',')})),and(friend_id.eq.${appUser.id},user_id.in.(${(users || []).map(u => u.id).join(',')}))`)
-            .in('status', ['pending', 'accepted']);
-
-          console.log('Existing relations:', existingRelations);
-
-          const relatedUserIds = new Set([
-            ...(existingRelations || []).map(r => r.friend_id),
-            ...(existingRelations || []).map(r => r.user_id)
-          ]);
-
-          const filteredUsers = (users || []).filter(user => !relatedUserIds.has(user.id));
+          const matchedUserIds = matchedUsers.map(u => u.id);
           
-          console.log('Filtered users being returned:', filteredUsers);
+          if (matchedUserIds.length > 0) {
+            const { data: existingRelations } = await supabase
+              .from('friendships')
+              .select('friend_id, user_id, status')
+              .or(`and(user_id.eq.${appUser.id},friend_id.in.(${matchedUserIds.join(',')})),and(friend_id.eq.${appUser.id},user_id.in.(${matchedUserIds.join(',')}))`)
+              .in('status', ['pending', 'accepted']);
 
-          return new Response(JSON.stringify({ users: filteredUsers }), {
+            console.log('Existing relations:', existingRelations);
+
+            const relatedUserIds = new Set([
+              ...(existingRelations || []).map(r => r.friend_id),
+              ...(existingRelations || []).map(r => r.user_id)
+            ]);
+
+            const filteredUsers = matchedUsers.filter(user => !relatedUserIds.has(user.id));
+            
+            console.log('Final filtered users being returned:', filteredUsers);
+
+            return new Response(JSON.stringify({ users: filteredUsers }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          return new Response(JSON.stringify({ users: matchedUsers }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
