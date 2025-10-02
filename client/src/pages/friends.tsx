@@ -390,7 +390,10 @@ export default function FriendsPage() {
                                      'Unknown User';
                   return (
                   <div key={user.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-3">
+                    <Link 
+                      href={`/user/${user.id}`}
+                      className="flex items-center space-x-3 flex-1 cursor-pointer"
+                    >
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
                         <span className="text-white text-sm">👤</span>
                       </div>
@@ -398,7 +401,7 @@ export default function FriendsPage() {
                         <div className="font-medium text-gray-900">{displayName}</div>
                         <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
-                    </div>
+                    </Link>
                     <Button
                       onClick={() => sendRequestMutation.mutate(user.id)}
                       disabled={sendRequestMutation.isPending}
