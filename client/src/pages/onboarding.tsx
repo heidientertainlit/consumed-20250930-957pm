@@ -145,11 +145,31 @@ export default function OnboardingPage() {
     setAnswers(newAnswers);
   };
 
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Analyzing your responses...");
+
   const handleNext = async () => {
     if (currentQuestion < surveyQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       // Save responses to database and generate AI DNA profile
+      setIsGenerating(true);
+      
+      // Rotating loading messages
+      const messages = [
+        "Analyzing your responses...",
+        "Mapping your entertainment preferences...",
+        "Discovering your unique patterns...",
+        "Crafting your DNA profile...",
+        "Almost there, adding the finishing touches..."
+      ];
+      
+      let messageIndex = 0;
+      const messageInterval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % messages.length;
+        setLoadingMessage(messages[messageIndex]);
+      }, 6000);
+      
       try {
         // First, save all survey responses
         for (const answer of answers) {
@@ -192,13 +212,18 @@ export default function OnboardingPage() {
           superpowers: aiProfile.flavor_notes || [],
           meaning: aiProfile.profile_text || ''
         });
+        
+        clearInterval(messageInterval);
         setShowResults(true);
       } catch (error) {
         console.error('Error generating DNA profile:', error);
+        clearInterval(messageInterval);
         // Fallback to local generation if AI fails
         const profile = generateDNAProfile(answers);
         setDNAProfile(profile);
         setShowResults(true);
+      } finally {
+        setIsGenerating(false);
       }
     }
   };
@@ -228,6 +253,35 @@ export default function OnboardingPage() {
           <p className="text-gray-600">
             Preparing your personalized questions...
           </p>
+          <p className="text-sm text-gray-500 mt-2">This will just take a moment</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading screen while generating DNA profile
+  if (isGenerating) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+            <Dna className="text-white animate-spin" size={40} style={{ animationDuration: '3s' }} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Discovering Your Entertainment DNA</h1>
+          <p className="text-gray-700 mb-6 text-lg font-medium animate-pulse">
+            {loadingMessage}
+          </p>
+          <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-2.5 mb-4">
+            <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 h-2.5 rounded-full animate-pulse" style={{ width: '85%' }}></div>
+          </div>
+          <p className="text-sm text-gray-600 mb-2">Give us a moment while our AI analyzes your responses...</p>
+          <p className="text-xs text-gray-500">This usually takes 30-60 seconds</p>
+          
+          <div className="mt-8 flex justify-center space-x-2">
+            <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
         </div>
       </div>
     );
