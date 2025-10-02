@@ -209,10 +209,16 @@ export default function FriendsPage() {
           <p className="text-gray-600">Connect with other entertainment fans</p>
         </div>
 
-        {/* Pending Requests */}
-        {pendingData?.requests && pendingData.requests.length > 0 && (
-          <div className="bg-blue-50 rounded-2xl border border-blue-200 p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900">Pending Requests</h3>
+        {/* Pending Requests - Always Shown */}
+        <div className="bg-blue-50 rounded-2xl border border-blue-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Friend Requests to Approve</h3>
+            <div className="bg-blue-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
+              {pendingData?.requests?.length || 0}
+            </div>
+          </div>
+          
+          {pendingData?.requests && pendingData.requests.length > 0 ? (
             <div className="space-y-3">
               {pendingData.requests.map((request: any) => (
                 <div key={request.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
@@ -249,8 +255,12 @@ export default function FriendsPage() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              No pending friend requests
+            </div>
+          )}
+        </div>
 
         {/* Search Section */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
