@@ -2133,6 +2133,40 @@ export default function UserProfile() {
             </div>
           )}
         </div>
+
+        {/* Logout Button - Only shown on own profile, at bottom */}
+        {isOwnProfile && (
+          <div className="px-4 pb-24 pt-12">
+            <div className="flex justify-center">
+              <Button 
+                variant="outline" 
+                className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300"
+                onClick={async () => {
+                  await queryClient.cancelQueries();
+                  queryClient.clear();
+                  const { error } = await signOut();
+                  if (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to log out. Please try again.",
+                      variant: "destructive"
+                    });
+                  } else {
+                    toast({
+                      title: "Logged out",
+                      description: "You have been successfully logged out."
+                    });
+                    setLocation('/login');
+                  }
+                }}
+                data-testid="button-logout"
+              >
+                <LogOut size={16} className="mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <ConsumptionTracker 
@@ -2393,40 +2427,6 @@ export default function UserProfile() {
           listItems={selectedListForShare.items}
           listType="custom"
         />
-      )}
-
-      {/* Logout Button - Only shown on own profile, at bottom */}
-      {isOwnProfile && (
-        <div className="max-w-4xl mx-auto px-4 pb-24 pt-12">
-          <div className="flex justify-center">
-            <Button 
-              variant="outline" 
-              className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300"
-              onClick={async () => {
-                await queryClient.cancelQueries();
-                queryClient.clear();
-                const { error } = await signOut();
-                if (error) {
-                  toast({
-                    title: "Error",
-                    description: "Failed to log out. Please try again.",
-                    variant: "destructive"
-                  });
-                } else {
-                  toast({
-                    title: "Logged out",
-                    description: "You have been successfully logged out."
-                  });
-                  setLocation('/login');
-                }
-              }}
-              data-testid="button-logout"
-            >
-              <LogOut size={16} className="mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
       )}
 
       {/* Entertainment DNA Survey Modal */}
