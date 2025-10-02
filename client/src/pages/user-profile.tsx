@@ -1081,12 +1081,22 @@ export default function UserProfile() {
           {!isOwnProfile && (
             <div className="mt-6">
               <Button 
-                onClick={() => setIsAddFriendModalOpen(true)}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                onClick={() => viewingUserId && sendFriendRequest(viewingUserId)}
+                disabled={isSendingRequest || !viewingUserId}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="button-add-friend"
               >
-                <Users size={20} className="mr-2" />
-                Add Friend
+                {isSendingRequest ? (
+                  <>
+                    <Loader2 size={20} className="mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Users size={20} className="mr-2" />
+                    Add Friend
+                  </>
+                )}
               </Button>
             </div>
           )}
