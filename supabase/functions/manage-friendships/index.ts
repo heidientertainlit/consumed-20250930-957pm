@@ -32,36 +32,68 @@ serve(async (req) => {
       });
     }
 
-    // Look up app user by email, CREATE if doesn't exist
+    // Look up app user by ID first (more reliable), then fall back to email
     let { data: appUser, error: appUserError } = await supabase
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
+    // If not found by ID, try by email
     if (appUserError && appUserError.code === 'PGRST116') {
-      const { data: newUser, error: createError } = await supabase
+      const { data: emailUser } = await supabase
         .from('users')
-        .insert({
-          id: user.id,
-          email: user.email,
-          user_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user',
-          first_name: user.user_metadata?.first_name || '',
-          last_name: user.user_metadata?.last_name || ''
-        })
         .select('id, email, user_name')
+        .eq('email', user.email)
         .single();
-
-      if (createError) {
-        return new Response(JSON.stringify({ 
-          error: 'Failed to create user: ' + createError.message 
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
       
-      appUser = newUser;
+      if (emailUser) {
+        appUser = emailUser;
+      } else {
+        // User doesn't exist, create it
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email,
+            user_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user',
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || ''
+          })
+          .select('id, email, user_name')
+          .single();
+
+        if (createError) {
+          // If it's a duplicate key error, try fetching the user again
+          if (createError.code === '23505') {
+            const { data: existingUser } = await supabase
+              .from('users')
+              .select('id, email, user_name')
+              .eq('id', user.id)
+              .single();
+            
+            if (existingUser) {
+              appUser = existingUser;
+            } else {
+              return new Response(JSON.stringify({ 
+                error: 'Failed to create or fetch user' 
+              }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+          } else {
+            return new Response(JSON.stringify({ 
+              error: 'Failed to create user: ' + createError.message 
+            }), {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        } else {
+          appUser = newUser;
+        }
+      }
     } else if (appUserError) {
       return new Response(JSON.stringify({ 
         error: 'User lookup failed: ' + appUserError.message 
