@@ -17,6 +17,7 @@ import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
 import OnboardingPage from "./pages/onboarding";
 import LoginPage from "./pages/login";
+import ResetPasswordPage from "./pages/reset-password";
 import NotFoundPage from "./pages/not-found";
 
 function Router() {
@@ -26,6 +27,9 @@ function Router() {
         <PublicOnlyRoute>
           <LoginPage />
         </PublicOnlyRoute>
+      </Route>
+      <Route path="/reset-password">
+        <ResetPasswordPage />
       </Route>
       <Route path="/onboarding">
         <ProtectedRoute>

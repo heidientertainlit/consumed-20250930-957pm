@@ -10,6 +10,21 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 2, 2025 - UI Improvements & Password Reset Functionality**
+- **NAVIGATION UPDATE**: Moved profile icon from bottom navigation to top header (right of bell icon)
+  - Cleaner 4-item bottom navigation: Feed, Track, Play, Leaderboard
+  - Profile accessible via top-right icon next to notifications
+- **PASSWORD RESET**: Implemented complete forgot password flow using Supabase auth
+  - Added "Forgot password?" link on login page sign-in form
+  - Modal for entering email to request password reset
+  - Email sent with reset link redirecting to `/reset-password` page
+  - New reset password page where users enter and confirm new password
+  - Auth context extended with `resetPassword()` and `updatePassword()` methods
+  - Full error handling and user feedback via toast notifications
+- **IMPORT DIALOG**: Streamlined Import History dialog by removing Cancel button
+  - Users now use X button in corner to close dialog
+  - Full-width Import button with improved visibility
+
 **October 1, 2025 - EMERGENCY DATABASE ROLLBACK: Fixed Critical RLS Policy Issues**
 - **CRITICAL ISSUE**: Bad database constraints and duplicate RLS policies broke media tracking functionality
 - **ROOT CAUSE**: Accidentally added `unique_user_list_type` constraint on lists table preventing users from tracking media
