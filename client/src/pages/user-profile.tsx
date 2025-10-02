@@ -1110,7 +1110,6 @@ export default function UserProfile() {
                       variant="outline" 
                       className="border-gray-300"
                       onClick={() => {
-                        setEditDisplayName(userProfileData?.display_name || '');
                         setEditUsername(userProfileData?.user_name || '');
                         setEditFirstName(userProfileData?.first_name || '');
                         setEditLastName(userProfileData?.last_name || '');
