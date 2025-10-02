@@ -2,14 +2,16 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
-import { Search, Check, UserPlus, Users, X } from "lucide-react";
+import { Search, Check, UserPlus, Users, X, Share2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { copyLink } from "@/lib/share";
 
 export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { session } = useAuth();
+  const [activeTab, setActiveTab] = useState<'requests' | 'friends'>('requests');
+  const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -207,58 +209,138 @@ export default function FriendsPage() {
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-black mb-2">Friends</h1>
           <p className="text-gray-600">Connect with other entertainment fans</p>
+          
+          {/* Invite Friends Button */}
+          <Button
+            onClick={async () => {
+              if (!user?.id) return;
+              await copyLink({ kind: 'profile', id: user.id });
+              toast({
+                title: "Invite Link Copied!",
+                description: "Share this link to invite friends to find you on consumed",
+              });
+            }}
+            className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-full"
+            data-testid="button-invite-friends"
+          >
+            <Share2 size={16} className="mr-2" />
+            Invite Friends
+          </Button>
         </div>
 
-        {/* Pending Requests - Always Shown */}
-        <div className="bg-blue-50 rounded-2xl border border-blue-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Friend Requests to Approve</h3>
-            <div className="bg-blue-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
-              {pendingData?.requests?.length || 0}
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`flex-1 py-3 px-6 rounded-t-xl font-semibold transition-all ${
+              activeTab === 'requests'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+            data-testid="tab-requests"
+          >
+            <div className="flex items-center justify-center gap-2">
+              Requests to Approve
+              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {pendingData?.requests?.length || 0}
+              </span>
             </div>
-          </div>
-          
-          {pendingData?.requests && pendingData.requests.length > 0 ? (
-            <div className="space-y-3">
-              {pendingData.requests.map((request: any) => (
-                <div key={request.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm">👤</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('friends')}
+            className={`flex-1 py-3 px-6 rounded-t-xl font-semibold transition-all ${
+              activeTab === 'friends'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+            data-testid="tab-friends"
+          >
+            <div className="flex items-center justify-center gap-2">
+              Your Friends
+              <span className="bg-gray-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {friendsData?.friends?.length || 0}
+              </span>
+            </div>
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          {activeTab === 'requests' ? (
+            /* Pending Requests Content */
+            pendingData?.requests && pendingData.requests.length > 0 ? (
+              <div className="space-y-3">
+                {pendingData.requests.map((request: any) => (
+                  <div key={request.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">👤</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{request.sender?.user_name || 'Unknown User'}</div>
+                        <div className="text-sm text-gray-500">{request.sender?.email}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{request.sender?.user_name || 'Unknown User'}</div>
-                      <div className="text-sm text-gray-500">{request.sender?.email}</div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => acceptRequestMutation.mutate(request.user_id)}
+                        disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm rounded-full"
+                        data-testid={`button-accept-request-${request.id}`}
+                      >
+                        <Check size={14} className="mr-1" />
+                        Accept
+                      </Button>
+                      <Button
+                        onClick={() => rejectRequestMutation.mutate(request.user_id)}
+                        disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
+                        variant="outline"
+                        className="border-red-300 text-red-600 hover:bg-red-50 px-4 py-2 text-sm rounded-full"
+                        data-testid={`button-reject-request-${request.id}`}
+                      >
+                        <X size={14} className="mr-1" />
+                        Deny
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => acceptRequestMutation.mutate(request.user_id)}
-                      disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm rounded-full"
-                      data-testid={`button-accept-request-${request.id}`}
-                    >
-                      <Check size={14} className="mr-1" />
-                      Accept
-                    </Button>
-                    <Button
-                      onClick={() => rejectRequestMutation.mutate(request.user_id)}
-                      disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
-                      variant="outline"
-                      className="border-red-300 text-red-600 hover:bg-red-50 px-4 py-2 text-sm rounded-full"
-                      data-testid={`button-reject-request-${request.id}`}
-                    >
-                      <X size={14} className="mr-1" />
-                      Deny
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Users className="mx-auto mb-3 text-gray-300" size={48} />
+                <p className="font-medium">No pending friend requests</p>
+                <p className="text-sm mt-1">When someone sends you a friend request, it will appear here</p>
+              </div>
+            )
           ) : (
-            <div className="text-center py-4 text-gray-500">
-              No pending friend requests
-            </div>
+            /* Your Friends Content */
+            friendsData?.friends && friendsData.friends.length > 0 ? (
+              <div className="space-y-3">
+                {friendsData.friends.map((friendship: any) => (
+                  <div key={friendship.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">👤</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{friendship.friend?.user_name || 'Unknown User'}</div>
+                        <div className="text-sm text-gray-500">{friendship.friend?.email}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
+                      <Check size={14} />
+                      <span>Friends</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Users className="mx-auto mb-3 text-gray-300" size={48} />
+                <p className="font-medium">No friends yet</p>
+                <p className="text-sm mt-1">Search below to find people to connect with!</p>
+              </div>
+            )
           )}
         </div>
 
@@ -321,38 +403,6 @@ export default function FriendsPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Current Friends */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900">Your Friends</h3>
-
-          {friendsData?.friends && friendsData.friends.length > 0 ? (
-            <div className="space-y-3">
-              {friendsData.friends.map((friendship: any) => (
-                <div key={friendship.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm">👤</span>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{friendship.friend?.user_name || 'Unknown User'}</div>
-                      <div className="text-sm text-gray-500">{friendship.friend?.email}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
-                    <Check size={14} />
-                    <span>Friends</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="mx-auto mb-2 text-gray-400" size={48} />
-              <p>No friends yet. Search above to find people to connect with!</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
