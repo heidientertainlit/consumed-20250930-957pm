@@ -73,7 +73,7 @@ export default function LoginPage() {
       setSubmitting(false);
     } else {
       toast({
-        title: "Welcome to consumed!",
+        title: "Welcome to Consumed!",
         description: "Let's discover your Entertainment DNA.",
       });
       
@@ -141,7 +141,7 @@ export default function LoginPage() {
           <div className="flex justify-center mb-4">
             <img 
               src="/consumed-logo-white.png" 
-              alt="consumed" 
+              alt="Consumed" 
               className="h-16 w-auto"
             />
           </div>

@@ -261,7 +261,7 @@ export default function OnboardingPage() {
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-base"
               data-testid="complete-onboarding-button"
             >
-              Start Exploring consumed!
+              Start Exploring Consumed!
             </Button>
           </div>
         </div>
@@ -281,6 +281,12 @@ export default function OnboardingPage() {
           <p className="text-gray-600 text-sm">
             Let's understand how you consume entertainment
           </p>
+          <button
+            onClick={() => window.location.href = '/feed'}
+            className="text-xs text-gray-400 hover:text-gray-500 mt-2 underline"
+          >
+            Skip for now
+          </button>
         </div>
 
         {/* Progress */}

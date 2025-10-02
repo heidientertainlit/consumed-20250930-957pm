@@ -112,7 +112,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">Welcome to consumed</DialogTitle>
+          <DialogTitle className="text-center">Welcome to Consumed</DialogTitle>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
