@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
-import { Search, Check, UserPlus, Users } from "lucide-react";
+import { Search, Check, UserPlus, Users, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -158,6 +158,39 @@ export default function FriendsPage() {
     },
   });
 
+  // Reject friend request
+  const rejectRequestMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'rejectRequest', friendId }),
+      });
+
+      if (!response.ok) throw new Error('Failed to reject friend request');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
+      toast({
+        title: "Request Rejected",
+        description: "Friend request has been declined.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Reject Request",
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation />
@@ -186,14 +219,27 @@ export default function FriendsPage() {
                       <div className="text-sm text-gray-500">{request.sender?.email}</div>
                     </div>
                   </div>
-                  <Button
-                    onClick={() => acceptRequestMutation.mutate(request.user_id)}
-                    disabled={acceptRequestMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm rounded-full"
-                  >
-                    <Check size={14} className="mr-1" />
-                    Accept
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => acceptRequestMutation.mutate(request.user_id)}
+                      disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm rounded-full"
+                      data-testid={`button-accept-request-${request.id}`}
+                    >
+                      <Check size={14} className="mr-1" />
+                      Accept
+                    </Button>
+                    <Button
+                      onClick={() => rejectRequestMutation.mutate(request.user_id)}
+                      disabled={acceptRequestMutation.isPending || rejectRequestMutation.isPending}
+                      variant="outline"
+                      className="border-red-300 text-red-600 hover:bg-red-50 px-4 py-2 text-sm rounded-full"
+                      data-testid={`button-reject-request-${request.id}`}
+                    >
+                      <X size={14} className="mr-1" />
+                      Deny
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

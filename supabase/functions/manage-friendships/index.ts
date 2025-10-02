@@ -297,6 +297,34 @@ serve(async (req) => {
           });
         }
 
+        case 'rejectRequest': {
+          if (!friendId) {
+            return new Response(JSON.stringify({ error: 'friendId is required' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          // Delete the pending friendship request
+          const { error } = await supabase
+            .from('friendships')
+            .delete()
+            .eq('user_id', friendId)
+            .eq('friend_id', appUser.id)
+            .eq('status', 'pending');
+
+          if (error) {
+            return new Response(JSON.stringify({ error: 'Failed to reject friend request' }), {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
         default:
           return new Response(JSON.stringify({ error: 'Invalid action' }), {
             status: 400,
