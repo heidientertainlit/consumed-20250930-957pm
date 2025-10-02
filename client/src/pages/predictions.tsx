@@ -415,22 +415,14 @@ export default function VoteAndPredictPage() {
   };
 
   const handleInviteFriends = async (pool: PredictionPool) => {
-    const shareData = {
-      title: `Join my prediction on consumed!`,
-      text: `I'm predicting "${pool.title}" - think you can beat me? Join the pool and let's see who's right! 🎯`,
-      url: `${window.location.origin}/predictions#${pool.id}`
-    };
-
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        toast({
-          title: "Invite Link Copied!",
-          description: "Share this with your friends to invite them",
-        });
-      }
+      const { copyLink } = await import('@/lib/share');
+      await copyLink({ kind: 'prediction', id: pool.id });
+      
+      toast({
+        title: "Invite Link Copied!",
+        description: "Share this with your friends to invite them to play",
+      });
     } catch (error) {
       console.error('Error inviting friends:', error);
       toast({
