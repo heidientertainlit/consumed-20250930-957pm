@@ -2724,7 +2724,7 @@ export default function UserProfile() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Edit Profile</h2>
+              <h2 className="text-2xl font-bold text-black">Edit Profile</h2>
               <Button
                 variant="ghost"
                 size="sm"
@@ -2732,14 +2732,14 @@ export default function UserProfile() {
                 className="h-8 w-8 p-0"
                 data-testid="button-close-edit-profile"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4 text-black" />
               </Button>
             </div>
 
             <div className="space-y-4">
               {/* Display Name */}
               <div>
-                <Label htmlFor="display-name" className="text-sm font-medium text-gray-700 mb-2 block">
+                <Label htmlFor="display-name" className="text-sm font-medium text-black mb-2 block">
                   Display Name
                 </Label>
                 <Input
@@ -2750,12 +2750,12 @@ export default function UserProfile() {
                   className="w-full"
                   data-testid="input-display-name"
                 />
-                <p className="text-xs text-gray-500 mt-1">This is your public-facing name</p>
+                <p className="text-xs text-black mt-1">This is your public-facing name</p>
               </div>
 
               {/* First Name */}
               <div>
-                <Label htmlFor="first-name" className="text-sm font-medium text-gray-700 mb-2 block">
+                <Label htmlFor="first-name" className="text-sm font-medium text-black mb-2 block">
                   First Name
                 </Label>
                 <Input
@@ -2770,8 +2770,8 @@ export default function UserProfile() {
 
               {/* Last Name */}
               <div>
-                <Label htmlFor="last-name" className="text-sm font-medium text-gray-700 mb-2 block">
-                  Last Name <span className="text-gray-400 font-normal">(optional)</span>
+                <Label htmlFor="last-name" className="text-sm font-medium text-black mb-2 block">
+                  Last Name <span className="text-black font-normal">(optional)</span>
                 </Label>
                 <Input
                   id="last-name"
@@ -2785,7 +2785,7 @@ export default function UserProfile() {
 
               {/* Username */}
               <div>
-                <Label htmlFor="username" className="text-sm font-medium text-gray-700 mb-2 block">
+                <Label htmlFor="username" className="text-sm font-medium text-black mb-2 block">
                   Username
                 </Label>
                 <Input
@@ -2796,7 +2796,7 @@ export default function UserProfile() {
                   className="w-full"
                   data-testid="input-username"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-black mt-1">
                   3-20 characters, letters, numbers, and underscores only
                 </p>
               </div>
