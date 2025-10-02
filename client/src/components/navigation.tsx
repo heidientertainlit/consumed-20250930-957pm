@@ -60,6 +60,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 </span>
               )}
             </button>
+            <Link href="/user/user-1">
+              <button
+                className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                data-testid="profile-button"
+              >
+                <User className="text-white" size={18} />
+              </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -97,14 +105,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <BarChart3 className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Leaderboard</span>
-          </Link>
-
-          <Link
-            href="/user/user-1"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location.startsWith("/user") ? "bg-white/20" : ""}`}
-          >
-            <User className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Profile</span>
           </Link>
 
         </div>
