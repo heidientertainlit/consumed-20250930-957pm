@@ -200,40 +200,10 @@ serve(async (req) => {
                    fullName.includes(queryLower);
           }).slice(0, 20); // Get top 20 matches
 
-          console.log('Matched users before filtering relations:', matchedUsers.length);
+          console.log('Matched users count:', matchedUsers.length);
 
-          if (matchedUsers.length === 0) {
-            return new Response(JSON.stringify({ users: [] }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
-
-          // Filter out users who are already friends or have pending requests
-          const matchedUserIds = matchedUsers.map(u => u.id);
-          
-          if (matchedUserIds.length > 0) {
-            const { data: existingRelations } = await supabase
-              .from('friendships')
-              .select('friend_id, user_id, status')
-              .or(`and(user_id.eq.${appUser.id},friend_id.in.(${matchedUserIds.join(',')})),and(friend_id.eq.${appUser.id},user_id.in.(${matchedUserIds.join(',')}))`)
-              .in('status', ['pending', 'accepted']);
-
-            console.log('Existing relations:', existingRelations);
-
-            const relatedUserIds = new Set([
-              ...(existingRelations || []).map(r => r.friend_id),
-              ...(existingRelations || []).map(r => r.user_id)
-            ]);
-
-            const filteredUsers = matchedUsers.filter(user => !relatedUserIds.has(user.id));
-            
-            console.log('Final filtered users being returned:', filteredUsers);
-
-            return new Response(JSON.stringify({ users: filteredUsers }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
-
+          // Return all matched users (no filtering for existing relationships)
+          // This allows testing and finding users even if they have pending requests
           return new Response(JSON.stringify({ users: matchedUsers }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
