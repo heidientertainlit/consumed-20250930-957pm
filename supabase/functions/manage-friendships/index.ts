@@ -106,7 +106,7 @@ serve(async (req) => {
               id,
               user_id,
               created_at,
-              sender:user_id(id, user_name, email)
+              users!friendships_user_id_fkey(id, user_name, email, first_name, last_name)
             `)
             .eq('friend_id', appUser.id)
             .eq('status', 'pending')

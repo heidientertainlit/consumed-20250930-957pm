@@ -284,8 +284,12 @@ export default function FriendsPage() {
                         <span className="text-white text-sm">👤</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{request.sender?.user_name || 'Unknown User'}</div>
-                        <div className="text-sm text-gray-500">{request.sender?.email}</div>
+                        <div className="font-medium text-gray-900">
+                          {request.users?.first_name && request.users?.last_name 
+                            ? `${request.users.first_name} ${request.users.last_name}` 
+                            : request.users?.user_name || 'Unknown User'}
+                        </div>
+                        <div className="text-sm text-gray-500">@{request.users?.user_name}</div>
                       </div>
                     </div>
                     <div className="flex gap-2">
