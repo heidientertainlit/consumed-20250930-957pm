@@ -60,6 +60,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     });
+    
+    if (error || !data.user) {
+      return { error, data };
+    }
+
+    // Create user in custom users table immediately
+    const { error: dbError } = await supabase
+      .from('users')
+      .insert({
+        id: data.user.id,
+        email: email,
+        user_name: metadata?.username || email.split('@')[0],
+        first_name: metadata?.firstName || '',
+        last_name: metadata?.lastName || '',
+      });
+
+    // Ignore duplicate key errors (user already exists)
+    if (dbError && dbError.code !== '23505') {
+      console.error('Failed to create user in database:', dbError);
+    }
+
     return { error, data }
   }
 
