@@ -951,43 +951,6 @@ export default function UserProfile() {
     return allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   };
 
-  // Fetch favorite creators from database instead of computing
-  const [favoriteCreators, setFavoriteCreators] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchCreatorStats = async () => {
-      if (!session?.access_token) return;
-
-      try {
-        const response = await fetch(
-          'https://mahpgcogwpawvviapqza.supabase.co/rest/v1/user_creator_stats?select=*&order=fan_points.desc&limit=3',
-          {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        if (response.ok) {
-          const stats = await response.json();
-          setFavoriteCreators(
-            stats.map((s: any) => ({
-              name: s.creator_name,
-              type: s.role,
-              points: s.fan_points,
-            }))
-          );
-        }
-      } catch (error) {
-        console.error('Error fetching creator stats:', error);
-      }
-    };
-
-    fetchCreatorStats();
-  }, [session?.access_token]);
-
   // Get currently consuming items from the "Currently" list
   const currentlyList = userLists.find(list => list.title === 'Currently');
   const currentlyConsuming = currentlyList?.items || [];
@@ -1718,43 +1681,6 @@ export default function UserProfile() {
             </div>
           )}
         </div>
-
-        {/* Favorite Creators */}
-        <div className="px-4 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Favorite Creators</h2>
-          {favoriteCreators.length > 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              <div className="space-y-4">
-                {favoriteCreators.map((creator, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User size={24} className="text-gray-600" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900" data-testid={`text-creator-name-${index}`}>{creator.name}</div>
-                        <div className="text-sm text-gray-600">{creator.type}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-purple-700" data-testid={`text-creator-points-${index}`}>{creator.points}</div>
-                      <div className="text-xs text-gray-500">fan pts</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-white rounded-2xl border border-gray-200">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">⭐</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Favorite Creators Yet</h3>
-              <p className="text-gray-600">Track more media to discover your favorite creators</p>
-            </div>
-          )}
-        </div>
-
 
         {/* Media History */}
         <div className="px-4 mb-8">
