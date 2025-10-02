@@ -219,7 +219,7 @@ export default function OnboardingPage() {
   // Show loading state while fetching questions
   if (isLoadingQuestions) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Loader2 className="text-white animate-spin" size={32} />
@@ -235,7 +235,7 @@ export default function OnboardingPage() {
 
   if (showResults && dnaProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white rounded-3xl p-6 shadow-2xl">
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -299,7 +299,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
       <div className="max-w-2xl w-full bg-white rounded-3xl p-6 shadow-2xl">
         {/* Header */}
         <div className="text-center mb-6">
@@ -432,8 +432,12 @@ export default function OnboardingPage() {
 
           <Button
             onClick={handleNext}
-            disabled={surveyQuestions.length === 0 || !getCurrentAnswer() || (Array.isArray(getCurrentAnswer()) && getCurrentAnswer().length === 0)}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-2 px-8 py-2 disabled:opacity-50 rounded-full"
+            disabled={
+              surveyQuestions.length === 0 || 
+              !getCurrentAnswer() || 
+              (Array.isArray(getCurrentAnswer()) && (getCurrentAnswer() as string[]).length === 0)
+            }
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-2 px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-full"
             data-testid="next-question-button"
           >
             <span className="text-sm">{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Discover My DNA" : "Next"}</span>
