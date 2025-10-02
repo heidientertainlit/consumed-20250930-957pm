@@ -145,14 +145,61 @@ export default function OnboardingPage() {
     setAnswers(newAnswers);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentQuestion < surveyQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      // Generate DNA profile
-      const profile = generateDNAProfile(answers);
-      setDNAProfile(profile);
-      setShowResults(true);
+      // Save responses to database and generate AI DNA profile
+      try {
+        // First, save all survey responses
+        for (const answer of answers) {
+          await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_responses', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+              user_id: session?.user?.id,
+              question_id: answer.questionId,
+              answer_text: Array.isArray(answer.answer) ? answer.answer.join(', ') : answer.answer
+            })
+          });
+        }
+
+        // Now call the AI generation edge function
+        const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-dna-profile', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ user_id: session?.user?.id }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate DNA profile');
+        }
+
+        const aiProfile = await response.json();
+        
+        // Convert to display format
+        setDNAProfile({
+          title: aiProfile.label || 'Entertainment Enthusiast',
+          description: aiProfile.tagline || '',
+          superpowers: aiProfile.flavor_notes || [],
+          meaning: aiProfile.profile_text || ''
+        });
+        setShowResults(true);
+      } catch (error) {
+        console.error('Error generating DNA profile:', error);
+        // Fallback to local generation if AI fails
+        const profile = generateDNAProfile(answers);
+        setDNAProfile(profile);
+        setShowResults(true);
+      }
     }
   };
 
@@ -208,54 +255,36 @@ export default function OnboardingPage() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5">
-              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
-                <Sparkles className="mr-2 text-purple-600" size={20} />
-                Your Entertainment Superpowers:
-              </h3>
-              <ul className="space-y-2">
-                {dnaProfile.superpowers.map((power, index) => (
-                  <li key={index} className="text-gray-700 text-sm leading-relaxed">
-                    • {power}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {dnaProfile.superpowers && dnaProfile.superpowers.length > 0 && (
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                  <Sparkles className="mr-2 text-purple-600" size={20} />
+                  Your Flavor Notes:
+                </h3>
+                <ul className="space-y-2">
+                  {dnaProfile.superpowers.map((power, index) => (
+                    <li key={index} className="text-gray-700 text-sm leading-relaxed">
+                      • {power}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-5">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">🔮 What This Means:</h3>
-              <p className="text-gray-700 text-sm leading-relaxed">
-                {dnaProfile.meaning}
-              </p>
-            </div>
+            {dnaProfile.meaning && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-5">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">🔮 Your Entertainment DNA:</h3>
+                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                  {dnaProfile.meaning}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 text-center">
             <Button 
-              onClick={async () => {
-                // Save DNA profile to database
-                if (session?.access_token && dnaProfile) {
-                  try {
-                    const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/users?select=id', {
-                      method: 'PATCH',
-                      headers: {
-                        'Authorization': `Bearer ${session.access_token}`,
-                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=minimal'
-                      },
-                      body: JSON.stringify({
-                        dna_profile_title: dnaProfile.title
-                      })
-                    });
-                    
-                    if (response.ok) {
-                      console.log('DNA profile saved successfully');
-                    }
-                  } catch (error) {
-                    console.error('Error saving DNA profile:', error);
-                  }
-                }
+              onClick={() => {
+                // DNA profile is already saved by the edge function
                 window.location.href = '/feed';
               }}
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-base"
