@@ -139,7 +139,7 @@ serve(async (req) => {
           // Get all users except current user, then filter manually for better control
           const { data: allUsers, error: fetchError } = await supabase
             .from('users')
-            .select('id, user_name, email, first_name, last_name')
+            .select('id, user_name, email, first_name, last_name, display_name')
             .neq('id', appUser.id);
 
           console.log('Fetched all users:', { count: allUsers?.length || 0, error: fetchError });
