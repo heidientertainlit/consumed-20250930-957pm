@@ -48,16 +48,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error }
   }
 
-  const signUp = async (email: string, password: string, metadata?: { firstName: string; lastName: string; username: string }) => {
+  const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string; username?: string }) => {
+    const firstName = metadata?.firstName || '';
+    const lastName = metadata?.lastName || '';
+    const username = metadata?.username || email.split('@')[0];
+    const displayName = `${firstName} ${lastName}`.trim() || username;
+    
     const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          first_name: metadata?.firstName,
-          last_name: metadata?.lastName,
-          user_name: metadata?.username,
-          display_name: `${metadata?.firstName} ${metadata?.lastName}`.trim()
+          first_name: firstName,
+          last_name: lastName,
+          user_name: username,
+          display_name: displayName
         }
       }
     })

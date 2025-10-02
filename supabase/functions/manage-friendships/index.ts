@@ -45,7 +45,10 @@ serve(async (req) => {
         .insert({
           id: user.id,
           email: user.email,
-          user_name: user.email.split('@')[0] || 'user'
+          user_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user',
+          display_name: user.user_metadata?.display_name || user.email.split('@')[0] || 'User',
+          first_name: user.user_metadata?.first_name || '',
+          last_name: user.user_metadata?.last_name || ''
         })
         .select('id, email, user_name')
         .single();
