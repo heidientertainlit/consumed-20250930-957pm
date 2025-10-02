@@ -832,54 +832,6 @@ export default function UserProfile() {
     }
   };
 
-  // Mock mockUserData data for display
-  const mockUserData = {
-    name: "Alex Thompson",
-    mockUserDataname: "@alexthompson",
-    avatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150&h=150&fit=crop&crop=face",
-    followers: 1234,
-    following: 567,
-    fanPoints: 8945,
-    joinedDate: "March 2023",
-    bio: "",
-    stats: {
-      tracked: 342,
-      reviews: 89,
-      lists: 12,
-      streak: 28
-    },
-    consumptionStats: {
-      moviesWatched: 127,
-      tvShowsWatched: 45,
-      booksRead: 89,
-      musicHours: 1247,
-      podcastHours: 342,
-      gamesPlayed: 23,
-      totalHours: 1823,
-      averageRating: 4.2,
-      genreBreakdown: {
-        action: 28,
-        drama: 35,
-        comedy: 42,
-        scifi: 31,
-        fantasy: 19,
-        documentary: 15
-      }
-    },
-    entertainmentDNA: {
-      profileText: "You're a fearless discoverer of new entertainment experiences! Your DNA reveals someone who thrives on variety and surprise, seeking meaningful narratives with complex characters and layered storytelling. Quality over quantity defines your entertainment choices, and you approach content like an adventurous explorer - always pushing boundaries and seeking new experiences. You're the friend who introduces everyone to their next favorite obsession, combining intellectual curiosity with pure escapism in a way that makes every recommendation feel like a treasure map.",
-      favoriteGenres: ["Science Fiction", "Drama", "Indie Films", "Literary Fiction"],
-      favoriteMediaTypes: ["Movies", "Books", "TV Series", "Documentaries"],
-      favoriteSports: ["Basketball", "Tennis"],
-      mediaConsumptionStats: {
-        primaryMediaType: "Movies",
-        viewingStyle: "Binge Enthusiast", 
-        discoveryMethod: "Friend Recommendations",
-        socialAspect: "Loves discussing and sharing recommendations"
-      },
-      isPrivate: false
-    }
-  };
 
   // Aggregate all media items from all lists for media history
   const getAllMediaItems = () => {
@@ -1146,9 +1098,11 @@ export default function UserProfile() {
           </div>
 
           {/* Bio */}
-          <div className="mt-6">
-            <p className="text-gray-700 leading-relaxed">{mockUserData.bio}</p>
-          </div>
+          {userProfileData?.bio && (
+            <div className="mt-6">
+              <p className="text-gray-700 leading-relaxed">{userProfileData.bio}</p>
+            </div>
+          )}
 
           {/* Add Friend Button - Only shown when viewing other users */}
           {!isOwnProfile && (
