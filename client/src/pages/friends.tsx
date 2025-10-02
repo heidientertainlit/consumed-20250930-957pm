@@ -49,8 +49,14 @@ export default function FriendsPage() {
         body: JSON.stringify({ action: 'getPendingRequests' }),
       });
 
-      if (!response.ok) return { requests: [] };
-      return response.json();
+      if (!response.ok) {
+        console.error('Pending requests error:', await response.text());
+        return { requests: [] };
+      }
+      
+      const data = await response.json();
+      console.log('Pending requests data:', data);
+      return data;
     },
     enabled: !!session?.access_token,
   });
