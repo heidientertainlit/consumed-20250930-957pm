@@ -49,23 +49,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string; username?: string }) => {
-    const firstName = metadata?.firstName || '';
-    const lastName = metadata?.lastName || '';
-    const username = metadata?.username || email.split('@')[0];
-    const displayName = `${firstName} ${lastName}`.trim() || username;
-    
-    const { error, data } = await supabase.auth.signUp({
+    // Auto-generate display_name from first_name + last_name, fallback to username
+    const displayName = metadata?.firstName && metadata?.lastName 
+      ? `${metadata.firstName} ${metadata.lastName}`.trim()
+      : metadata?.firstName || metadata?.username || email.split('@')[0];
+
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          first_name: firstName,
-          last_name: lastName,
-          user_name: username,
+          first_name: metadata?.firstName || '',
+          last_name: metadata?.lastName || '',
+          user_name: metadata?.username || email.split('@')[0],
           display_name: displayName
         }
       }
-    })
+    });
     return { error, data }
   }
 

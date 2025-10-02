@@ -22,7 +22,7 @@ export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  
+
   // Get user ID from URL to determine if viewing own profile or someone else's
   const viewingUserId = window.location.pathname.split('/user/')[1];
   const isOwnProfile = !viewingUserId || viewingUserId === user?.id;
@@ -39,7 +39,7 @@ export default function UserProfile() {
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  
+
   // Add Friend states
   const [isAddFriendModalOpen, setIsAddFriendModalOpen] = useState(false);
   const [friendSearchQuery, setFriendSearchQuery] = useState("");
@@ -2737,22 +2737,6 @@ export default function UserProfile() {
             </div>
 
             <div className="space-y-4">
-              {/* Display Name */}
-              <div>
-                <Label htmlFor="display-name" className="text-sm font-medium text-black mb-2 block">
-                  Display Name
-                </Label>
-                <Input
-                  id="display-name"
-                  value={editDisplayName}
-                  onChange={(e) => setEditDisplayName(e.target.value)}
-                  placeholder="Your display name"
-                  className="w-full bg-white text-black border-gray-300"
-                  data-testid="input-display-name"
-                />
-                <p className="text-xs text-black mt-1">This is your public-facing name</p>
-              </div>
-
               {/* First Name */}
               <div>
                 <Label htmlFor="first-name" className="text-sm font-medium text-black mb-2 block">
@@ -2763,7 +2747,7 @@ export default function UserProfile() {
                   value={editFirstName}
                   onChange={(e) => setEditFirstName(e.target.value)}
                   placeholder="Your first name"
-                  className="w-full bg-white text-black border-gray-300"
+                  className="w-full"
                   data-testid="input-first-name"
                 />
               </div>
@@ -2778,9 +2762,10 @@ export default function UserProfile() {
                   value={editLastName}
                   onChange={(e) => setEditLastName(e.target.value)}
                   placeholder="Your last name"
-                  className="w-full bg-white text-black border-gray-300"
+                  className="w-full"
                   data-testid="input-last-name"
                 />
+                <p className="text-xs text-black mt-1">Your display name will be "{editFirstName} {editLastName}".trim() || editUsername</p>
               </div>
 
               {/* Username */}
@@ -2793,7 +2778,7 @@ export default function UserProfile() {
                   value={editUsername}
                   onChange={(e) => setEditUsername(e.target.value.toLowerCase())}
                   placeholder="username"
-                  className="w-full bg-white text-black border-gray-300"
+                  className="w-full"
                   data-testid="input-username"
                 />
                 <p className="text-xs text-black mt-1">
