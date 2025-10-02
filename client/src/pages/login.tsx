@@ -56,6 +56,18 @@ export default function LoginPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate username format
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    if (!usernameRegex.test(username)) {
+      toast({
+        title: "Invalid Username",
+        description: "Username must be 3-20 characters and contain only letters, numbers, and underscores (no spaces).",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSubmitting(true);
     
     const { error, data } = await signUp(email, password, {
@@ -258,7 +270,9 @@ export default function LoginPage() {
                     required
                     data-testid="input-signup-username"
                     className="bg-white form-text-black form-placeholder-black"
+                    placeholder="letters, numbers, underscores only"
                   />
+                  <p className="text-xs text-gray-500">3-20 characters, no spaces</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email" className="form-text-black">Email</Label>
