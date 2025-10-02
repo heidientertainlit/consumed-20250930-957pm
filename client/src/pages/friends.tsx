@@ -306,10 +306,9 @@ export default function FriendsPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
-                <Users className="mx-auto mb-3 text-gray-300" size={48} />
-                <p className="font-medium">No pending friend requests</p>
-                <p className="text-sm mt-1">When someone sends you a friend request, it will appear here</p>
+              <div className="text-center py-6 text-gray-500">
+                <Users className="mx-auto mb-2 text-gray-300" size={32} />
+                <p className="font-medium text-sm">No pending friend requests</p>
               </div>
             )
           ) : (
@@ -335,10 +334,9 @@ export default function FriendsPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
-                <Users className="mx-auto mb-3 text-gray-300" size={48} />
-                <p className="font-medium">No friends yet</p>
-                <p className="text-sm mt-1">Search below to find people to connect with!</p>
+              <div className="text-center py-6 text-gray-500">
+                <Users className="mx-auto mb-2 text-gray-300" size={32} />
+                <p className="font-medium text-sm">No friends yet</p>
               </div>
             )
           )}
