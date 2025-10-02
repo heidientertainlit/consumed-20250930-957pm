@@ -108,25 +108,48 @@ serve(async (req) => {
 
       switch (action) {
         case 'getFriends': {
-          const { data: friendships, error } = await supabase
+          const { data: friendships, error: friendshipsError } = await supabase
             .from('friendships')
-            .select(`
-              id,
-              created_at,
-              friend:friend_id(id, user_name, email)
-            `)
+            .select('id, friend_id, created_at')
             .eq('user_id', appUser.id)
             .eq('status', 'accepted')
             .order('created_at', { ascending: false });
 
-          if (error) {
-            return new Response(JSON.stringify({ error: error.message }), {
+          if (friendshipsError) {
+            return new Response(JSON.stringify({ error: friendshipsError.message }), {
               status: 500,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
           }
 
-          return new Response(JSON.stringify({ friends: friendships || [] }), {
+          if (!friendships || friendships.length === 0) {
+            return new Response(JSON.stringify({ friends: [] }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          // Fetch user data for each friendship
+          const friendIds = friendships.map(f => f.friend_id);
+          const { data: users, error: usersError } = await supabase
+            .from('users')
+            .select('id, user_name, email, first_name, last_name')
+            .in('id', friendIds);
+
+          if (usersError) {
+            return new Response(JSON.stringify({ error: usersError.message }), {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+
+          // Combine friendships with user data
+          const friends = friendships.map(friendship => ({
+            id: friendship.id,
+            created_at: friendship.created_at,
+            friend: users?.find(u => u.id === friendship.friend_id) || null
+          }));
+
+          return new Response(JSON.stringify({ friends }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
