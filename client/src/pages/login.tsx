@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import "./auth.css";
 
@@ -16,7 +17,10 @@ export default function LoginPage() {
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { user, loading, signIn, signUp } = useAuth();
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const { user, loading, signIn, signUp, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -79,6 +83,30 @@ export default function LoginPage() {
     }
     
     setSubmitting(false);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetting(true);
+    
+    const { error } = await resetPassword(resetEmail);
+    
+    if (error) {
+      toast({
+        title: "Password reset failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
+      });
+      setIsForgotPasswordOpen(false);
+      setResetEmail("");
+    }
+    
+    setResetting(false);
   };
 
   // Show loading spinner while auth state is being determined
@@ -172,6 +200,14 @@ export default function LoginPage() {
                     data-testid="input-signin-password"
                     className="bg-white form-text-black form-placeholder-black"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPasswordOpen(true)}
+                    className="text-sm text-purple-600 hover:text-purple-700 hover:underline"
+                    data-testid="link-forgot-password"
+                  >
+                    Forgot password?
+                  </button>
                 </div>
                 <Button
                   type="submit"
@@ -261,6 +297,41 @@ export default function LoginPage() {
           </Tabs>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-black">Reset Password</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Enter your email address and we'll send you a link to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForgotPassword} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email" className="text-black">Email</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+                data-testid="input-reset-email"
+                className="bg-white text-black placeholder:text-gray-400"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              disabled={resetting}
+              data-testid="button-send-reset-link"
+            >
+              {resetting ? "Sending..." : "Send Reset Link"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
