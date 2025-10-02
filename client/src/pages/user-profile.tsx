@@ -22,6 +22,10 @@ export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  // Get user ID from URL to determine if viewing own profile or someone else's
+  const viewingUserId = window.location.pathname.split('/user/')[1];
+  const isOwnProfile = !viewingUserId || viewingUserId === user?.id;
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -1096,53 +1100,41 @@ export default function UserProfile() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-3 mt-4 md:mt-0">
-                  <Button 
-                    variant="outline" 
-                    className="border-purple-300 text-purple-600 hover:bg-purple-50"
-                    onClick={() => setIsAddFriendModalOpen(true)}
-                    data-testid="button-add-friend"
-                  >
-                    <Users size={16} className="mr-2" />
-                    Add Friend
-                  </Button>
+                  {isOwnProfile ? (
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-300"
+                      onClick={() => {
+                        setEditDisplayName(userProfileData?.display_name || '');
+                        setEditUsername(userProfileData?.user_name || '');
+                        setIsEditProfileOpen(true);
+                      }}
+                      data-testid="button-edit-profile"
+                    >
+                      <Settings size={16} className="mr-2" />
+                      Edit Profile
+                    </Button>
+                  ) : null}
                   <Button 
                     variant="outline" 
                     className="border-gray-300"
-                    onClick={() => {
-                      setEditDisplayName(userProfileData?.display_name || '');
-                      setEditUsername(userProfileData?.user_name || '');
-                      setIsEditProfileOpen(true);
-                    }}
-                    data-testid="button-edit-profile"
-                  >
-                    <Settings size={16} className="mr-2" />
-                    Edit Profile
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300"
                     onClick={async () => {
-                      await queryClient.cancelQueries();
-                      queryClient.clear();
-                      const { error } = await signOut();
-                      if (error) {
-                        toast({
-                          title: "Error",
-                          description: "Failed to log out. Please try again.",
-                          variant: "destructive"
-                        });
-                      } else {
-                        toast({
-                          title: "Logged out",
-                          description: "You have been successfully logged out."
-                        });
-                        setLocation('/login');
-                      }
+                      await copyLink({ 
+                        kind: 'profile',
+                        obj: { 
+                          id: viewingUserId || user?.id,
+                          user_name: userProfileData?.user_name
+                        } 
+                      });
+                      toast({
+                        title: "Link Copied!",
+                        description: "Share this profile with your friends",
+                      });
                     }}
-                    data-testid="button-logout"
+                    data-testid="button-share-profile"
                   >
-                    <LogOut size={16} className="mr-2" />
-                    Logout
+                    <Share2 size={16} className="mr-2" />
+                    Share Profile
                   </Button>
                 </div>
               </div>
@@ -1153,6 +1145,20 @@ export default function UserProfile() {
           <div className="mt-6">
             <p className="text-gray-700 leading-relaxed">{mockUserData.bio}</p>
           </div>
+
+          {/* Add Friend Button - Only shown when viewing other users */}
+          {!isOwnProfile && (
+            <div className="mt-6 flex justify-center">
+              <Button 
+                onClick={() => setIsAddFriendModalOpen(true)}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                data-testid="button-add-friend"
+              >
+                <Users size={20} className="mr-2" />
+                Add Friend
+              </Button>
+            </div>
+          )}
 
           {/* Your Stats */}
           <div className="mt-6">
@@ -2387,6 +2393,40 @@ export default function UserProfile() {
           listItems={selectedListForShare.items}
           listType="custom"
         />
+      )}
+
+      {/* Logout Button - Only shown on own profile, at bottom */}
+      {isOwnProfile && (
+        <div className="max-w-4xl mx-auto px-4 pb-24 pt-12">
+          <div className="flex justify-center">
+            <Button 
+              variant="outline" 
+              className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300"
+              onClick={async () => {
+                await queryClient.cancelQueries();
+                queryClient.clear();
+                const { error } = await signOut();
+                if (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to log out. Please try again.",
+                    variant: "destructive"
+                  });
+                } else {
+                  toast({
+                    title: "Logged out",
+                    description: "You have been successfully logged out."
+                  });
+                  setLocation('/login');
+                }
+              }}
+              data-testid="button-logout"
+            >
+              <LogOut size={16} className="mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Entertainment DNA Survey Modal */}

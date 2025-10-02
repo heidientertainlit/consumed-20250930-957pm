@@ -1,7 +1,7 @@
 const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://consumedapp.com';
 const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
 
-export type ShareKind = 'list' | 'media' | 'prediction' | 'post' | 'edna';
+export type ShareKind = 'list' | 'media' | 'prediction' | 'post' | 'edna' | 'profile';
 
 function listPath(input: { id?: string; user_id?: string; isCurrently?: boolean }) {
   if (input?.isCurrently && input?.user_id) return `/list/currently?user=${input.user_id}`;
@@ -11,6 +11,10 @@ function listPath(input: { id?: string; user_id?: string; isCurrently?: boolean 
 
 export function urlFor(kind: ShareKind, arg: any) {
   if (kind === 'list') return `${BASE}${listPath(arg)}`;
+  if (kind === 'profile') {
+    const id = typeof arg === 'string' ? arg : arg?.id;
+    return `${BASE}/user/${id}`;
+  }
   const id = typeof arg === 'string' ? arg : arg?.id;
   return `${BASE}/${kind}/${id}`;
 }
