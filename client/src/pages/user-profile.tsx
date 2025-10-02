@@ -36,6 +36,8 @@ export default function UserProfile() {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState("");
   const [editUsername, setEditUsername] = useState("");
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   
   // Add Friend states
@@ -265,7 +267,7 @@ export default function UserProfile() {
 
         const { data, error } = await supabase
           .from('users')
-          .select('user_name, display_name')
+          .select('user_name, display_name, first_name, last_name')
           .eq('id', user.id)
           .single();
 
@@ -345,7 +347,9 @@ export default function UserProfile() {
         .from('users')
         .update({
           user_name: editUsername,
-          display_name: editDisplayName || null
+          display_name: editDisplayName || null,
+          first_name: editFirstName || null,
+          last_name: editLastName || null
         })
         .eq('id', user.id);
 
@@ -363,7 +367,9 @@ export default function UserProfile() {
       // Update local state with new profile data
       setUserProfileData({
         user_name: editUsername,
-        display_name: editDisplayName || null
+        display_name: editDisplayName || null,
+        first_name: editFirstName || null,
+        last_name: editLastName || null
       });
 
       // Success!
@@ -1107,6 +1113,8 @@ export default function UserProfile() {
                       onClick={() => {
                         setEditDisplayName(userProfileData?.display_name || '');
                         setEditUsername(userProfileData?.user_name || '');
+                        setEditFirstName(userProfileData?.first_name || '');
+                        setEditLastName(userProfileData?.last_name || '');
                         setIsEditProfileOpen(true);
                       }}
                       data-testid="button-edit-profile"
@@ -2743,6 +2751,36 @@ export default function UserProfile() {
                   data-testid="input-display-name"
                 />
                 <p className="text-xs text-gray-500 mt-1">This is your public-facing name</p>
+              </div>
+
+              {/* First Name */}
+              <div>
+                <Label htmlFor="first-name" className="text-sm font-medium text-gray-700 mb-2 block">
+                  First Name
+                </Label>
+                <Input
+                  id="first-name"
+                  value={editFirstName}
+                  onChange={(e) => setEditFirstName(e.target.value)}
+                  placeholder="Your first name"
+                  className="w-full"
+                  data-testid="input-first-name"
+                />
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <Label htmlFor="last-name" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Last Name <span className="text-gray-400 font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="last-name"
+                  value={editLastName}
+                  onChange={(e) => setEditLastName(e.target.value)}
+                  placeholder="Your last name"
+                  className="w-full"
+                  data-testid="input-last-name"
+                />
               </div>
 
               {/* Username */}
