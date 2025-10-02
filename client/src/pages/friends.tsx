@@ -56,12 +56,14 @@ export default function FriendsPage() {
   });
 
   // Search users
-  const { data: searchResults, isLoading: searchLoading } = useQuery({
+  const { data: searchResults, isLoading: searchLoading, error: searchError } = useQuery({
     queryKey: ['user-search', searchQuery],
     queryFn: async () => {
       if (!session?.access_token || !searchQuery.trim() || searchQuery.length < 3) {
         return { users: [] };
       }
+
+      console.log('Searching for users with query:', searchQuery);
 
       const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
         method: 'POST',
@@ -72,8 +74,15 @@ export default function FriendsPage() {
         body: JSON.stringify({ action: 'searchUsers', query: searchQuery }),
       });
 
-      if (!response.ok) return { users: [] };
-      return response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Search error:', errorData);
+        throw new Error(errorData.error || 'Search failed');
+      }
+      
+      const data = await response.json();
+      console.log('Search results:', data);
+      return data;
     },
     enabled: !!session?.access_token && searchQuery.length >= 3,
   });
@@ -212,14 +221,19 @@ export default function FriendsPage() {
               searchLoading ? (
                 <div className="text-center py-4 text-gray-500">Searching...</div>
               ) : searchResults?.users && searchResults.users.length > 0 ? (
-                searchResults.users.map((user: any) => (
+                searchResults.users.map((user: any) => {
+                  const displayName = user.display_name || 
+                                     (user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : '') ||
+                                     user.user_name || 
+                                     'Unknown User';
+                  return (
                   <div key={user.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
                         <span className="text-white text-sm">👤</span>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{user.user_name}</div>
+                        <div className="font-medium text-gray-900">{displayName}</div>
                         <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
                     </div>
@@ -232,7 +246,8 @@ export default function FriendsPage() {
                       Add
                     </Button>
                   </div>
-                ))
+                );
+                })
               ) : (
                 <div className="text-center py-4 text-gray-500">
                   No users found. Try a different search.

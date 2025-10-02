@@ -141,8 +141,8 @@ serve(async (req) => {
           const searchPattern = `%${query}%`;
           let { data: users, error } = await supabase
             .from('users')
-            .select('id, user_name, email')
-            .or(`user_name.ilike.${searchPattern},email.ilike.${searchPattern}`)
+            .select('id, user_name, email, display_name, first_name, last_name')
+            .or(`user_name.ilike.${searchPattern},email.ilike.${searchPattern},display_name.ilike.${searchPattern}`)
             .neq('id', appUser.id)
             .limit(10);
 
@@ -155,7 +155,7 @@ serve(async (req) => {
             // Try a simpler search approach
             const { data: fallbackUsers, error: fallbackError } = await supabase
               .from('users')
-              .select('id, user_name, email')
+              .select('id, user_name, email, display_name, first_name, last_name')
               .neq('id', appUser.id)
               .limit(50); // Get more users to filter manually
             
@@ -176,7 +176,10 @@ serve(async (req) => {
             // Filter results manually if database search fails
             const filteredUsers = (fallbackUsers || []).filter(user => 
               user.user_name?.toLowerCase().includes(query.toLowerCase()) ||
-              user.email?.toLowerCase().includes(query.toLowerCase())
+              user.email?.toLowerCase().includes(query.toLowerCase()) ||
+              user.display_name?.toLowerCase().includes(query.toLowerCase()) ||
+              user.first_name?.toLowerCase().includes(query.toLowerCase()) ||
+              user.last_name?.toLowerCase().includes(query.toLowerCase())
             ).slice(0, 10);
 
             console.log('Manually filtered users:', filteredUsers);
