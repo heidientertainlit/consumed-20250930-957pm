@@ -100,6 +100,8 @@ export default function FriendsPage() {
     mutationFn: async (friendId: string) => {
       if (!session?.access_token) throw new Error('Not authenticated');
 
+      console.log('Sending friend request to:', friendId);
+
       const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
         method: 'POST',
         headers: {
@@ -111,9 +113,13 @@ export default function FriendsPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Send request error:', errorData);
         throw new Error(errorData.error || 'Failed to send friend request');
       }
-      return response.json();
+      
+      const result = await response.json();
+      console.log('Friend request sent successfully:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-search'] });
@@ -124,6 +130,7 @@ export default function FriendsPage() {
       });
     },
     onError: (error: Error) => {
+      console.error('Friend request mutation error:', error);
       toast({
         title: "Failed to Send Request",
         description: error.message,
@@ -306,9 +313,8 @@ export default function FriendsPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6 text-gray-500">
-                <Users className="mx-auto mb-2 text-gray-300" size={32} />
-                <p className="font-medium text-sm">No pending friend requests</p>
+              <div className="text-center py-3 text-gray-400">
+                <p className="text-sm">No pending requests</p>
               </div>
             )
           ) : (
@@ -334,9 +340,8 @@ export default function FriendsPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6 text-gray-500">
-                <Users className="mx-auto mb-2 text-gray-300" size={32} />
-                <p className="font-medium text-sm">No friends yet</p>
+              <div className="text-center py-3 text-gray-400">
+                <p className="text-sm">No friends yet</p>
               </div>
             )
           )}
