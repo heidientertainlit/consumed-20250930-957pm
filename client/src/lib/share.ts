@@ -1,4 +1,4 @@
-const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://consumedapp.com';
+const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
 const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
 
 export type ShareKind = 'list' | 'media' | 'prediction' | 'post' | 'edna' | 'profile';
