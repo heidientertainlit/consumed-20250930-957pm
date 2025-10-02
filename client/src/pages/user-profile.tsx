@@ -46,6 +46,7 @@ export default function UserProfile() {
   const [friendSearchResults, setFriendSearchResults] = useState<any[]>([]);
   const [isSearchingFriends, setIsSearchingFriends] = useState(false);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
+  const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
 
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
@@ -219,6 +220,8 @@ export default function UserProfile() {
         setFriendSearchResults([]);
         setFriendSearchQuery("");
         setIsAddFriendModalOpen(false);
+        // Refresh friendship status
+        checkFriendshipStatus();
       } else {
         const data = await response.json();
         toast({
@@ -236,6 +239,88 @@ export default function UserProfile() {
       });
     } finally {
       setIsSendingRequest(false);
+    }
+  };
+
+  // Check friendship status
+  const checkFriendshipStatus = async () => {
+    if (!session?.access_token || !viewingUserId || isOwnProfile) {
+      setFriendshipStatus('none');
+      return;
+    }
+
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          }
+        }
+      );
+
+      // Check if they're already friends (accepted status)
+      const { data: friendships, error: friendsError } = await supabase
+        .from('friendships')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('friend_id', viewingUserId)
+        .eq('status', 'accepted');
+
+      if (friendsError) {
+        console.error('Error checking friendships:', friendsError);
+        setFriendshipStatus('none');
+        return;
+      }
+
+      if (friendships && friendships.length > 0) {
+        setFriendshipStatus('friends');
+        return;
+      }
+
+      // Check if there's a pending request I sent
+      const { data: sentRequests, error: sentError } = await supabase
+        .from('friendships')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('friend_id', viewingUserId)
+        .eq('status', 'pending');
+
+      if (sentError) {
+        console.error('Error checking sent requests:', sentError);
+      }
+
+      if (sentRequests && sentRequests.length > 0) {
+        setFriendshipStatus('pending_sent');
+        return;
+      }
+
+      // Check if there's a pending request they sent me
+      const { data: receivedRequests, error: receivedError } = await supabase
+        .from('friendships')
+        .select('*')
+        .eq('user_id', viewingUserId)
+        .eq('friend_id', user?.id)
+        .eq('status', 'pending');
+
+      if (receivedError) {
+        console.error('Error checking received requests:', receivedError);
+      }
+
+      if (receivedRequests && receivedRequests.length > 0) {
+        setFriendshipStatus('pending_received');
+        return;
+      }
+
+      // No relationship exists
+      setFriendshipStatus('none');
+    } catch (error) {
+      console.error('Error checking friendship status:', error);
+      setFriendshipStatus('none');
     }
   };
 
@@ -290,6 +375,7 @@ export default function UserProfile() {
       fetchUserLists();
       fetchUserStats();
       fetchUserPoints();
+      checkFriendshipStatus();
       // fetchHighlights(); // Uncomment when fetchHighlights is implemented
     }
   }, [session?.access_token, viewingUserId]);
@@ -1078,26 +1164,55 @@ export default function UserProfile() {
           )}
 
           {/* Add Friend Button - Only shown when viewing other users */}
-          {!isOwnProfile && (
+          {!isOwnProfile && friendshipStatus !== 'loading' && (
             <div className="mt-6">
-              <Button 
-                onClick={() => viewingUserId && sendFriendRequest(viewingUserId)}
-                disabled={isSendingRequest || !viewingUserId}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                data-testid="button-add-friend"
-              >
-                {isSendingRequest ? (
-                  <>
-                    <Loader2 size={20} className="mr-2 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Users size={20} className="mr-2" />
-                    Add Friend
-                  </>
-                )}
-              </Button>
+              {friendshipStatus === 'friends' ? (
+                <Button 
+                  disabled
+                  className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
+                  data-testid="button-already-friends"
+                >
+                  <Users size={20} className="mr-2" />
+                  Already Friends
+                </Button>
+              ) : friendshipStatus === 'pending_sent' ? (
+                <Button 
+                  disabled
+                  className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
+                  data-testid="button-request-pending"
+                >
+                  <Clock size={20} className="mr-2" />
+                  Request Pending
+                </Button>
+              ) : friendshipStatus === 'pending_received' ? (
+                <Button 
+                  onClick={() => setLocation('/friends')}
+                  className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                  data-testid="button-accept-request"
+                >
+                  <Users size={20} className="mr-2" />
+                  Accept Friend Request
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => viewingUserId && sendFriendRequest(viewingUserId)}
+                  disabled={isSendingRequest || !viewingUserId}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-testid="button-add-friend"
+                >
+                  {isSendingRequest ? (
+                    <>
+                      <Loader2 size={20} className="mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Users size={20} className="mr-2" />
+                      Add Friend
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           )}
 
