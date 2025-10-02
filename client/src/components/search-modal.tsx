@@ -324,17 +324,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   </div>
                 ))}
               </div>
-
-              {/* Search Tips */}
-              <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-                <h4 className="font-medium text-purple-900 mb-2">How to Search</h4>
-                <ul className="text-sm text-purple-700 space-y-2">
-                  <li>• <strong>Personal recommendations:</strong> "Movies like the book XYZ" or "Something like Breaking Bad but lighter"</li>
-                  <li>• <strong>Group blends:</strong> "Find something for me and my partner who loves horror" or "Books for my family with teens"</li>
-                  <li>• <strong>Specific searches:</strong> "Christopher Nolan" or "Taylor Swift discography"</li>
-                  <li>• <strong>Mood-based:</strong> "Something uplifting for a tough week" or "Cozy mystery books"</li>
-                </ul>
-              </div>
             </div>
           )}
         </div>
