@@ -200,9 +200,46 @@ export default function ListDetail() {
 
   // Removed fallbackCopyToClipboard - using same pattern as predictions
 
-  const handleRemoveItem = (itemId: number) => {
-    // In real app, would make API call to remove item
-    console.log("Removing item:", itemId);
+  const deleteMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!session?.access_token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/delete-list-item", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ itemId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to delete item: ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      toast({
+        title: "Item Removed",
+        description: "Item has been removed from your list",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed", 
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleRemoveItem = (itemId: string) => {
+    deleteMutation.mutate(itemId);
   };
 
   // Privacy toggle mutation
