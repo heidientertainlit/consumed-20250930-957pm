@@ -33,6 +33,13 @@ export default function UserProfile() {
   const [editDisplayName, setEditDisplayName] = useState("");
   const [editUsername, setEditUsername] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  
+  // Add Friend states
+  const [isAddFriendModalOpen, setIsAddFriendModalOpen] = useState(false);
+  const [friendSearchQuery, setFriendSearchQuery] = useState("");
+  const [friendSearchResults, setFriendSearchResults] = useState<any[]>([]);
+  const [isSearchingFriends, setIsSearchingFriends] = useState(false);
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
 
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
@@ -132,6 +139,96 @@ export default function UserProfile() {
         description: "An error occurred while searching. Please try again.",
         variant: "destructive"
       });
+    }
+  };
+
+  // Search for friends
+  const searchFriends = async (query: string) => {
+    if (!query || query.length < 2 || !session?.access_token) {
+      setFriendSearchResults([]);
+      return;
+    }
+
+    setIsSearchingFriends(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'searchUsers',
+          query: query
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFriendSearchResults(data.users || []);
+      } else {
+        toast({
+          title: "Search Failed",
+          description: "Unable to search for users.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Friend search error:', error);
+      toast({
+        title: "Search Error",
+        description: "An error occurred while searching.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearchingFriends(false);
+    }
+  };
+
+  // Send friend request
+  const sendFriendRequest = async (friendId: string) => {
+    if (!session?.access_token) return;
+
+    setIsSendingRequest(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'sendRequest',
+          friendId: friendId
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Request Sent!",
+          description: "Friend request sent successfully.",
+        });
+        // Clear search results and close modal
+        setFriendSearchResults([]);
+        setFriendSearchQuery("");
+        setIsAddFriendModalOpen(false);
+      } else {
+        const data = await response.json();
+        toast({
+          title: "Request Failed",
+          description: data.error || "Unable to send friend request.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Send friend request error:', error);
+      toast({
+        title: "Request Error",
+        description: "An error occurred while sending request.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingRequest(false);
     }
   };
 
@@ -999,6 +1096,15 @@ export default function UserProfile() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-3 mt-4 md:mt-0">
+                  <Button 
+                    variant="outline" 
+                    className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                    onClick={() => setIsAddFriendModalOpen(true)}
+                    data-testid="button-add-friend"
+                  >
+                    <Users size={16} className="mr-2" />
+                    Add Friend
+                  </Button>
                   <Button 
                     variant="outline" 
                     className="border-gray-300"
@@ -2456,6 +2562,111 @@ export default function UserProfile() {
                     <ChevronRight size={14} />
                   )}
                 </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Friend Modal */}
+      {isAddFriendModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Add Friend</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsAddFriendModalOpen(false);
+                  setFriendSearchQuery("");
+                  setFriendSearchResults([]);
+                }}
+                className="h-8 w-8 p-0"
+                data-testid="button-close-add-friend"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Search Input */}
+              <div>
+                <Label htmlFor="friend-search" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Search for users
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="friend-search"
+                    value={friendSearchQuery}
+                    onChange={(e) => {
+                      setFriendSearchQuery(e.target.value);
+                      searchFriends(e.target.value);
+                    }}
+                    placeholder="Enter username or email..."
+                    className="w-full pr-10"
+                    data-testid="input-friend-search"
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Search by username or email address</p>
+              </div>
+
+              {/* Search Results */}
+              <div className="max-h-80 overflow-y-auto">
+                {isSearchingFriends ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="animate-spin text-purple-600 mr-2" size={20} />
+                    <span className="text-gray-600">Searching...</span>
+                  </div>
+                ) : friendSearchResults.length > 0 ? (
+                  <div className="space-y-2">
+                    {friendSearchResults.map((result) => (
+                      <div
+                        key={result.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <User size={20} className="text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">@{result.user_name}</p>
+                            <p className="text-xs text-gray-500">{result.email}</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => sendFriendRequest(result.id)}
+                          disabled={isSendingRequest}
+                          className="bg-purple-600 hover:bg-purple-700 text-white"
+                          data-testid={`button-add-${result.id}`}
+                        >
+                          {isSendingRequest ? (
+                            <Loader2 className="animate-spin" size={16} />
+                          ) : (
+                            <>
+                              <Plus size={16} className="mr-1" />
+                              Add
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : friendSearchQuery.length >= 2 ? (
+                  <div className="text-center py-8">
+                    <Users size={48} className="mx-auto text-gray-300 mb-2" />
+                    <p className="text-gray-600">No users found</p>
+                    <p className="text-xs text-gray-500 mt-1">Try a different search term</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Search size={48} className="mx-auto text-gray-300 mb-2" />
+                    <p className="text-gray-600">Search for friends</p>
+                    <p className="text-xs text-gray-500 mt-1">Enter at least 2 characters to search</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
