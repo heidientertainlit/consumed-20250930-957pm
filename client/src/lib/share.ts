@@ -15,6 +15,10 @@ export function urlFor(kind: ShareKind, arg: any) {
     const id = typeof arg === 'string' ? arg : arg?.id;
     return `${BASE}/user/${id}`;
   }
+  if (kind === 'prediction') {
+    const id = typeof arg === 'string' ? arg : arg?.id;
+    return `${BASE}/predictions#${id}`;
+  }
   const id = typeof arg === 'string' ? arg : arg?.id;
   return `${BASE}/${kind}/${id}`;
 }
