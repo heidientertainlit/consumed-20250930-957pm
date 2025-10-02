@@ -1148,7 +1148,7 @@ export default function UserProfile() {
 
           {/* Add Friend Button - Only shown when viewing other users */}
           {!isOwnProfile && (
-            <div className="mt-6 flex justify-center">
+            <div className="mt-6">
               <Button 
                 onClick={() => setIsAddFriendModalOpen(true)}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
