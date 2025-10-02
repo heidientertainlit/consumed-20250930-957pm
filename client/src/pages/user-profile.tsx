@@ -56,6 +56,9 @@ export default function UserProfile() {
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
 
+  // Public profile - no restrictions for viewing
+  const canViewProfile = true; // Always true for now - will add privacy settings later
+
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
@@ -376,14 +379,16 @@ export default function UserProfile() {
     fetchUserProfile();
   }, [session?.access_token, viewingUserId]);
 
-  // Fetch DNA profile and user lists when authenticated or viewing user changes
+  // Fetch profile data - accessible to everyone (public profiles)
   useEffect(() => {
     if (session?.access_token && viewingUserId) {
       fetchDnaProfile();
       fetchUserLists();
       fetchUserStats();
       fetchUserPoints();
-      checkFriendshipStatus();
+      if (!isOwnProfile) {
+        checkFriendshipStatus();
+      }
       // fetchHighlights(); // Uncomment when fetchHighlights is implemented
     }
   }, [session?.access_token, viewingUserId]);
