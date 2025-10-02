@@ -16,10 +16,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-
-  const { data: user } = useQuery({
-    queryKey: ["/api/users/user-1"],
-  });
+  const { user } = useAuth();
 
   // Check for undismissed static notifications
   useEffect(() => {
@@ -60,7 +57,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 </span>
               )}
             </button>
-            <Link href="/user/user-1">
+            <Link href={user?.id ? `/user/${user.id}` : "/login"}>
               <button
                 className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
                 data-testid="profile-button"
