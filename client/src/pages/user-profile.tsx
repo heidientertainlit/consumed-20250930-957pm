@@ -2747,7 +2747,7 @@ export default function UserProfile() {
                   value={editDisplayName}
                   onChange={(e) => setEditDisplayName(e.target.value)}
                   placeholder="Your display name"
-                  className="w-full"
+                  className="w-full bg-white text-black border-gray-300"
                   data-testid="input-display-name"
                 />
                 <p className="text-xs text-black mt-1">This is your public-facing name</p>
@@ -2763,7 +2763,7 @@ export default function UserProfile() {
                   value={editFirstName}
                   onChange={(e) => setEditFirstName(e.target.value)}
                   placeholder="Your first name"
-                  className="w-full"
+                  className="w-full bg-white text-black border-gray-300"
                   data-testid="input-first-name"
                 />
               </div>
@@ -2778,7 +2778,7 @@ export default function UserProfile() {
                   value={editLastName}
                   onChange={(e) => setEditLastName(e.target.value)}
                   placeholder="Your last name"
-                  className="w-full"
+                  className="w-full bg-white text-black border-gray-300"
                   data-testid="input-last-name"
                 />
               </div>
@@ -2793,7 +2793,7 @@ export default function UserProfile() {
                   value={editUsername}
                   onChange={(e) => setEditUsername(e.target.value.toLowerCase())}
                   placeholder="username"
-                  className="w-full"
+                  className="w-full bg-white text-black border-gray-300"
                   data-testid="input-username"
                 />
                 <p className="text-xs text-black mt-1">
