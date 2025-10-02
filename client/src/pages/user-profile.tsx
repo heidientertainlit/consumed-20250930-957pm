@@ -21,12 +21,20 @@ import { queryClient } from "@/lib/queryClient";
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   
   // Get user ID from URL using wouter's useRoute
   const [match, params] = useRoute('/user/:id');
   const viewingUserId = params?.id || user?.id; // Use URL param or fallback to current user
   const isOwnProfile = !params?.id || viewingUserId === user?.id;
+
+  // Store return URL for redirect after login
+  useEffect(() => {
+    if (!user && !loading && params?.id) {
+      // Store the profile URL they're trying to visit
+      sessionStorage.setItem('returnUrl', `/user/${params.id}`);
+    }
+  }, [user, loading, params?.id]);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -1164,54 +1172,67 @@ export default function UserProfile() {
           )}
 
           {/* Add Friend Button - Only shown when viewing other users */}
-          {!isOwnProfile && friendshipStatus !== 'loading' && (
+          {!isOwnProfile && (
             <div className="mt-6">
-              {friendshipStatus === 'friends' ? (
+              {!user ? (
                 <Button 
-                  disabled
-                  className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
-                  data-testid="button-already-friends"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                  data-testid="button-signin-to-connect"
                 >
                   <Users size={20} className="mr-2" />
-                  Already Friends
+                  Sign In to Connect
                 </Button>
-              ) : friendshipStatus === 'pending_sent' ? (
-                <Button 
-                  disabled
-                  className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
-                  data-testid="button-request-pending"
-                >
-                  <Clock size={20} className="mr-2" />
-                  Request Pending
-                </Button>
-              ) : friendshipStatus === 'pending_received' ? (
-                <Button 
-                  onClick={() => setLocation('/friends')}
-                  className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
-                  data-testid="button-accept-request"
-                >
-                  <Users size={20} className="mr-2" />
-                  Accept Friend Request
-                </Button>
-              ) : (
-                <Button 
-                  onClick={() => viewingUserId && sendFriendRequest(viewingUserId)}
-                  disabled={isSendingRequest || !viewingUserId}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-testid="button-add-friend"
-                >
-                  {isSendingRequest ? (
-                    <>
-                      <Loader2 size={20} className="mr-2 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
+              ) : friendshipStatus !== 'loading' && (
+                <>
+                  {friendshipStatus === 'friends' ? (
+                    <Button 
+                      disabled
+                      className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
+                      data-testid="button-already-friends"
+                    >
                       <Users size={20} className="mr-2" />
-                      Add Friend
-                    </>
+                      Already Friends
+                    </Button>
+                  ) : friendshipStatus === 'pending_sent' ? (
+                    <Button 
+                      disabled
+                      className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
+                      data-testid="button-request-pending"
+                    >
+                      <Clock size={20} className="mr-2" />
+                      Request Pending
+                    </Button>
+                  ) : friendshipStatus === 'pending_received' ? (
+                    <Button 
+                      onClick={() => setLocation('/friends')}
+                      className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                      data-testid="button-accept-request"
+                    >
+                      <Users size={20} className="mr-2" />
+                      Accept Friend Request
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => viewingUserId && sendFriendRequest(viewingUserId)}
+                      disabled={isSendingRequest || !viewingUserId}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid="button-add-friend"
+                    >
+                      {isSendingRequest ? (
+                        <>
+                          <Loader2 size={20} className="mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Users size={20} className="mr-2" />
+                          Add Friend
+                        </>
+                      )}
+                    </Button>
                   )}
-                </Button>
+                </>
               )}
             </div>
           )}

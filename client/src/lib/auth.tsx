@@ -34,6 +34,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
+
+        // Handle redirect after successful login/signup
+        if (event === 'SIGNED_IN' && session?.user) {
+          const returnUrl = sessionStorage.getItem('returnUrl')
+          if (returnUrl) {
+            sessionStorage.removeItem('returnUrl')
+            // Small delay to ensure auth state is fully updated
+            setTimeout(() => {
+              window.location.href = returnUrl
+            }, 100)
+          }
+        }
       }
     )
 
