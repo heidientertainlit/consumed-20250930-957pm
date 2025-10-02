@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
@@ -22,10 +22,11 @@ export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-
-  // Get user ID from URL to determine if viewing own profile or someone else's
-  const viewingUserId = window.location.pathname.split('/user/')[1];
-  const isOwnProfile = !viewingUserId || viewingUserId === user?.id;
+  
+  // Get user ID from URL using wouter's useRoute
+  const [match, params] = useRoute('/user/:id');
+  const viewingUserId = params?.id || user?.id; // Use URL param or fallback to current user
+  const isOwnProfile = !params?.id || viewingUserId === user?.id;
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -256,7 +257,7 @@ export default function UserProfile() {
   // Fetch user profile data from custom users table
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!session?.access_token || !user?.id) return;
+      if (!session?.access_token || !viewingUserId) return;
 
       try {
         const { createClient } = await import('@supabase/supabase-js');
@@ -268,7 +269,7 @@ export default function UserProfile() {
         const { data, error } = await supabase
           .from('users')
           .select('user_name, first_name, last_name')
-          .eq('id', user.id)
+          .eq('id', viewingUserId)
           .single();
 
         if (!error && data) {
@@ -280,18 +281,18 @@ export default function UserProfile() {
     };
 
     fetchUserProfile();
-  }, [session?.access_token, user?.id]);
+  }, [session?.access_token, viewingUserId]);
 
-  // Fetch DNA profile and user lists when authenticated
+  // Fetch DNA profile and user lists when authenticated or viewing user changes
   useEffect(() => {
-    if (session?.access_token) {
+    if (session?.access_token && viewingUserId) {
       fetchDnaProfile();
       fetchUserLists();
       fetchUserStats();
       fetchUserPoints();
       // fetchHighlights(); // Uncomment when fetchHighlights is implemented
     }
-  }, [session?.access_token]);
+  }, [session?.access_token, viewingUserId]);
 
   // Handle save profile
   const handleSaveProfile = async () => {
@@ -393,11 +394,11 @@ export default function UserProfile() {
 
   // Fetch user lists from Supabase edge function
   const fetchUserLists = async () => {
-    if (!session?.access_token) return;
+    if (!session?.access_token || !viewingUserId) return;
 
     setIsLoadingLists(true);
     try {
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media', {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${viewingUserId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -427,11 +428,11 @@ export default function UserProfile() {
 
   // Fetch user stats from Supabase edge function
   const fetchUserStats = async () => {
-    if (!session?.access_token) return;
+    if (!session?.access_token || !viewingUserId) return;
 
     setIsLoadingStats(true);
     try {
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-stats', {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-stats?user_id=${viewingUserId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -456,11 +457,11 @@ export default function UserProfile() {
 
   // Fetch user points from Supabase edge function
   const fetchUserPoints = async () => {
-    if (!session?.access_token) return;
+    if (!session?.access_token || !viewingUserId) return;
 
     setIsLoadingPoints(true);
     try {
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points', {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points?user_id=${viewingUserId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -509,7 +510,7 @@ export default function UserProfile() {
 
   // Fetch DNA profile from database
   const fetchDnaProfile = async () => {
-    if (!session?.access_token) return;
+    if (!session?.access_token || !viewingUserId) return;
 
     try {
       const { createClient } = await import('@supabase/supabase-js');
@@ -521,7 +522,7 @@ export default function UserProfile() {
       const { data: profiles, error } = await supabase
         .from('dna_profiles')
         .select('*')
-        .eq('user_id', user?.id);
+        .eq('user_id', viewingUserId);
 
       if (error) {
         console.error('Error fetching DNA profile:', error);
