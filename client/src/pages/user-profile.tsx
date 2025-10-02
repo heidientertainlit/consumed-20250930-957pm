@@ -1119,12 +1119,10 @@ export default function UserProfile() {
                     variant="outline" 
                     className="border-gray-300"
                     onClick={async () => {
+                      const profileUserId = isOwnProfile ? user?.id : viewingUserId;
                       await copyLink({ 
                         kind: 'profile',
-                        obj: { 
-                          id: viewingUserId || user?.id,
-                          user_name: userProfileData?.user_name
-                        } 
+                        id: profileUserId
                       });
                       toast({
                         title: "Link Copied!",
