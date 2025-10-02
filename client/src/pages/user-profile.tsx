@@ -78,6 +78,7 @@ export default function UserProfile() {
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
   const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
+  const [showAllMediaHistory, setShowAllMediaHistory] = useState(false);
 
   // Highlights state
   const [highlights, setHighlights] = useState<any[]>([]);
@@ -1938,54 +1939,67 @@ export default function UserProfile() {
               <p className="text-gray-600 mt-2">Loading your media history...</p>
             </div>
           ) : filteredMediaHistory.length > 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-              <div className="divide-y divide-gray-100">
-                {filteredMediaHistory.map((item, index) => (
-                  <div key={`${item.id}-${index}`} className="p-4 flex items-center space-x-4 hover:bg-gray-50">
-                    {item.image_url ? (
-                      <img 
-                        src={item.image_url}
-                        alt={item.title}
-                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-lg">
-                          {item.media_type === 'movie' ? '🎬' : 
-                           item.media_type === 'tv' ? '📺' : 
-                           item.media_type === 'book' ? '📚' : 
-                           item.media_type === 'music' ? '🎵' : 
-                           item.media_type === 'podcast' ? '🎧' : 
-                           item.media_type === 'game' ? '🎮' : '🎭'}
-                        </span>
+            <>
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+                <div className="divide-y divide-gray-100">
+                  {(showAllMediaHistory ? filteredMediaHistory : filteredMediaHistory.slice(0, 10)).map((item, index) => (
+                    <div key={`${item.id}-${index}`} className="p-4 flex items-center space-x-4 hover:bg-gray-50">
+                      {item.image_url ? (
+                        <img 
+                          src={item.image_url}
+                          alt={item.title}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg">
+                            {item.media_type === 'movie' ? '🎬' : 
+                             item.media_type === 'tv' ? '📺' : 
+                             item.media_type === 'book' ? '📚' : 
+                             item.media_type === 'music' ? '🎵' : 
+                             item.media_type === 'podcast' ? '🎧' : 
+                             item.media_type === 'game' ? '🎮' : '🎭'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 truncate">{item.title}</h4>
+                        <p className="text-sm text-gray-600 truncate">
+                          {item.media_type === 'tv' ? 'TV Show' : 
+                           item.media_type === 'movie' ? 'Movie' : 
+                           item.media_type === 'book' ? 'Book' : 
+                           item.media_type === 'music' ? 'Music' : 
+                           item.media_type === 'podcast' ? 'Podcast' : 
+                           item.media_type === 'game' ? 'Game' : item.type}
+                          {item.creator && ` by ${item.creator}`}
+                        </p>
+                        <p className="text-xs text-purple-600">In {item.listName}</p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-900 truncate">{item.title}</h4>
-                      <p className="text-sm text-gray-600 truncate">
-                        {item.media_type === 'tv' ? 'TV Show' : 
-                         item.media_type === 'movie' ? 'Movie' : 
-                         item.media_type === 'book' ? 'Book' : 
-                         item.media_type === 'music' ? 'Music' : 
-                         item.media_type === 'podcast' ? 'Podcast' : 
-                         item.media_type === 'game' ? 'Game' : item.type}
-                        {item.creator && ` by ${item.creator}`}
-                      </p>
-                      <p className="text-xs text-purple-600">In {item.listName}</p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs text-gray-500">
+                          {new Date(item.created_at).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-xs text-gray-500">
-                        {new Date(item.created_at).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          year: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+
+              {/* Show More/Less Button */}
+              {filteredMediaHistory.length > 10 && (
+                <button
+                  onClick={() => setShowAllMediaHistory(!showAllMediaHistory)}
+                  className="w-full mt-4 py-3 text-sm font-medium text-purple-700 hover:text-purple-800 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors"
+                  data-testid="button-show-more-media"
+                >
+                  {showAllMediaHistory ? 'Show Less' : `Show ${filteredMediaHistory.length - 10} More`}
+                </button>
+              )}
+            </>
           ) : (
             <div className="text-center py-8 bg-white rounded-2xl border border-gray-200">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
