@@ -46,7 +46,6 @@ serve(async (req) => {
           id: user.id,
           email: user.email,
           user_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user',
-          display_name: user.user_metadata?.display_name || user.email.split('@')[0] || 'User',
           first_name: user.user_metadata?.first_name || '',
           last_name: user.user_metadata?.last_name || ''
         })
@@ -140,7 +139,7 @@ serve(async (req) => {
           // Get all users except current user, then filter manually for better control
           const { data: allUsers, error: fetchError } = await supabase
             .from('users')
-            .select('id, user_name, email, display_name, first_name, last_name')
+            .select('id, user_name, email, first_name, last_name')
             .neq('id', appUser.id);
 
           console.log('Fetched all users:', { count: allUsers?.length || 0, error: fetchError });
@@ -158,14 +157,12 @@ serve(async (req) => {
           const matchedUsers = (allUsers || []).filter(user => {
             const userName = (user.user_name || '').toLowerCase();
             const email = (user.email || '').toLowerCase();
-            const displayName = (user.display_name || '').toLowerCase();
             const firstName = (user.first_name || '').toLowerCase();
             const lastName = (user.last_name || '').toLowerCase();
             const fullName = `${firstName} ${lastName}`.trim();
             
             return userName.includes(queryLower) ||
                    email.includes(queryLower) ||
-                   displayName.includes(queryLower) ||
                    firstName.includes(queryLower) ||
                    lastName.includes(queryLower) ||
                    fullName.includes(queryLower);

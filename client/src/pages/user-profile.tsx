@@ -34,7 +34,6 @@ export default function UserProfile() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false); // Added state for highlight modal
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [editDisplayName, setEditDisplayName] = useState("");
   const [editUsername, setEditUsername] = useState("");
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
@@ -267,7 +266,7 @@ export default function UserProfile() {
 
         const { data, error } = await supabase
           .from('users')
-          .select('user_name, display_name, first_name, last_name')
+          .select('user_name, first_name, last_name')
           .eq('id', user.id)
           .single();
 
@@ -347,7 +346,6 @@ export default function UserProfile() {
         .from('users')
         .update({
           user_name: editUsername,
-          display_name: editDisplayName || null,
           first_name: editFirstName || null,
           last_name: editLastName || null
         })
@@ -367,7 +365,6 @@ export default function UserProfile() {
       // Update local state with new profile data
       setUserProfileData({
         user_name: editUsername,
-        display_name: editDisplayName || null,
         first_name: editFirstName || null,
         last_name: editLastName || null
       });
@@ -1072,7 +1069,9 @@ export default function UserProfile() {
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                   <h1 className="text-3xl font-semibold text-black mb-1">
-                    {userProfileData?.display_name || userProfileData?.user_name || 'User'}
+                    {userProfileData?.first_name && userProfileData?.last_name 
+                      ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
+                      : userProfileData?.first_name || userProfileData?.user_name || 'User'}
                   </h1>
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-gray-600">@{userProfileData?.user_name || 'user'}</span>
@@ -1111,7 +1110,6 @@ export default function UserProfile() {
                       variant="outline" 
                       className="border-gray-300"
                       onClick={() => {
-                        setEditDisplayName(userProfileData?.display_name || '');
                         setEditUsername(userProfileData?.user_name || '');
                         setEditFirstName(userProfileData?.first_name || '');
                         setEditLastName(userProfileData?.last_name || '');
@@ -2747,7 +2745,7 @@ export default function UserProfile() {
                   value={editFirstName}
                   onChange={(e) => setEditFirstName(e.target.value)}
                   placeholder="Your first name"
-                  className="w-full !bg-white !text-black !border-gray-300"
+                  className="w-full"
                   data-testid="input-first-name"
                 />
               </div>
@@ -2762,10 +2760,12 @@ export default function UserProfile() {
                   value={editLastName}
                   onChange={(e) => setEditLastName(e.target.value)}
                   placeholder="Your last name"
-                  className="w-full !bg-white !text-black !border-gray-300"
+                  className="w-full"
                   data-testid="input-last-name"
                 />
-                <p className="text-xs text-black mt-1">Your display name will be "{editFirstName} {editLastName}".trim() || editUsername</p>
+                <p className="text-xs text-black mt-1">
+                  Your display name will be "{(editFirstName + ' ' + editLastName).trim() || editFirstName || editUsername}"
+                </p>
               </div>
 
               {/* Username */}
@@ -2778,7 +2778,7 @@ export default function UserProfile() {
                   value={editUsername}
                   onChange={(e) => setEditUsername(e.target.value.toLowerCase())}
                   placeholder="username"
-                  className="w-full !bg-white !text-black !border-gray-300"
+                  className="w-full"
                   data-testid="input-username"
                 />
                 <p className="text-xs text-black mt-1">

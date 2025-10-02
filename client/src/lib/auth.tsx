@@ -49,11 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string; username?: string }) => {
-    // Auto-generate display_name from first_name + last_name, fallback to username
-    const displayName = metadata?.firstName && metadata?.lastName 
-      ? `${metadata.firstName} ${metadata.lastName}`.trim()
-      : metadata?.firstName || metadata?.username || email.split('@')[0];
-
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -61,8 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           first_name: metadata?.firstName || '',
           last_name: metadata?.lastName || '',
-          user_name: metadata?.username || email.split('@')[0],
-          display_name: displayName
+          user_name: metadata?.username || email.split('@')[0]
         }
       }
     });
