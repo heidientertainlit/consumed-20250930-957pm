@@ -153,8 +153,12 @@ export default function FriendsPage() {
         body: JSON.stringify({ action: 'acceptRequest', friendId }),
       });
 
-      if (!response.ok) throw new Error('Failed to accept friend request');
-      return response.json();
+      const result = await response.json();
+      console.log('Accept request response:', result);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to accept friend request');
+      }
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friends'] });
