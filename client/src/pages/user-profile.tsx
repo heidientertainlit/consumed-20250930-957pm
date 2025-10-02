@@ -887,35 +887,6 @@ export default function UserProfile() {
     fetchCreatorStats();
   }, [session?.access_token]);
 
-  const recentActivity = [
-    {
-      id: 1,
-      type: "review",
-      content: "Just finished 'Dune' and I'm absolutely blown away! The world-building is incredible.",
-      media: "Dune",
-      category: "books",
-      rating: 5,
-      timestamp: "3 hours ago"
-    },
-    {
-      id: 2,
-      type: "track",
-      content: "Added to my 'Sci-Fi Must Reads' list",
-      media: "Project Hail Mary",
-      category: "books",
-      timestamp: "1 day ago"
-    },
-    {
-      id: 3,
-      type: "review",
-      content: "Nolan does it again with Oppenheimer. The cinematography is stunning.",
-      media: "Oppenheimer",
-      category: "movies",
-      rating: 4,
-      timestamp: "3 days ago"
-    }
-  ];
-
   // Get currently consuming items from the "Currently" list
   const currentlyList = userLists.find(list => list.title === 'Currently');
   const currentlyConsuming = currentlyList?.items || [];
