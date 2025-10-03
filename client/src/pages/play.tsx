@@ -537,7 +537,6 @@ export default function PlayPage() {
           ))
           )}
         </div>
-        </div>
 
         {/* Stats Section */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mt-8">
