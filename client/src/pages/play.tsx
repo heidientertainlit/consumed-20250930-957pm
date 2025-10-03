@@ -485,31 +485,27 @@ export default function PlayPage() {
         {(gameTypeFilter === 'all' || gameTypeFilter === 'predict') && (
         <div className="mb-6">
           <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-4 shadow-sm opacity-75">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-3xl">🏆</div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge className="bg-yellow-500 text-white hover:bg-yellow-500 text-xs font-bold border-0">
-                      FEATURED
-                    </Badge>
-                    <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs font-medium">
-                      <Trophy size={10} className="mr-1" />
-                      PREDICT
-                    </Badge>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">
-                    98th Academy Awards Prediction Pool
-                  </h2>
-                  <p className="text-sm text-gray-700">
-                    Join the biggest Oscar prediction pool in history! Predict winners across all major categories.
-                  </p>
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🏆</div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-yellow-500 text-white hover:bg-yellow-500 text-xs font-bold border-0">
+                    FEATURED
+                  </Badge>
+                  <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs font-medium">
+                    <Trophy size={10} className="mr-1" />
+                    PREDICT
+                  </Badge>
+                  <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-xs font-bold border border-yellow-400">
+                    🎬 Coming Soon
+                  </Badge>
                 </div>
-              </div>
-              <div className="ml-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-100 border border-yellow-400 rounded-lg">
-                  <span className="text-sm font-bold text-yellow-700">🎬 Coming Soon</span>
-                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-1">
+                  98th Academy Awards Prediction Pool
+                </h2>
+                <p className="text-sm text-gray-700">
+                  Join the biggest Oscar prediction pool in history! Predict winners across all major categories.
+                </p>
               </div>
             </div>
           </div>
