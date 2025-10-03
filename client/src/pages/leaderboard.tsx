@@ -51,6 +51,66 @@ const fetchLeaderboard = async (session: any, category: string = 'all_time', lim
   return response.json();
 };
 
+// Fetch challenge-specific leaderboards
+const fetchChallengeLeaderboards = async (session: any) => {
+  if (!session?.access_token) {
+    throw new Error('No authentication token available');
+  }
+
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // Fetch all long-form trivia challenges (20+ questions)
+  const { data: challenges, error: challengesError } = await supabase
+    .from('prediction_pools')
+    .select('id, title, description, points_reward, icon, options')
+    .eq('type', 'trivia')
+    .eq('status', 'open');
+
+  if (challengesError) throw challengesError;
+
+  // Filter to only long-form challenges (multi-question format)
+  const longFormChallenges = challenges?.filter(c => 
+    Array.isArray(c.options) && c.options.length > 2 && c.options[0]?.question
+  ) || [];
+
+  // For each challenge, fetch top scorers
+  const challengeLeaderboards = await Promise.all(
+    longFormChallenges.map(async (challenge) => {
+      const { data: predictions, error } = await supabase
+        .from('user_predictions')
+        .select(`
+          user_id,
+          points_earned,
+          created_at,
+          users (
+            user_name
+          )
+        `)
+        .eq('pool_id', challenge.id)
+        .order('points_earned', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error(`Error fetching leaderboard for ${challenge.id}:`, error);
+        return {
+          challenge,
+          topScorers: []
+        };
+      }
+
+      return {
+        challenge,
+        topScorers: predictions || []
+      };
+    })
+  );
+
+  return challengeLeaderboards;
+};
+
 // Define leaderboard categories
 const leaderboardCategories = [
   {
@@ -148,12 +208,19 @@ const leaderboardCategories = [
 export default function Leaderboard() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all_time");
+  const [expandedChallenge, setExpandedChallenge] = useState<string | null>(null);
   const { session } = useAuth();
 
   const { data: leaderboardData, isLoading, error } = useQuery({
     queryKey: ["leaderboard", selectedCategory],
     queryFn: () => fetchLeaderboard(session, selectedCategory, 10),
-    enabled: !!session?.access_token,
+    enabled: !!session?.access_token && selectedCategory !== 'challenges',
+  });
+
+  const { data: challengeLeaderboards, isLoading: challengesLoading } = useQuery({
+    queryKey: ["challenge-leaderboards"],
+    queryFn: () => fetchChallengeLeaderboards(session),
+    enabled: !!session?.access_token && selectedCategory === 'challenges',
   });
 
   // Log leaderboard data for debugging
@@ -268,24 +335,62 @@ export default function Leaderboard() {
             </div>
           ) : selectedCategory === 'challenges' ? (
             <div className="p-6">
-              <p className="text-gray-500 text-sm mb-4">Select a challenge below to see its leaderboard:</p>
-              <div className="space-y-3">
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 hover:bg-purple-100 transition-colors cursor-not-allowed">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">⚡</div>
-                      <div>
-                        <div className="font-semibold text-gray-900">Harry Potter Trivia Challenge</div>
-                        <div className="text-sm text-gray-600">20 questions • 100 points</div>
+              {challengesLoading ? (
+                <div className="text-center py-8 text-gray-500">Loading challenges...</div>
+              ) : challengeLeaderboards && challengeLeaderboards.length > 0 ? (
+                <>
+                  <p className="text-gray-500 text-sm mb-4">Click a challenge to see its leaderboard:</p>
+                  <div className="space-y-3">
+                    {challengeLeaderboards.map((item: any) => (
+                      <div key={item.challenge.id}>
+                        <button
+                          onClick={() => setExpandedChallenge(expandedChallenge === item.challenge.id ? null : item.challenge.id)}
+                          className="w-full bg-purple-50 border border-purple-200 rounded-lg p-4 hover:bg-purple-100 transition-colors"
+                          data-testid={`challenge-${item.challenge.id}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="text-2xl">{item.challenge.icon || '🏆'}</div>
+                              <div className="text-left">
+                                <div className="font-semibold text-gray-900">{item.challenge.title}</div>
+                                <div className="text-sm text-gray-600">
+                                  {item.challenge.options?.length || 0} questions • {item.challenge.points_reward} points
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-sm text-purple-600 font-medium">
+                              {item.topScorers.length > 0 ? `${item.topScorers.length} player${item.topScorers.length !== 1 ? 's' : ''}` : 'No scores yet'}
+                            </div>
+                          </div>
+                        </button>
+                        
+                        {expandedChallenge === item.challenge.id && item.topScorers.length > 0 && (
+                          <div className="mt-2 bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
+                            {item.topScorers.map((scorer: any, index: number) => (
+                              <div key={scorer.user_id} className="p-3 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 flex items-center justify-center">
+                                    {index === 0 ? <Trophy className="text-yellow-500" size={20} /> :
+                                     index === 1 ? <Medal className="text-gray-400" size={20} /> :
+                                     index === 2 ? <Award className="text-orange-600" size={20} /> :
+                                     <span className="text-gray-500 font-semibold text-sm">{index + 1}</span>}
+                                  </div>
+                                  <div className="font-medium text-gray-900">{scorer.users?.user_name || 'Anonymous'}</div>
+                                </div>
+                                <div className="font-semibold text-purple-600">{scorer.points_earned} pts</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="text-sm text-purple-600 font-medium">Coming Soon</div>
+                    ))}
                   </div>
+                </>
+              ) : (
+                <div className="text-center text-sm text-gray-500 py-8">
+                  No challenges available yet. Check back soon!
                 </div>
-                <div className="text-center text-sm text-gray-500 py-4">
-                  More challenges coming soon! Each will have its own leaderboard showing top scores.
-                </div>
-              </div>
+              )}
             </div>
           ) : leaderboardData && leaderboardData.length > 0 ? (
             <div className="divide-y divide-gray-100">
