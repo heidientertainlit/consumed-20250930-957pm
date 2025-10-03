@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
 import { TriviaGameModal } from "@/components/trivia-game-modal";
+import { PredictionGameModal } from "@/components/prediction-game-modal";
 
 // All game data now comes from the database via API
 
@@ -213,6 +214,7 @@ export default function PlayPage() {
 
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
+  const [selectedPredictionGame, setSelectedPredictionGame] = useState<any>(null);
 
   const handleOptionSelect = (gameId: string, option: string) => {
     setSelectedAnswers(prev => ({ ...prev, [gameId]: option }));
