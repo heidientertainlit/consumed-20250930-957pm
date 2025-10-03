@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
+import { TriviaGameModal } from "@/components/trivia-game-modal";
 
 // All game data now comes from the database via API
 
@@ -146,6 +147,7 @@ export default function PlayPage() {
   };
 
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
 
   const handleOptionSelect = (gameId: string, option: string) => {
     setSelectedAnswers(prev => ({ ...prev, [gameId]: option }));
@@ -220,19 +222,44 @@ export default function PlayPage() {
   // Use only real games from the database API - shuffle ONLY once when data loads
   const allGames = useMemo(() => {
     return (predictionPools || [])
-      .filter((pool: any) => pool.status === 'open' && pool.options && pool.options.length === 2)
-      .map((pool: any) => ({
-        id: pool.id,
-        type: pool.type,
-        title: pool.title,
-        description: pool.description,
-        points: pool.points_reward || pool.pointsReward,
-        participants: pool.participants,
-        deadline: pool.deadline,
-        icon: pool.icon,
-        mediaType: pool.category,
-        options: pool.options
-      }))
+      .filter((pool: any) => {
+        if (pool.status !== 'open' || !pool.options) return false;
+        
+        // Multi-question trivia games have array of question objects
+        const isMultiQuestionTrivia = pool.type === 'trivia' && 
+          Array.isArray(pool.options) && 
+          pool.options.length > 0 && 
+          typeof pool.options[0] === 'object' &&
+          pool.options[0].question;
+        
+        // Quick games have exactly 2 string options
+        const isQuickGame = Array.isArray(pool.options) && 
+          pool.options.length === 2 && 
+          typeof pool.options[0] === 'string';
+        
+        return isMultiQuestionTrivia || isQuickGame;
+      })
+      .map((pool: any) => {
+        // Determine if this is a long-form trivia game
+        const isLongFormTrivia = pool.type === 'trivia' && 
+          Array.isArray(pool.options) && 
+          pool.options.length > 0 && 
+          typeof pool.options[0] === 'object';
+        
+        return {
+          id: pool.id,
+          type: pool.type,
+          title: pool.title,
+          description: pool.description,
+          points: pool.points_reward || pool.pointsReward,
+          participants: pool.participants,
+          deadline: pool.deadline,
+          icon: pool.icon,
+          mediaType: pool.category,
+          options: pool.options,
+          isLongForm: isLongFormTrivia
+        };
+      })
       .sort(() => Math.random() - 0.5); // Randomize order ONLY once
   }, [predictionPools]);
 
@@ -394,7 +421,7 @@ export default function PlayPage() {
                         {game.type === 'trivia' ? (
                           <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 text-xs font-medium">
                             <Brain size={10} className="mr-1" />
-                            TRIVIA
+                            {game.isLongForm ? 'TRIVIA GAME' : 'QUICK TRIVIA'}
                           </Badge>
                         ) : game.type === 'vote' ? (
                           <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs font-medium">
@@ -405,6 +432,11 @@ export default function PlayPage() {
                           <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs font-medium">
                             <Trophy size={10} className="mr-1" />
                             PREDICT
+                          </Badge>
+                        )}
+                        {game.isLongForm && (
+                          <Badge variant="outline" className="text-xs">
+                            {game.options.length} Questions
                           </Badge>
                         )}
                       </div>
@@ -449,13 +481,25 @@ export default function PlayPage() {
                 {selectedOptions[game.id] ? (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                     <div className="text-green-800 font-medium">✓ Submitted</div>
-                    <div className="text-green-700 text-sm">You selected "{selectedOptions[game.id]}"</div>
+                    <div className="text-green-700 text-sm">
+                      {game.isLongForm ? 'Game completed!' : `You selected "${selectedOptions[game.id]}"`}
+                    </div>
                   </div>
+                ) : game.isLongForm ? (
+                  // Long-form trivia game - show "Play Game" button
+                  <Button 
+                    onClick={() => setSelectedTriviaGame(game)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    data-testid={`play-${game.id}`}
+                  >
+                    <Brain size={16} className="mr-2" />
+                    Play Trivia Game
+                  </Button>
                 ) : (
+                  // Quick game - show inline options
                   <>
-                    {/* Quick Vote/Predict/Trivia Label */}
                     <div className="text-gray-600 text-sm font-medium">
-                      {game.type === 'vote' ? 'Quick Vote:' : game.type === 'prediction' ? 'Quick Predict:' : 'Quick Answer:'}
+                      {game.type === 'vote' ? 'Quick Vote:' : game.type === 'predict' ? 'Quick Predict:' : 'Quick Answer:'}
                     </div>
 
                     {/* Two Option Boxes */}
@@ -493,6 +537,7 @@ export default function PlayPage() {
           ))
           )}
         </div>
+        </div>
 
         {/* Stats Section */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mt-8">
@@ -526,6 +571,22 @@ export default function PlayPage() {
         isOpen={isTrackModalOpen} 
         onClose={() => setIsTrackModalOpen(false)} 
       />
+
+      {/* Trivia Game Modal */}
+      {selectedTriviaGame && (
+        <TriviaGameModal
+          poolId={selectedTriviaGame.id}
+          title={selectedTriviaGame.title}
+          questions={selectedTriviaGame.options}
+          pointsReward={selectedTriviaGame.points}
+          isOpen={!!selectedTriviaGame}
+          onClose={() => {
+            setSelectedTriviaGame(null);
+            // Mark as submitted
+            setSelectedOptions(prev => ({ ...prev, [selectedTriviaGame.id]: 'completed' }));
+          }}
+        />
+      )}
     </div>
   );
 }
