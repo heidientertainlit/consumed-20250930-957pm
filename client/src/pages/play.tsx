@@ -319,10 +319,10 @@ export default function PlayPage() {
             variant={gameTypeFilter === 'all' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setGameTypeFilter('all')}
-            className={`rounded-full whitespace-nowrap ${
+            className={`rounded-full whitespace-nowrap border-0 ${
               gameTypeFilter === 'all' 
                 ? 'bg-gray-900 text-white hover:bg-gray-800' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
+                : 'bg-purple-600/20 text-purple-900 hover:bg-purple-600/30'
             }`}
             data-testid="chip-game-all"
           >
@@ -332,10 +332,10 @@ export default function PlayPage() {
             variant={gameTypeFilter === 'vote' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setGameTypeFilter('vote')}
-            className={`rounded-full whitespace-nowrap ${
+            className={`rounded-full whitespace-nowrap border-0 ${
               gameTypeFilter === 'vote' 
                 ? 'bg-green-600 text-white hover:bg-green-700' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
+                : 'bg-purple-600/20 text-purple-900 hover:bg-purple-600/30'
             }`}
             data-testid="chip-game-vote"
           >
@@ -346,10 +346,10 @@ export default function PlayPage() {
             variant={gameTypeFilter === 'trivia' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setGameTypeFilter('trivia')}
-            className={`rounded-full whitespace-nowrap ${
+            className={`rounded-full whitespace-nowrap border-0 ${
               gameTypeFilter === 'trivia' 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
+                : 'bg-purple-600/20 text-purple-900 hover:bg-purple-600/30'
             }`}
             data-testid="chip-game-trivia"
           >
@@ -360,10 +360,10 @@ export default function PlayPage() {
             variant={gameTypeFilter === 'predict' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setGameTypeFilter('predict')}
-            className={`rounded-full whitespace-nowrap ${
+            className={`rounded-full whitespace-nowrap border-0 ${
               gameTypeFilter === 'predict' 
                 ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                : 'bg-white border-gray-300 hover:bg-gray-50'
+                : 'bg-purple-600/20 text-purple-900 hover:bg-purple-600/30'
             }`}
             data-testid="chip-game-predict"
           >
@@ -372,7 +372,7 @@ export default function PlayPage() {
           </Button>
 
           {/* Divider */}
-          <div className="h-6 w-px bg-gray-300 mx-1"></div>
+          <div className="h-6 w-px bg-purple-300/50 mx-1"></div>
 
           {/* Media Type Dropdown Pill */}
           <DropdownMenu>
@@ -380,7 +380,7 @@ export default function PlayPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-full whitespace-nowrap bg-white border-gray-300 hover:bg-gray-50"
+                className="rounded-full whitespace-nowrap border-0 bg-purple-600/20 text-purple-900 hover:bg-purple-600/30"
                 data-testid="dropdown-media-type"
               >
                 {mediaTypeFilter === 'all' ? 'All Media' : mediaTypeFilter}
