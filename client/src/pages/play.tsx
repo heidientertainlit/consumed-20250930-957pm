@@ -299,12 +299,19 @@ export default function PlayPage() {
           typeof pool.options[0] === 'object' &&
           pool.options[0].question;
         
+        // Multi-category prediction games have array of category objects
+        const isMultiCategoryPrediction = pool.type === 'prediction' && 
+          Array.isArray(pool.options) && 
+          pool.options.length > 0 && 
+          typeof pool.options[0] === 'object' &&
+          pool.options[0].category;
+        
         // Quick games have exactly 2 string options
         const isQuickGame = Array.isArray(pool.options) && 
           pool.options.length === 2 && 
           typeof pool.options[0] === 'string';
         
-        return isMultiQuestionTrivia || isQuickGame;
+        return isMultiQuestionTrivia || isMultiCategoryPrediction || isQuickGame;
       })
       .map((pool: any) => {
         // Determine if this is a long-form trivia game
@@ -312,6 +319,14 @@ export default function PlayPage() {
           Array.isArray(pool.options) && 
           pool.options.length > 0 && 
           typeof pool.options[0] === 'object';
+        
+        // Determine if this is a multi-category prediction game
+        const isMultiCategoryPrediction = pool.type === 'prediction' && 
+          Array.isArray(pool.options) && 
+          pool.options.length > 0 && 
+          typeof pool.options[0] === 'object' &&
+          pool.options[0].category && 
+          pool.options[0].nominees;
         
         return {
           id: pool.id,
@@ -324,7 +339,8 @@ export default function PlayPage() {
           icon: pool.icon,
           mediaType: pool.category,
           options: pool.options,
-          isLongForm: isLongFormTrivia
+          isLongForm: isLongFormTrivia,
+          isMultiCategory: isMultiCategoryPrediction
         };
       })
       .sort(() => Math.random() - 0.5); // Randomize order ONLY once
@@ -621,6 +637,40 @@ export default function PlayPage() {
                       }
                     }
                     
+                    // For multi-category predictions, check if all categories have predictions
+                    if (game.isMultiCategory) {
+                      try {
+                        const predictions = JSON.parse(allPredictions[game.id]);
+                        const isComplete = Array.isArray(predictions) && predictions.length === game.options.length;
+                        
+                        if (isComplete) {
+                          return (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                              <div className="text-green-800 font-medium">✓ Predictions Submitted</div>
+                              <div className="text-green-700 text-sm">{game.options.length} categories predicted!</div>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                              <div className="text-yellow-800 font-medium">⏸ In Progress</div>
+                              <div className="text-yellow-700 text-sm">
+                                {predictions.length}/{game.options.length} categories predicted
+                              </div>
+                            </div>
+                          );
+                        }
+                      } catch (e) {
+                        // Fallback if parsing fails
+                        return (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                            <div className="text-green-800 font-medium">✓ Predictions Submitted</div>
+                            <div className="text-green-700 text-sm">Completed!</div>
+                          </div>
+                        );
+                      }
+                    }
+                    
                     // For quick games
                     return (
                       <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
@@ -640,6 +690,16 @@ export default function PlayPage() {
                   >
                     <Brain size={16} className="mr-2" />
                     Play Trivia Game
+                  </Button>
+                ) : game.isMultiCategory ? (
+                  // Multi-category prediction game - show "Make Predictions" button
+                  <Button 
+                    onClick={() => setSelectedPredictionGame(game)}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    data-testid={`play-${game.id}`}
+                  >
+                    <Trophy size={16} className="mr-2" />
+                    Make Predictions
                   </Button>
                 ) : (
                   // Quick game - show inline options
@@ -737,6 +797,20 @@ export default function PlayPage() {
           isOpen={!!selectedTriviaGame}
           onClose={() => {
             setSelectedTriviaGame(null);
+          }}
+        />
+      )}
+
+      {/* Prediction Game Modal */}
+      {selectedPredictionGame && (
+        <PredictionGameModal
+          poolId={selectedPredictionGame.id}
+          title={selectedPredictionGame.title}
+          categories={selectedPredictionGame.options}
+          pointsReward={selectedPredictionGame.points}
+          isOpen={!!selectedPredictionGame}
+          onClose={() => {
+            setSelectedPredictionGame(null);
           }}
         />
       )}
