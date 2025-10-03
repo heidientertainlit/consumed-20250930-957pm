@@ -362,10 +362,10 @@ export default function PlayPage() {
         {/* Tab Navigation */}
         <div className="bg-white rounded-xl border border-gray-200 mb-6">
           <div className="flex items-center justify-between border-b border-gray-200">
-            <div className="flex">
+            <div className="flex overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setGameTypeFilter('all')}
-                className={`px-6 py-4 font-medium text-sm transition-colors relative ${
+                className={`px-6 py-4 font-medium text-sm transition-colors relative whitespace-nowrap ${
                   gameTypeFilter === 'all'
                     ? 'text-gray-900 border-b-2 border-gray-900'
                     : 'text-gray-500 hover:text-gray-700'
@@ -376,7 +376,7 @@ export default function PlayPage() {
               </button>
               <button
                 onClick={() => setGameTypeFilter('vote')}
-                className={`px-6 py-4 font-medium text-sm transition-colors relative flex items-center gap-2 ${
+                className={`px-6 py-4 font-medium text-sm transition-colors relative flex items-center gap-2 whitespace-nowrap ${
                   gameTypeFilter === 'vote'
                     ? 'text-green-600 border-b-2 border-green-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -388,7 +388,7 @@ export default function PlayPage() {
               </button>
               <button
                 onClick={() => setGameTypeFilter('trivia')}
-                className={`px-6 py-4 font-medium text-sm transition-colors relative flex items-center gap-2 ${
+                className={`px-6 py-4 font-medium text-sm transition-colors relative flex items-center gap-2 whitespace-nowrap ${
                   gameTypeFilter === 'trivia'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -400,7 +400,7 @@ export default function PlayPage() {
               </button>
               <button
                 onClick={() => setGameTypeFilter('predict')}
-                className={`px-6 py-4 font-medium text-sm transition-colors relative flex items-center gap-2 ${
+                className={`px-6 py-4 font-medium text-sm transition-colors relative flex items-center gap-2 whitespace-nowrap ${
                   gameTypeFilter === 'predict'
                     ? 'text-purple-600 border-b-2 border-purple-600'
                     : 'text-gray-500 hover:text-gray-700'
@@ -412,7 +412,7 @@ export default function PlayPage() {
               </button>
               <button
                 onClick={() => setGameTypeFilter('challenges')}
-                className={`px-6 py-4 font-medium text-sm transition-colors relative flex items-center gap-2 ${
+                className={`px-6 py-4 font-medium text-sm transition-colors relative flex items-center gap-2 whitespace-nowrap ${
                   gameTypeFilter === 'challenges'
                     ? 'text-purple-600 border-b-2 border-purple-600'
                     : 'text-gray-500 hover:text-gray-700'
