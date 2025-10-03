@@ -354,7 +354,7 @@ export default function PlayPage() {
           <h1 className="text-3xl font-semibold text-black mb-3">
             Games Feed
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-gray-600">
             Play games, vote on topics, make predictions, and earn points. Use the search bar above for personalized recommendations and group blends!
           </p>
         </div>

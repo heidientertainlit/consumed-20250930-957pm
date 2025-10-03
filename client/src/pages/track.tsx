@@ -355,7 +355,7 @@ export default function Track() {
           <h1 className="text-3xl font-semibold text-black mb-3">
             Track Entertainment,<br />Earn Points
           </h1>
-          <p className="text-lg text-gray-600 mb-6">
+          <p className="text-gray-600 mb-6">
             Every show, book, song, or game you log helps you climb the leaderboard. <i>Use the search bar above for personalized recommendations and group blends!</i>
           </p>
 

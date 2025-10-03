@@ -35,14 +35,10 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
 
   const submitPrediction = useMutation({
     mutationFn: async (data: { poolId: string; prediction: string; score: number }) => {
-      return await apiRequest('/api/predictions/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pool_id: data.poolId,
-          prediction: data.prediction,
-          score: data.score
-        })
+      return await apiRequest('POST', '/api/predictions/predict', {
+        pool_id: data.poolId,
+        prediction: data.prediction,
+        score: data.score
       });
     },
     onSuccess: () => {
