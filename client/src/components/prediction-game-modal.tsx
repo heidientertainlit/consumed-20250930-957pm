@@ -121,7 +121,7 @@ export function PredictionGameModal({ poolId, title, categories, pointsReward, i
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-gray-900">{title}</DialogTitle>
           <div className="flex items-center justify-between mt-3">
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs text-gray-900 border-gray-300">
               Category {currentCategory + 1} of {categories.length}
             </Badge>
             <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs">

@@ -135,7 +135,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-gray-900">{title}</DialogTitle>
           <div className="flex items-center justify-between mt-3">
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs text-gray-900 border-gray-300">
               Question {currentQuestion + 1} of {questions.length}
             </Badge>
             <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs">
