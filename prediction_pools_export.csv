@@ -1,0 +1,48 @@
+id,title,description,type,points_reward,deadline,status,category,icon,options,inline,participants,created_at
+academy-awards-2025,2025 Academy Awards,Predict winners across all major Oscar categories,awards,20,"March 2, 2025",completed,Movies,🎭,,f,4156,2025-09-23 16:45:09.983541+00
+academy-awards-2026,2026 Academy Awards (Oscars),Coming Soon - Stay tuned for next year's Oscar predictions!,awards,25,March 2026,locked,Movies,🏆,,f,0,2025-09-23 16:45:09.983541+00
+box-office-weekend,Weekend Box Office Champion,Which movie will dominate the box office this weekend?,weekly,15,Friday 11:59 PM,open,Movies,🎬,"[""Dune: Part Two"", ""Madame Web"", ""Bob Marley: One Love"", ""Ordinary Angels""]",t,743,2025-09-23 16:45:09.983541+00
+dancing-with-stars,Dancing with the Stars - Who Will Win This Week?,Predict who will be eliminated this week on DWTS,weekly,15,Tuesday 11:59 PM,open,Reality TV,💃,"[""Joey Graziadei"", ""Ilona Maher"", ""Stephen Nedoroscik"", ""Chandler Kinney""]",t,1834,2025-09-23 16:45:09.983541+00
+game-1,The Summer I Turned Pretty,Who will Belly choose in Season 3?,vote,10,2025-10-29T05:32:29.407Z,open,tv-show,📺,"[""Conrad"", ""Jeremiah""]",t,1501,2025-09-29 05:32:29.485649+00
+game-10,The Mandalorian,Who is more beloved?,vote,10,2025-10-29T05:32:29.723Z,open,tv-show,📺,"[""Grogu"", ""Mando""]",t,766,2025-09-29 05:32:29.736362+00
+game-11,Friends,What was the name of Ross's pet monkey?,trivia,15,2025-10-29T05:32:29.749Z,open,movie,🎬,"[""Marcel"", ""Marshal""]",t,1664,2025-09-29 05:32:29.759147+00
+game-12,Harry Potter,What house was Cedric Diggory in?,trivia,15,2025-10-29T05:32:29.770Z,open,book,📚,"[""Ravenclaw"", ""Hufflepuff""]",t,832,2025-09-29 05:32:29.782628+00
+game-13,The Office,Who was Jim's best friend before Pam?,trivia,15,2025-10-29T05:32:29.795Z,open,tv-show,📺,"[""Pam"", ""Dwight""]",t,2092,2025-09-29 05:32:29.806373+00
+game-14,The Hunger Games,Who won the 75th Hunger Games?,trivia,15,2025-10-29T05:32:29.818Z,open,book,📚,"[""Katniss"", ""Peeta""]",t,2290,2025-09-29 05:32:29.831478+00
+game-15,Avengers: Endgame,Who sacrificed themselves for the Soul Stone?,trivia,15,2025-10-29T05:32:29.845Z,open,movie,🎬,"[""Natasha"", ""Clint""]",t,733,2025-09-29 05:32:29.855977+00
+game-16,Percy Jackson,Who is Percy's father?,trivia,15,2025-10-29T05:32:29.870Z,open,book,📚,"[""Poseidon"", ""Zeus""]",t,1449,2025-09-29 05:32:29.883948+00
+game-17,Titanic,Who painted Rose?,trivia,15,2025-10-29T05:32:29.896Z,open,movie,🎬,"[""Jack"", ""Cal""]",t,2295,2025-09-29 05:32:29.907679+00
+game-18,Twilight,Team Edward or Team Jacob?,trivia,15,2025-10-29T05:32:29.919Z,open,book,📚,"[""Edward"", ""Jacob""]",t,1859,2025-09-29 05:32:29.932092+00
+game-19,Jurassic Park,Who dino the founder?,trivia,15,2025-10-29T05:32:29.945Z,open,movie,🎬,"[""John Hammond"", ""Alan Grant""]",t,998,2025-09-29 05:32:29.955685+00
+game-2,Barbie vs Oppenheimer,Which movie did you think should've won the Oscar for Best Picture?,vote,10,2025-10-29T05:32:29.509Z,open,movie,🎬,"[""Barbie"", ""Oppenheimer""]",t,725,2025-09-29 05:32:29.52428+00
+game-20,Lord of the Rings,Who destroys the One Ring?,trivia,15,2025-10-29T05:32:29.967Z,open,book,📚,"[""Frodo"", ""Sam""]",t,684,2025-09-29 05:32:29.980065+00
+game-21,Star Wars,Who is Luke's father?,trivia,15,2025-10-29T05:32:29.992Z,open,movie,🎬,"[""Darth Vader"", ""Obi-Wan""]",t,1954,2025-09-29 05:32:30.003884+00
+game-22,To Kill a Mockingbird,Who is the narrator?,trivia,15,2025-10-29T05:32:30.015Z,open,book,📚,"[""Scout"", ""Jem""]",t,746,2025-09-29 05:32:30.02776+00
+game-23,The Last of Us,Who the bad lead?,trivia,15,2025-10-29T05:32:30.040Z,open,tv-show,📺,"[""Joel"", ""Ellie""]",t,2225,2025-09-29 05:32:30.050549+00
+game-24,Mean Girls,"Who said ""You can't sit with us""?",trivia,15,2025-10-29T05:32:30.063Z,open,movie,🎬,"[""Gretchen"", ""Karen""]",t,1410,2025-09-29 05:32:30.075832+00
+game-25,Olivia Rodrigo,Better debut?,trivia,15,2025-10-29T05:32:30.088Z,open,music,🎵,"[""Sour"", ""folklore""]",t,2389,2025-09-29 05:32:30.098585+00
+game-26,The Great Gatsby,Who narrates the story?,trivia,15,2025-10-29T05:32:30.110Z,open,book,📚,"[""Nick"", ""Gatsby""]",t,1796,2025-09-29 05:32:30.122375+00
+game-27,Breaking Bad,Who was the smarter character?,trivia,15,2025-10-29T05:32:30.135Z,open,tv-show,📺,"[""Walter"", ""Jesse""]",t,2181,2025-09-29 05:32:30.145106+00
+game-28,Divergent,What faction did Tris choose?,trivia,15,2025-10-29T05:32:30.157Z,open,book,📚,"[""Erudite"", ""Dauntless""]",t,2239,2025-09-29 05:32:30.168769+00
+game-29,The Dark Knight,Who played the Joker?,trivia,15,2025-10-29T05:32:30.181Z,open,movie,🎬,"[""Heath Ledger"", ""Jared Leto""]",t,823,2025-09-29 05:32:30.191875+00
+game-3,Taylor Swift,Which album more iconic?,vote,10,2025-10-29T05:32:29.538Z,open,music,🎵,"[""1989"", ""Folklore""]",t,2412,2025-09-29 05:32:29.551436+00
+game-30,Matilda,Who was Matilda's teacher?,trivia,15,2025-10-29T05:32:30.203Z,open,book,📚,"[""Miss Honey"", ""Miss Trunchbull""]",t,1182,2025-09-29 05:32:30.215983+00
+game-31,The Lion King,Who killed Mufasa?,trivia,15,2025-10-29T05:32:30.228Z,open,movie,🎬,"[""Scar"", ""Hyenas""]",t,2417,2025-09-29 05:32:30.238441+00
+game-32,NFL Season 3,Who will win Chiefs vs Texans?,predict,20,2025-10-29T05:32:30.250Z,open,sports,⚽,"[""Chiefs"", ""Texans""]",t,653,2025-09-29 05:32:30.261978+00
+game-33,NBA Finals 2026,Who will take the championship?,predict,20,2025-10-29T05:32:30.274Z,open,sports,⚽,"[""Celtics"", ""Lakers""]",t,1240,2025-09-29 05:32:30.28415+00
+game-34,NFL Super Bowl 2025,Who will win?,predict,20,2025-10-29T05:32:30.298Z,open,sports,⚽,"[""49ers"", ""Chiefs""]",t,970,2025-09-29 05:32:30.312359+00
+game-35,UEFA Champions League,Who will win?,predict,20,2025-10-29T05:32:30.325Z,open,sports,⚽,"[""Real Madrid"", ""Man City""]",t,1217,2025-09-29 05:32:30.33542+00
+game-36,World Series 2025,Which league wins?,predict,20,2025-10-29T05:32:30.347Z,open,sports,⚽,"[""AL"", ""NL""]",t,1752,2025-09-29 05:32:30.35989+00
+game-37,NBA MVP 2025,Who will win?,predict,20,2025-10-29T05:32:30.374Z,open,sports,⚽,"[""Giannis"", ""Jokic""]",t,2496,2025-09-29 05:32:30.383891+00
+game-38,UFC,Who wins the fight (UFC Fight Night)?,predict,20,2025-10-29T05:32:30.395Z,open,sports,⚽,"[""Garcia"", ""Onaona""]",t,2415,2025-09-29 05:32:30.407306+00
+game-39,NHL Stanley Cup 2025,Who should've won the 2025 Stanley Cup Final?,predict,20,2025-10-29T05:32:30.422Z,open,sports,⚽,"[""Florida Panthers"", ""Edmonton Oilers""]",t,1048,2025-09-29 05:32:30.432083+00
+game-4,Drake vs Kendrick,Who is the better lyricist?,vote,10,2025-10-29T05:32:29.564Z,open,music,🎵,"[""Drake"", ""Kendrick""]",t,2022,2025-09-29 05:32:29.577596+00
+game-40,Olympics 2028,Who wins more medals?,predict,20,2025-10-29T05:32:30.443Z,open,sports,⚽,"[""USA"", ""China""]",t,1277,2025-09-29 05:32:30.455855+00
+game-5,Game of Thrones,Who the better character?,vote,10,2025-10-29T05:32:29.595Z,open,tv-show,📺,"[""Jon Snow"", ""Daenerys""]",t,1884,2025-09-29 05:32:29.610583+00
+game-6,Euphoria,Who is Rue's best friend?,vote,10,2025-10-29T05:32:29.624Z,open,tv-show,📺,"[""Jules"", ""Lexi""]",t,1081,2025-09-29 05:32:29.637136+00
+game-7,Beyoncé,Which was bigger?,vote,10,2025-10-29T05:32:29.650Z,open,music,🎵,"[""Renaissance"", ""Lemonade""]",t,750,2025-09-29 05:32:29.660549+00
+game-8,Grammys,Album of the Year battle?,vote,10,2025-10-29T05:32:29.672Z,open,awards,🏆,"[""Taylor Swift"", ""Beyoncé""]",t,2154,2025-09-29 05:32:29.685294+00
+game-9,Billie Eilish,Which song is bigger?,vote,10,2025-10-29T05:32:29.699Z,open,music,🎵,"[""Bad Guy"", ""Ocean Eyes""]",t,1018,2025-09-29 05:32:29.710647+00
+netflix-weekend,Netflix Top 10 This Week,Predict which show will be #1 on Netflix this week,vote,10,Sunday 11:59 PM,open,Streaming,📺,"[""Nobody Wants This"", ""Emily in Paris S4"", ""Monsters: Menendez"", ""Avatar: Last Airbender""]",t,1247,2025-09-23 16:45:09.983541+00
+trending-music,Billboard Hot 100 #1,Predict next week's Billboard Hot 100 #1 single,vote,12,Monday 11:59 PM,open,Music,🎵,"[""Flowers - Miley Cyrus"", ""Anti-Hero - Taylor Swift"", ""Unholy - Sam Smith"", ""As It Was - Harry Styles""]",t,892,2025-09-23 16:45:09.983541+00
+tv-ratings,Highest Rated TV Show,Predict which show will have the highest ratings this week,vote,13,Sunday 11:59 PM,open,TV,📊,"[""Sunday Night Football"", ""The Voice"", ""NCIS"", ""60 Minutes""]",t,567,2025-09-23 16:45:09.983541+00
