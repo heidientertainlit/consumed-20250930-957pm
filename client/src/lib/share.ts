@@ -17,7 +17,7 @@ export function urlFor(kind: ShareKind, arg: any) {
   }
   if (kind === 'prediction') {
     const id = typeof arg === 'string' ? arg : arg?.id;
-    return `${BASE}/predictions#${id}`;
+    return `${BASE}/play#${id}`;
   }
   const id = typeof arg === 'string' ? arg : arg?.id;
   return `${BASE}/${kind}/${id}`;
