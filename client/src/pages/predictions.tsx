@@ -7,11 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star, UserPlus } from "lucide-react";
+import { Trophy, Calendar, Vote, ArrowLeft, Clock, Users, Star, UserPlus, Brain } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { PredictionPool } from "@shared/schema";
+import { TriviaGameModal } from "@/components/trivia-game-modal";
 
 // Data fetching hooks
 function usePredictionPools() {
@@ -436,6 +437,21 @@ export default function VoteAndPredictPage() {
   const renderModal = () => {
     if (!selectedPool) return null;
 
+    // Check if this is a multi-question trivia game
+    if (selectedPool.type === "trivia" && Array.isArray(selectedPool.options) && 
+        selectedPool.options.length > 0 && typeof selectedPool.options[0] === 'object') {
+      return (
+        <TriviaGameModal
+          poolId={selectedPool.id}
+          title={selectedPool.title}
+          questions={selectedPool.options as any}
+          pointsReward={selectedPool.pointsReward}
+          isOpen={!!selectedPool}
+          onClose={() => setSelectedPool(null)}
+        />
+      );
+    }
+
     switch (selectedPool.type) {
       case "awards":
         return <AwardShowModal pool={selectedPool} isOpen={!!selectedPool} onClose={() => setSelectedPool(null)} />;
@@ -573,7 +589,8 @@ export default function VoteAndPredictPage() {
                         <span className="ml-2">
                           {pool.type === "vote" ? "Vote" : 
                            pool.type === "weekly" ? "Predict" :
-                           pool.type === "awards" ? "Pick Winners" : 
+                           pool.type === "awards" ? "Pick Winners" :
+                           pool.type === "trivia" ? "Play Trivia" :
                            "Fill Bracket"}
                         </span>
                       </Button>
