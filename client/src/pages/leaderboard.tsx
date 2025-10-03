@@ -136,6 +136,12 @@ const leaderboardCategories = [
     title: "Fan Points",
     icon: <Star className="w-5 h-5 text-pink-600" />,
     isSelected: false
+  },
+  {
+    id: "challenges",
+    title: "Challenges",
+    icon: <Gamepad2 className="w-5 h-5 text-purple-600" />,
+    isSelected: false
   }
 ];
 
@@ -248,6 +254,7 @@ export default function Leaderboard() {
                 {selectedCategory === 'predict_leader' && 'Pending points for correct predictions (20 pts each when resolved)'}
                 {selectedCategory === 'trivia_leader' && 'Points from trivia games only (15 pts each)'}
                 {selectedCategory === 'fan_points' && 'Your top creators ranked by fan points (1 pt per media item consumed)'}
+                {selectedCategory === 'challenges' && 'Leaderboards for each long-form trivia challenge'}
               </p>
             </div>
           </div>
@@ -275,6 +282,27 @@ export default function Leaderboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : selectedCategory === 'challenges' ? (
+            <div className="p-6">
+              <p className="text-gray-500 text-sm mb-4">Select a challenge below to see its leaderboard:</p>
+              <div className="space-y-3">
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 hover:bg-purple-100 transition-colors cursor-not-allowed">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">⚡</div>
+                      <div>
+                        <div className="font-semibold text-gray-900">Harry Potter Trivia Challenge</div>
+                        <div className="text-sm text-gray-600">20 questions • 100 points</div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-purple-600 font-medium">Coming Soon</div>
+                  </div>
+                </div>
+                <div className="text-center text-sm text-gray-500 py-4">
+                  More challenges coming soon! Each will have its own leaderboard showing top scores.
+                </div>
+              </div>
             </div>
           ) : leaderboardData && leaderboardData.length > 0 ? (
             <div className="divide-y divide-gray-100">
