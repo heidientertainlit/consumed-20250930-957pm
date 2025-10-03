@@ -669,8 +669,6 @@ export default function PlayPage() {
           isOpen={!!selectedTriviaGame}
           onClose={() => {
             setSelectedTriviaGame(null);
-            // Mark as submitted
-            setSelectedOptions(prev => ({ ...prev, [selectedTriviaGame.id]: 'completed' }));
           }}
         />
       )}
