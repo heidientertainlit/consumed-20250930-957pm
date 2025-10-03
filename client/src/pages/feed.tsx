@@ -346,7 +346,7 @@ export default function Feed() {
           <h1 className="text-3xl font-semibold text-black mb-3">
             Activity Feed
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-base text-gray-600">
             Stay in the loop with friends' entertainment—post your latest watch, read, listen, or play, and start the conversation that's been on your mind. <i>Use the search bar above for personalized recommendations and group blends!</i>
           </p>
         </div>
