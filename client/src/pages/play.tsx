@@ -526,12 +526,6 @@ export default function PlayPage() {
                     <Users size={14} />
                     <span>{game.participants || 0}</span>
                   </div>
-                  {game.deadline && (
-                    <div className="flex items-center space-x-1">
-                      <Clock size={14} />
-                      <span>{game.deadline}</span>
-                    </div>
-                  )}
                 </div>
               </CardHeader>
               
