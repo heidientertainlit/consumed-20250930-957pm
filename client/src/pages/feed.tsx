@@ -347,7 +347,7 @@ export default function Feed() {
             Activity Feed
           </h1>
           <p className="text-lg text-gray-600">
-            Stay in the loop with friends' entertainment—post your latest watch, read, listen, or play, and start the conversation that's been on your mind.
+            Stay in the loop with friends' entertainment—post your latest watch, read, listen, or play, and start the conversation that's been on your mind. <i>Use the search bar above for personalized recommendations and group blends!</i>
           </p>
         </div>
 
