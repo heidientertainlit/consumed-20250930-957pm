@@ -9,7 +9,6 @@ import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import Leaderboard from "@/pages/leaderboard";
 import Play from "@/pages/play";
-import Predictions from "@/pages/predictions";
 import Friends from "@/pages/friends";
 import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
@@ -65,11 +64,6 @@ function Router() {
         <Route path="/play">
           <ProtectedRoute>
             <Play />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/predictions">
-          <ProtectedRoute>
-            <Predictions />
           </ProtectedRoute>
         </Route>
         <Route path="/media/:id">
