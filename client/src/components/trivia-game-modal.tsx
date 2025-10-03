@@ -68,17 +68,18 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
       // Game complete
       setIsComplete(true);
       const finalScore = isCorrect ? score + 1 : score;
-      const percentage = Math.round((finalScore / questions.length) * 100);
+      const pointsPerQuestion = Math.floor(pointsReward / questions.length);
+      const totalPointsEarned = finalScore * pointsPerQuestion;
       
       submitPrediction.mutate({
         poolId,
         prediction: JSON.stringify(newAnswers),
-        score: finalScore
+        score: totalPointsEarned
       });
 
       toast({
         title: "Trivia Complete!",
-        description: `You scored ${finalScore}/${questions.length} (${percentage}%) and earned ${Math.round(pointsReward * (percentage / 100))} points!`,
+        description: `You scored ${finalScore}/${questions.length} correct and earned ${totalPointsEarned} points!`,
       });
     }
   };
@@ -95,7 +96,8 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
   const currentQ = questions[currentQuestion];
 
   if (isComplete) {
-    const percentage = Math.round((score / questions.length) * 100);
+    const pointsPerQuestion = Math.floor(pointsReward / questions.length);
+    const totalPointsEarned = score * pointsPerQuestion;
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
@@ -111,10 +113,10 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
               {score}/{questions.length}
             </div>
             <div className="text-2xl text-gray-700 mb-2">
-              {percentage}% Correct
+              {score} Correct × {pointsPerQuestion} pts each
             </div>
             <div className="text-lg text-gray-600">
-              Points Earned: {Math.round(pointsReward * (percentage / 100))}
+              Points Earned: {totalPointsEarned}
             </div>
           </div>
 

@@ -121,7 +121,7 @@ serve(async (req) => {
 
     // POST /predict - User submits a prediction
     if (req.method === 'POST' && pathname.endsWith('/predict')) {
-      const { pool_id, prediction } = await req.json();
+      const { pool_id, prediction, score } = await req.json();
       
       if (!pool_id || !prediction) {
         return new Response(JSON.stringify({ 
@@ -135,7 +135,7 @@ serve(async (req) => {
       // Check if pool is still open for predictions
       const { data: pool } = await supabase
         .from('prediction_pools')
-        .select('status, points_reward')
+        .select('status, points_reward, type, options')
         .eq('id', pool_id)
         .single();
 
@@ -153,6 +153,22 @@ serve(async (req) => {
         });
       }
 
+      // Calculate points based on game type
+      let pointsEarned = pool.points_reward;
+      
+      if (pool.type === 'trivia') {
+        // For long-form trivia, use the score passed from frontend
+        if (score !== undefined) {
+          pointsEarned = score;
+        } 
+        // For quick trivia (2 options), check if answer is correct
+        else if (Array.isArray(pool.options) && pool.options.length === 2 && typeof pool.options[0] === 'string') {
+          // Quick trivia - check correct answer stored in options[2] if exists
+          const correctAnswer = pool.options[2] || pool.options[0]; // Default to first option if no correct answer stored
+          pointsEarned = prediction === correctAnswer ? pool.points_reward : 0;
+        }
+      }
+
       // Insert or update user prediction
       const { error: insertError } = await supabase
         .from('user_predictions')
@@ -160,7 +176,7 @@ serve(async (req) => {
           user_id: appUser.id,
           pool_id: pool_id,
           prediction: prediction,
-          points_earned: pool.points_reward, // Award points immediately for participation
+          points_earned: pointsEarned,
           created_at: new Date().toISOString()
         }, { 
           onConflict: 'user_id,pool_id',
@@ -176,7 +192,7 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true, 
-        points_earned: pool.points_reward 
+        points_earned: pointsEarned
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
