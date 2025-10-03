@@ -192,8 +192,8 @@ export default function PlayPage() {
   const { toast } = useToast();
   
   // Extract predictions map and full data
-  const userPredictions = userPredictionsData.predictions;
-  const userPredictionsList = userPredictionsData.fullData;
+  const userPredictions = userPredictionsData.predictions || {};
+  const userPredictionsList = userPredictionsData.fullData || [];
   
   // Merge local selections with database predictions
   const allPredictions = { ...userPredictions, ...selectedOptions };
