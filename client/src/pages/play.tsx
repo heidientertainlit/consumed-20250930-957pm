@@ -481,7 +481,8 @@ export default function PlayPage() {
           </div>
         </div>
 
-        {/* Featured: 98th Academy Awards Prediction Pool */}
+        {/* Featured: 98th Academy Awards Prediction Pool - Only show on "All" and "Predict" tabs */}
+        {(gameTypeFilter === 'all' || gameTypeFilter === 'predict') && (
         <div className="mb-8">
           <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-300 rounded-2xl p-6 shadow-lg opacity-75">
             <div className="flex items-start justify-between mb-4">
@@ -530,6 +531,7 @@ export default function PlayPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Games Feed */}
         <div className="space-y-6">
