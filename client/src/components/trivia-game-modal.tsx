@@ -117,7 +117,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
           </div>
 
           <div className="flex justify-center space-x-3">
-            <Button variant="outline" className="text-gray-900" onClick={handleRestart}>
+            <Button variant="outline" className="text-gray-900 bg-white hover:bg-gray-50" onClick={handleRestart}>
               Try Again
             </Button>
             <Button className="bg-purple-700 hover:bg-purple-800 text-white" onClick={onClose}>
@@ -151,9 +151,9 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
           </div>
 
           <div className="space-y-2">
-            {currentQ.options.map((option) => (
+            {currentQ.options.map((option, index) => (
               <button
-                key={option}
+                key={`${currentQuestion}-${index}`}
                 onClick={() => setSelectedAnswer(option)}
                 className={`w-full p-3 text-left rounded-lg border transition-all ${
                   selectedAnswer === option
