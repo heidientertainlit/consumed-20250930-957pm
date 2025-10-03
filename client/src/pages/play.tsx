@@ -51,6 +51,44 @@ function usePredictionPools() {
   });
 }
 
+// Fetch user's existing predictions
+function useUserPredictions() {
+  return useQuery({
+    queryKey: ['/api/predictions/user-predictions'],
+    queryFn: async () => {
+      const { createClient } = await import('@supabase/supabase-js');
+      
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return {};
+      
+      // Get user's predictions
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .select('pool_id, prediction')
+        .eq('user_id', user.id);
+        
+      if (error) {
+        console.error('Error fetching user predictions:', error);
+        return {};
+      }
+      
+      // Convert to map of pool_id -> prediction
+      const predictions: Record<string, string> = {};
+      data?.forEach((pred) => {
+        predictions[pred.pool_id] = pred.prediction;
+      });
+      
+      return predictions;
+    }
+  });
+}
+
 // Vote submission mutation - directly to Supabase database (NO EDGE FUNCTIONS!)
 function useSubmitPrediction() {
   const queryClient = useQueryClient();
@@ -127,6 +165,7 @@ function useSubmitPrediction() {
     onSuccess: () => {
       // Invalidate leaderboard cache to show updated points immediately
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
       console.log('🔄 Leaderboard cache invalidated - points will update immediately');
     }
   });
@@ -136,8 +175,12 @@ export default function PlayPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { data: predictionPools = [], isLoading } = usePredictionPools();
+  const { data: userPredictions = {} } = useUserPredictions();
   const submitPrediction = useSubmitPrediction();
   const { toast } = useToast();
+  
+  // Merge local selections with database predictions
+  const allPredictions = { ...userPredictions, ...selectedOptions };
   
   // Filter states
   const [gameTypeFilter, setGameTypeFilter] = useState<string>('all');
@@ -484,12 +527,12 @@ export default function PlayPage() {
               
               <CardContent className="space-y-4">
                 {/* Show if already submitted */}
-                {selectedOptions[game.id] ? (
+                {allPredictions[game.id] ? (
                   (() => {
                     // For long-form trivia, check if all questions were answered
                     if (game.isLongForm) {
                       try {
-                        const answers = JSON.parse(selectedOptions[game.id]);
+                        const answers = JSON.parse(allPredictions[game.id]);
                         const isComplete = Array.isArray(answers) && answers.length === game.options.length;
                         
                         if (isComplete) {
@@ -525,7 +568,7 @@ export default function PlayPage() {
                       <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                         <div className="text-green-800 font-medium">✓ Submitted</div>
                         <div className="text-green-700 text-sm">
-                          You selected "{selectedOptions[game.id]}"
+                          You selected "{allPredictions[game.id]}"
                         </div>
                       </div>
                     );
