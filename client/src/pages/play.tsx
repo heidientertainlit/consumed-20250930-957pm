@@ -193,14 +193,14 @@ export default function PlayPage() {
   const { toast } = useToast();
   
   // Extract predictions map and full data
-  const userPredictions = userPredictionsData.predictions || {};
-  const userPredictionsList = userPredictionsData.fullData || [];
+  const userPredictions = userPredictionsData?.predictions || {};
+  const userPredictionsList = userPredictionsData?.fullData || [];
   
   // Merge local selections with database predictions
   const allPredictions = { ...userPredictions, ...selectedOptions };
   
   // Calculate total points from games
-  const totalGamePoints = userPredictionsList.reduce((sum: number, pred: any) => {
+  const totalGamePoints = (userPredictionsList || []).reduce((sum: number, pred: any) => {
     return sum + (pred.points_earned || 0);
   }, 0);
   
