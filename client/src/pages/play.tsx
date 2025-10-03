@@ -485,12 +485,51 @@ export default function PlayPage() {
               <CardContent className="space-y-4">
                 {/* Show if already submitted */}
                 {selectedOptions[game.id] ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                    <div className="text-green-800 font-medium">✓ Submitted</div>
-                    <div className="text-green-700 text-sm">
-                      {game.isLongForm ? 'Game completed!' : `You selected "${selectedOptions[game.id]}"`}
-                    </div>
-                  </div>
+                  (() => {
+                    // For long-form trivia, check if all questions were answered
+                    if (game.isLongForm) {
+                      try {
+                        const answers = JSON.parse(selectedOptions[game.id]);
+                        const isComplete = Array.isArray(answers) && answers.length === game.options.length;
+                        
+                        if (isComplete) {
+                          return (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                              <div className="text-green-800 font-medium">✓ Submitted</div>
+                              <div className="text-green-700 text-sm">Game completed!</div>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                              <div className="text-yellow-800 font-medium">⏸ In Progress</div>
+                              <div className="text-yellow-700 text-sm">
+                                {answers.length}/{game.options.length} questions answered
+                              </div>
+                            </div>
+                          );
+                        }
+                      } catch (e) {
+                        // Fallback if parsing fails
+                        return (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                            <div className="text-green-800 font-medium">✓ Submitted</div>
+                            <div className="text-green-700 text-sm">Game completed!</div>
+                          </div>
+                        );
+                      }
+                    }
+                    
+                    // For quick games
+                    return (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                        <div className="text-green-800 font-medium">✓ Submitted</div>
+                        <div className="text-green-700 text-sm">
+                          You selected "{selectedOptions[game.id]}"
+                        </div>
+                      </div>
+                    );
+                  })()
                 ) : game.isLongForm ? (
                   // Long-form trivia game - show "Play Game" button
                   <Button 
