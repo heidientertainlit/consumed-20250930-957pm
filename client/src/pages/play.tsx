@@ -51,7 +51,7 @@ function usePredictionPools() {
   });
 }
 
-// Fetch user's existing predictions
+// Fetch user's existing predictions with full details
 function useUserPredictions() {
   return useQuery({
     queryKey: ['/api/predictions/user-predictions'],
@@ -65,26 +65,38 @@ function useUserPredictions() {
       
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return {};
+      if (!user) return { predictions: {}, fullData: [] };
       
-      // Get user's predictions
+      // Get user's predictions with pool details
       const { data, error } = await supabase
         .from('user_predictions')
-        .select('pool_id, prediction')
-        .eq('user_id', user.id);
+        .select(`
+          pool_id, 
+          prediction, 
+          points_earned,
+          created_at,
+          prediction_pools (
+            id,
+            title,
+            type,
+            category
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
         
       if (error) {
         console.error('Error fetching user predictions:', error);
-        return {};
+        return { predictions: {}, fullData: [] };
       }
       
-      // Convert to map of pool_id -> prediction
+      // Convert to map of pool_id -> prediction for form state
       const predictions: Record<string, string> = {};
       data?.forEach((pred) => {
         predictions[pred.pool_id] = pred.prediction;
       });
       
-      return predictions;
+      return { predictions, fullData: data || [] };
     }
   });
 }
@@ -175,12 +187,21 @@ export default function PlayPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { data: predictionPools = [], isLoading } = usePredictionPools();
-  const { data: userPredictions = {} } = useUserPredictions();
+  const { data: userPredictionsData = { predictions: {}, fullData: [] } } = useUserPredictions();
   const submitPrediction = useSubmitPrediction();
   const { toast } = useToast();
   
+  // Extract predictions map and full data
+  const userPredictions = userPredictionsData.predictions;
+  const userPredictionsList = userPredictionsData.fullData;
+  
   // Merge local selections with database predictions
   const allPredictions = { ...userPredictions, ...selectedOptions };
+  
+  // Calculate total points from games
+  const totalGamePoints = userPredictionsList.reduce((sum: number, pred: any) => {
+    return sum + (pred.points_earned || 0);
+  }, 0);
   
   // Filter states
   const [gameTypeFilter, setGameTypeFilter] = useState<string>('all');
@@ -637,24 +658,34 @@ export default function PlayPage() {
             <h2 className="text-xl font-bold text-gray-800">Your Game Stats</h2>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">0</div>
-              <div className="text-sm text-gray-500">Trivia Played</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">0%</div>
-              <div className="text-sm text-gray-500">Trivia Accuracy</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 mb-1">0</div>
-              <div className="text-sm text-gray-500">Votes Cast</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 mb-1">0</div>
-              <div className="text-sm text-gray-500">Predictions Made</div>
-            </div>
+          <div className="text-center mb-6">
+            <div className="text-3xl font-bold text-purple-600 mb-1">{totalGamePoints}</div>
+            <div className="text-sm text-gray-500">Total Points Earned</div>
           </div>
+
+          {userPredictionsList.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Games Completed</h3>
+              {userPredictionsList.map((pred: any) => (
+                <div 
+                  key={pred.pool_id} 
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  data-testid={`completed-game-${pred.pool_id}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    {pred.prediction_pools?.type === 'trivia' && <Brain size={18} className="text-blue-600" />}
+                    {pred.prediction_pools?.type === 'vote' && <Vote size={18} className="text-green-600" />}
+                    {pred.prediction_pools?.type === 'prediction' && <Trophy size={18} className="text-purple-600" />}
+                    <div>
+                      <div className="font-medium text-sm text-gray-900">{pred.prediction_pools?.title || 'Unknown Game'}</div>
+                      <div className="text-xs text-gray-500 capitalize">{pred.prediction_pools?.type || 'game'}</div>
+                    </div>
+                  </div>
+                  <div className="text-sm font-semibold text-purple-600">+{pred.points_earned || 0} pts</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
