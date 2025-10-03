@@ -5,6 +5,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -263,16 +264,8 @@ export default function PlayPage() {
       .sort(() => Math.random() - 0.5); // Randomize order ONLY once
   }, [predictionPools]);
 
-  // Extract unique media types from games
-  const uniqueMediaTypes = useMemo(() => {
-    const types = new Set<string>();
-    allGames.forEach((game: any) => {
-      if (game.mediaType) {
-        types.add(game.mediaType);
-      }
-    });
-    return Array.from(types).sort();
-  }, [allGames]);
+  // All available media types (including those without content yet)
+  const allMediaTypes = ['Movies', 'TV', 'Music', 'Books', 'Sports', 'Gaming', 'Podcasts'];
 
   // Filter games based on selected filters
   const filteredGames = useMemo(() => {
@@ -321,77 +314,39 @@ export default function PlayPage() {
 
         {/* Filters Section */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
-          {/* Game Type Filters */}
-          <div className="mb-4">
-            <div className="text-sm font-medium text-gray-700 mb-2">Game Type</div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={gameTypeFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setGameTypeFilter('all')}
-                className={gameTypeFilter === 'all' ? 'bg-gray-900 text-white hover:bg-gray-800' : 'border-gray-300 hover:border-gray-400'}
-                data-testid="filter-game-all"
-              >
-                All
-              </Button>
-              <Button
-                variant={gameTypeFilter === 'vote' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setGameTypeFilter('vote')}
-                className={gameTypeFilter === 'vote' ? 'bg-green-600 text-white hover:bg-green-700' : 'border-gray-300 hover:border-gray-400'}
-                data-testid="filter-game-vote"
-              >
-                <Vote size={14} className="mr-1" />
-                Vote
-              </Button>
-              <Button
-                variant={gameTypeFilter === 'trivia' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setGameTypeFilter('trivia')}
-                className={gameTypeFilter === 'trivia' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border-gray-300 hover:border-gray-400'}
-                data-testid="filter-game-trivia"
-              >
-                <Brain size={14} className="mr-1" />
-                Trivia
-              </Button>
-              <Button
-                variant={gameTypeFilter === 'predict' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setGameTypeFilter('predict')}
-                className={gameTypeFilter === 'predict' ? 'bg-purple-600 text-white hover:bg-purple-700' : 'border-gray-300 hover:border-gray-400'}
-                data-testid="filter-game-predict"
-              >
-                <Trophy size={14} className="mr-1" />
-                Predict
-              </Button>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Game Type Dropdown */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Game Type</label>
+              <Select value={gameTypeFilter} onValueChange={setGameTypeFilter}>
+                <SelectTrigger className="w-full" data-testid="select-game-type">
+                  <SelectValue placeholder="All Games" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Games</SelectItem>
+                  <SelectItem value="vote">Vote</SelectItem>
+                  <SelectItem value="trivia">Trivia</SelectItem>
+                  <SelectItem value="predict">Predict</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
 
-          {/* Media Type Filters */}
-          <div>
-            <div className="text-sm font-medium text-gray-700 mb-2">Media Type</div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={mediaTypeFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setMediaTypeFilter('all')}
-                className={mediaTypeFilter === 'all' ? 'bg-gray-900 text-white hover:bg-gray-800' : 'border-gray-300 hover:border-gray-400'}
-                data-testid="filter-media-all"
-              >
-                All
-              </Button>
-              {uniqueMediaTypes.map((type) => (
-                <Button
-                  key={type}
-                  variant={mediaTypeFilter === type ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setMediaTypeFilter(type)}
-                  className={mediaTypeFilter === type ? 'bg-gray-900 text-white hover:bg-gray-800' : 'border-gray-300 hover:border-gray-400'}
-                  data-testid={`filter-media-${type.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  {type}
-                </Button>
-              ))}
+            {/* Media Type Dropdown */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Media Type</label>
+              <Select value={mediaTypeFilter} onValueChange={setMediaTypeFilter}>
+                <SelectTrigger className="w-full" data-testid="select-media-type">
+                  <SelectValue placeholder="All Media" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Media</SelectItem>
+                  {allMediaTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
