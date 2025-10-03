@@ -349,9 +349,9 @@ export default function PlayPage() {
   // All available media types (including those without content yet)
   const allMediaTypes = ['Movies', 'TV', 'Music', 'Books', 'Sports', 'Gaming', 'Podcasts'];
 
-  // Filter games based on selected filters
+  // Filter games based on selected filters and sort by completion status
   const filteredGames = useMemo(() => {
-    return allGames.filter((game: any) => {
+    const filtered = allGames.filter((game: any) => {
       // Challenges tab - show only long-form trivia games
       if (gameTypeFilter === 'challenges') {
         if (!game.isLongForm) return false;
@@ -368,7 +368,20 @@ export default function PlayPage() {
       
       return true;
     });
-  }, [allGames, gameTypeFilter, mediaTypeFilter]);
+    
+    // Sort: uncompleted games first, completed games at bottom
+    return filtered.sort((a: any, b: any) => {
+      const aCompleted = !!allPredictions[a.id];
+      const bCompleted = !!allPredictions[b.id];
+      
+      // If a is completed and b is not, b comes first
+      if (aCompleted && !bCompleted) return 1;
+      // If b is completed and a is not, a comes first
+      if (!aCompleted && bCompleted) return -1;
+      // If both same status, maintain original order
+      return 0;
+    });
+  }, [allGames, gameTypeFilter, mediaTypeFilter, allPredictions]);
 
   if (isLoading) {
     return (
