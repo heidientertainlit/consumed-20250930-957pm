@@ -382,10 +382,15 @@ export default function VoteAndPredictPage() {
     }
   };
 
-  // Filter pools based on status
-  const filteredPools = pools.filter((pool: PredictionPool) => 
-    pool.status === filterStatus
-  );
+  // Filter pools based on status and sort with Harry Potter trivia first
+  const filteredPools = pools
+    .filter((pool: PredictionPool) => pool.status === filterStatus)
+    .sort((a: PredictionPool, b: PredictionPool) => {
+      // Put Harry Potter trivia at the top
+      if (a.id === 'trivia-harry-potter-full') return -1;
+      if (b.id === 'trivia-harry-potter-full') return 1;
+      return 0;
+    });
 
   const handlePoolClick = (pool: PredictionPool) => {
     if (pool.status === "open" && !pool.inline) {
