@@ -483,13 +483,13 @@ export default function PlayPage() {
 
         {/* Featured: 98th Academy Awards Prediction Pool - Only show on "All" and "Predict" tabs */}
         {(gameTypeFilter === 'all' || gameTypeFilter === 'predict') && (
-        <div className="mb-8">
-          <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-300 rounded-2xl p-6 shadow-lg opacity-75">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <div className="text-5xl">🏆</div>
+        <div className="mb-6">
+          <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-4 shadow-sm opacity-75">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">🏆</div>
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-1">
                     <Badge className="bg-yellow-500 text-white hover:bg-yellow-500 text-xs font-bold border-0">
                       FEATURED
                     </Badge>
@@ -498,34 +498,17 @@ export default function PlayPage() {
                       PREDICT
                     </Badge>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">
                     98th Academy Awards Prediction Pool
                   </h2>
-                  <p className="text-gray-700">
+                  <p className="text-sm text-gray-700">
                     Join the biggest Oscar prediction pool in history! Predict winners across all major categories.
                   </p>
                 </div>
               </div>
-            </div>
-            
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-yellow-300">
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1">
-                  <Trophy size={16} className="text-yellow-600" />
-                  <span className="font-semibold text-gray-700">2026 Oscars</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Film size={16} className="text-yellow-600" />
-                  <span className="font-semibold text-gray-700">Multiple Categories</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Star size={16} className="text-yellow-600" />
-                  <span className="font-semibold text-yellow-600">Big Points Pool</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-100 border border-yellow-400 rounded-lg">
-                  <span className="text-lg font-bold text-yellow-700">🎬 Coming Soon</span>
+              <div className="ml-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-100 border border-yellow-400 rounded-lg">
+                  <span className="text-sm font-bold text-yellow-700">🎬 Coming Soon</span>
                 </div>
               </div>
             </div>
