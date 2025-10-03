@@ -100,31 +100,31 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
     const totalPointsEarned = score * pointsPerQuestion;
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
+        <DialogContent className="max-w-lg bg-white border-gray-200 text-gray-800">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gray-900 text-center">
-              <Trophy className="inline-block mr-2 text-yellow-500" size={32} />
+            <DialogTitle className="text-xl font-bold text-gray-900 text-center">
+              <Trophy className="inline-block mr-2 text-yellow-500" size={24} />
               Trivia Complete!
             </DialogTitle>
           </DialogHeader>
 
-          <div className="text-center py-8">
-            <div className="text-6xl font-bold text-purple-600 mb-4">
+          <div className="text-center py-6">
+            <div className="text-5xl font-bold text-purple-600 mb-3">
               {score}/{questions.length}
             </div>
-            <div className="text-2xl text-gray-700 mb-2">
+            <div className="text-xl text-gray-700 mb-2">
               {score} Correct × {pointsPerQuestion} pts each
             </div>
-            <div className="text-lg text-gray-600">
+            <div className="text-base text-gray-600">
               Points Earned: {totalPointsEarned}
             </div>
           </div>
 
           <div className="flex justify-center space-x-3">
-            <Button variant="outline" onClick={handleRestart}>
+            <Button variant="outline" className="text-gray-900" onClick={handleRestart}>
               Try Again
             </Button>
-            <Button className="bg-purple-700 hover:bg-purple-800" onClick={onClose}>
+            <Button className="bg-purple-700 hover:bg-purple-800 text-white" onClick={onClose}>
               Close
             </Button>
           </div>
@@ -135,46 +135,46 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white border-gray-200 text-gray-800">
+      <DialogContent className="max-w-lg bg-white border-gray-200 text-gray-800">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900">{title}</DialogTitle>
-          <div className="flex items-center justify-between mt-4">
-            <Badge variant="outline" className="text-sm">
+          <DialogTitle className="text-lg font-bold text-gray-900">{title}</DialogTitle>
+          <div className="flex items-center justify-between mt-3">
+            <Badge variant="outline" className="text-xs">
               Question {currentQuestion + 1} of {questions.length}
             </Badge>
-            <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+            <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs">
               Score: {score}/{currentQuestion}
             </Badge>
           </div>
           <Progress value={progress} className="mt-2" />
         </DialogHeader>
 
-        <div className="space-y-6 mt-6">
-          <div className="text-xl font-semibold text-gray-800">
+        <div className="space-y-4 mt-4">
+          <div className="text-lg font-semibold text-gray-800">
             {currentQ.question}
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {currentQ.options.map((option) => (
               <button
                 key={option}
                 onClick={() => setSelectedAnswer(option)}
-                className={`w-full p-4 text-left rounded-lg border transition-all ${
+                className={`w-full p-3 text-left rounded-lg border transition-all ${
                   selectedAnswer === option
                     ? 'border-purple-500 bg-purple-50 text-purple-900'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-800'
                 }`}
               >
-                <div className="font-medium text-gray-800">{option}</div>
+                <div className="font-medium">{option}</div>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <div className="flex justify-end space-x-3 mt-4 pt-4 border-t">
+          <Button variant="outline" className="text-gray-900 bg-white" onClick={onClose}>Cancel</Button>
           <Button 
-            className="bg-purple-700 hover:bg-purple-800"
+            className="bg-purple-700 hover:bg-purple-800 text-white"
             disabled={!selectedAnswer}
             onClick={handleNext}
           >
