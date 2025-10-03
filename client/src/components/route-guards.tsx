@@ -13,6 +13,11 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
 
   useEffect(() => {
     if (!loading && !user) {
+      // Capture full URL including hash fragment for redirect after login
+      const fullPath = window.location.pathname + window.location.hash;
+      if (fullPath !== '/login') {
+        sessionStorage.setItem('returnUrl', fullPath);
+      }
       setLocation('/login');
     }
   }, [user, loading, setLocation]);
