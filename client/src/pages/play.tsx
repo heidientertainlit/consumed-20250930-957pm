@@ -5,7 +5,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -312,48 +312,99 @@ export default function PlayPage() {
           </p>
         </div>
 
-        {/* Filters Section */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
-          <div className="grid grid-cols-2 gap-4">
-            {/* Game Type Dropdown */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Game Type</label>
-              <Select value={gameTypeFilter} onValueChange={setGameTypeFilter}>
-                <SelectTrigger className="w-full" data-testid="select-game-type">
-                  <SelectValue placeholder="All Games" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Games</SelectItem>
-                  <SelectItem value="vote">Vote</SelectItem>
-                  <SelectItem value="trivia">Trivia</SelectItem>
-                  <SelectItem value="predict">Predict</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Compact Filter Bar */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+          {/* Game Type Chips */}
+          <Button
+            variant={gameTypeFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setGameTypeFilter('all')}
+            className={`rounded-full whitespace-nowrap ${
+              gameTypeFilter === 'all' 
+                ? 'bg-gray-900 text-white hover:bg-gray-800' 
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            }`}
+            data-testid="chip-game-all"
+          >
+            All
+          </Button>
+          <Button
+            variant={gameTypeFilter === 'vote' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setGameTypeFilter('vote')}
+            className={`rounded-full whitespace-nowrap ${
+              gameTypeFilter === 'vote' 
+                ? 'bg-green-600 text-white hover:bg-green-700' 
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            }`}
+            data-testid="chip-game-vote"
+          >
+            <Vote size={14} className="mr-1" />
+            Vote
+          </Button>
+          <Button
+            variant={gameTypeFilter === 'trivia' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setGameTypeFilter('trivia')}
+            className={`rounded-full whitespace-nowrap ${
+              gameTypeFilter === 'trivia' 
+                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            }`}
+            data-testid="chip-game-trivia"
+          >
+            <Brain size={14} className="mr-1" />
+            Trivia
+          </Button>
+          <Button
+            variant={gameTypeFilter === 'predict' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setGameTypeFilter('predict')}
+            className={`rounded-full whitespace-nowrap ${
+              gameTypeFilter === 'predict' 
+                ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            }`}
+            data-testid="chip-game-predict"
+          >
+            <Trophy size={14} className="mr-1" />
+            Predict
+          </Button>
 
-            {/* Media Type Dropdown */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Media Type</label>
-              <Select value={mediaTypeFilter} onValueChange={setMediaTypeFilter}>
-                <SelectTrigger className="w-full" data-testid="select-media-type">
-                  <SelectValue placeholder="All Media" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Media</SelectItem>
-                  {allMediaTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          {/* Divider */}
+          <div className="h-6 w-px bg-gray-300 mx-1"></div>
 
-          {/* Results count */}
-          <div className="text-sm text-gray-500 mt-3 pt-3 border-t border-gray-200">
-            Showing {filteredGames.length} of {allGames.length} games
-          </div>
+          {/* Media Type Dropdown Pill */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full whitespace-nowrap bg-white border-gray-300 hover:bg-gray-50"
+                data-testid="dropdown-media-type"
+              >
+                {mediaTypeFilter === 'all' ? 'All Media' : mediaTypeFilter}
+                <span className="ml-1 text-xs">▾</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem 
+                onClick={() => setMediaTypeFilter('all')}
+                className={mediaTypeFilter === 'all' ? 'bg-gray-100 font-medium' : ''}
+              >
+                All Media
+              </DropdownMenuItem>
+              {allMediaTypes.map((type) => (
+                <DropdownMenuItem 
+                  key={type}
+                  onClick={() => setMediaTypeFilter(type)}
+                  className={mediaTypeFilter === type ? 'bg-gray-100 font-medium' : ''}
+                >
+                  {type}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Games Feed */}
