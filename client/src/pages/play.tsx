@@ -441,7 +441,7 @@ export default function PlayPage() {
                           </Badge>
                         )}
                         {game.isLongForm && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge className="bg-purple-600 text-white hover:bg-purple-600 text-xs border-0">
                             {game.options.length} Questions
                           </Badge>
                         )}
