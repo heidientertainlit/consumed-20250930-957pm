@@ -1556,9 +1556,8 @@ export default function UserProfile() {
                   <>
                     <Button 
                       size="sm"
-                      variant="outline"
                       onClick={handleRetakeDNASurvey}
-                      className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
                       data-testid="button-retake-dna-survey"
                     >
                       <RefreshCw size={14} className="mr-2" />
