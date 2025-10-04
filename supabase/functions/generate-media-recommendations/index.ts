@@ -82,12 +82,23 @@ serve(async (req) => {
       });
     }
 
-    // Fetch user's DNA profile from database
-    const { data: dnaProfile, error: dnaError } = await supabase
-      .from('dna_profiles')
-      .select('*')
-      .eq('user_id', appUser.id)
-      .single();
+    // Fetch user's DNA profile and consumption history in parallel
+    const [dnaResult, consumptionResult] = await Promise.all([
+      supabase
+        .from('dna_profiles')
+        .select('*')
+        .eq('user_id', appUser.id)
+        .single(),
+      supabase
+        .from('list_items')
+        .select('title, type, media_type, creator, created_at')
+        .eq('user_id', appUser.id)
+        .order('created_at', { ascending: false })
+        .limit(6)
+    ]);
+
+    const { data: dnaProfile, error: dnaError } = dnaResult;
+    const { data: recentConsumption, error: consumptionError } = consumptionResult;
 
     console.log("DNA profile lookup:", { found: !!dnaProfile, dnaError });
 
@@ -99,14 +110,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-
-    // Get user's recent consumption using correct schema (list_items table)
-    const { data: recentConsumption, error: consumptionError } = await supabase
-      .from('list_items')
-      .select('title, type, media_type, creator, created_at')
-      .eq('user_id', appUser.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
 
     console.log("Recent consumption lookup:", { count: recentConsumption?.length, consumptionError });
 
@@ -172,7 +175,7 @@ Respond in JSON format with a "recommendations" array.`;
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 2000,
+        max_tokens: 1500,
         temperature: 0.7
       })
     });

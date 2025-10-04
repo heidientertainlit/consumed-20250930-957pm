@@ -54,7 +54,7 @@ export default function Track() {
 
     const listId = listName.toLowerCase().replace(/\s+/g, '-');
     const shareUrl = `${window.location.origin}/list/${listId}?user=${session.user.id}`;
-    
+
     if (navigator.share) {
       // Use native sharing if available (mobile)
       navigator.share({
@@ -94,7 +94,7 @@ export default function Track() {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Get user's lists and media data from Supabase
   const { data: userListsData, isLoading: listsLoading, error: listsError } = useQuery({
     queryKey: ['user-lists-with-media'],
@@ -103,20 +103,20 @@ export default function Track() {
         console.log('No session token available');
         return null;
       }
-      
+
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${session.access_token}`,
         },
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Supabase lists fetch failed:', response.status, errorText);
         throw new Error('Failed to fetch user lists');
       }
-      
+
       const data = await response.json();
       console.log('Supabase lists data:', data);
       return data;
@@ -126,20 +126,20 @@ export default function Track() {
 
   // Extract lists and stats from the response
   const userLists = userListsData?.lists || [];
-  
+
   // Get actual user points from Supabase
   const { data: userPointsData } = useQuery({
     queryKey: ['user-points'],
     queryFn: async () => {
       if (!session?.access_token) return null;
-      
+
       const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         return data;
@@ -153,38 +153,39 @@ export default function Track() {
     totalLogged: userLists.reduce((total: number, list: any) => total + (list.items?.length || 0), 0),
     pointsEarned: userPointsData?.points?.all_time || 0, // Use actual points from Supabase
   };
-  
+
   // Get personalized recommendations from Supabase
+  const fetchRecommendations = async () => {
+    if (!session?.access_token) {
+      console.log('No session token available for recommendations');
+      return null;
+    }
+
+    const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Recommendations fetch failed:', response.status, errorText);
+      // Don't throw error, just return empty to not break the page
+      return { recommendations: [] };
+    }
+
+    const data = await response.json();
+    console.log('Recommendations data:', data);
+    return data;
+  };
+
   const { data: recommendationsData, isLoading: recommendationsLoading } = useQuery({
-    queryKey: ['media-recommendations'],
-    queryFn: async () => {
-      if (!session?.access_token) {
-        console.log('No session token available for recommendations');
-        return null;
-      }
-      
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations", {
-        method: "GET", 
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Recommendations fetch failed:', response.status, errorText);
-        // Don't throw error, just return empty to not break the page
-        return { recommendations: [] };
-      }
-      
-      const data = await response.json();
-      console.log('Recommendations data:', data);
-      return data;
-    },
+    queryKey: ["media-recommendations"],
+    queryFn: fetchRecommendations,
     enabled: !!session?.access_token,
-    // Cache for 10 minutes since recommendations are expensive to generate
-    staleTime: 10 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   const recommendations = recommendationsData?.recommendations || [];
@@ -278,7 +279,7 @@ export default function Track() {
       }
 
       const result = await response.json();
-      
+
       toast({
         title: "Import successful!",
         description: `Imported ${result.imported} items${result.failed > 0 ? ` (${result.failed} failed)` : ''}`,
@@ -286,7 +287,7 @@ export default function Track() {
 
       // Refresh lists
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      
+
       // Close modal and reset
       setIsUploadModalOpen(false);
       setUploadFile(null);
@@ -321,7 +322,7 @@ export default function Track() {
   const getCategoryIcon = (category: string, isWhiteBg = false) => {
     const iconClass = isWhiteBg ? "text-purple-600" : "text-gray-600";
     const iconSize = 16;
-    
+
     switch (category) {
       case 'movies': return <Film className={iconClass} size={iconSize} />;
       case 'tv': return <Tv className={iconClass} size={iconSize} />;
@@ -400,7 +401,7 @@ export default function Track() {
         <div className="mb-4 md:mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Lists</h2>
           <p className="text-gray-600 text-sm mb-4 md:mb-6">View your default lists. They include what you're on now, what you've finished, or what's next.</p>
-          
+
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 md:mb-4">
             {/* Filter Dropdown */}
             <div className="mb-3 md:mb-4">
@@ -417,7 +418,7 @@ export default function Track() {
                 </SelectContent>
               </Select>
             </div>
-            
+
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -433,7 +434,7 @@ export default function Track() {
               userLists
                 .filter((list: any) => selectedFilter === "All" || list.title === selectedFilter)
                 .map((list: any) => (
-                  <div 
+                  <div
                     key={list.id}
                     className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => handleListClick(list.title)}
@@ -445,7 +446,7 @@ export default function Track() {
                       {list.title === "Did Not Finish" && <X className="text-purple-700 mr-3" size={24} />}
                       {list.title === "Queue" && <Users className="text-purple-700 mr-3" size={24} />}
                       {list.title === "All Media" && <List className="text-purple-700 mr-3" size={24} />}
-                      {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) && 
+                      {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) &&
                         <List className="text-purple-700 mr-3" size={24} />}
                       <h3 className="font-bold text-lg text-gray-800">{list.title}</h3>
                     </div>
@@ -455,7 +456,7 @@ export default function Track() {
                       {list.title === "Did Not Finish" && "Media you started but didn't complete"}
                       {list.title === "Queue" && "Media you want to consume later"}
                       {list.title === "All Media" && "All tracked media items"}
-                      {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) && 
+                      {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) &&
                         (list.description || "Your custom list")}
                     </p>
                     <div className="text-2xl font-bold text-purple-800">{list.items?.length || 0}</div>
@@ -473,7 +474,7 @@ export default function Track() {
               <Sparkles className="text-purple-700 mr-2" size={20} />
               <h2 className="text-xl font-bold text-gray-800">Recommended for You</h2>
             </div>
-            
+
             <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
               {recommendationsLoading ? (
                 // Loading skeleton cards
@@ -526,21 +527,21 @@ export default function Track() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleAddRecommendation(rec, 'currently')}
                             className="cursor-pointer"
                             disabled={addRecommendationMutation.isPending}
                           >
                             Add to Currently
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleAddRecommendation(rec, 'finished')}
                             className="cursor-pointer"
                             disabled={addRecommendationMutation.isPending}
                           >
-                            Add to Finished  
+                            Add to Finished
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleAddRecommendation(rec, 'dnf')}
                             className="cursor-pointer"
                             disabled={addRecommendationMutation.isPending}
@@ -551,7 +552,7 @@ export default function Track() {
                       </DropdownMenu>
                     </div>
                   </div>
-                  
+
                   <h3 className="font-bold text-lg mb-1">{rec.title}</h3>
                   <p className="text-white/80 text-sm leading-relaxed">
                     {rec.description}
@@ -566,9 +567,9 @@ export default function Track() {
       </div>
 
 
-      <ConsumptionTracker 
-        isOpen={isTrackModalOpen} 
-        onClose={() => setIsTrackModalOpen(false)} 
+      <ConsumptionTracker
+        isOpen={isTrackModalOpen}
+        onClose={() => setIsTrackModalOpen(false)}
       />
 
       {/* Import History Dialog */}
@@ -587,7 +588,7 @@ export default function Track() {
               </button>
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="flex flex-col gap-4">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -665,7 +666,7 @@ export default function Track() {
               To bring your viewing and reading history into Consumed, you'll need to download your data from each service first. This process is easiest on desktop.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div>
               <h3 className="font-semibold text-gray-900 mb-3">Where to download:</h3>
@@ -674,9 +675,9 @@ export default function Track() {
                   <span className="font-medium text-gray-700 min-w-[100px]">Netflix:</span>
                   <div className="text-sm text-gray-600">
                     Go to your Account → Security → Personal Info Access → Request.{' '}
-                    <a 
-                      href="https://www.netflix.com/account/getmyinfo" 
-                      target="_blank" 
+                    <a
+                      href="https://www.netflix.com/account/getmyinfo"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-700 underline"
                     >
@@ -689,9 +690,9 @@ export default function Track() {
                   <span className="font-medium text-gray-700 min-w-[100px]">Goodreads:</span>
                   <div className="text-sm text-gray-600">
                     Visit your Import/Export page and click "Export Library".{' '}
-                    <a 
-                      href="https://www.goodreads.com/review/import" 
-                      target="_blank" 
+                    <a
+                      href="https://www.goodreads.com/review/import"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-700 underline"
                     >
@@ -716,8 +717,8 @@ export default function Track() {
 
             <div className="text-sm text-gray-600 text-center">
               Need help? We're here for you at{' '}
-              <a 
-                href="mailto:import@consumedapp.com" 
+              <a
+                href="mailto:import@consumedapp.com"
                 className="text-blue-600 hover:text-blue-700 underline"
               >
                 import@consumedapp.com
@@ -733,7 +734,7 @@ export default function Track() {
           </div>
         </DialogContent>
       </Dialog>
-      
+
     </div>
   );
 }
