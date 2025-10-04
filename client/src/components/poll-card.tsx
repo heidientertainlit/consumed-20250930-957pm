@@ -78,7 +78,7 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm" data-testid={`poll-${poll.id}`}>
+    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-100 p-4 shadow-sm" data-testid={`poll-${poll.id}`}>
       {/* Header with badge */}
       <div className="flex items-center justify-between mb-3">
         <div className={cn(
@@ -123,13 +123,13 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
               onClick={() => !showResults && handleVote(option.id)}
               disabled={showResults || isSubmitting}
               className={cn(
-                "w-full text-left p-3 rounded-lg border transition-all duration-200 relative overflow-hidden",
+                "w-full text-left p-3 rounded-lg border transition-all duration-200 relative overflow-hidden bg-white",
                 showResults
                   ? "cursor-default"
                   : "hover:border-purple-300 hover:bg-purple-50 cursor-pointer",
                 isSelected && showResults
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-gray-200"
+                  ? "border-purple-400 bg-purple-50"
+                  : "border-purple-100"
               )}
               data-testid={`poll-${poll.id}-option-${option.id}`}
             >
