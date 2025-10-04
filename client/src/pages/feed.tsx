@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
+import PollCard from "@/components/poll-card";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Eye, Users, BookOpen, Film, Send } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import CommentsSection from "@/components/comments-section";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SocialPost {
   id: string;
@@ -72,6 +74,12 @@ export default function Feed() {
   const { data: socialPosts, isLoading } = useQuery({
     queryKey: ["social-feed"],
     queryFn: () => fetchSocialFeed(session),
+    enabled: !!session?.access_token,
+  });
+
+  // Fetch active polls
+  const { data: polls = [] } = useQuery({
+    queryKey: ["/api/polls"],
     enabled: !!session?.access_token,
   });
 
@@ -229,6 +237,21 @@ export default function Feed() {
 
   const handleShareUpdate = () => {
     setIsShareDialogOpen(true);
+  };
+
+  // Poll voting mutation
+  const voteMutation = useMutation({
+    mutationFn: async ({ pollId, optionId }: { pollId: number; optionId: number }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      return apiRequest('POST', `/api/polls/${pollId}/vote`, { optionId, userId: user.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+    },
+  });
+
+  const handleVote = async (pollId: number, optionId: number) => {
+    await voteMutation.mutateAsync({ pollId, optionId });
   };
 
   const handleLike = (postId: string) => {
