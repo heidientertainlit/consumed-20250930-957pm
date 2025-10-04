@@ -79,8 +79,13 @@ export default function Feed() {
 
   // Fetch active polls
   const { data: polls = [] } = useQuery({
-    queryKey: ["/api/polls"],
-    enabled: !!session?.access_token,
+    queryKey: ["/api/polls", user?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/polls?userId=${user?.id}`);
+      if (!response.ok) throw new Error('Failed to fetch polls');
+      return response.json();
+    },
+    enabled: !!session?.access_token && !!user?.id,
   });
 
   // Like mutation with optimistic updates
@@ -245,8 +250,14 @@ export default function Feed() {
       if (!user?.id) throw new Error('Not authenticated');
       return apiRequest('POST', `/api/polls/${pollId}/vote`, { optionId, userId: user.id });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+    onSuccess: (data) => {
+      // Refetch polls with user vote status
+      queryClient.invalidateQueries({ queryKey: ["/api/polls", user?.id] });
+      
+      // Log points earned
+      if (data.pointsAwarded) {
+        console.log(`✅ Vote submitted! Earned ${data.pointsAwarded} points`);
+      }
     },
   });
 
@@ -407,19 +418,6 @@ export default function Feed() {
             </Button>
           </div>
 
-          {/* Active Polls - Always Show at Top */}
-          {polls && polls.length > 0 && (
-            <div className="space-y-3 mb-6">
-              {polls.map((poll: any) => (
-                <PollCard
-                  key={poll.id}
-                  poll={poll}
-                  onVote={handleVote}
-                  hasVoted={false}
-                />
-              ))}
-            </div>
-          )}
 
           {isLoading ? (
             <div className="space-y-4">
@@ -468,6 +466,26 @@ export default function Feed() {
             <div className="space-y-4">
               {socialPosts.map((post: SocialPost, postIndex: number) => (
                 <div key={`post-wrapper-${postIndex}`}>
+                  {/* Insert Polls after 3rd post */}
+                  {postIndex === 2 && polls && polls.length > 0 && (
+                    <div className="space-y-3 mb-4">
+                      {polls.map((poll: any) => {
+                        // Check if user has already voted
+                        const hasVoted = poll.user_has_voted || false;
+                        if (hasVoted) return null; // Hide poll if already voted
+                        
+                        return (
+                          <PollCard
+                            key={poll.id}
+                            poll={poll}
+                            onVote={handleVote}
+                            hasVoted={false}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                  
                   {/* Original Post */}
                   <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                     {/* User Info and Date */}

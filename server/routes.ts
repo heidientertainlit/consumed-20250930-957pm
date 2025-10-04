@@ -156,7 +156,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get active polls
   app.get("/api/polls", async (req, res) => {
     try {
-      const polls = await pollsDb.getActivePolls();
+      const userId = req.query.userId as string | undefined;
+      const polls = await pollsDb.getActivePolls(userId);
       res.json(polls);
     } catch (error) {
       console.error('Fetch polls error:', error);
@@ -193,10 +194,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId
       });
 
-      // Get updated poll with vote counts
-      const updatedPoll = await pollsDb.getPollWithResults(parseInt(pollId));
+      // Award points for poll participation
+      const poll = await pollsDb.getPollWithResults(parseInt(pollId));
+      const pointsToAward = poll.points_reward || 5;
       
-      res.json(updatedPoll);
+      // Update user points (add to all_time points)
+      await sql`
+        INSERT INTO user_points (user_id, category, points)
+        VALUES (${userId}, 'all_time', ${pointsToAward})
+        ON CONFLICT (user_id, category)
+        DO UPDATE SET points = user_points.points + ${pointsToAward}
+      `;
+
+      res.json({ ...poll, pointsAwarded: pointsToAward });
     } catch (error) {
       console.error('Vote submission error:', error);
       res.status(500).json({ message: "Failed to submit vote" });

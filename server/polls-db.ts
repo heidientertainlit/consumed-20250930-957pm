@@ -11,7 +11,7 @@ export const pollsDb = {
     return option && option.poll_id === pollId;
   },
 
-  async getActivePolls() {
+  async getActivePolls(userId?: string) {
     const polls = await sql`
       SELECT p.*, 
         (SELECT COUNT(*)::integer FROM poll_responses WHERE poll_id = p.id) as total_votes
@@ -32,8 +32,20 @@ export const pollsDb = {
           ORDER BY po.order_index ASC
         `;
 
+        // Check if user has voted on this poll
+        let userHasVoted = false;
+        if (userId) {
+          const [response] = await sql`
+            SELECT id FROM poll_responses
+            WHERE poll_id = ${poll.id} AND user_id = ${userId}
+            LIMIT 1
+          `;
+          userHasVoted = !!response;
+        }
+
         return {
           ...poll,
+          user_has_voted: userHasVoted,
           options: options.map(opt => ({
             ...opt,
             percentage: poll.total_votes > 0 

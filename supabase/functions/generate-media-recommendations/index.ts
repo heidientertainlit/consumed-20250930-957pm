@@ -120,11 +120,26 @@ serve(async (req) => {
       `${item.title} by ${item.creator || 'Unknown'} (${item.media_type || item.type})`
     ).join(', ') || 'no recent media';
 
-    const prompt = `DNA: ${dnaProfile.profile_text}
-Types: ${mediaTypesText} | Genres: ${genresText} | Recent: ${recentMediaText}
+    const prompt = `Based on this Entertainment DNA profile:
 
-Generate 3 top recommendations. JSON format:
-{"recommendations":[{"title":"","creator":"","media_type":"","year":0,"description":"1-2 sentences","genre":"","rating_explanation":"brief"}]}`;
+${dnaProfile.profile_text}
+
+User's favorite media types: ${mediaTypesText}
+User's favorite genres: ${genresText}
+Recent media consumption: ${recentMediaText}
+
+Generate 8-12 personalized media recommendations that specifically match their profile. For each recommendation, provide:
+- title: exact title of the media
+- creator: author/artist/director/developer  
+- media_type: one of "book", "movie", "tv", "music", "podcast", "game", "youtube"
+- year: release year (number)
+- description: 2-3 sentence explanation of why this matches their entertainment DNA
+- genre: primary genre
+- rating_explanation: why this person would rate it highly
+
+Focus on content that matches their specific preferences mentioned in the profile.
+
+Respond in JSON format with a "recommendations" array.`;
 
     // Get OpenAI API key
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -148,11 +163,11 @@ Generate 3 top recommendations. JSON format:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'Entertainment recommendation AI. Return valid JSON only.'
+            content: 'You are an expert entertainment recommendation engine that analyzes Entertainment DNA profiles to suggest personalized media content. Always respond with valid JSON.'
           },
           {
             role: 'user',
@@ -160,10 +175,9 @@ Generate 3 top recommendations. JSON format:
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 500,
+        max_tokens: 1500,
         temperature: 0.7
-      }),
-      signal: AbortSignal.timeout(8000)
+      })
     });
 
     if (!openaiResponse.ok) {
