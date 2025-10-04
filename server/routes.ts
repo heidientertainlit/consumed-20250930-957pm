@@ -174,6 +174,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "optionId and userId are required" });
       }
 
+      // Verify that the option belongs to this poll
+      const optionValid = await pollsDb.verifyOptionBelongsToPoll(parseInt(optionId), parseInt(pollId));
+      if (!optionValid) {
+        return res.status(400).json({ message: "Invalid option for this poll" });
+      }
+
       // Check if user already voted
       const existingVote = await pollsDb.getUserPollResponse(parseInt(pollId), userId);
       if (existingVote) {
@@ -197,9 +203,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create a new poll (admin only - for now no auth check)
+  // Create a new poll (admin only)
   app.post("/api/polls", async (req, res) => {
     try {
+      // TODO: Add proper admin authentication check
+      // For now, this endpoint should only be called by admin users
+      // Consider using req.headers.authorization to verify admin status
       const { question, type, sponsorName, sponsorLogoUrl, sponsorCtaUrl, pointsReward, expiresAt, options } = req.body;
 
       if (!question || !type || !options || !Array.isArray(options) || options.length < 2) {
@@ -226,9 +235,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update poll status (admin only - for now no auth check)
+  // Update poll status (admin only)
   app.patch("/api/polls/:pollId", async (req, res) => {
     try {
+      // TODO: Add proper admin authentication check
+      // For now, this endpoint should only be called by admin users
+      // Consider using req.headers.authorization to verify admin status
       const { pollId } = req.params;
       const { status } = req.body;
 

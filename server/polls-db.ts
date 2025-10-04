@@ -3,6 +3,14 @@ import { neon } from '@neondatabase/serverless';
 const sql = neon(process.env.DATABASE_URL!);
 
 export const pollsDb = {
+  async verifyOptionBelongsToPoll(optionId: number, pollId: number) {
+    const [option] = await sql`
+      SELECT poll_id FROM poll_options
+      WHERE id = ${optionId}
+    `;
+    return option && option.poll_id === pollId;
+  },
+
   async getActivePolls() {
     const polls = await sql`
       SELECT p.*, 

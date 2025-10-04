@@ -37,12 +37,23 @@ The application employs a modern full-stack architecture with a clear separation
 -   **Play Section**: Trivia, predictions, and "Blends" (finding common media for groups).
 -   **Profile Management**: Editable display name and username with validation and real-time uniqueness checking.
 -   **Creator Recognition**: "Favorite Creators" are computed from actual user media consumption, calculating "fan points" and dominant roles.
+-   **Polls/Surveys System**: Database-backed polling system supporting branded (consumed/entertainlit) and sponsored polls with:
+    -   Real-time vote counting and percentage calculations
+    -   Duplicate vote prevention per user
+    -   Points rewards for participation
+    -   Sponsor branding and call-to-action support
+    -   Poll lifecycle management (draft/active/archived statuses)
+    -   Vote integrity validation (ensures options belong to their polls)
+    -   **Security Note**: Admin endpoints (poll creation/archiving) require authentication implementation (currently documented with TODO comments)
 
 ### System Design Choices
 -   **Database Schema (Critical Naming Conventions)**:
     -   `users` table: `id`, `email`, `user_name` (CRITICAL: always use `user_name`, never `username`), `display_name`, `password`, `avatar`, `bio`, `is_admin`, `created_at`, `first_name`, `last_name`, `computed_favorite_media_types`, `computed_favorite_genres`.
     -   `list_items` table: `id`, `list_id`, `user_id`, `title`, `type`, `creator`, `image_url`, `notes` (NOT `review`), `created_at` (NOT `added_at`), `media_type`, `media_id`.
     -   `lists` table: System lists have `user_id = NULL`. Standard lists include Queue, Finished, Did Not Finish.
+    -   `polls` table: `id` (serial), `question`, `type` (consumed/entertainlit/sponsored), `sponsor_name`, `sponsor_logo_url`, `sponsor_cta_url`, `status` (draft/active/archived), `points_reward`, `expires_at`, `created_by`, `created_at`, `updated_at`.
+    -   `poll_options` table: `id` (serial), `poll_id`, `label`, `description`, `order_index`, `image_url`, `metadata`, `created_at`.
+    -   `poll_responses` table: `id` (UUID), `poll_id`, `option_id`, `user_id`, `created_at`.
 -   **Row Level Security (RLS)**: Strict RLS policies are implemented for `lists` and `list_items` to ensure data privacy and integrity.
     -   Lists SELECT: `auth.uid() = user_id OR visibility = 'public' OR user_id IS NULL`
     -   Lists MODIFY: `auth.uid() = user_id`
