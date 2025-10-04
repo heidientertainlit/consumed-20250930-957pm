@@ -1505,12 +1505,13 @@ export default function UserProfile() {
         {/* Entertainment DNA */}
         <div className="px-4 mb-8">
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+            {/* Responsive Header: Stack on mobile, horizontal on larger screens */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <Sparkles className="text-white" size={20} />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h2 className="text-xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent">
                     Your Entertainment DNA
                   </h2>
@@ -1527,7 +1528,7 @@ export default function UserProfile() {
               </div>
 
               {/* Action Buttons based on status */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 {dnaProfileStatus === 'no_profile' && (
                   <Button 
                     size="sm"
