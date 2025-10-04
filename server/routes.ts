@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { pollsDb } from "./polls-db";
 // Removed unnecessary imports - simplified for minimal backend
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -147,6 +148,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(listsData);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user lists" });
+    }
+  });
+
+  // Polls API endpoints
+  
+  // Get active polls
+  app.get("/api/polls", async (req, res) => {
+    try {
+      const polls = await pollsDb.getActivePolls();
+      res.json(polls);
+    } catch (error) {
+      console.error('Fetch polls error:', error);
+      res.status(500).json({ message: "Failed to fetch polls" });
+    }
+  });
+
+  // Submit a vote for a poll
+  app.post("/api/polls/:pollId/vote", async (req, res) => {
+    try {
+      const { pollId } = req.params;
+      const { optionId, userId } = req.body;
+
+      if (!optionId || !userId) {
+        return res.status(400).json({ message: "optionId and userId are required" });
+      }
+
+      // Check if user already voted
+      const existingVote = await pollsDb.getUserPollResponse(parseInt(pollId), userId);
+      if (existingVote) {
+        return res.status(400).json({ message: "You have already voted in this poll" });
+      }
+
+      // Submit the vote
+      await pollsDb.createPollResponse({
+        pollId: parseInt(pollId),
+        optionId: parseInt(optionId),
+        userId
+      });
+
+      // Get updated poll with vote counts
+      const updatedPoll = await pollsDb.getPollWithResults(parseInt(pollId));
+      
+      res.json(updatedPoll);
+    } catch (error) {
+      console.error('Vote submission error:', error);
+      res.status(500).json({ message: "Failed to submit vote" });
+    }
+  });
+
+  // Create a new poll (admin only - for now no auth check)
+  app.post("/api/polls", async (req, res) => {
+    try {
+      const { question, type, sponsorName, sponsorLogoUrl, sponsorCtaUrl, pointsReward, expiresAt, options } = req.body;
+
+      if (!question || !type || !options || !Array.isArray(options) || options.length < 2) {
+        return res.status(400).json({ message: "Invalid poll data. Question, type, and at least 2 options are required" });
+      }
+
+      const pollId = await pollsDb.createPoll({
+        question,
+        type,
+        sponsorName: sponsorName || null,
+        sponsorLogoUrl: sponsorLogoUrl || null,
+        sponsorCtaUrl: sponsorCtaUrl || null,
+        status: 'active',
+        pointsReward: pointsReward || 5,
+        expiresAt: expiresAt || null,
+        createdBy: null
+      }, options);
+
+      const poll = await pollsDb.getPollWithResults(pollId);
+      res.json(poll);
+    } catch (error) {
+      console.error('Create poll error:', error);
+      res.status(500).json({ message: "Failed to create poll" });
+    }
+  });
+
+  // Update poll status (admin only - for now no auth check)
+  app.patch("/api/polls/:pollId", async (req, res) => {
+    try {
+      const { pollId } = req.params;
+      const { status } = req.body;
+
+      if (!status || !['draft', 'active', 'archived'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status. Must be 'draft', 'active', or 'archived'" });
+      }
+
+      await pollsDb.updatePollStatus(parseInt(pollId), status);
+      const poll = await pollsDb.getPollWithResults(parseInt(pollId));
+      
+      res.json(poll);
+    } catch (error) {
+      console.error('Update poll error:', error);
+      res.status(500).json({ message: "Failed to update poll" });
     }
   });
 

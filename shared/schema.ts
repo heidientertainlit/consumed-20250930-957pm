@@ -121,6 +121,41 @@ export const userPredictions = pgTable("user_predictions", {
   createdAt: timestamp("created_at"),
 });
 
+// Polls system tables
+export const polls = pgTable("polls", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  type: text("type").notNull(), // 'consumed', 'entertainlit', 'sponsored'
+  sponsorName: text("sponsor_name"),
+  sponsorLogoUrl: text("sponsor_logo_url"),
+  sponsorCtaUrl: text("sponsor_cta_url"),
+  status: text("status").notNull().default("draft"), // 'draft', 'active', 'archived'
+  pointsReward: integer("points_reward").notNull().default(5),
+  expiresAt: timestamp("expires_at"),
+  createdBy: varchar("created_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const pollOptions = pgTable("poll_options", {
+  id: serial("id").primaryKey(),
+  pollId: integer("poll_id").notNull().references(() => polls.id, { onDelete: "cascade" }),
+  label: text("label").notNull(),
+  description: text("description"),
+  orderIndex: integer("order_index").notNull().default(0),
+  imageUrl: text("image_url"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pollResponses = pgTable("poll_responses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pollId: integer("poll_id").notNull().references(() => polls.id, { onDelete: "cascade" }),
+  optionId: integer("option_id").notNull().references(() => pollOptions.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -177,6 +212,22 @@ export const insertUserPredictionSchema = createInsertSchema(userPredictions).om
   createdAt: true,
 });
 
+export const insertPollSchema = createInsertSchema(polls).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPollOptionSchema = createInsertSchema(pollOptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPollResponseSchema = createInsertSchema(pollResponses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -197,3 +248,9 @@ export type PredictionResult = typeof predictionResults.$inferSelect;
 export type InsertPredictionResult = z.infer<typeof insertPredictionResultSchema>;
 export type UserPrediction = typeof userPredictions.$inferSelect;
 export type InsertUserPrediction = z.infer<typeof insertUserPredictionSchema>;
+export type Poll = typeof polls.$inferSelect;
+export type InsertPoll = z.infer<typeof insertPollSchema>;
+export type PollOption = typeof pollOptions.$inferSelect;
+export type InsertPollOption = z.infer<typeof insertPollOptionSchema>;
+export type PollResponse = typeof pollResponses.$inferSelect;
+export type InsertPollResponse = z.infer<typeof insertPollResponseSchema>;
