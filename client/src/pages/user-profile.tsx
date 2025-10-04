@@ -1554,15 +1554,14 @@ export default function UserProfile() {
 
                 {dnaProfileStatus === 'has_profile' && (
                   <>
-                    <Button 
-                      size="sm"
+                    <button
                       onClick={handleRetakeDNASurvey}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                      className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 transition-colors"
                       data-testid="button-retake-dna-survey"
+                      aria-label="Retake DNA Survey"
                     >
-                      <RefreshCw size={14} className="mr-2" />
-                      Retake
-                    </Button>
+                      <RefreshCw size={14} />
+                    </button>
                     <Button 
                       size="sm"
                       onClick={handleShareDNAProfile}
