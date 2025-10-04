@@ -78,16 +78,16 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
   };
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-purple-200 p-6 shadow-lg" data-testid={`poll-${poll.id}`}>
+    <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm" data-testid={`poll-${poll.id}`}>
       {/* Header with badge */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className={cn(
-          "px-4 py-1.5 rounded-full text-white text-sm font-semibold bg-gradient-to-r",
+          "px-3 py-1 rounded-full text-white text-xs font-medium bg-gradient-to-r",
           getBrandColor()
         )}>
           {poll.sponsor_logo_url ? (
-            <div className="flex items-center space-x-2">
-              <img src={poll.sponsor_logo_url} alt={poll.sponsor_name} className="h-4 w-4" />
+            <div className="flex items-center space-x-1.5">
+              <img src={poll.sponsor_logo_url} alt={poll.sponsor_name} className="h-3 w-3" />
               <span>{getBadgeText()}</span>
             </div>
           ) : (
@@ -95,24 +95,24 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
           )}
         </div>
 
-        <div className="flex items-center space-x-4 text-sm text-gray-600">
+        <div className="flex items-center space-x-3 text-xs text-gray-500">
           <div className="flex items-center space-x-1">
-            <TrendingUp size={16} />
+            <TrendingUp size={14} />
             <span>{poll.points_reward} pts</span>
           </div>
           {poll.total_votes > 0 && (
-            <span className="text-gray-500">{poll.total_votes} {poll.total_votes === 1 ? 'vote' : 'votes'}</span>
+            <span>{poll.total_votes} {poll.total_votes === 1 ? 'vote' : 'votes'}</span>
           )}
         </div>
       </div>
 
       {/* Question */}
-      <h3 className="text-xl font-bold text-gray-900 mb-6" data-testid={`poll-${poll.id}-question`}>
+      <h3 className="text-base font-semibold text-gray-900 mb-3" data-testid={`poll-${poll.id}-question`}>
         {poll.question}
       </h3>
 
       {/* Options */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {poll.options.map((option) => {
           const isSelected = selectedOption === option.id;
           const isWinning = showResults && option.percentage > 0 && option.percentage === Math.max(...poll.options.map(o => o.percentage));
@@ -123,12 +123,12 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
               onClick={() => !showResults && handleVote(option.id)}
               disabled={showResults || isSubmitting}
               className={cn(
-                "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 relative overflow-hidden",
+                "w-full text-left p-3 rounded-lg border transition-all duration-200 relative overflow-hidden",
                 showResults
                   ? "cursor-default"
-                  : "hover:border-purple-400 hover:bg-purple-50 cursor-pointer",
+                  : "hover:border-purple-300 hover:bg-purple-50 cursor-pointer",
                 isSelected && showResults
-                  ? "border-purple-600 bg-purple-50"
+                  ? "border-purple-500 bg-purple-50"
                   : "border-gray-200"
               )}
               data-testid={`poll-${poll.id}-option-${option.id}`}
@@ -138,7 +138,7 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
                 <div
                   className={cn(
                     "absolute inset-0 transition-all duration-500",
-                    isWinning ? "bg-purple-100" : "bg-gray-100"
+                    isWinning ? "bg-purple-50" : "bg-gray-50"
                   )}
                   style={{ width: `${option.percentage}%` }}
                 />
@@ -148,22 +148,22 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-gray-900">{option.label}</span>
+                    <span className="text-sm font-medium text-gray-800">{option.label}</span>
                     {isSelected && showResults && (
-                      <CheckCircle2 size={18} className="text-purple-600" />
+                      <CheckCircle2 size={14} className="text-purple-600" />
                     )}
                   </div>
                   {option.description && (
-                    <p className="text-sm text-gray-600 mt-1">{option.description}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
                   )}
                 </div>
 
                 {showResults && (
-                  <div className="ml-4 text-right">
-                    <div className="font-bold text-lg text-gray-900">
+                  <div className="ml-3 text-right">
+                    <div className="font-semibold text-sm text-gray-900">
                       {option.percentage}%
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-gray-500">
                       {option.vote_count} {option.vote_count === 1 ? 'vote' : 'votes'}
                     </div>
                   </div>
@@ -176,10 +176,10 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
 
       {/* Sponsor CTA */}
       {poll.type === "sponsored" && poll.sponsor_cta_url && showResults && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-3 pt-3 border-t border-gray-200">
           <Button
             onClick={() => window.open(poll.sponsor_cta_url, '_blank')}
-            className="w-full bg-gradient-to-r from-orange-600 to-pink-600 hover:from-orange-700 hover:to-pink-700 text-white"
+            className="w-full text-sm bg-gradient-to-r from-orange-600 to-pink-600 hover:from-orange-700 hover:to-pink-700 text-white"
             data-testid={`poll-${poll.id}-cta`}
           >
             Learn More
@@ -189,8 +189,8 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
 
       {/* Footer with expiry */}
       {poll.expires_at && !showResults && (
-        <div className="mt-4 pt-4 border-t border-gray-200 flex items-center space-x-2 text-sm text-gray-600">
-          <Calendar size={16} />
+        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center space-x-1.5 text-xs text-gray-500">
+          <Calendar size={12} />
           <span>Ends {new Date(poll.expires_at).toLocaleDateString()}</span>
         </div>
       )}
