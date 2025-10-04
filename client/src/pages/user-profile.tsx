@@ -102,6 +102,122 @@ export default function UserProfile() {
   const [highlights, setHighlights] = useState<any[]>([]);
   const [isLoadingHighlights, setIsLoadingHighlights] = useState(false);
 
+  // Fetch highlights from Supabase
+  const fetchHighlights = async () => {
+    if (!session?.access_token || !viewingUserId) return;
+
+    setIsLoadingHighlights(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/user-highlights', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHighlights(data.highlights || []);
+        console.log('Highlights loaded:', data.highlights);
+      } else {
+        console.error('Failed to fetch highlights');
+        setHighlights([]);
+      }
+    } catch (error) {
+      console.error('Error fetching highlights:', error);
+      setHighlights([]);
+    } finally {
+      setIsLoadingHighlights(false);
+    }
+  };
+
+  // Add highlight to Supabase
+  const addHighlight = async (media: any) => {
+    if (!session?.access_token) return;
+
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/user-highlights', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: media.title,
+          creator: media.creator || '',
+          media_type: media.type || media.media_type || 'mixed',
+          image_url: media.image || media.image_url || null,
+          description: media.description || null,
+          external_id: media.external_id || null,
+          external_source: media.external_source || null,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({ 
+          title: "Highlight Added!", 
+          description: `Added "${media.title}" to your highlights` 
+        });
+        // Refresh highlights from server
+        fetchHighlights();
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Failed to Add Highlight",
+          description: error.error || "Unable to add highlight",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error adding highlight:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while adding highlight",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Delete highlight from Supabase
+  const deleteHighlight = async (highlightId: string) => {
+    if (!session?.access_token) return;
+
+    try {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/user-highlights?id=${highlightId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        toast({ 
+          title: "Highlight Removed", 
+          description: "Highlight removed successfully" 
+        });
+        // Refresh highlights from server
+        fetchHighlights();
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Failed to Remove Highlight",
+          description: error.error || "Unable to remove highlight",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting highlight:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while removing highlight",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Media search states for highlights
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -392,10 +508,10 @@ export default function UserProfile() {
       fetchUserStats();
       fetchUserPoints();
       fetchUserPredictions();
+      fetchHighlights();
       if (!isOwnProfile) {
         checkFriendshipStatus();
       }
-      // fetchHighlights(); // Uncomment when fetchHighlights is implemented
     }
   }, [session?.access_token, viewingUserId]);
 
@@ -1337,7 +1453,12 @@ export default function UserProfile() {
               </Button>
             </div>
 
-            {highlights.length === 0 ? (
+            {isLoadingHighlights ? (
+              <div className="text-center py-6">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-600 mb-2" />
+                <p className="text-xs text-gray-600">Loading highlights...</p>
+              </div>
+            ) : highlights.length === 0 ? (
               <div className="text-center py-6 bg-gray-50 rounded-lg">
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Star className="w-6 h-6 text-purple-600" />
@@ -1358,13 +1479,22 @@ export default function UserProfile() {
             ) : (
               // Render highlights in a compact 3-column grid
               <div className="grid grid-cols-3 gap-3">
-                {highlights.slice(0, 3).map((highlight, index) => (
-                  <div key={index} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100 text-center">
+                {highlights.slice(0, 3).map((highlight) => (
+                  <div key={highlight.id} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100 text-center relative group">
+                    {isOwnProfile && (
+                      <button
+                        onClick={() => deleteHighlight(highlight.id)}
+                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Remove highlight"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
                     <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
                       <Star className="text-purple-600" size={16} />
                     </div>
                     <h4 className="font-medium text-gray-900 text-xs truncate">{highlight.title}</h4>
-                    <p className="text-xs text-gray-600 mt-1 truncate">{highlight.creator || highlight.type}</p>
+                    <p className="text-xs text-gray-600 mt-1 truncate">{highlight.creator || highlight.media_type}</p>
                   </div>
                 ))}
               </div>
@@ -2538,14 +2668,9 @@ export default function UserProfile() {
                   Cancel
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
                     if (selectedMedia) {
-                      // Add the selected media to highlights
-                      setHighlights(prev => [...prev, selectedMedia]);
-                      toast({ 
-                        title: "Highlight Added!", 
-                        description: `Added "${selectedMedia.title}" to your highlights` 
-                      });
+                      await addHighlight(selectedMedia);
                       setIsHighlightModalOpen(false);
                       setSelectedMedia(null);
                       setSearchResults([]);
