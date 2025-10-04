@@ -1480,11 +1480,11 @@ export default function UserProfile() {
               // Render highlights in a compact 3-column grid
               <div className="grid grid-cols-3 gap-3">
                 {highlights.slice(0, 3).map((highlight) => (
-                  <div key={highlight.id} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100 text-center relative group">
+                  <div key={highlight.id} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100 text-center relative">
                     {isOwnProfile && (
                       <button
                         onClick={() => deleteHighlight(highlight.id)}
-                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                         aria-label="Remove highlight"
                       >
                         <X size={12} />
