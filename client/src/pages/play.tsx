@@ -411,6 +411,15 @@ export default function PlayPage() {
           </p>
         </div>
 
+        {/* Game Points Callout */}
+        {totalGamePoints > 0 && (
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4 mb-6 text-center">
+            <div className="text-sm text-gray-700">
+              🎮 You've earned <span className="font-bold text-purple-700">{totalGamePoints} points</span> from games
+            </div>
+          </div>
+        )}
+
         {/* Tab Navigation */}
         <div className="bg-white rounded-xl border border-gray-200 mb-6">
           <div className="flex items-center justify-between border-b border-gray-200">
@@ -754,43 +763,6 @@ export default function PlayPage() {
               </CardContent>
             </Card>
           ))
-          )}
-        </div>
-
-        {/* Stats Section */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mt-8">
-          <div className="flex items-center space-x-3 mb-6">
-            <Gamepad2 className="text-purple-800" size={24} />
-            <h2 className="text-xl font-bold text-gray-800">Your Game Stats</h2>
-          </div>
-          
-          <div className="text-center mb-6">
-            <div className="text-3xl font-bold text-purple-600 mb-1">{totalGamePoints}</div>
-            <div className="text-sm text-gray-500">Total Points Earned</div>
-          </div>
-
-          {userPredictionsList.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Games Completed</h3>
-              {userPredictionsList.map((pred: any) => (
-                <div 
-                  key={pred.pool_id} 
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  data-testid={`completed-game-${pred.pool_id}`}
-                >
-                  <div className="flex items-center space-x-3">
-                    {pred.prediction_pools?.type === 'trivia' && <Brain size={18} className="text-blue-600" />}
-                    {pred.prediction_pools?.type === 'vote' && <Vote size={18} className="text-green-600" />}
-                    {pred.prediction_pools?.type === 'prediction' && <Trophy size={18} className="text-purple-600" />}
-                    <div>
-                      <div className="font-medium text-sm text-gray-900">{pred.prediction_pools?.title || 'Unknown Game'}</div>
-                      <div className="text-xs text-gray-500 capitalize">{pred.prediction_pools?.type || 'game'}</div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-purple-600">+{pred.points_earned || 0} pts</div>
-                </div>
-              ))}
-            </div>
           )}
         </div>
       </div>
