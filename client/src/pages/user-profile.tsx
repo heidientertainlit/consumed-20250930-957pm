@@ -85,6 +85,10 @@ export default function UserProfile() {
   // User profile data from custom users table
   const [userProfileData, setUserProfileData] = useState<any>(null);
 
+  // Game predictions states
+  const [userPredictionsList, setUserPredictionsList] = useState<any[]>([]);
+  const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+
   // Media History filters
   const [mediaHistorySearch, setMediaHistorySearch] = useState("");
   const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
@@ -386,6 +390,7 @@ export default function UserProfile() {
       fetchUserLists();
       fetchUserStats();
       fetchUserPoints();
+      fetchUserPredictions();
       if (!isOwnProfile) {
         checkFriendshipStatus();
       }
@@ -580,6 +585,49 @@ export default function UserProfile() {
       setUserPoints(null);
     } finally {
       setIsLoadingPoints(false);
+    }
+  };
+
+  // Fetch user predictions from Supabase database
+  const fetchUserPredictions = async () => {
+    if (!session?.access_token || !viewingUserId) return;
+
+    setIsLoadingPredictions(true);
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .select(`
+          pool_id, 
+          prediction, 
+          points_earned,
+          created_at,
+          prediction_pools (
+            id,
+            title,
+            type,
+            category
+          )
+        `)
+        .eq('user_id', viewingUserId)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching user predictions:', error);
+        setUserPredictionsList([]);
+      } else {
+        setUserPredictionsList(data || []);
+        console.log('User predictions loaded:', data);
+      }
+    } catch (error) {
+      console.error('Error fetching user predictions:', error);
+      setUserPredictionsList([]);
+    } finally {
+      setIsLoadingPredictions(false);
     }
   };
 
@@ -1680,6 +1728,80 @@ export default function UserProfile() {
               </Button>
             </div>
           )}
+        </div>
+
+        {/* Your Game Stats */}
+        <div className="px-4 mb-8">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center space-x-3 mb-6">
+              <Gamepad2 className="text-purple-800" size={24} />
+              <h2 className="text-xl font-bold text-gray-800">Your Game Stats</h2>
+            </div>
+            
+            {isLoadingPredictions ? (
+              <div className="text-center py-8">
+                <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
+                <p className="text-gray-600 mt-2">Loading game stats...</p>
+              </div>
+            ) : userPredictionsList.length > 0 ? (
+              <>
+                <div className="text-center mb-6">
+                  <div className="text-3xl font-bold text-purple-600 mb-1">
+                    {userPredictionsList.reduce((sum, pred) => sum + (pred.points_earned || 0), 0)}
+                  </div>
+                  <div className="text-sm text-gray-500">Total Points Earned</div>
+                </div>
+
+                <div className="space-y-3 mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Recent Games (Last 5)</h3>
+                  {userPredictionsList.slice(0, 5).map((pred: any) => (
+                    <div 
+                      key={pred.pool_id} 
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      data-testid={`completed-game-${pred.pool_id}`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {pred.prediction_pools?.type === 'trivia' && <Brain size={18} className="text-blue-600" />}
+                        {pred.prediction_pools?.type === 'vote' && <Trophy size={18} className="text-green-600" />}
+                        {pred.prediction_pools?.type === 'prediction' && <Trophy size={18} className="text-purple-600" />}
+                        <div>
+                          <div className="font-medium text-sm text-gray-900">{pred.prediction_pools?.title || 'Unknown Game'}</div>
+                          <div className="text-xs text-gray-500 capitalize">{pred.prediction_pools?.type || 'game'}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold text-purple-600">+{pred.points_earned || 0} pts</div>
+                    </div>
+                  ))}
+                </div>
+
+                {userPredictionsList.length > 5 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setLocation('/play')}
+                    className="w-full text-purple-700 border-purple-200 hover:bg-purple-50"
+                  >
+                    View All Game History ({userPredictionsList.length} total)
+                  </Button>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Gamepad2 size={32} className="text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Games Played Yet</h3>
+                <p className="text-gray-600 mb-4">Start playing games to earn points and climb the leaderboard!</p>
+                <Button 
+                  onClick={() => setLocation('/play')}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  data-testid="button-start-playing"
+                >
+                  <Play size={16} className="mr-2" />
+                  Go to Games
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Media History */}
