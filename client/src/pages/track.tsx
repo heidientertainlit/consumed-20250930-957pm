@@ -184,8 +184,9 @@ export default function Track() {
     queryKey: ["media-recommendations"],
     queryFn: fetchRecommendations,
     enabled: !!session?.access_token,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    staleTime: 15 * 60 * 1000, // Cache for 15 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    retry: false, // Don't retry on failure for faster error state
   });
 
   const recommendations = recommendationsData?.recommendations || [];
@@ -478,7 +479,7 @@ export default function Track() {
             <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
               {recommendationsLoading ? (
                 // Loading skeleton cards
-                [...Array(3)].map((_, index) => (
+                [...Array(2)].map((_, index) => (
                   <div key={`loading-${index}`} className="flex-shrink-0 w-80 bg-gradient-to-r from-slate-700 to-purple-700 rounded-xl p-4 text-white shadow-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center">

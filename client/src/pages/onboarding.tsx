@@ -213,6 +213,16 @@ export default function OnboardingPage() {
           meaning: aiProfile.profile_text || ''
         });
         
+        // Pre-generate recommendations in background (don't await - fire and forget)
+        fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }).catch(() => {
+          // Silent fail - recommendations will be generated on first visit to track page if this fails
+        });
+        
         clearInterval(messageInterval);
         setShowResults(true);
       } catch (error) {
