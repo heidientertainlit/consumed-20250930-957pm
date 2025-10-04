@@ -407,6 +407,19 @@ export default function Feed() {
             </Button>
           </div>
 
+          {/* Active Polls - Always Show at Top */}
+          {polls && polls.length > 0 && (
+            <div className="space-y-3 mb-6">
+              {polls.map((poll: any) => (
+                <PollCard
+                  key={poll.id}
+                  poll={poll}
+                  onVote={handleVote}
+                  hasVoted={false}
+                />
+              ))}
+            </div>
+          )}
 
           {isLoading ? (
             <div className="space-y-4">
@@ -588,20 +601,6 @@ export default function Feed() {
                     )}
                   </div>
                   </div>
-
-                  {/* Insert Real Polls after 1st post */}
-                  {postIndex === 0 && polls && polls.length > 0 && (
-                    <div className="space-y-4 mt-4">
-                      {polls.map((poll: any) => (
-                        <PollCard
-                          key={poll.id}
-                          poll={poll}
-                          onVote={handleVote}
-                          hasVoted={false}
-                        />
-                      ))}
-                    </div>
-                  )}
 
                   {/* Insert Coming to Screen card after 3rd post */}
                   {postIndex === 2 && !booksSubmitted && (
