@@ -199,6 +199,30 @@ serve(async (req) => {
       }
     }
 
+    // Search games via new gaming-search function
+    if (!type || type === 'game' || type === 'gaming') {
+      try {
+        const gamingResponse = await fetch(
+          'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/gaming-search',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': req.headers.get('Authorization') || ''
+            },
+            body: JSON.stringify({ query })
+          }
+        );
+        
+        if (gamingResponse.ok) {
+          const gamingData = await gamingResponse.json();
+          results.push(...(gamingData.results || []));
+        }
+      } catch (error) {
+        console.error('Gaming search routing error:', error);
+      }
+    }
+
     // Search sports games/events via ESPN API and OpenAI fallback
     if (!type || type === 'sports') {
       try {
