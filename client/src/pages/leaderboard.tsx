@@ -2,8 +2,10 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame, Users, Vote, Brain, TrendingUp } from "lucide-react";
+import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame, Users, Vote, Brain, TrendingUp, Share2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { copyLink } from "@/lib/share";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -210,6 +212,7 @@ export default function Leaderboard() {
   const [selectedCategory, setSelectedCategory] = useState("all_time");
   const [expandedChallenge, setExpandedChallenge] = useState<string | null>(null);
   const { session } = useAuth();
+  const { toast } = useToast();
 
   const { data: leaderboardData, isLoading, error } = useQuery({
     queryKey: ["leaderboard", selectedCategory],
@@ -235,6 +238,22 @@ export default function Leaderboard() {
     setIsTrackModalOpen(true);
   };
 
+  const handleShare = async () => {
+    try {
+      await copyLink({ kind: 'leaderboard' });
+      toast({
+        title: "Link Copied!",
+        description: "Leaderboard link copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to copy link",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1: return <Trophy className="text-purple-800" />;
@@ -251,7 +270,17 @@ export default function Leaderboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-semibold text-black mb-3">Leaderboard</h1>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <h1 className="text-3xl font-semibold text-black">Leaderboard</h1>
+            <button
+              onClick={handleShare}
+              className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+              data-testid="button-share-leaderboard"
+              aria-label="Share leaderboard"
+            >
+              <Share2 className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
           <p className="text-gray-600">See the top fans and trackers in the community — ranked by points from logging, sharing, and engaging with entertainment.</p>
         </div>
 
