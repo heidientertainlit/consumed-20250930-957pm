@@ -419,18 +419,18 @@ export default function PlayPage() {
         <div className="space-y-4 mb-8">
           {/* Trivia Challenges Card */}
           <div className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-2xl p-6 border border-purple-200">
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-3">
               <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
                 <Brain className="text-white" size={20} />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-semibold text-purple-900 mb-2">Trivia Challenges</h3>
-                <p className="text-purple-700 text-sm mb-4">
+                <p className="text-purple-700 text-sm mb-4 w-full">
                   Test your knowledge against friends on different entertainment topics
                 </p>
                 <button
                   onClick={() => setGameTypeFilter('trivia')}
-                  className="bg-white text-purple-700 font-medium px-6 py-2.5 rounded-lg hover:bg-purple-50 transition-colors shadow-sm w-full"
+                  className="bg-white text-purple-700 font-medium px-6 py-3 rounded-full hover:bg-purple-50 transition-colors shadow-sm w-full"
                   data-testid="explore-trivia"
                 >
                   Explore Trivia Challenges
@@ -441,18 +441,18 @@ export default function PlayPage() {
 
           {/* Polls Card */}
           <div className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl p-6 border border-blue-200">
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-3">
               <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
                 <Vote className="text-white" size={20} />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-semibold text-blue-900 mb-2">Polls</h3>
-                <p className="text-blue-700 text-sm mb-4">
+                <p className="text-blue-700 text-sm mb-4 w-full">
                   Vote on trending topics and see how your opinions compare to others
                 </p>
                 <button
                   onClick={() => setGameTypeFilter('vote')}
-                  className="bg-white text-blue-700 font-medium px-6 py-2.5 rounded-lg hover:bg-blue-50 transition-colors shadow-sm w-full"
+                  className="bg-white text-blue-700 font-medium px-6 py-3 rounded-full hover:bg-blue-50 transition-colors shadow-sm w-full"
                   data-testid="explore-polls"
                 >
                   Explore Polls
@@ -463,18 +463,18 @@ export default function PlayPage() {
 
           {/* Predictions Card */}
           <div className="bg-gradient-to-br from-green-100 to-green-50 rounded-2xl p-6 border border-green-200">
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-3">
               <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0">
                 <Trophy className="text-white" size={20} />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-semibold text-green-900 mb-2">Predictions</h3>
-                <p className="text-green-700 text-sm mb-4">
+                <p className="text-green-700 text-sm mb-4 w-full">
                   Make predictions about upcoming releases and entertainment events
                 </p>
                 <button
                   onClick={() => setGameTypeFilter('predict')}
-                  className="bg-white text-green-700 font-medium px-6 py-2.5 rounded-lg hover:bg-green-50 transition-colors shadow-sm w-full"
+                  className="bg-white text-green-700 font-medium px-6 py-3 rounded-full hover:bg-green-50 transition-colors shadow-sm w-full"
                   data-testid="explore-predictions"
                 >
                   Explore Predictions
