@@ -60,7 +60,7 @@ export default function PlayTriviaPage() {
       return predictions;
     },
   });
-  
+
   const allPredictions = userPredictionsData || {};
 
   // Submit prediction mutation
@@ -110,14 +110,14 @@ export default function PlayTriviaPage() {
       Array.isArray(pool.options) && 
       pool.options.length > 0 && 
       typeof pool.options[0] === 'object';
-    
+
     return {
       ...pool,
       points: pool.points_reward,
       isLongForm: isLongFormTrivia,
     };
   });
-  
+
   // Filter for trivia games only
   const triviaGames = processedGames.filter((game: any) => game.type === 'trivia');
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
@@ -139,7 +139,7 @@ export default function PlayTriviaPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
-      
+
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Back Button and Header */}
         <button
@@ -202,12 +202,14 @@ export default function PlayTriviaPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-4">
                     {allPredictions[game.id] ? (
                       <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                         <div className="text-green-800 font-medium">✓ Submitted</div>
-                        <div className="text-green-700 text-sm">Game completed!</div>
+                        <div className="text-green-700 text-sm">
+                          You answered "{allPredictions[game.id]}"
+                        </div>
                       </div>
                     ) : game.isLongForm ? (
                       <Button 
@@ -216,19 +218,19 @@ export default function PlayTriviaPage() {
                         data-testid={`play-${game.id}`}
                       >
                         <Brain size={16} className="mr-2" />
-                        Play Trivia Game
+                        Start Trivia
                       </Button>
-                    ) : (
+                    ) : Array.isArray(game.options) && typeof game.options[0] === 'string' ? (
                       <>
                         <div className="text-gray-600 text-sm font-medium">Quick Answer:</div>
                         <div className="grid grid-cols-2 gap-3">
-                          {(game.options || []).slice(0, 2).map((option: string, index: number) => (
+                          {game.options.slice(0, 2).map((option: string, index: number) => (
                             <button
-                              key={option}
+                              key={`${game.id}-${index}`}
                               onClick={() => handleOptionSelect(game.id, option)}
                               className={`p-4 text-left rounded-lg border-2 transition-all ${
                                 selectedAnswers[game.id] === option
-                                  ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
+                                  ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
                                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                               }`}
                               data-testid={`option-${game.id}-${index}`}
@@ -300,7 +302,7 @@ export default function PlayTriviaPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-4">
                     <Button 
                       onClick={() => setSelectedTriviaGame(game)}
