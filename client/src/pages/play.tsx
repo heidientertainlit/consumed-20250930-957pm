@@ -486,11 +486,8 @@ export default function PlayPage() {
         <div className="mb-8">
           <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-300">
             <div className="flex items-center space-x-2 mb-3">
-              <Trophy className="text-amber-700" size={24} />
+              <Star className="text-amber-700" size={24} />
               <h3 className="text-xl font-semibold text-amber-900">High Stakes Challenges</h3>
-              <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-xs font-bold border-0">
-                ⭐ HIGH STAKES
-              </Badge>
               <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-xs font-medium border border-red-300">
                 18+
               </Badge>
