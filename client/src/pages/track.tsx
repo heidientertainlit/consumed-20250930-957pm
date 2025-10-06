@@ -372,18 +372,18 @@ export default function Track() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               onClick={() => setIsTrackModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-6 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200 max-w-xs"
               data-testid="button-track-media"
             >
-              <Plus className="mr-3" size={24} />
+              <Plus className="mr-2" size={24} />
               Track Media
             </Button>
             <Button
               onClick={() => setIsUploadModalOpen(true)}
-              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-bold px-8 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-bold px-6 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200 max-w-xs"
               data-testid="button-upload-media"
             >
-              <Upload className="mr-3" size={24} />
+              <Upload className="mr-2" size={24} />
               Import History
             </Button>
           </div>
