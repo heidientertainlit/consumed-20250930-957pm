@@ -411,7 +411,7 @@ export default function PlayPage() {
             Play
           </h1>
           <p className="text-gray-600">
-            Test your knowledge, make predictions, and compete with friends
+            Test your knowledge, make predictions, and compete with friends — free or high stakes.
           </p>
         </div>
 
