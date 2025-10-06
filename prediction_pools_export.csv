@@ -28,16 +28,16 @@ game-29,The Dark Knight,Who played the Joker?,trivia,15,2025-10-29T05:32:30.181Z
 game-3,Taylor Swift,Which album more iconic?,vote,10,2025-10-29T05:32:29.538Z,open,music,🎵,"[""1989"", ""Folklore""]",t,2412,2025-09-29 05:32:29.551436+00
 game-30,Matilda,Who was Matilda's teacher?,trivia,15,2025-10-29T05:32:30.203Z,open,book,📚,"[""Miss Honey"", ""Miss Trunchbull""]",t,1182,2025-09-29 05:32:30.215983+00
 game-31,The Lion King,Who killed Mufasa?,trivia,15,2025-10-29T05:32:30.228Z,open,movie,🎬,"[""Scar"", ""Hyenas""]",t,2417,2025-09-29 05:32:30.238441+00
-game-32,NFL Season 3,Who will win Chiefs vs Texans?,predict,20,2025-10-29T05:32:30.250Z,open,sports,⚽,"[""Chiefs"", ""Texans""]",t,653,2025-09-29 05:32:30.261978+00
-game-33,NBA Finals 2026,Who will take the championship?,predict,20,2025-10-29T05:32:30.274Z,open,sports,⚽,"[""Celtics"", ""Lakers""]",t,1240,2025-09-29 05:32:30.28415+00
-game-34,NFL Super Bowl 2025,Who will win?,predict,20,2025-10-29T05:32:30.298Z,open,sports,⚽,"[""49ers"", ""Chiefs""]",t,970,2025-09-29 05:32:30.312359+00
-game-35,UEFA Champions League,Who will win?,predict,20,2025-10-29T05:32:30.325Z,open,sports,⚽,"[""Real Madrid"", ""Man City""]",t,1217,2025-09-29 05:32:30.33542+00
-game-36,World Series 2025,Which league wins?,predict,20,2025-10-29T05:32:30.347Z,open,sports,⚽,"[""AL"", ""NL""]",t,1752,2025-09-29 05:32:30.35989+00
-game-37,NBA MVP 2025,Who will win?,predict,20,2025-10-29T05:32:30.374Z,open,sports,⚽,"[""Giannis"", ""Jokic""]",t,2496,2025-09-29 05:32:30.383891+00
-game-38,UFC,Who wins the fight (UFC Fight Night)?,predict,20,2025-10-29T05:32:30.395Z,open,sports,⚽,"[""Garcia"", ""Onaona""]",t,2415,2025-09-29 05:32:30.407306+00
-game-39,NHL Stanley Cup 2025,Who should've won the 2025 Stanley Cup Final?,predict,20,2025-10-29T05:32:30.422Z,open,sports,⚽,"[""Florida Panthers"", ""Edmonton Oilers""]",t,1048,2025-09-29 05:32:30.432083+00
+game-32,NFL Season 3,Who will win Chiefs vs Texans?,predict,20,2025-10-29T05:32:30.250Z,open,sports,🏅,"[""Chiefs"", ""Texans""]",t,653,2025-09-29 05:32:30.261978+00
+game-33,NBA Finals 2026,Who will take the championship?,predict,20,2025-10-29T05:32:30.274Z,open,sports,🏅,"[""Celtics"", ""Lakers""]",t,1240,2025-09-29 05:32:30.28415+00
+game-34,NFL Super Bowl 2025,Who will win?,predict,20,2025-10-29T05:32:30.298Z,open,sports,🏅,"[""49ers"", ""Chiefs""]",t,970,2025-09-29 05:32:30.312359+00
+game-35,UEFA Champions League,Who will win?,predict,20,2025-10-29T05:32:30.325Z,open,sports,🏅,"[""Real Madrid"", ""Man City""]",t,1217,2025-09-29 05:32:30.33542+00
+game-36,World Series 2025,Which league wins?,predict,20,2025-10-29T05:32:30.347Z,open,sports,🏅,"[""AL"", ""NL""]",t,1752,2025-09-29 05:32:30.35989+00
+game-37,NBA MVP 2025,Who will win?,predict,20,2025-10-29T05:32:30.374Z,open,sports,🏅,"[""Giannis"", ""Jokic""]",t,2496,2025-09-29 05:32:30.383891+00
+game-38,UFC,Who wins the fight (UFC Fight Night)?,predict,20,2025-10-29T05:32:30.395Z,open,sports,🏅,"[""Garcia"", ""Onaona""]",t,2415,2025-09-29 05:32:30.407306+00
+game-39,NHL Stanley Cup 2025,Who should've won the 2025 Stanley Cup Final?,predict,20,2025-10-29T05:32:30.422Z,open,sports,🏅,"[""Florida Panthers"", ""Edmonton Oilers""]",t,1048,2025-09-29 05:32:30.432083+00
 game-4,Drake vs Kendrick,Who is the better lyricist?,vote,10,2025-10-29T05:32:29.564Z,open,music,🎵,"[""Drake"", ""Kendrick""]",t,2022,2025-09-29 05:32:29.577596+00
-game-40,Olympics 2028,Who wins more medals?,predict,20,2025-10-29T05:32:30.443Z,open,sports,⚽,"[""USA"", ""China""]",t,1277,2025-09-29 05:32:30.455855+00
+game-40,Olympics 2028,Who wins more medals?,predict,20,2025-10-29T05:32:30.443Z,open,sports,🏅,"[""USA"", ""China""]",t,1277,2025-09-29 05:32:30.455855+00
 game-5,Game of Thrones,Who the better character?,vote,10,2025-10-29T05:32:29.595Z,open,tv-show,📺,"[""Jon Snow"", ""Daenerys""]",t,1884,2025-09-29 05:32:29.610583+00
 game-6,Euphoria,Who is Rue's best friend?,vote,10,2025-10-29T05:32:29.624Z,open,tv-show,📺,"[""Jules"", ""Lexi""]",t,1081,2025-09-29 05:32:29.637136+00
 game-7,Beyoncé,Which was bigger?,vote,10,2025-10-29T05:32:29.650Z,open,music,🎵,"[""Renaissance"", ""Lemonade""]",t,750,2025-09-29 05:32:29.660549+00

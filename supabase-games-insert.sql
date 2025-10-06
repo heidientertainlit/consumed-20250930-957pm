@@ -43,12 +43,12 @@ INSERT INTO prediction_pools (id, title, description, type, category, points_rew
 
 -- Insert Prediction Games
 INSERT INTO prediction_pools (id, title, description, type, category, points_reward, deadline, status, icon, options, inline, participants, created_at) VALUES
-('game-32', 'NFL Season 3', 'Who will win Chiefs vs Texans?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["Chiefs", "Texans"]', true, 2134, NOW()),
-('game-33', 'NBA Finals 2026', 'Who will take the championship?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["Celtics", "Lakers"]', true, 3456, NOW()),
-('game-34', 'NFL Super Bowl 2025', 'Who will win?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["49ers", "Chiefs"]', true, 4567, NOW()),
-('game-35', 'UEFA Champions League', 'Who will win?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["Real Madrid", "Man City"]', true, 2890, NOW()),
-('game-36', 'World Series 2025', 'Which league wins?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["AL", "NL"]', true, 1876, NOW()),
-('game-37', 'NBA MVP 2025', 'Who will win?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["Giannis", "Jokic"]', true, 2345, NOW()),
-('game-38', 'UFC', 'Who wins the fight (UFC Fight Night)?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["Garcia", "Onaona"]', true, 1234, NOW()),
-('game-39', 'NHL Stanley Cup 2025', 'Who should''ve won the 2025 Stanley Cup Final?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["Florida Panthers", "Edmonton Oilers"]', true, 1567, NOW()),
-('game-40', 'Olympics 2028', 'Who wins more medals?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '⚽', '["USA", "China"]', true, 2890, NOW());
+('game-32', 'NFL Season 3', 'Who will win Chiefs vs Texans?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["Chiefs", "Texans"]', true, 2134, NOW()),
+('game-33', 'NBA Finals 2026', 'Who will take the championship?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["Celtics", "Lakers"]', true, 3456, NOW()),
+('game-34', 'NFL Super Bowl 2025', 'Who will win?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["49ers", "Chiefs"]', true, 4567, NOW()),
+('game-35', 'UEFA Champions League', 'Who will win?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["Real Madrid", "Man City"]', true, 2890, NOW()),
+('game-36', 'World Series 2025', 'Which league wins?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["AL", "NL"]', true, 1876, NOW()),
+('game-37', 'NBA MVP 2025', 'Who will win?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["Giannis", "Jokic"]', true, 2345, NOW()),
+('game-38', 'UFC', 'Who wins the fight (UFC Fight Night)?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["Garcia", "Onaona"]', true, 1234, NOW()),
+('game-39', 'NHL Stanley Cup 2025', 'Who should''ve won the 2025 Stanley Cup Final?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["Florida Panthers", "Edmonton Oilers"]', true, 1567, NOW()),
+('game-40', 'Olympics 2028', 'Who wins more medals?', 'predict', 'sports', 20, '2025-10-29 23:59:59+00', 'open', '🏅', '["USA", "China"]', true, 2890, NOW());

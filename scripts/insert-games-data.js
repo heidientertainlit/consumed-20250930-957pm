@@ -78,7 +78,7 @@ async function insertGamesData() {
       const iconMap = {
         'TV Show': '📺',
         'Movie': '🎬', 
-        'Sports': '⚽',
+        'Sports': '🏅',
         'Book': '📚',
         'Music': '🎵',
         'Awards': '🏆'
