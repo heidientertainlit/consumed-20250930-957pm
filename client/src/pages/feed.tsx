@@ -61,7 +61,6 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
 export default function Feed() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
@@ -302,18 +301,6 @@ export default function Feed() {
     setCommentInputs(prev => ({ ...prev, [postId]: value }));
   };
 
-  const handleFollowCreator = (creatorName: string) => {
-    if (!followedCreators.includes(creatorName)) {
-      setFollowedCreators([...followedCreators, creatorName]);
-      // Award +2 points to user
-      const currentUser = user;
-      if (currentUser) {
-        // In a real app, this would update the backend
-        console.log(`Awarded +2 points for following ${creatorName}`);
-      }
-    }
-  };
-
   const getCreatorForMedia = (title: string) => {
     const creators = {
       "SmartLess": "Jason Bateman",
@@ -388,24 +375,6 @@ export default function Feed() {
 
         {/* Activity Stream */}
         <div className="space-y-6">
-
-          {/* Followed Creators */}
-          {followedCreators.length > 0 && (
-            <div className="flex items-center space-x-3 overflow-x-auto pb-2">
-              <span className="text-gray-600 font-medium whitespace-nowrap">Following:</span>
-              {followedCreators.map((creator) => (
-                <div
-                  key={creator}
-                  className="flex items-center space-x-2 bg-white border border-gray-300 rounded-full px-3 py-1 whitespace-nowrap"
-                >
-                  <div className="w-6 h-6 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center">
-                    <User className="text-white" size={12} />
-                  </div>
-                  <span className="text-gray-700">{creator}</span>
-                </div>
-              ))}
-            </div>
-          )}
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
             <Button
@@ -529,21 +498,8 @@ export default function Feed() {
 
                               {/* Creator Info */}
                               {media.creator && (
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <span className="text-gray-600 text-sm">by {media.creator}</span>
-                                  {!followedCreators.includes(media.creator) ? (
-                                    <button
-                                      onClick={() => handleFollowCreator(media.creator)}
-                                      className="text-xs bg-purple-100 text-purple-600 hover:bg-purple-200 px-2 py-1 rounded-full transition-colors"
-                                    >
-                                      + Follow
-                                    </button>
-                                  ) : (
-                                    <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
-                                      <Check size={14} />
-                                      <span>Following</span>
-                                    </div>
-                                  )}
+                                <div className="text-gray-600 text-sm mb-2">
+                                  by {media.creator}
                                 </div>
                               )}
 
