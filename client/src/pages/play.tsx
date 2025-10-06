@@ -211,7 +211,6 @@ export default function PlayPage() {
   // Filter states
   const [gameTypeFilter, setGameTypeFilter] = useState<string>('all');
   const [mediaTypeFilter, setMediaTypeFilter] = useState<string>('all');
-  const [stakesFilter, setStakesFilter] = useState<string>('all'); // 'all', 'low', 'high'
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -407,7 +406,7 @@ export default function PlayPage() {
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-8">
           <h1 className="text-3xl font-semibold text-black mb-3">
             Play
           </h1>
@@ -416,50 +415,8 @@ export default function PlayPage() {
           </p>
         </div>
 
-        {/* Sticky Stakes Filter */}
-        <div className="sticky top-0 z-10 bg-gray-50 pb-4 mb-6">
-          <div className="flex items-center justify-center space-x-3">
-            <button
-              onClick={() => setStakesFilter('all')}
-              className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all ${
-                stakesFilter === 'all'
-                  ? 'bg-gray-900 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
-              }`}
-              data-testid="filter-all-stakes"
-            >
-              Show All
-            </button>
-            <button
-              onClick={() => setStakesFilter('low')}
-              className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all flex items-center space-x-2 ${
-                stakesFilter === 'low'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white text-purple-600 border border-purple-300 hover:border-purple-400'
-              }`}
-              data-testid="filter-low-stakes"
-            >
-              <span className="text-lg">🟣</span>
-              <span>Low Stakes</span>
-            </button>
-            <button
-              onClick={() => setStakesFilter('high')}
-              className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all flex items-center space-x-2 ${
-                stakesFilter === 'high'
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-md'
-                  : 'bg-white text-amber-600 border border-amber-300 hover:border-amber-400'
-              }`}
-              data-testid="filter-high-stakes"
-            >
-              <span className="text-lg">🟡</span>
-              <span>High Stakes</span>
-            </button>
-          </div>
-        </div>
-
         {/* LOW STAKES - Pastel Cards */}
-        {(stakesFilter === 'all' || stakesFilter === 'low') && (
-          <div className="space-y-4 mb-8">
+        <div className="space-y-4 mb-8">
           {/* Trivia Challenges Card */}
           <div className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-2xl p-6 border border-purple-200">
             <div className="flex items-start justify-between">
@@ -531,12 +488,10 @@ export default function PlayPage() {
               </div>
             </div>
           </div>
-          </div>
-        )}
+        </div>
 
         {/* HIGH STAKES Section */}
-        {(stakesFilter === 'all' || stakesFilter === 'high') && (
-          <div className="mb-8">
+        <div className="mb-8">
           <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-300 shadow-lg">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start space-x-4 flex-1">
@@ -602,8 +557,7 @@ export default function PlayPage() {
               </div>
             </div>
           </div>
-          </div>
-        )}
+        </div>
 
         {/* Original Games Feed Header */}
         <div className="text-center mb-6">
