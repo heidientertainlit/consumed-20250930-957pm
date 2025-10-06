@@ -21,7 +21,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   // Check for undismissed static notifications
   useEffect(() => {
     const dismissed = JSON.parse(localStorage.getItem("nudges.dismissed") || "[]");
-    const totalNudges = 2; // We have 2 static nudges
+    const totalNudges = 3; // We have 3 static nudges
     setNotificationCount(totalNudges - dismissed.length);
   }, [isNotificationsOpen]); // Recheck when modal closes
 
