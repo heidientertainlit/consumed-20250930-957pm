@@ -207,9 +207,7 @@ export default function PlayTriviaPage() {
                     {allPredictions[game.id] ? (
                       <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                         <div className="text-green-800 font-medium">✓ Submitted</div>
-                        <div className="text-green-700 text-sm">
-                          You answered "{allPredictions[game.id]}"
-                        </div>
+                        <div className="text-green-700 text-sm">Game completed!</div>
                       </div>
                     ) : game.isLongForm ? (
                       <Button 
@@ -218,19 +216,19 @@ export default function PlayTriviaPage() {
                         data-testid={`play-${game.id}`}
                       >
                         <Brain size={16} className="mr-2" />
-                        Start Trivia
+                        Play Trivia Game
                       </Button>
-                    ) : Array.isArray(game.options) && typeof game.options[0] === 'string' ? (
+                    ) : (
                       <>
                         <div className="text-gray-600 text-sm font-medium">Quick Answer:</div>
                         <div className="grid grid-cols-2 gap-3">
-                          {game.options.slice(0, 2).map((option: string, index: number) => (
+                          {(game.options || []).slice(0, 2).map((option: string, index: number) => (
                             <button
                               key={`${game.id}-${index}`}
                               onClick={() => handleOptionSelect(game.id, option)}
                               className={`p-4 text-left rounded-lg border-2 transition-all ${
                                 selectedAnswers[game.id] === option
-                                  ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
+                                  ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
                                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                               }`}
                               data-testid={`option-${game.id}-${index}`}
