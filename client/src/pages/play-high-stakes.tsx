@@ -84,7 +84,7 @@ export default function PlayHighStakesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 pb-24">
-      <Navigation onTrackClick={handleTrackConsumption} />
+      <Navigation onTrackConsumption={handleTrackConsumption} />
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-8">
         {/* Header */}
