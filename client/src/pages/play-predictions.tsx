@@ -161,6 +161,39 @@ export default function PlayPredictionsPage() {
           </p>
         </div>
 
+        {/* Featured: 98th Academy Awards Prediction Pool */}
+        <div className="mb-6 relative">
+          <div className="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-4 shadow-sm opacity-50">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🏆</div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-yellow-500 text-white hover:bg-yellow-500 text-xs font-bold border-0">
+                    FEATURED
+                  </Badge>
+                  <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs font-medium">
+                    <Trophy size={10} className="mr-1" />
+                    PREDICT
+                  </Badge>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-1">
+                  98th Academy Awards Prediction Pool
+                </h2>
+                <p className="text-sm text-gray-700">
+                  Join the biggest Oscar prediction pool in history! Predict winners across all major categories.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Coming Soon Bar */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg transform -rotate-6">
+              🎬 Coming Soon
+            </div>
+          </div>
+        </div>
+
         {/* LOW STAKES Section */}
         {lowStakesGames.length > 0 && (
           <div className="mb-8">

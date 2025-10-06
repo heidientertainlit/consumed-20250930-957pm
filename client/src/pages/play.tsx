@@ -646,9 +646,10 @@ export default function PlayPage() {
                 onClick={() => {
                   if (agreedToRules) {
                     setShowHighStakesRules(false);
+                    setLocation('/play/predictions');
                     toast({
                       title: "Welcome to High Stakes!",
-                      description: "Browse available games and select one to enter.",
+                      description: "Browse available high stakes games below.",
                     });
                   } else {
                     toast({
