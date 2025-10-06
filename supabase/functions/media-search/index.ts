@@ -52,10 +52,23 @@ serve(async (req) => {
       }
     }
 
-    // Search books via Open Library
+    // Search books via Open Library with "by" detection
     if (!type || type === 'book') {
       try {
-        const bookResponse = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`);
+        let bookUrl;
+        
+        // Detect "by" pattern for structured search (e.g., "accused by claire poulson")
+        if (query.toLowerCase().includes(' by ')) {
+          const parts = query.split(/\s+by\s+/i);
+          const title = parts[0].trim();
+          const author = parts[1].trim();
+          bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
+        } else {
+          // Use regular search for queries without "by"
+          bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`;
+        }
+        
+        const bookResponse = await fetch(bookUrl);
         if (bookResponse.ok) {
           const bookData = await bookResponse.json();
           bookData.docs?.slice(0, 5).forEach((book) => {
