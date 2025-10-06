@@ -13,7 +13,6 @@ const highStakesGames = [
     id: 'hs-dwts-weekly',
     title: 'Dancing with the Stars',
     category: 'Reality TV',
-    icon: '💃',
     question: 'Who will be eliminated this week?',
     options: ['Joey Graziadei', 'Ilona Maher', 'Stephen Nedoroscik', 'Chandler Kinney'],
     deadline: 'Tuesday 11:59 PM ET',
@@ -26,7 +25,6 @@ const highStakesGames = [
     id: 'hs-lib-weekly',
     title: 'Love is Blind',
     category: 'Reality TV',
-    icon: '💕',
     question: 'Which couple will make it to the finale?',
     options: ['Taylor & Garrett', 'Nick & Hannah', 'Tyler & Ashley', 'Marissa & Ramses'],
     deadline: 'Wednesday 11:59 PM ET',
@@ -39,7 +37,6 @@ const highStakesGames = [
     id: 'hs-nfl-weekly',
     title: 'NFL Sunday Showdown',
     category: 'Sports',
-    icon: '🏅',
     question: 'Who wins the prime time game?',
     options: ['Chiefs', 'Bills', 'Ravens', 'Cowboys'],
     deadline: 'Sunday 8:00 PM ET',
@@ -52,7 +49,6 @@ const highStakesGames = [
     id: 'hs-friends-trivia',
     title: 'Friends Trivia',
     category: 'TV Show',
-    icon: '☕',
     question: 'What is the name of Phoebe\'s twin sister?',
     options: ['Ursula', 'Erica', 'Amy', 'Rachel'],
     deadline: 'Friday 11:59 PM ET',
@@ -132,12 +128,9 @@ export default function PlayHighStakesPage() {
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-4xl">{game.icon}</span>
-                    <div>
-                      <CardTitle className="text-xl text-white mb-1">{game.title}</CardTitle>
-                      <p className="text-amber-300 text-sm font-medium">{game.category}</p>
-                    </div>
+                  <div>
+                    <CardTitle className="text-xl text-white mb-1">{game.title}</CardTitle>
+                    <p className="text-amber-300 text-sm font-medium">{game.category}</p>
                   </div>
                   <div className="text-right">
                     <div className="bg-amber-500/20 px-3 py-1 rounded-full border border-amber-400/30">
@@ -196,8 +189,7 @@ export default function PlayHighStakesPage() {
       <Dialog open={!!selectedGame && !showPaymentModal} onOpenChange={(open) => !open && setSelectedGame(null)}>
         <DialogContent className="bg-gradient-to-br from-gray-900 to-purple-900 border-amber-500/30 text-white max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl flex items-center gap-2">
-              <span className="text-3xl">{selectedGame?.icon}</span>
+            <DialogTitle className="text-2xl">
               {selectedGame?.title}
             </DialogTitle>
             <DialogDescription className="text-amber-300">
