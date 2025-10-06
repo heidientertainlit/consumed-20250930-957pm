@@ -19,24 +19,33 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
 
   const submitMutation = useMutation({
     mutationFn: async (answer: string) => {
-      if (game.type === 'trivia') {
-        return apiRequest('POST', '/api/predictions', {
-          game_id: game.id,
+      // Import Supabase client for direct DB access
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      
+      // Submit prediction to user_predictions table
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .insert({
+          user_id: user.id,
+          pool_id: game.id,
           prediction: answer,
-        });
-      } else if (game.type === 'vote') {
-        // Find the option ID for polls
-        const option = game.options?.find((opt: any) => opt.label === answer);
-        if (!option) throw new Error('Invalid option');
-        return apiRequest('POST', `/api/polls/${game.id}/vote`, {
-          optionId: option.id,
-        });
-      } else if (game.type === 'predict') {
-        return apiRequest('POST', '/api/predictions', {
-          game_id: game.id,
-          prediction: answer,
-        });
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error submitting prediction:', error);
+        throw error;
       }
+      
+      return { pointsAwarded: game.points_reward || 10 };
     },
     onSuccess: (data: any) => {
       setIsSubmitted(true);
@@ -75,23 +84,20 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
 
   // Extract options based on game type
   const getOptions = () => {
-    if (game.type === 'trivia') {
-      // Long-form trivia has array of question objects
-      if (Array.isArray(game.options) && typeof game.options[0] === 'object') {
-        return game.options[0]?.options || [];
-      }
-      // Quick trivia has array of strings
-      if (Array.isArray(game.options)) {
-        return game.options;
-      }
+    if (!game.options || !Array.isArray(game.options)) return [];
+    
+    // If options are objects with labels, extract the labels
+    if (typeof game.options[0] === 'object' && game.options[0]?.label) {
+      return game.options.map((opt: any) => opt.label);
     }
-    if (game.type === 'vote' && game.options) {
-      return game.options.map((opt: any) => opt.label || opt);
+    
+    // If options are question objects (long-form trivia), get first question's options
+    if (typeof game.options[0] === 'object' && game.options[0]?.options) {
+      return game.options[0].options;
     }
-    if (game.type === 'predict' && game.options) {
-      return game.options;
-    }
-    return [];
+    
+    // Otherwise, options are simple strings
+    return game.options;
   };
 
   const options = getOptions();

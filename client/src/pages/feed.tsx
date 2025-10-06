@@ -92,40 +92,56 @@ export default function Feed() {
   const { data: playGames = [] } = useQuery({
     queryKey: ["/api/play-games", user?.id],
     queryFn: async () => {
-      if (!session?.access_token) return [];
+      if (!session?.access_token || !user?.id) return [];
       
+      console.log('🎮 Fetching games for Feed from prediction_pools...');
+      
+      // Get user's existing predictions
+      const { data: userPredictions } = await supabase
+        .from('user_predictions')
+        .select('pool_id')
+        .eq('user_id', user.id);
+      
+      const completedPoolIds = new Set(userPredictions?.map(p => p.pool_id) || []);
+      console.log('✅ User has completed:', completedPoolIds);
+      
+      // Get all open games
       const { data, error } = await supabase
-        .from('games')
+        .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching play games:', error);
         return [];
       }
 
-      // Process games to add isLongForm and isMultiCategory flags
-      const processedGames = (data || []).map((game: any) => {
-        const isLongForm = game.type === 'trivia' && 
-          Array.isArray(game.options) && 
-          typeof game.options[0] === 'object';
-        
-        const isMultiCategory = game.type === 'predict' && 
-          Array.isArray(game.options) && 
-          typeof game.options[0] === 'object';
+      console.log('✅ Loaded games for Feed:', data);
 
-        return {
-          ...game,
-          isLongForm,
-          isMultiCategory,
-        };
-      });
+      // Filter out games user has already played and process
+      const availableGames = (data || [])
+        .filter((game: any) => !completedPoolIds.has(game.id))
+        .map((game: any) => {
+          const isLongForm = Array.isArray(game.options) && 
+            typeof game.options[0] === 'object' && 
+            game.options[0]?.options;
+          
+          const isMultiCategory = false; // Not used for these games
 
-      return processedGames;
+          return {
+            ...game,
+            isLongForm,
+            isMultiCategory,
+          };
+        })
+        .filter((game: any) => !game.isLongForm) // Only show quick games inline
+        .slice(0, 5); // Limit to 5 games
+
+      console.log('🔄 Available games for Feed:', availableGames);
+      return availableGames;
     },
-    enabled: !!session?.access_token,
+    enabled: !!session?.access_token && !!user?.id,
   });
 
   // Like mutation with optimistic updates
