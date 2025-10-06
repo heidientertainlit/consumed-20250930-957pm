@@ -94,10 +94,23 @@ export default function NotificationsModal({ isOpen, onClose }: NotificationsMod
     {
       id: "creator-feedback",
       title: "👋 Hi! I'm Heidi, the creator of Consumed",
-      body: "Tell me what you love, what's not working, and what you'd like to see next. Reach out here!",
-      actionLabel: "Email Heidi",
-      onAction: () => {
-        window.location.href = 'mailto:feedback@consumedapp.com?subject=Consumed Feedback';
+      body: "Tell me what you love, what's not working, and what you'd like to see next. Reach out at feedback@consumedapp.com",
+      actionLabel: "Copy Email",
+      onAction: async () => {
+        try {
+          await navigator.clipboard.writeText('feedback@consumedapp.com');
+          toast({
+            title: "Email copied!",
+            description: "Paste it into your email app to send feedback.",
+          });
+        } catch (error) {
+          console.error('Error copying email:', error);
+          toast({
+            title: "Copy failed",
+            description: "Email: feedback@consumedapp.com",
+            variant: "destructive"
+          });
+        }
       },
     },
   ];
