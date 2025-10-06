@@ -474,70 +474,27 @@ export default function PlayPage() {
 
         {/* HIGH STAKES Section */}
         <div className="mb-8">
-          <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-300 shadow-lg">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-start space-x-4 flex-1">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Trophy className="text-white" size={28} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white hover:from-yellow-600 hover:to-amber-700 text-xs font-bold border-0 shadow-sm">
-                      ⭐ HIGH STAKES
-                    </Badge>
-                    <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-xs font-medium border border-red-300">
-                      18+ Only
-                    </Badge>
-                  </div>
-                  <h3 className="text-2xl font-bold text-amber-900 mb-2">Premium Challenges</h3>
-                  <p className="text-amber-800 text-sm mb-3">
-                    Compete for real prizes from our sponsors. Double your points or win exclusive rewards!
-                  </p>
-                  <div className="flex flex-wrap gap-3 text-sm text-amber-900 mb-4">
-                    <div className="flex items-center space-x-1">
-                      <Star size={16} className="text-amber-600" />
-                      <span className="font-medium">Entry: 50-250 points</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Trophy size={16} className="text-amber-600" />
-                      <span className="font-medium">Win: 2x payout + prizes</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowHighStakesRules(true)}
-                    className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold px-8 py-3 rounded-lg transition-all shadow-md hover:shadow-lg"
-                    data-testid="enter-high-stakes"
-                  >
-                    View High Stakes Games
-                  </button>
-                </div>
-              </div>
+          <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-300">
+            <div className="flex items-center space-x-2 mb-3">
+              <Trophy className="text-amber-700" size={24} />
+              <h3 className="text-xl font-semibold text-amber-900">Premium Challenges</h3>
+              <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-xs font-bold border-0">
+                ⭐ HIGH STAKES
+              </Badge>
+              <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-xs font-medium border border-red-300">
+                18+
+              </Badge>
             </div>
-            
-            {/* Sample High Stakes Games Preview */}
-            <div className="mt-4 pt-4 border-t border-amber-200">
-              <div className="text-xs font-medium text-amber-700 uppercase tracking-wide mb-3">Featured High Stakes:</div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-white rounded-lg p-3 border border-amber-200">
-                  <div className="text-sm font-medium text-gray-900 mb-1">Friends Trivia</div>
-                  <div className="text-xs text-gray-600 mb-2">Entry: 50 pts • Win: 100 pts</div>
-                  <Badge className="bg-purple-100 text-purple-700 text-xs">Trivia</Badge>
-                </div>
-                <div className="bg-white rounded-lg p-3 border border-amber-200">
-                  <div className="text-sm font-medium text-gray-900 mb-1">Oscars 2025</div>
-                  <div className="text-xs text-gray-600 mb-2">Entry: 100 pts • Win: 200 pts</div>
-                  <Badge className="bg-green-100 text-green-700 text-xs">Prediction</Badge>
-                </div>
-                <div className="bg-white rounded-lg p-3 border border-amber-200 relative overflow-hidden">
-                  <div className="absolute top-1 right-1">
-                    <Badge className="bg-red-500 text-white text-xs">SPONSORED</Badge>
-                  </div>
-                  <div className="text-sm font-medium text-gray-900 mb-1">AMC Challenge</div>
-                  <div className="text-xs text-gray-600 mb-2">Entry: 250 pts • Win: $50 Gift Card</div>
-                  <Badge className="bg-purple-100 text-purple-700 text-xs">Trivia</Badge>
-                </div>
-              </div>
-            </div>
+            <p className="text-amber-800 text-sm mb-4">
+              Compete for real prizes from our sponsors. Double your points or win exclusive rewards!
+            </p>
+            <button
+              onClick={() => setShowHighStakesRules(true)}
+              className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-medium px-6 py-3 rounded-full transition-all shadow-sm w-full"
+              data-testid="enter-high-stakes"
+            >
+              View High Stakes Games
+            </button>
           </div>
         </div>
 
@@ -702,54 +659,43 @@ export default function PlayPage() {
             </div>
           ) : (
             filteredGames.map((game: any) => (
-            <Card key={game.id} className="bg-white border border-gray-200 shadow-sm">
+            <Card key={game.id} className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <div className="text-xl">{game.icon}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        {game.type === 'trivia' ? (
-                          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 text-xs font-medium">
-                            <Brain size={10} className="mr-1" />
-                            {game.isLongForm ? 'TRIVIA GAME' : 'QUICK TRIVIA'}
-                          </Badge>
-                        ) : game.type === 'vote' ? (
-                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs font-medium">
-                            <Vote size={10} className="mr-1" />
-                            VOTE
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs font-medium">
-                            <Trophy size={10} className="mr-1" />
-                            PREDICT
-                          </Badge>
-                        )}
-                        {game.isLongForm && (
-                          <Badge className="bg-purple-600 text-white hover:bg-purple-600 text-xs border-0">
-                            {game.options.length} Questions
-                          </Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-lg text-gray-900 leading-tight mb-2">{game.title}</CardTitle>
-                      <p className="text-gray-600 text-sm">{game.description}</p>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="text-2xl">{game.icon}</div>
+                    {game.type === 'trivia' ? (
+                      <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase">
+                        {game.isLongForm ? 'Trivia' : 'Quick Trivia'}
+                      </Badge>
+                    ) : game.type === 'vote' ? (
+                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium uppercase">
+                        Vote
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase">
+                        Predict
+                      </Badge>
+                    )}
                   </div>
                   {/* Invite to Play button - upper right */}
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => handleInviteFriends(game)}
-                    className="ml-3 px-3 py-1 text-xs border-gray-300 hover:border-gray-400"
+                    className="px-3 py-1.5 text-xs bg-black text-white hover:bg-gray-800 border-0 rounded-lg"
                     data-testid={`invite-${game.id}`}
                   >
-                    <UserPlus size={12} className="mr-1" />
+                    <UserPlus size={14} className="mr-1" />
                     Invite to Play
                   </Button>
                 </div>
 
+                <CardTitle className="text-xl font-bold text-gray-900 mb-2 mt-2">{game.title}</CardTitle>
+                <p className="text-gray-600 text-sm mb-4">{game.description}</p>
+
                 {/* Stats Row */}
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
                   <div className="flex items-center space-x-1">
                     <Star size={14} className="text-purple-600" />
                     <span className="font-medium text-purple-600">{game.points || 10} pts</span>
@@ -847,7 +793,7 @@ export default function PlayPage() {
                   // Long-form trivia game - show "Play Game" button
                   <Button 
                     onClick={() => setSelectedTriviaGame(game)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full bg-gray-500 hover:bg-gray-600 text-white rounded-xl py-6"
                     data-testid={`play-${game.id}`}
                   >
                     <Brain size={16} className="mr-2" />
@@ -857,7 +803,7 @@ export default function PlayPage() {
                   // Multi-category prediction game - show "Make Predictions" button
                   <Button 
                     onClick={() => setSelectedPredictionGame(game)}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    className="w-full bg-gray-500 hover:bg-gray-600 text-white rounded-xl py-6"
                     data-testid={`play-${game.id}`}
                   >
                     <Trophy size={16} className="mr-2" />
@@ -892,7 +838,7 @@ export default function PlayPage() {
                     <Button 
                       onClick={() => handleSubmitAnswer(game)}
                       disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
-                      className="w-full bg-gray-900 hover:bg-gray-800 text-white disabled:opacity-50"
+                      className="w-full bg-gray-500 hover:bg-gray-600 text-white disabled:opacity-50 rounded-xl py-6"
                       data-testid={`submit-${game.id}`}
                     >
                       {submitPrediction.isPending ? 'Submitting...' : 'Submit'}
