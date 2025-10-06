@@ -416,6 +416,15 @@ export default function PlayPage() {
           </p>
         </div>
 
+        {/* Game Points Callout */}
+        {totalGamePoints > 0 && (
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4 mb-6 text-center">
+            <div className="text-sm text-gray-700">
+              🎮 You've earned <span className="font-bold text-purple-700">{totalGamePoints} points</span> from games
+            </div>
+          </div>
+        )}
+
         {/* LOW STAKES - Pastel Cards */}
         <div className="space-y-4 mb-8">
           {/* Trivia Challenges Card */}
@@ -478,7 +487,7 @@ export default function PlayPage() {
           <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-300">
             <div className="flex items-center space-x-2 mb-3">
               <Trophy className="text-amber-700" size={24} />
-              <h3 className="text-xl font-semibold text-amber-900">Premium Challenges</h3>
+              <h3 className="text-xl font-semibold text-amber-900">High Stakes Challenges</h3>
               <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-xs font-bold border-0">
                 ⭐ HIGH STAKES
               </Badge>
@@ -498,25 +507,6 @@ export default function PlayPage() {
             </button>
           </div>
         </div>
-
-        {/* Original Games Feed Header */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-semibold text-black mb-3">
-            All Games
-          </h2>
-          <p className="text-gray-600">
-            Browse and filter all available games
-          </p>
-        </div>
-
-        {/* Game Points Callout */}
-        {totalGamePoints > 0 && (
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4 mb-6 text-center">
-            <div className="text-sm text-gray-700">
-              🎮 You've earned <span className="font-bold text-purple-700">{totalGamePoints} points</span> from games
-            </div>
-          </div>
-        )}
 
         {/* Tab Navigation */}
         <div className="bg-white rounded-xl border border-gray-200 mb-6">
