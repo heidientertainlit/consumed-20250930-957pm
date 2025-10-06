@@ -71,10 +71,10 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50">
-        <div className="flex justify-around items-center h-20 px-4">
+        <div className="flex justify-evenly items-center h-20">
           <Link
             href="/feed"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
           >
             <Activity className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Feed</span>
@@ -82,7 +82,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
           <Link
             href="/track"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/track" || location === "/" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/track" || location === "/" ? "bg-white/20" : ""}`}
           >
             <Plus className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Track</span>
@@ -90,7 +90,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
           <Link
             href="/play"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/play" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/play" ? "bg-white/20" : ""}`}
           >
             <Gamepad2 className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Play</span>
@@ -98,7 +98,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
           <Link
             href="/leaderboard"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
           >
             <BarChart3 className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Leaders</span>
@@ -106,7 +106,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
           <Link
             href="/friends"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/friends" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/friends" ? "bg-white/20" : ""}`}
           >
             <Users className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Friends</span>
