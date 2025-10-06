@@ -161,6 +161,9 @@ export default function Track() {
       return null;
     }
 
+    console.log('[DEBUG] Fetching recommendations from edge function...');
+    const startTime = Date.now();
+
     const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations", {
       method: "GET",
       headers: {
@@ -168,15 +171,19 @@ export default function Track() {
       },
     });
 
+    const elapsed = Date.now() - startTime;
+    console.log(`[DEBUG] Edge function response received in ${elapsed}ms, status: ${response.status}`);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Recommendations fetch failed:', response.status, errorText);
+      console.error('[DEBUG] Recommendations fetch failed:', response.status, errorText);
       // Don't throw error, just return empty to not break the page
       return { recommendations: [] };
     }
 
     const data = await response.json();
-    console.log('Recommendations data:', data);
+    console.log('[DEBUG] Recommendations data received:', data);
+    console.log(`[DEBUG] Total time: ${Date.now() - startTime}ms`);
     return data;
   };
 
