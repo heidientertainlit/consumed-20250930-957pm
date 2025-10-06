@@ -156,6 +156,14 @@ export const pollResponses = pgTable("poll_responses", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const cachedRecommendations = pgTable("cached_recommendations", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  recommendations: jsonb("recommendations").notNull(),
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -228,6 +236,11 @@ export const insertPollResponseSchema = createInsertSchema(pollResponses).omit({
   createdAt: true,
 });
 
+export const insertCachedRecommendationsSchema = createInsertSchema(cachedRecommendations).omit({
+  id: true,
+  generatedAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -254,3 +267,5 @@ export type PollOption = typeof pollOptions.$inferSelect;
 export type InsertPollOption = z.infer<typeof insertPollOptionSchema>;
 export type PollResponse = typeof pollResponses.$inferSelect;
 export type InsertPollResponse = z.infer<typeof insertPollResponseSchema>;
+export type CachedRecommendations = typeof cachedRecommendations.$inferSelect;
+export type InsertCachedRecommendations = z.infer<typeof insertCachedRecommendationsSchema>;
