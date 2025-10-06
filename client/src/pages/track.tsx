@@ -191,8 +191,8 @@ export default function Track() {
     queryKey: ["media-recommendations"],
     queryFn: fetchRecommendations,
     enabled: !!session?.access_token,
-    staleTime: 1 * 60 * 1000, // Cache for 1 minute (reduced for testing)
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes for instant revisits
+    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
     retry: false, // Don't retry on failure for faster error state
   });
 
