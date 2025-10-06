@@ -188,7 +188,7 @@ export default function PlayPredictionsPage() {
           
           {/* Coming Soon Bar */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg transform -rotate-6">
+            <div className="bg-gradient-to-r from-purple-300 to-purple-400 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg transform -rotate-6">
               🎬 Coming Soon
             </div>
           </div>
