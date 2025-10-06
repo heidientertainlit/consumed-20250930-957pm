@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -187,6 +187,7 @@ function useSubmitPrediction() {
 }
 
 export default function PlayPage() {
+  const [, setLocation] = useLocation();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [showHighStakesRules, setShowHighStakesRules] = useState(false);
@@ -427,7 +428,7 @@ export default function PlayPage() {
               Test your knowledge against friends on different entertainment topics
             </p>
             <button
-              onClick={() => setGameTypeFilter('trivia')}
+              onClick={() => setLocation('/play/trivia')}
               className="bg-white text-purple-700 font-medium px-6 py-3 rounded-full hover:bg-purple-50 transition-colors shadow-sm w-full"
               data-testid="explore-trivia"
             >
@@ -445,7 +446,7 @@ export default function PlayPage() {
               Vote on trending topics and see how your opinions compare to others
             </p>
             <button
-              onClick={() => setGameTypeFilter('vote')}
+              onClick={() => setLocation('/play/polls')}
               className="bg-white text-blue-700 font-medium px-6 py-3 rounded-full hover:bg-blue-50 transition-colors shadow-sm w-full"
               data-testid="explore-polls"
             >
@@ -463,7 +464,7 @@ export default function PlayPage() {
               Make predictions about upcoming releases and entertainment events
             </p>
             <button
-              onClick={() => setGameTypeFilter('predict')}
+              onClick={() => setLocation('/play/predictions')}
               className="bg-white text-green-700 font-medium px-6 py-3 rounded-full hover:bg-green-50 transition-colors shadow-sm w-full"
               data-testid="explore-predictions"
             >

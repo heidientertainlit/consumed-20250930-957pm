@@ -9,6 +9,9 @@ import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import Leaderboard from "@/pages/leaderboard";
 import Play from "@/pages/play";
+import PlayTrivia from "@/pages/play-trivia";
+import PlayPolls from "@/pages/play-polls";
+import PlayPredictions from "@/pages/play-predictions";
 import Friends from "@/pages/friends";
 import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
@@ -64,6 +67,21 @@ function Router() {
         <Route path="/play">
           <ProtectedRoute>
             <Play />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/play/trivia">
+          <ProtectedRoute>
+            <PlayTrivia />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/play/polls">
+          <ProtectedRoute>
+            <PlayPolls />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/play/predictions">
+          <ProtectedRoute>
+            <PlayPredictions />
           </ProtectedRoute>
         </Route>
         <Route path="/media/:id">
