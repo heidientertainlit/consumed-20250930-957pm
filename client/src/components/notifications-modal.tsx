@@ -36,6 +36,15 @@ export default function NotificationsModal({ isOpen, onClose }: NotificationsMod
 
   const nudges: Nudge[] = [
     {
+      id: "creator-feedback",
+      title: "👋 Hi! I'm Heidi, the creator of Consumed",
+      body: "Tell me what you love, what's not working, and what you'd like to see next. Reach out here!",
+      actionLabel: "Email Heidi",
+      onAction: () => {
+        window.location.href = 'mailto:feedback@consumedapp.com?subject=Consumed Feedback';
+      },
+    },
+    {
       id: "invite-friends",
       title: "Invite friends, earn points",
       body: "Share Consumed with a friend and rack up points toward perks.",
