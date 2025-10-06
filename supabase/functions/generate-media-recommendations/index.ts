@@ -128,7 +128,7 @@ User's favorite media types: ${mediaTypesText}
 User's favorite genres: ${genresText}
 Recent media consumption: ${recentMediaText}
 
-Generate 8-12 personalized media recommendations that specifically match their profile. For each recommendation, provide:
+Generate 6-8 personalized media recommendations that specifically match their profile. For each recommendation, provide:
 - title: exact title of the media
 - creator: author/artist/director/developer  
 - media_type: one of "book", "movie", "tv", "music", "podcast", "game", "youtube"
@@ -153,79 +153,105 @@ Respond in JSON format with a "recommendations" array.`;
       });
     }
 
-    console.log("Calling OpenAI API...");
+    console.log("Calling OpenAI API with timeout...");
 
-    // Call OpenAI API
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert entertainment recommendation engine that analyzes Entertainment DNA profiles to suggest personalized media content. Always respond with valid JSON.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 1500,
-        temperature: 0.7
-      })
-    });
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
 
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error('OpenAI API error:', openaiResponse.status, errorText);
-      throw new Error(`OpenAI API error: ${openaiResponse.status} - ${errorText}`);
-    }
-
-    const openaiResult = await openaiResponse.json();
-    const recommendationsText = openaiResult.choices[0].message.content;
-
-    console.log("OpenAI response received, parsing...");
-
-    let recommendations;
     try {
-      recommendations = JSON.parse(recommendationsText);
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
-      console.error('Raw response:', recommendationsText);
-      throw new Error('Failed to parse AI recommendations');
+      // Call OpenAI API with faster model
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', // Faster, cheaper model
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert entertainment recommendation engine that analyzes Entertainment DNA profiles to suggest personalized media content. Always respond with valid JSON.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 800, // Reduced for faster response
+          temperature: 0.7
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!openaiResponse.ok) {
+        const errorText = await openaiResponse.text();
+        console.error('OpenAI API error:', openaiResponse.status, errorText);
+        throw new Error(`OpenAI API error: ${openaiResponse.status} - ${errorText}`);
+      }
+
+      const openaiResult = await openaiResponse.json();
+      const recommendationsText = openaiResult.choices[0].message.content;
+
+      console.log("OpenAI response received, parsing...");
+
+      let recommendations;
+      try {
+        recommendations = JSON.parse(recommendationsText);
+      } catch (parseError) {
+        console.error('Error parsing OpenAI response:', parseError);
+        console.error('Raw response:', recommendationsText);
+        throw new Error('Failed to parse AI recommendations');
+      }
+
+      // Transform recommendations into the format expected by the frontend
+      const formattedRecommendations = recommendations.recommendations?.map((rec) => ({
+        id: `rec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        title: rec.title,
+        creator: rec.creator,
+        media_type: rec.media_type,
+        type: rec.media_type, // For compatibility
+        year: rec.year,
+        description: rec.description,
+        genre: rec.genre,
+        rating_explanation: rec.rating_explanation,
+        image_url: null,
+        external_id: null,
+        external_source: 'ai_recommendation'
+      })) || [];
+
+      console.log("Generated recommendations:", formattedRecommendations.length);
+
+      return new Response(JSON.stringify({
+        recommendations: formattedRecommendations,
+        count: formattedRecommendations.length,
+        generated_at: new Date().toISOString()
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      // Handle timeout specifically
+      if (fetchError.name === 'AbortError') {
+        console.error('OpenAI request timed out after 25 seconds');
+        return new Response(JSON.stringify({
+          error: 'Request timed out',
+          details: 'Recommendation generation took too long. Please try again.'
+        }), {
+          status: 504,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      throw fetchError;
     }
-
-    // Transform recommendations into the format expected by the frontend
-    const formattedRecommendations = recommendations.recommendations?.map((rec) => ({
-      id: `rec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      title: rec.title,
-      creator: rec.creator,
-      media_type: rec.media_type,
-      type: rec.media_type, // For compatibility
-      year: rec.year,
-      description: rec.description,
-      genre: rec.genre,
-      rating_explanation: rec.rating_explanation,
-      image_url: null,
-      external_id: null,
-      external_source: 'ai_recommendation'
-    })) || [];
-
-    console.log("Generated recommendations:", formattedRecommendations.length);
-
-    return new Response(JSON.stringify({
-      recommendations: formattedRecommendations,
-      count: formattedRecommendations.length,
-      generated_at: new Date().toISOString()
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200
-    });
 
   } catch (error) {
     console.error('Error generating recommendations:', error);
