@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Vote, Star, Users, UserPlus, ChevronLeft } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
+import FeedbackFooter from '@/components/feedback-footer';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -315,6 +316,9 @@ export default function PlayPollsPage() {
         isOpen={isTrackModalOpen} 
         onClose={() => setIsTrackModalOpen(false)} 
       />
+
+      <FeedbackFooter />
+
     </div>
   );
 }

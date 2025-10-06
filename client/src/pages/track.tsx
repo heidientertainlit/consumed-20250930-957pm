@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
+import FeedbackFooter from "@/components/feedback-footer";
 import ListShareModal from "@/components/list-share-modal";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
@@ -742,6 +743,8 @@ export default function Track() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <FeedbackFooter />
 
     </div>
   );

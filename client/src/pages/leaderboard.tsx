@@ -1,5 +1,6 @@
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
+import FeedbackFooter from "@/components/feedback-footer";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame, Users, Vote, Brain, TrendingUp, Share2 } from "lucide-react";
@@ -467,6 +468,9 @@ export default function Leaderboard() {
         isOpen={isTrackModalOpen} 
         onClose={() => setIsTrackModalOpen(false)} 
       />
+
+      <FeedbackFooter />
+
     </div>
   );
 }

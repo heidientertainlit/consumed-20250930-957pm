@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
+import FeedbackFooter from "@/components/feedback-footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -665,6 +666,9 @@ export default function PlayPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <FeedbackFooter />
+
     </div>
   );
 }

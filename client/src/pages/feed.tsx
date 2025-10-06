@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
+import FeedbackFooter from "@/components/feedback-footer";
 import PollCard from "@/components/poll-card";
 import PlayCard from "@/components/play-card";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Eye, Users, BookOpen, Film, Send } from "lucide-react";
@@ -723,6 +724,7 @@ export default function Feed() {
         </div>
       </div>
 
+      <FeedbackFooter />
 
       <ConsumptionTracker
         isOpen={isTrackModalOpen}

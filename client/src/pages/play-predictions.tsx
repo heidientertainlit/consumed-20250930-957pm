@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trophy, Star, Users, UserPlus, ChevronLeft } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
+import FeedbackFooter from '@/components/feedback-footer';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -373,6 +374,9 @@ export default function PlayPredictionsPage() {
           }}
         />
       )}
+
+      <FeedbackFooter />
+
     </div>
   );
 }
