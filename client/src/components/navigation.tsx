@@ -101,9 +101,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
           >
             <BarChart3 className="text-white" size={24} />
-            <span className="text-xs font-medium text-white text-center leading-tight">
-              Leader<br />board
-            </span>
+            <span className="text-xs font-medium text-white">Leaders</span>
           </Link>
 
           <Link
