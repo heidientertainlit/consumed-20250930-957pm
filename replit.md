@@ -34,9 +34,10 @@ The application employs a modern full-stack architecture with a clear separation
 ### Feature Specifications
 -   **Media Tracking**: Simplified list-based system allowing users to track various entertainment items across "Currently", "Queue", "Finished", and "Did Not Finish" lists.
 -   **Social Features**: Leaderboards, activity feeds, friend discovery, and "Inner Circle" for Super Fan identification.
--   **Play Section**: Trivia, predictions, and "Blends" (finding common media for groups).
+-   **Play Section**: Category-based navigation with dedicated pages for Trivia (/play/trivia), Polls (/play/polls), and Predictions (/play/predictions). Main Play page shows category cards only - no "All Games" listing. Inline Play cards appear every 3rd post in the Feed for quick participation.
 -   **Profile Management**: Editable display name and username with validation and real-time uniqueness checking.
 -   **Creator Recognition**: "Favorite Creators" are computed from actual user media consumption, calculating "fan points" and dominant roles.
+-   **Media Item Pages**: Deferred to post-launch. Individual media pages (e.g., `/media/tv/:tmdb_id`) would provide deep linking and better shareability but are not critical for MVP launch.
 -   **Polls/Surveys System**: Database-backed polling system supporting branded (consumed/entertainlit) and sponsored polls with:
     -   Real-time vote counting and percentage calculations
     -   Duplicate vote prevention per user
