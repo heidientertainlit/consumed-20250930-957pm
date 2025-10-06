@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import PollCard from "@/components/poll-card";
+import PlayCard from "@/components/play-card";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Eye, Users, BookOpen, Film, Send } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import CommentsSection from "@/components/comments-section";
@@ -85,6 +86,46 @@ export default function Feed() {
       return response.json();
     },
     enabled: !!session?.access_token && !!user?.id,
+  });
+
+  // Fetch Play games for inline play
+  const { data: playGames = [] } = useQuery({
+    queryKey: ["/api/play-games", user?.id],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        console.error('Error fetching play games:', error);
+        return [];
+      }
+
+      // Process games to add isLongForm and isMultiCategory flags
+      const processedGames = (data || []).map((game: any) => {
+        const isLongForm = game.type === 'trivia' && 
+          Array.isArray(game.options) && 
+          typeof game.options[0] === 'object';
+        
+        const isMultiCategory = game.type === 'predict' && 
+          Array.isArray(game.options) && 
+          typeof game.options[0] === 'object';
+
+        return {
+          ...game,
+          isLongForm,
+          isMultiCategory,
+        };
+      });
+
+      return processedGames;
+    },
+    enabled: !!session?.access_token,
   });
 
   // Like mutation with optimistic updates
@@ -249,12 +290,12 @@ export default function Feed() {
       if (!user?.id) throw new Error('Not authenticated');
       return apiRequest('POST', `/api/polls/${pollId}/vote`, { optionId, userId: user.id });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       // Refetch polls with user vote status
       queryClient.invalidateQueries({ queryKey: ["/api/polls", user?.id] });
       
       // Log points earned
-      if (data.pointsAwarded) {
+      if (data?.pointsAwarded) {
         console.log(`✅ Vote submitted! Earned ${data.pointsAwarded} points`);
       }
     },
@@ -433,27 +474,28 @@ export default function Feed() {
             </div>
           ) : socialPosts && socialPosts.length > 0 ? (
             <div className="space-y-4">
-              {socialPosts.map((post: SocialPost, postIndex: number) => (
-                <div key={`post-wrapper-${postIndex}`}>
-                  {/* Insert Polls after 3rd post */}
-                  {postIndex === 2 && polls && polls.length > 0 && (
-                    <div className="space-y-3 mb-4">
-                      {polls.map((poll: any) => {
-                        // Check if user has already voted
-                        const hasVoted = poll.user_has_voted || false;
-                        if (hasVoted) return null; // Hide poll if already voted
-                        
-                        return (
-                          <PollCard
-                            key={poll.id}
-                            poll={poll}
-                            onVote={handleVote}
-                            hasVoted={false}
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
+              {socialPosts.map((post: SocialPost, postIndex: number) => {
+                // Inject PlayCard every 3rd post
+                const shouldShowPlayCard = (postIndex + 1) % 3 === 0;
+                const playCardIndex = Math.floor(postIndex / 3);
+                const currentGame = playGames && playGames.length > 0 
+                  ? playGames[playCardIndex % playGames.length]
+                  : null;
+                
+                // Only show quick games inline (no long-form trivia or multi-category predictions)
+                const canPlayInline = currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory;
+                
+                return (
+                  <div key={`post-wrapper-${postIndex}`}>
+                    {/* Insert PlayCard every 3rd post */}
+                    {shouldShowPlayCard && canPlayInline && (
+                      <PlayCard 
+                        game={currentGame}
+                        onComplete={() => {
+                          queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
+                        }}
+                      />
+                    )}
                   
                   {/* Original Post */}
                   <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -649,7 +691,8 @@ export default function Feed() {
                     </div>
                   )}
                 </div>
-              ))}
+              );
+              })}
 
             </div>
           ) : (
