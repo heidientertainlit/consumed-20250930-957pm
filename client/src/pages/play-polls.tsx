@@ -20,15 +20,46 @@ export default function PlayPollsPage() {
     setIsTrackModalOpen(true);
   };
 
-  // Fetch games
+  // Fetch games directly from Supabase
   const { data: games = [], isLoading } = useQuery({
-    queryKey: ['/api/games'],
+    queryKey: ['/api/predictions/pools'],
+    queryFn: async () => {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const { data: pools, error } = await supabase
+        .from('prediction_pools')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+      if (error) throw new Error('Failed to fetch games');
+      return pools || [];
+    },
   });
 
   // Fetch all predictions
-  const { data: allPredictions = {} } = useQuery<Record<string, string>>({
-    queryKey: ['/api/predictions/all'],
+  const { data: userPredictionsData } = useQuery({
+    queryKey: ['/api/predictions/user-predictions'],
+    queryFn: async () => {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return {};
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .select('pool_id, prediction')
+        .eq('user_id', user.id);
+      if (error) return {};
+      const predictions: Record<string, string> = {};
+      data?.forEach((pred) => { predictions[pred.pool_id] = pred.prediction; });
+      return predictions;
+    },
   });
+  
+  const allPredictions = userPredictionsData || {};
 
   // Submit prediction mutation
   const submitPrediction = useMutation({
@@ -71,8 +102,16 @@ export default function PlayPollsPage() {
     });
   };
 
+  // Process and filter games
+  const processedGames = games.map((pool: any) => {
+    return {
+      ...pool,
+      points: pool.points_reward,
+    };
+  });
+  
   // Filter for poll/vote games only
-  const pollGames = games.filter((game: any) => game.type === 'vote');
+  const pollGames = processedGames.filter((game: any) => game.type === 'vote');
   const lowStakesGames = pollGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = pollGames.filter((game: any) => game.isHighStakes);
 

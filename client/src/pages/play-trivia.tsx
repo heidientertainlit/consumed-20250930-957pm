@@ -104,8 +104,22 @@ export default function PlayTriviaPage() {
     });
   };
 
+  // Process and filter games
+  const processedGames = games.map((pool: any) => {
+    const isLongFormTrivia = pool.type === 'trivia' && 
+      Array.isArray(pool.options) && 
+      pool.options.length > 0 && 
+      typeof pool.options[0] === 'object';
+    
+    return {
+      ...pool,
+      points: pool.points_reward,
+      isLongForm: isLongFormTrivia,
+    };
+  });
+  
   // Filter for trivia games only
-  const triviaGames = games.filter((game: any) => game.type === 'trivia');
+  const triviaGames = processedGames.filter((game: any) => game.type === 'trivia');
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
 
