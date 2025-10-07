@@ -51,7 +51,10 @@ export const ednaResponses = pgTable("edna_responses", {
 export const dnaProfiles = pgTable("dna_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
+  label: text("label"), // Archetype label (e.g., "Cozy Completionist")
+  tagline: text("tagline"), // One-line tag
   profileText: text("profile_text").notNull(),
+  flavorNotes: jsonb("flavor_notes"), // Array of 3 flavor notes
   favoriteGenres: jsonb("favorite_genres"), // Array of genre strings
   favoriteMediaTypes: jsonb("favorite_media_types"), // Array of media types
   favoriteSports: jsonb("favorite_sports"), // Array of sports
