@@ -824,6 +824,8 @@ export default function UserProfile() {
       const listSlug = listTitle.toLowerCase().replace(/\s+/g, '-');
       const userId = session?.user?.id || profileUser?.id;
       
+      console.log('Sharing list:', { listId, listTitle, listSlug, userId });
+      
       await copyLink({
         kind: 'list',
         obj: { id: listSlug, user_id: userId }
