@@ -191,8 +191,6 @@ export default function PlayPage() {
   const [, setLocation] = useLocation();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [showHighStakesRules, setShowHighStakesRules] = useState(false);
-  const [agreedToRules, setAgreedToRules] = useState(false);
   const { data: predictionPools = [], isLoading } = usePredictionPools();
   const { data: userPredictionsData = { predictions: {}, fullData: [] } } = useUserPredictions();
   const submitPrediction = useSubmitPrediction();
@@ -483,29 +481,6 @@ export default function PlayPage() {
           </div>
         </div>
 
-        {/* HIGH STAKES Section */}
-        <div className="mb-8">
-          <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-300">
-            <div className="flex items-center space-x-2 mb-3">
-              <Star className="text-amber-700" size={24} />
-              <h3 className="text-xl font-semibold text-amber-900">High Stakes Challenges</h3>
-              <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-xs font-medium border border-red-300">
-                18+
-              </Badge>
-            </div>
-            <p className="text-amber-800 text-sm mb-4">
-              Compete for real prizes from our sponsors. Double your points or win exclusive rewards!
-            </p>
-            <button
-              onClick={() => setShowHighStakesRules(true)}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-medium px-6 py-3 rounded-full transition-all shadow-sm w-full"
-              data-testid="enter-high-stakes"
-            >
-              View High Stakes Games
-            </button>
-          </div>
-        </div>
-
       </div>
 
       <ConsumptionTracker 
@@ -540,132 +515,6 @@ export default function PlayPage() {
           }}
         />
       )}
-
-      {/* High Stakes Rules Modal */}
-      <Dialog open={showHighStakesRules} onOpenChange={setShowHighStakesRules}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-amber-900 flex items-center space-x-2">
-              <Trophy className="text-amber-600" size={28} />
-              <span>High Stakes Rules of Play</span>
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <p className="text-sm text-amber-900 font-medium mb-2">
-                By entering a High Stakes game, you confirm that:
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">
-                  1
-                </div>
-                <p className="text-sm text-gray-700 flex-1">
-                  You are <span className="font-semibold">18 years or older</span>.
-                </p>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">
-                  2
-                </div>
-                <p className="text-sm text-gray-700 flex-1">
-                  You understand that this game is <span className="font-semibold">skill-based, not chance-based</span>.
-                </p>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">
-                  3
-                </div>
-                <p className="text-sm text-gray-700 flex-1">
-                  Points have <span className="font-semibold">no cash value</span> and <span className="font-semibold">cannot be exchanged or refunded</span>.
-                </p>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">
-                  4
-                </div>
-                <p className="text-sm text-gray-700 flex-1">
-                  Any prizes are <span className="font-semibold">sponsor-provided and promotional only</span> — not cash payouts.
-                </p>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">
-                  5
-                </div>
-                <p className="text-sm text-gray-700 flex-1">
-                  <span className="font-semibold">No purchase is required</span> to participate; points can be earned in-app.
-                </p>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-0.5">
-                  6
-                </div>
-                <p className="text-sm text-gray-700 flex-1">
-                  You agree to Consumed's full <span className="font-semibold text-purple-600 cursor-pointer hover:underline">Terms of Service</span> and <span className="font-semibold text-purple-600 cursor-pointer hover:underline">Privacy Policy</span>.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3 p-4 bg-amber-50 border border-amber-200 rounded-lg mt-6">
-              <Checkbox
-                id="agree-rules"
-                checked={agreedToRules}
-                onCheckedChange={(checked) => setAgreedToRules(checked as boolean)}
-                className="border-amber-500 data-[state=checked]:bg-amber-600"
-              />
-              <label
-                htmlFor="agree-rules"
-                className="text-sm font-medium text-gray-900 cursor-pointer flex-1"
-              >
-                I have read and agree to the High Stakes Rules of Play
-              </label>
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <Button
-                onClick={() => {
-                  setShowHighStakesRules(false);
-                  setAgreedToRules(false);
-                }}
-                variant="outline"
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  if (agreedToRules) {
-                    setShowHighStakesRules(false);
-                    setLocation('/play/high-stakes');
-                    toast({
-                      title: "Welcome to High Stakes!",
-                      description: "Browse available high stakes games below.",
-                    });
-                  } else {
-                    toast({
-                      title: "Agreement Required",
-                      description: "Please agree to the rules to continue.",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-                disabled={!agreedToRules}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold disabled:opacity-50"
-              >
-                I Agree & Continue
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <FeedbackFooter />
 
