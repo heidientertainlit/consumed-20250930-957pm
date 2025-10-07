@@ -1083,9 +1083,9 @@ export default function UserProfile() {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Extended size to fit all DNA details (1080 x 2400)
+      // Instagram Story size (1080 x 1920)
       canvas.width = 1080;
-      canvas.height = 2400;
+      canvas.height = 1920;
 
       // Background: Blue to Purple gradient (matching Canva design)
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
@@ -1106,23 +1106,23 @@ export default function UserProfile() {
         ctx.font = 'italic 48px Poppins, sans-serif';
         ctx.fillText('by consumed', canvas.width / 2, 145);
 
-        // White rounded rectangle content area (extended to fit all content)
+        // White rounded rectangle content area (fits in Instagram story)
         ctx.fillStyle = 'white';
-        ctx.roundRect(58, 188, canvas.width - 116, 2040, 30);
+        ctx.roundRect(58, 188, canvas.width - 116, 1400, 30);
         ctx.fill();
 
         // DNA Label (use actual label from profile, centered in white box)
         ctx.fillStyle = '#a855f7';
-        ctx.font = 'bold 52px Poppins, sans-serif';
+        ctx.font = 'bold 50px Poppins, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(dnaProfile.label || 'Your DNA Profile', canvas.width / 2, 300);
+        ctx.fillText(dnaProfile.label || 'Your DNA Profile', canvas.width / 2, 290);
 
-        // Tagline
+        // Tagline (with more spacing below label)
         ctx.fillStyle = '#6b7280';
-        ctx.font = 'italic 32px Poppins, sans-serif';
+        ctx.font = 'italic 28px Poppins, sans-serif';
         const tagline = dnaProfile.tagline || '';
         const wrappedTagline = tagline.length > 50 ? tagline.substring(0, 47) + '...' : tagline;
-        ctx.fillText(wrappedTagline, canvas.width / 2, 340);
+        ctx.fillText(wrappedTagline, canvas.width / 2, 345);
 
         // Divider line
         ctx.strokeStyle = '#e5e7eb';
@@ -1132,16 +1132,16 @@ export default function UserProfile() {
         ctx.lineTo(canvas.width - 120, 380);
         ctx.stroke();
 
-        // Profile text (wrapped, left-aligned, optimized to fit with flavor notes)
+        // Profile text (wrapped, left-aligned, compact to fit sections)
         ctx.fillStyle = '#374151';
-        ctx.font = '32px Poppins, sans-serif';
+        ctx.font = '28px Poppins, sans-serif';
         ctx.textAlign = 'left';
         const maxWidth = canvas.width - 200;
-        const lineHeight = 48;
+        const lineHeight = 42;
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
-        let y = 440;
-        const maxTextY = 1440; // Leave room for flavor notes
+        let y = 410;
+        const maxTextY = 900; // Leave room for all sections below
 
         for (let i = 0; i < words.length; i++) {
           const testLine = line + words[i] + ' ';
@@ -1160,126 +1160,126 @@ export default function UserProfile() {
           ctx.fillText(line, 100, y);
         }
 
-        // Additional sections below profile text
-        let sectionY = y + 60;
+        // Additional sections below profile text (compact layout)
+        let sectionY = y + 45;
 
         // Favorite Genres section
         if (dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 28px Poppins, sans-serif';
+          ctx.font = 'bold 22px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Genres', 100, sectionY);
-          sectionY += 50;
+          sectionY += 38;
 
-          // Genre badges
+          // Genre badges (compact)
           const genres = dnaProfile.favorite_genres.slice(0, 9);
           let badgeX = 100;
           let badgeY = sectionY;
-          genres.forEach((genre: string, index: number) => {
-            const badgeWidth = ctx.measureText(genre).width + 40;
+          genres.forEach((genre: string) => {
+            ctx.font = 'bold 14px Poppins, sans-serif';
+            const badgeWidth = ctx.measureText(genre).width + 32;
             if (badgeX + badgeWidth > canvas.width - 100) {
               badgeX = 100;
-              badgeY += 55;
+              badgeY += 42;
             }
             ctx.beginPath();
             ctx.fillStyle = '#ede9fe';
-            ctx.roundRect(badgeX, badgeY, badgeWidth, 40, 20);
+            ctx.roundRect(badgeX, badgeY, badgeWidth, 32, 16);
             ctx.fill();
             ctx.fillStyle = '#7c3aed';
-            ctx.font = 'bold 16px Poppins, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(genre, badgeX + badgeWidth / 2, badgeY + 25);
-            badgeX += badgeWidth + 12;
+            ctx.fillText(genre, badgeX + badgeWidth / 2, badgeY + 21);
+            badgeX += badgeWidth + 10;
           });
-          sectionY = badgeY + 60;
+          sectionY = badgeY + 48;
         }
 
         // Favorite Media Types section
         if (dnaProfile.favorite_media_types && dnaProfile.favorite_media_types.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 28px Poppins, sans-serif';
+          ctx.font = 'bold 22px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Media Types', 100, sectionY);
-          sectionY += 50;
+          sectionY += 38;
 
-          // Media type badges
+          // Media type badges (compact, single line)
           const mediaTypes = dnaProfile.favorite_media_types.slice(0, 6);
           let badgeX = 100;
           mediaTypes.forEach((type: string) => {
-            const badgeWidth = ctx.measureText(type).width + 40;
+            ctx.font = 'bold 14px Poppins, sans-serif';
+            const badgeWidth = ctx.measureText(type).width + 32;
             ctx.beginPath();
             ctx.fillStyle = '#dbeafe';
-            ctx.roundRect(badgeX, sectionY, badgeWidth, 40, 20);
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 32, 16);
             ctx.fill();
             ctx.fillStyle = '#2563eb';
-            ctx.font = 'bold 16px Poppins, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(type, badgeX + badgeWidth / 2, sectionY + 25);
-            badgeX += badgeWidth + 12;
+            ctx.fillText(type, badgeX + badgeWidth / 2, sectionY + 21);
+            badgeX += badgeWidth + 10;
           });
-          sectionY += 60;
+          sectionY += 48;
         }
 
         // Favorite Sports section
         if (dnaProfile.favorite_sports && dnaProfile.favorite_sports.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 28px Poppins, sans-serif';
+          ctx.font = 'bold 22px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Sports', 100, sectionY);
-          sectionY += 50;
+          sectionY += 38;
 
-          // Sports badges
+          // Sports badges (compact, single line)
           const sports = dnaProfile.favorite_sports.slice(0, 4);
           let badgeX = 100;
           sports.forEach((sport: string) => {
-            const badgeWidth = ctx.measureText(sport).width + 40;
+            ctx.font = 'bold 14px Poppins, sans-serif';
+            const badgeWidth = ctx.measureText(sport).width + 32;
             ctx.beginPath();
             ctx.fillStyle = '#dcfce7';
-            ctx.roundRect(badgeX, sectionY, badgeWidth, 40, 20);
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 32, 16);
             ctx.fill();
             ctx.fillStyle = '#16a34a';
-            ctx.font = 'bold 16px Poppins, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(sport, badgeX + badgeWidth / 2, sectionY + 25);
-            badgeX += badgeWidth + 12;
+            ctx.fillText(sport, badgeX + badgeWidth / 2, sectionY + 21);
+            badgeX += badgeWidth + 10;
           });
-          sectionY += 60;
+          sectionY += 48;
         }
 
         // Entertainment Style (Flavor notes)
         if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 28px Poppins, sans-serif';
+          ctx.font = 'bold 22px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Your Entertainment Style', 100, sectionY);
-          sectionY += 50;
+          sectionY += 38;
 
-          // Style badges
+          // Style badges (compact, single line)
           const notes = dnaProfile.flavor_notes.slice(0, 3);
           let badgeX = 100;
           notes.forEach((note: string) => {
-            const badgeWidth = ctx.measureText(note).width + 40;
+            ctx.font = 'bold 14px Poppins, sans-serif';
+            const badgeWidth = ctx.measureText(note).width + 32;
             ctx.beginPath();
             ctx.fillStyle = '#f3e8ff';
-            ctx.roundRect(badgeX, sectionY, badgeWidth, 40, 20);
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 32, 16);
             ctx.fill();
             ctx.fillStyle = '#a855f7';
-            ctx.font = 'bold 16px Poppins, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(note, badgeX + badgeWidth / 2, sectionY + 25);
-            badgeX += badgeWidth + 12;
+            ctx.fillText(note, badgeX + badgeWidth / 2, sectionY + 21);
+            badgeX += badgeWidth + 10;
           });
         }
 
-        // Bottom text: "Discover yours" (now BELOW the white box)
+        // Bottom text: "Discover yours" (BELOW the white box)
         ctx.fillStyle = 'white';
         ctx.font = 'italic 40px Poppins, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Discover yours', canvas.width / 2, 2300);
+        ctx.fillText('Discover yours', canvas.width / 2, 1680);
 
-        // Bottom text: "@consumedapp" (now BELOW the white box)
-        ctx.font = 'bold 42px Poppins, sans-serif';
-        ctx.fillText('@consumedapp', canvas.width / 2, 2360);
+        // Bottom text: "app.consumedapp.com" (BELOW the white box)
+        ctx.font = 'bold 38px Poppins, sans-serif';
+        ctx.fillText('app.consumedapp.com', canvas.width / 2, 1750);
 
         // Convert to blob and download
         canvas.toBlob((blob) => {
