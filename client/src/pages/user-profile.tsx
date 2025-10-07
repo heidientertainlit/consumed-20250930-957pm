@@ -1166,10 +1166,10 @@ export default function UserProfile() {
         // Favorite Genres section
         if (dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 26px Poppins, sans-serif';
+          ctx.font = 'bold 28px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Genres', 100, sectionY);
-          sectionY += 45;
+          sectionY += 50;
 
           // Genre badges (larger)
           const genres = dnaProfile.favorite_genres.slice(0, 9);
@@ -1197,10 +1197,10 @@ export default function UserProfile() {
         // Favorite Media Types section
         if (dnaProfile.favorite_media_types && dnaProfile.favorite_media_types.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 26px Poppins, sans-serif';
+          ctx.font = 'bold 28px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Media Types', 100, sectionY);
-          sectionY += 45;
+          sectionY += 50;
 
           // Media type badges (larger)
           const mediaTypes = dnaProfile.favorite_media_types.slice(0, 6);
@@ -1223,10 +1223,10 @@ export default function UserProfile() {
         // Favorite Sports section
         if (dnaProfile.favorite_sports && dnaProfile.favorite_sports.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 26px Poppins, sans-serif';
+          ctx.font = 'bold 28px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Sports', 100, sectionY);
-          sectionY += 45;
+          sectionY += 50;
 
           // Sports badges (larger)
           const sports = dnaProfile.favorite_sports.slice(0, 4);
@@ -1249,10 +1249,10 @@ export default function UserProfile() {
         // Entertainment Style (Flavor notes)
         if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 26px Poppins, sans-serif';
+          ctx.font = 'bold 28px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Your Entertainment Style', 100, sectionY);
-          sectionY += 45;
+          sectionY += 50;
 
           // Style badges (larger)
           const notes = dnaProfile.flavor_notes.slice(0, 3);
