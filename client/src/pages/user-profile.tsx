@@ -1083,9 +1083,9 @@ export default function UserProfile() {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Instagram Story size (1080 x 1920)
+      // Extended size to fit all DNA details (1080 x 2400)
       canvas.width = 1080;
-      canvas.height = 1920;
+      canvas.height = 2400;
 
       // Background: Blue to Purple gradient (matching Canva design)
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
@@ -1106,9 +1106,9 @@ export default function UserProfile() {
         ctx.font = 'italic 48px Poppins, sans-serif';
         ctx.fillText('by consumed', canvas.width / 2, 145);
 
-        // White rounded rectangle content area (more spacing from top, extended height)
+        // White rounded rectangle content area (extended to fit all content)
         ctx.fillStyle = 'white';
-        ctx.roundRect(58, 188, canvas.width - 116, 1400, 30);
+        ctx.roundRect(58, 188, canvas.width - 116, 2040, 30);
         ctx.fill();
 
         // DNA Label (use actual label from profile, centered in white box)
@@ -1160,30 +1160,114 @@ export default function UserProfile() {
           ctx.fillText(line, 100, y);
         }
 
-        // Flavor notes badges (always show if available, positioned to fit in white box)
-        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0) {
-          const badgeY = 1520; // Fixed position near bottom of white box
-          ctx.textAlign = 'center';
-          const notes = dnaProfile.flavor_notes.slice(0, 3);
-          const badgeWidth = 200;
-          const spacing = 15;
-          const totalWidth = notes.length * badgeWidth + (notes.length - 1) * spacing;
-          let badgeX = (canvas.width - totalWidth) / 2;
+        // Additional sections below profile text
+        let sectionY = y + 60;
 
-          notes.forEach((note: string) => {
-            // Badge background - begin new path for each badge
+        // Favorite Genres section
+        if (dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0) {
+          ctx.fillStyle = '#374151';
+          ctx.font = 'bold 28px Poppins, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('Favorite Genres', 100, sectionY);
+          sectionY += 50;
+
+          // Genre badges
+          const genres = dnaProfile.favorite_genres.slice(0, 9);
+          let badgeX = 100;
+          let badgeY = sectionY;
+          genres.forEach((genre: string, index: number) => {
+            const badgeWidth = ctx.measureText(genre).width + 40;
+            if (badgeX + badgeWidth > canvas.width - 100) {
+              badgeX = 100;
+              badgeY += 55;
+            }
             ctx.beginPath();
-            ctx.fillStyle = '#f3e8ff';
+            ctx.fillStyle = '#ede9fe';
             ctx.roundRect(badgeX, badgeY, badgeWidth, 40, 20);
             ctx.fill();
+            ctx.fillStyle = '#7c3aed';
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(genre, badgeX + badgeWidth / 2, badgeY + 25);
+            badgeX += badgeWidth + 12;
+          });
+          sectionY = badgeY + 60;
+        }
 
-            // Badge text
+        // Favorite Media Types section
+        if (dnaProfile.favorite_media_types && dnaProfile.favorite_media_types.length > 0) {
+          ctx.fillStyle = '#374151';
+          ctx.font = 'bold 28px Poppins, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('Favorite Media Types', 100, sectionY);
+          sectionY += 50;
+
+          // Media type badges
+          const mediaTypes = dnaProfile.favorite_media_types.slice(0, 6);
+          let badgeX = 100;
+          mediaTypes.forEach((type: string) => {
+            const badgeWidth = ctx.measureText(type).width + 40;
+            ctx.beginPath();
+            ctx.fillStyle = '#dbeafe';
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 40, 20);
+            ctx.fill();
+            ctx.fillStyle = '#2563eb';
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(type, badgeX + badgeWidth / 2, sectionY + 25);
+            badgeX += badgeWidth + 12;
+          });
+          sectionY += 60;
+        }
+
+        // Favorite Sports section
+        if (dnaProfile.favorite_sports && dnaProfile.favorite_sports.length > 0) {
+          ctx.fillStyle = '#374151';
+          ctx.font = 'bold 28px Poppins, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('Favorite Sports', 100, sectionY);
+          sectionY += 50;
+
+          // Sports badges
+          const sports = dnaProfile.favorite_sports.slice(0, 4);
+          let badgeX = 100;
+          sports.forEach((sport: string) => {
+            const badgeWidth = ctx.measureText(sport).width + 40;
+            ctx.beginPath();
+            ctx.fillStyle = '#dcfce7';
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 40, 20);
+            ctx.fill();
+            ctx.fillStyle = '#16a34a';
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(sport, badgeX + badgeWidth / 2, sectionY + 25);
+            badgeX += badgeWidth + 12;
+          });
+          sectionY += 60;
+        }
+
+        // Entertainment Style (Flavor notes)
+        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0) {
+          ctx.fillStyle = '#374151';
+          ctx.font = 'bold 28px Poppins, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('Your Entertainment Style', 100, sectionY);
+          sectionY += 50;
+
+          // Style badges
+          const notes = dnaProfile.flavor_notes.slice(0, 3);
+          let badgeX = 100;
+          notes.forEach((note: string) => {
+            const badgeWidth = ctx.measureText(note).width + 40;
+            ctx.beginPath();
+            ctx.fillStyle = '#f3e8ff';
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 40, 20);
+            ctx.fill();
             ctx.fillStyle = '#a855f7';
-            ctx.font = 'bold 18px Poppins, sans-serif';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(note.length > 18 ? note.substring(0, 15) + '...' : note, badgeX + badgeWidth / 2, badgeY + 20);
-
-            badgeX += badgeWidth + spacing;
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(note, badgeX + badgeWidth / 2, sectionY + 25);
+            badgeX += badgeWidth + 12;
           });
         }
 
@@ -1191,11 +1275,11 @@ export default function UserProfile() {
         ctx.fillStyle = 'white';
         ctx.font = 'italic 40px Poppins, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Discover yours', canvas.width / 2, 1640);
+        ctx.fillText('Discover yours', canvas.width / 2, 2300);
 
         // Bottom text: "@consumedapp" (now BELOW the white box)
         ctx.font = 'bold 42px Poppins, sans-serif';
-        ctx.fillText('@consumedapp', canvas.width / 2, 1700);
+        ctx.fillText('@consumedapp', canvas.width / 2, 2360);
 
         // Convert to blob and download
         canvas.toBlob((blob) => {
