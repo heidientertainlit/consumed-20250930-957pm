@@ -1094,116 +1094,154 @@ export default function UserProfile() {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Top text: "My Entertainment DNA"
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 52px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('My Entertainment DNA', canvas.width / 2, 90);
-
-      // "by consumed" text
-      ctx.font = 'italic 48px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillText('by consumed', canvas.width / 2, 145);
-
-      // White rounded rectangle content area (matching Canva design)
-      ctx.fillStyle = 'white';
-      ctx.roundRect(58, 168, canvas.width - 116, 720, 30);
-      ctx.fill();
-
-      // DNA Label (centered in white box)
-      ctx.fillStyle = '#a855f7';
-      ctx.font = 'bold 52px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(dnaProfile.label || 'Your DNA Profile', canvas.width / 2, 280);
-
-      // Tagline
-      ctx.fillStyle = '#6b7280';
-      ctx.font = 'italic 32px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      const tagline = dnaProfile.tagline || '';
-      const wrappedTagline = tagline.length > 50 ? tagline.substring(0, 47) + '...' : tagline;
-      ctx.fillText(wrappedTagline, canvas.width / 2, 340);
-
-      // Divider line
-      ctx.strokeStyle = '#e5e7eb';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(120, 380);
-      ctx.lineTo(canvas.width - 120, 380);
-      ctx.stroke();
-
-      // Profile text (wrapped, left-aligned)
-      ctx.fillStyle = '#374151';
-      ctx.font = '30px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.textAlign = 'left';
-      const maxWidth = canvas.width - 200;
-      const lineHeight = 46;
-      const words = (dnaProfile.profile_text || '').split(' ');
-      let line = '';
-      let y = 440;
-
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + ' ';
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > maxWidth && i > 0) {
-          ctx.fillText(line, 100, y);
-          line = words[i] + ' ';
-          y += lineHeight;
-          if (y > 780) break; // Stop before bottom of white box
-        } else {
-          line = testLine;
-        }
-      }
-      ctx.fillText(line, 100, y);
-
-      // Flavor notes badges (if space allows)
-      if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && y < 700) {
-        y += 60;
+      // Load and draw logo
+      const logo = new Image();
+      logo.crossOrigin = 'anonymous';
+      
+      // Function to complete the drawing
+      const completeDrawing = () => {
+        // Top text: "My Entertainment DNA"
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 52px Poppins, sans-serif';
         ctx.textAlign = 'center';
-        const notes = dnaProfile.flavor_notes.slice(0, 3);
-        const badgeWidth = 240;
-        const spacing = 25;
-        const totalWidth = notes.length * badgeWidth + (notes.length - 1) * spacing;
-        let badgeX = (canvas.width - totalWidth) / 2;
+        ctx.fillText('My Entertainment DNA', canvas.width / 2, 90);
 
-        notes.forEach((note: string) => {
-          // Badge background
-          ctx.fillStyle = '#f3e8ff';
-          ctx.roundRect(badgeX, y, badgeWidth, 50, 25);
-          ctx.fill();
+        // "by consumed" text with logo
+        ctx.font = 'italic 48px Poppins, sans-serif';
+        const byText = 'by ';
+        const byTextWidth = ctx.measureText(byText).width;
+        const logoWidth = 240;
+        const totalWidth = byTextWidth + logoWidth;
+        const startX = (canvas.width - totalWidth) / 2;
+        
+        ctx.fillText(byText, startX, 145);
+        
+        // Draw logo next to "by" text
+        if (logo.complete) {
+          const logoHeight = 60;
+          const logoY = 145 - logoHeight + 10;
+          ctx.drawImage(logo, startX + byTextWidth, logoY, logoWidth, logoHeight);
+        }
 
-          // Badge text
-          ctx.fillStyle = '#a855f7';
-          ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-          ctx.fillText(note.length > 15 ? note.substring(0, 12) + '...' : note, badgeX + badgeWidth / 2, y + 33);
+        // White rounded rectangle content area (matching Canva design)
+        ctx.fillStyle = 'white';
+        ctx.roundRect(58, 168, canvas.width - 116, 720, 30);
+        ctx.fill();
 
-          badgeX += badgeWidth + spacing;
-        });
-      }
+        // DNA Label (centered in white box)
+        ctx.fillStyle = '#a855f7';
+        ctx.font = 'bold 52px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(dnaProfile.label || 'Your DNA Profile', canvas.width / 2, 280);
 
-      // Bottom text: "Discover yours"
-      ctx.fillStyle = 'white';
-      ctx.font = 'italic 40px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Discover yours', canvas.width / 2, 965);
+        // Tagline
+        ctx.fillStyle = '#6b7280';
+        ctx.font = 'italic 32px Poppins, sans-serif';
+        const tagline = dnaProfile.tagline || '';
+        const wrappedTagline = tagline.length > 50 ? tagline.substring(0, 47) + '...' : tagline;
+        ctx.fillText(wrappedTagline, canvas.width / 2, 340);
 
-      // Bottom text: "@consumedapp"
-      ctx.font = 'bold 42px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillText('@consumedapp', canvas.width / 2, 1020);
+        // Divider line
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(120, 380);
+        ctx.lineTo(canvas.width - 120, 380);
+        ctx.stroke();
 
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${userProfileData?.user_name || 'my'}-entertainment-dna.png`;
-        a.click();
-        URL.revokeObjectURL(url);
+        // Profile text (wrapped, left-aligned)
+        ctx.fillStyle = '#374151';
+        ctx.font = '30px Poppins, sans-serif';
+        ctx.textAlign = 'left';
+        const maxWidth = canvas.width - 200;
+        const lineHeight = 46;
+        const words = (dnaProfile.profile_text || '').split(' ');
+        let line = '';
+        let y = 440;
 
-        toast({
-          title: "DNA Downloaded!",
-          description: "Share your Entertainment DNA on social media",
-        });
-      }, 'image/png');
+        for (let i = 0; i < words.length; i++) {
+          const testLine = line + words[i] + ' ';
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && i > 0) {
+            ctx.fillText(line, 100, y);
+            line = words[i] + ' ';
+            y += lineHeight;
+            if (y > 780) break; // Stop before bottom of white box
+          } else {
+            line = testLine;
+          }
+        }
+        ctx.fillText(line, 100, y);
+
+        // Flavor notes badges (if space allows)
+        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && y < 700) {
+          y += 60;
+          ctx.textAlign = 'center';
+          const notes = dnaProfile.flavor_notes.slice(0, 3);
+          const badgeWidth = 240;
+          const spacing = 25;
+          const totalWidth = notes.length * badgeWidth + (notes.length - 1) * spacing;
+          let badgeX = (canvas.width - totalWidth) / 2;
+
+          notes.forEach((note: string) => {
+            // Badge background
+            ctx.fillStyle = '#f3e8ff';
+            ctx.roundRect(badgeX, y, badgeWidth, 50, 25);
+            ctx.fill();
+
+            // Badge text
+            ctx.fillStyle = '#a855f7';
+            ctx.font = 'bold 24px Poppins, sans-serif';
+            ctx.fillText(note.length > 15 ? note.substring(0, 12) + '...' : note, badgeX + badgeWidth / 2, y + 33);
+
+            badgeX += badgeWidth + spacing;
+          });
+        }
+
+        // Bottom text: "Discover yours"
+        ctx.fillStyle = 'white';
+        ctx.font = 'italic 40px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Discover yours', canvas.width / 2, 965);
+
+        // Bottom text: "@consumedapp"
+        ctx.font = 'bold 42px Poppins, sans-serif';
+        ctx.fillText('@consumedapp', canvas.width / 2, 1020);
+
+        // Convert to blob and download
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${userProfileData?.user_name || 'my'}-entertainment-dna.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+
+          toast({
+            title: "DNA Downloaded!",
+            description: "Share your Entertainment DNA on social media",
+          });
+        }, 'image/png');
+      };
+
+      // Try to load logo, but continue even if it fails
+      logo.onload = completeDrawing;
+      logo.onerror = () => {
+        console.warn('Logo failed to load, continuing without it');
+        completeDrawing();
+      };
+      
+      // Attempt to load the logo (using the attached image path)
+      logo.src = '/client/consumed-logo-white.png';
+      
+      // Fallback: if logo doesn't load within 500ms, continue without it
+      setTimeout(() => {
+        if (!logo.complete) {
+          completeDrawing();
+        }
+      }, 500);
+
     } catch (error) {
       console.error('Error downloading DNA:', error);
       toast({
