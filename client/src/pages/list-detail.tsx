@@ -173,10 +173,13 @@ export default function ListDetail() {
     }
 
     try {
+      // Convert title to slug for share URL
+      const listSlug = sharedListData.title.toLowerCase().replace(/\s+/g, '-');
+      
       await copyLink({ 
         kind: 'list', 
         obj: { 
-          id: sharedListData.id,
+          id: listSlug,
           isCurrently: sharedListData.title === 'Currently',
           user_id: session?.user?.id
         } 

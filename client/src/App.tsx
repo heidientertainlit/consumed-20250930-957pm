@@ -111,11 +111,6 @@ function Router() {
             <UserProfile />
           </ProtectedRoute>
         </Route>
-        <Route path="/prediction/:id">
-          <ProtectedRoute>
-            <Play />
-          </ProtectedRoute>
-        </Route>
         <Route path="/edna/:id">
           <EdnaSharePage />
         </Route>
