@@ -1134,14 +1134,14 @@ export default function UserProfile() {
 
         // Profile text (wrapped, left-aligned)
         ctx.fillStyle = '#374151';
-        ctx.font = '28px Poppins, sans-serif';
+        ctx.font = '26px Poppins, sans-serif';
         ctx.textAlign = 'left';
         const maxWidth = canvas.width - 200;
-        const lineHeight = 42;
+        const lineHeight = 38;
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
         let y = 430;
-        const maxY = 860; // Allow more space for text (white box ends at 888)
+        const maxY = 870; // Extend closer to white box limit (888)
 
         for (let i = 0; i < words.length; i++) {
           const testLine = line + words[i] + ' ';
@@ -1155,30 +1155,31 @@ export default function UserProfile() {
             line = testLine;
           }
         }
-        if (y <= maxY) {
+        // Always try to render the last line if we haven't exceeded the limit
+        if (line.trim() && y <= maxY) {
           ctx.fillText(line, 100, y);
         }
 
-        // Flavor notes badges (if space allows)
-        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && y < 800) {
-          y += 50;
+        // Flavor notes badges (only if we have enough space - at least 60px)
+        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && (y + 60) < 880) {
+          y += 45;
           ctx.textAlign = 'center';
           const notes = dnaProfile.flavor_notes.slice(0, 3);
-          const badgeWidth = 220;
-          const spacing = 20;
+          const badgeWidth = 210;
+          const spacing = 18;
           const totalWidth = notes.length * badgeWidth + (notes.length - 1) * spacing;
           let badgeX = (canvas.width - totalWidth) / 2;
 
           notes.forEach((note: string) => {
             // Badge background
             ctx.fillStyle = '#f3e8ff';
-            ctx.roundRect(badgeX, y, badgeWidth, 45, 22);
+            ctx.roundRect(badgeX, y, badgeWidth, 42, 21);
             ctx.fill();
 
             // Badge text
             ctx.fillStyle = '#a855f7';
-            ctx.font = 'bold 22px Poppins, sans-serif';
-            ctx.fillText(note.length > 15 ? note.substring(0, 12) + '...' : note, badgeX + badgeWidth / 2, y + 30);
+            ctx.font = 'bold 20px Poppins, sans-serif';
+            ctx.fillText(note.length > 15 ? note.substring(0, 12) + '...' : note, badgeX + badgeWidth / 2, y + 28);
 
             badgeX += badgeWidth + spacing;
           });
