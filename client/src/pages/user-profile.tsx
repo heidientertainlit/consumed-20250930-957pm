@@ -1171,7 +1171,8 @@ export default function UserProfile() {
           let badgeX = (canvas.width - totalWidth) / 2;
 
           notes.forEach((note: string) => {
-            // Badge background
+            // Badge background - begin new path for each badge
+            ctx.beginPath();
             ctx.fillStyle = '#f3e8ff';
             ctx.roundRect(badgeX, badgeY, badgeWidth, 40, 20);
             ctx.fill();
@@ -1179,7 +1180,8 @@ export default function UserProfile() {
             // Badge text
             ctx.fillStyle = '#a855f7';
             ctx.font = 'bold 18px Poppins, sans-serif';
-            ctx.fillText(note.length > 18 ? note.substring(0, 15) + '...' : note, badgeX + badgeWidth / 2, badgeY + 26);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(note.length > 18 ? note.substring(0, 15) + '...' : note, badgeX + badgeWidth / 2, badgeY + 20);
 
             badgeX += badgeWidth + spacing;
           });
