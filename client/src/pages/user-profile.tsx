@@ -22,7 +22,7 @@ export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
-  
+
   // Get user ID from URL using wouter's useRoute
   const [match, params] = useRoute('/user/:id');
   const viewingUserId = params?.id || user?.id; // Use URL param or fallback to current user
@@ -732,7 +732,7 @@ export default function UserProfile() {
         `)
         .eq('user_id', viewingUserId)
         .order('created_at', { ascending: false });
-        
+
       if (error) {
         console.error('Error fetching user predictions:', error);
         setUserPredictionsList([]);
@@ -1102,20 +1102,20 @@ export default function UserProfile() {
         ctx.textAlign = 'center';
         ctx.fillText('My Entertainment DNA', canvas.width / 2, 90);
 
-        // "by consumed" text - just use text instead of logo for now
+        // "by consumed" text
         ctx.font = 'italic 48px Poppins, sans-serif';
         ctx.fillText('by consumed', canvas.width / 2, 145);
 
-        // White rounded rectangle content area (taller to fit all text)
+        // White rounded rectangle content area (more spacing from top, extended height)
         ctx.fillStyle = 'white';
-        ctx.roundRect(58, 168, canvas.width - 116, 1400, 30);
+        ctx.roundRect(58, 188, canvas.width - 116, 1400, 30);
         ctx.fill();
 
-        // DNA Label (centered in white box)
+        // DNA Label (use actual label from profile, centered in white box)
         ctx.fillStyle = '#a855f7';
         ctx.font = 'bold 52px Poppins, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(dnaProfile.label || 'Your DNA Profile', canvas.width / 2, 280);
+        ctx.fillText(dnaProfile.label || 'Your DNA Profile', canvas.width / 2, 300);
 
         // Tagline
         ctx.fillStyle = '#6b7280';
@@ -1589,7 +1589,6 @@ export default function UserProfile() {
               </div>
             )}
           </div>
-
         </div>
 
         {/* Highlights Section */}
@@ -2506,7 +2505,7 @@ export default function UserProfile() {
               <Gamepad2 className="text-purple-800" size={24} />
               <h2 className="text-xl font-bold text-gray-800">Your Game Stats</h2>
             </div>
-            
+
             {isLoadingPredictions ? (
               <div className="text-center py-8">
                 <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
