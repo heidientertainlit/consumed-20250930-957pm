@@ -1068,6 +1068,152 @@ export default function UserProfile() {
     setDnaProfileStatus('no_profile');
   };
 
+  const handleDownloadDNA = async () => {
+    if (!dnaProfile) {
+      toast({
+        title: "Cannot Download",
+        description: "Generate your Entertainment DNA first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Instagram Story size
+      canvas.width = 1080;
+      canvas.height = 1920;
+
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#6366f1'); // indigo-500
+      gradient.addColorStop(1, '#8b5cf6'); // purple-500
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Add subtle pattern overlay
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      for (let i = 0; i < 20; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 100 + 50, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // White content area
+      ctx.fillStyle = 'white';
+      ctx.roundRect(80, 250, canvas.width - 160, 1300, 40);
+      ctx.fill();
+
+      // DNA Icon
+      ctx.fillStyle = '#8b5cf6';
+      ctx.font = 'bold 120px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('✨', canvas.width / 2, 450);
+
+      // Label
+      ctx.fillStyle = '#1f2937';
+      ctx.font = 'bold 72px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText(dnaProfile.label || 'Entertainment DNA', canvas.width / 2, 600);
+
+      // Tagline
+      ctx.fillStyle = '#6b7280';
+      ctx.font = 'italic 42px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      const tagline = dnaProfile.tagline || '';
+      ctx.fillText(tagline.length > 50 ? tagline.substring(0, 47) + '...' : tagline, canvas.width / 2, 680);
+
+      // Profile text (wrapped)
+      ctx.fillStyle = '#374151';
+      ctx.font = '38px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textAlign = 'left';
+      const maxWidth = canvas.width - 240;
+      const lineHeight = 56;
+      const words = (dnaProfile.profile_text || '').split(' ');
+      let line = '';
+      let y = 800;
+
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && i > 0) {
+          ctx.fillText(line, 140, y);
+          line = words[i] + ' ';
+          y += lineHeight;
+          if (y > 1350) break; // Stop if too long
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, 140, y);
+
+      // Flavor notes (compact badges)
+      if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0) {
+        y += 80;
+        ctx.textAlign = 'center';
+        const notes = dnaProfile.flavor_notes.slice(0, 3);
+        const badgeWidth = 280;
+        const spacing = 40;
+        const totalWidth = notes.length * badgeWidth + (notes.length - 1) * spacing;
+        let badgeX = (canvas.width - totalWidth) / 2;
+
+        notes.forEach((note: string) => {
+          // Badge background
+          ctx.fillStyle = '#f3e8ff';
+          ctx.roundRect(badgeX, y, badgeWidth, 60, 30);
+          ctx.fill();
+
+          // Badge text
+          ctx.fillStyle = '#7c3aed';
+          ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+          ctx.fillText(note.length > 15 ? note.substring(0, 12) + '...' : note, badgeX + badgeWidth / 2, y + 42);
+
+          badgeX += badgeWidth + spacing;
+        });
+      }
+
+      // Bottom branding section
+      ctx.fillStyle = '#1f2937';
+      ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('@consumedapp', canvas.width / 2, 1720);
+
+      ctx.fillStyle = '#6b7280';
+      ctx.font = '38px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText('consumedapp.com', canvas.width / 2, 1790);
+
+      // Top branding
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Entertainment DNA', canvas.width / 2, 140);
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${userProfileData?.user_name || 'my'}-entertainment-dna.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "DNA Downloaded!",
+          description: "Share your Entertainment DNA on social media",
+        });
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error downloading DNA:', error);
+      toast({
+        title: "Download Failed",
+        description: "Unable to create DNA image",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleShareDNAProfile = async () => {
     if (!dnaProfile?.id) {
       toast({
@@ -1562,6 +1708,15 @@ export default function UserProfile() {
                     >
                       <RefreshCw size={14} />
                     </button>
+                    <Button 
+                      size="sm"
+                      onClick={handleDownloadDNA}
+                      className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
+                      data-testid="button-download-dna"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Download
+                    </Button>
                     <Button 
                       size="sm"
                       onClick={handleShareDNAProfile}
