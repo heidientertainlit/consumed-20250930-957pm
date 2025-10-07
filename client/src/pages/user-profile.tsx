@@ -1134,10 +1134,10 @@ export default function UserProfile() {
 
         // Profile text (wrapped, left-aligned)
         ctx.fillStyle = '#374151';
-        ctx.font = '26px Poppins, sans-serif';
+        ctx.font = '32px Poppins, sans-serif';
         ctx.textAlign = 'left';
         const maxWidth = canvas.width - 200;
-        const lineHeight = 38;
+        const lineHeight = 46;
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
         let y = 430;
