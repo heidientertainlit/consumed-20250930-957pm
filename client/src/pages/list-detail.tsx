@@ -173,12 +173,18 @@ export default function ListDetail() {
     }
 
     try {
+      // Convert title to slug for clean URLs
+      const listSlug = sharedListData.title.toLowerCase().replace(/\s+/g, '-');
+      
+      // Use sharedUserId when viewing someone else's list, otherwise your own
+      const userId = sharedUserId || session?.user?.id;
+      
       await copyLink({ 
         kind: 'list', 
         obj: { 
-          id: sharedListData.id,
+          id: listSlug,
           isCurrently: sharedListData.title === 'Currently',
-          user_id: session?.user?.id
+          user_id: userId
         } 
       });
 
@@ -340,7 +346,7 @@ export default function ListDetail() {
         <div className="flex items-center mb-6">
           <button
             onClick={() => setLocation("/track")}
-            className="mr-4 p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="mr-4 p-2 text-gray-700 hover:text-black transition-colors"
             data-testid="button-back"
             aria-label="Back to track"
           >
