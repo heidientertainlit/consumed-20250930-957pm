@@ -21,8 +21,8 @@ export default function PlayTriviaPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
 
-  // Extract game ID from URL if present (format: /prediction/trivia-harry-potter-easy)
-  const gameIdFromUrl = location.match(/\/prediction\/(.+)/)?.[1];
+  // Extract game ID from URL hash if present (format: /play/trivia#game-id)
+  const gameIdFromUrl = window.location.hash.replace('#', '');
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);

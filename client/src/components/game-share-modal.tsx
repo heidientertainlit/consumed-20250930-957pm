@@ -15,13 +15,18 @@ interface GameShareModalProps {
 export default function GameShareModal({ isOpen, onClose, gameId, gameTitle, gameType }: GameShareModalProps) {
   const [copied, setCopied] = useState(false);
   
-  // Generate proper route based on game type with game ID
+  // Generate proper route based on game type with game ID in hash
   const getShareUrl = () => {
     const baseUrl = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
     const base = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
     
-    // Use the legacy prediction URL format with game ID
-    return `${base}/prediction/${gameId}`;
+    // Route to correct game type page with game ID in hash
+    let route = '/play';
+    if (gameType === 'trivia') route = '/play/trivia';
+    else if (gameType === 'vote') route = '/play/polls';
+    else if (gameType === 'predict') route = '/play/predictions';
+    
+    return `${base}${route}#${gameId}`;
   };
   
   const shareUrl = getShareUrl();

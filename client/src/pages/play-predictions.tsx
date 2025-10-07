@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,9 @@ export default function PlayPredictionsPage() {
   const [selectedPredictionGame, setSelectedPredictionGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
+
+  // Extract game ID from URL hash if present (format: /play/predictions#game-id)
+  const gameIdFromUrl = window.location.hash.replace('#', '');
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -122,6 +125,16 @@ export default function PlayPredictionsPage() {
   const predictionGames = processedGames.filter((game: any) => game.type === 'predict');
   const lowStakesGames = predictionGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = predictionGames.filter((game: any) => game.isHighStakes);
+
+  // Auto-open prediction if gameId is in URL hash
+  React.useEffect(() => {
+    if (gameIdFromUrl && !selectedPredictionGame && predictionGames.length > 0) {
+      const gameToOpen = predictionGames.find((g: any) => g.id === gameIdFromUrl);
+      if (gameToOpen) {
+        setSelectedPredictionGame(gameToOpen);
+      }
+    }
+  }, [gameIdFromUrl, predictionGames, selectedPredictionGame]);
 
   if (isLoading) {
     return (
