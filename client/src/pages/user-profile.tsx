@@ -1141,7 +1141,7 @@ export default function UserProfile() {
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
         let y = 430;
-        const maxY = 820; // Allow more space for text
+        const maxY = 860; // Allow more space for text (white box ends at 888)
 
         for (let i = 0; i < words.length; i++) {
           const testLine = line + words[i] + ' ';
@@ -1160,7 +1160,7 @@ export default function UserProfile() {
         }
 
         // Flavor notes badges (if space allows)
-        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && y < 750) {
+        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && y < 800) {
           y += 50;
           ctx.textAlign = 'center';
           const notes = dnaProfile.flavor_notes.slice(0, 3);
