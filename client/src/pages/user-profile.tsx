@@ -1094,10 +1094,6 @@ export default function UserProfile() {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Load and draw logo
-      const logo = new Image();
-      logo.crossOrigin = 'anonymous';
-      
       // Function to complete the drawing
       const completeDrawing = () => {
         // Top text: "My Entertainment DNA"
@@ -1106,22 +1102,9 @@ export default function UserProfile() {
         ctx.textAlign = 'center';
         ctx.fillText('My Entertainment DNA', canvas.width / 2, 90);
 
-        // "by consumed" text with logo
+        // "by consumed" text - just use text instead of logo for now
         ctx.font = 'italic 48px Poppins, sans-serif';
-        const byText = 'by ';
-        const byTextWidth = ctx.measureText(byText).width;
-        const logoWidth = 240;
-        const totalWidth = byTextWidth + logoWidth;
-        const startX = (canvas.width - totalWidth) / 2;
-        
-        ctx.fillText(byText, startX, 145);
-        
-        // Draw logo next to "by" text
-        if (logo.complete) {
-          const logoHeight = 60;
-          const logoY = 145 - logoHeight + 10;
-          ctx.drawImage(logo, startX + byTextWidth, logoY, logoWidth, logoHeight);
-        }
+        ctx.fillText('by consumed', canvas.width / 2, 145);
 
         // White rounded rectangle content area (matching Canva design)
         ctx.fillStyle = 'white';
@@ -1225,22 +1208,8 @@ export default function UserProfile() {
         }, 'image/png');
       };
 
-      // Try to load logo, but continue even if it fails
-      logo.onload = completeDrawing;
-      logo.onerror = () => {
-        console.warn('Logo failed to load, continuing without it');
-        completeDrawing();
-      };
-      
-      // Attempt to load the logo (using the attached image path)
-      logo.src = '/client/consumed-logo-white.png';
-      
-      // Fallback: if logo doesn't load within 500ms, continue without it
-      setTimeout(() => {
-        if (!logo.complete) {
-          completeDrawing();
-        }
-      }, 500);
+      // Execute drawing
+      completeDrawing();
 
     } catch (error) {
       console.error('Error downloading DNA:', error);
