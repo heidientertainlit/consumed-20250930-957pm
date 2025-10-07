@@ -1108,7 +1108,7 @@ export default function UserProfile() {
 
         // White rounded rectangle content area (extended height)
         ctx.fillStyle = 'white';
-        ctx.roundRect(58, 168, canvas.width - 116, 1200, 30);
+        ctx.roundRect(58, 168, canvas.width - 116, 1100, 30);
         ctx.fill();
 
         // DNA Label (centered in white box)
@@ -1132,16 +1132,16 @@ export default function UserProfile() {
         ctx.lineTo(canvas.width - 120, 380);
         ctx.stroke();
 
-        // Profile text (wrapped, left-aligned, 3x larger font)
+        // Profile text (wrapped, left-aligned, readable size)
         ctx.fillStyle = '#374151';
-        ctx.font = '96px Poppins, sans-serif';
+        ctx.font = '48px Poppins, sans-serif';
         ctx.textAlign = 'left';
         const maxWidth = canvas.width - 200;
-        const lineHeight = 138;
+        const lineHeight = 68;
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
-        let y = 500;
-        const maxY = 1350; // Extended limit for white box
+        let y = 460;
+        const maxY = 1240; // Extended limit for white box
 
         for (let i = 0; i < words.length; i++) {
           const testLine = line + words[i] + ' ';
