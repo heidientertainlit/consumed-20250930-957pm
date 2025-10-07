@@ -72,8 +72,7 @@ export default function PlayTriviaPage() {
   // Submit prediction mutation
   const submitPrediction = useMutation({
     mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
-      return apiRequest({
-        url: '/api/predictions',
+      return apiRequest('/api/predictions', {
         method: 'POST',
         body: JSON.stringify({ poolId, prediction: answer }),
       });
