@@ -1788,28 +1788,24 @@ export default function UserProfile() {
               </div>
             )}
 
-            {dnaProfileStatus === 'has_profile' && (
+            {dnaProfileStatus === 'has_profile' && dnaProfile && (
               <div className="bg-white rounded-xl p-6">
-                {/* Entertainment DNA Label & Tagline */}
-                {(dnaProfile?.label || dnaProfile?.tagline) && (
-                  <div className="mb-6 text-center">
-                    {dnaProfile?.label && (
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent mb-2">
-                        {dnaProfile.label}
-                      </h3>
-                    )}
-                    {dnaProfile?.tagline && (
-                      <p className="text-gray-600 italic text-lg">
-                        {dnaProfile.tagline}
-                      </p>
-                    )}
-                  </div>
-                )}
+                {/* Entertainment DNA Label & Tagline - Always show if we have a profile */}
+                <div className="mb-6 text-center">
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent mb-2">
+                    {dnaProfile.label || 'Your DNA Profile'}
+                  </h3>
+                  {dnaProfile.tagline && (
+                    <p className="text-gray-600 italic text-lg">
+                      {dnaProfile.tagline}
+                    </p>
+                  )}
+                </div>
 
                 {/* Full AI-Generated Description */}
                 <div className="mb-6">
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    {dnaProfile?.profile_text || "Your personalized Entertainment DNA profile will appear here."}
+                    {dnaProfile.profile_text || "Your personalized Entertainment DNA profile will appear here."}
                   </p>
                 </div>
 
