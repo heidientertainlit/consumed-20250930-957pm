@@ -339,10 +339,10 @@ export default function ListDetail() {
         {/* Header */}
         <div className="flex items-center mb-6">
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={() => setLocation("/track")}
-            className="mr-4 border-gray-300 hover:bg-gray-100"
+            className="mr-4 bg-gray-900 text-white hover:bg-gray-800"
             data-testid="button-back"
           >
             <ArrowLeft size={20} />
