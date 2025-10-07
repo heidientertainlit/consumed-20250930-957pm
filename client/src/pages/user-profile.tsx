@@ -1191,7 +1191,7 @@ export default function UserProfile() {
             ctx.fillText(genre, badgeX + badgeWidth / 2, badgeY + 24);
             badgeX += badgeWidth + 12;
           });
-          sectionY = badgeY + 65;
+          sectionY = badgeY + 75;
         }
 
         // Favorite Media Types section
@@ -1217,7 +1217,7 @@ export default function UserProfile() {
             ctx.fillText(type, badgeX + badgeWidth / 2, sectionY + 24);
             badgeX += badgeWidth + 12;
           });
-          sectionY += 65;
+          sectionY += 75;
         }
 
         // Favorite Sports section
@@ -1243,7 +1243,7 @@ export default function UserProfile() {
             ctx.fillText(sport, badgeX + badgeWidth / 2, sectionY + 24);
             badgeX += badgeWidth + 12;
           });
-          sectionY += 65;
+          sectionY += 75;
         }
 
         // Entertainment Style (Flavor notes)
