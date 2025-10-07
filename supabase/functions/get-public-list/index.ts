@@ -15,10 +15,10 @@ serve(async (req) => {
   }
 
   try {
-    // Create anon client for public access (no auth required)
+    // Create service role client to bypass RLS for public list access
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '', 
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     // Parse URL parameters
