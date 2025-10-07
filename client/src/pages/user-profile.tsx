@@ -1132,16 +1132,16 @@ export default function UserProfile() {
         ctx.lineTo(canvas.width - 120, 380);
         ctx.stroke();
 
-        // Profile text (wrapped, left-aligned, readable size)
+        // Profile text (wrapped, left-aligned, smaller font to fit full description)
         ctx.fillStyle = '#374151';
-        ctx.font = '48px Poppins, sans-serif';
+        ctx.font = '36px Poppins, sans-serif';
         ctx.textAlign = 'left';
         const maxWidth = canvas.width - 200;
-        const lineHeight = 68;
+        const lineHeight = 52;
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
-        let y = 460;
-        const maxY = 1480; // Extended limit for white box
+        let y = 450;
+        const maxY = 1500; // Extended limit for white box
 
         for (let i = 0; i < words.length; i++) {
           const testLine = line + words[i] + ' ';
