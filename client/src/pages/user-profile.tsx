@@ -1128,19 +1128,19 @@ export default function UserProfile() {
         ctx.strokeStyle = '#e5e7eb';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(120, 380);
-        ctx.lineTo(canvas.width - 120, 380);
+        ctx.moveTo(120, 390);
+        ctx.lineTo(canvas.width - 120, 390);
         ctx.stroke();
 
-        // Profile text (wrapped, left-aligned, compact to fit sections)
+        // Profile text (wrapped, left-aligned, more spacing from divider)
         ctx.fillStyle = '#374151';
-        ctx.font = '28px Poppins, sans-serif';
+        ctx.font = '30px Poppins, sans-serif';
         ctx.textAlign = 'left';
         const maxWidth = canvas.width - 200;
-        const lineHeight = 42;
+        const lineHeight = 46;
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
-        let y = 410;
+        let y = 450;
         const maxTextY = 900; // Leave room for all sections below
 
         for (let i = 0; i < words.length; i++) {
@@ -1160,114 +1160,114 @@ export default function UserProfile() {
           ctx.fillText(line, 100, y);
         }
 
-        // Additional sections below profile text (compact layout)
-        let sectionY = y + 45;
+        // Additional sections below profile text (generous spacing)
+        let sectionY = y + 60;
 
         // Favorite Genres section
         if (dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 22px Poppins, sans-serif';
+          ctx.font = 'bold 26px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Genres', 100, sectionY);
-          sectionY += 38;
+          sectionY += 45;
 
-          // Genre badges (compact)
+          // Genre badges (larger)
           const genres = dnaProfile.favorite_genres.slice(0, 9);
           let badgeX = 100;
           let badgeY = sectionY;
           genres.forEach((genre: string) => {
-            ctx.font = 'bold 14px Poppins, sans-serif';
-            const badgeWidth = ctx.measureText(genre).width + 32;
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            const badgeWidth = ctx.measureText(genre).width + 36;
             if (badgeX + badgeWidth > canvas.width - 100) {
               badgeX = 100;
-              badgeY += 42;
+              badgeY += 50;
             }
             ctx.beginPath();
             ctx.fillStyle = '#ede9fe';
-            ctx.roundRect(badgeX, badgeY, badgeWidth, 32, 16);
+            ctx.roundRect(badgeX, badgeY, badgeWidth, 38, 18);
             ctx.fill();
             ctx.fillStyle = '#7c3aed';
             ctx.textAlign = 'center';
-            ctx.fillText(genre, badgeX + badgeWidth / 2, badgeY + 21);
-            badgeX += badgeWidth + 10;
+            ctx.fillText(genre, badgeX + badgeWidth / 2, badgeY + 24);
+            badgeX += badgeWidth + 12;
           });
-          sectionY = badgeY + 48;
+          sectionY = badgeY + 65;
         }
 
         // Favorite Media Types section
         if (dnaProfile.favorite_media_types && dnaProfile.favorite_media_types.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 22px Poppins, sans-serif';
+          ctx.font = 'bold 26px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Media Types', 100, sectionY);
-          sectionY += 38;
+          sectionY += 45;
 
-          // Media type badges (compact, single line)
+          // Media type badges (larger)
           const mediaTypes = dnaProfile.favorite_media_types.slice(0, 6);
           let badgeX = 100;
           mediaTypes.forEach((type: string) => {
-            ctx.font = 'bold 14px Poppins, sans-serif';
-            const badgeWidth = ctx.measureText(type).width + 32;
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            const badgeWidth = ctx.measureText(type).width + 36;
             ctx.beginPath();
             ctx.fillStyle = '#dbeafe';
-            ctx.roundRect(badgeX, sectionY, badgeWidth, 32, 16);
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 38, 18);
             ctx.fill();
             ctx.fillStyle = '#2563eb';
             ctx.textAlign = 'center';
-            ctx.fillText(type, badgeX + badgeWidth / 2, sectionY + 21);
-            badgeX += badgeWidth + 10;
+            ctx.fillText(type, badgeX + badgeWidth / 2, sectionY + 24);
+            badgeX += badgeWidth + 12;
           });
-          sectionY += 48;
+          sectionY += 65;
         }
 
         // Favorite Sports section
         if (dnaProfile.favorite_sports && dnaProfile.favorite_sports.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 22px Poppins, sans-serif';
+          ctx.font = 'bold 26px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Sports', 100, sectionY);
-          sectionY += 38;
+          sectionY += 45;
 
-          // Sports badges (compact, single line)
+          // Sports badges (larger)
           const sports = dnaProfile.favorite_sports.slice(0, 4);
           let badgeX = 100;
           sports.forEach((sport: string) => {
-            ctx.font = 'bold 14px Poppins, sans-serif';
-            const badgeWidth = ctx.measureText(sport).width + 32;
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            const badgeWidth = ctx.measureText(sport).width + 36;
             ctx.beginPath();
             ctx.fillStyle = '#dcfce7';
-            ctx.roundRect(badgeX, sectionY, badgeWidth, 32, 16);
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 38, 18);
             ctx.fill();
             ctx.fillStyle = '#16a34a';
             ctx.textAlign = 'center';
-            ctx.fillText(sport, badgeX + badgeWidth / 2, sectionY + 21);
-            badgeX += badgeWidth + 10;
+            ctx.fillText(sport, badgeX + badgeWidth / 2, sectionY + 24);
+            badgeX += badgeWidth + 12;
           });
-          sectionY += 48;
+          sectionY += 65;
         }
 
         // Entertainment Style (Flavor notes)
         if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0) {
           ctx.fillStyle = '#374151';
-          ctx.font = 'bold 22px Poppins, sans-serif';
+          ctx.font = 'bold 26px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Your Entertainment Style', 100, sectionY);
-          sectionY += 38;
+          sectionY += 45;
 
-          // Style badges (compact, single line)
+          // Style badges (larger)
           const notes = dnaProfile.flavor_notes.slice(0, 3);
           let badgeX = 100;
           notes.forEach((note: string) => {
-            ctx.font = 'bold 14px Poppins, sans-serif';
-            const badgeWidth = ctx.measureText(note).width + 32;
+            ctx.font = 'bold 16px Poppins, sans-serif';
+            const badgeWidth = ctx.measureText(note).width + 36;
             ctx.beginPath();
             ctx.fillStyle = '#f3e8ff';
-            ctx.roundRect(badgeX, sectionY, badgeWidth, 32, 16);
+            ctx.roundRect(badgeX, sectionY, badgeWidth, 38, 18);
             ctx.fill();
             ctx.fillStyle = '#a855f7';
             ctx.textAlign = 'center';
-            ctx.fillText(note, badgeX + badgeWidth / 2, sectionY + 21);
-            badgeX += badgeWidth + 10;
+            ctx.fillText(note, badgeX + badgeWidth / 2, sectionY + 24);
+            badgeX += badgeWidth + 12;
           });
         }
 
