@@ -1281,6 +1281,10 @@ export default function UserProfile() {
         ctx.font = 'bold 38px Poppins, sans-serif';
         ctx.fillText('app.consumedapp.com', canvas.width / 2, 1750);
 
+        // Bottom text: "@consumedapp" 
+        ctx.font = 'bold 38px Poppins, sans-serif';
+        ctx.fillText('@consumedapp', canvas.width / 2, 1810);
+
         // Convert to blob and download
         canvas.toBlob((blob) => {
           if (!blob) return;
