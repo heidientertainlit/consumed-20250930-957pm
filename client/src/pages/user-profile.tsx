@@ -1169,7 +1169,7 @@ export default function UserProfile() {
           ctx.font = 'bold 28px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Genres', 100, sectionY);
-          sectionY += 55;
+          sectionY += 65;
 
           // Genre badges (larger)
           const genres = dnaProfile.favorite_genres.slice(0, 9);
@@ -1200,7 +1200,7 @@ export default function UserProfile() {
           ctx.font = 'bold 28px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Media Types', 100, sectionY);
-          sectionY += 55;
+          sectionY += 65;
 
           // Media type badges (larger)
           const mediaTypes = dnaProfile.favorite_media_types.slice(0, 6);
@@ -1226,7 +1226,7 @@ export default function UserProfile() {
           ctx.font = 'bold 28px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Favorite Sports', 100, sectionY);
-          sectionY += 55;
+          sectionY += 65;
 
           // Sports badges (larger)
           const sports = dnaProfile.favorite_sports.slice(0, 4);
@@ -1252,7 +1252,7 @@ export default function UserProfile() {
           ctx.font = 'bold 28px Poppins, sans-serif';
           ctx.textAlign = 'left';
           ctx.fillText('Your Entertainment Style', 100, sectionY);
-          sectionY += 55;
+          sectionY += 65;
 
           // Style badges (larger)
           const notes = dnaProfile.flavor_notes.slice(0, 3);
