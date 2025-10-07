@@ -1106,9 +1106,9 @@ export default function UserProfile() {
         ctx.font = 'italic 48px Poppins, sans-serif';
         ctx.fillText('by consumed', canvas.width / 2, 145);
 
-        // White rounded rectangle content area (extended height)
+        // White rounded rectangle content area (taller to fit all text)
         ctx.fillStyle = 'white';
-        ctx.roundRect(58, 168, canvas.width - 116, 1100, 30);
+        ctx.roundRect(58, 168, canvas.width - 116, 1400, 30);
         ctx.fill();
 
         // DNA Label (centered in white box)
@@ -1141,7 +1141,7 @@ export default function UserProfile() {
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
         let y = 460;
-        const maxY = 1240; // Extended limit for white box
+        const maxY = 1480; // Extended limit for white box
 
         for (let i = 0; i < words.length; i++) {
           const testLine = line + words[i] + ' ';
@@ -1150,7 +1150,7 @@ export default function UserProfile() {
             ctx.fillText(line, 100, y);
             line = words[i] + ' ';
             y += lineHeight;
-            if (y > maxY) break; // Stop before bottom of white box
+            if (y > maxY) break;
           } else {
             line = testLine;
           }
@@ -1160,8 +1160,8 @@ export default function UserProfile() {
           ctx.fillText(line, 100, y);
         }
 
-        // Flavor notes badges (only if we have enough space - at least 60px)
-        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && (y + 60) < 880) {
+        // Flavor notes badges (only if we have enough space)
+        if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0 && (y + 60) < maxY) {
           y += 45;
           ctx.textAlign = 'center';
           const notes = dnaProfile.flavor_notes.slice(0, 3);
@@ -1185,15 +1185,15 @@ export default function UserProfile() {
           });
         }
 
-        // Bottom text: "Discover yours"
+        // Bottom text: "Discover yours" (now BELOW the white box)
         ctx.fillStyle = 'white';
         ctx.font = 'italic 40px Poppins, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Discover yours', canvas.width / 2, 965);
+        ctx.fillText('Discover yours', canvas.width / 2, 1640);
 
-        // Bottom text: "@consumedapp"
+        // Bottom text: "@consumedapp" (now BELOW the white box)
         ctx.font = 'bold 42px Poppins, sans-serif';
-        ctx.fillText('@consumedapp', canvas.width / 2, 1020);
+        ctx.fillText('@consumedapp', canvas.width / 2, 1700);
 
         // Convert to blob and download
         canvas.toBlob((blob) => {
