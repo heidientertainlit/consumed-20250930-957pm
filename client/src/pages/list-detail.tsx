@@ -173,13 +173,10 @@ export default function ListDetail() {
     }
 
     try {
-      // Convert title to slug for share URL
-      const listSlug = sharedListData.title.toLowerCase().replace(/\s+/g, '-');
-      
       await copyLink({ 
         kind: 'list', 
         obj: { 
-          id: listSlug,
+          id: sharedListData.id,
           isCurrently: sharedListData.title === 'Currently',
           user_id: session?.user?.id
         } 
@@ -341,15 +338,14 @@ export default function ListDetail() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center mb-6">
-          <Button
-            variant="default"
-            size="sm"
+          <button
             onClick={() => setLocation("/track")}
-            className="mr-4 bg-gray-900 text-white hover:bg-gray-800"
+            className="mr-4 p-2 text-gray-600 hover:text-gray-900 transition-colors"
             data-testid="button-back"
+            aria-label="Back to track"
           >
-            <ArrowLeft size={20} />
-          </Button>
+            <ArrowLeft size={24} />
+          </button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900">{listData.name}</h1>
             <p className="text-gray-600">{listData.description}</p>
