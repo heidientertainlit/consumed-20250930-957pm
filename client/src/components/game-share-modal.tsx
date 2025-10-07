@@ -67,7 +67,7 @@ export default function GameShareModal({ isOpen, onClose, gameId, gameTitle, gam
             <h3 className="text-lg font-semibold text-gray-900">Invite Friends to Play</h3>
             <p className="text-sm text-gray-600">"{gameTitle}"</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-600 hover:text-gray-900 hover:bg-gray-100">
             <X size={20} />
           </Button>
         </div>
