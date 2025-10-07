@@ -179,6 +179,14 @@ export default function ListDetail() {
       // Use sharedUserId when viewing someone else's list, otherwise your own
       const userId = sharedUserId || session?.user?.id;
       
+      console.log('LIST-DETAIL SHARE:', { 
+        listId: sharedListData.id,
+        listTitle: sharedListData.title, 
+        listSlug, 
+        userId,
+        sharedUserId 
+      });
+      
       await copyLink({ 
         kind: 'list', 
         obj: { 
