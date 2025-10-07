@@ -1087,107 +1087,131 @@ export default function UserProfile() {
       canvas.width = 1080;
       canvas.height = 1920;
 
-      // Background gradient
+      // Background gradient matching app (purple to pink)
       const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, '#6366f1'); // indigo-500
-      gradient.addColorStop(1, '#8b5cf6'); // purple-500
+      gradient.addColorStop(0, '#a855f7'); // purple-500
+      gradient.addColorStop(1, '#ec4899'); // pink-500
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Add subtle pattern overlay
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-      for (let i = 0; i < 20; i++) {
+      // Add sparkle pattern overlay
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      for (let i = 0; i < 30; i++) {
         ctx.beginPath();
-        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 100 + 50, 0, Math.PI * 2);
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 3 + 1, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // White content area
+      // Top branding section
       ctx.fillStyle = 'white';
-      ctx.roundRect(80, 250, canvas.width - 160, 1300, 40);
+      ctx.font = 'bold 64px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('consumed', canvas.width / 2, 120);
+
+      // White content card
+      ctx.fillStyle = 'white';
+      ctx.roundRect(60, 200, canvas.width - 120, 1450, 30);
       ctx.fill();
 
-      // DNA Icon
-      ctx.fillStyle = '#8b5cf6';
-      ctx.font = 'bold 120px Arial';
+      // DNA Icon/Header
+      ctx.fillStyle = '#a855f7';
+      ctx.font = 'bold 80px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('✨', canvas.width / 2, 450);
+      ctx.fillText('✨', canvas.width / 2, 340);
 
-      // Label
-      ctx.fillStyle = '#1f2937';
-      ctx.font = 'bold 72px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillText(dnaProfile.label || 'Entertainment DNA', canvas.width / 2, 600);
+      ctx.fillStyle = '#111827';
+      ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText('Entertainment DNA', canvas.width / 2, 420);
+
+      // User's DNA Label
+      ctx.fillStyle = '#a855f7';
+      ctx.font = 'bold 60px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText(dnaProfile.label || 'Your DNA Profile', canvas.width / 2, 530);
 
       // Tagline
       ctx.fillStyle = '#6b7280';
-      ctx.font = 'italic 42px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.font = 'italic 36px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       const tagline = dnaProfile.tagline || '';
-      ctx.fillText(tagline.length > 50 ? tagline.substring(0, 47) + '...' : tagline, canvas.width / 2, 680);
+      const wrappedTagline = tagline.length > 45 ? tagline.substring(0, 42) + '...' : tagline;
+      ctx.fillText(wrappedTagline, canvas.width / 2, 600);
+
+      // Divider line
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(140, 650);
+      ctx.lineTo(canvas.width - 140, 650);
+      ctx.stroke();
 
       // Profile text (wrapped)
       ctx.fillStyle = '#374151';
-      ctx.font = '38px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.font = '34px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       ctx.textAlign = 'left';
-      const maxWidth = canvas.width - 240;
-      const lineHeight = 56;
+      const maxWidth = canvas.width - 200;
+      const lineHeight = 52;
       const words = (dnaProfile.profile_text || '').split(' ');
       let line = '';
-      let y = 800;
+      let y = 740;
 
       for (let i = 0; i < words.length; i++) {
         const testLine = line + words[i] + ' ';
         const metrics = ctx.measureText(testLine);
         if (metrics.width > maxWidth && i > 0) {
-          ctx.fillText(line, 140, y);
+          ctx.fillText(line, 100, y);
           line = words[i] + ' ';
           y += lineHeight;
-          if (y > 1350) break; // Stop if too long
+          if (y > 1300) break;
         } else {
           line = testLine;
         }
       }
-      ctx.fillText(line, 140, y);
+      ctx.fillText(line, 100, y);
 
-      // Flavor notes (compact badges)
+      // Flavor notes with gradient badges
       if (dnaProfile.flavor_notes && dnaProfile.flavor_notes.length > 0) {
-        y += 80;
+        y += 100;
         ctx.textAlign = 'center';
         const notes = dnaProfile.flavor_notes.slice(0, 3);
-        const badgeWidth = 280;
-        const spacing = 40;
+        const badgeWidth = 260;
+        const spacing = 30;
         const totalWidth = notes.length * badgeWidth + (notes.length - 1) * spacing;
         let badgeX = (canvas.width - totalWidth) / 2;
 
-        notes.forEach((note: string) => {
-          // Badge background
-          ctx.fillStyle = '#f3e8ff';
-          ctx.roundRect(badgeX, y, badgeWidth, 60, 30);
+        notes.forEach((note: string, index: number) => {
+          // Gradient badge background
+          const badgeGrad = ctx.createLinearGradient(badgeX, y, badgeX + badgeWidth, y + 55);
+          badgeGrad.addColorStop(0, '#f3e8ff');
+          badgeGrad.addColorStop(1, '#fce7f3');
+          ctx.fillStyle = badgeGrad;
+          ctx.roundRect(badgeX, y, badgeWidth, 55, 28);
           ctx.fill();
 
           // Badge text
-          ctx.fillStyle = '#7c3aed';
-          ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-          ctx.fillText(note.length > 15 ? note.substring(0, 12) + '...' : note, badgeX + badgeWidth / 2, y + 42);
+          ctx.fillStyle = '#a855f7';
+          ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+          ctx.fillText(note.length > 13 ? note.substring(0, 10) + '...' : note, badgeX + badgeWidth / 2, y + 38);
 
           badgeX += badgeWidth + spacing;
         });
       }
 
-      // Bottom branding section
-      ctx.fillStyle = '#1f2937';
-      ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('@consumedapp', canvas.width / 2, 1720);
+      // Bottom branding bar
+      const footerGrad = ctx.createLinearGradient(0, 1680, 0, 1760);
+      footerGrad.addColorStop(0, '#a855f7');
+      footerGrad.addColorStop(1, '#ec4899');
+      ctx.fillStyle = footerGrad;
+      ctx.roundRect(60, 1680, canvas.width - 120, 80, 30);
+      ctx.fill();
 
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '38px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillText('consumedapp.com', canvas.width / 2, 1790);
-
-      // Top branding
       ctx.fillStyle = 'white';
-      ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.font = 'bold 40px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Entertainment DNA', canvas.width / 2, 140);
+      ctx.fillText('consumedapp.com', canvas.width / 2, 1735);
+
+      // Footer call-to-action
+      ctx.fillStyle = 'white';
+      ctx.font = '32px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText('Discover your Entertainment DNA', canvas.width / 2, 1840);
 
       // Convert to blob and download
       canvas.toBlob((blob) => {
