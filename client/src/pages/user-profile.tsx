@@ -1141,7 +1141,7 @@ export default function UserProfile() {
         const words = (dnaProfile.profile_text || '').split(' ');
         let line = '';
         let y = 450;
-        const maxTextY = 900; // Leave room for all sections below
+        const maxTextY = 1100; // Leave room for all sections below
 
         for (let i = 0; i < words.length; i++) {
           const testLine = line + words[i] + ' ';
