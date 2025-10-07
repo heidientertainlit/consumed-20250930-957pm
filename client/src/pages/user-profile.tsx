@@ -821,9 +821,12 @@ export default function UserProfile() {
   // Share list using unified helper
   const handleShareListDirect = async (listId: string, listTitle: string) => {
     try {
+      const listSlug = listTitle.toLowerCase().replace(/\s+/g, '-');
+      const userId = session?.user?.id || profileUser?.id;
+      
       await copyLink({
         kind: 'list',
-        id: listId
+        obj: { id: listSlug, user_id: userId }
       });
 
       toast({

@@ -5,6 +5,7 @@ export type ShareKind = 'list' | 'media' | 'prediction' | 'post' | 'edna' | 'pro
 
 function listPath(input: { id?: string; user_id?: string; isCurrently?: boolean }) {
   if (input?.isCurrently && input?.user_id) return `/list/currently?user=${input.user_id}`;
+  if (input?.id && input?.user_id) return `/list/${input.id}?user=${input.user_id}`;
   if (input?.id) return `/list/${input.id}`;
   return '/list';
 }
