@@ -18,6 +18,7 @@ import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
 import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
+import EdnaSharePage from "@/pages/edna-share";
 import OnboardingPage from "./pages/onboarding";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
@@ -114,6 +115,9 @@ function Router() {
           <ProtectedRoute>
             <Play />
           </ProtectedRoute>
+        </Route>
+        <Route path="/edna/:id">
+          <EdnaSharePage />
         </Route>
         <Route component={NotFoundPage} />
       </Switch>
