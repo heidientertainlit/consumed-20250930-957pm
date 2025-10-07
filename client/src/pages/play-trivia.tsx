@@ -10,6 +10,8 @@ import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { copyLink } from "@/lib/share";
+import GameShareModal from "@/components/game-share-modal";
 
 export default function PlayTriviaPage() {
   const [, setLocation] = useLocation();
@@ -17,6 +19,7 @@ export default function PlayTriviaPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [shareModalGame, setShareModalGame] = useState<any>(null);
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -97,11 +100,8 @@ export default function PlayTriviaPage() {
     });
   };
 
-  const handleInviteFriends = (game: any) => {
-    toast({
-      title: "Coming Soon!",
-      description: "Friend invitations will be available soon",
-    });
+  const handleInviteFriends = (item: any) => {
+    setShareModalGame(item);
   };
 
   // Process and filter games
@@ -343,6 +343,18 @@ export default function PlayTriviaPage() {
           }}
         />
       )}
+
+      {/* Game Share Modal */}
+      {shareModalGame && (
+        <GameShareModal
+          isOpen={!!shareModalGame}
+          onClose={() => setShareModalGame(null)}
+          gameId={shareModalGame.id}
+          gameTitle={shareModalGame.title}
+          gameType="trivia"
+        />
+      )}
+
     </div>
   );
 }

@@ -9,6 +9,7 @@ import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import FeedbackFooter from '@/components/feedback-footer';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
+import GameShareModal from "@/components/game-share-modal";
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,6 +19,7 @@ export default function PlayPredictionsPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedPredictionGame, setSelectedPredictionGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [shareModalGame, setShareModalGame] = useState<any>(null);
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -61,7 +63,7 @@ export default function PlayPredictionsPage() {
       return predictions;
     },
   });
-  
+
   const allPredictions = userPredictionsData || {};
 
   // Submit prediction mutation
@@ -98,27 +100,24 @@ export default function PlayPredictionsPage() {
     });
   };
 
-  const handleInviteFriends = (game: any) => {
-    toast({
-      title: "Coming Soon!",
-      description: "Friend invitations will be available soon",
-    });
+  const handleInviteFriends = (item: any) => {
+    setShareModalGame(item);
   };
 
   // Process and filter games
   const processedGames = games.map((pool: any) => {
-    const isMultiCategoryPrediction = pool.type === 'predict' && 
-      Array.isArray(pool.options) && 
-      pool.options.length > 0 && 
+    const isMultiCategoryPrediction = pool.type === 'predict' &&
+      Array.isArray(pool.options) &&
+      pool.options.length > 0 &&
       typeof pool.options[0] === 'object';
-    
+
     return {
       ...pool,
       points: pool.points_reward,
       isMultiCategory: isMultiCategoryPrediction,
     };
   });
-  
+
   // Filter for prediction games only
   const predictionGames = processedGames.filter((game: any) => game.type === 'predict');
   const lowStakesGames = predictionGames.filter((game: any) => !game.isHighStakes);
@@ -140,7 +139,7 @@ export default function PlayPredictionsPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
-      
+
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Back Button and Header */}
         <button
@@ -186,7 +185,7 @@ export default function PlayPredictionsPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Coming Soon Bar */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="bg-gradient-to-r from-purple-300 to-purple-400 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg transform -rotate-6">
@@ -210,8 +209,8 @@ export default function PlayPredictionsPage() {
                           Predict
                         </Badge>
                       </div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => handleInviteFriends(game)}
                         className="px-3 py-1.5 text-xs bg-black text-white hover:bg-gray-800 border-0 rounded-lg"
@@ -236,7 +235,7 @@ export default function PlayPredictionsPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-4">
                     {allPredictions[game.id] ? (
                       <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
@@ -246,7 +245,7 @@ export default function PlayPredictionsPage() {
                         </div>
                       </div>
                     ) : game.isMultiCategory ? (
-                      <Button 
+                      <Button
                         onClick={() => setSelectedPredictionGame(game)}
                         className="w-full bg-gray-500 hover:bg-gray-600 text-white rounded-xl py-6"
                         data-testid={`play-${game.id}`}
@@ -273,7 +272,7 @@ export default function PlayPredictionsPage() {
                             </button>
                           ))}
                         </div>
-                        <Button 
+                        <Button
                           onClick={() => handleSubmitAnswer(game)}
                           disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
                           className="w-full bg-gray-500 hover:bg-gray-600 text-white disabled:opacity-50 rounded-xl py-6"
@@ -305,8 +304,8 @@ export default function PlayPredictionsPage() {
                           High Stakes Prediction
                         </Badge>
                       </div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => handleInviteFriends(game)}
                         className="px-3 py-1.5 text-xs bg-black text-white hover:bg-gray-800 border-0 rounded-lg"
@@ -331,9 +330,9 @@ export default function PlayPredictionsPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-4">
-                    <Button 
+                    <Button
                       onClick={() => setSelectedPredictionGame(game)}
                       className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-xl py-6"
                       data-testid={`play-${game.id}`}
@@ -357,9 +356,9 @@ export default function PlayPredictionsPage() {
         )}
       </div>
 
-      <ConsumptionTracker 
-        isOpen={isTrackModalOpen} 
-        onClose={() => setIsTrackModalOpen(false)} 
+      <ConsumptionTracker
+        isOpen={isTrackModalOpen}
+        onClose={() => setIsTrackModalOpen(false)}
       />
 
       {selectedPredictionGame && (
@@ -372,6 +371,14 @@ export default function PlayPredictionsPage() {
           onClose={() => {
             setSelectedPredictionGame(null);
           }}
+        />
+      )}
+
+      {shareModalGame && (
+        <GameShareModal
+          game={shareModalGame}
+          isOpen={!!shareModalGame}
+          onClose={() => setShareModalGame(null)}
         />
       )}
 
