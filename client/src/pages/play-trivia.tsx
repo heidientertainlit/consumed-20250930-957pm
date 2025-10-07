@@ -20,7 +20,7 @@ export default function PlayTriviaPage() {
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
-  
+
   // Extract game ID from URL if present (format: /prediction/trivia-harry-potter-easy)
   const gameIdFromUrl = location.match(/\/prediction\/(.+)/)?.[1];
 
@@ -72,7 +72,8 @@ export default function PlayTriviaPage() {
   // Submit prediction mutation
   const submitPrediction = useMutation({
     mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
-      return apiRequest('/api/predictions', {
+      return apiRequest({
+        url: '/api/predictions',
         method: 'POST',
         body: JSON.stringify({ poolId, prediction: answer }),
       });
@@ -125,7 +126,7 @@ export default function PlayTriviaPage() {
   const triviaGames = processedGames.filter((game: any) => game.type === 'trivia');
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
-  
+
   // Auto-open game if gameId is in URL
   React.useEffect(() => {
     if (gameIdFromUrl && !selectedTriviaGame && triviaGames.length > 0) {
