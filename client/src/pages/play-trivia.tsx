@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,12 +14,15 @@ import { copyLink } from "@/lib/share";
 import GameShareModal from "@/components/game-share-modal";
 
 export default function PlayTriviaPage() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
+  
+  // Extract game ID from URL if present (format: /prediction/trivia-harry-potter-easy)
+  const gameIdFromUrl = location.match(/\/prediction\/(.+)/)?.[1];
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -122,6 +125,16 @@ export default function PlayTriviaPage() {
   const triviaGames = processedGames.filter((game: any) => game.type === 'trivia');
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
+  
+  // Auto-open game if gameId is in URL
+  React.useEffect(() => {
+    if (gameIdFromUrl && !selectedTriviaGame && triviaGames.length > 0) {
+      const gameToOpen = triviaGames.find((g: any) => g.id === gameIdFromUrl);
+      if (gameToOpen) {
+        setSelectedTriviaGame(gameToOpen);
+      }
+    }
+  }, [gameIdFromUrl, triviaGames, selectedTriviaGame]);
 
   if (isLoading) {
     return (

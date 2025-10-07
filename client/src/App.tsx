@@ -110,6 +110,11 @@ function Router() {
             <UserProfile />
           </ProtectedRoute>
         </Route>
+        <Route path="/prediction/:id">
+          <ProtectedRoute>
+            <Play />
+          </ProtectedRoute>
+        </Route>
         <Route component={NotFoundPage} />
       </Switch>
     </AuthProvider>
