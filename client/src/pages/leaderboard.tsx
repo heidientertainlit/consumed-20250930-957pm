@@ -189,12 +189,6 @@ const leaderboardCategories = [
     isSelected: false
   },
   {
-    id: "high_stakes",
-    title: "High Stakes",
-    icon: <Star className="w-5 h-5 text-amber-500" />,
-    isSelected: false
-  },
-  {
     id: "trivia_leader",
     title: "Trivia Leader",
     icon: <Brain className="w-5 h-5 text-blue-600" />,
