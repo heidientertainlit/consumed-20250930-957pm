@@ -376,9 +376,11 @@ export default function PlayPredictionsPage() {
 
       {shareModalGame && (
         <GameShareModal
-          game={shareModalGame}
           isOpen={!!shareModalGame}
           onClose={() => setShareModalGame(null)}
+          gameId={shareModalGame.id}
+          gameTitle={shareModalGame.title}
+          gameType={shareModalGame.type || "predict"}
         />
       )}
 

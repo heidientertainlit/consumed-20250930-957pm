@@ -351,7 +351,7 @@ export default function PlayTriviaPage() {
           onClose={() => setShareModalGame(null)}
           gameId={shareModalGame.id}
           gameTitle={shareModalGame.title}
-          gameType="trivia"
+          gameType={shareModalGame.type || "trivia"}
         />
       )}
 

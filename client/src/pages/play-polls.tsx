@@ -312,11 +312,15 @@ export default function PlayPollsPage() {
         )}
       </div>
 
-      <GameShareModal
-        isOpen={!!shareModalGame}
-        onClose={() => setShareModalGame(null)}
-        game={shareModalGame}
-      />
+      {shareModalGame && (
+        <GameShareModal
+          isOpen={!!shareModalGame}
+          onClose={() => setShareModalGame(null)}
+          gameId={shareModalGame.id}
+          gameTitle={shareModalGame.title}
+          gameType={shareModalGame.type || "vote"}
+        />
+      )}
 
       <ConsumptionTracker
         isOpen={isTrackModalOpen}
