@@ -542,12 +542,16 @@ export default function Feed() {
                   {/* Media Cards */}
                   {post.mediaItems && post.mediaItems.length > 0 && (
                     <div className="space-y-3 mb-4">
-                      {post.mediaItems.map((media, index) => (
+                      {post.mediaItems.map((media, index) => {
+                        const isClickable = media.externalId && media.externalSource;
+                        return (
                         <div 
                           key={index} 
-                          className="bg-gray-100 rounded-2xl p-4 cursor-pointer hover:bg-gray-200 transition-colors"
+                          className={`bg-gray-100 rounded-2xl p-4 transition-colors ${
+                            isClickable ? 'cursor-pointer hover:bg-gray-200' : 'cursor-default'
+                          }`}
                           onClick={() => {
-                            if (media.externalId && media.externalSource) {
+                            if (isClickable) {
                               setLocation(`/media/${media.externalSource}/${media.externalId}`);
                             }
                           }}
@@ -598,7 +602,8 @@ export default function Feed() {
                             <ChevronRight className="text-gray-400" size={20} />
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
