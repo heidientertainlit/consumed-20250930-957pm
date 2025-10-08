@@ -104,7 +104,7 @@ export default function GameShareModal({ isOpen, onClose, gameId, gameTitle, gam
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Share to Social Media
           </label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleSocialShare('twitter')}
               variant="outline"
@@ -121,15 +121,6 @@ export default function GameShareModal({ isOpen, onClose, gameId, gameTitle, gam
             >
               <Facebook size={20} className="text-blue-600 mb-1" />
               <span className="text-xs">Facebook</span>
-            </Button>
-            
-            <Button
-              onClick={() => handleSocialShare('whatsapp')}
-              variant="outline"
-              className="flex flex-col items-center p-4 h-auto"
-            >
-              <MessageCircle size={20} className="text-green-500 mb-1" />
-              <span className="text-xs">WhatsApp</span>
             </Button>
           </div>
         </div>
