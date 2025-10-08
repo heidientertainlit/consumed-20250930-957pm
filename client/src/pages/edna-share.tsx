@@ -36,20 +36,38 @@ export default function EdnaSharePage() {
       if (!params?.id) return;
 
       try {
-        const { data, error: fetchError } = await supabase
+        // Get user_id from query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user');
+
+        // Fetch DNA profile
+        const { data: profileData, error: profileError } = await supabase
           .from("dna_profiles")
-          .select(`
-            *,
-            users!inner (
-              user_name,
-              display_name
-            )
-          `)
+          .select("*")
           .eq("id", params.id)
           .single();
 
-        if (fetchError) throw fetchError;
-        setDnaProfile(data as DNAProfile);
+        if (profileError) throw profileError;
+
+        // Fetch user info if we have a user_id
+        let userData = null;
+        if (userId) {
+          const { data: userDataResult, error: userError } = await supabase
+            .from("users")
+            .select("user_name, display_name")
+            .eq("id", userId)
+            .single();
+          
+          if (!userError && userDataResult) {
+            userData = userDataResult;
+          }
+        }
+
+        // Combine the data
+        setDnaProfile({
+          ...profileData,
+          users: userData || undefined
+        } as DNAProfile);
       } catch (err) {
         console.error("Error fetching DNA profile:", err);
         setError("DNA Profile not found");

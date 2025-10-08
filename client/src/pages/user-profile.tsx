@@ -1333,7 +1333,10 @@ export default function UserProfile() {
     try {
       await copyLink({
         kind: 'edna',
-        id: dnaProfile.id
+        obj: {
+          id: dnaProfile.id,
+          user_id: dnaProfile.user_id
+        }
       });
 
       toast({

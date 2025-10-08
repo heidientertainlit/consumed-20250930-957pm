@@ -10,8 +10,15 @@ function listPath(input: { id?: string; user_id?: string; isCurrently?: boolean 
   return '/list';
 }
 
+function ednaPath(input: { id?: string; user_id?: string }) {
+  if (input?.id && input?.user_id) return `/edna/${input.id}?user=${input.user_id}`;
+  if (input?.id) return `/edna/${input.id}`;
+  return '/edna';
+}
+
 export function urlFor(kind: ShareKind, arg: any) {
   if (kind === 'list') return `${BASE}${listPath(arg)}`;
+  if (kind === 'edna') return `${BASE}${ednaPath(arg)}`;
   if (kind === 'profile') {
     const id = typeof arg === 'string' ? arg : arg?.id;
     return `${BASE}/user/${id}`;
@@ -28,8 +35,8 @@ export function urlFor(kind: ShareKind, arg: any) {
 }
 
 export async function copyLink(opts: { kind: ShareKind; id?: string; obj?: any }) {
-  const url = opts.kind === 'list'
-    ? urlFor('list', opts.obj ?? { id: opts.id })
+  const url = (opts.kind === 'list' || opts.kind === 'edna')
+    ? urlFor(opts.kind, opts.obj ?? { id: opts.id })
     : urlFor(opts.kind, opts.id!);
 
   await navigator.clipboard.writeText(url);

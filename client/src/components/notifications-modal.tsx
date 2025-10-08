@@ -76,7 +76,13 @@ export default function NotificationsModal({ isOpen, onClose }: NotificationsMod
             });
             return;
           }
-          await copyLink({ kind: 'edna', id: user.id });
+          await copyLink({ 
+            kind: 'edna', 
+            obj: {
+              id: user.id,
+              user_id: user.id
+            }
+          });
           toast({
             title: "DNA link copied!",
             description: "Share this link to show your Entertainment DNA.",
