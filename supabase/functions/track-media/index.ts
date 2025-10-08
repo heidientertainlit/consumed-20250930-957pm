@@ -93,7 +93,8 @@ serve(async (req) => {
         'currently': 'Currently',
         'finished': 'Finished', 
         'dnf': 'Did Not Finish',
-        'queue': 'Queue'
+        'queue': 'Queue',
+        'favorites': 'Favorites'
       };
 
       const listTitle = listTitleMapping[listType] || 'Currently';
