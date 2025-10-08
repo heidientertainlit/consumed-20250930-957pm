@@ -8,26 +8,13 @@ const corsHeaders = {
 
 // Content filter helper
 function isContentAppropriate(item: any, type: string): boolean {
-  // Check for adult/explicit flags from APIs
+  // Only filter TMDB adult content (pornographic films)
   if (type === 'movie' || type === 'tv') {
-    // TMDB provides an 'adult' flag
     if (item.adult === true) return false;
   }
   
-  if (type === 'music' || type === 'podcast') {
-    // Spotify provides an 'explicit' flag
-    if (item.explicit === true) return false;
-  }
-  
-  // Basic keyword blacklist for titles/descriptions
-  const inappropriateKeywords = [
-    'porn', 'xxx', 'adult film', 'erotic', '18+', 'nsfw'
-  ];
-  
-  const textToCheck = (item.title || item.name || '').toLowerCase() + ' ' + 
-                      (item.description || item.overview || '').toLowerCase();
-  
-  return !inappropriateKeywords.some(keyword => textToCheck.includes(keyword));
+  // Allow all other content (music, podcasts, books, etc.)
+  return true;
 }
 
 serve(async (req) => {
