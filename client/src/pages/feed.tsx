@@ -77,11 +77,21 @@ export default function Feed() {
   };
 
 
-  const { data: socialPosts, isLoading } = useQuery({
+  const { data: socialPosts, isLoading, error } = useQuery({
     queryKey: ["social-feed"],
-    queryFn: () => fetchSocialFeed(session),
+    queryFn: async () => {
+      console.log('🔍 Fetching social feed...');
+      const result = await fetchSocialFeed(session);
+      console.log('📊 Social feed result:', result);
+      return result;
+    },
     enabled: !!session?.access_token,
   });
+
+  // Log any errors
+  if (error) {
+    console.error('❌ Social feed error:', error);
+  }
 
   // Fetch active polls
   const { data: polls = [] } = useQuery({
