@@ -71,6 +71,11 @@ export default function Feed() {
   const [booksSubmitted, setBooksSubmitted] = useState(false);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
+  // Using window.location.assign for navigation as we are not using react-router-dom
+  const setLocation = (path: string) => {
+    window.location.assign(path);
+  };
+
 
   const { data: socialPosts, isLoading } = useQuery({
     queryKey: ["social-feed"],
@@ -94,25 +99,25 @@ export default function Feed() {
     queryKey: ["/api/play-games", user?.id],
     queryFn: async () => {
       if (!session?.access_token || !user?.id) return [];
-      
+
       console.log('🎮 Fetching games for Feed from prediction_pools...');
-      
+
       // Get user's existing predictions
       const { data: userPredictions } = await supabase
         .from('user_predictions')
         .select('pool_id')
         .eq('user_id', user.id);
-      
+
       const completedPoolIds = new Set(userPredictions?.map(p => p.pool_id) || []);
       console.log('✅ User has completed:', completedPoolIds);
-      
+
       // Get all open games
       const { data, error } = await supabase
         .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
         .order('created_at', { ascending: false });
-      
+
       if (error) {
         console.error('Error fetching play games:', error);
         return [];
@@ -127,7 +132,7 @@ export default function Feed() {
           const isLongForm = Array.isArray(game.options) && 
             typeof game.options[0] === 'object' && 
             game.options[0]?.options;
-          
+
           const isMultiCategory = false; // Not used for these games
 
           return {
@@ -150,7 +155,7 @@ export default function Feed() {
     mutationFn: async (postId: string) => {
       console.log('❤️ Submitting like:', { postId });
       if (!session?.access_token) throw new Error('Not authenticated');
-      
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-like`, {
         method: 'POST',
         headers: {
@@ -159,7 +164,7 @@ export default function Feed() {
         },
         body: JSON.stringify({ post_id: postId }),
       });
-      
+
       console.log('💗 Like response status:', response.status);
       if (!response.ok) {
         const errorText = await response.text();
@@ -173,13 +178,13 @@ export default function Feed() {
     onMutate: async (postId) => {
       // Optimistic update - immediately update UI
       console.log('⚡ Optimistic like update for:', postId);
-      
+
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["social-feed"] });
-      
+
       // Snapshot previous value
       const previousPosts = queryClient.getQueryData(["social-feed"]);
-      
+
       // Optimistically update posts
       queryClient.setQueryData(["social-feed"], (old: SocialPost[] | undefined) => {
         if (!old) return old;
@@ -189,20 +194,20 @@ export default function Feed() {
             : post
         );
       });
-      
+
       // Update local like state
       setLikedPosts(prev => new Set(prev).add(postId));
-      
+
       return { previousPosts };
     },
     onError: (err, postId, context) => {
       console.log('💥 Like mutation error - reverting optimistic update:', err);
-      
+
       // Revert optimistic update
       if (context?.previousPosts) {
         queryClient.setQueryData(["social-feed"], context.previousPosts);
       }
-      
+
       // Revert local like state
       setLikedPosts(prev => {
         const newSet = new Set(prev);
@@ -222,7 +227,7 @@ export default function Feed() {
     mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
       console.log('🔥 Submitting comment:', { postId, content });
       if (!session?.access_token) throw new Error('Not authenticated');
-      
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments`, {
         method: 'POST',
         headers: {
@@ -231,7 +236,7 @@ export default function Feed() {
         },
         body: JSON.stringify({ post_id: postId, content }),
       });
-      
+
       console.log('📬 Comment response:', response.status);
       if (!response.ok) {
         const errorText = await response.text();
@@ -256,7 +261,7 @@ export default function Feed() {
   // Fetch comments query
   const fetchComments = async (postId: string) => {
     if (!session?.access_token) throw new Error('Not authenticated');
-    
+
     console.log('🔍 Fetching comments for post:', postId);
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}`, {
       method: 'GET',
@@ -265,17 +270,17 @@ export default function Feed() {
         'Content-Type': 'application/json',
       },
     });
-    
+
     console.log('📡 Comments response status:', response.status);
     if (!response.ok) {
       const errorText = await response.text();
       console.log('❌ Comments fetch error:', errorText);
       throw new Error('Failed to fetch comments');
     }
-    
+
     const result = await response.json();
     console.log('✅ Comments fetch success:', result);
-    
+
     // Transform the response to match frontend interface
     const transformedComments = result.comments?.map((comment: any) => ({
       id: comment.id,
@@ -288,7 +293,7 @@ export default function Feed() {
         avatar: ''
       }
     })) || [];
-    
+
     console.log('🔄 Transformed comments:', transformedComments);
     return transformedComments;
   };
@@ -310,7 +315,7 @@ export default function Feed() {
     onSuccess: (data: any) => {
       // Refetch polls with user vote status
       queryClient.invalidateQueries({ queryKey: ["/api/polls", user?.id] });
-      
+
       // Log points earned
       if (data?.pointsAwarded) {
         console.log(`✅ Vote submitted! Earned ${data.pointsAwarded} points`);
@@ -339,7 +344,7 @@ export default function Feed() {
   const handleComment = (postId: string) => {
     const content = commentInputs[postId]?.trim();
     if (!content) return;
-    
+
     commentMutation.mutate({ postId, content });
   };
 
@@ -498,10 +503,10 @@ export default function Feed() {
                 const currentGame = playGames && playGames.length > 0 
                   ? playGames[playCardIndex % playGames.length]
                   : null;
-                
+
                 // Only show quick games inline (no long-form trivia or multi-category predictions)
                 const canPlayInline = currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory;
-                
+
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
                     {/* Insert PlayCard every 3rd post */}
@@ -513,7 +518,7 @@ export default function Feed() {
                         }}
                       />
                     )}
-                  
+
                   {/* Original Post */}
                   <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                     {/* User Info and Date */}
@@ -551,7 +556,14 @@ export default function Feed() {
 
                             {/* Media Info */}
                             <div className="flex-1">
-                              <h3 className="font-semibold text-lg text-gray-900 mb-1" data-testid={`feed-post-${post.id}-media-${index}`}>
+                              <h3 
+                                className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2 cursor-pointer hover:text-purple-600 transition-colors"
+                                onClick={() => {
+                                  if (media.externalId && media.externalSource) {
+                                    setLocation(`/media/${media.externalSource}/${media.externalId}`);
+                                  }
+                                }}
+                              >
                                 {media.title}
                               </h3>
 

@@ -3,6 +3,9 @@ import React, { useState } from "react";
 import { ArrowLeft, Play, Plus, Heart, Share, Star, Calendar, Clock, Users, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
+import { useRoute, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
 
 // Rating Modal Component
 function RatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -113,14 +116,58 @@ function RatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 }
 
 export default function MediaDetail() {
+  const [, params] = useRoute("/media/:source/:id");
+  const [, setLocation] = useLocation();
+  const { session } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
   };
-  // Mock data for SmartLess podcast
-  const mediaItem = {
+
+  // Fetch media details from edge function
+  const { data: mediaItem, isLoading } = useQuery({
+    queryKey: ['media-detail', params?.source, params?.id],
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`
+          }
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch media details');
+      return response.json();
+    },
+    enabled: !!params?.source && !!params?.id && !!session
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={handleTrackConsumption} />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!mediaItem) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={handleTrackConsumption} />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center">Media not found</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Use fetched data or fallback to mock data structure
+  const mediaData = mediaItem || {
     id: "spotify_0Yzd0g8NYmn27k2HFNplv7",
     title: "SmartLess",
     creator: "Jason Bateman, Sean Hayes, Will Arnett",
@@ -222,6 +269,16 @@ export default function MediaDetail() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setLocation("/track")}
+          className="mb-4"
+        >
+          <ArrowLeft size={20} className="mr-2" />
+          Back
+        </Button>
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
@@ -238,8 +295,8 @@ export default function MediaDetail() {
                 
                 <div className="flex-1 space-y-4">
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{mediaItem.title}</h1>
-                    <p className="text-lg text-gray-600 mb-4">by {mediaItem.creator}</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{mediaData.title}</h1>
+                    <p className="text-lg text-gray-600 mb-4">by {mediaData.creator}</p>
                     
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
