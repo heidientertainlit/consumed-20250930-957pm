@@ -7,7 +7,7 @@ import ListShareModal from "@/components/list-share-modal";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown, Upload, HelpCircle, Info } from "lucide-react";
+import { Star, TrendingUp, Award, Users, Plus, List, Play, BookOpen, Headphones, Eye, Gamepad2, Filter, Film, Tv, Music, Trophy, Sparkles, ExternalLink, Share2, CornerUpRight, X, ChevronDown, Upload, HelpCircle, Info, Heart } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -454,8 +454,9 @@ export default function Track() {
                       {list.title === "Finished" && <Star className="text-purple-700 mr-3" size={24} />}
                       {list.title === "Did Not Finish" && <X className="text-purple-700 mr-3" size={24} />}
                       {list.title === "Queue" && <Users className="text-purple-700 mr-3" size={24} />}
+                      {list.title === "Favorites" && <Heart className="text-purple-700 mr-3" size={24} />}
                       {list.title === "All Media" && <List className="text-purple-700 mr-3" size={24} />}
-                      {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) &&
+                      {!["Currently", "Finished", "Did Not Finish", "Queue", "Favorites", "All Media"].includes(list.title) &&
                         <List className="text-purple-700 mr-3" size={24} />}
                       <h3 className="font-bold text-lg text-gray-800">{list.title}</h3>
                     </div>
@@ -464,8 +465,9 @@ export default function Track() {
                       {list.title === "Finished" && "Media you've completed"}
                       {list.title === "Did Not Finish" && "Media you started but didn't complete"}
                       {list.title === "Queue" && "Media you want to consume later"}
+                      {list.title === "Favorites" && "Your all-time favorite media"}
                       {list.title === "All Media" && "All tracked media items"}
-                      {!["Currently", "Finished", "Did Not Finish", "Queue", "All Media"].includes(list.title) &&
+                      {!["Currently", "Finished", "Did Not Finish", "Queue", "Favorites", "All Media"].includes(list.title) &&
                         (list.description || "Your custom list")}
                     </p>
                     <div className="text-2xl font-bold text-purple-800">{list.items?.length || 0}</div>
