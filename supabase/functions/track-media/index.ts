@@ -36,7 +36,7 @@ serve(async (req) => {
     // Look up app user by email, CREATE if doesn't exist
     let { data: appUser, error: appUserError } = await supabase
       .from('users')
-      .select('id, email, user_name')  // FIXED: using user_name instead of username
+      .select('id, email, user_name')
       .eq('email', user.email)
       .single();
 
