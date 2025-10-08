@@ -73,7 +73,7 @@ serve(async (req) => {
     if (req.method === 'POST') {
       // Create a new social feed post
       const body = await req.json();
-      const { content, media_title, media_type, media_creator, media_image_url, rating } = body;
+      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source } = body;
 
       console.log('Creating post for user:', appUser.id);
 
@@ -86,7 +86,9 @@ serve(async (req) => {
           media_type,
           media_creator,
           image_url: media_image_url,
-          rating
+          rating,
+          media_external_id: media_external_id || null,
+          media_external_source: media_external_source || null
         })
         .select()
         .single();

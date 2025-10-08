@@ -185,7 +185,9 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           media_type: selectedMedia.type,
           media_creator: selectedMedia.creator,
           media_image_url: selectedMedia.image,
-          rating: rating ? parseFloat(rating) : null
+          rating: rating ? parseFloat(rating) : null,
+          media_external_id: selectedMedia.external_id || null,
+          media_external_source: selectedMedia.external_source || null
         }),
       });
 
