@@ -448,6 +448,13 @@ export default function Feed() {
 
         {/* Activity Stream */}
         <div className="space-y-6">
+          
+          {/* DEBUG BANNER */}
+          <div className="bg-yellow-100 border-2 border-yellow-400 p-4 rounded-lg text-sm">
+            <strong>DEBUG:</strong> Posts: {socialPosts ? `${socialPosts.length} items` : 'undefined/null'} | 
+            Loading: {isLoading ? 'YES' : 'NO'} | 
+            Error: {error ? 'YES' : 'NO'}
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
             <Button
