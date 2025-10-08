@@ -22,7 +22,6 @@ serve(async (req) => {
       }
     );
 
-    // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -31,13 +30,32 @@ serve(async (req) => {
       });
     }
 
+    console.log('Auth user:', user.email);
+
     if (req.method === 'GET') {
       console.log('Getting social posts...');
       
-      // Query social_posts with embedded media fields (matching share-update pattern)
       const { data: posts, error } = await supabase
         .from('social_posts')
-        .select('id, user_id, thoughts, content, media_title, media_type, media_creator, media_image, media_external_id, media_external_source, rating, likes, comments, created_at')
+        .select(`
+          id, 
+          user_id, 
+          content, 
+          post_type, 
+          rating, 
+          progress, 
+          created_at, 
+          updated_at, 
+          likes_count, 
+          comments_count, 
+          media_title, 
+          media_type, 
+          media_creator, 
+          image_url, 
+          media_external_id, 
+          media_external_source, 
+          media_description
+        `)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -51,65 +69,47 @@ serve(async (req) => {
 
       console.log('Found posts:', posts?.length || 0);
 
-      // Get user data separately (same pattern as track-media)
       const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
       const { data: users, error: usersError } = await supabase
         .from('users')
         .select('id, user_name, display_name, email, avatar')
         .in('id', userIds);
 
+      console.log('User lookup result:', { users: users?.length, usersError });
+
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
-      // Find missing user IDs and fetch from auth.users as fallback
-      const missingUserIds = userIds.filter(id => !userMap.has(id));
-      if (missingUserIds.length > 0) {
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-        
-        if (authUsers?.users) {
-          authUsers.users.forEach(authUser => {
-            if (missingUserIds.includes(authUser.id)) {
-              userMap.set(authUser.id, {
-                id: authUser.id,
-                user_name: authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
-                display_name: authUser.user_metadata?.display_name || authUser.user_metadata?.user_name || authUser.email?.split('@')[0] || 'Unknown',
-                email: authUser.email || '',
-                avatar: authUser.user_metadata?.avatar || ''
-              });
-            }
-          });
-        }
-      }
-
-      // Transform posts for frontend
       const transformedPosts = posts?.map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
-        // Use embedded media fields (like share-update creates them)
         const hasMedia = post.media_title && post.media_title.trim() !== '';
         
         return {
           id: post.id,
-          type: 'consumption',
+          type: post.post_type || 'update',
           user: {
             id: post.user_id,
-            username: postUser?.user_name || 'Unknown',
-            displayName: postUser?.display_name || postUser?.user_name || 'Unknown',
-            avatar: postUser?.avatar || ''
+            username: postUser.user_name || 'Unknown',
+            displayName: postUser.display_name || postUser.user_name || 'Unknown',
+            avatar: postUser.avatar || ''
           },
-          content: post.thoughts || post.content || '',
+          content: post.content || '',
           timestamp: post.created_at,
-          likes: post.likes || 0,
-          comments: post.comments || 0,
+          likes: post.likes_count || 0,
+          comments: post.comments_count || 0,
           shares: 0,
+          rating: post.rating,
+          progress: post.progress,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
             creator: post.media_creator || '',
             mediaType: post.media_type || '',
-            imageUrl: post.media_image || '',
+            imageUrl: post.image_url || '',
             rating: post.rating,
             externalId: post.media_external_id || '',
-            externalSource: post.media_external_source || ''
+            externalSource: post.media_external_source || '',
+            description: post.media_description || ''
           }] : []
         };
       }) || [];
@@ -124,25 +124,27 @@ serve(async (req) => {
 
     if (req.method === 'POST') {
       const body = await req.json();
-      const { content, media_title, media_type, media_creator, media_image, rating } = body;
+      const { content, media_title, media_type, media_creator, media_image_url, rating, progress, post_type } = body;
 
-      console.log('Creating post with embedded media:', { content, media_title, media_type, media_creator, media_image, rating });
+      console.log('Creating post:', { content, media_title, media_type, media_creator, media_image_url, rating, progress, post_type });
 
-      // Create social post with embedded media fields (matching share-update pattern)
       const { data: post, error } = await supabase
         .from('social_posts')
         .insert({
           user_id: user.id,
-          thoughts: content || '',
           content: content || '',
-          media_title,
-          media_type,
-          media_creator,
-          media_image,
-          rating,
-          audience: 'all',
-          likes: 0,
-          comments: 0
+          post_type: post_type || 'update',
+          rating: rating || null,
+          progress: progress || null,
+          likes_count: 0,
+          comments_count: 0,
+          media_title: media_title || null,
+          media_type: media_type || null,
+          media_creator: media_creator || null,
+          image_url: media_image_url || null,
+          media_external_id: null,
+          media_external_source: null,
+          media_description: null
         })
         .select('id')
         .single();
@@ -163,7 +165,7 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.log('Function error:', error.message);
+    console.error('Function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
