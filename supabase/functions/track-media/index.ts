@@ -113,7 +113,7 @@ serve(async (req) => {
       if (listError || !systemList) {
         console.error('System list not found:', listError);
         return new Response(JSON.stringify({
-          error: `System list "${listTitle}" not found. Available lists should be: Currently, Queue, Finished, Did Not Finish`
+          error: `System list "${listTitle}" not found. Available lists should be: Currently, Queue, Finished, Did Not Finish, Favorites`
         }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
