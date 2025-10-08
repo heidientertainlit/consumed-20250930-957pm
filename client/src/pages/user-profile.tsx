@@ -1334,10 +1334,6 @@ export default function UserProfile() {
       // Use the session user ID or profile user ID
       const userId = session?.user?.id || profileUser?.id;
       
-      alert(`DEBUG: About to copy link with user ID: ${userId}`);
-      console.log('DNA Profile object:', dnaProfile);
-      console.log('Using user ID:', userId);
-      
       await copyLink({
         kind: 'edna',
         obj: {
