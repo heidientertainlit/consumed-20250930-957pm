@@ -37,7 +37,7 @@ serve(async (req) => {
       // Query social_posts with embedded media fields (matching share-update pattern)
       const { data: posts, error } = await supabase
         .from('social_posts')
-        .select('id, user_id, thoughts, content, media_title, media_type, media_creator, media_image_url, rating, likes, comments, created_at')
+        .select('id, user_id, thoughts, content, media_title, media_type, media_creator, media_image, media_external_id, media_external_source, rating, likes, comments, created_at')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -106,10 +106,10 @@ serve(async (req) => {
             title: post.media_title,
             creator: post.media_creator || '',
             mediaType: post.media_type || '',
-            imageUrl: post.media_image_url || '',
+            imageUrl: post.media_image || '',
             rating: post.rating,
-            externalId: '',
-            externalSource: ''
+            externalId: post.media_external_id || '',
+            externalSource: post.media_external_source || ''
           }] : []
         };
       }) || [];
