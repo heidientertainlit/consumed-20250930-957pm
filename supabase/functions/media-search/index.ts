@@ -1,11 +1,34 @@
 
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
+
+// Content filter helper
+function isContentAppropriate(item: any, type: string): boolean {
+  // Check for adult/explicit flags from APIs
+  if (type === 'movie' || type === 'tv') {
+    // TMDB provides an 'adult' flag
+    if (item.adult === true) return false;
+  }
+  
+  if (type === 'music' || type === 'podcast') {
+    // Spotify provides an 'explicit' flag
+    if (item.explicit === true) return false;
+  }
+  
+  // Basic keyword blacklist for titles/descriptions
+  const inappropriateKeywords = [
+    'porn', 'xxx', 'adult film', 'erotic', '18+', 'nsfw'
+  ];
+  
+  const textToCheck = (item.title || item.name || '').toLowerCase() + ' ' + 
+                      (item.description || item.overview || '').toLowerCase();
+  
+  return !inappropriateKeywords.some(keyword => textToCheck.includes(keyword));
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -29,11 +52,11 @@ serve(async (req) => {
       try {
         const tmdbKey = Deno.env.get('TMDB_API_KEY');
         if (tmdbKey) {
-          const tmdbResponse = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(query)}&page=1`);
+          const tmdbResponse = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(query)}&page=1&include_adult=false`);
           if (tmdbResponse.ok) {
             const tmdbData = await tmdbResponse.json();
             tmdbData.results?.slice(0, 10).forEach((item) => {
-              if (item.media_type === 'movie' || item.media_type === 'tv') {
+              if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type)) {
                 results.push({
                   title: item.title || item.name,
                   type: item.media_type === 'movie' ? 'movie' : 'tv',
@@ -72,15 +95,17 @@ serve(async (req) => {
         if (bookResponse.ok) {
           const bookData = await bookResponse.json();
           bookData.docs?.slice(0, 5).forEach((book) => {
-            results.push({
-              title: book.title,
-              type: 'book',
-              creator: book.author_name?.[0] || 'Unknown Author',
-              image: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
-              external_id: book.key,
-              external_source: 'openlibrary',
-              description: book.first_sentence?.[0] || ''
-            });
+            if (isContentAppropriate(book, 'book')) {
+              results.push({
+                title: book.title,
+                type: 'book',
+                creator: book.author_name?.[0] || 'Unknown Author',
+                image: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
+                external_id: book.key,
+                external_source: 'openlibrary',
+                description: book.first_sentence?.[0] || ''
+              });
+            }
           });
         }
       } catch (error) {
@@ -119,15 +144,17 @@ serve(async (req) => {
             if (spotifyResponse.ok) {
               const spotifyData = await spotifyResponse.json();
               spotifyData.shows?.items?.forEach((podcast) => {
-                results.push({
-                  title: podcast.name,
-                  type: 'podcast',
-                  creator: podcast.publisher,
-                  image: podcast.images?.[0]?.url || '',
-                  external_id: podcast.id,
-                  external_source: 'spotify',
-                  description: podcast.description
-                });
+                if (isContentAppropriate(podcast, 'podcast')) {
+                  results.push({
+                    title: podcast.name,
+                    type: 'podcast',
+                    creator: podcast.publisher,
+                    image: podcast.images?.[0]?.url || '',
+                    external_id: podcast.id,
+                    external_source: 'spotify',
+                    description: podcast.description
+                  });
+                }
               });
             }
           }
@@ -168,15 +195,17 @@ serve(async (req) => {
             if (spotifyResponse.ok) {
               const spotifyData = await spotifyResponse.json();
               spotifyData.tracks?.items?.forEach((track) => {
-                results.push({
-                  title: track.name,
-                  type: 'music',
-                  creator: track.artists?.[0]?.name || 'Unknown Artist',
-                  image: track.album?.images?.[0]?.url || '',
-                  external_id: track.id,
-                  external_source: 'spotify',
-                  description: `From the album ${track.album?.name || 'Unknown Album'}`
-                });
+                if (isContentAppropriate(track, 'music')) {
+                  results.push({
+                    title: track.name,
+                    type: 'music',
+                    creator: track.artists?.[0]?.name || 'Unknown Artist',
+                    image: track.album?.images?.[0]?.url || '',
+                    external_id: track.id,
+                    external_source: 'spotify',
+                    description: `From the album ${track.album?.name || 'Unknown Album'}`
+                  });
+                }
               });
             }
           }
@@ -191,19 +220,21 @@ serve(async (req) => {
       try {
         const youtubeKey = Deno.env.get('YOUTUBE_API_KEY');
         if (youtubeKey) {
-          const youtubeResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=5&key=${youtubeKey}`);
+          const youtubeResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=5&key=${youtubeKey}&safeSearch=strict`);
           if (youtubeResponse.ok) {
             const youtubeData = await youtubeResponse.json();
             youtubeData.items?.forEach((video) => {
-              results.push({
-                title: video.snippet.title,
-                type: 'youtube',
-                creator: video.snippet.channelTitle,
-                image: video.snippet.thumbnails?.medium?.url || '',
-                external_id: video.id.videoId,
-                external_source: 'youtube',
-                description: video.snippet.description
-              });
+              if (isContentAppropriate(video.snippet, 'youtube')) {
+                results.push({
+                  title: video.snippet.title,
+                  type: 'youtube',
+                  creator: video.snippet.channelTitle,
+                  image: video.snippet.thumbnails?.medium?.url || '',
+                  external_id: video.id.videoId,
+                  external_source: 'youtube',
+                  description: video.snippet.description
+                });
+              }
             });
           }
         }
@@ -229,6 +260,7 @@ serve(async (req) => {
         
         if (gamingResponse.ok) {
           const gamingData = await gamingResponse.json();
+          // Gaming search already filters content internally
           results.push(...(gamingData.results || []));
         }
       } catch (error) {
