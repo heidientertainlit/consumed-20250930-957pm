@@ -1331,6 +1331,10 @@ export default function UserProfile() {
     }
 
     try {
+      console.log('DNA Profile object:', dnaProfile);
+      console.log('DNA Profile user_id:', dnaProfile.user_id);
+      console.log('DNA Profile id:', dnaProfile.id);
+      
       await copyLink({
         kind: 'edna',
         obj: {
