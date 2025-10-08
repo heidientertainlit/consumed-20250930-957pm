@@ -124,9 +124,9 @@ serve(async (req) => {
 
     if (req.method === 'POST') {
       const body = await req.json();
-      const { content, media_title, media_type, media_creator, media_image_url, rating } = body;
+      const { content, media_title, media_type, media_creator, media_image, rating } = body;
 
-      console.log('Creating post with embedded media:', { content, media_title, media_type, media_creator, media_image_url, rating });
+      console.log('Creating post with embedded media:', { content, media_title, media_type, media_creator, media_image, rating });
 
       // Create social post with embedded media fields (matching share-update pattern)
       const { data: post, error } = await supabase
@@ -138,7 +138,7 @@ serve(async (req) => {
           media_title,
           media_type,
           media_creator,
-          media_image_url,
+          media_image,
           rating,
           audience: 'all',
           likes: 0,
