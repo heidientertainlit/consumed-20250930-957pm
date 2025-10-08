@@ -40,27 +40,34 @@ export default function EdnaSharePage() {
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('user') || params.id;
 
-        // Fetch DNA profile by user_id
-        const { data: profileData, error: profileError } = await supabase
-          .from("dna_profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
+        console.log('Fetching public DNA for user:', userId);
 
-        if (profileError) throw profileError;
+        // Call Edge Function with service role access to bypass RLS
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-dna?user_id=${userId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+          }
+        );
 
-        // Fetch user info
-        const { data: userDataResult, error: userError } = await supabase
-          .from("users")
-          .select("user_name, display_name")
-          .eq("id", userId)
-          .single();
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Public DNA fetch failed:', response.status, errorText);
+          throw new Error('Failed to fetch DNA profile');
+        }
 
-        // Combine the data
-        setDnaProfile({
-          ...profileData,
-          users: userDataResult || undefined
-        } as DNAProfile);
+        const data = await response.json();
+        console.log('Public DNA data:', data);
+
+        if (data.dna_profile) {
+          setDnaProfile(data.dna_profile as DNAProfile);
+        } else {
+          throw new Error('No DNA profile returned');
+        }
       } catch (err) {
         console.error("Error fetching DNA profile:", err);
         setError("DNA Profile not found");
