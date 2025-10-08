@@ -543,7 +543,15 @@ export default function Feed() {
                   {post.mediaItems && post.mediaItems.length > 0 && (
                     <div className="space-y-3 mb-4">
                       {post.mediaItems.map((media, index) => (
-                        <div key={index} className="bg-gray-100 rounded-2xl p-4">
+                        <div 
+                          key={index} 
+                          className="bg-gray-100 rounded-2xl p-4 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => {
+                            if (media.externalId && media.externalSource) {
+                              setLocation(`/media/${media.externalSource}/${media.externalId}`);
+                            }
+                          }}
+                        >
                           <div className="flex items-center space-x-4">
                             {/* Media Artwork */}
                             <div className="w-16 h-24 rounded-lg overflow-hidden">
@@ -556,14 +564,7 @@ export default function Feed() {
 
                             {/* Media Info */}
                             <div className="flex-1">
-                              <h3 
-                                className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2 cursor-pointer hover:text-purple-600 transition-colors"
-                                onClick={() => {
-                                  if (media.externalId && media.externalSource) {
-                                    setLocation(`/media/${media.externalSource}/${media.externalId}`);
-                                  }
-                                }}
-                              >
+                              <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2 hover:text-purple-600 transition-colors">
                                 {media.title}
                               </h3>
 
