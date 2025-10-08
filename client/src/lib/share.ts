@@ -35,10 +35,17 @@ export function urlFor(kind: ShareKind, arg: any) {
 }
 
 export async function copyLink(opts: { kind: ShareKind; id?: string; obj?: any }) {
+  console.log('=== copyLink called ===');
+  console.log('kind:', opts.kind);
+  console.log('id:', opts.id);
+  console.log('obj:', opts.obj);
+  
   const url = (opts.kind === 'list' || opts.kind === 'edna')
     ? urlFor(opts.kind, opts.obj ?? { id: opts.id })
     : urlFor(opts.kind, opts.id!);
 
+  console.log('Generated URL:', url);
+  
   await navigator.clipboard.writeText(url);
   return url;
 }
