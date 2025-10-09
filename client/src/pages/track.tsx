@@ -208,7 +208,15 @@ export default function Track() {
         throw new Error("Authentication required");
       }
 
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
+      // Check if this is a custom list by looking for it in customLists
+      const isCustomList = customLists.some((list: any) => list.id === listType);
+      
+      // Use different endpoint based on whether it's a custom list or system list
+      const endpoint = isCustomList 
+        ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
+        : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -226,7 +234,7 @@ export default function Track() {
           },
           rating: null,
           review: null,
-          listType: listType,
+          ...(isCustomList ? { customListId: listType } : { listType: listType }),
         }),
       });
 
@@ -239,9 +247,11 @@ export default function Track() {
       return response.json();
     },
     onSuccess: (data, variables) => {
+      // Use the listTitle from the response for consistent messaging
+      const listTitle = data.listTitle || 'list';
       toast({
         title: "Added to list!",
-        description: `${variables.recommendation.title} added to ${variables.listType === 'queue' ? 'Queue' : variables.listType === 'currently' ? 'Currently' : variables.listType === 'finished' ? 'Finished' : 'Did Not Finish'}.`,
+        description: `${variables.recommendation.title} added to ${listTitle}.`,
       });
       // Invalidate and refetch only the lists data to show the new item - don't refetch recommendations
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
@@ -569,7 +579,7 @@ export default function Track() {
                             <ChevronDown size={14} />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuContent align="end" className="w-56">
                           <DropdownMenuItem
                             onClick={() => handleAddRecommendation(rec, 'currently')}
                             className="cursor-pointer"
@@ -591,6 +601,45 @@ export default function Track() {
                           >
                             Add to Did Not Finish
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleAddRecommendation(rec, 'favorites')}
+                            className="cursor-pointer"
+                            disabled={addRecommendationMutation.isPending}
+                          >
+                            Add to Favorites
+                          </DropdownMenuItem>
+                          
+                          {/* Custom Lists Section */}
+                          {customLists.length > 0 && (
+                            <>
+                              <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t mt-1 pt-2">
+                                MY CUSTOM LISTS
+                              </div>
+                              {customLists.map((list: any) => (
+                                <DropdownMenuItem
+                                  key={list.id}
+                                  onClick={() => handleAddRecommendation(rec, list.id)}
+                                  className="cursor-pointer pl-4"
+                                  disabled={addRecommendationMutation.isPending}
+                                >
+                                  <List className="text-purple-600 mr-2 h-4 w-4" />
+                                  Add to {list.title}
+                                </DropdownMenuItem>
+                              ))}
+                            </>
+                          )}
+                          
+                          {/* Create New List */}
+                          <div className="border-t mt-1 pt-1">
+                            <DropdownMenuItem
+                              onClick={() => setIsCreateListDialogOpen(true)}
+                              className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
+                              disabled={addRecommendationMutation.isPending}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Create New List
+                            </DropdownMenuItem>
+                          </div>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
