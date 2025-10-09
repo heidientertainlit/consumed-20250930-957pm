@@ -4,6 +4,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import ListShareModal from "@/components/list-share-modal";
+import CreateListDialog from "@/components/create-list-dialog";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export default function Track() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("Currently");
@@ -352,8 +354,10 @@ export default function Track() {
     });
   };
 
-  // Fixed filter options for the 5 standard lists
-  const filterOptions = ["All", "Currently", "Queue", "Finished", "Did Not Finish", "Favorites"];
+  // Build filter options dynamically: system lists + custom lists
+  const systemListTitles = ["All", "Currently", "Queue", "Finished", "Did Not Finish", "Favorites"];
+  const customLists = userLists.filter((list: any) => list.isCustom) || [];
+  const filterOptions = [...systemListTitles, ...customLists.map((list: any) => list.title)];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -413,19 +417,47 @@ export default function Track() {
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 md:mb-4">
             {/* Filter Dropdown */}
-            <div className="mb-3 md:mb-4">
+            <div className="mb-3 md:mb-4 flex gap-2">
               <Select value={selectedFilter} onValueChange={setSelectedFilter}>
                 <SelectTrigger className="w-80 h-16 bg-white border-gray-300 text-black text-lg">
                   <SelectValue placeholder="Filter your lists" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
-                  {filterOptions.map((filter) => (
+                  {/* System Lists */}
+                  {systemListTitles.map((filter) => (
                     <SelectItem key={filter} value={filter} className="text-black hover:bg-gray-100 text-lg py-4">
                       {filter}
                     </SelectItem>
                   ))}
+                  
+                  {/* Custom Lists Separator */}
+                  {customLists.length > 0 && (
+                    <div className="px-2 py-2 text-xs text-gray-500 font-semibold border-t mt-2 pt-2">
+                      MY CUSTOM LISTS
+                    </div>
+                  )}
+                  
+                  {/* Custom Lists */}
+                  {customLists.map((list: any) => (
+                    <SelectItem key={list.id} value={list.title} className="text-black hover:bg-gray-100 text-lg py-4 pl-6">
+                      <div className="flex items-center">
+                        <List className="text-purple-600 mr-2" size={16} />
+                        {list.title}
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              
+              {/* Create New List Button */}
+              <Button
+                onClick={() => setIsCreateListDialogOpen(true)}
+                className="h-16 px-4 bg-purple-600 hover:bg-purple-700 text-white"
+                data-testid="button-create-list"
+              >
+                <Plus size={20} className="mr-2" />
+                Create List
+              </Button>
             </div>
 
           </div>
@@ -745,6 +777,12 @@ export default function Track() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Create List Dialog */}
+      <CreateListDialog
+        open={isCreateListDialogOpen}
+        onOpenChange={setIsCreateListDialogOpen}
+      />
 
       <FeedbackFooter />
 
