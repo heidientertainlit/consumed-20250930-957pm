@@ -7,6 +7,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+// Detect if query is a direct media search vs conversational recommendation request
+function detectDirectSearch(query: string): boolean {
+  const lower = query.toLowerCase().trim();
+  const wordCount = lower.split(/\s+/).length;
+  
+  // Conversational indicators - if any of these are present, it's NOT a direct search
+  const conversationalKeywords = [
+    'like', 'similar', 'recommend', 'suggestion', 'what should', 'looking for',
+    'want to', 'help me', 'find me', 'show me', 'give me', 'need', 'mood',
+    'feeling', 'uplifting', 'sad', 'happy', 'exciting', 'relaxing', 'funny',
+    'something', 'anything', 'best', 'top', 'favorite', 'everyone', 'family',
+    'group', 'friends', 'partner', 'kids', 'blend'
+  ];
+  
+  for (const keyword of conversationalKeywords) {
+    if (lower.includes(keyword)) {
+      return false; // It's conversational
+    }
+  }
+  
+  // Question words indicate conversational search
+  const questionWords = ['what', 'which', 'how', 'why', 'when', 'where', 'who'];
+  for (const word of questionWords) {
+    if (lower.startsWith(word + ' ')) {
+      return false;
+    }
+  }
+  
+  // If it's 1-5 words and has no conversational indicators, likely a direct search
+  // e.g., "Friends", "Taylor Swift", "Harry Potter", "The Office"
+  if (wordCount >= 1 && wordCount <= 5) {
+    return true;
+  }
+  
+  // Default to conversational for longer queries
+  return false;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -45,6 +83,57 @@ serve(async (req) => {
       }
 
       console.log('Processing conversational search for:', query);
+      
+      // Detect if this is a direct media search vs. conversational query
+      const isDirectSearch = detectDirectSearch(query);
+      console.log('Search type:', isDirectSearch ? 'DIRECT' : 'CONVERSATIONAL');
+      
+      // If it's a direct search, use media-search API for actual results
+      if (isDirectSearch) {
+        try {
+          const searchResponse = await fetch(
+            'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': req.headers.get('Authorization') || ''
+              },
+              body: JSON.stringify({ query })
+            }
+          );
+          
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            
+            if (searchData.results && searchData.results.length > 0) {
+              // Return direct search results with links to detail pages
+              const formattedResults = searchData.results.slice(0, 10).map((item: any) => ({
+                id: item.external_id || Math.random().toString(),
+                title: item.title,
+                type: item.type,
+                description: item.description || '',
+                poster_url: item.image || '',
+                detailUrl: item.external_id && item.external_source 
+                  ? `/media/${item.type}/${item.external_source}/${item.external_id}`
+                  : null,
+                external_id: item.external_id,
+                external_source: item.external_source
+              }));
+              
+              return new Response(JSON.stringify({
+                type: 'direct',
+                results: formattedResults
+              }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Direct search failed, falling back to AI:', error);
+          // Fall through to AI recommendations
+        }
+      }
 
       // Get OpenAI API key
       const openaiApiKey = Deno.env.get('OPENAI_API_KEY');

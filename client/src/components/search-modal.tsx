@@ -260,35 +260,44 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-4">Search Results</h4>
                   <div className="space-y-3">
-                    {searchResults.results.map((result, index) => (
-                      <div key={result.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start space-x-3">
-                          {result.poster_url && (
-                            <img
-                              src={result.poster_url}
-                              alt={result.title}
-                              className="w-12 h-16 object-cover rounded"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <h5 className="font-medium text-gray-900">{result.title}</h5>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <span className="text-sm text-gray-600 capitalize">{result.type}</span>
-                              {result.year && <span className="text-sm text-gray-500">• {result.year}</span>}
-                              {result.rating && (
-                                <div className="flex items-center space-x-1">
-                                  <Star className="text-yellow-400" size={14} />
-                                  <span className="text-sm text-gray-600">{result.rating}</span>
-                                </div>
+                    {searchResults.results.map((result, index) => {
+                      const ResultWrapper = result.detailUrl ? 'a' : 'div';
+                      const wrapperProps = result.detailUrl 
+                        ? { href: result.detailUrl, className: "block" }
+                        : {};
+                      
+                      return (
+                        <ResultWrapper key={result.id} {...wrapperProps}>
+                          <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
+                            <div className="flex items-start space-x-3">
+                              {result.poster_url && (
+                                <img
+                                  src={result.poster_url}
+                                  alt={result.title}
+                                  className="w-12 h-16 object-cover rounded"
+                                />
                               )}
+                              <div className="flex-1">
+                                <h5 className="font-medium text-gray-900 hover:text-purple-600 transition-colors">{result.title}</h5>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <span className="text-sm text-gray-600 capitalize">{result.type}</span>
+                                  {result.year && <span className="text-sm text-gray-500">• {result.year}</span>}
+                                  {result.rating && (
+                                    <div className="flex items-center space-x-1">
+                                      <Star className="text-yellow-400" size={14} />
+                                      <span className="text-sm text-gray-600">{result.rating}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                {result.description && (
+                                  <p className="text-sm text-gray-700 mt-2 line-clamp-2">{result.description}</p>
+                                )}
+                              </div>
                             </div>
-                            {result.description && (
-                              <p className="text-sm text-gray-700 mt-2">{result.description}</p>
-                            )}
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        </ResultWrapper>
+                      );
+                    })}
                   </div>
                 </div>
               ) : null}
