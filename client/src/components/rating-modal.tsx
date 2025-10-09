@@ -83,6 +83,8 @@ export default function RatingModal({
       // Invalidate feed queries to show the new post
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      // Invalidate media reviews so it shows on the media detail page
+      queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
       // Reset form
       setRating(0);
       setReview("");

@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import RatingModal from "@/components/rating-modal";
+import { supabase } from "@/lib/supabase";
 
 export default function MediaDetail() {
   const [, params] = useRoute("/media/:type/:source/:id");
@@ -66,6 +67,35 @@ export default function MediaDetail() {
       return response.json();
     },
     enabled: !!params?.source && !!params?.id && !!session?.access_token
+  });
+
+  // Fetch reviews/ratings for this specific media
+  const { data: reviews = [] } = useQuery({
+    queryKey: ['media-reviews', params?.source, params?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('social_posts')
+        .select(`
+          id,
+          rating,
+          thoughts,
+          created_at,
+          users:user_id (
+            display_name,
+            user_name
+          )
+        `)
+        .eq('media_external_source', params?.source)
+        .eq('media_external_id', params?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to fetch reviews:', error);
+        return [];
+      }
+      return data || [];
+    },
+    enabled: !!params?.source && !!params?.id
   });
 
   if (isLoading) {
@@ -278,6 +308,51 @@ export default function MediaDetail() {
                 )}
               </div>
             </div>
+
+            {/* Reviews & Ratings */}
+            {reviews.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Reviews & Ratings ({reviews.length})
+                </h2>
+                <div className="space-y-4">
+                  {reviews.map((review: any) => (
+                    <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <span className="text-purple-600 text-sm font-medium">
+                              {review.users?.display_name?.[0]?.toUpperCase() || review.users?.user_name?.[0]?.toUpperCase() || '?'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {review.users?.display_name || review.users?.user_name || 'Anonymous'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(review.created_at).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        {review.rating && (
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                            <span className="font-medium text-gray-900">{review.rating}</span>
+                          </div>
+                        )}
+                      </div>
+                      {review.thoughts && (
+                        <p className="text-gray-700 text-sm leading-relaxed">{review.thoughts}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
