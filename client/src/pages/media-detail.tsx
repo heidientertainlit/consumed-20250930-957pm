@@ -189,40 +189,6 @@ export default function MediaDetail() {
     averageLength: "45 min"
   };
 
-  const recentEpisodes = [
-    {
-      id: 1,
-      title: "Conan O'Brien",
-      description: "The guys sit down with comedy legend Conan O'Brien to discuss late-night television, Harvard, and his new podcast.",
-      duration: "47:32",
-      releaseDate: "2024-01-15",
-      plays: "1.2M"
-    },
-    {
-      id: 2,
-      title: "Ryan Reynolds",
-      description: "Ryan Reynolds joins the hosts to talk about Deadpool, Aviation Gin, and his friendship with the guys.",
-      duration: "52:18",
-      releaseDate: "2024-01-08",
-      plays: "2.1M"
-    },
-    {
-      id: 3,
-      title: "Amy Poehler",
-      description: "Amy Poehler discusses Parks and Recreation, SNL, and her directorial work with the SmartLess crew.",
-      duration: "41:25",
-      releaseDate: "2024-01-01",
-      plays: "890K"
-    }
-  ];
-
-  const userStats = {
-    episodesListened: 127,
-    hoursListened: 94,
-    favoriteEpisode: "Conan O'Brien",
-    discoveredDate: "2022-03-15"
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
@@ -263,10 +229,6 @@ export default function MediaDetail() {
                         <span className="font-medium">{mediaItem.rating}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>{mediaItem.subscribers} subscribers</span>
-                      </div>
-                      <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         <span>{mediaItem.totalEpisodes} episodes</span>
                       </div>
@@ -278,10 +240,6 @@ export default function MediaDetail() {
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    <Button className="bg-purple-600 hover:bg-purple-700">
-                      <Play size={16} className="mr-2" />
-                      Play Latest
-                    </Button>
                     <Button variant="outline">
                       <Plus size={16} className="mr-2" />
                       Add to List
@@ -364,66 +322,10 @@ export default function MediaDetail() {
                 </div>
               </div>
             </div>
-
-            {/* Recent Episodes */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Recent Episodes</h2>
-                <Button variant="outline" size="sm">View All</Button>
-              </div>
-              
-              <div className="space-y-4">
-                {recentEpisodes.map((episode) => (
-                  <div key={episode.id} className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors">
-                    <Button variant="ghost" size="sm" className="p-2 mt-1">
-                      <Play size={16} />
-                    </Button>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1">{episode.title}</h3>
-                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{episode.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>{episode.releaseDate}</span>
-                        <span>{episode.duration}</span>
-                        <span>{episode.plays} plays</span>
-                      </div>
-                    </div>
-                    
-                    <Button variant="ghost" size="sm">
-                      <Plus size={16} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Your Stats */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Stats</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Episodes Listened</span>
-                  <span className="font-semibold">{userStats.episodesListened}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Hours Listened</span>
-                  <span className="font-semibold">{userStats.hoursListened}h</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Discovered</span>
-                  <span className="font-semibold">Mar 2022</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Favorite Episode</span>
-                  <p className="font-semibold text-sm mt-1">{userStats.favoriteEpisode}</p>
-                </div>
-              </div>
-            </div>
-
-
             {/* Related Shows */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">You Might Also Like</h3>
