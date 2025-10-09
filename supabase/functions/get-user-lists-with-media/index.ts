@@ -96,6 +96,28 @@ serve(async (req) => {
       });
     }
 
+    // SAFE: Fetch custom lists with fallback protection
+    let customLists = [];
+    if (appUser) {
+      try {
+        const { data: userLists, error: customListsError } = await supabase
+          .from('lists')
+          .select('id, title, is_private')
+          .eq('user_id', appUser.id)
+          .order('title');
+        
+        if (!customListsError && userLists) {
+          customLists = userLists;
+          console.log("Custom lists loaded:", customLists.length);
+        } else if (customListsError) {
+          console.error('Error fetching custom lists (non-fatal):', customListsError);
+        }
+      } catch (error) {
+        console.error('Custom lists query failed (non-fatal):', error);
+        // Continue with empty custom lists - system lists will still work
+      }
+    }
+
     // Get user's media items if authenticated
     let userItems = [];
     if (appUser) {
@@ -129,6 +151,15 @@ serve(async (req) => {
       items: itemsByListId[list.id] || []
     }));
 
+    // Convert custom lists to expected format
+    const customListsWithItems = customLists.map(list => ({
+      id: list.id,
+      title: list.title,
+      items: itemsByListId[list.id] || [],
+      isCustom: true,
+      isPrivate: list.is_private
+    }));
+
     // Add "All" category at the beginning
     const allList = {
       id: 'all',
@@ -136,7 +167,8 @@ serve(async (req) => {
       items: userItems
     };
 
-    const finalLists = [allList, ...listsWithItems];
+    // Assemble final lists: All + System Lists + Custom Lists
+    const finalLists = [allList, ...listsWithItems, ...customListsWithItems];
     
     console.log("Returning final lists:", finalLists.map(l => `${l.title} (${l.items.length} items)`));
 

@@ -31,20 +31,15 @@ serve(async (req) => {
       });
     }
 
-    console.log('Auth user:', user.email);
-
-    // Look up app user by email, CREATE if doesn't exist
+    // Look up app user by email
     let { data: appUser, error: appUserError } = await supabase
       .from('users')
       .select('id, email, user_name')
       .eq('email', user.email)
       .single();
 
-    console.log('User lookup result:', { appUser, appUserError });
-
-    // If user doesn't exist, create them
+    // Auto-create user if doesn't exist
     if (appUserError && appUserError.code === 'PGRST116') {
-      console.log('User not found, creating new user:', user.email);
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
@@ -59,7 +54,6 @@ serve(async (req) => {
         .single();
 
       if (createError) {
-        console.error('Failed to create user:', createError);
         return new Response(JSON.stringify({ 
           error: 'Failed to create user: ' + createError.message 
         }), {
@@ -69,9 +63,7 @@ serve(async (req) => {
       }
       
       appUser = newUser;
-      console.log('Created new user:', appUser);
     } else if (appUserError) {
-      console.error('User lookup error:', appUserError);
       return new Response(JSON.stringify({ 
         error: 'User lookup failed: ' + appUserError.message 
       }), {
@@ -80,54 +72,43 @@ serve(async (req) => {
       });
     }
 
-    // Parse the request body
+    // Parse request
     const requestBody = await req.json();
-    const { media, rating, review, listType } = requestBody;
+    const { media, rating, review, customListId } = requestBody;
     const { title, mediaType, creator, imageUrl } = media || {};
 
-    let targetList = null;
-
-    if (listType && listType !== 'all') {
-      // Map listType to actual list title
-      const listTitleMapping = {
-        'currently': 'Currently',
-        'finished': 'Finished', 
-        'dnf': 'Did Not Finish',
-        'queue': 'Queue',
-        'favorites': 'Favorites'
-      };
-
-      const listTitle = listTitleMapping[listType] || 'Currently';
-      console.log('Looking for system list with title:', listTitle);
-
-      // Find SYSTEM list by title (user_id IS NULL)
-      const { data: systemList, error: listError } = await supabase
-        .from('lists')
-        .select('id, title')
-        .is('user_id', null)
-        .eq('title', listTitle)
-        .single();
-
-      console.log('System list lookup result:', { systemList, listError });
-
-      if (listError || !systemList) {
-        console.error('System list not found:', listError);
-        return new Response(JSON.stringify({
-          error: `System list "${listTitle}" not found. Available lists should be: Currently, Queue, Finished, Did Not Finish, Favorites`
-        }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      targetList = systemList;
+    if (!customListId) {
+      return new Response(JSON.stringify({
+        error: 'customListId is required'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    // Insert the media item with correct Supabase column names
+    // Verify the custom list exists and belongs to the user
+    const { data: customList, error: listError } = await supabase
+      .from('lists')
+      .select('id, title')
+      .eq('id', customListId)
+      .eq('user_id', appUser.id)
+      .single();
+
+    if (listError || !customList) {
+      console.error('Custom list not found or unauthorized:', listError);
+      return new Response(JSON.stringify({
+        error: 'Custom list not found or you do not have permission to add to it'
+      }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Insert the media item
     const { data: mediaItem, error: mediaError } = await supabase
       .from('list_items')
       .insert({
-        list_id: targetList?.id || null,
+        list_id: customList.id,
         user_id: appUser.id,
         title: title || 'Untitled',
         type: mediaType || 'mixed',
@@ -151,18 +132,18 @@ serve(async (req) => {
       });
     }
 
-    console.log('Successfully added media item:', mediaItem);
+    console.log('Successfully added media to custom list:', customList.title);
 
     return new Response(JSON.stringify({
       success: true,
       data: mediaItem,
-      listTitle: targetList?.title || 'All'
+      listTitle: customList.title
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Track media error:', error);
+    console.error('Add to custom list error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

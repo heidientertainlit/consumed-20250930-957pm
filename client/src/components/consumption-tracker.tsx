@@ -8,11 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X, List, Star, MessageCircle } from "lucide-react";
 import { InsertConsumptionLog } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { AuthModal } from "./auth-modal";
 import { useToast } from "@/hooks/use-toast";
+import CustomListSubmenu from "./custom-list-submenu";
 
 interface ConsumptionTrackerProps {
   isOpen: boolean;
@@ -151,15 +152,20 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
   }, [searchQuery, selectedCategories]);
 
   const trackMediaMutation = useMutation({
-    mutationFn: async (mediaData: MediaResult & { listType?: string }) => {
+    mutationFn: async (mediaData: MediaResult & { listType?: string; isCustomList?: boolean }) => {
       if (!session?.access_token) {
         throw new Error("Authentication required");
       }
 
-      // For now, send the list type as a string - we'll map to real list IDs in the edge function
-      // The edge function will need to look up the actual list ID based on the list type and user
+      const listType = mediaData.listType || 'all';
+      const isCustomList = mediaData.isCustomList || false;
+      
+      // Choose endpoint based on isCustomList flag
+      const endpoint = isCustomList 
+        ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
+        : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
 
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -177,24 +183,30 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
           },
           rating: rating > 0 ? rating : null,
           review: review.trim() || null,
-          listType: mediaData.listType || 'all', // Send the type, let edge function map to real list ID
+          // Send appropriate parameter based on list type
+          ...(isCustomList 
+            ? { customListId: listType } 
+            : { listType: listType }
+          ),
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Track media error response:', response.status, errorText);
-        throw new Error(`Track media failed: ${response.status} - ${errorText}`);
+        throw new Error(`Failed to add media: ${response.status} - ${errorText}`);
       }
 
       return response.json();
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
+      const listTitle = data?.listTitle || "your list";
       toast({
         title: "Media added!",
-        description: "Successfully added to your tracking list.",
+        description: `Successfully added to ${listTitle}.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       
       // Sync creator stats after successfully tracking media
       try {
@@ -231,7 +243,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
     },
   });
 
-  const handleAddMedia = (listType?: string) => {
+  const handleAddMedia = (listType?: string, isCustom: boolean = false) => {
     if (!selectedMedia) return;
 
     // Check if user is authenticated
@@ -243,7 +255,8 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
     // Update the mutation to use the specified list type
     const mediaWithList = {
       ...selectedMedia,
-      listType: listType || 'all' // Default to 'all' for Quick Add
+      listType: listType || 'all', // Default to 'all' for Quick Add
+      isCustomList: isCustom
     };
 
     trackMediaMutation.mutate(mediaWithList);
@@ -553,6 +566,13 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
                   >
                     Favorites
                   </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <CustomListSubmenu
+                    onSelectList={(listId, listTitle, isCustom) => handleAddMedia(listId, isCustom)}
+                    disabled={!selectedMedia || trackMediaMutation.isPending}
+                  />
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
