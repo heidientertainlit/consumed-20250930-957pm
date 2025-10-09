@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import RatingModal from "@/components/rating-modal";
+import CreateListDialog from "@/components/create-list-dialog";
 import { supabase } from "@/lib/supabase";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -16,6 +17,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 export default function MediaDetail() {
@@ -24,6 +26,7 @@ export default function MediaDetail() {
   const { session, user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [showCreateListDialog, setShowCreateListDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -107,6 +110,26 @@ export default function MediaDetail() {
     enabled: !!params?.source && !!params?.id
   });
 
+  // Fetch user's lists (including custom lists)
+  const { data: userListsData } = useQuery({
+    queryKey: ['user-lists-with-media'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch lists');
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+  });
+
+  const customLists = userListsData?.lists?.filter((list: any) => list.isCustom) || [];
+
   // Delete review mutation
   const deleteReviewMutation = useMutation({
     mutationFn: async (postId: string) => {
@@ -187,31 +210,46 @@ export default function MediaDetail() {
 
   // Mutation for adding recommendations to lists
   const addRecommendationMutation = useMutation({
-    mutationFn: async ({ recommendation, listType }: { recommendation: any; listType: string }) => {
+    mutationFn: async ({ recommendation, listType, isCustom }: { recommendation: any; listType: string; isCustom?: boolean }) => {
       if (!session?.access_token) {
         throw new Error("Authentication required");
       }
 
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
+      const endpoint = isCustom 
+        ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
+        : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
+
+      const body = isCustom
+        ? {
+            listId: listType,
+            title: recommendation.title,
+            type: recommendation.media_type || recommendation.type,
+            creator: recommendation.creator,
+            image_url: recommendation.image_url,
+            media_type: recommendation.media_type || recommendation.type,
+          }
+        : {
+            media: {
+              title: recommendation.title,
+              mediaType: recommendation.media_type || recommendation.type,
+              creator: recommendation.creator,
+              imageUrl: recommendation.image_url,
+              externalId: recommendation.external_id,
+              externalSource: recommendation.external_source,
+              description: recommendation.description
+            },
+            rating: null,
+            review: null,
+            listType: listType
+          };
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({
-          media: {
-            title: recommendation.title,
-            mediaType: recommendation.media_type || recommendation.type,
-            creator: recommendation.creator,
-            imageUrl: recommendation.image_url,
-            externalId: recommendation.external_id,
-            externalSource: recommendation.external_source,
-            description: recommendation.description
-          },
-          rating: null,
-          review: null,
-          listType: listType
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -221,9 +259,10 @@ export default function MediaDetail() {
       return response.json();
     },
     onSuccess: (data, variables) => {
+      const listTitle = data.listTitle || 'list';
       toast({
         title: "Added to list!",
-        description: `${variables.recommendation.title} added to ${variables.listType === 'queue' ? 'Queue' : variables.listType === 'currently' ? 'Currently' : variables.listType === 'finished' ? 'Finished' : variables.listType === 'favorites' ? 'Favorites' : 'Did Not Finish'}.`,
+        description: `${variables.recommendation.title} added to ${listTitle}.`,
       });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
     },
@@ -236,37 +275,52 @@ export default function MediaDetail() {
     },
   });
 
-  const handleAddRecommendation = (recommendation: any, listType: string) => {
-    addRecommendationMutation.mutate({ recommendation, listType });
+  const handleAddRecommendation = (recommendation: any, listType: string, isCustom: boolean = false) => {
+    addRecommendationMutation.mutate({ recommendation, listType, isCustom });
   };
 
   // Mutation for adding current media to lists
   const addMediaToListMutation = useMutation({
-    mutationFn: async (listType: string) => {
+    mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
       if (!session?.access_token || !mediaItem) {
         throw new Error("Authentication required");
       }
 
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
+      const endpoint = isCustom 
+        ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
+        : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
+
+      const body = isCustom
+        ? {
+            listId: listType,
+            title: mediaItem.title,
+            type: mediaItem.type || params?.type,
+            creator: mediaItem.creator,
+            image_url: mediaItem.artwork || mediaItem.image_url,
+            media_type: mediaItem.type || params?.type,
+          }
+        : {
+            media: {
+              title: mediaItem.title,
+              mediaType: mediaItem.type || params?.type,
+              creator: mediaItem.creator,
+              imageUrl: mediaItem.artwork || mediaItem.image_url,
+              externalId: params?.id,
+              externalSource: params?.source,
+              description: mediaItem.description || null
+            },
+            rating: null,
+            review: null,
+            listType: listType
+          };
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({
-          media: {
-            title: mediaItem.title,
-            mediaType: mediaItem.type || params?.type,
-            creator: mediaItem.creator,
-            imageUrl: mediaItem.artwork || mediaItem.image_url,
-            externalId: params?.id,
-            externalSource: params?.source,
-            description: mediaItem.description || null
-          },
-          rating: null,
-          review: null,
-          listType: listType
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -275,10 +329,11 @@ export default function MediaDetail() {
 
       return response.json();
     },
-    onSuccess: (data, listType) => {
+    onSuccess: (data) => {
+      const listTitle = data.listTitle || 'list';
       toast({
         title: "Added to list!",
-        description: `${mediaItem?.title} added to ${listType === 'queue' ? 'Queue' : listType === 'currently' ? 'Currently' : listType === 'finished' ? 'Finished' : listType === 'favorites' ? 'Favorites' : 'Did Not Finish'}.`,
+        description: `${mediaItem?.title} added to ${listTitle}.`,
       });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
     },
@@ -291,8 +346,8 @@ export default function MediaDetail() {
     },
   });
 
-  const handleAddMediaToList = (listType: string) => {
-    addMediaToListMutation.mutate(listType);
+  const handleAddMediaToList = (listType: string, isCustom: boolean = false) => {
+    addMediaToListMutation.mutate({ listType, isCustom });
   };
 
   if (isLoading) {
@@ -438,7 +493,7 @@ export default function MediaDetail() {
                                 <ChevronDown size={16} />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-56">
                               <DropdownMenuItem
                                 onClick={() => handleAddMediaToList('currently')}
                                 className="cursor-pointer"
@@ -473,6 +528,38 @@ export default function MediaDetail() {
                                 disabled={addMediaToListMutation.isPending}
                               >
                                 Favorites
+                              </DropdownMenuItem>
+                              
+                              {/* Custom Lists */}
+                              {customLists.length > 0 && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
+                                    MY CUSTOM LISTS
+                                  </div>
+                                  {customLists.map((list: any) => (
+                                    <DropdownMenuItem
+                                      key={list.id}
+                                      onClick={() => handleAddMediaToList(list.id, true)}
+                                      className="cursor-pointer pl-4"
+                                      disabled={addMediaToListMutation.isPending}
+                                    >
+                                      <List className="text-purple-600 mr-2 h-4 w-4" />
+                                      {list.title}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </>
+                              )}
+                              
+                              {/* Create New List */}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setShowCreateListDialog(true)}
+                                className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
+                                disabled={addMediaToListMutation.isPending}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create New List
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -696,7 +783,7 @@ export default function MediaDetail() {
                                 <ChevronDown size={14} />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-56">
                               <DropdownMenuItem
                                 onClick={() => handleAddRecommendation(rec, 'currently')}
                                 className="cursor-pointer"
@@ -724,6 +811,38 @@ export default function MediaDetail() {
                                 disabled={addRecommendationMutation.isPending}
                               >
                                 Add to Favorites
+                              </DropdownMenuItem>
+                              
+                              {/* Custom Lists */}
+                              {customLists.length > 0 && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
+                                    MY CUSTOM LISTS
+                                  </div>
+                                  {customLists.map((list: any) => (
+                                    <DropdownMenuItem
+                                      key={list.id}
+                                      onClick={() => handleAddRecommendation(rec, list.id, true)}
+                                      className="cursor-pointer pl-4"
+                                      disabled={addRecommendationMutation.isPending}
+                                    >
+                                      <List className="text-purple-600 mr-2 h-4 w-4" />
+                                      {list.title}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </>
+                              )}
+                              
+                              {/* Create New List */}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setShowCreateListDialog(true)}
+                                className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
+                                disabled={addRecommendationMutation.isPending}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create New List
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -757,6 +876,14 @@ export default function MediaDetail() {
         mediaImage={mediaItem?.artwork || mediaData.artwork}
         mediaExternalId={params?.id}
         mediaExternalSource={params?.source}
+      />
+      
+      <CreateListDialog 
+        isOpen={showCreateListDialog} 
+        onClose={() => setShowCreateListDialog(false)}
+        onListCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+        }}
       />
     </div>
   );
