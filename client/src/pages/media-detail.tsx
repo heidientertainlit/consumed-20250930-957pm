@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { ArrowLeft, Play, Plus, Heart, Share, Star, Calendar, Clock, Users, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -8,114 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
-
-// Rating Modal Component
-function RatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [userRating, setUserRating] = useState<string>("");
-  const [hasRated, setHasRated] = useState(false);
-
-  const handleRatingSubmit = () => {
-    const rating = parseFloat(userRating);
-    if (rating >= 0 && rating <= 5) {
-      setHasRated(true);
-      // Here you would typically save to backend
-      console.log('Rating submitted:', rating);
-    }
-  };
-
-  const handleRatingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Allow empty string, numbers, and decimal with one decimal place
-    if (value === '' || /^\d*\.?\d?$/.test(value)) {
-      const num = parseFloat(value);
-      if (value === '' || (num >= 0 && num <= 5)) {
-        setUserRating(value);
-      }
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Add My Rating</h3>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            ×
-          </Button>
-        </div>
-        
-        {!hasRated ? (
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="rating-input" className="block text-sm text-gray-600 mb-2">
-                Rate this podcast (0.0 - 5.0)
-              </label>
-              <div className="flex items-center space-x-3">
-                <input
-                  id="rating-input"
-                  type="text"
-                  value={userRating}
-                  onChange={handleRatingChange}
-                  placeholder="4.5"
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  data-testid="input-rating"
-                />
-                <div className="flex items-center space-x-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`w-5 h-5 ${
-                        parseFloat(userRating) >= star
-                          ? 'text-yellow-500 fill-current'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            <Button 
-              onClick={handleRatingSubmit}
-              disabled={!userRating || parseFloat(userRating) < 0 || parseFloat(userRating) > 5}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300"
-              data-testid="button-submit-rating"
-            >
-              Submit Rating
-            </Button>
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <Star className="w-5 h-5 text-yellow-500 fill-current" />
-              <span className="text-lg font-semibold">{userRating}</span>
-            </div>
-            <p className="text-sm text-gray-600">Thank you for rating!</p>
-            <div className="flex gap-3 mt-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => { setHasRated(false); setUserRating(''); }}
-                data-testid="button-change-rating"
-              >
-                Change Rating
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={onClose}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                Done
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import RatingModal from "@/components/rating-modal";
 
 export default function MediaDetail() {
   const [, params] = useRoute("/media/:type/:source/:id");
@@ -408,7 +301,16 @@ export default function MediaDetail() {
         </div>
       </div>
       
-      <RatingModal isOpen={showRatingModal} onClose={() => setShowRatingModal(false)} />
+      <RatingModal 
+        isOpen={showRatingModal} 
+        onClose={() => setShowRatingModal(false)}
+        mediaTitle={mediaItem?.title || mediaData.title}
+        mediaType={mediaItem?.type || mediaData.type}
+        mediaCreator={mediaItem?.creator || mediaData.creator}
+        mediaImage={mediaItem?.artwork || mediaData.artwork}
+        mediaExternalId={params?.id}
+        mediaExternalSource={params?.source}
+      />
     </div>
   );
 }
