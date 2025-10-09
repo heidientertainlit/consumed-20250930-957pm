@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,25 @@ serve(async (req) => {
   }
 
   try {
+    // Validate authentication
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '', 
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization') }
+        }
+      }
+    );
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ code: 401, message: 'Missing authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const { searchParams } = new URL(req.url);
     const source = searchParams.get('source');
     const externalId = searchParams.get('external_id');
