@@ -511,24 +511,41 @@ export default function MediaDetail() {
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {mediaItem.platforms.map((platform: any, index: number) => (
-                          <a
-                            key={index}
-                            href={platform.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                            data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
-                          >
-                            {platform.logo && (
-                              <img 
-                                src={platform.logo} 
-                                alt={platform.name}
-                                className="w-4 h-4 object-contain"
-                              />
-                            )}
-                            <span className="font-medium text-gray-700">{platform.name}</span>
-                            <ExternalLink className="w-3 h-3 text-gray-400" />
-                          </a>
+                          platform.url ? (
+                            <a
+                              key={index}
+                              href={platform.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+                              data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
+                            >
+                              {platform.logo && (
+                                <img 
+                                  src={platform.logo} 
+                                  alt={platform.name}
+                                  className="w-4 h-4 object-contain"
+                                />
+                              )}
+                              <span className="font-medium text-gray-700">{platform.name}</span>
+                              <ExternalLink className="w-3 h-3 text-gray-400" />
+                            </a>
+                          ) : (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-sm"
+                              data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
+                            >
+                              {platform.logo && (
+                                <img 
+                                  src={platform.logo} 
+                                  alt={platform.name}
+                                  className="w-4 h-4 object-contain"
+                                />
+                              )}
+                              <span className="font-medium text-gray-700">{platform.name}</span>
+                            </div>
+                          )
                         ))}
                       </div>
                     </div>

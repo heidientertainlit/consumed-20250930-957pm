@@ -81,7 +81,7 @@ serve(async (req) => {
           platforms: data['watch/providers']?.results?.US?.flatrate?.map((p: any) => ({
             name: p.provider_name,
             logo: `https://image.tmdb.org/t/p/w92${p.logo_path}`,
-            url: data['watch/providers']?.results?.US?.link || '#'
+            url: null
           })) || [],
           trailer: data.videos?.results?.find((v: any) => v.type === 'Trailer')?.key
         };
