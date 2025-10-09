@@ -234,6 +234,55 @@ export default function MediaDetail() {
     addRecommendationMutation.mutate({ recommendation, listType });
   };
 
+  // Mutation for adding current media to lists
+  const addMediaToListMutation = useMutation({
+    mutationFn: async (listType: string) => {
+      if (!session?.access_token || !mediaItem) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch(`/api/lists/${listType}/items`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          title: mediaItem.title,
+          type: mediaItem.type || params?.type,
+          media_type: mediaItem.type || params?.type,
+          creator: mediaItem.creator,
+          image_url: mediaItem.artwork || mediaItem.image_url,
+          notes: null
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add media to list');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, listType) => {
+      toast({
+        title: "Added to list!",
+        description: `${mediaItem?.title} added to ${listType === 'queue' ? 'Queue' : listType === 'currently' ? 'Currently' : listType === 'finished' ? 'Finished' : listType === 'favorites' ? 'Favorites' : 'Did Not Finish'}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add to list",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddMediaToList = (listType: string) => {
+    addMediaToListMutation.mutate(listType);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
@@ -344,10 +393,67 @@ export default function MediaDetail() {
                   <div className="flex flex-wrap gap-3">
                     {session && (
                       <>
-                        <Button variant="outline">
-                          <Plus size={16} className="mr-2" />
-                          Add to List
-                        </Button>
+                        <div className="flex">
+                          <Button 
+                            variant="outline"
+                            onClick={() => handleAddMediaToList('queue')}
+                            disabled={addMediaToListMutation.isPending}
+                            className="rounded-r-none border-r-0"
+                            data-testid="button-quick-add"
+                          >
+                            <Plus size={16} className="mr-2" />
+                            {addMediaToListMutation.isPending ? "Adding..." : "Quick Add"}
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                className="rounded-l-none px-2"
+                                disabled={addMediaToListMutation.isPending}
+                                data-testid="button-add-list-dropdown"
+                              >
+                                <ChevronDown size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() => handleAddMediaToList('currently')}
+                                className="cursor-pointer"
+                                disabled={addMediaToListMutation.isPending}
+                              >
+                                Currently
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAddMediaToList('queue')}
+                                className="cursor-pointer"
+                                disabled={addMediaToListMutation.isPending}
+                              >
+                                Queue
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAddMediaToList('finished')}
+                                className="cursor-pointer"
+                                disabled={addMediaToListMutation.isPending}
+                              >
+                                Finished
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAddMediaToList('dnf')}
+                                className="cursor-pointer"
+                                disabled={addMediaToListMutation.isPending}
+                              >
+                                Did Not Finish
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAddMediaToList('favorites')}
+                                className="cursor-pointer"
+                                disabled={addMediaToListMutation.isPending}
+                              >
+                                Favorites
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                         <Button 
                           variant="outline" 
                           onClick={() => setShowRatingModal(true)}
@@ -510,72 +616,77 @@ export default function MediaDetail() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">You Might Also Like</h3>
               
               {recommendationsLoading ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm">Finding recommendations...</p>
+                <div className="space-y-4">
+                  {[1, 2].map((index) => (
+                    <div key={`loading-${index}`} className="bg-gradient-to-r from-slate-700 to-purple-700 rounded-xl p-4 text-white shadow-lg">
+                      <div className="bg-white/30 h-4 w-16 rounded mb-2 animate-pulse"></div>
+                      <div className="bg-white/30 h-5 w-3/4 rounded mb-2 animate-pulse"></div>
+                      <div className="space-y-2">
+                        <div className="bg-white/20 h-3 w-full rounded animate-pulse"></div>
+                        <div className="bg-white/20 h-3 w-5/6 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : recommendations.length > 0 ? (
                 <div className="space-y-4">
                   {recommendations.slice(0, 4).map((rec: any) => (
-                    <div key={rec.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900 text-sm mb-1">{rec.title}</p>
-                          <p className="text-xs text-gray-600 mb-2">{rec.creator}</p>
-                          <span className="text-xs text-gray-500 capitalize">{rec.media_type}</span>
+                    <div key={rec.id} className="bg-gradient-to-r from-slate-700 to-purple-700 rounded-xl p-4 text-white shadow-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium capitalize opacity-90">{rec.media_type}</span>
+                        <div className="flex">
+                          <Button
+                            size="sm"
+                            onClick={() => handleAddRecommendation(rec, 'queue')}
+                            disabled={addRecommendationMutation.isPending}
+                            className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-2 py-1 text-xs rounded-r-none border-r border-gray-300"
+                            data-testid={`add-to-queue-${rec.id}`}
+                          >
+                            <Plus size={14} className="mr-1" />
+                            {addRecommendationMutation.isPending ? "Adding..." : "Queue"}
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                disabled={addRecommendationMutation.isPending}
+                                className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-2 py-1 text-xs rounded-l-none"
+                                data-testid={`add-dropdown-${rec.id}`}
+                              >
+                                <ChevronDown size={14} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() => handleAddRecommendation(rec, 'currently')}
+                                className="cursor-pointer"
+                                disabled={addRecommendationMutation.isPending}
+                              >
+                                Add to Currently
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAddRecommendation(rec, 'finished')}
+                                className="cursor-pointer"
+                                disabled={addRecommendationMutation.isPending}
+                              >
+                                Add to Finished
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAddRecommendation(rec, 'dnf')}
+                                className="cursor-pointer"
+                                disabled={addRecommendationMutation.isPending}
+                              >
+                                Add to Did Not Finish
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                       
-                      {rec.description && (
-                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{rec.description}</p>
-                      )}
-                      
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddRecommendation(rec, 'queue')}
-                          disabled={addRecommendationMutation.isPending}
-                          className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-2 py-1 text-xs rounded-r-none border-r border-gray-300 flex-1"
-                          data-testid={`add-to-queue-${rec.id}`}
-                        >
-                          <Plus size={12} className="mr-1" />
-                          {addRecommendationMutation.isPending ? "Adding..." : "Add to Queue"}
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              size="sm"
-                              disabled={addRecommendationMutation.isPending}
-                              className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-2 py-1 text-xs rounded-l-none"
-                              data-testid={`add-dropdown-${rec.id}`}
-                            >
-                              <ChevronDown size={12} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem
-                              onClick={() => handleAddRecommendation(rec, 'currently')}
-                              className="cursor-pointer text-sm"
-                              disabled={addRecommendationMutation.isPending}
-                            >
-                              Add to Currently
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleAddRecommendation(rec, 'finished')}
-                              className="cursor-pointer text-sm"
-                              disabled={addRecommendationMutation.isPending}
-                            >
-                              Add to Finished
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleAddRecommendation(rec, 'dnf')}
-                              className="cursor-pointer text-sm"
-                              disabled={addRecommendationMutation.isPending}
-                            >
-                              Add to Did Not Finish
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <h3 className="font-bold text-base mb-1">{rec.title}</h3>
+                      <p className="text-white/80 text-sm leading-relaxed line-clamp-3">
+                        {rec.description}
+                      </p>
                     </div>
                   ))}
                 </div>
