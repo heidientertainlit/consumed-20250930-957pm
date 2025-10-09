@@ -80,7 +80,8 @@ serve(async (req) => {
           })) || [],
           platforms: data['watch/providers']?.results?.US?.flatrate?.map((p: any) => ({
             name: p.provider_name,
-            logo: `https://image.tmdb.org/t/p/w92${p.logo_path}`
+            logo: `https://image.tmdb.org/t/p/w92${p.logo_path}`,
+            url: data['watch/providers']?.results?.US?.link || '#'
           })) || [],
           trailer: data.videos?.results?.find((v: any) => v.type === 'Trailer')?.key
         };
@@ -108,6 +109,32 @@ serve(async (req) => {
       if (response.ok) {
         const data = await response.json();
         const isPodcast = data.type === 'show';
+        
+        // Build platforms array for Spotify content
+        const platforms = [
+          {
+            name: 'Spotify',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/168px-Spotify_logo_without_text.svg.png',
+            url: data.external_urls?.spotify
+          }
+        ];
+        
+        // Add common podcast platforms if it's a podcast
+        if (isPodcast) {
+          platforms.push(
+            {
+              name: 'Apple Podcasts',
+              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Podcasts_%28iOS%29.svg/170px-Podcasts_%28iOS%29.svg.png',
+              url: `https://podcasts.apple.com/search?term=${encodeURIComponent(data.name)}`
+            },
+            {
+              name: 'Google Podcasts',
+              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Podcasts_icon.svg/170px-Google_Podcasts_icon.svg.png',
+              url: `https://podcasts.google.com/search/${encodeURIComponent(data.name)}`
+            }
+          );
+        }
+        
         mediaDetails = {
           title: data.name,
           type: isPodcast ? 'Podcast' : 'Music',
@@ -121,8 +148,43 @@ serve(async (req) => {
           totalEpisodes: data.total_episodes || 0,
           subscribers: data.total_tracks ? `${data.total_tracks} tracks` : '0',
           averageLength: data.duration_ms ? `${Math.floor(data.duration_ms / 60000)} min` : '45 min',
-          externalUrl: data.external_urls?.spotify
+          externalUrl: data.external_urls?.spotify,
+          platforms
         };
+      }
+    } else if (source === 'youtube') {
+      const youtubeKey = Deno.env.get('YOUTUBE_API_KEY');
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?id=${externalId}&part=snippet,contentDetails,statistics&key=${youtubeKey}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        const video = data.items?.[0];
+        
+        if (video) {
+          mediaDetails = {
+            title: video.snippet.title,
+            type: 'YouTube',
+            creator: video.snippet.channelTitle,
+            artwork: video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url,
+            description: video.snippet.description || 'No description available.',
+            rating: '4.0',
+            releaseDate: video.snippet.publishedAt,
+            category: 'Video',
+            language: 'English',
+            totalEpisodes: 0,
+            subscribers: video.statistics?.viewCount ? `${Math.floor(video.statistics.viewCount / 1000)}K views` : '0',
+            averageLength: 'N/A',
+            platforms: [
+              {
+                name: 'YouTube',
+                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/159px-YouTube_full-color_icon_%282017%29.svg.png',
+                url: `https://www.youtube.com/watch?v=${externalId}`
+              }
+            ]
+          };
+        }
       }
     } else if (source === 'openlibrary') {
       const response = await fetch(`https://openlibrary.org/works/${externalId}.json`);
@@ -145,7 +207,24 @@ serve(async (req) => {
           totalEpisodes: 0,
           subscribers: '0',
           averageLength: 'N/A',
-          subjects: data.subjects?.slice(0, 5) || []
+          subjects: data.subjects?.slice(0, 5) || [],
+          platforms: [
+            {
+              name: 'Amazon',
+              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/200px-Amazon_logo.svg.png',
+              url: `https://www.amazon.com/s?k=${encodeURIComponent(data.title)}`
+            },
+            {
+              name: 'Goodreads',
+              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Goodreads_logo.svg/200px-Goodreads_logo.svg.png',
+              url: `https://www.goodreads.com/search?q=${encodeURIComponent(data.title)}`
+            },
+            {
+              name: 'Open Library',
+              logo: 'https://openlibrary.org/static/images/openlibrary-logo-tighter.svg',
+              url: `https://openlibrary.org/works/${externalId}`
+            }
+          ]
         };
       }
     }

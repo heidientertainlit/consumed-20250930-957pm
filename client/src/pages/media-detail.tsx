@@ -223,51 +223,6 @@ export default function MediaDetail() {
     discoveredDate: "2022-03-15"
   };
 
-  const availablePlatforms = [
-    {
-      name: "Spotify",
-      type: "Free with ads",
-      logo: "🎵",
-      url: "https://open.spotify.com/show/...",
-      color: "bg-green-500"
-    },
-    {
-      name: "Apple Podcasts",
-      type: "Free",
-      logo: "🎧",
-      url: "https://podcasts.apple.com/...",
-      color: "bg-purple-500"
-    },
-    {
-      name: "Google Podcasts",
-      type: "Free",
-      logo: "🔍",
-      url: "https://podcasts.google.com/...",
-      color: "bg-blue-500"
-    },
-    {
-      name: "Amazon Music",
-      type: "Prime included",
-      logo: "📻",
-      url: "https://music.amazon.com/...",
-      color: "bg-orange-500"
-    },
-    {
-      name: "YouTube",
-      type: "Free with ads",
-      logo: "📺",
-      url: "https://youtube.com/...",
-      color: "bg-red-500"
-    },
-    {
-      name: "Stitcher",
-      type: "Free",
-      logo: "🎤",
-      url: "https://stitcher.com/...",
-      color: "bg-gray-500"
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
@@ -345,26 +300,42 @@ export default function MediaDetail() {
                     </Button>
                   </div>
 
-                  {/* Listen On Platforms */}
-                  <div className="mt-6 pt-6 border-t border-gray-100">
-                    <h3 className="text-sm font-medium text-gray-700 mb-3">Listen On</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {availablePlatforms.map((platform, index) => (
-                        <a
-                          key={index}
-                          href={platform.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                          data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
-                          title={`${platform.name} - ${platform.type}`}
-                        >
-                          <span className="font-medium text-gray-700">{platform.name}</span>
-                          <ExternalLink className="w-3 h-3 text-gray-400" />
-                        </a>
-                      ))}
+                  {/* Find On Platforms */}
+                  {mediaItem.platforms && mediaItem.platforms.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">
+                        {mediaItem.type === 'Movie' || mediaItem.type === 'TV Show' 
+                          ? 'Watch On' 
+                          : mediaItem.type === 'Podcast' || mediaItem.type === 'Music' 
+                          ? 'Listen On' 
+                          : mediaItem.type === 'Book' 
+                          ? 'Read On' 
+                          : 'Find On'}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {mediaItem.platforms.map((platform: any, index: number) => (
+                          <a
+                            key={index}
+                            href={platform.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+                            data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
+                          >
+                            {platform.logo && (
+                              <img 
+                                src={platform.logo} 
+                                alt={platform.name}
+                                className="w-4 h-4 object-contain"
+                              />
+                            )}
+                            <span className="font-medium text-gray-700">{platform.name}</span>
+                            <ExternalLink className="w-3 h-3 text-gray-400" />
+                          </a>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
