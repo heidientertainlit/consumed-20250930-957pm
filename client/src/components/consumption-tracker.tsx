@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth";
 import { AuthModal } from "./auth-modal";
 import { useToast } from "@/hooks/use-toast";
 import CustomListSubmenu from "./custom-list-submenu";
+import CreateListDialog from "./create-list-dialog";
 
 interface ConsumptionTrackerProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showCreateListDialog, setShowCreateListDialog] = useState(false);
   const [rating, setRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
 
@@ -571,6 +573,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
                   
                   <CustomListSubmenu
                     onSelectList={(listId, listTitle, isCustom) => handleAddMedia(listId, isCustom)}
+                    onCreateList={() => setShowCreateListDialog(true)}
                     disabled={!selectedMedia || trackMediaMutation.isPending}
                   />
                 </DropdownMenuContent>
@@ -583,6 +586,11 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
       <AuthModal
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
+      />
+      
+      <CreateListDialog
+        open={showCreateListDialog}
+        onOpenChange={setShowCreateListDialog}
       />
     </Dialog>
   );

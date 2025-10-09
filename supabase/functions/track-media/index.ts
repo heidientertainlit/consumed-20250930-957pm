@@ -134,9 +134,7 @@ serve(async (req) => {
         media_type: mediaType || 'mixed', 
         creator: creator || '',
         image_url: imageUrl || null,
-        notes: review || null,
-        external_id: requestBody.media?.externalId || null,
-        external_source: requestBody.media?.externalSource || null
+        notes: review || null
       })
       .select()
       .single();

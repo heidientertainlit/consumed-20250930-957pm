@@ -1,12 +1,11 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { ChevronRight, Plus, List } from "lucide-react";
-import CreateListDialog from "./create-list-dialog";
+import { DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { Plus, List } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 interface CustomListSubmenuProps {
   onSelectList: (listId: string, listTitle: string, isCustom: boolean) => void;
+  onCreateList: () => void;
   disabled?: boolean;
 }
 
@@ -17,8 +16,7 @@ interface UserList {
   isPrivate?: boolean;
 }
 
-export default function CustomListSubmenu({ onSelectList, disabled }: CustomListSubmenuProps) {
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+export default function CustomListSubmenu({ onSelectList, onCreateList, disabled }: CustomListSubmenuProps) {
   const { session } = useAuth();
 
   // Fetch user's lists (includes both system and custom lists)
@@ -43,58 +41,54 @@ export default function CustomListSubmenu({ onSelectList, disabled }: CustomList
   // Filter to only custom lists
   const customLists = listsData?.lists?.filter(list => list.isCustom) || [];
 
+  if (isLoading) {
+    return (
+      <DropdownMenuItem disabled className="text-sm text-gray-400">
+        <List className="h-4 w-4 mr-2" />
+        Loading custom lists...
+      </DropdownMenuItem>
+    );
+  }
+
   return (
     <>
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger disabled={disabled} className="cursor-pointer">
-          <List className="h-4 w-4 mr-2" />
-          <span>Custom Lists</span>
-          <ChevronRight className="h-4 w-4 ml-auto" />
-        </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="w-48">
-          {isLoading ? (
-            <DropdownMenuItem disabled className="text-sm text-gray-500">
-              Loading...
+      <DropdownMenuLabel className="text-xs text-gray-400 font-semibold px-2 py-1.5">
+        MY CUSTOM LISTS
+      </DropdownMenuLabel>
+      
+      {customLists.length > 0 ? (
+        <>
+          {customLists.map((list) => (
+            <DropdownMenuItem
+              key={list.id}
+              onClick={() => onSelectList(list.id, list.title, true)}
+              disabled={disabled}
+              className="cursor-pointer pl-4"
+              data-testid={`menu-custom-list-${list.id}`}
+            >
+              <List className="h-4 w-4 mr-2 text-purple-400" />
+              {list.title}
+              {list.isPrivate && <span className="ml-2 text-xs">🔒</span>}
             </DropdownMenuItem>
-          ) : customLists.length > 0 ? (
-            <>
-              {customLists.map((list) => (
-                <DropdownMenuItem
-                  key={list.id}
-                  onClick={() => onSelectList(list.id, list.title, true)}
-                  className="cursor-pointer"
-                  data-testid={`menu-custom-list-${list.id}`}
-                >
-                  {list.title}
-                  {list.isPrivate && <span className="ml-2 text-xs text-gray-500">🔒</span>}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-            </>
-          ) : (
-            <DropdownMenuItem disabled className="text-sm text-gray-500">
-              No custom lists yet
-            </DropdownMenuItem>
-          )}
-          
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowCreateDialog(true);
-            }}
-            className="cursor-pointer text-purple-400 hover:text-purple-300"
-            data-testid="menu-create-new-list"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create New List
-          </DropdownMenuItem>
-        </DropdownMenuSubContent>
-      </DropdownMenuSub>
-
-      <CreateListDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-      />
+          ))}
+        </>
+      ) : (
+        <DropdownMenuItem disabled className="text-sm text-gray-500 pl-4 italic">
+          No custom lists yet
+        </DropdownMenuItem>
+      )}
+      
+      <DropdownMenuItem
+        onClick={onCreateList}
+        disabled={disabled}
+        className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4 font-medium"
+        data-testid="menu-create-new-list"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Create New List
+      </DropdownMenuItem>
+      
+      <DropdownMenuSeparator />
     </>
   );
 }
