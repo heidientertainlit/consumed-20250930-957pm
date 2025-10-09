@@ -37,7 +37,13 @@ The application employs a modern full-stack architecture with a clear separation
 -   **Play Section**: Category-based navigation with dedicated pages for Trivia (/play/trivia), Polls (/play/polls), and Predictions (/play/predictions). Main Play page shows category cards only - no "All Games" listing. Inline Play cards appear every 3rd post in the Feed for quick participation.
 -   **Profile Management**: Editable display name and username with validation and real-time uniqueness checking.
 -   **Creator Recognition**: "Favorite Creators" are computed from actual user media consumption, calculating "fan points" and dominant roles.
--   **Media Item Pages**: Deferred to post-launch. Individual media pages (e.g., `/media/tv/:tmdb_id`) would provide deep linking and better shareability but are not critical for MVP launch.
+-   **Media Item Pages (CRITICAL - WORKING)**: 
+    -   **URL Structure**: `/media/{mediaType}/{source}/{externalId}` (e.g., `/media/tv/tmdb/250307`)
+    -   **IMPORTANT**: TMDB has both movie AND TV with same IDs - media type MUST be included in URL
+    -   **Feed Navigation**: Posts are clickable when they have both `media_external_id` AND `media_external_source`
+    -   **API Integration**: `get-media-details` edge function accepts `media_type` parameter to differentiate between movie/TV
+    -   **Example**: Movie ID 250307 = "Arcade Fire", TV ID 250307 = "The Pitt" - without media_type, wrong content loads
+    -   **Service Worker**: Disabled during development to prevent aggressive caching of API responses
 -   **Polls/Surveys System**: Database-backed polling system supporting branded (consumed/entertainlit) and sponsored polls with:
     -   Real-time vote counting and percentage calculations
     -   Duplicate vote prevention per user
