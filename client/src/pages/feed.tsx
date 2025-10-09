@@ -5,7 +5,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PollCard from "@/components/poll-card";
 import PlayCard from "@/components/play-card";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Eye, Users, BookOpen, Film, Send } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Eye, Users, BookOpen, Film, Send, Trash2, MoreVertical } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import CommentsSection from "@/components/comments-section";
 import { Button } from "@/components/ui/button";
@@ -327,6 +327,40 @@ export default function Feed() {
     await voteMutation.mutateAsync({ pollId, optionId });
   };
 
+  // Delete post mutation
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed?post_id=${postId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete post');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
+    },
+  });
+
+  const handleDeletePost = async (postId: string) => {
+    if (confirm('Are you sure you want to delete this post?')) {
+      await deletePostMutation.mutateAsync(postId);
+    }
+  };
+
   const handleLike = (postId: string) => {
     const isLiked = likedPosts.has(postId);
     if (isLiked) {
@@ -530,6 +564,16 @@ export default function Feed() {
                         <div className="font-semibold text-gray-900">{post.user.username}</div>
                         <div className="text-sm text-gray-500">{formatFullDate(post.timestamp)}</div>
                       </div>
+                      {user?.id === post.user.id && (
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          data-testid={`button-delete-post-${post.id}`}
+                          title="Delete post"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </div>
 
                   {/* Post Content */}

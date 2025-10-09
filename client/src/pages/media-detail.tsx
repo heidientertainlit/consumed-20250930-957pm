@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
@@ -14,10 +14,11 @@ import { supabase } from "@/lib/supabase";
 export default function MediaDetail() {
   const [, params] = useRoute("/media/:type/:source/:id");
   const [, setLocation] = useLocation();
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -77,6 +78,7 @@ export default function MediaDetail() {
         .from('social_posts')
         .select(`
           id,
+          user_id,
           rating,
           content,
           created_at,
@@ -97,6 +99,44 @@ export default function MediaDetail() {
     },
     enabled: !!params?.source && !!params?.id
   });
+
+  // Delete review mutation
+  const deleteReviewMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed?post_id=${postId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete review');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
+      toast({
+        title: "Review deleted",
+        description: "Your review has been removed",
+      });
+    },
+  });
+
+  const handleDeleteReview = async (postId: string) => {
+    if (confirm('Are you sure you want to delete this review?')) {
+      await deleteReviewMutation.mutateAsync(postId);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -319,13 +359,13 @@ export default function MediaDetail() {
                   {reviews.map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                       <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-1">
                           <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
                             <span className="text-purple-600 text-sm font-medium">
                               {review.users?.display_name?.[0]?.toUpperCase() || review.users?.user_name?.[0]?.toUpperCase() || '?'}
                             </span>
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium text-gray-900">
                               {review.users?.display_name || review.users?.user_name || 'Anonymous'}
                             </p>
@@ -338,12 +378,24 @@ export default function MediaDetail() {
                             </p>
                           </div>
                         </div>
-                        {review.rating && (
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span className="font-medium text-gray-900">{review.rating}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {review.rating && (
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="font-medium text-gray-900">{review.rating}</span>
+                            </div>
+                          )}
+                          {user?.id === review.user_id && (
+                            <button
+                              onClick={() => handleDeleteReview(review.id)}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                              data-testid={`button-delete-review-${review.id}`}
+                              title="Delete review"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {review.content && (
                         <p className="text-gray-700 text-sm leading-relaxed">{review.content}</p>

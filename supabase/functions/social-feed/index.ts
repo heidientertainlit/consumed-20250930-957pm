@@ -164,6 +164,67 @@ serve(async (req) => {
       });
     }
 
+    if (req.method === 'DELETE') {
+      const url = new URL(req.url);
+      const postId = url.searchParams.get('post_id');
+
+      if (!postId) {
+        return new Response(JSON.stringify({ error: 'post_id is required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      console.log('Deleting post:', postId);
+
+      // First, verify the post belongs to the current user
+      const { data: post, error: fetchError } = await supabase
+        .from('social_posts')
+        .select('user_id')
+        .eq('id', postId)
+        .single();
+
+      if (fetchError || !post) {
+        return new Response(JSON.stringify({ error: 'Post not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get the app user ID from the users table
+      const { data: appUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+
+      if (!appUser || post.user_id !== appUser.id) {
+        return new Response(JSON.stringify({ error: 'Unauthorized to delete this post' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Delete the post
+      const { error: deleteError } = await supabase
+        .from('social_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (deleteError) {
+        console.log('Failed to delete post:', deleteError);
+        return new Response(JSON.stringify({ error: deleteError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      console.log('Deleted post:', postId);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
   } catch (error) {
     console.error('Function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
