@@ -175,11 +175,11 @@ export default function MediaDetail() {
   };
 
   const { data: recommendationsData, isLoading: recommendationsLoading } = useQuery({
-    queryKey: ["media-recommendations", params?.source, params?.id, mediaItem?.title],
+    queryKey: ["media-recommendations", params?.source, params?.id],
     queryFn: fetchRecommendations,
     enabled: !!session?.access_token && !!mediaItem,
-    staleTime: 0, // Don't cache - always fetch fresh context-aware recommendations
-    gcTime: 0,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 15 * 60 * 1000,
     retry: false,
   });
 
