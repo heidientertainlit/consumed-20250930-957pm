@@ -568,7 +568,9 @@ export default function Feed() {
 
                             {/* Media Info */}
                             <div className="flex-1">
-                              <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2 hover:text-purple-600 transition-colors">
+                              <h3 className={`font-semibold text-gray-900 text-lg mb-1 line-clamp-2 transition-colors ${
+                                isClickable ? 'hover:text-purple-600' : ''
+                              }`}>
                                 {media.title}
                               </h3>
 
@@ -598,8 +600,8 @@ export default function Feed() {
                               )}
                             </div>
 
-                            {/* Arrow */}
-                            <ChevronRight className="text-gray-400" size={20} />
+                            {/* Arrow - only show if clickable */}
+                            {isClickable && <ChevronRight className="text-gray-400" size={20} />}
                           </div>
                         </div>
                         );
