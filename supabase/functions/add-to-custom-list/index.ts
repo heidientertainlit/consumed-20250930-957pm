@@ -75,7 +75,7 @@ serve(async (req) => {
     // Parse request
     const requestBody = await req.json();
     const { media, rating, review, customListId } = requestBody;
-    const { title, mediaType, creator, imageUrl } = media || {};
+    const { title, mediaType, creator, imageUrl, externalId, externalSource } = media || {};
 
     if (!customListId) {
       return new Response(JSON.stringify({
@@ -115,7 +115,9 @@ serve(async (req) => {
         media_type: mediaType || 'mixed', 
         creator: creator || '',
         image_url: imageUrl || null,
-        notes: review || null
+        notes: review || null,
+        external_id: externalId || null,
+        external_source: externalSource || null
       })
       .select()
       .single();

@@ -83,7 +83,7 @@ serve(async (req) => {
     // Parse the request body
     const requestBody = await req.json();
     const { media, rating, review, listType } = requestBody;
-    const { title, mediaType, creator, imageUrl } = media || {};
+    const { title, mediaType, creator, imageUrl, externalId, externalSource } = media || {};
 
     let targetList = null;
 
@@ -134,7 +134,9 @@ serve(async (req) => {
         media_type: mediaType || 'mixed', 
         creator: creator || '',
         image_url: imageUrl || null,
-        notes: review || null
+        notes: review || null,
+        external_id: externalId || null,
+        external_source: externalSource || null
       })
       .select()
       .single();

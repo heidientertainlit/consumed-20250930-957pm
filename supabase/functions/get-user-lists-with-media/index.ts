@@ -123,7 +123,7 @@ serve(async (req) => {
     if (appUser) {
       const { data: items, error: itemsError } = await supabase
         .from('list_items')
-        .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id')
+        .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id, external_id, external_source')
         .eq('user_id', appUser.id)
         .order('created_at', { ascending: false });
       
