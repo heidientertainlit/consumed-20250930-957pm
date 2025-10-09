@@ -108,7 +108,7 @@ export default function ListDetail() {
       type: item.media_type ? capitalizeFirst(item.media_type) : 'Mixed',
       artwork: item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop",
       progress: 0,
-      addedDate: new Date(item.created_at).toLocaleDateString(),
+      addedDate: new Date(item.added_at || item.created_at).toLocaleDateString(),
       addedBy: "You",
       externalId: item.external_id,
       externalSource: item.external_source,

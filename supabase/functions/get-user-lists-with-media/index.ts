@@ -101,9 +101,9 @@ serve(async (req) => {
     if (appUser) {
       const { data: items, error: itemsError } = await supabase
         .from('list_items')
-        .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id, external_id, external_source')
+        .select('id, list_id, title, type, media_type, creator, image_url, notes, added_at, media_id, external_id, external_source')
         .eq('user_id', appUser.id)
-        .order('created_at', { ascending: false });
+        .order('added_at', { ascending: false });
       
       if (itemsError) {
         console.error('Error fetching user items:', itemsError);
@@ -118,7 +118,7 @@ serve(async (req) => {
     const itemsByListId = userItems.reduce((acc, item) => {
       const listId = item.list_id || 'all';
       if (!acc[listId]) acc[listId] = [];
-      acc[listId].push(item); // created_at is already correct
+      acc[listId].push(item);
       return acc;
     }, {});
 
@@ -133,7 +133,7 @@ serve(async (req) => {
     const allList = {
       id: 'all',
       title: 'All',
-      items: userItems // created_at is already correct
+      items: userItems
     };
 
     const finalLists = [allList, ...listsWithItems];
