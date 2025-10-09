@@ -51,7 +51,7 @@ serve(async (req) => {
           media_title, 
           media_type, 
           media_creator, 
-          image_url, 
+          media_image, 
           media_external_id, 
           media_external_source, 
           media_description
@@ -105,7 +105,7 @@ serve(async (req) => {
             title: post.media_title,
             creator: post.media_creator || '',
             mediaType: post.media_type || '',
-            imageUrl: post.image_url || '',
+            imageUrl: post.media_image || '',
             rating: post.rating,
             externalId: post.media_external_id || '',
             externalSource: post.media_external_source || '',
