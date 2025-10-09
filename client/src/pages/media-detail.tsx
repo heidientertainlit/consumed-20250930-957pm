@@ -78,7 +78,7 @@ export default function MediaDetail() {
         .select(`
           id,
           rating,
-          thoughts,
+          content,
           created_at,
           users:user_id (
             display_name,
@@ -345,8 +345,8 @@ export default function MediaDetail() {
                           </div>
                         )}
                       </div>
-                      {review.thoughts && (
-                        <p className="text-gray-700 text-sm leading-relaxed">{review.thoughts}</p>
+                      {review.content && (
+                        <p className="text-gray-700 text-sm leading-relaxed">{review.content}</p>
                       )}
                     </div>
                   ))}
