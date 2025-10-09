@@ -330,24 +330,21 @@ export default function Feed() {
   // Delete post mutation
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
+      if (!user?.id) throw new Error('Not authenticated');
       
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed?post_id=${postId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Delete using Supabase client directly
+      const { error } = await supabase
+        .from('social_posts')
+        .delete()
+        .eq('id', postId)
+        .eq('user_id', user.id); // Ensure user can only delete their own posts
 
-      if (!response.ok) {
+      if (error) {
+        console.error('Delete error:', error);
         throw new Error('Failed to delete post');
       }
 
-      return response.json();
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
