@@ -359,14 +359,26 @@ export default function MediaDetail() {
                   <span className="text-gray-500">Language</span>
                   <p className="font-medium text-gray-900">{mediaItem.language}</p>
                 </div>
-                <div>
-                  <span className="text-gray-500">Started</span>
-                  <p className="font-medium text-gray-900">July 2020</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Last Episode</span>
-                  <p className="font-medium text-gray-900">Jan 15, 2024</p>
-                </div>
+                {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
+                  <div>
+                    <span className="text-gray-500">Release Year</span>
+                    <p className="font-medium text-gray-900">{new Date(mediaItem.releaseDate).getFullYear()}</p>
+                  </div>
+                )}
+                {(mediaItem.type === 'TV Show' || mediaItem.type === 'Podcast') && mediaItem.releaseDate && (
+                  <div>
+                    <span className="text-gray-500">Started</span>
+                    <p className="font-medium text-gray-900">
+                      {new Date(mediaItem.releaseDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    </p>
+                  </div>
+                )}
+                {mediaItem.runtime && (
+                  <div>
+                    <span className="text-gray-500">Runtime</span>
+                    <p className="font-medium text-gray-900">{mediaItem.runtime} min</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
