@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -10,6 +10,13 @@ import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import RatingModal from "@/components/rating-modal";
 import { supabase } from "@/lib/supabase";
+import { apiRequest } from "@/lib/queryClient";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function MediaDetail() {
   const [, params] = useRoute("/media/:type/:source/:id");
@@ -133,6 +140,98 @@ export default function MediaDetail() {
     if (confirm('Are you sure you want to delete this review?')) {
       await deleteReviewMutation.mutateAsync(postId);
     }
+  };
+
+  // Fetch context-aware recommendations based on current media
+  const fetchRecommendations = async () => {
+    if (!session?.access_token || !mediaItem) {
+      return { recommendations: [] };
+    }
+
+    const queryParams = new URLSearchParams({
+      currentMediaTitle: mediaItem.title,
+      currentMediaType: mediaItem.type || params?.type || 'unknown',
+      currentMediaCreator: mediaItem.creator || ''
+    });
+
+    const response = await fetch(
+      `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations?${queryParams}`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error('[Recommendations] Fetch failed:', response.status);
+      return { recommendations: [] };
+    }
+
+    const data = await response.json();
+    console.log('[Recommendations] Context-aware recommendations received:', data.count);
+    return data;
+  };
+
+  const { data: recommendationsData, isLoading: recommendationsLoading } = useQuery({
+    queryKey: ["media-recommendations", params?.source, params?.id],
+    queryFn: fetchRecommendations,
+    enabled: !!session?.access_token && !!mediaItem,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    gcTime: 15 * 60 * 1000,
+    retry: false,
+  });
+
+  const recommendations = recommendationsData?.recommendations || [];
+
+  // Mutation for adding recommendations to lists
+  const addRecommendationMutation = useMutation({
+    mutationFn: async ({ recommendation, listType }: { recommendation: any; listType: string }) => {
+      if (!session?.access_token) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch(`/api/lists/${listType}/items`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          title: recommendation.title,
+          type: recommendation.media_type || recommendation.type,
+          media_type: recommendation.media_type || recommendation.type,
+          creator: recommendation.creator,
+          image_url: recommendation.image_url,
+          notes: recommendation.description
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add recommendation to list');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Added to list!",
+        description: `${variables.recommendation.title} added to ${variables.listType === 'queue' ? 'Queue' : variables.listType === 'currently' ? 'Currently' : variables.listType === 'finished' ? 'Finished' : 'Did Not Finish'}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add recommendation",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddRecommendation = (recommendation: any, listType: string) => {
+    addRecommendationMutation.mutate({ recommendation, listType });
   };
 
   if (isLoading) {
@@ -406,24 +505,86 @@ export default function MediaDetail() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Related Shows */}
+            {/* AI-Powered Recommendations */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">You Might Also Like</h3>
-              <div className="space-y-4">
-                {[
-                  { title: "Conan O'Brien Needs a Friend", host: "Conan O'Brien" },
-                  { title: "WTF with Marc Maron", host: "Marc Maron" },
-                  { title: "The Joe Rogan Experience", host: "Joe Rogan" }
-                ].map((show, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex-shrink-0"></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm">{show.title}</p>
-                      <p className="text-xs text-gray-600">{show.host}</p>
+              
+              {recommendationsLoading ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm">Finding recommendations...</p>
+                </div>
+              ) : recommendations.length > 0 ? (
+                <div className="space-y-4">
+                  {recommendations.slice(0, 4).map((rec: any) => (
+                    <div key={rec.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm mb-1">{rec.title}</p>
+                          <p className="text-xs text-gray-600 mb-2">{rec.creator}</p>
+                          <span className="text-xs text-gray-500 capitalize">{rec.media_type}</span>
+                        </div>
+                      </div>
+                      
+                      {rec.description && (
+                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{rec.description}</p>
+                      )}
+                      
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddRecommendation(rec, 'queue')}
+                          disabled={addRecommendationMutation.isPending}
+                          className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-2 py-1 text-xs rounded-r-none border-r border-gray-300 flex-1"
+                          data-testid={`add-to-queue-${rec.id}`}
+                        >
+                          <Plus size={12} className="mr-1" />
+                          {addRecommendationMutation.isPending ? "Adding..." : "Add to Queue"}
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="sm"
+                              disabled={addRecommendationMutation.isPending}
+                              className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-2 py-1 text-xs rounded-l-none"
+                              data-testid={`add-dropdown-${rec.id}`}
+                            >
+                              <ChevronDown size={12} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => handleAddRecommendation(rec, 'currently')}
+                              className="cursor-pointer text-sm"
+                              disabled={addRecommendationMutation.isPending}
+                            >
+                              Add to Currently
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleAddRecommendation(rec, 'finished')}
+                              className="cursor-pointer text-sm"
+                              disabled={addRecommendationMutation.isPending}
+                            >
+                              Add to Finished
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleAddRecommendation(rec, 'dnf')}
+                              className="cursor-pointer text-sm"
+                              disabled={addRecommendationMutation.isPending}
+                            >
+                              Add to Did Not Finish
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm">No recommendations available yet.</p>
+                  <p className="text-xs mt-1">Complete your Entertainment DNA to get personalized suggestions!</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -113,6 +113,14 @@ serve(async (req) => {
 
     console.log("Recent consumption lookup:", { count: recentConsumption?.length, consumptionError });
 
+    // Check if we're generating context-aware recommendations for a specific media item
+    const url = new URL(req.url);
+    const currentMediaTitle = url.searchParams.get('currentMediaTitle');
+    const currentMediaType = url.searchParams.get('currentMediaType');
+    const currentMediaCreator = url.searchParams.get('currentMediaCreator');
+
+    console.log("Request params:", { currentMediaTitle, currentMediaType, currentMediaCreator });
+
     // Prepare data for AI prompt
     const mediaTypesText = dnaProfile.favorite_media_types?.join(', ') || 'various media types';
     const genresText = dnaProfile.favorite_genres?.join(', ') || 'various genres';
@@ -120,7 +128,35 @@ serve(async (req) => {
       `${item.title} by ${item.creator || 'Unknown'} (${item.media_type || item.type})`
     ).join(', ') || 'no recent media';
 
-    const prompt = `Based on this Entertainment DNA profile:
+    let prompt: string;
+
+    if (currentMediaTitle && currentMediaType) {
+      // Context-aware recommendations for media detail page
+      prompt = `Based on this Entertainment DNA profile:
+
+${dnaProfile.profile_text}
+
+User's favorite media types: ${mediaTypesText}
+User's favorite genres: ${genresText}
+Recent media consumption: ${recentMediaText}
+
+The user is currently viewing: "${currentMediaTitle}" by ${currentMediaCreator || 'Unknown'} (${currentMediaType})
+
+Generate 6-8 personalized recommendations similar to "${currentMediaTitle}" that also match their entertainment DNA profile. For each recommendation, provide:
+- title: exact title of the media
+- creator: author/artist/director/developer  
+- media_type: one of "book", "movie", "tv", "music", "podcast", "game", "youtube"
+- year: release year (number)
+- description: 2-3 sentence explanation of why this is similar to "${currentMediaTitle}" and matches their entertainment DNA
+- genre: primary genre
+- rating_explanation: why this person would rate it highly
+
+Focus on content that is similar in style, theme, or genre to "${currentMediaTitle}" while matching their specific preferences.
+
+Respond in JSON format with a "recommendations" array.`;
+    } else {
+      // General recommendations based on DNA profile (for Track page)
+      prompt = `Based on this Entertainment DNA profile:
 
 ${dnaProfile.profile_text}
 
@@ -140,6 +176,7 @@ Generate 6-8 personalized media recommendations that specifically match their pr
 Focus on content that matches their specific preferences mentioned in the profile.
 
 Respond in JSON format with a "recommendations" array.`;
+    }
 
     // Get OpenAI API key
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
