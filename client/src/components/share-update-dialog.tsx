@@ -173,6 +173,20 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
     setIsPosting(true);
     
+    const postData = {
+      content: thoughts.trim() || null,
+      media_title: selectedMedia.title,
+      media_type: selectedMedia.type,
+      media_creator: selectedMedia.creator,
+      media_image_url: selectedMedia.image,
+      rating: rating ? parseFloat(rating) : null,
+      media_external_id: selectedMedia.external_id || null,
+      media_external_source: selectedMedia.external_source || null
+    };
+    
+    console.log('📤 Posting data:', postData);
+    console.log('📋 Selected media:', selectedMedia);
+    
     try {
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-update", {
         method: "POST",
@@ -180,16 +194,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          content: thoughts.trim() || null,
-          media_title: selectedMedia.title,
-          media_type: selectedMedia.type,
-          media_creator: selectedMedia.creator,
-          media_image_url: selectedMedia.image,
-          rating: rating ? parseFloat(rating) : null,
-          media_external_id: selectedMedia.external_id || null,
-          media_external_source: selectedMedia.external_source || null
-        }),
+        body: JSON.stringify(postData),
       });
 
       if (!response.ok) {
