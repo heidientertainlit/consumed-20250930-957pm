@@ -277,10 +277,10 @@ export default function MediaDetail() {
           variant="ghost"
           size="sm"
           onClick={() => setLocation("/track")}
-          className="mb-4"
+          className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+          data-testid="button-back"
         >
-          <ArrowLeft size={20} className="mr-2" />
-          Back
+          <ArrowLeft size={24} className="text-gray-600" />
         </Button>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
