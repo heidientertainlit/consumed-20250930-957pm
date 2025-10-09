@@ -76,6 +76,7 @@ serve(async (req) => {
       const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source } = body;
 
       console.log('Creating post for user:', appUser.id);
+      console.log('📦 Received body data:', JSON.stringify(body, null, 2));
 
       const { data: post, error } = await supabase
         .from('social_posts')
