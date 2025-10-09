@@ -261,14 +261,24 @@ export default function MediaDetail() {
                         <Star className="w-4 h-4 text-yellow-500 fill-current" />
                         <span className="font-medium">{mediaItem.rating}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{mediaItem.totalEpisodes} episodes</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>~{mediaItem.averageLength}</span>
-                      </div>
+                      {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{new Date(mediaItem.releaseDate).getFullYear()}</span>
+                        </div>
+                      )}
+                      {(mediaItem.type === 'TV Show' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{mediaItem.totalEpisodes} episodes</span>
+                        </div>
+                      )}
+                      {mediaItem.averageLength && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          <span>~{mediaItem.averageLength}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
