@@ -92,7 +92,9 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/media/:type/:source/:id">
-          <MediaDetail />
+          <ProtectedRoute>
+            <MediaDetail />
+          </ProtectedRoute>
         </Route>
         <Route path="/list/:id">
           <ProtectedRoute>

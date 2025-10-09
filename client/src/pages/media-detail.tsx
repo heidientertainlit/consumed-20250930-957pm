@@ -46,7 +46,7 @@ export default function MediaDetail() {
     }
   };
 
-  // Fetch media details from edge function (public - no auth required for sharing)
+  // Fetch media details from edge function
   const { data: mediaItem, isLoading } = useQuery({
     queryKey: ['media-detail', params?.type, params?.source, params?.id],
     queryFn: async () => {
@@ -54,6 +54,7 @@ export default function MediaDetail() {
         `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}&media_type=${params?.type}`,
         {
           headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json'
           }
         }
@@ -64,7 +65,7 @@ export default function MediaDetail() {
       }
       return response.json();
     },
-    enabled: !!params?.source && !!params?.id
+    enabled: !!params?.source && !!params?.id && !!session?.access_token
   });
 
   if (isLoading) {
