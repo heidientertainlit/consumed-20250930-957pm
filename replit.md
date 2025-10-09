@@ -33,6 +33,14 @@ The application employs a modern full-stack architecture with a clear separation
 
 ### Feature Specifications
 -   **Media Tracking**: Simplified list-based system allowing users to track various entertainment items across "Currently", "Queue", "Finished", and "Did Not Finish" lists.
+-   **Custom Lists**: User-created lists for organizing media with:
+    -   Nested dropdown UI in ConsumptionTracker ("Custom Lists >" submenu)
+    -   Simple creation dialog (title input only, public by default)
+    -   Alphabetical ordering
+    -   Separate edge functions (`create-custom-list`, `add-to-custom-list`) for safety
+    -   Fallback protection: system lists work even if custom lists fail
+    -   `isCustom` flag for reliable endpoint routing (no UUID regex fragility)
+    -   Consistent `listTitle` responses from both endpoints for success messages
 -   **Social Features**: Leaderboards, activity feeds, friend discovery, and "Inner Circle" for Super Fan identification.
 -   **Play Section**: Category-based navigation with dedicated pages for Trivia (/play/trivia), Polls (/play/polls), and Predictions (/play/predictions). Main Play page shows category cards only - no "All Games" listing. Inline Play cards appear every 3rd post in the Feed for quick participation.
 -   **Profile Management**: Editable display name and username with validation and real-time uniqueness checking.
