@@ -12,21 +12,6 @@ function detectDirectSearch(query: string): boolean {
   const lower = query.toLowerCase().trim();
   const wordCount = lower.split(/\s+/).length;
   
-  // Conversational indicators - if any of these are present, it's NOT a direct search
-  const conversationalKeywords = [
-    'like', 'similar', 'recommend', 'suggestion', 'what should', 'looking for',
-    'want to', 'help me', 'find me', 'show me', 'give me', 'need', 'mood',
-    'feeling', 'uplifting', 'sad', 'happy', 'exciting', 'relaxing', 'funny',
-    'something', 'anything', 'best', 'top', 'favorite', 'everyone', 'family',
-    'group', 'friends', 'partner', 'kids', 'blend'
-  ];
-  
-  for (const keyword of conversationalKeywords) {
-    if (lower.includes(keyword)) {
-      return false; // It's conversational
-    }
-  }
-  
   // Question words indicate conversational search
   const questionWords = ['what', 'which', 'how', 'why', 'when', 'where', 'who'];
   for (const word of questionWords) {
@@ -35,8 +20,23 @@ function detectDirectSearch(query: string): boolean {
     }
   }
   
-  // If it's 1-5 words and has no conversational indicators, likely a direct search
-  // e.g., "Friends", "Taylor Swift", "Harry Potter", "The Office"
+  // Conversational phrases - must match as phrases, not individual words
+  const conversationalPhrases = [
+    'like ', 'similar to', 'similar ', 'recommend', 'suggestion', 'what should', 'looking for',
+    'want to', 'help me', 'find me', 'show me', 'give me', 'i need', 'in the mood',
+    'feeling ', 'uplifting', 'something ', 'anything ', 'best ', 'top ', 'favorite ',
+    'for everyone', 'for my family', 'for my ', 'with my ', 'for kids', 'group blend',
+    'blend for'
+  ];
+  
+  for (const phrase of conversationalPhrases) {
+    if (lower.includes(phrase)) {
+      return false; // It's conversational
+    }
+  }
+  
+  // If it's 1-5 words and has no conversational indicators, it's a direct search
+  // e.g., "Friends", "Taylor Swift", "Harry Potter", "The Office", "stranger things"
   if (wordCount >= 1 && wordCount <= 5) {
     return true;
   }
