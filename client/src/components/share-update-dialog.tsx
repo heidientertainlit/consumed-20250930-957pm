@@ -107,6 +107,8 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
       }
 
       const data = await response.json();
+      console.log('🔍 Search API response:', data);
+      console.log('🔍 First result:', data.results?.[0]);
       setSearchResults(data.results || []);
     } catch (error) {
       console.error("Media search error:", error);
