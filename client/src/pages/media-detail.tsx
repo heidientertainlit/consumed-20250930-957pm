@@ -175,18 +175,22 @@ export default function MediaDetail() {
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    <Button variant="outline">
-                      <Plus size={16} className="mr-2" />
-                      Add to List
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setShowRatingModal(true)}
-                      data-testid="button-add-rating"
-                    >
-                      <Star size={16} className="mr-2" />
-                      Add My Rating
-                    </Button>
+                    {session && (
+                      <>
+                        <Button variant="outline">
+                          <Plus size={16} className="mr-2" />
+                          Add to List
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowRatingModal(true)}
+                          data-testid="button-add-rating"
+                        >
+                          <Star size={16} className="mr-2" />
+                          Add My Rating
+                        </Button>
+                      </>
+                    )}
                     <Button 
                       variant="outline"
                       onClick={handleShare}
