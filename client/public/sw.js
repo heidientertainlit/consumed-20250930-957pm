@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'consumed-v1';
+const CACHE_NAME = 'consumed-v2';
 const urlsToCache = [
   '/',
   '/src/main.tsx',
