@@ -42,16 +42,22 @@ serve(async (req) => {
 
       if (response.ok) {
         const data = await response.json();
+        const isMovie = !!data.title;
         mediaDetails = {
           title: data.title || data.name,
-          type: data.title ? 'movie' : 'tv',
+          type: isMovie ? 'Movie' : 'TV Show',
           creator: data.credits?.crew?.find((c: any) => c.job === 'Director')?.name || 
                    data.created_by?.[0]?.name || 'Unknown',
-          image: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
-          description: data.overview,
-          rating: data.vote_average ? (data.vote_average / 2).toFixed(1) : null,
+          artwork: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
+          description: data.overview || 'No description available.',
+          rating: data.vote_average ? (data.vote_average / 2).toFixed(1) : '0',
           releaseDate: data.release_date || data.first_air_date,
           runtime: data.runtime || data.episode_run_time?.[0],
+          category: data.genres?.[0]?.name || 'Unknown',
+          language: 'English',
+          totalEpisodes: data.number_of_episodes || (isMovie ? 1 : 0),
+          subscribers: data.popularity ? `${Math.floor(data.popularity)}K` : '0',
+          averageLength: `${data.runtime || data.episode_run_time?.[0] || 45} min`,
           genres: data.genres?.map((g: any) => g.name) || [],
           cast: data.credits?.cast?.slice(0, 10).map((c: any) => ({
             name: c.name,
@@ -87,17 +93,21 @@ serve(async (req) => {
 
       if (response.ok) {
         const data = await response.json();
+        const isPodcast = data.type === 'show';
         mediaDetails = {
           title: data.name,
-          type: data.type === 'show' ? 'podcast' : 'music',
+          type: isPodcast ? 'Podcast' : 'Music',
           creator: data.artists?.[0]?.name || data.publisher || 'Unknown',
-          image: data.images?.[0]?.url || data.album?.images?.[0]?.url,
-          description: data.description,
+          artwork: data.images?.[0]?.url || data.album?.images?.[0]?.url,
+          description: data.description || 'No description available.',
+          rating: '4.5',
           releaseDate: data.release_date,
-          duration: data.duration_ms ? Math.floor(data.duration_ms / 60000) : null,
-          genres: data.genres || [],
-          externalUrl: data.external_urls?.spotify,
-          totalTracks: data.total_tracks
+          category: data.genres?.[0] || (isPodcast ? 'Podcast' : 'Music'),
+          language: 'English',
+          totalEpisodes: data.total_episodes || 0,
+          subscribers: data.total_tracks ? `${data.total_tracks} tracks` : '0',
+          averageLength: data.duration_ms ? `${Math.floor(data.duration_ms / 60000)} min` : '45 min',
+          externalUrl: data.external_urls?.spotify
         };
       }
     } else if (source === 'openlibrary') {
@@ -110,12 +120,18 @@ serve(async (req) => {
 
         mediaDetails = {
           title: data.title,
-          type: 'book',
-          creator: authorData?.name || 'Unknown',
-          description: typeof data.description === 'string' ? data.description : data.description?.value,
-          subjects: data.subjects?.slice(0, 5) || [],
-          firstPublishYear: data.first_publish_date,
-          coverUrl: data.covers?.[0] ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg` : null
+          type: 'Book',
+          creator: authorData?.name || 'Unknown Author',
+          artwork: data.covers?.[0] ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg` : null,
+          description: typeof data.description === 'string' ? data.description : data.description?.value || 'No description available.',
+          rating: '4.2',
+          releaseDate: data.first_publish_date,
+          category: data.subjects?.[0] || 'Fiction',
+          language: 'English',
+          totalEpisodes: 0,
+          subscribers: '0',
+          averageLength: 'N/A',
+          subjects: data.subjects?.slice(0, 5) || []
         };
       }
     }

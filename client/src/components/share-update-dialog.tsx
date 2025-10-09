@@ -173,12 +173,6 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
     setIsPosting(true);
     
-    console.log('🔍 DEBUG: Selected Media Data:', {
-      external_id: selectedMedia.external_id,
-      external_source: selectedMedia.external_source,
-      full_media: selectedMedia
-    });
-    
     try {
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-update", {
         method: "POST",
