@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'consumed-v2';
+const CACHE_NAME = 'consumed-v3';
 const urlsToCache = [
   '/',
   '/src/main.tsx',
@@ -33,6 +33,14 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  // Don't cache API calls or Supabase edge functions
+  if (event.request.url.includes('/api/') || 
+      event.request.url.includes('supabase.co/functions') ||
+      event.request.url.includes('/functions/v1/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
