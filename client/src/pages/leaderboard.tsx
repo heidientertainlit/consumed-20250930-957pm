@@ -219,12 +219,16 @@ export default function Leaderboard() {
     queryKey: ["leaderboard", selectedCategory],
     queryFn: () => fetchLeaderboard(session, selectedCategory, 10),
     enabled: !!session?.access_token && selectedCategory !== 'challenges',
+    staleTime: 30000, // Cache data for 30 seconds - instant category switches!
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   const { data: challengeLeaderboards, isLoading: challengesLoading } = useQuery({
     queryKey: ["challenge-leaderboards"],
     queryFn: () => fetchChallengeLeaderboards(session),
     enabled: !!session?.access_token && selectedCategory === 'challenges',
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   // Log leaderboard data for debugging
