@@ -13,28 +13,10 @@ serve(async (req) => {
   }
 
   try {
-    // Validate authentication
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '', 
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization') }
-        }
-      }
-    );
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ code: 401, message: 'Missing authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     const { searchParams } = new URL(req.url);
     const source = searchParams.get('source');
     const externalId = searchParams.get('external_id');
+    const mediaType = searchParams.get('media_type'); // Get media type from params
 
     if (!source || !externalId) {
       return new Response(JSON.stringify({ error: 'Missing source or external_id' }), {
@@ -49,15 +31,27 @@ serve(async (req) => {
     if (source === 'tmdb') {
       const tmdbKey = Deno.env.get('TMDB_API_KEY');
       
-      // Try movie first, then TV
-      let response = await fetch(
-        `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
-      );
-      
-      if (!response.ok) {
+      // Use media_type if provided, otherwise try movie first then TV
+      let response;
+      if (mediaType === 'tv') {
         response = await fetch(
           `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
         );
+      } else if (mediaType === 'movie') {
+        response = await fetch(
+          `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
+        );
+      } else {
+        // Fallback: try movie first, then TV
+        response = await fetch(
+          `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
+        );
+        
+        if (!response.ok) {
+          response = await fetch(
+            `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
+          );
+        }
       }
 
       if (response.ok) {

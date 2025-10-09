@@ -131,7 +131,7 @@ export default function MediaDetail() {
     queryKey: ['media-detail', params?.type, params?.source, params?.id],
     queryFn: async () => {
       const response = await fetch(
-        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}`,
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}&media_type=${params?.type}`,
         {
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
