@@ -164,6 +164,10 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
   const handlePost = async () => {
     if (!selectedMedia) return;
 
+    console.log('🎯 selectedMedia BEFORE posting:', selectedMedia);
+    console.log('🎯 Has external_id?', selectedMedia.external_id);
+    console.log('🎯 Has external_source?', selectedMedia.external_source);
+
     if (!session?.access_token) {
       toast({
         title: "Authentication Error",
