@@ -40,14 +40,11 @@ serve(async (req) => {
         .select(`
           id, 
           user_id, 
-          content, 
-          post_type, 
+          thoughts, 
           rating, 
-          progress, 
           created_at, 
-          updated_at, 
-          likes_count, 
-          comments_count, 
+          likes, 
+          comments, 
           media_title, 
           media_type, 
           media_creator, 
@@ -86,20 +83,19 @@ serve(async (req) => {
         
         return {
           id: post.id,
-          type: post.post_type || 'update',
+          type: 'update',
           user: {
             id: post.user_id,
             username: postUser.user_name || 'Unknown',
             displayName: postUser.display_name || postUser.user_name || 'Unknown',
             avatar: postUser.avatar || ''
           },
-          content: post.content || '',
+          content: post.thoughts || '',
           timestamp: post.created_at,
-          likes: post.likes_count || 0,
-          comments: post.comments_count || 0,
+          likes: post.likes || 0,
+          comments: post.comments || 0,
           shares: 0,
           rating: post.rating,
-          progress: post.progress,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
