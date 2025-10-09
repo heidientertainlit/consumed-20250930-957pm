@@ -197,7 +197,13 @@ export default function MediaDetail() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setLocation("/track")}
+          onClick={() => {
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              setLocation('/');
+            }
+          }}
           className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
           data-testid="button-back"
         >
