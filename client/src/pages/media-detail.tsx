@@ -192,19 +192,25 @@ export default function MediaDetail() {
         throw new Error("Authentication required");
       }
 
-      const response = await fetch(`/api/lists/${listType}/items`, {
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          title: recommendation.title,
-          type: recommendation.media_type || recommendation.type,
-          media_type: recommendation.media_type || recommendation.type,
-          creator: recommendation.creator,
-          image_url: recommendation.image_url,
-          notes: recommendation.description
+          media: {
+            title: recommendation.title,
+            mediaType: recommendation.media_type || recommendation.type,
+            creator: recommendation.creator,
+            imageUrl: recommendation.image_url,
+            externalId: recommendation.external_id,
+            externalSource: recommendation.external_source,
+            description: recommendation.description
+          },
+          rating: null,
+          review: null,
+          listType: listType
         }),
       });
 
@@ -241,19 +247,25 @@ export default function MediaDetail() {
         throw new Error("Authentication required");
       }
 
-      const response = await fetch(`/api/lists/${listType}/items`, {
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          title: mediaItem.title,
-          type: mediaItem.type || params?.type,
-          media_type: mediaItem.type || params?.type,
-          creator: mediaItem.creator,
-          image_url: mediaItem.artwork || mediaItem.image_url,
-          notes: null
+          media: {
+            title: mediaItem.title,
+            mediaType: mediaItem.type || params?.type,
+            creator: mediaItem.creator,
+            imageUrl: mediaItem.artwork || mediaItem.image_url,
+            externalId: params?.id,
+            externalSource: params?.source,
+            description: mediaItem.description || null
+          },
+          rating: null,
+          review: null,
+          listType: listType
         }),
       });
 
