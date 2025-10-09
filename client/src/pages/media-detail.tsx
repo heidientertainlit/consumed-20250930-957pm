@@ -336,6 +336,9 @@ export default function MediaDetail() {
     averageLength: "45 min"
   };
 
+  // Find user's own rating
+  const userReview = reviews.find((review: any) => review.user_id === user?.id);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
@@ -380,7 +383,15 @@ export default function MediaDetail() {
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-yellow-500 fill-current" />
                         <span className="font-medium">{mediaItem.rating}</span>
+                        <span className="text-xs text-gray-500 ml-1">avg</span>
                       </div>
+                      {userReview?.rating && (
+                        <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-md">
+                          <Star className="w-4 h-4 text-purple-600 fill-current" />
+                          <span className="font-semibold text-purple-700">{userReview.rating}</span>
+                          <span className="text-xs text-purple-600 ml-1">your rating</span>
+                        </div>
+                      )}
                       {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
@@ -472,7 +483,7 @@ export default function MediaDetail() {
                           data-testid="button-add-rating"
                         >
                           <Star size={16} className="mr-2" />
-                          Add My Rating
+                          {userReview?.rating ? "Update My Rating" : "Add My Rating"}
                         </Button>
                       </>
                     )}
