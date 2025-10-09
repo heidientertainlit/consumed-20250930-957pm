@@ -91,7 +91,7 @@ function Router() {
             <PlayHighStakes />
           </ProtectedRoute>
         </Route>
-        <Route path="/media/:source/:id">
+        <Route path="/media/:type/:source/:id">
           <ProtectedRoute>
             <MediaDetail />
           </ProtectedRoute>

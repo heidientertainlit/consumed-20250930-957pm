@@ -552,7 +552,7 @@ export default function Feed() {
                           }`}
                           onClick={() => {
                             if (isClickable) {
-                              setLocation(`/media/${media.externalSource}/${media.externalId}`);
+                              setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
                             }
                           }}
                         >

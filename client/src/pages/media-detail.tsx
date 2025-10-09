@@ -116,7 +116,7 @@ function RatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 }
 
 export default function MediaDetail() {
-  const [, params] = useRoute("/media/:source/:id");
+  const [, params] = useRoute("/media/:type/:source/:id");
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -128,7 +128,7 @@ export default function MediaDetail() {
 
   // Fetch media details from edge function
   const { data: mediaItem, isLoading } = useQuery({
-    queryKey: ['media-detail', params?.source, params?.id],
+    queryKey: ['media-detail', params?.type, params?.source, params?.id],
     queryFn: async () => {
       const response = await fetch(
         `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}`,
