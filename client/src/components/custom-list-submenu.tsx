@@ -78,7 +78,10 @@ export default function CustomListSubmenu({ onSelectList, disabled }: CustomList
           )}
           
           <DropdownMenuItem
-            onClick={() => setShowCreateDialog(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCreateDialog(true);
+            }}
             className="cursor-pointer text-purple-400 hover:text-purple-300"
             data-testid="menu-create-new-list"
           >
