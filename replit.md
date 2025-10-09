@@ -44,6 +44,12 @@ The application employs a modern full-stack architecture with a clear separation
     -   **API Integration**: `get-media-details` edge function accepts `media_type` parameter to differentiate between movie/TV
     -   **Example**: Movie ID 250307 = "Arcade Fire", TV ID 250307 = "The Pitt" - without media_type, wrong content loads
     -   **Service Worker**: Disabled during development to prevent aggressive caching of API responses
+    -   **Platform Links ("Find On")**: Media detail pages display dynamic platform availability based on content type:
+        -   **TMDB (Movies/TV)**: Shows streaming services (Netflix, Hulu, Disney+, etc.) from TMDB's watch providers API with "Watch On" label
+        -   **Spotify (Music/Podcasts)**: Direct Spotify link; podcasts also show Apple Podcasts and Google Podcasts with "Listen On" label
+        -   **YouTube**: Direct YouTube link with "Find On" label
+        -   **Books**: Links to Amazon, Goodreads, and Open Library with "Read On" label
+        -   Platform logos and external links are displayed for each available platform
 -   **Polls/Surveys System**: Database-backed polling system supporting branded (consumed/entertainlit) and sponsored polls with:
     -   Real-time vote counting and percentage calculations
     -   Duplicate vote prevention per user
