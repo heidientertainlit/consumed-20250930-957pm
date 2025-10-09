@@ -6,6 +6,8 @@ import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { copyLink } from "@/lib/share";
+import { useToast } from "@/hooks/use-toast";
 
 // Rating Modal Component
 function RatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -121,9 +123,34 @@ export default function MediaDetail() {
   const { session } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
+  };
+
+  const handleShare = async () => {
+    try {
+      await copyLink({
+        kind: 'media',
+        obj: {
+          type: params?.type,
+          source: params?.source,
+          id: params?.id
+        }
+      });
+      toast({
+        title: "Link copied!",
+        description: "Share this media with your friends",
+      });
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      toast({
+        title: "Failed to copy link",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
   };
 
   // Fetch media details from edge function
@@ -258,7 +285,11 @@ export default function MediaDetail() {
                       <Star size={16} className="mr-2" />
                       Add My Rating
                     </Button>
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={handleShare}
+                      data-testid="button-share"
+                    >
                       <Share size={16} className="mr-2" />
                       Share
                     </Button>

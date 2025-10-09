@@ -30,12 +30,18 @@ export function urlFor(kind: ShareKind, arg: any) {
   if (kind === 'leaderboard') {
     return `${BASE}/leaderboard`;
   }
+  if (kind === 'media') {
+    // Media URLs need type/source/id structure: /media/movie/tmdb/951
+    if (arg?.type && arg?.source && arg?.id) {
+      return `${BASE}/media/${arg.type}/${arg.source}/${arg.id}`;
+    }
+  }
   const id = typeof arg === 'string' ? arg : arg?.id;
   return `${BASE}/${kind}/${id}`;
 }
 
 export async function copyLink(opts: { kind: ShareKind; id?: string; obj?: any }) {
-  const url = (opts.kind === 'list' || opts.kind === 'edna')
+  const url = (opts.kind === 'list' || opts.kind === 'edna' || opts.kind === 'media')
     ? urlFor(opts.kind, opts.obj ?? { id: opts.id })
     : urlFor(opts.kind, opts.id!);
 
