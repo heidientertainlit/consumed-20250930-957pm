@@ -108,11 +108,8 @@ export default function ListDetail() {
       type: item.media_type ? capitalizeFirst(item.media_type) : 'Mixed',
       artwork: item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop",
       progress: 0,
-      addedDate: new Date(item.added_at || item.created_at).toLocaleDateString(),
-      addedBy: "You",
-      externalId: item.external_id,
-      externalSource: item.external_source,
-      mediaType: item.media_type
+      addedDate: new Date(item.created_at).toLocaleDateString(),
+      addedBy: "You"
     })),
     collaborators: [],
     owner: "You",
@@ -444,85 +441,66 @@ export default function ListDetail() {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {(listData?.items || []).map((item: any) => {
-              const isClickable = item.externalId && item.externalSource && item.mediaType;
-              const handleItemClick = () => {
-                if (isClickable) {
-                  setLocation(`/media/${item.mediaType}/${item.externalSource}/${item.externalId}`);
-                }
-              };
+            {(listData?.items || []).map((item: any) => (
+              <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start gap-4">
+                  <img
+                    src={item.artwork}
+                    alt={item.title}
+                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                  />
 
-              return (
-                <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start gap-4">
-                    <img
-                      src={item.artwork}
-                      alt={item.title}
-                      className={`w-16 h-16 rounded-lg object-cover flex-shrink-0 ${isClickable ? 'cursor-pointer' : ''}`}
-                      onClick={handleItemClick}
-                      data-testid={`img-item-${item.id}`}
-                    />
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div 
-                          className={isClickable ? 'cursor-pointer' : ''}
-                          onClick={handleItemClick}
-                        >
-                          <h3 className="font-semibold text-gray-900 mb-1 hover:text-purple-600 transition-colors" data-testid={`text-title-${item.id}`}>
-                            {item.title}
-                          </h3>
-                          <p className="text-sm text-gray-600">by {item.creator}</p>
-                          <Badge variant="secondary" className="mt-1 text-xs">
-                            {item.type}
-                          </Badge>
-                        </div>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveItem(item.id);
-                          }}
-                          className="text-gray-400 hover:text-red-600"
-                          data-testid={`button-remove-${item.id}`}
-                        >
-                          <X size={16} />
-                        </Button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
+                        <p className="text-sm text-gray-600">by {item.creator}</p>
+                        <Badge variant="secondary" className="mt-1 text-xs">
+                          {item.type}
+                        </Badge>
                       </div>
 
-                      {item.progress > 0 && (
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-                            <span>Progress</span>
-                            <span>{item.progress}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${item.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="text-gray-400 hover:text-red-600"
+                        data-testid={`button-remove-${item.id}`}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
 
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1">
-                            <Calendar size={12} />
-                            <span>Added {item.addedDate}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span>by {item.addedBy}</span>
-                          </div>
+                    {item.progress > 0 && (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+                          <span>Progress</span>
+                          <span>{item.progress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${item.progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <Calendar size={12} />
+                          <span>Added {item.addedDate}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>by {item.addedBy}</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
 

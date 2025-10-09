@@ -101,9 +101,9 @@ serve(async (req) => {
     if (appUser) {
       const { data: items, error: itemsError } = await supabase
         .from('list_items')
-        .select('id, list_id, title, type, media_type, creator, image_url, notes, added_at, media_id, external_id, external_source')
+        .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id')
         .eq('user_id', appUser.id)
-        .order('added_at', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (itemsError) {
         console.error('Error fetching user items:', itemsError);
