@@ -4,7 +4,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, Share2, Trash2, MoreVertical, Star, Clock, Calendar, Check } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -109,7 +109,9 @@ export default function ListDetail() {
       artwork: item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop",
       progress: 0,
       addedDate: new Date(item.created_at).toLocaleDateString(),
-      addedBy: "You"
+      addedBy: "You",
+      external_id: item.external_id,
+      external_source: item.external_source
     })),
     collaborators: [],
     owner: "You",
@@ -441,35 +443,55 @@ export default function ListDetail() {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {(listData?.items || []).map((item: any) => (
-              <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <img
-                    src={item.artwork}
-                    alt={item.title}
-                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                  />
+            {(listData?.items || []).map((item: any) => {
+              const isClickable = item.external_id && item.external_source;
+              const mediaUrl = isClickable ? `/media/${item.type.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
+              
+              return (
+                <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    {isClickable ? (
+                      <Link href={mediaUrl!}>
+                        <img
+                          src={item.artwork}
+                          alt={item.title}
+                          className="w-16 h-16 rounded-lg object-cover flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                        />
+                      </Link>
+                    ) : (
+                      <img
+                        src={item.artwork}
+                        alt={item.title}
+                        className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                      />
+                    )}
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
-                        <p className="text-sm text-gray-600">by {item.creator}</p>
-                        <Badge variant="secondary" className="mt-1 text-xs">
-                          {item.type}
-                        </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          {isClickable ? (
+                            <Link href={mediaUrl!}>
+                              <h3 className="font-semibold text-gray-900 mb-1 hover:text-purple-600 cursor-pointer transition-colors">{item.title}</h3>
+                            </Link>
+                          ) : (
+                            <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
+                          )}
+                          <p className="text-sm text-gray-600">by {item.creator}</p>
+                          <Badge variant="secondary" className="mt-1 text-xs">
+                            {item.type}
+                          </Badge>
+                        </div>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="text-gray-400 hover:text-red-600"
+                          data-testid={`button-remove-${item.id}`}
+                        >
+                          <X size={16} />
+                        </Button>
                       </div>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-gray-400 hover:text-red-600"
-                        data-testid={`button-remove-${item.id}`}
-                      >
-                        <X size={16} />
-                      </Button>
-                    </div>
 
                     {item.progress > 0 && (
                       <div className="mb-3">
@@ -500,7 +522,8 @@ export default function ListDetail() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
