@@ -131,7 +131,13 @@ export default function MediaDetail() {
     queryKey: ['media-detail', params?.source, params?.id],
     queryFn: async () => {
       const response = await fetch(
-        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}`
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
       );
       if (!response.ok) {
         console.error('Failed to fetch media details:', response.status, await response.text());
@@ -139,7 +145,7 @@ export default function MediaDetail() {
       }
       return response.json();
     },
-    enabled: !!params?.source && !!params?.id
+    enabled: !!params?.source && !!params?.id && !!session?.access_token
   });
 
   if (isLoading) {
