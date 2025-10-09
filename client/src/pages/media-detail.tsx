@@ -223,7 +223,7 @@ export default function MediaDetail() {
     onSuccess: (data, variables) => {
       toast({
         title: "Added to list!",
-        description: `${variables.recommendation.title} added to ${variables.listType === 'queue' ? 'Queue' : variables.listType === 'currently' ? 'Currently' : variables.listType === 'finished' ? 'Finished' : 'Did Not Finish'}.`,
+        description: `${variables.recommendation.title} added to ${variables.listType === 'queue' ? 'Queue' : variables.listType === 'currently' ? 'Currently' : variables.listType === 'finished' ? 'Finished' : variables.listType === 'favorites' ? 'Favorites' : 'Did Not Finish'}.`,
       });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
     },
@@ -689,6 +689,13 @@ export default function MediaDetail() {
                                 disabled={addRecommendationMutation.isPending}
                               >
                                 Add to Did Not Finish
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAddRecommendation(rec, 'favorites')}
+                                className="cursor-pointer"
+                                disabled={addRecommendationMutation.isPending}
+                              >
+                                Add to Favorites
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
