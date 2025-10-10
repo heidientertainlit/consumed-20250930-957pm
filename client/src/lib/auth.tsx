@@ -105,14 +105,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: dbError, data };
     }
 
-    // Verify the insert completed by fetching the user
-    const { data: verifyData, error: verifyError } = await supabase
-      .from('users')
-      .select('user_name')
-      .eq('id', data.user.id)
-      .single();
+    // Verify the insert completed by fetching the user with retries
+    let verifyData = null;
+    let verifyError = null;
+    for (let i = 0; i < 3; i++) {
+      const result = await supabase
+        .from('users')
+        .select('user_name, first_name, last_name')
+        .eq('id', data.user.id)
+        .single();
+      
+      verifyData = result.data;
+      verifyError = result.error;
+      
+      if (!verifyError && verifyData) {
+        console.log('User successfully created in database:', verifyData);
+        break;
+      }
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
 
-    console.log('User created in database:', verifyData, verifyError);
+    if (verifyError || !verifyData) {
+      console.error('Failed to verify user creation:', verifyError);
+      return { error: new Error('Failed to create user profile'), data };
+    }
 
     return { error, data }
   }

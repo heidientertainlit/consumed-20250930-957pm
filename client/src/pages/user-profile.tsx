@@ -483,14 +483,34 @@ export default function UserProfile() {
           import.meta.env.VITE_SUPABASE_ANON_KEY
         );
 
-        const { data, error } = await supabase
-          .from('users')
-          .select('user_name, first_name, last_name')
-          .eq('id', viewingUserId)
-          .single();
+        // Retry logic for newly created users
+        let retries = 3;
+        let data = null;
+        let error = null;
+
+        while (retries > 0 && !data) {
+          const result = await supabase
+            .from('users')
+            .select('user_name, first_name, last_name')
+            .eq('id', viewingUserId)
+            .single();
+
+          data = result.data;
+          error = result.error;
+
+          if (error || !data) {
+            retries--;
+            if (retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
+        }
 
         if (!error && data) {
+          console.log('User profile data loaded:', data);
           setUserProfileData(data);
+        } else {
+          console.error('Failed to load user profile after retries:', error);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
