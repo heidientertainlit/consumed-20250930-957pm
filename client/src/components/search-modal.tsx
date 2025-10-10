@@ -305,9 +305,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           ) : (
             <div>
               <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Multiple Ways to Search</h3>
                 <p className="text-sm text-gray-700">
-                  Our AI-powered search understands natural language. You can search for specific media, get personalized recommendations, or create group blends to find entertainment everyone will love.
+                  Search titles or get AI-powered recommendations. Just type what you want—we understand both titles and questions.
                 </p>
               </div>
               
