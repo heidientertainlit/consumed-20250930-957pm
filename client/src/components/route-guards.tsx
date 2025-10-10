@@ -37,8 +37,9 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
       }
 
       try {
+        // Check dna_profiles table instead of users table
         const response = await fetch(
-          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/users?select=dna_profile_title&id=eq.${user.id}`,
+          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/dna_profiles?select=id&user_id=eq.${user.id}`,
           {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
@@ -49,8 +50,8 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
 
         if (response.ok) {
           const data = await response.json();
-          // Redirect to onboarding if DNA profile is not set
-          if (data.length > 0 && !data[0].dna_profile_title) {
+          // Redirect to onboarding if no DNA profile exists
+          if (!data || data.length === 0) {
             console.log('No DNA profile found, redirecting to onboarding');
             setLocation('/onboarding');
           }

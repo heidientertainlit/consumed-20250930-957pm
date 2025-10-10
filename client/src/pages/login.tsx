@@ -101,11 +101,9 @@ export default function LoginPage() {
         description: "Let's discover your Entertainment DNA.",
       });
       
-      // Wait longer for auth state and database to fully sync
-      setTimeout(() => {
-        setLocation('/onboarding');
-        setSubmitting(false);
-      }, 1500);
+      // Redirect to onboarding immediately
+      setLocation('/onboarding');
+      setSubmitting(false);
     }
   };
 
