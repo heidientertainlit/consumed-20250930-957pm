@@ -34,17 +34,39 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get custom user_id from users table using auth.users.id
-    const { data: customUser, error: customUserError } = await supabase
+    // Get or create app user (using service role, so RLS doesn't block insert)
+    let { data: customUser, error: customUserError } = await supabase
       .from('users')
-      .select('id')
+      .select('id, email, user_name')
       .eq('id', user.id)
       .single();
 
-    if (customUserError || !customUser) {
-      return new Response(JSON.stringify({ error: 'User not found in custom users table' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (customUserError && customUserError.code === 'PGRST116') {
+      // User doesn't exist, create them
+      console.log('Creating new user:', user.email);
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          id: user.id,
+          email: user.email,
+          user_name: user.email?.split('@')[0] || 'user'
+        })
+        .select('id, email, user_name')
+        .single();
+
+      if (createError) {
+        console.error('Failed to create user:', createError);
+        return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      customUser = newUser;
+    } else if (customUserError) {
+      console.error('App user error:', customUserError);
+      return new Response(JSON.stringify({ error: 'Database error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 

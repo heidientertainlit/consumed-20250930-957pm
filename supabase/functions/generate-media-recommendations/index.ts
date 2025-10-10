@@ -44,10 +44,15 @@ serve(async (req) => {
 
     console.log('User lookup result:', { appUser, appUserError });
 
-    // If user doesn't exist, create them (using working pattern)
+    // If user doesn't exist, create them using service role client (bypass RLS)
     if (appUserError && appUserError.code === 'PGRST116') {
       console.log('User not found, creating new user:', user.email);
-      const { data: newUser, error: createError } = await supabase
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '', 
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      
+      const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({
           id: user.id,

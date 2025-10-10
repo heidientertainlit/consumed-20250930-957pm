@@ -36,6 +36,47 @@ serve(async (req) => {
       });
     }
 
+    // Get or create app user
+    let { data: appUser, error: appUserError } = await supabase
+      .from('users')
+      .select('id, email, user_name')
+      .eq('email', user.email)
+      .single();
+
+    if (appUserError && appUserError.code === 'PGRST116') {
+      // User doesn't exist, create them using service role client (bypass RLS)
+      console.log('Creating new user:', user.email);
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '', 
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      
+      const { data: newUser, error: createError } = await supabaseAdmin
+        .from('users')
+        .insert({
+          id: user.id,
+          email: user.email,
+          user_name: user.email.split('@')[0] || 'user'
+        })
+        .select('id, email, user_name')
+        .single();
+
+      if (createError) {
+        console.error('Failed to create user:', createError);
+        return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      appUser = newUser;
+    } else if (appUserError) {
+      console.error('App user error:', appUserError);
+      return new Response(JSON.stringify({ error: 'Database error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // Handle game-specific categories
     if (category === 'vote_leader' || category === 'predict_leader' || category === 'trivia_leader') {
       // Determine game type filter
