@@ -72,20 +72,31 @@ serve(async (req) => {
 
     if (req.method === 'POST') {
       // Create a new social feed post
-      const body = await req.json();
+      let body;
+      try {
+        body = await req.json();
+      } catch (parseError) {
+        console.error('JSON parsing error:', parseError);
+        return new Response(JSON.stringify({ error: 'Invalid request body' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source } = body;
 
       console.log('Creating post for user:', appUser.id);
+      console.log('Request body:', body);
 
       const { data: post, error } = await supabase
         .from('social_posts')
         .insert({
           user_id: appUser.id,
-          content,
+          thoughts: content,
           media_title,
           media_type,
           media_creator,
-          image_url: media_image_url,
+          media_image: media_image_url,
           rating,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null
