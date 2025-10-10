@@ -305,8 +305,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           ) : (
             <div>
               <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
-                <p className="text-sm text-gray-700">
-                  Search titles or get AI-powered recommendations. Just type what you want—we understand both titles and questions.
+                <p className="text-sm text-gray-700 font-semibold">
+                  Search titles OR get AI-powered recommendations. Here's how it works:
                 </p>
               </div>
               
