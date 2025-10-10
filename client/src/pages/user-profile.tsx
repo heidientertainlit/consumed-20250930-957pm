@@ -507,10 +507,12 @@ export default function UserProfile() {
         }
 
         if (!error && data) {
-          console.log('User profile data loaded:', data);
+          console.log('✅ User profile data loaded successfully:', data);
           setUserProfileData(data);
         } else {
-          console.error('Failed to load user profile after retries:', error);
+          console.error('❌ Failed to load user profile after retries:', error);
+          console.log('User ID being queried:', viewingUserId);
+          console.log('Auth user metadata:', user?.user_metadata);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -1501,10 +1503,12 @@ export default function UserProfile() {
                   <h1 className="text-3xl font-semibold text-black mb-1">
                     {userProfileData?.first_name && userProfileData?.last_name 
                       ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
-                      : userProfileData?.first_name || userProfileData?.user_name || 'User'}
+                      : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
                   </h1>
                   <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-gray-600">@{userProfileData?.user_name || 'user'}</span>
+                    <span className="text-gray-600">
+                      @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
+                    </span>
                   </div>
 
                   {/* Total Points Display */}
