@@ -61,14 +61,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string; username?: string }) => {
+    // Ensure username is provided and valid
+    const username = metadata?.username?.trim() || email.split('@')[0];
+    const firstName = metadata?.firstName?.trim() || '';
+    const lastName = metadata?.lastName?.trim() || '';
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          first_name: metadata?.firstName || '',
-          last_name: metadata?.lastName || '',
-          user_name: metadata?.username || email.split('@')[0]
+          first_name: firstName,
+          last_name: lastName,
+          user_name: username
         }
       }
     });
@@ -77,20 +82,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error, data };
     }
 
-    // Create user in custom users table immediately
+    // Create user in custom users table immediately with upsert to handle duplicates
     const { error: dbError } = await supabase
       .from('users')
-      .insert({
+      .upsert({
         id: data.user.id,
         email: email,
-        user_name: metadata?.username || email.split('@')[0],
-        first_name: metadata?.firstName || '',
-        last_name: metadata?.lastName || '',
+        user_name: username,
+        first_name: firstName,
+        last_name: lastName,
+      }, {
+        onConflict: 'id',
+        ignoreDuplicates: false
       });
 
-    // Ignore duplicate key errors (user already exists)
-    if (dbError && dbError.code !== '23505') {
+    if (dbError) {
       console.error('Failed to create user in database:', dbError);
+      // Return the error so signup knows it failed
+      return { error: dbError, data };
     }
 
     return { error, data }
