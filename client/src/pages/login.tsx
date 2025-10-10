@@ -20,15 +20,16 @@ export default function LoginPage() {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [justSignedUp, setJustSignedUp] = useState(false);
   const { user, loading, signIn, signUp, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && !justSignedUp) {
       setLocation('/feed');
     }
-  }, [user, loading, setLocation]);
+  }, [user, loading, justSignedUp, setLocation]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +101,9 @@ export default function LoginPage() {
         title: "Welcome to Consumed!",
         description: "Let's discover your Entertainment DNA.",
       });
+      
+      // Set flag to prevent useEffect from redirecting to /feed
+      setJustSignedUp(true);
       
       // Redirect to onboarding immediately
       setLocation('/onboarding');
