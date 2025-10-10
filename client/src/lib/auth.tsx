@@ -82,6 +82,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error, data };
     }
 
+    // Wait a moment for auth to fully complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Create user in custom users table immediately with upsert to handle duplicates
     const { error: dbError } = await supabase
       .from('users')
@@ -101,6 +104,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Return the error so signup knows it failed
       return { error: dbError, data };
     }
+
+    // Verify the insert completed by fetching the user
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('users')
+      .select('user_name')
+      .eq('id', data.user.id)
+      .single();
+
+    console.log('User created in database:', verifyData, verifyError);
 
     return { error, data }
   }
