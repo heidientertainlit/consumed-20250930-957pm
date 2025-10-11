@@ -124,6 +124,33 @@ serve(async (req) => {
         username: comment.users?.user_name || comment.users?.email?.split('@')[0]
       };
 
+      // Get post owner to send notification
+      const { data: post } = await serviceSupabase
+        .from('social_posts')
+        .select('user_id')
+        .eq('id', post_id)
+        .single();
+
+      if (post && post.user_id !== user.id) {
+        // Send notification to post owner
+        const commenterName = comment.users?.user_name || comment.users?.email?.split('@')[0] || 'Someone';
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({
+            userId: post.user_id,
+            type: 'comment',
+            triggeredByUserId: user.id,
+            message: `${commenterName} commented on your post`,
+            postId: post_id,
+            commentId: comment.id
+          })
+        });
+      }
+
       return new Response(JSON.stringify({ comment: transformedComment }), {
         status: 201,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

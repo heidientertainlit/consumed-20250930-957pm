@@ -4,7 +4,7 @@ import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, Searc
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import SearchModal from "./search-modal";
-import NotificationsModal from "./notifications-modal";
+import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 
 interface NavigationProps {
@@ -14,16 +14,7 @@ interface NavigationProps {
 export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const [location] = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
   const { user } = useAuth();
-
-  // Check for undismissed static notifications
-  useEffect(() => {
-    const dismissed = JSON.parse(localStorage.getItem("nudges.dismissed") || "[]");
-    const totalNudges = 3; // We have 3 static nudges
-    setNotificationCount(totalNudges - dismissed.length);
-  }, [isNotificationsOpen]); // Recheck when modal closes
 
   return (
     <>
@@ -45,18 +36,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             >
               <Search className="text-white" size={18} />
             </button>
-            <button
-              onClick={() => setIsNotificationsOpen(true)}
-              className="relative w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-              data-testid="notification-bell"
-            >
-              <Bell className="text-white" size={18} />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs flex items-center justify-center text-white font-bold">
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </span>
-              )}
-            </button>
+            <NotificationBell />
             <Link href={user?.id ? `/user/${user.id}` : "/login"}>
               <button
                 className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
@@ -119,12 +99,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-      />
-
-      {/* Notifications Modal */}
-      <NotificationsModal
-        isOpen={isNotificationsOpen}
-        onClose={() => setIsNotificationsOpen(false)}
       />
     </>
   );

@@ -68,6 +68,43 @@ serve(async (req) => {
         });
       }
 
+      // Get post owner and liker info to send notification
+      const serviceSupabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '', 
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
+      );
+
+      const { data: post } = await serviceSupabase
+        .from('social_posts')
+        .select('user_id')
+        .eq('id', post_id)
+        .single();
+
+      const { data: liker } = await serviceSupabase
+        .from('users')
+        .select('user_name, email')
+        .eq('id', user.id)
+        .single();
+
+      if (post && post.user_id !== user.id && liker) {
+        // Send notification to post owner
+        const likerName = liker.user_name || liker.email?.split('@')[0] || 'Someone';
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({
+            userId: post.user_id,
+            type: 'like',
+            triggeredByUserId: user.id,
+            message: `${likerName} liked your post`,
+            postId: post_id
+          })
+        });
+      }
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });

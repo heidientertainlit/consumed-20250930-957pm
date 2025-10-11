@@ -296,6 +296,22 @@ serve(async (req) => {
             });
           }
 
+          // Send notification to the friend
+          const requesterName = appUser.user_name || appUser.email?.split('@')[0] || 'Someone';
+          await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+            },
+            body: JSON.stringify({
+              userId: friendId,
+              type: 'friend_request',
+              triggeredByUserId: appUser.id,
+              message: `${requesterName} sent you a friend request`
+            })
+          });
+
           return new Response(JSON.stringify({ friendship }), {
             status: 201,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -366,6 +382,22 @@ serve(async (req) => {
           if (insertError2) {
             console.log('Reciprocal insert failed (expected due to RLS):', insertError2.message);
           }
+
+          // Send notification to the friend that request was accepted
+          const accepterName = appUser.user_name || appUser.email?.split('@')[0] || 'Someone';
+          await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+            },
+            body: JSON.stringify({
+              userId: friendId,
+              type: 'friend_accepted',
+              triggeredByUserId: appUser.id,
+              message: `${accepterName} accepted your friend request`
+            })
+          });
 
           return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
