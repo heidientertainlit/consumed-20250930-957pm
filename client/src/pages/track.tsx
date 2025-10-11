@@ -380,7 +380,7 @@ export default function Track() {
             Track Entertainment,<br />Earn Points
           </h1>
           <p className="text-gray-600 mb-6">
-            Track media. Make lists. Earn points for what you love. <i>(Use the search bar above for entertainment recommendations and more)</i>
+            Track media. Make lists. Earn points for what you love.
           </p>
 
           {/* Action Buttons */}
