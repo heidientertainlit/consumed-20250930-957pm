@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
@@ -28,6 +28,7 @@ interface SocialPost {
   likes: number;
   comments: number;
   shares: number;
+  likedByCurrentUser?: boolean;
   mediaItems: Array<{
     id: string;
     title: string;
@@ -82,6 +83,19 @@ export default function Feed() {
     queryFn: () => fetchSocialFeed(session),
     enabled: !!session?.access_token,
   });
+
+  // Initialize likedPosts from feed data
+  useEffect(() => {
+    if (socialPosts) {
+      const likedIds = new Set(
+        socialPosts
+          .filter(post => post.likedByCurrentUser)
+          .map(post => post.id)
+      );
+      setLikedPosts(likedIds);
+      console.log('✅ Initialized liked posts:', likedIds.size);
+    }
+  }, [socialPosts]);
 
   // Fetch active polls
   const { data: polls = [] } = useQuery({
