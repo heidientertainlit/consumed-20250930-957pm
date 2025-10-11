@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 
 interface TriviaQuestion {
   question: string;
@@ -31,15 +31,36 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
   const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const { toast } = useToast();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
 
   const submitPrediction = useMutation({
     mutationFn: async (data: { poolId: string; prediction: string; score: number }) => {
-      return await apiRequest('POST', '/api/predictions/predict', {
-        pool_id: data.poolId,
-        prediction: data.prediction,
-        score: data.score
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/predictions/predict`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pool_id: data.poolId,
+          prediction: data.prediction,
+          score: data.score
+        })
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit trivia answer: ${errorText}`);
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
