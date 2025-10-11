@@ -122,13 +122,13 @@ serve(async (req) => {
       const postIds = posts?.map(post => post.id) || [];
       const { data: userLikes, error: likesError } = await supabase
         .from('social_post_likes')
-        .select('post_id')
+        .select('social_post_id')
         .eq('user_id', appUser.id)
-        .in('post_id', postIds);
+        .in('social_post_id', postIds);
 
       console.log('User likes lookup:', { likes: userLikes?.length, likesError });
 
-      const likedPostIds = new Set(userLikes?.map(like => like.post_id) || []);
+      const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
       const transformedPosts = posts?.map(post => {

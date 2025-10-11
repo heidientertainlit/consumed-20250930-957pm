@@ -46,7 +46,7 @@ serve(async (req) => {
       const { data: existingLike } = await supabase
         .from('social_post_likes')
         .select('id')
-        .eq('post_id', post_id)
+        .eq('social_post_id', post_id)
         .eq('user_id', user.id)
         .single();
 
@@ -59,7 +59,7 @@ serve(async (req) => {
 
       const { error } = await supabase
         .from('social_post_likes')
-        .insert({ post_id, user_id: user.id });
+        .insert({ social_post_id: post_id, user_id: user.id });
 
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
@@ -115,7 +115,7 @@ serve(async (req) => {
       const { error } = await supabase
         .from('social_post_likes')
         .delete()
-        .eq('post_id', post_id)
+        .eq('social_post_id', post_id)
         .eq('user_id', user.id);
 
       if (error) {

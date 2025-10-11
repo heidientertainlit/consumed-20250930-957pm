@@ -58,7 +58,7 @@ serve(async (req) => {
           user_id,
           users!inner(user_name, email)
         `)
-        .eq('post_id', post_id)
+        .eq('social_post_id', post_id)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -99,7 +99,7 @@ serve(async (req) => {
       const { data: comment, error } = await serviceSupabase
         .from('social_post_comments')
         .insert({
-          post_id,
+          social_post_id: post_id,
           user_id: user.id,
           content
         })
