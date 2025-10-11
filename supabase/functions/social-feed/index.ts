@@ -118,6 +118,17 @@ serve(async (req) => {
 
       console.log('User lookup result:', { users: users?.length, usersError });
 
+      // Get posts that the current user has liked
+      const postIds = posts?.map(post => post.id) || [];
+      const { data: userLikes, error: likesError } = await supabase
+        .from('social_post_likes')
+        .select('post_id')
+        .eq('user_id', appUser.id)
+        .in('post_id', postIds);
+
+      console.log('User likes lookup:', { likes: userLikes?.length, likesError });
+
+      const likedPostIds = new Set(userLikes?.map(like => like.post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
       const transformedPosts = posts?.map(post => {
@@ -139,6 +150,7 @@ serve(async (req) => {
           likes: post.likes_count || 0,
           comments: post.comments_count || 0,
           shares: 0,
+          likedByCurrentUser: likedPostIds.has(post.id),
           rating: post.rating,
           progress: post.progress,
           mediaItems: hasMedia ? [{
