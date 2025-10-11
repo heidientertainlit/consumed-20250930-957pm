@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Send, User } from "lucide-react";
+import { Send, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -24,6 +24,8 @@ interface CommentsSectionProps {
   onCommentInputChange: (value: string) => void;
   onSubmitComment: () => void;
   isSubmitting: boolean;
+  currentUserId?: string;
+  onDeleteComment?: (commentId: string, postId: string) => void;
 }
 
 export default function CommentsSection({
@@ -34,6 +36,8 @@ export default function CommentsSection({
   onCommentInputChange,
   onSubmitComment,
   isSubmitting,
+  currentUserId,
+  onDeleteComment,
 }: CommentsSectionProps) {
   const { data: comments, isLoading } = useQuery({
     queryKey: ["post-comments", postId],
@@ -114,6 +118,16 @@ export default function CommentsSection({
                   <span className="text-xs text-gray-500">
                     {formatCommentDate(comment.createdAt)}
                   </span>
+                  {currentUserId === comment.user.id && onDeleteComment && (
+                    <button
+                      onClick={() => onDeleteComment(comment.id, postId)}
+                      className="text-gray-400 hover:text-red-500 transition-colors ml-auto"
+                      data-testid={`button-delete-comment-${comment.id}`}
+                      title="Delete comment"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
                 <p className="text-sm text-gray-800">{comment.content}</p>
               </div>

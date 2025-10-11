@@ -272,6 +272,57 @@ export default function Feed() {
     },
   });
 
+  // Delete post mutation
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-delete`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post_id: postId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to delete post');
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+    },
+  });
+
+  // Delete comment mutation
+  const deleteCommentMutation = useMutation({
+    mutationFn: async ({ commentId, postId }: { commentId: string; postId: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/delete-comment`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment_id: commentId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to delete comment');
+      }
+      return await response.json();
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["post-comments", variables.postId] });
+    },
+  });
+
   // Fetch comments query
   const fetchComments = async (postId: string) => {
     if (!session?.access_token) throw new Error('Not authenticated');
@@ -341,37 +392,6 @@ export default function Feed() {
     await voteMutation.mutateAsync({ pollId, optionId });
   };
 
-  // Delete post mutation
-  const deletePostMutation = useMutation({
-    mutationFn: async (postId: string) => {
-      if (!user?.id) throw new Error('Not authenticated');
-      
-      // Delete using Supabase client directly
-      const { error } = await supabase
-        .from('social_posts')
-        .delete()
-        .eq('id', postId)
-        .eq('user_id', user.id); // Ensure user can only delete their own posts
-
-      if (error) {
-        console.error('Delete error:', error);
-        throw new Error('Failed to delete post');
-      }
-
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
-    },
-  });
-
-  const handleDeletePost = async (postId: string) => {
-    if (confirm('Are you sure you want to delete this post?')) {
-      await deletePostMutation.mutateAsync(postId);
-    }
-  };
-
   const handleLike = (postId: string) => {
     const isLiked = likedPosts.has(postId);
     if (isLiked) {
@@ -391,6 +411,18 @@ export default function Feed() {
     if (!content) return;
 
     commentMutation.mutate({ postId, content });
+  };
+
+  const handleDeletePost = (postId: string) => {
+    if (confirm('Are you sure you want to delete this post?')) {
+      deletePostMutation.mutate(postId);
+    }
+  };
+
+  const handleDeleteComment = (commentId: string, postId: string) => {
+    if (confirm('Are you sure you want to delete this comment?')) {
+      deleteCommentMutation.mutate({ commentId, postId });
+    }
   };
 
   const toggleComments = (postId: string) => {
@@ -705,6 +737,8 @@ export default function Feed() {
                         onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
                         onSubmitComment={() => handleComment(post.id)}
                         isSubmitting={commentMutation.isPending}
+                        currentUserId={user?.id}
+                        onDeleteComment={handleDeleteComment}
                       />
                     )}
                   </div>
