@@ -68,7 +68,7 @@ serve(async (req) => {
         });
       }
 
-      // Get post owner and liker info to send notification
+      // Increment likes_count on the post and get post owner
       const serviceSupabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '', 
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
@@ -76,9 +76,17 @@ serve(async (req) => {
 
       const { data: post } = await serviceSupabase
         .from('social_posts')
-        .select('user_id')
+        .select('user_id, likes_count')
         .eq('id', post_id)
         .single();
+
+      // Increment likes_count
+      if (post) {
+        await serviceSupabase
+          .from('social_posts')
+          .update({ likes_count: (post.likes_count || 0) + 1 })
+          .eq('id', post_id);
+      }
 
       const { data: liker } = await serviceSupabase
         .from('users')
@@ -123,6 +131,25 @@ serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+
+      // Decrement likes_count on the post
+      const serviceSupabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '', 
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
+      );
+
+      const { data: post } = await serviceSupabase
+        .from('social_posts')
+        .select('likes_count')
+        .eq('id', post_id)
+        .single();
+
+      if (post && post.likes_count > 0) {
+        await serviceSupabase
+          .from('social_posts')
+          .update({ likes_count: post.likes_count - 1 })
+          .eq('id', post_id);
       }
 
       return new Response(JSON.stringify({ success: true }), {
