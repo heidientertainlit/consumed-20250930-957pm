@@ -39,7 +39,13 @@ serve(async (req) => {
       .single();
 
     if (appUserError && appUserError.code === 'PGRST116') {
-      const { data: newUser, error: createError } = await supabase
+      // User doesn't exist - create with service role to bypass RLS
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({
           id: user.id,

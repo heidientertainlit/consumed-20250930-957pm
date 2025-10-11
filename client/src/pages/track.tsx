@@ -425,51 +425,48 @@ export default function Track() {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Lists</h2>
           <p className="text-gray-600 text-sm mb-4 md:mb-6">View your default lists. They include what you're on now, what you've finished, or what's next.</p>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 md:mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-3 md:mb-4">
             {/* Filter Dropdown */}
-            <div className="mb-3 md:mb-4 flex gap-2">
-              <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-                <SelectTrigger className="w-80 h-16 bg-white border-gray-300 text-black text-lg">
-                  <SelectValue placeholder="Filter your lists" />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  {/* System Lists */}
-                  {systemListTitles.map((filter) => (
-                    <SelectItem key={filter} value={filter} className="text-black hover:bg-gray-100 text-lg py-4">
-                      {filter}
-                    </SelectItem>
-                  ))}
-                  
-                  {/* Custom Lists Separator */}
-                  {customLists.length > 0 && (
-                    <div className="px-2 py-2 text-xs text-gray-500 font-semibold border-t mt-2 pt-2">
-                      MY CUSTOM LISTS
+            <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+              <SelectTrigger className="w-full sm:w-80 h-16 bg-white border-gray-300 text-black text-lg">
+                <SelectValue placeholder="Filter your lists" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                {/* System Lists */}
+                {systemListTitles.map((filter) => (
+                  <SelectItem key={filter} value={filter} className="text-black hover:bg-gray-100 text-lg py-4">
+                    {filter}
+                  </SelectItem>
+                ))}
+                
+                {/* Custom Lists Separator */}
+                {customLists.length > 0 && (
+                  <div className="px-2 py-2 text-xs text-gray-500 font-semibold border-t mt-2 pt-2">
+                    MY CUSTOM LISTS
+                  </div>
+                )}
+                
+                {/* Custom Lists */}
+                {customLists.map((list: any) => (
+                  <SelectItem key={list.id} value={list.title} className="text-black hover:bg-gray-100 text-lg py-4 pl-6">
+                    <div className="flex items-center">
+                      <List className="text-purple-600 mr-2" size={16} />
+                      {list.title}
                     </div>
-                  )}
-                  
-                  {/* Custom Lists */}
-                  {customLists.map((list: any) => (
-                    <SelectItem key={list.id} value={list.title} className="text-black hover:bg-gray-100 text-lg py-4 pl-6">
-                      <div className="flex items-center">
-                        <List className="text-purple-600 mr-2" size={16} />
-                        {list.title}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {/* Create New List Button */}
-              <Button
-                onClick={() => setIsCreateListDialogOpen(true)}
-                className="h-16 px-4 bg-purple-600 hover:bg-purple-700 text-white"
-                data-testid="button-create-list"
-              >
-                <Plus size={20} className="mr-2" />
-                Create List
-              </Button>
-            </div>
-
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Create New List Button */}
+            <Button
+              onClick={() => setIsCreateListDialogOpen(true)}
+              className="w-full sm:w-auto h-16 px-6 bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center"
+              data-testid="button-create-list"
+            >
+              <Plus size={20} className="mr-2" />
+              <span>Create List</span>
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
