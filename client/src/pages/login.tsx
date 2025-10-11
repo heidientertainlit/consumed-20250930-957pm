@@ -21,14 +21,43 @@ export default function LoginPage() {
   const [resetEmail, setResetEmail] = useState("");
   const [resetting, setResetting] = useState(false);
   const [justSignedUp, setJustSignedUp] = useState(false);
-  const { user, loading, signIn, signUp, resetPassword } = useAuth();
+  const { user, session, loading, signIn, signUp, resetPassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && user && !justSignedUp) {
-      setLocation('/feed');
-    }
+    const checkOnboardingStatus = async () => {
+      if (!loading && user && session && !justSignedUp) {
+        // Check if user has completed onboarding by checking for EDNA profile
+        try {
+          const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/user_edna_profiles?select=id&user_id=eq.' + user.id, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+          });
+          
+          if (response.ok) {
+            const profiles = await response.json();
+            if (profiles && profiles.length > 0) {
+              // User has completed onboarding, go to feed
+              setLocation('/feed');
+            } else {
+              // User hasn't completed onboarding, send to onboarding
+              setLocation('/onboarding');
+            }
+          } else {
+            // Default to feed if we can't check
+            setLocation('/feed');
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          setLocation('/feed');
+        }
+      }
+    };
+
+    checkOnboardingStatus();
   }, [user, loading, justSignedUp, setLocation]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -102,12 +131,9 @@ export default function LoginPage() {
         description: "Let's discover your Entertainment DNA.",
       });
       
-      // Set flag to prevent useEffect from redirecting to /feed
-      setJustSignedUp(true);
-      
-      // Redirect to onboarding immediately
-      setLocation('/onboarding');
-      setSubmitting(false);
+      // Redirect new users to onboarding
+      // Use window.location.href for a full page reload to ensure clean state
+      window.location.href = '/onboarding';
     }
   };
 
