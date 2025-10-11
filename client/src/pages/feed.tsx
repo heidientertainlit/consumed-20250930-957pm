@@ -609,10 +609,7 @@ export default function Feed() {
                       </div>
                       {user?.id === post.user.id && (
                         <button
-                          onClick={() => {
-                            console.log('Delete button clicked - User ID:', user?.id, 'Post User ID:', post.user.id);
-                            handleDeletePost(post.id);
-                          }}
+                          onClick={() => handleDeletePost(post.id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                           data-testid={`button-delete-post-${post.id}`}
                           title="Delete post"
@@ -620,10 +617,6 @@ export default function Feed() {
                           <Trash2 size={18} />
                         </button>
                       )}
-                      {/* Debug: Show delete button condition */}
-                      <div className="text-xs text-gray-400">
-                        {user?.id === post.user.id ? '✓' : `${user?.id?.slice(0,8)}.../${post.user.id?.slice(0,8)}...`}
-                      </div>
                     </div>
 
                   {/* Post Content */}
