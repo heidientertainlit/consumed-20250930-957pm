@@ -199,18 +199,34 @@ export default function Feed() {
       // Snapshot previous value
       const previousPosts = queryClient.getQueryData(["social-feed"]);
 
-      // Optimistically update posts
+      // Check if already liked
+      const isAlreadyLiked = likedPosts.has(postId);
+
+      // Optimistically update posts - toggle like
       queryClient.setQueryData(["social-feed"], (old: SocialPost[] | undefined) => {
         if (!old) return old;
         return old.map(post => 
           post.id === postId 
-            ? { ...post, likes: (post.likes || 0) + 1 }
+            ? { 
+                ...post, 
+                likes: isAlreadyLiked 
+                  ? Math.max((post.likes || 0) - 1, 0)  // Unlike: decrement (min 0)
+                  : (post.likes || 0) + 1                // Like: increment
+              }
             : post
         );
       });
 
-      // Update local like state
-      setLikedPosts(prev => new Set(prev).add(postId));
+      // Update local like state - toggle
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        if (isAlreadyLiked) {
+          newSet.delete(postId);
+        } else {
+          newSet.add(postId);
+        }
+        return newSet;
+      });
 
       return { previousPosts };
     },
