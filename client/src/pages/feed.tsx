@@ -508,7 +508,8 @@ export default function Feed() {
             Activity Feed
           </h1>
           <p className="text-base text-gray-600">
-            Stay in the loop with friends' entertainment—post your latest watch, read, listen, or play, and start the conversation that's been on your mind.
+            See what your friends are watching, reading, and listening to — and join the conversation.
+            Ask questions, share reactions, or post what's on your mind. <i>('Now that the Yankees lost… what should I watch next?' 'Why does everyone hate Conrad?' or 'What's everyone reading this month?')</i>
           </p>
         </div>
 
