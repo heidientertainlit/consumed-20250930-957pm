@@ -719,11 +719,13 @@ export default function Feed() {
                       <div className="flex items-center space-x-6">
                         <button 
                           onClick={() => handleLike(post.id)}
-                          className={`flex items-center space-x-2 transition-colors ${
+                          disabled={likeMutation.isPending}
+                          className={`flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                             likedPosts.has(post.id) 
                               ? 'text-red-500' 
                               : 'text-gray-500 hover:text-red-500'
                           }`}
+                          data-testid={`button-like-${post.id}`}
                         >
                           <Heart 
                             size={18} 
