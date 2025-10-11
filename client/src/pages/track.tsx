@@ -380,7 +380,7 @@ export default function Track() {
             Track Entertainment,<br />Earn Points
           </h1>
           <p className="text-gray-600 mb-6">
-            Every show, book, song, or game you log helps you climb the leaderboard. <i>Use the search bar above for personalized recommendations and group blends!</i>
+            Track media. Make lists. Earn points for what you love. <i>(Use the search bar above for entertainment recommendations and more)</i>
           </p>
 
           {/* Action Buttons */}
