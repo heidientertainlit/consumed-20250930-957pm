@@ -1751,7 +1751,7 @@ export default function UserProfile() {
                 <Button
                   onClick={() => setIsHighlightModalOpen(true)}
                   size="sm"
-                  className="bg-black text-white hover:bg-gray-800"
+                  className="bg-purple-600 text-white hover:bg-purple-700"
                 >
                   <Plus className="w-3 h-3 mr-1" />
                   Add Highlight
@@ -2601,7 +2601,7 @@ export default function UserProfile() {
                           e.stopPropagation();
                           handleShareListDirect(list.id, list.title);
                         }}
-                        className="bg-black text-white hover:bg-gray-800 rounded-lg px-3 py-2 flex items-center gap-2"
+                        className="bg-purple-600 text-white hover:bg-purple-700 rounded-lg px-3 py-2 flex items-center gap-2"
                         data-testid={`share-${list.title.toLowerCase().replace(/\s+/g, '-')}-list`}
                       >
                         <Share2 size={16} />
@@ -3354,7 +3354,7 @@ export default function UserProfile() {
                 </Button>
                 <Button
                   onClick={handleSaveProfile}
-                  className="flex-1 bg-black text-white hover:bg-gray-800"
+                  className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
                   disabled={isSavingProfile || !editUsername}
                   data-testid="button-save-profile"
                 >

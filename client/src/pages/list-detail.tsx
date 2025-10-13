@@ -405,10 +405,9 @@ export default function ListDetail() {
               </Button>
 
               <Button
-                variant="outline"
                 onClick={handleShare}
                 data-testid="button-share-list"
-                className={copied ? "bg-green-50 border-green-200 text-green-700" : ""}
+                className={copied ? "bg-green-500 hover:bg-green-600 text-white" : "bg-purple-500 hover:bg-purple-600 text-white"}
               >
                 {copied ? (
                   <>

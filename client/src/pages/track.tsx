@@ -395,7 +395,7 @@ export default function Track() {
             </Button>
             <Button
               onClick={() => setIsUploadModalOpen(true)}
-              className="bg-black hover:bg-gray-800 text-white font-bold px-5 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200 w-56"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-5 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200 w-56"
               data-testid="button-upload-media"
             >
               <Upload className="mr-2" size={24} />

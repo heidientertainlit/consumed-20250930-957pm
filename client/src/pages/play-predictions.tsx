@@ -226,7 +226,7 @@ export default function PlayPredictionsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleInviteFriends(game)}
-                        className="px-3 py-1.5 text-xs bg-black text-white hover:bg-gray-800 border-0 rounded-lg"
+                        className="px-3 py-1.5 text-xs bg-purple-600 text-white hover:bg-purple-700 border-0 rounded-lg"
                         data-testid={`invite-${game.id}`}
                       >
                         <UserPlus size={14} className="mr-1" />
@@ -321,7 +321,7 @@ export default function PlayPredictionsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleInviteFriends(game)}
-                        className="px-3 py-1.5 text-xs bg-black text-white hover:bg-gray-800 border-0 rounded-lg"
+                        className="px-3 py-1.5 text-xs bg-purple-600 text-white hover:bg-purple-700 border-0 rounded-lg"
                         data-testid={`invite-${game.id}`}
                       >
                         <UserPlus size={14} className="mr-1" />
