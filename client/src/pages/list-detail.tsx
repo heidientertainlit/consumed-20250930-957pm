@@ -382,8 +382,8 @@ export default function ListDetail() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {/* Show privacy toggle only for custom lists (lists with user_id) */}
-              {sharedListData?.isCustom ? (
+              {/* Show privacy toggle for all user-owned lists (both system and custom) */}
+              {!sharedUserId && session ? (
                 <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
                   <Lock size={16} className={listData?.isPublic ? "text-gray-400" : "text-purple-600"} />
                   <Switch
