@@ -283,11 +283,11 @@ export default function ListDetail() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       toast({
         title: "Privacy Updated",
-        description: `List is now ${listData?.isPublic ? 'private' : 'public'}`,
+        description: data.message || `List privacy updated successfully`,
       });
     },
     onError: (error) => {
