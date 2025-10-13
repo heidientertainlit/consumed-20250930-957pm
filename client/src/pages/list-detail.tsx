@@ -4,6 +4,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, Share2, Trash2, MoreVertical, Star, Clock, Calendar, Check } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -381,21 +382,32 @@ export default function ListDetail() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {/* Show actual privacy status with toggle */}
-              <button
-                onClick={handlePrivacyToggle}
-                disabled={privacyMutation.isPending}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:opacity-80 disabled:opacity-50 ${
-                  listData?.isPublic 
-                    ? 'bg-purple-50 text-purple-600' 
-                    : 'bg-gray-50 text-gray-600'
-                }`}
-              >
-                {listData?.isPublic ? <Globe size={14} /> : <Lock size={14} />}
-                <span className="text-sm font-medium">
-                  {listData?.isPublic ? 'Public List' : 'Private List'}
-                </span>
-              </button>
+              {/* Show privacy toggle only for custom lists (lists with user_id) */}
+              {sharedListData?.isCustom ? (
+                <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                  <Lock size={16} className={listData?.isPublic ? "text-gray-400" : "text-purple-600"} />
+                  <Switch
+                    checked={listData?.isPublic || false}
+                    onCheckedChange={(checked) => {
+                      if (!privacyMutation.isPending) {
+                        privacyMutation.mutate(checked);
+                      }
+                    }}
+                    disabled={privacyMutation.isPending}
+                    className="data-[state=checked]:bg-purple-600"
+                    data-testid="toggle-list-privacy"
+                  />
+                  <Globe size={16} className={listData?.isPublic ? "text-purple-600" : "text-gray-400"} />
+                  <span className="text-sm font-medium text-gray-700">
+                    {listData?.isPublic ? 'Public' : 'Private'}
+                  </span>
+                </div>
+              ) : (
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-sm">
+                  <Globe size={14} className="mr-1" />
+                  Public List
+                </Badge>
+              )}
 
               <Button
                 onClick={() => setIsTrackModalOpen(true)}
