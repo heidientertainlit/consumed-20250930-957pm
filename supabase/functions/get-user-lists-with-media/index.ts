@@ -68,7 +68,7 @@ serve(async (req) => {
           appUser = newUser;
           console.log('Created new user:', appUser);
           
-          // Create personal system lists for new user
+          // Create personal system lists for new user (idempotent)
           const systemLists = [
             { title: 'Currently', description: 'What you\'re consuming right now' },
             { title: 'Queue', description: 'Media you want to consume later' },
@@ -77,15 +77,32 @@ serve(async (req) => {
             { title: 'Favorites', description: 'Your favorite media items' }
           ];
 
-          await supabaseAdmin.from('lists').insert(
-            systemLists.map(list => ({
-              user_id: newUser.id,
-              title: list.title,
-              description: list.description,
-              is_default: true,
-              is_private: false
-            }))
-          );
+          // Use individual inserts with error handling for idempotency
+          for (const list of systemLists) {
+            const { error: listError } = await supabaseAdmin
+              .from('lists')
+              .insert({
+                user_id: newUser.id,
+                title: list.title,
+                description: list.description,
+                is_default: true,
+                is_private: false
+              })
+              .select()
+              .maybeSingle();
+            
+            // Ignore duplicate key errors (23505), fail on others
+            if (listError && listError.code !== '23505') {
+              console.error(`Failed to create ${list.title} list:`, listError);
+              return new Response(JSON.stringify({ 
+                error: `Failed to create system list ${list.title}: ${listError.message}`,
+                lists: []
+              }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+          }
           console.log('Created personal system lists for new user');
         }
       } else if (!appUserError) {
@@ -113,35 +130,63 @@ serve(async (req) => {
         lists: userSystemLists?.map(l => l.title)
       });
 
-      // AUTO-MIGRATION: If user has no personal system lists, create them now
-      if (!userSystemLists || userSystemLists.length === 0) {
-        console.log('No personal system lists found - creating them now (auto-migration)');
+      // AUTO-MIGRATION: Ensure user has ALL required system lists (backfill missing ones)
+      const requiredSystemLists = [
+        { title: 'Currently', description: 'What you\'re consuming right now' },
+        { title: 'Queue', description: 'Media you want to consume later' },
+        { title: 'Finished', description: 'Media you\'ve completed' },
+        { title: 'Did Not Finish', description: 'Media you started but didn\'t complete' },
+        { title: 'Favorites', description: 'Your favorite media items' }
+      ];
+
+      const existingTitles = new Set(userSystemLists?.map(l => l.title) || []);
+      const missingLists = requiredSystemLists.filter(list => !existingTitles.has(list.title));
+
+      if (missingLists.length > 0) {
+        console.log(`Auto-migration: Backfilling ${missingLists.length} missing system lists`);
         
         const supabaseAdmin = createClient(
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
-        
-        const systemListsToCreate = [
-          { title: 'Currently', description: 'What you\'re consuming right now' },
-          { title: 'Queue', description: 'Media you want to consume later' },
-          { title: 'Finished', description: 'Media you\'ve completed' },
-          { title: 'Did Not Finish', description: 'Media you started but didn\'t complete' },
-          { title: 'Favorites', description: 'Your favorite media items' }
-        ];
 
-        const { data: createdLists } = await supabaseAdmin.from('lists').insert(
-          systemListsToCreate.map(list => ({
-            user_id: appUser.id,
-            title: list.title,
-            description: list.description,
-            is_default: true,
-            is_private: false
-          }))
-        ).select('id, title, is_private');
+        // Create missing lists individually with error handling
+        for (const list of missingLists) {
+          const { error: listError } = await supabaseAdmin
+            .from('lists')
+            .insert({
+              user_id: appUser.id,
+              title: list.title,
+              description: list.description,
+              is_default: true,
+              is_private: false
+            })
+            .select()
+            .maybeSingle();
+          
+          // Ignore duplicate key errors (23505), fail on others
+          if (listError && listError.code !== '23505') {
+            console.error(`Failed to backfill ${list.title} list:`, listError);
+            return new Response(JSON.stringify({ 
+              error: `Failed to backfill system list ${list.title}: ${listError.message}`,
+              lists: []
+            }), {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        }
+
+        // Re-fetch all system lists after backfill
+        const { data: updatedSystemLists } = await supabase
+          .from('lists')
+          .select('id, title, is_private')
+          .eq('user_id', appUser.id)
+          .eq('is_default', true)
+          .order('title');
         
-        systemLists = createdLists || [];
-        console.log('Auto-created personal system lists:', systemLists.length);
+        systemLists = updatedSystemLists || [];
+        console.log('System lists after backfill:', systemLists.length);
       } else {
         systemLists = userSystemLists;
       }

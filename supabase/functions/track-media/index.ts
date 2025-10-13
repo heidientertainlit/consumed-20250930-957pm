@@ -78,7 +78,7 @@ serve(async (req) => {
       appUser = newUser;
       console.log('Created new user:', appUser);
 
-      // Create personal system lists for new user
+      // Create personal system lists for new user (idempotent)
       const systemLists = [
         { title: 'Currently', description: 'What you\'re consuming right now' },
         { title: 'Queue', description: 'Media you want to consume later' },
@@ -87,15 +87,31 @@ serve(async (req) => {
         { title: 'Favorites', description: 'Your favorite media items' }
       ];
 
-      await supabaseAdmin.from('lists').insert(
-        systemLists.map(list => ({
-          user_id: newUser.id,
-          title: list.title,
-          description: list.description,
-          is_default: true,
-          is_private: false
-        }))
-      );
+      // Use individual inserts with error handling for idempotency
+      for (const list of systemLists) {
+        const { error: listError } = await supabaseAdmin
+          .from('lists')
+          .insert({
+            user_id: newUser.id,
+            title: list.title,
+            description: list.description,
+            is_default: true,
+            is_private: false
+          })
+          .select()
+          .maybeSingle();
+        
+        // Ignore duplicate key errors (23505), fail on others
+        if (listError && listError.code !== '23505') {
+          console.error(`Failed to create ${list.title} list:`, listError);
+          return new Response(JSON.stringify({ 
+            error: `Failed to create system list ${list.title}: ${listError.message}` 
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      }
       console.log('Created personal system lists for new user');
     } else if (appUserError) {
       console.error('User lookup error:', appUserError);
