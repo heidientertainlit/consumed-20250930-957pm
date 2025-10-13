@@ -32,7 +32,15 @@ The application employs a modern full-stack architecture with a clear separation
 -   **Trivia Scoring**: Points are awarded only for correct answers. Long-form trivia divides total points evenly per question (10 pts/question for 100pt game). Quick trivia awards full points for correct answer, zero for incorrect.
 
 ### Feature Specifications
--   **Media Tracking**: Simplified list-based system allowing users to track various entertainment items across "Currently", "Queue", "Finished", and "Did Not Finish" lists.
+-   **Media Tracking**: Simplified list-based system allowing users to track various entertainment items across personal system lists with full privacy control.
+-   **Personal System Lists (UPDATED ARCHITECTURE - October 2025)**:
+    -   Each user gets personal copies of 5 default lists: Currently, Queue, Finished, Did Not Finish, Favorites
+    -   System lists are user-specific (user_id = user's ID) with `is_default = true` flag
+    -   Full privacy control: users can toggle any list between public/private
+    -   Auto-created on user signup OR auto-migrated on first access
+    -   Idempotent creation with unique constraint on (user_id, title) - prevents race condition duplicates
+    -   Individual backfill migration: missing system lists are added automatically
+    -   Robust error handling: critical failures return HTTP 500, duplicate keys (23505) are safely ignored
 -   **Custom Lists**: User-created lists for organizing media with:
     -   Nested dropdown UI in ConsumptionTracker ("Custom Lists >" submenu)
     -   Simple creation dialog (title input only, public by default)
@@ -41,6 +49,7 @@ The application employs a modern full-stack architecture with a clear separation
     -   Fallback protection: system lists work even if custom lists fail
     -   `isCustom` flag for reliable endpoint routing (no UUID regex fragility)
     -   Consistent `listTitle` responses from both endpoints for success messages
+    -   Custom lists have `is_default = false/null`
 -   **Social Features**: Leaderboards, activity feeds, friend discovery, and "Inner Circle" for Super Fan identification.
 -   **Play Section**: Category-based navigation with dedicated pages for Trivia (/play/trivia), Polls (/play/polls), and Predictions (/play/predictions). Main Play page shows category cards only - no "All Games" listing. Inline Play cards appear every 3rd post in the Feed for quick participation.
 -   **Profile Management**: Editable display name and username with validation and real-time uniqueness checking.
@@ -76,16 +85,24 @@ The application employs a modern full-stack architecture with a clear separation
         -   **ALWAYS use**: `content` and `image_url` - these are the correct production column names
     -   `users` table: `id`, `email`, `user_name` (CRITICAL: always use `user_name`, never `username`), `display_name`, `password`, `avatar`, `bio`, `is_admin`, `created_at`, `first_name`, `last_name`, `computed_favorite_media_types`, `computed_favorite_genres`.
     -   `list_items` table: `id`, `list_id`, `user_id`, `title`, `type`, `creator`, `image_url`, `notes` (NOT `review`), `created_at` (NOT `added_at`), `media_type`, `media_id`.
-    -   `lists` table: System lists have `user_id = NULL`. Standard lists include Queue, Finished, Did Not Finish.
+    -   `lists` table (UPDATED October 2025): 
+        -   **System lists**: user_id = user's ID, is_default = true (personal copies per user)
+        -   **Custom lists**: user_id = user's ID, is_default = false/null
+        -   **Privacy**: is_private controls visibility for ALL lists (both system and custom)
+        -   **Unique constraint**: (user_id, title) prevents duplicate lists per user
+        -   Standard system lists: Currently, Queue, Finished, Did Not Finish, Favorites
     -   `polls` table: `id` (serial), `question`, `type` (consumed/entertainlit/sponsored), `sponsor_name`, `sponsor_logo_url`, `sponsor_cta_url`, `status` (draft/active/archived), `points_reward`, `expires_at`, `created_by`, `created_at`, `updated_at`.
     -   `poll_options` table: `id` (serial), `poll_id`, `label`, `description`, `order_index`, `image_url`, `metadata`, `created_at`.
     -   `poll_responses` table: `id` (UUID), `poll_id`, `option_id`, `user_id`, `created_at`.
 -   **Row Level Security (RLS)**: Strict RLS policies are implemented for `lists` and `list_items` to ensure data privacy and integrity.
-    -   Lists SELECT: `auth.uid() = user_id OR visibility = 'public' OR user_id IS NULL`
+    -   Lists SELECT: `auth.uid() = user_id OR visibility = 'public'`
     -   Lists MODIFY: `auth.uid() = user_id`
-    -   List Items SELECT: `auth.uid() = user_id OR list_id in public/system lists`
+    -   List Items SELECT: `auth.uid() = user_id OR list_id in public lists`
     -   List Items MODIFY: `auth.uid() = user_id`
 -   **Edge Functions**: All edge functions adhere to the database schema, including the use of `user_name` and auto-creation logic for new users.
+    -   **List Provisioning**: predictions, track-media, and get-user-lists-with-media all create personal system lists on user creation/migration
+    -   **Idempotency**: Individual list inserts ignore duplicate key errors (23505), fail on other errors with HTTP 500
+    -   **Migration Strategy**: get-user-lists-with-media backfills missing system lists individually for backward compatibility
 
 ## External Dependencies
 
