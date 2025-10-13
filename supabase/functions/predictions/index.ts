@@ -68,6 +68,25 @@ serve(async (req) => {
       }
       
       appUser = newUser;
+
+      // Create personal system lists for new user
+      const systemLists = [
+        { title: 'Currently', description: 'What you\'re consuming right now' },
+        { title: 'Queue', description: 'Media you want to consume later' },
+        { title: 'Finished', description: 'Media you\'ve completed' },
+        { title: 'Did Not Finish', description: 'Media you started but didn\'t complete' },
+        { title: 'Favorites', description: 'Your favorite media items' }
+      ];
+
+      await supabaseAdmin.from('lists').insert(
+        systemLists.map(list => ({
+          user_id: newUser.id,
+          title: list.title,
+          description: list.description,
+          is_default: true,
+          is_private: false
+        }))
+      );
     } else if (appUserError) {
       return new Response(JSON.stringify({ 
         error: 'User lookup failed: ' + appUserError.message 

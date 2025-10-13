@@ -40,7 +40,14 @@ serve(async (req) => {
       // If user doesn't exist, create them
       if (appUserError && appUserError.code === 'PGRST116') {
         console.log('User not found, creating new user:', user.email);
-        const { data: newUser, error: createError} = await supabase
+        
+        // Use service role to create user and lists
+        const supabaseAdmin = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+        
+        const { data: newUser, error: createError} = await supabaseAdmin
           .from('users')
           .insert({
             id: user.id,
@@ -60,6 +67,26 @@ serve(async (req) => {
         } else {
           appUser = newUser;
           console.log('Created new user:', appUser);
+          
+          // Create personal system lists for new user
+          const systemLists = [
+            { title: 'Currently', description: 'What you\'re consuming right now' },
+            { title: 'Queue', description: 'Media you want to consume later' },
+            { title: 'Finished', description: 'Media you\'ve completed' },
+            { title: 'Did Not Finish', description: 'Media you started but didn\'t complete' },
+            { title: 'Favorites', description: 'Your favorite media items' }
+          ];
+
+          await supabaseAdmin.from('lists').insert(
+            systemLists.map(list => ({
+              user_id: newUser.id,
+              title: list.title,
+              description: list.description,
+              is_default: true,
+              is_private: false
+            }))
+          );
+          console.log('Created personal system lists for new user');
         }
       } else if (!appUserError) {
         appUser = foundAppUser;
@@ -67,54 +94,75 @@ serve(async (req) => {
       }
     }
 
-    // Get ALL system default lists (user_id = NULL)
-    // Create a service role client for accessing system data
-    const serviceSupabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '', 
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-    
-    console.log("Fetching system default lists...");
-    const { data: systemLists, error: systemListsError } = await serviceSupabase
-      .from('lists')
-      .select('id, title')
-      .is('user_id', null)
-      .order('title');
-
-    console.log("System lists result:", { 
-      count: systemLists?.length, 
-      systemListsError,
-      lists: systemLists?.map(l => l.title)
-    });
-
-    if (systemListsError) {
-      return new Response(JSON.stringify({
-        error: 'Failed to fetch system lists: ' + systemListsError.message
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // SAFE: Fetch custom lists with fallback protection
+    // Get user's personal system lists (is_default = true) and custom lists
+    let systemLists = [];
     let customLists = [];
+    
     if (appUser) {
+      // Check if user has personal system lists
+      const { data: userSystemLists, error: systemListsError } = await supabase
+        .from('lists')
+        .select('id, title, is_private')
+        .eq('user_id', appUser.id)
+        .eq('is_default', true)
+        .order('title');
+
+      console.log("User system lists result:", { 
+        count: userSystemLists?.length, 
+        systemListsError,
+        lists: userSystemLists?.map(l => l.title)
+      });
+
+      // AUTO-MIGRATION: If user has no personal system lists, create them now
+      if (!userSystemLists || userSystemLists.length === 0) {
+        console.log('No personal system lists found - creating them now (auto-migration)');
+        
+        const supabaseAdmin = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+        
+        const systemListsToCreate = [
+          { title: 'Currently', description: 'What you\'re consuming right now' },
+          { title: 'Queue', description: 'Media you want to consume later' },
+          { title: 'Finished', description: 'Media you\'ve completed' },
+          { title: 'Did Not Finish', description: 'Media you started but didn\'t complete' },
+          { title: 'Favorites', description: 'Your favorite media items' }
+        ];
+
+        const { data: createdLists } = await supabaseAdmin.from('lists').insert(
+          systemListsToCreate.map(list => ({
+            user_id: appUser.id,
+            title: list.title,
+            description: list.description,
+            is_default: true,
+            is_private: false
+          }))
+        ).select('id, title, is_private');
+        
+        systemLists = createdLists || [];
+        console.log('Auto-created personal system lists:', systemLists.length);
+      } else {
+        systemLists = userSystemLists;
+      }
+
+      // Fetch custom lists (is_default = false or null)
       try {
-        const { data: userLists, error: customListsError } = await supabase
+        const { data: userCustomLists, error: customListsError } = await supabase
           .from('lists')
           .select('id, title, is_private')
           .eq('user_id', appUser.id)
+          .or('is_default.is.null,is_default.eq.false')
           .order('title');
         
-        if (!customListsError && userLists) {
-          customLists = userLists;
+        if (!customListsError && userCustomLists) {
+          customLists = userCustomLists;
           console.log("Custom lists loaded:", customLists.length);
         } else if (customListsError) {
           console.error('Error fetching custom lists (non-fatal):', customListsError);
         }
       } catch (error) {
         console.error('Custom lists query failed (non-fatal):', error);
-        // Continue with empty custom lists - system lists will still work
       }
     }
 

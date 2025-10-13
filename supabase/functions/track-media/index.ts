@@ -45,7 +45,14 @@ serve(async (req) => {
     // If user doesn't exist, create them
     if (appUserError && appUserError.code === 'PGRST116') {
       console.log('User not found, creating new user:', user.email);
-      const { data: newUser, error: createError } = await supabase
+      
+      // Use service role to bypass RLS for user creation
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({
           id: user.id,
@@ -70,6 +77,26 @@ serve(async (req) => {
       
       appUser = newUser;
       console.log('Created new user:', appUser);
+
+      // Create personal system lists for new user
+      const systemLists = [
+        { title: 'Currently', description: 'What you\'re consuming right now' },
+        { title: 'Queue', description: 'Media you want to consume later' },
+        { title: 'Finished', description: 'Media you\'ve completed' },
+        { title: 'Did Not Finish', description: 'Media you started but didn\'t complete' },
+        { title: 'Favorites', description: 'Your favorite media items' }
+      ];
+
+      await supabaseAdmin.from('lists').insert(
+        systemLists.map(list => ({
+          user_id: newUser.id,
+          title: list.title,
+          description: list.description,
+          is_default: true,
+          is_private: false
+        }))
+      );
+      console.log('Created personal system lists for new user');
     } else if (appUserError) {
       console.error('User lookup error:', appUserError);
       return new Response(JSON.stringify({ 
@@ -98,14 +125,15 @@ serve(async (req) => {
       };
 
       const listTitle = listTitleMapping[listType] || 'Currently';
-      console.log('Looking for system list with title:', listTitle);
+      console.log('Looking for personal list with title:', listTitle);
 
-      // Find SYSTEM list by title (user_id IS NULL)
+      // Find USER'S personal list by title (is_default = true means it's a system list)
       const { data: systemList, error: listError } = await supabase
         .from('lists')
         .select('id, title')
-        .is('user_id', null)
+        .eq('user_id', appUser.id)
         .eq('title', listTitle)
+        .eq('is_default', true)
         .single();
 
       console.log('System list lookup result:', { systemList, listError });
