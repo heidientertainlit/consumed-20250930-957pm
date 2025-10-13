@@ -86,11 +86,13 @@ The application employs a modern full-stack architecture with a clear separation
     -   `users` table: `id`, `email`, `user_name` (CRITICAL: always use `user_name`, never `username`), `display_name`, `password`, `avatar`, `bio`, `is_admin`, `created_at`, `first_name`, `last_name`, `computed_favorite_media_types`, `computed_favorite_genres`.
     -   `list_items` table: `id`, `list_id`, `user_id`, `title`, `type`, `creator`, `image_url`, `notes` (NOT `review`), `created_at` (NOT `added_at`), `media_type`, `media_id`.
     -   `lists` table (UPDATED October 2025): 
+        -   **CRITICAL**: Production Supabase does NOT have `description` column - dev database does, production doesn't
         -   **System lists**: user_id = user's ID, is_default = true (personal copies per user)
         -   **Custom lists**: user_id = user's ID, is_default = false/null
         -   **Privacy**: is_private controls visibility for ALL lists (both system and custom)
         -   **Unique constraint**: (user_id, title) prevents duplicate lists per user
         -   Standard system lists: Currently, Queue, Finished, Did Not Finish, Favorites
+        -   **Edge function inserts**: Only use `user_id`, `title`, `is_default`, `is_private` - NO description field
     -   `polls` table: `id` (serial), `question`, `type` (consumed/entertainlit/sponsored), `sponsor_name`, `sponsor_logo_url`, `sponsor_cta_url`, `status` (draft/active/archived), `points_reward`, `expires_at`, `created_by`, `created_at`, `updated_at`.
     -   `poll_options` table: `id` (serial), `poll_id`, `label`, `description`, `order_index`, `image_url`, `metadata`, `created_at`.
     -   `poll_responses` table: `id` (UUID), `poll_id`, `option_id`, `user_id`, `created_at`.
