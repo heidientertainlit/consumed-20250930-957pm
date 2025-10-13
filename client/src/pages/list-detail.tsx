@@ -301,7 +301,9 @@ export default function ListDetail() {
 
   const handlePrivacyToggle = () => {
     if (listData) {
-      privacyMutation.mutate(!listData.isPublic);
+      // Toggle: if currently public, make private (and vice versa)
+      const newIsPublic = !listData.isPublic;
+      privacyMutation.mutate(newIsPublic);
     }
   };
 
