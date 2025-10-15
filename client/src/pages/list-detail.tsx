@@ -259,30 +259,25 @@ export default function ListDetail() {
     deleteMutation.mutate(itemId);
   };
 
-  // Privacy toggle mutation
+  // Privacy toggle mutation - Direct Supabase update (no edge function)
   const privacyMutation = useMutation({
     mutationFn: async (isPublic: boolean) => {
-      if (!session?.access_token || !sharedListData?.id) {
-        throw new Error('Authentication required');
+      if (!sharedListData?.id) {
+        throw new Error('List ID required');
       }
 
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-list-visibility", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          listId: sharedListData.id,
-          isPublic: isPublic
-        }),
-      });
+      const { data, error } = await supabase
+        .from('lists')
+        .update({ is_private: !isPublic })
+        .eq('id', sharedListData.id)
+        .select('id, title, is_private')
+        .single();
 
-      if (!response.ok) {
-        throw new Error('Failed to update list visibility');
+      if (error) {
+        throw new Error(error.message || 'Failed to update list visibility');
       }
 
-      return response.json();
+      return { success: true, list: data, message: `List is now ${isPublic ? 'public' : 'private'}` };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
@@ -384,24 +379,28 @@ export default function ListDetail() {
             <div className="flex flex-wrap items-center gap-3">
               {/* Show privacy toggle for all user-owned lists (both system and custom) */}
               {!sharedUserId && session ? (
-                <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
-                  <Lock size={16} className={listData?.isPublic ? "text-gray-400" : "text-purple-400"} />
-                  <Switch
-                    checked={listData?.isPublic || false}
-                    onCheckedChange={(checked) => {
-                      if (!privacyMutation.isPending) {
-                        privacyMutation.mutate(checked);
-                      }
-                    }}
-                    disabled={privacyMutation.isPending}
-                    className="data-[state=checked]:bg-purple-400"
-                    data-testid="toggle-list-privacy"
-                  />
-                  <Globe size={16} className={listData?.isPublic ? "text-purple-400" : "text-gray-400"} />
-                  <span className="text-sm font-medium text-gray-700">
-                    {listData?.isPublic ? 'Public' : 'Private'}
-                  </span>
-                </div>
+                <button
+                  onClick={() => {
+                    if (!privacyMutation.isPending && listData) {
+                      privacyMutation.mutate(!listData.isPublic);
+                    }
+                  }}
+                  disabled={privacyMutation.isPending}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                  data-testid="toggle-list-privacy"
+                >
+                  {listData?.isPublic ? (
+                    <>
+                      <Globe size={18} className="text-purple-500 group-hover:text-purple-600" />
+                      <span className="text-sm font-semibold text-gray-700 group-hover:text-purple-700">Public</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={18} className="text-gray-500 group-hover:text-purple-600" />
+                      <span className="text-sm font-semibold text-gray-700 group-hover:text-purple-700">Private</span>
+                    </>
+                  )}
+                </button>
               ) : (
                 <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-sm">
                   <Globe size={14} className="mr-1" />
