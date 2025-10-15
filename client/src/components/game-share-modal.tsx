@@ -107,19 +107,17 @@ export default function GameShareModal({ isOpen, onClose, gameId, gameTitle, gam
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleSocialShare('twitter')}
-              variant="outline"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-4 h-auto bg-purple-600 hover:bg-purple-700 text-white"
             >
-              <Twitter size={20} className="text-blue-500 mb-1" />
+              <Twitter size={20} className="mb-1" />
               <span className="text-xs">Twitter</span>
             </Button>
             
             <Button
               onClick={() => handleSocialShare('facebook')}
-              variant="outline"
-              className="flex flex-col items-center p-4 h-auto"
+              className="flex flex-col items-center p-4 h-auto bg-purple-600 hover:bg-purple-700 text-white"
             >
-              <Facebook size={20} className="text-blue-600 mb-1" />
+              <Facebook size={20} className="mb-1" />
               <span className="text-xs">Facebook</span>
             </Button>
           </div>

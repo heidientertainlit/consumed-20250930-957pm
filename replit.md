@@ -19,6 +19,7 @@ The application employs a modern full-stack architecture with a clear separation
 -   **Profile access**: Profile icon located in the top header.
 -   **Component Library**: shadcn/ui components built with Radix UI primitives.
 -   **Styling**: Tailwind CSS.
+-   **Button Theme (October 15, 2025)**: All buttons default to purple (`bg-purple-600`) with white text to ensure visibility. Outline buttons use purple border with white background. No black buttons are used in the application.
 
 ### Technical Implementations
 -   **Frontend**: React 18 with TypeScript, Wouter for routing, TanStack Query for server state management, and Vite for building.
