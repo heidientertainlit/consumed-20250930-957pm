@@ -180,8 +180,34 @@ export default function Track() {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[DEBUG] Recommendations fetch failed:', response.status, errorText);
-      // Don't throw error, just return empty to not break the page
-      return { recommendations: [] };
+      
+      // Return default recommendations when DNA-based recommendations fail
+      return {
+        recommendations: [
+          {
+            id: 'rec-default-1',
+            title: 'The Bear',
+            media_type: 'tv',
+            creator: 'Christopher Storer',
+            image_url: 'https://image.tmdb.org/t/p/w300/rSPOTWpnPHiKfwfWUKiCPD5gk2Y.jpg',
+            description: 'A young chef from the fine dining world returns to Chicago to run his family sandwich shop.',
+            external_id: '136315',
+            external_source: 'tmdb',
+            reason: 'Award-winning series perfect for starting your entertainment journey'
+          },
+          {
+            id: 'rec-default-2',
+            title: 'Dune',
+            media_type: 'book',
+            creator: 'Frank Herbert',
+            image_url: 'https://covers.openlibrary.org/b/id/12562342-M.jpg',
+            description: 'Epic science fiction novel about politics, religion, and power on a desert planet.',
+            external_id: 'OL17364865M',
+            external_source: 'openlibrary',
+            reason: 'Essential sci-fi reading that influenced countless works'
+          }
+        ]
+      };
     }
 
     const data = await response.json();

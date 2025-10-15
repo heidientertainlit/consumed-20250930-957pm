@@ -467,43 +467,41 @@ export default function Leaderboard() {
               <div className="space-y-3">
                 {challengeLeaderboards.map((item: any) => (
                   <div key={item.challenge.id}>
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <button
-                          onClick={() => setExpandedChallenge(expandedChallenge === item.challenge.id ? null : item.challenge.id)}
-                          className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity"
-                        >
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => setExpandedChallenge(expandedChallenge === item.challenge.id ? null : item.challenge.id)}
+                        className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
                           <div className="text-2xl">{item.challenge.icon || '🧠'}</div>
-                          <div>
+                          <div className="text-left">
                             <div className="font-semibold text-gray-900">{item.challenge.title}</div>
                             <div className="text-sm text-gray-600">
                               {item.challenge.options?.length || 0} questions • {item.challenge.points_reward} points
                             </div>
                           </div>
-                        </button>
+                        </div>
                         
                         <div className="flex items-center gap-3">
                           <div className="text-sm text-purple-600 font-medium">
                             {item.topScorers.length > 0 ? `${item.topScorers.length} player${item.topScorers.length !== 1 ? 's' : ''}` : 'No scores yet'}
                           </div>
-                          <a
-                            href={`/play/trivia#${item.challenge.id}`}
-                            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
-                            data-testid={`play-challenge-${item.challenge.id}`}
-                          >
-                            Play
-                          </a>
                           {item.topScorers.length > 0 && (
-                            <button
-                              onClick={() => setExpandedChallenge(expandedChallenge === item.challenge.id ? null : item.challenge.id)}
-                              className="p-1"
-                            >
-                              <ChevronDown 
-                                className={`w-5 h-5 text-gray-400 transition-transform ${expandedChallenge === item.challenge.id ? 'rotate-180' : ''}`}
-                              />
-                            </button>
+                            <ChevronDown 
+                              className={`w-5 h-5 text-gray-400 transition-transform ${expandedChallenge === item.challenge.id ? 'rotate-180' : ''}`}
+                            />
                           )}
                         </div>
+                      </button>
+                      
+                      <div className="px-4 pb-4">
+                        <a
+                          href={`/play/trivia#${item.challenge.id}`}
+                          className="block w-full bg-purple-600 text-white text-center px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+                          data-testid={`play-challenge-${item.challenge.id}`}
+                        >
+                          Play Challenge
+                        </a>
                       </div>
                     </div>
 
