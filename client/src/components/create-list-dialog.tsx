@@ -78,3 +78,42 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
     createListMutation.mutate(title.trim());
   };
 
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New List</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="list-title">List Name</Label>
+            <Input
+              id="list-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter list name..."
+              maxLength={50}
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={createListMutation.isPending}
+            >
+              {createListMutation.isPending ? "Creating..." : "Create List"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
