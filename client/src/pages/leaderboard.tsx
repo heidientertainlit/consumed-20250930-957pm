@@ -199,12 +199,6 @@ const leaderboardCategories = [
     title: "Fan Points",
     icon: <Star className="w-5 h-5 text-pink-600" />,
     isSelected: false
-  },
-  {
-    id: "challenges",
-    title: "Challenges",
-    icon: <Gamepad2 className="w-5 h-5 text-purple-600" />,
-    isSelected: false
   }
 ];
 
@@ -340,7 +334,6 @@ export default function Leaderboard() {
                 {selectedCategory === 'predict_leader' && 'Pending points for correct predictions (20 pts each when resolved)'}
                 {selectedCategory === 'trivia_leader' && 'Overall trivia points from all games • View individual challenge leaderboards below'}
                 {selectedCategory === 'fan_points' && 'Your top creators ranked by fan points (1 pt per media item consumed)'}
-                {selectedCategory === 'challenges' && 'Leaderboards for each long-form trivia challenge'}
               </p>
             </div>
           </div>
