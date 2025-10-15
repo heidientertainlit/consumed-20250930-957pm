@@ -51,12 +51,11 @@ serve(async (req) => {
     const { data, error } = await supabase
       .from('lists')
       .update({ 
-        is_private: !isPublic, // is_private is opposite of isPublic
-        updated_at: new Date().toISOString()
+        is_private: !isPublic // is_private is opposite of isPublic
       })
       .eq('id', listId)
       .eq('user_id', user.id) // Ensure user owns the list
-      .select()
+      .select('id, title, is_private, is_default')
       .single();
 
     if (error) {

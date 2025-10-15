@@ -105,6 +105,19 @@ The application employs a modern full-stack architecture with a clear separation
     -   **List Provisioning**: predictions, track-media, and get-user-lists-with-media all create personal system lists on user creation/migration
     -   **Idempotency**: Individual list inserts ignore duplicate key errors (23505), fail on other errors with HTTP 500
     -   **Migration Strategy**: get-user-lists-with-media backfills missing system lists individually for backward compatibility
+    -   **CRITICAL - Lists Column Selection (October 15, 2025)**: ALL edge functions that insert/update lists MUST explicitly select only existing columns: `id, title, is_default, is_private`. Production Supabase does NOT have `description` or `updated_at` columns. NEVER use `.select()` without specifying columns.
+        -   ✅ CORRECT: `.select('id, title, is_default, is_private')`
+        -   ❌ WRONG: `.select()` (tries to fetch non-existent columns)
+        -   ❌ WRONG: `.update({ is_private: x, updated_at: ... })` (updated_at doesn't exist)
+        -   Affected functions: get-user-lists-with-media, predictions, track-media, update-list-visibility
+-   **Privacy Toggle System (WORKING - October 15, 2025)**:
+    -   Location: `client/src/pages/list-detail.tsx` and edge function `update-list-visibility`
+    -   UI shows toggle only for user-owned lists (!sharedUserId && session)
+    -   Toggle color: Gray (`data-[state=checked]:bg-gray-600`) not purple
+    -   Edge function updates ONLY `is_private` field (no updated_at, no description)
+    -   Edge function explicitly selects `id, title, is_private, is_default`
+    -   Privacy mutation properly invalidates cache and shows toast notifications
+    -   RLS ensures users can only modify their own lists via `eq('user_id', user.id)` check
 
 ## External Dependencies
 

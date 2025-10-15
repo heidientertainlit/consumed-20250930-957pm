@@ -385,7 +385,7 @@ export default function ListDetail() {
               {/* Show privacy toggle for all user-owned lists (both system and custom) */}
               {!sharedUserId && session ? (
                 <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
-                  <Lock size={16} className={listData?.isPublic ? "text-gray-400" : "text-purple-600"} />
+                  <Lock size={16} className={listData?.isPublic ? "text-gray-400" : "text-gray-600"} />
                   <Switch
                     checked={listData?.isPublic || false}
                     onCheckedChange={(checked) => {
@@ -394,10 +394,10 @@ export default function ListDetail() {
                       }
                     }}
                     disabled={privacyMutation.isPending}
-                    className="data-[state=checked]:bg-purple-600"
+                    className="data-[state=checked]:bg-gray-600"
                     data-testid="toggle-list-privacy"
                   />
-                  <Globe size={16} className={listData?.isPublic ? "text-purple-600" : "text-gray-400"} />
+                  <Globe size={16} className={listData?.isPublic ? "text-gray-600" : "text-gray-400"} />
                   <span className="text-sm font-medium text-gray-700">
                     {listData?.isPublic ? 'Public' : 'Private'}
                   </span>
