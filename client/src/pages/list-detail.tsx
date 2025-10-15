@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Search, Settings, Users, Globe, Lock, X, Share2, Trash2, MoreVertical, Star, Clock, Calendar, Check } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -266,8 +266,6 @@ export default function ListDetail() {
         throw new Error('Authentication required');
       }
 
-      console.log('🔒 Updating privacy:', { listId: sharedListData.id, isPublic, currentIsPrivate: sharedListData.is_private });
-
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-list-visibility", {
         method: "POST",
         headers: {
@@ -280,17 +278,11 @@ export default function ListDetail() {
         }),
       });
 
-      console.log('🔒 Privacy update response status:', response.status);
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('🔒 Privacy update failed:', errorData);
-        throw new Error(errorData.error || 'Failed to update list visibility');
+        throw new Error('Failed to update list visibility');
       }
 
-      const data = await response.json();
-      console.log('🔒 Privacy update success:', data);
-      return data;
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
@@ -450,17 +442,7 @@ export default function ListDetail() {
         {/* List Items */}
         <div className="bg-white rounded-2xl shadow-sm mb-6">
           <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Items</h2>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm">
-                  <Search size={16} />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Settings size={16} />
-                </Button>
-              </div>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900">Items</h2>
           </div>
 
           <div className="divide-y divide-gray-100">
