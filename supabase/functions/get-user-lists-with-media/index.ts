@@ -239,7 +239,8 @@ serve(async (req) => {
     const listsWithItems = (systemLists || []).map(list => ({
       id: list.id,
       title: list.title,
-      items: itemsByListId[list.id] || []
+      items: itemsByListId[list.id] || [],
+      is_private: list.is_private
     }));
 
     // Convert custom lists to expected format
