@@ -215,38 +215,6 @@ export default function Leaderboard() {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  // Fetch trivia challenges to add as dynamic categories
-  const { data: triviaGames } = useQuery({
-    queryKey: ["trivia-challenges"],
-    queryFn: async () => {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      
-      const { data, error } = await supabase
-        .from('prediction_pools')
-        .select('id, title')
-        .eq('type', 'trivia')
-        .eq('status', 'open')
-        .contains('options', [{ question: '' }]); // Long-form trivia has options as array of objects
-      
-      return data || [];
-    },
-    enabled: !!session?.access_token,
-    staleTime: 60000, // Cache for 1 minute
-  });
-
-  // Create dynamic categories including trivia challenges
-  const allCategories = [
-    ...leaderboardCategories,
-    ...(triviaGames || []).map(game => ({
-      id: `trivia_challenge_${game.id}`,
-      title: game.title,
-      icon: <Brain className="w-5 h-5 text-blue-600" />,
-      isSelected: false
-    }))
-  ];
 
   const { data: leaderboardData, isLoading, error } = useQuery({
     queryKey: ["leaderboard", selectedCategory],
@@ -256,10 +224,11 @@ export default function Leaderboard() {
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
+  // Fetch trivia challenges when trivia_leader is selected
   const { data: challengeLeaderboards, isLoading: challengesLoading } = useQuery({
     queryKey: ["challenge-leaderboards"],
     queryFn: () => fetchChallengeLeaderboards(session),
-    enabled: !!session?.access_token && selectedCategory === 'challenges',
+    enabled: !!session?.access_token && (selectedCategory === 'challenges' || selectedCategory === 'trivia_leader'),
     staleTime: 30000, // Cache for 30 seconds
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
@@ -326,7 +295,7 @@ export default function Leaderboard() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Categories</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {allCategories.map((category) => (
+            {leaderboardCategories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
@@ -350,11 +319,11 @@ export default function Leaderboard() {
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="p-6 border-b border-gray-100 bg-gray-50">
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              {allCategories.find(cat => cat.id === selectedCategory)?.title || 'All-Time'} Rankings
+              {leaderboardCategories.find(cat => cat.id === selectedCategory)?.title || 'All-Time'} Rankings
             </h2>
             <div className="flex items-center space-x-3 mb-2">
               <div className="text-purple-600">
-                {allCategories.find(cat => cat.id === selectedCategory)?.icon}
+                {leaderboardCategories.find(cat => cat.id === selectedCategory)?.icon}
               </div>
               <p className="text-gray-700 text-sm">
                 {selectedCategory === 'all_time' && 'Total points from all media types'}
@@ -369,10 +338,9 @@ export default function Leaderboard() {
                 {selectedCategory === 'friend_inviter' && '25 points for every successful friend that joins and uses the app'}
                 {selectedCategory === 'vote_leader' && 'Points from voting games only (10 pts each)'}
                 {selectedCategory === 'predict_leader' && 'Pending points for correct predictions (20 pts each when resolved)'}
-                {selectedCategory === 'trivia_leader' && 'Points from all trivia games combined (15 pts each)'}
+                {selectedCategory === 'trivia_leader' && 'Overall trivia points from all games • View individual challenge leaderboards below'}
                 {selectedCategory === 'fan_points' && 'Your top creators ranked by fan points (1 pt per media item consumed)'}
                 {selectedCategory === 'challenges' && 'Leaderboards for each long-form trivia challenge'}
-                {selectedCategory.startsWith('trivia_challenge_') && 'Top scores for this specific trivia challenge'}
               </p>
             </div>
           </div>
@@ -495,6 +463,60 @@ export default function Leaderboard() {
           ) : (
             <div className="p-8 text-center">
               <p className="text-gray-600">No leaderboard data available for this category.</p>
+            </div>
+          )}
+
+          {/* Trivia Challenges Section - only show within trivia_leader */}
+          {selectedCategory === 'trivia_leader' && challengeLeaderboards && challengeLeaderboards.length > 0 && (
+            <div className="border-t border-gray-200 p-6 bg-gray-50">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Individual Trivia Challenges</h3>
+              <p className="text-gray-600 text-sm mb-4">Click a challenge to see its leaderboard:</p>
+              <div className="space-y-3">
+                {challengeLeaderboards.map((item: any) => (
+                  <div key={item.challenge.id}>
+                    <button
+                      onClick={() => setExpandedChallenge(expandedChallenge === item.challenge.id ? null : item.challenge.id)}
+                      className="w-full bg-white border border-gray-200 rounded-lg p-4 hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                      data-testid={`challenge-${item.challenge.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="text-2xl">{item.challenge.icon || '🧠'}</div>
+                          <div className="text-left">
+                            <div className="font-semibold text-gray-900">{item.challenge.title}</div>
+                            <div className="text-sm text-gray-600">
+                              {item.challenge.options?.length || 0} questions • {item.challenge.points_reward} points
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-sm text-purple-600 font-medium">
+                          {item.topScorers.length > 0 ? `${item.topScorers.length} player${item.topScorers.length !== 1 ? 's' : ''}` : 'No scores yet'}
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Expanded Challenge Leaderboard */}
+                    {expandedChallenge === item.challenge.id && item.topScorers.length > 0 && (
+                      <div className="mt-2 bg-white border border-gray-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-900 mb-3">Top Scores</h4>
+                        <div className="space-y-2">
+                          {item.topScorers.map((scorer: any, idx: number) => (
+                            <div key={scorer.user_id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 flex items-center justify-center">
+                                  {getRankIcon(idx + 1)}
+                                </div>
+                                <span className="font-medium text-gray-900">{scorer.user_name}</span>
+                              </div>
+                              <span className="text-green-600 font-semibold">{scorer.user_points} pts</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
