@@ -463,37 +463,49 @@ export default function Leaderboard() {
           {selectedCategory === 'trivia_leader' && challengeLeaderboards && challengeLeaderboards.length > 0 && (
             <div className="border-t border-gray-200 p-6 bg-gray-50">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Individual Trivia Challenges</h3>
-              <p className="text-gray-600 text-sm mb-4">Click a challenge to see its leaderboard:</p>
+              <p className="text-gray-600 text-sm mb-4">Click a challenge to see its leaderboard or play the game:</p>
               <div className="space-y-3">
                 {challengeLeaderboards.map((item: any) => (
                   <div key={item.challenge.id}>
-                    <button
-                      onClick={() => setExpandedChallenge(expandedChallenge === item.challenge.id ? null : item.challenge.id)}
-                      className="w-full bg-white border border-gray-200 rounded-lg p-4 hover:bg-purple-50 hover:border-purple-300 transition-colors"
-                      data-testid={`challenge-${item.challenge.id}`}
-                    >
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setExpandedChallenge(expandedChallenge === item.challenge.id ? null : item.challenge.id)}
+                          className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity"
+                        >
                           <div className="text-2xl">{item.challenge.icon || '🧠'}</div>
-                          <div className="text-left">
+                          <div>
                             <div className="font-semibold text-gray-900">{item.challenge.title}</div>
                             <div className="text-sm text-gray-600">
                               {item.challenge.options?.length || 0} questions • {item.challenge.points_reward} points
                             </div>
                           </div>
-                        </div>
+                        </button>
+                        
                         <div className="flex items-center gap-3">
                           <div className="text-sm text-purple-600 font-medium">
                             {item.topScorers.length > 0 ? `${item.topScorers.length} player${item.topScorers.length !== 1 ? 's' : ''}` : 'No scores yet'}
                           </div>
+                          <a
+                            href={`/play/trivia#${item.challenge.id}`}
+                            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+                            data-testid={`play-challenge-${item.challenge.id}`}
+                          >
+                            Play
+                          </a>
                           {item.topScorers.length > 0 && (
-                            <ChevronDown 
-                              className={`w-5 h-5 text-gray-400 transition-transform ${expandedChallenge === item.challenge.id ? 'rotate-180' : ''}`}
-                            />
+                            <button
+                              onClick={() => setExpandedChallenge(expandedChallenge === item.challenge.id ? null : item.challenge.id)}
+                              className="p-1"
+                            >
+                              <ChevronDown 
+                                className={`w-5 h-5 text-gray-400 transition-transform ${expandedChallenge === item.challenge.id ? 'rotate-180' : ''}`}
+                              />
+                            </button>
                           )}
                         </div>
                       </div>
-                    </button>
+                    </div>
 
                     {/* Expanded Challenge Leaderboard */}
                     {expandedChallenge === item.challenge.id && item.topScorers.length > 0 && (
