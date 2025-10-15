@@ -80,33 +80,43 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-white dark:bg-white text-black dark:text-black border-gray-200">
         <DialogHeader>
-          <DialogTitle>Create New List</DialogTitle>
+          <DialogTitle className="text-black">Create Custom List</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="list-title">List Name</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="list-title" className="text-black">List Name</Label>
             <Input
               id="list-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter list name..."
+              placeholder="e.g., My Watchlist, Classics, Binge Queue"
               maxLength={50}
+              data-testid="input-list-title"
               autoFocus
+              className="bg-white text-black border-gray-300 placeholder:text-gray-500"
             />
+            <p className="text-xs text-gray-600">
+              {title.length}/50 characters
+            </p>
           </div>
-          <div className="flex justify-end gap-2">
+
+          <div className="flex justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              data-testid="button-cancel-create-list"
+              className="border-gray-300 text-black hover:bg-gray-100"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={createListMutation.isPending}
+              disabled={createListMutation.isPending || !title.trim()}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              data-testid="button-create-list"
             >
               {createListMutation.isPending ? "Creating..." : "Create List"}
             </Button>

@@ -88,7 +88,7 @@ serve(async (req) => {
             is_default: true,
             is_private: false
           })
-          .select()
+          .select('id, title, is_default, is_private')
           .maybeSingle();
         
         // Ignore duplicate key errors (23505), fail on others
