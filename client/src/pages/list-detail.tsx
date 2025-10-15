@@ -266,6 +266,8 @@ export default function ListDetail() {
         throw new Error('Authentication required');
       }
 
+      console.log('🔒 Updating privacy:', { listId: sharedListData.id, isPublic, currentIsPrivate: sharedListData.is_private });
+
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-list-visibility", {
         method: "POST",
         headers: {
@@ -278,11 +280,17 @@ export default function ListDetail() {
         }),
       });
 
+      console.log('🔒 Privacy update response status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to update list visibility');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('🔒 Privacy update failed:', errorData);
+        throw new Error(errorData.error || 'Failed to update list visibility');
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('🔒 Privacy update success:', data);
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
