@@ -3,7 +3,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame, Users, Vote, Brain, TrendingUp, Share2 } from "lucide-react";
+import { Trophy, Medal, Award, Gamepad2, Book, Headphones, Music, Film, Tv, Target, Star, MessageSquare, Calendar, Flame, Users, Vote, Brain, TrendingUp, Share2, ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
@@ -482,8 +482,15 @@ export default function Leaderboard() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-sm text-purple-600 font-medium">
-                          {item.topScorers.length > 0 ? `${item.topScorers.length} player${item.topScorers.length !== 1 ? 's' : ''}` : 'No scores yet'}
+                        <div className="flex items-center gap-3">
+                          <div className="text-sm text-purple-600 font-medium">
+                            {item.topScorers.length > 0 ? `${item.topScorers.length} player${item.topScorers.length !== 1 ? 's' : ''}` : 'No scores yet'}
+                          </div>
+                          {item.topScorers.length > 0 && (
+                            <ChevronDown 
+                              className={`w-5 h-5 text-gray-400 transition-transform ${expandedChallenge === item.challenge.id ? 'rotate-180' : ''}`}
+                            />
+                          )}
                         </div>
                       </div>
                     </button>
