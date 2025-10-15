@@ -1541,8 +1541,7 @@ export default function UserProfile() {
                 <div className="flex items-center space-x-3 mt-4 md:mt-0">
                   {isOwnProfile ? (
                     <Button 
-                      variant="outline" 
-                      className="border-gray-300"
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
                       onClick={() => {
                         setEditUsername(userProfileData?.user_name || '');
                         setEditFirstName(userProfileData?.first_name || '');
@@ -1556,8 +1555,7 @@ export default function UserProfile() {
                     </Button>
                   ) : null}
                   <Button 
-                    variant="outline" 
-                    className="border-gray-300"
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
                     onClick={async () => {
                       const profileUserId = isOwnProfile ? user?.id : viewingUserId;
                       await copyLink({ 
