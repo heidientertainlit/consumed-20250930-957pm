@@ -80,6 +80,65 @@ serve(async (req) => {
       });
     }
 
+    // Handle individual trivia challenge leaderboards
+    if (category.startsWith('trivia_challenge_')) {
+      const poolId = category.replace('trivia_challenge_', '');
+      
+      // Get predictions for this specific challenge
+      const { data: predictions, error: predictionsError } = await supabase
+        .from('user_predictions')
+        .select('user_id, points_earned')
+        .eq('pool_id', poolId);
+        
+      if (predictionsError) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch challenge predictions' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get users for user names
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, user_name');
+        
+      if (usersError) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Aggregate points by user
+      const userMap = users.reduce((acc: any, user: any) => {
+        acc[user.id] = user.user_name;
+        return acc;
+      }, {});
+
+      const userPoints: { [key: string]: number } = {};
+      
+      predictions.forEach((prediction: any) => {
+        const userId = prediction.user_id;
+        userPoints[userId] = (userPoints[userId] || 0) + prediction.points_earned;
+      });
+
+      // Convert to leaderboard format and sort
+      const leaderboard = Object.entries(userPoints)
+        .map(([userId, points]) => ({
+          user_id: userId,
+          user_name: userMap[userId] || 'Anonymous',
+          user_points: points as number,
+          score: points as number,
+          created_at: new Date().toISOString()
+        }))
+        .sort((a, b) => b.user_points - a.user_points)
+        .slice(0, limit);
+
+      return new Response(JSON.stringify(leaderboard), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // Handle game-specific categories
     if (category === 'vote_leader' || category === 'predict_leader' || category === 'trivia_leader') {
       // Determine game type filter

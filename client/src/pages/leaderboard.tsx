@@ -215,6 +215,39 @@ export default function Leaderboard() {
   const { session } = useAuth();
   const { toast } = useToast();
 
+  // Fetch trivia challenges to add as dynamic categories
+  const { data: triviaGames } = useQuery({
+    queryKey: ["trivia-challenges"],
+    queryFn: async () => {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      const { data, error } = await supabase
+        .from('prediction_pools')
+        .select('id, title')
+        .eq('type', 'trivia')
+        .eq('status', 'open')
+        .contains('options', [{ question: '' }]); // Long-form trivia has options as array of objects
+      
+      return data || [];
+    },
+    enabled: !!session?.access_token,
+    staleTime: 60000, // Cache for 1 minute
+  });
+
+  // Create dynamic categories including trivia challenges
+  const allCategories = [
+    ...categories,
+    ...(triviaGames || []).map(game => ({
+      id: `trivia_challenge_${game.id}`,
+      title: game.title,
+      icon: <Brain className="w-5 h-5 text-blue-600" />,
+      isSelected: false
+    }))
+  ];
+
   const { data: leaderboardData, isLoading, error } = useQuery({
     queryKey: ["leaderboard", selectedCategory],
     queryFn: () => fetchLeaderboard(session, selectedCategory, 10),
@@ -293,13 +326,13 @@ export default function Leaderboard() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Categories</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {leaderboardCategories.map((category) => (
+            {allCategories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
                 className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
                   selectedCategory === category.id
-                    ? 'bg-gray-900 text-white border-gray-900'
+                    ? 'bg-purple-600 text-white border-purple-600'
                     : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                 }`}
                 data-testid={`category-${category.id}`}
@@ -317,11 +350,11 @@ export default function Leaderboard() {
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="p-6 border-b border-gray-100 bg-gray-50">
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              {leaderboardCategories.find(cat => cat.id === selectedCategory)?.title || 'All-Time'} Rankings
+              {allCategories.find(cat => cat.id === selectedCategory)?.title || 'All-Time'} Rankings
             </h2>
             <div className="flex items-center space-x-3 mb-2">
               <div className="text-purple-600">
-                {leaderboardCategories.find(cat => cat.id === selectedCategory)?.icon}
+                {allCategories.find(cat => cat.id === selectedCategory)?.icon}
               </div>
               <p className="text-gray-700 text-sm">
                 {selectedCategory === 'all_time' && 'Total points from all media types'}
@@ -336,9 +369,10 @@ export default function Leaderboard() {
                 {selectedCategory === 'friend_inviter' && '25 points for every successful friend that joins and uses the app'}
                 {selectedCategory === 'vote_leader' && 'Points from voting games only (10 pts each)'}
                 {selectedCategory === 'predict_leader' && 'Pending points for correct predictions (20 pts each when resolved)'}
-                {selectedCategory === 'trivia_leader' && 'Points from trivia games only (15 pts each)'}
+                {selectedCategory === 'trivia_leader' && 'Points from all trivia games combined (15 pts each)'}
                 {selectedCategory === 'fan_points' && 'Your top creators ranked by fan points (1 pt per media item consumed)'}
                 {selectedCategory === 'challenges' && 'Leaderboards for each long-form trivia challenge'}
+                {selectedCategory.startsWith('trivia_challenge_') && 'Top scores for this specific trivia challenge'}
               </p>
             </div>
           </div>
