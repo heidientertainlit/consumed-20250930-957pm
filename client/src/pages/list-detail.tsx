@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
+import { supabase } from "@/lib/supabase";
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
@@ -386,20 +387,23 @@ export default function ListDetail() {
                     }
                   }}
                   disabled={privacyMutation.isPending}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-full hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="toggle-list-privacy"
                 >
                   {listData?.isPublic ? (
                     <>
-                      <Globe size={18} className="text-purple-500 group-hover:text-purple-600" />
-                      <span className="text-sm font-semibold text-gray-700 group-hover:text-purple-700">Public</span>
+                      <Globe size={16} className="text-purple-600" />
+                      <span className="text-sm font-medium text-gray-700">Public</span>
                     </>
                   ) : (
                     <>
-                      <Lock size={18} className="text-gray-500 group-hover:text-purple-600" />
-                      <span className="text-sm font-semibold text-gray-700 group-hover:text-purple-700">Private</span>
+                      <Lock size={16} className="text-gray-600" />
+                      <span className="text-sm font-medium text-gray-700">Private</span>
                     </>
                   )}
+                  <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${listData?.isPublic ? 'bg-gray-400' : 'bg-gray-300'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${listData?.isPublic ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </div>
                 </button>
               ) : (
                 <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-sm">
