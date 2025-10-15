@@ -108,7 +108,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
               variant="outline"
               onClick={() => onOpenChange(false)}
               data-testid="button-cancel-create-list"
-              className="border-gray-300 text-black hover:bg-gray-100"
+              className="border-gray-300 bg-white text-black hover:bg-gray-100 hover:text-black"
             >
               Cancel
             </Button>
