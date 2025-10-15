@@ -239,7 +239,7 @@ export default function Leaderboard() {
 
   // Create dynamic categories including trivia challenges
   const allCategories = [
-    ...categories,
+    ...leaderboardCategories,
     ...(triviaGames || []).map(game => ({
       id: `trivia_challenge_${game.id}`,
       title: game.title,
