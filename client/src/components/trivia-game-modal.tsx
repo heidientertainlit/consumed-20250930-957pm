@@ -166,8 +166,8 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-white border-gray-200 text-gray-800">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg bg-white border-gray-200 text-gray-800" onEscapeKeyDown={onClose} onInteractOutside={onClose}>
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-gray-900">{title}</DialogTitle>
           <div className="flex items-center justify-between mt-3">
