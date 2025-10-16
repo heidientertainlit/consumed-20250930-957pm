@@ -130,10 +130,11 @@ const fetchChallengeLeaderboards = async (session: any) => {
 
       // Combine predictions with user data
       const topScorers = predictions.map(pred => ({
-        ...pred,
-        users: {
-          user_name: userMap[pred.user_id] || 'Anonymous'
-        }
+        user_id: pred.user_id,
+        user_name: userMap[pred.user_id] || 'Anonymous',
+        user_points: pred.points_earned,
+        points_earned: pred.points_earned,
+        created_at: pred.created_at
       }));
 
       return {
