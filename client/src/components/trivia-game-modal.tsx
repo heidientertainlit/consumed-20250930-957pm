@@ -138,11 +138,26 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
           </div>
 
           <div className="flex justify-center space-x-3">
-            <Button variant="outline" className="text-gray-900 bg-white hover:bg-gray-50" onClick={handleRestart}>
-              Try Again
+            <Button 
+              variant="outline" 
+              className="text-gray-900 bg-white hover:bg-gray-50 border-purple-500" 
+              onClick={() => {
+                onClose();
+                window.location.href = `/leaderboard?category=trivia_leader&challenge=${poolId}`;
+              }}
+              data-testid="button-view-leaderboard"
+            >
+              View Leaderboard
             </Button>
-            <Button className="bg-purple-700 hover:bg-purple-800 text-white" onClick={onClose}>
-              Close
+            <Button 
+              className="bg-purple-600 hover:bg-purple-700 text-white" 
+              onClick={() => {
+                onClose();
+                window.location.href = '/play';
+              }}
+              data-testid="button-play-more"
+            >
+              Play More Games
             </Button>
           </div>
         </DialogContent>
