@@ -82,31 +82,63 @@ const fetchChallengeLeaderboards = async (session: any) => {
   // For each challenge, fetch top scorers
   const challengeLeaderboards = await Promise.all(
     longFormChallenges.map(async (challenge) => {
-      const { data: predictions, error } = await supabase
+      // Fetch predictions
+      const { data: predictions, error: predError } = await supabase
         .from('user_predictions')
-        .select(`
-          user_id,
-          points_earned,
-          created_at,
-          users (
-            user_name
-          )
-        `)
+        .select('user_id, points_earned, created_at')
         .eq('pool_id', challenge.id)
         .order('points_earned', { ascending: false })
         .limit(10);
 
-      if (error) {
-        console.error(`Error fetching leaderboard for ${challenge.id}:`, error);
+      if (predError) {
+        console.error(`Error fetching predictions for ${challenge.id}:`, predError);
         return {
           challenge,
           topScorers: []
         };
       }
 
+      if (!predictions || predictions.length === 0) {
+        return {
+          challenge,
+          topScorers: []
+        };
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(predictions.map(p => p.user_id))];
+
+      // Fetch user data
+      const { data: users, error: userError } = await supabase
+        .from('users')
+        .select('id, user_name')
+        .in('id', userIds);
+
+      if (userError) {
+        console.error(`Error fetching users for ${challenge.id}:`, userError);
+        return {
+          challenge,
+          topScorers: []
+        };
+      }
+
+      // Create user map
+      const userMap = (users || []).reduce((acc: any, user: any) => {
+        acc[user.id] = user.user_name;
+        return acc;
+      }, {});
+
+      // Combine predictions with user data
+      const topScorers = predictions.map(pred => ({
+        ...pred,
+        users: {
+          user_name: userMap[pred.user_id] || 'Anonymous'
+        }
+      }));
+
       return {
         challenge,
-        topScorers: predictions || []
+        topScorers
       };
     })
   );
