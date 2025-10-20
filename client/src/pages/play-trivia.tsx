@@ -20,6 +20,7 @@ export default function PlayTriviaPage() {
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
+  const [submissionResults, setSubmissionResults] = useState<Record<string, { correct: boolean; points: number }>>({});
 
   // Extract game ID from URL hash if present (format: /play/trivia#game-id)
   const gameIdFromUrl = window.location.hash.replace('#', '');
@@ -96,6 +97,18 @@ export default function PlayTriviaPage() {
   const handleSubmitAnswer = async (game: any) => {
     const answer = selectedAnswers[game.id];
     if (!answer) return;
+
+    // For quick trivia, check if answer is correct
+    // Quick trivia structure: game has "correct" field or first option in options array
+    const correctAnswer = game.correct || (Array.isArray(game.options) && game.options[0]);
+    const isCorrect = answer === correctAnswer;
+    const pointsEarned = isCorrect ? (game.points || 10) : 0;
+
+    // Store result for UI feedback
+    setSubmissionResults(prev => ({
+      ...prev,
+      [game.id]: { correct: isCorrect, points: pointsEarned }
+    }));
 
     await submitPrediction.mutateAsync({
       poolId: game.id,
@@ -216,11 +229,29 @@ export default function PlayTriviaPage() {
                   </CardHeader>
 
                   <CardContent className="space-y-4">
-                    {allPredictions[game.id] ? (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                        <div className="text-green-800 font-medium">✓ Submitted</div>
-                        <div className="text-green-700 text-sm">Game completed!</div>
-                      </div>
+                    {allPredictions[game.id] || submissionResults[game.id] ? (
+                      submissionResults[game.id] ? (
+                        submissionResults[game.id].correct ? (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                            <div className="text-green-800 font-bold text-lg">✓ Correct!</div>
+                            <div className="text-green-700 text-sm mt-1">
+                              You earned {submissionResults[game.id].points} points
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                            <div className="text-red-800 font-bold text-lg">✗ Incorrect</div>
+                            <div className="text-red-700 text-sm mt-1">
+                              No points earned this time
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                          <div className="text-gray-800 font-medium">✓ Submitted</div>
+                          <div className="text-gray-700 text-sm">Game completed!</div>
+                        </div>
+                      )
                     ) : game.isLongForm ? (
                       <Button 
                         onClick={() => setSelectedTriviaGame(game)}
