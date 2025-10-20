@@ -98,22 +98,30 @@ export default function PlayTriviaPage() {
     const answer = selectedAnswers[game.id];
     if (!answer) return;
 
-    // For quick trivia, check if answer is correct
-    // Quick trivia structure: game has "correct" field or first option in options array
-    const correctAnswer = game.correct || (Array.isArray(game.options) && game.options[0]);
-    const isCorrect = answer === correctAnswer;
-    const pointsEarned = isCorrect ? (game.points || 10) : 0;
+    try {
+      // Submit to backend - it will check if answer is correct and return points_earned
+      const result = await submitPrediction.mutateAsync({
+        poolId: game.id,
+        answer
+      });
 
-    // Store result for UI feedback
-    setSubmissionResults(prev => ({
-      ...prev,
-      [game.id]: { correct: isCorrect, points: pointsEarned }
-    }));
+      // Backend returns { success: true, points_earned: number }
+      const pointsEarned = result.points_earned || 0;
+      const isCorrect = pointsEarned > 0;
 
-    await submitPrediction.mutateAsync({
-      poolId: game.id,
-      answer
-    });
+      // Store result for UI feedback
+      setSubmissionResults(prev => ({
+        ...prev,
+        [game.id]: { correct: isCorrect, points: pointsEarned }
+      }));
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit answer. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleInviteFriends = (item: any) => {
