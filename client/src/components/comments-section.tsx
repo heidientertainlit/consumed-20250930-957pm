@@ -60,7 +60,8 @@ function CommentItem({
 }: CommentItemProps) {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
-  const maxDepth = 6; // Maximum nesting depth for visual clarity
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const hasReplies = comment.replies && comment.replies.length > 0;
 
   const formatCommentDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -84,8 +85,9 @@ function CommentItem({
     }
   };
 
-  const indentClass = depth > 0 ? `ml-${Math.min(depth * 4, 12)}` : "";
-  const shouldShowVerticalLine = depth > 0 && depth < maxDepth;
+  // Calculate indentation using inline styles to support unlimited nesting depth
+  const indentPx = depth * 16; // 16px per depth level
+  const shouldShowVerticalLine = depth > 0;
 
   return (
     <div className="relative">
@@ -97,7 +99,10 @@ function CommentItem({
         />
       )}
       
-      <div className={`flex items-start space-x-2 ${depth > 0 ? `ml-${Math.min(depth * 4, 12)}` : ''}`}>
+      <div 
+        className="flex items-start space-x-2"
+        style={{ marginLeft: depth > 0 ? `${indentPx}px` : '0' }}
+      >
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
           <User size={16} className="text-gray-600" />
         </div>
@@ -156,6 +161,20 @@ function CommentItem({
               <MessageCircle size={14} />
               <span className="text-xs">Reply</span>
             </button>
+
+            {/* Collapse/Expand Button (only show if there are replies) */}
+            {hasReplies && (
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="flex items-center space-x-1 text-gray-400 hover:text-gray-600 transition-colors"
+                data-testid={`button-toggle-replies-${comment.id}`}
+                title={isCollapsed ? 'Show replies' : 'Hide replies'}
+              >
+                <span className="text-xs">
+                  {isCollapsed ? `Show ${comment.replies?.length || 0} ${(comment.replies?.length || 0) === 1 ? 'reply' : 'replies'}` : 'Hide replies'}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Reply Input */}
@@ -198,8 +217,8 @@ function CommentItem({
         </div>
       </div>
 
-      {/* Nested Replies */}
-      {comment.replies && comment.replies.length > 0 && (
+      {/* Nested Replies (hidden when collapsed) */}
+      {!isCollapsed && comment.replies && comment.replies.length > 0 && (
         <div className="mt-3 space-y-3">
           {comment.replies.map((reply) => (
             <CommentItem
