@@ -102,13 +102,15 @@ export default function Feed() {
     }
   }, [socialPosts]);
 
-  // Fetch active polls
+  // Fetch active polls (filter out already voted)
   const { data: polls = [] } = useQuery({
     queryKey: ["/api/polls", user?.id],
     queryFn: async () => {
       const response = await fetch(`/api/polls?userId=${user?.id}`);
       if (!response.ok) throw new Error('Failed to fetch polls');
-      return response.json();
+      const allPolls = await response.json();
+      // Only show polls the user hasn't voted on yet
+      return allPolls.filter((poll: any) => !poll.user_has_voted);
     },
     enabled: !!session?.access_token && !!user?.id,
   });
