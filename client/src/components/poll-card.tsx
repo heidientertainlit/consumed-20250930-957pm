@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, TrendingUp, Calendar } from "lucide-react";
+import { CheckCircle2, TrendingUp, Calendar, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,7 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
   const [selectedOption, setSelectedOption] = useState<number | null>(userVote || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(hasVoted);
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   const handleVote = async (optionId: number) => {
     if (showResults || isSubmitting) return;
@@ -43,7 +44,12 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
     try {
       await onVote(poll.id, optionId);
       setSelectedOption(optionId);
-      setShowResults(true);
+      setJustSubmitted(true);
+      // Show success message for 2 seconds before showing results
+      setTimeout(() => {
+        setJustSubmitted(false);
+        setShowResults(true);
+      }, 2000);
     } catch (error) {
       console.error("Failed to vote:", error);
     } finally {
@@ -76,6 +82,25 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
         return "Poll";
     }
   };
+
+  // Show success message immediately after submission
+  if (justSubmitted) {
+    return (
+      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-300 p-6 shadow-sm" data-testid={`poll-${poll.id}-success`}>
+        <div className="flex flex-col items-center space-y-3 text-center">
+          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+            <Trophy size={32} className="text-white" />
+          </div>
+          <div className="text-xl font-bold text-green-800">
+            Submitted!
+          </div>
+          <div className="text-green-700">
+            You earned <span className="font-bold text-2xl">{poll.points_reward}</span> points
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-100 p-4 shadow-sm" data-testid={`poll-${poll.id}`}>
