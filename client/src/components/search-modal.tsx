@@ -136,8 +136,8 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
         {/* Search Input */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex gap-3">
-            <div className="relative flex-1">
+          <div className="space-y-3">
+            <div className="relative">
               <Search className="absolute left-3 top-3 text-gray-400" size={20} />
               <input
                 type="text"
@@ -157,11 +157,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             <Button
               onClick={handleSearch}
               disabled={!searchQuery.trim() || isSearching || !session}
-              className="bg-purple-700 hover:bg-purple-800 text-white disabled:opacity-50 px-6 py-3 text-lg"
+              className="w-full bg-purple-700 hover:bg-purple-800 text-white disabled:opacity-50 px-6 py-3 text-lg"
               data-testid="search-submit-button"
             >
               {isSearching ? (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-center space-x-2">
                   <Loader2 className="animate-spin" size={16} />
                   <span>Searching...</span>
                 </div>

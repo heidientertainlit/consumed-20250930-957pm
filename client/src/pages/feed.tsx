@@ -257,6 +257,31 @@ export default function Feed() {
     },
   });
 
+  // Poll vote mutation
+  const pollVoteMutation = useMutation({
+    mutationFn: async ({ pollId, optionId }: { pollId: number; optionId: number }) => {
+      if (!session?.access_token || !user?.id) throw new Error('Not authenticated');
+      
+      const response = await fetch(`/api/polls/${pollId}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id, optionId }),
+      });
+
+      if (!response.ok) throw new Error('Failed to vote');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/polls", user?.id] });
+    },
+  });
+
+  const handlePollVote = async (pollId: number, optionId: number) => {
+    await pollVoteMutation.mutateAsync({ pollId, optionId });
+  };
+
   // Comment mutation with support for replies
   const commentMutation = useMutation({
     mutationFn: async ({ postId, content, parentCommentId }: { postId: string; content: string; parentCommentId?: string }) => {
@@ -696,6 +721,13 @@ export default function Feed() {
                 // Only show quick games inline (no long-form trivia or multi-category predictions)
                 const canPlayInline = currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory;
 
+                // Inject PollCard every 5th post
+                const shouldShowPollCard = (postIndex + 1) % 5 === 0;
+                const pollCardIndex = Math.floor(postIndex / 5);
+                const currentPoll = polls && polls.length > 0 
+                  ? polls[pollCardIndex % polls.length]
+                  : null;
+
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
                     {/* Insert PlayCard every 3rd post */}
@@ -705,6 +737,14 @@ export default function Feed() {
                         onComplete={() => {
                           queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
                         }}
+                      />
+                    )}
+
+                    {/* Insert PollCard every 5th post */}
+                    {shouldShowPollCard && currentPoll && (
+                      <PollCard 
+                        poll={currentPoll}
+                        onVote={handlePollVote}
                       />
                     )}
 
