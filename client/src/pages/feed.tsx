@@ -68,10 +68,14 @@ export default function Feed() {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set());
   const [booksSubmitted, setBooksSubmitted] = useState(false);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Feature flag for comment likes
+  const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
   // Using window.location.assign for navigation as we are not using react-router-dom
   const setLocation = (path: string) => {
     window.location.assign(path);
@@ -339,12 +343,71 @@ export default function Feed() {
     },
   });
 
+  // Comment like mutation (feature flagged)
+  const commentLikeMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const isCurrentlyLiked = likedComments.has(commentId);
+      const method = isCurrentlyLiked ? 'DELETE' : 'POST';
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-comment-like`, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment_id: commentId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to toggle comment like');
+      }
+      return await response.json();
+    },
+    onMutate: async (commentId) => {
+      // Optimistic update
+      setLikedComments(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(commentId)) {
+          newSet.delete(commentId);
+        } else {
+          newSet.add(commentId);
+        }
+        return newSet;
+      });
+    },
+    onSuccess: (data, commentId) => {
+      // Invalidate comments query to get updated like counts
+      // We need to find which post this comment belongs to
+      // For now, invalidate all post comments queries
+      queryClient.invalidateQueries({ queryKey: ["post-comments"] });
+    },
+    onError: (error, commentId) => {
+      console.error('Comment like error:', error);
+      // Revert optimistic update on error
+      setLikedComments(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(commentId)) {
+          newSet.delete(commentId);
+        } else {
+          newSet.add(commentId);
+        }
+        return newSet;
+      });
+    },
+  });
+
   // Fetch comments query
   const fetchComments = async (postId: string) => {
     if (!session?.access_token) throw new Error('Not authenticated');
 
     console.log('🔍 Fetching comments for post:', postId);
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}`, {
+    
+    // Add include=meta parameter if feature flag is enabled
+    const includeParam = commentLikesEnabled ? '&include=meta' : '';
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}${includeParam}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
@@ -439,6 +502,11 @@ export default function Feed() {
     if (confirm('Are you sure you want to delete this comment?')) {
       deleteCommentMutation.mutate({ commentId, postId });
     }
+  };
+
+  const handleLikeComment = (commentId: string) => {
+    if (!commentLikesEnabled) return; // Safety check
+    commentLikeMutation.mutate(commentId);
   };
 
   const toggleComments = (postId: string) => {
@@ -758,6 +826,8 @@ export default function Feed() {
                         isSubmitting={commentMutation.isPending}
                         currentUserId={user?.id}
                         onDeleteComment={handleDeleteComment}
+                        onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                        likedComments={likedComments}
                       />
                     )}
                   </div>

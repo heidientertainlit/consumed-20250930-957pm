@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Send, User, Trash2 } from "lucide-react";
+import { Send, User, Trash2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -14,6 +14,8 @@ interface Comment {
     displayName: string;
     avatar: string;
   };
+  likesCount?: number;
+  likedByCurrentUser?: boolean;
 }
 
 interface CommentsSectionProps {
@@ -26,6 +28,8 @@ interface CommentsSectionProps {
   isSubmitting: boolean;
   currentUserId?: string;
   onDeleteComment?: (commentId: string, postId: string) => void;
+  onLikeComment?: (commentId: string) => void;
+  likedComments?: Set<string>;
 }
 
 export default function CommentsSection({
@@ -38,7 +42,11 @@ export default function CommentsSection({
   isSubmitting,
   currentUserId,
   onDeleteComment,
+  onLikeComment,
+  likedComments = new Set(),
 }: CommentsSectionProps) {
+  // Feature flag for comment likes (defaults to OFF for safety)
+  const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
   const { data: comments, isLoading } = useQuery({
     queryKey: ["post-comments", postId],
     queryFn: () => fetchComments(postId),
@@ -129,7 +137,31 @@ export default function CommentsSection({
                     </button>
                   )}
                 </div>
-                <p className="text-sm text-gray-800">{comment.content}</p>
+                <p className="text-sm text-gray-800 mb-2">{comment.content}</p>
+                
+                {/* Comment Like Button (Feature Flagged) */}
+                {commentLikesEnabled && onLikeComment && (
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => onLikeComment(comment.id)}
+                      className={`flex items-center space-x-1 transition-colors ${
+                        comment.likedByCurrentUser || likedComments.has(comment.id)
+                          ? 'text-red-500' 
+                          : 'text-gray-400 hover:text-red-400'
+                      }`}
+                      data-testid={`button-like-comment-${comment.id}`}
+                      title="Like comment"
+                    >
+                      <Heart 
+                        size={14} 
+                        className={comment.likedByCurrentUser || likedComments.has(comment.id) ? 'fill-current' : ''} 
+                      />
+                      {(comment.likesCount || 0) > 0 && (
+                        <span className="text-xs">{comment.likesCount}</span>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
