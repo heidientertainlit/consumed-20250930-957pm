@@ -87,7 +87,7 @@ serve(async (req) => {
           parent_comment_id,
           users!inner(user_name, email)
         `)
-        .eq('post_id', post_id)
+        .eq('social_post_id', post_id)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -159,7 +159,7 @@ serve(async (req) => {
       );
 
       const insertData: any = {
-        post_id: post_id,
+        social_post_id: post_id,
         user_id: user.id,
         content
       };
