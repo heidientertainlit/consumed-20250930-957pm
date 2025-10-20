@@ -1,6 +1,6 @@
-
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Send, User, Trash2, Heart } from "lucide-react";
+import { Send, User, Trash2, Heart, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -16,6 +16,7 @@ interface Comment {
   };
   likesCount?: number;
   likedByCurrentUser?: boolean;
+  replies?: Comment[]; // Nested replies
 }
 
 interface CommentsSectionProps {
@@ -24,12 +25,201 @@ interface CommentsSectionProps {
   session: any;
   commentInput: string;
   onCommentInputChange: (value: string) => void;
-  onSubmitComment: () => void;
+  onSubmitComment: (parentCommentId?: string, content?: string) => void;
   isSubmitting: boolean;
   currentUserId?: string;
   onDeleteComment?: (commentId: string, postId: string) => void;
   onLikeComment?: (commentId: string) => void;
   likedComments?: Set<string>;
+}
+
+interface CommentItemProps {
+  comment: Comment;
+  depth: number;
+  currentUserId?: string;
+  onDeleteComment?: (commentId: string, postId: string) => void;
+  onLikeComment?: (commentId: string) => void;
+  likedComments: Set<string>;
+  commentLikesEnabled: boolean;
+  postId: string;
+  onSubmitReply: (parentCommentId: string, content: string) => void;
+  isSubmitting: boolean;
+}
+
+function CommentItem({
+  comment,
+  depth,
+  currentUserId,
+  onDeleteComment,
+  onLikeComment,
+  likedComments,
+  commentLikesEnabled,
+  postId,
+  onSubmitReply,
+  isSubmitting,
+}: CommentItemProps) {
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [replyContent, setReplyContent] = useState("");
+  const maxDepth = 6; // Maximum nesting depth for visual clarity
+
+  const formatCommentDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffMinutes = Math.ceil(diffTime / (1000 * 60));
+    
+    if (diffMinutes < 60) return `${diffMinutes}m`;
+    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+    if (diffHours < 24) return `${diffHours}h`;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return `${diffDays}d`;
+  };
+
+  const handleSubmitReply = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (replyContent.trim()) {
+      onSubmitReply(comment.id, replyContent);
+      setReplyContent("");
+      setShowReplyInput(false);
+    }
+  };
+
+  const indentClass = depth > 0 ? `ml-${Math.min(depth * 4, 12)}` : "";
+  const shouldShowVerticalLine = depth > 0 && depth < maxDepth;
+
+  return (
+    <div className="relative">
+      {/* Vertical threading line */}
+      {shouldShowVerticalLine && (
+        <div 
+          className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-300"
+          style={{ marginLeft: `${(depth - 1) * 16}px` }}
+        />
+      )}
+      
+      <div className={`flex items-start space-x-2 ${depth > 0 ? `ml-${Math.min(depth * 4, 12)}` : ''}`}>
+        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
+          <User size={16} className="text-gray-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-2 mb-1 flex-wrap">
+            <span className="font-medium text-sm text-gray-900">
+              {comment.user.displayName}
+            </span>
+            <span className="text-xs text-gray-500">
+              {formatCommentDate(comment.createdAt)}
+            </span>
+            {currentUserId === comment.user.id && onDeleteComment && (
+              <button
+                onClick={() => onDeleteComment(comment.id, postId)}
+                className="text-gray-400 hover:text-red-500 transition-colors ml-auto"
+                data-testid={`button-delete-comment-${comment.id}`}
+                title="Delete comment"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-gray-800 mb-2 break-words">{comment.content}</p>
+          
+          {/* Action buttons */}
+          <div className="flex items-center space-x-3">
+            {/* Comment Like Button */}
+            {commentLikesEnabled && onLikeComment && (
+              <button
+                onClick={() => onLikeComment(comment.id)}
+                className={`flex items-center space-x-1 transition-colors ${
+                  comment.likedByCurrentUser || likedComments.has(comment.id)
+                    ? 'text-red-500' 
+                    : 'text-gray-400 hover:text-red-400'
+                }`}
+                data-testid={`button-like-comment-${comment.id}`}
+                title="Like comment"
+              >
+                <Heart 
+                  size={14} 
+                  className={comment.likedByCurrentUser || likedComments.has(comment.id) ? 'fill-current' : ''} 
+                />
+                {(comment.likesCount || 0) > 0 && (
+                  <span className="text-xs">{comment.likesCount}</span>
+                )}
+              </button>
+            )}
+            
+            {/* Reply Button */}
+            <button
+              onClick={() => setShowReplyInput(!showReplyInput)}
+              className="flex items-center space-x-1 text-gray-400 hover:text-purple-500 transition-colors"
+              data-testid={`button-reply-comment-${comment.id}`}
+              title="Reply to comment"
+            >
+              <MessageCircle size={14} />
+              <span className="text-xs">Reply</span>
+            </button>
+          </div>
+
+          {/* Reply Input */}
+          {showReplyInput && (
+            <form onSubmit={handleSubmitReply} className="mt-2 flex items-center space-x-2">
+              <Input
+                type="text"
+                placeholder="Write a reply..."
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                className="flex-1 bg-white text-black placeholder:text-gray-500 text-sm"
+                disabled={isSubmitting}
+                autoFocus
+                data-testid={`input-reply-${comment.id}`}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!replyContent.trim() || isSubmitting}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
+                data-testid={`button-submit-reply-${comment.id}`}
+              >
+                <Send size={14} />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setShowReplyInput(false);
+                  setReplyContent("");
+                }}
+                className="px-3 py-1"
+                data-testid={`button-cancel-reply-${comment.id}`}
+              >
+                Cancel
+              </Button>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {/* Nested Replies */}
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="mt-3 space-y-3">
+          {comment.replies.map((reply) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              depth={depth + 1}
+              currentUserId={currentUserId}
+              onDeleteComment={onDeleteComment}
+              onLikeComment={onLikeComment}
+              likedComments={likedComments}
+              commentLikesEnabled={commentLikesEnabled}
+              postId={postId}
+              onSubmitReply={onSubmitReply}
+              isSubmitting={isSubmitting}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function CommentsSection({
@@ -47,7 +237,7 @@ export default function CommentsSection({
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
-  console.log('💜 Comment likes enabled:', commentLikesEnabled, 'onLikeComment:', !!onLikeComment);
+  
   const { data: comments, isLoading } = useQuery({
     queryKey: ["post-comments", postId],
     queryFn: () => fetchComments(postId),
@@ -56,25 +246,16 @@ export default function CommentsSection({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmitComment();
+    onSubmitComment(); // Top-level comment
   };
 
-  const formatCommentDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffMinutes = Math.ceil(diffTime / (1000 * 60));
-    
-    if (diffMinutes < 60) return `${diffMinutes}m`;
-    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
-    if (diffHours < 24) return `${diffHours}h`;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return `${diffDays}d`;
+  const handleSubmitReply = (parentCommentId: string, content: string) => {
+    onSubmitComment(parentCommentId, content);
   };
 
   return (
     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-      {/* Comment Input */}
+      {/* Top-level Comment Input */}
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
           <User size={16} className="text-gray-600" />
@@ -87,12 +268,14 @@ export default function CommentsSection({
             onChange={(e) => onCommentInputChange(e.target.value)}
             className="flex-1 bg-white text-black placeholder:text-gray-500"
             disabled={isSubmitting}
+            data-testid="input-new-comment"
           />
           <Button
             type="submit"
             size="sm"
             disabled={!commentInput.trim() || isSubmitting}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
+            data-testid="button-submit-comment"
           >
             <Send size={16} />
           </Button>
@@ -115,56 +298,19 @@ export default function CommentsSection({
       ) : comments && comments.length > 0 ? (
         <div className="space-y-3">
           {comments.map((comment) => (
-            <div key={comment.id} className="flex items-start space-x-2">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <User size={16} className="text-gray-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className="font-medium text-sm text-gray-900">
-                    {comment.user.displayName}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {formatCommentDate(comment.createdAt)}
-                  </span>
-                  {currentUserId === comment.user.id && onDeleteComment && (
-                    <button
-                      onClick={() => onDeleteComment(comment.id, postId)}
-                      className="text-gray-400 hover:text-red-500 transition-colors ml-auto"
-                      data-testid={`button-delete-comment-${comment.id}`}
-                      title="Delete comment"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-                <p className="text-sm text-gray-800 mb-2">{comment.content}</p>
-                
-                {/* Comment Like Button (Feature Flagged) */}
-                {commentLikesEnabled && onLikeComment && (
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={() => onLikeComment(comment.id)}
-                      className={`flex items-center space-x-1 transition-colors ${
-                        comment.likedByCurrentUser || likedComments.has(comment.id)
-                          ? 'text-red-500' 
-                          : 'text-gray-400 hover:text-red-400'
-                      }`}
-                      data-testid={`button-like-comment-${comment.id}`}
-                      title="Like comment"
-                    >
-                      <Heart 
-                        size={14} 
-                        className={comment.likedByCurrentUser || likedComments.has(comment.id) ? 'fill-current' : ''} 
-                      />
-                      {(comment.likesCount || 0) > 0 && (
-                        <span className="text-xs">{comment.likesCount}</span>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              depth={0}
+              currentUserId={currentUserId}
+              onDeleteComment={onDeleteComment}
+              onLikeComment={onLikeComment}
+              likedComments={likedComments}
+              commentLikesEnabled={commentLikesEnabled}
+              postId={postId}
+              onSubmitReply={handleSubmitReply}
+              isSubmitting={isSubmitting}
+            />
           ))}
         </div>
       ) : (

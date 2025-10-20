@@ -257,11 +257,16 @@ export default function Feed() {
     },
   });
 
-  // Comment mutation
+  // Comment mutation with support for replies
   const commentMutation = useMutation({
-    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
-      console.log('🔥 Submitting comment:', { postId, content });
+    mutationFn: async ({ postId, content, parentCommentId }: { postId: string; content: string; parentCommentId?: string }) => {
+      console.log('🔥 Submitting comment:', { postId, content, parentCommentId });
       if (!session?.access_token) throw new Error('Not authenticated');
+
+      const body: any = { post_id: postId, content };
+      if (parentCommentId) {
+        body.parent_comment_id = parentCommentId;
+      }
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments`, {
         method: 'POST',
@@ -269,7 +274,7 @@ export default function Feed() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ post_id: postId, content }),
+        body: JSON.stringify(body),
       });
 
       console.log('📬 Comment response:', response.status);
@@ -413,7 +418,7 @@ export default function Feed() {
     },
   });
 
-  // Fetch comments query
+  // Fetch comments query with recursive transformation for nested replies
   const fetchComments = async (postId: string) => {
     if (!session?.access_token) throw new Error('Not authenticated');
 
@@ -439,8 +444,8 @@ export default function Feed() {
     const result = await response.json();
     console.log('✅ Comments fetch success:', result);
 
-    // Transform the response to match frontend interface
-    const transformedComments = result.comments?.map((comment: any) => ({
+    // Recursive function to transform comment tree
+    const transformComment = (comment: any): any => ({
       id: comment.id,
       content: comment.content,
       createdAt: comment.created_at, // Transform created_at to createdAt
@@ -451,10 +456,14 @@ export default function Feed() {
         avatar: ''
       },
       likesCount: comment.likesCount || 0,
-      likedByCurrentUser: comment.isLiked || false
-    })) || [];
+      likedByCurrentUser: comment.isLiked || false,
+      replies: comment.replies?.map(transformComment) || [] // Recursively transform replies
+    });
 
-    console.log('🔄 Transformed comments:', transformedComments);
+    // Transform the response to match frontend interface
+    const transformedComments = result.comments?.map(transformComment) || [];
+
+    console.log('🔄 Transformed comments with nesting:', transformedComments);
     return transformedComments;
   };
 
@@ -501,11 +510,12 @@ export default function Feed() {
     likeMutation.mutate(postId);
   };
 
-  const handleComment = (postId: string) => {
-    const content = commentInputs[postId]?.trim();
+  const handleComment = (postId: string, parentCommentId?: string, replyContent?: string) => {
+    // For replies, use the provided replyContent; for top-level comments, use commentInputs
+    const content = replyContent?.trim() || commentInputs[postId]?.trim();
     if (!content) return;
 
-    commentMutation.mutate({ postId, content });
+    commentMutation.mutate({ postId, content, parentCommentId });
   };
 
   const handleDeletePost = (postId: string) => {
@@ -839,7 +849,7 @@ export default function Feed() {
                         session={session}
                         commentInput={commentInputs[post.id] || ''}
                         onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                        onSubmitComment={() => handleComment(post.id)}
+                        onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
                         isSubmitting={commentMutation.isPending}
                         currentUserId={user?.id}
                         onDeleteComment={handleDeleteComment}
