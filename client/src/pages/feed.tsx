@@ -347,10 +347,12 @@ export default function Feed() {
   // Comment like mutation (feature flagged)
   const commentLikeMutation = useMutation({
     mutationFn: async (commentId: string) => {
+      console.log('💗 Comment like mutation start:', { commentId, isLiked: likedComments.has(commentId) });
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const isCurrentlyLiked = likedComments.has(commentId);
       const method = isCurrentlyLiked ? 'DELETE' : 'POST';
+      console.log('💗 Sending comment like request:', { method, commentId });
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-comment-like`, {
         method,
@@ -361,11 +363,16 @@ export default function Feed() {
         body: JSON.stringify({ comment_id: commentId }),
       });
 
+      console.log('💗 Comment like response:', { status: response.status, ok: response.ok });
+      
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('💗 Comment like error response:', errorText);
         throw new Error(errorText || 'Failed to toggle comment like');
       }
-      return await response.json();
+      const result = await response.json();
+      console.log('💗 Comment like success:', result);
+      return result;
     },
     onMutate: async (commentId) => {
       // Optimistic update
