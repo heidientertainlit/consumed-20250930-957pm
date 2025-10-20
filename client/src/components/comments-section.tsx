@@ -47,6 +47,7 @@ export default function CommentsSection({
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
+  console.log('💜 Comment likes enabled:', commentLikesEnabled, 'onLikeComment:', !!onLikeComment);
   const { data: comments, isLoading } = useQuery({
     queryKey: ["post-comments", postId],
     queryFn: () => fetchComments(postId),
