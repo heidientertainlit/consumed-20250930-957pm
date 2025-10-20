@@ -346,12 +346,11 @@ export default function Feed() {
 
   // Comment like mutation (feature flagged)
   const commentLikeMutation = useMutation({
-    mutationFn: async (commentId: string) => {
-      console.log('💗 Comment like mutation start:', { commentId, isLiked: likedComments.has(commentId) });
+    mutationFn: async ({ commentId, wasLiked }: { commentId: string; wasLiked: boolean }) => {
+      console.log('💗 Comment like mutation start:', { commentId, wasLiked });
       if (!session?.access_token) throw new Error('Not authenticated');
       
-      const isCurrentlyLiked = likedComments.has(commentId);
-      const method = isCurrentlyLiked ? 'DELETE' : 'POST';
+      const method = wasLiked ? 'DELETE' : 'POST';
       console.log('💗 Sending comment like request:', { method, commentId });
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-comment-like`, {
@@ -374,17 +373,23 @@ export default function Feed() {
       console.log('💗 Comment like success:', result);
       return result;
     },
-    onMutate: async (commentId) => {
+    onMutate: async ({ commentId }) => {
+      // Capture current state before optimistic update
+      const wasLiked = likedComments.has(commentId);
+      
       // Optimistic update
       setLikedComments(prev => {
         const newSet = new Set(prev);
-        if (newSet.has(commentId)) {
+        if (wasLiked) {
           newSet.delete(commentId);
         } else {
           newSet.add(commentId);
         }
         return newSet;
       });
+      
+      // Return context for potential rollback
+      return { wasLiked };
     },
     onSuccess: (data, commentId) => {
       // Invalidate comments query to get updated like counts
@@ -392,15 +397,16 @@ export default function Feed() {
       // For now, invalidate all post comments queries
       queryClient.invalidateQueries({ queryKey: ["post-comments"] });
     },
-    onError: (error, commentId) => {
+    onError: (error, { commentId }, context) => {
       console.error('Comment like error:', error);
-      // Revert optimistic update on error
+      // Revert optimistic update on error using saved context
+      const wasLiked = context?.wasLiked ?? false;
       setLikedComments(prev => {
         const newSet = new Set(prev);
-        if (newSet.has(commentId)) {
-          newSet.delete(commentId);
+        if (wasLiked) {
+          newSet.add(commentId); // Restore to liked state
         } else {
-          newSet.add(commentId);
+          newSet.delete(commentId); // Restore to not liked state
         }
         return newSet;
       });
@@ -516,7 +522,8 @@ export default function Feed() {
 
   const handleLikeComment = (commentId: string) => {
     if (!commentLikesEnabled) return; // Safety check
-    commentLikeMutation.mutate(commentId);
+    const wasLiked = likedComments.has(commentId);
+    commentLikeMutation.mutate({ commentId, wasLiked });
   };
 
   const toggleComments = (postId: string) => {
