@@ -4,12 +4,12 @@
 -- Step 1: Add likes_count and parent_comment_id to social_post_comments
 ALTER TABLE social_post_comments 
   ADD COLUMN IF NOT EXISTS likes_count INTEGER NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS parent_comment_id UUID REFERENCES social_post_comments(id) ON DELETE CASCADE;
+  ADD COLUMN IF NOT EXISTS parent_comment_id INTEGER REFERENCES social_post_comments(id) ON DELETE CASCADE;
 
 -- Step 2: Create social_comment_likes table (many-to-many relationship)
 CREATE TABLE IF NOT EXISTS social_comment_likes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  comment_id UUID NOT NULL REFERENCES social_post_comments(id) ON DELETE CASCADE,
+  id SERIAL PRIMARY KEY,
+  comment_id INTEGER NOT NULL REFERENCES social_post_comments(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   
