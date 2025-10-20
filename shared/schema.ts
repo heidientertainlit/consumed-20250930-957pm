@@ -102,6 +102,7 @@ export const predictionPools = pgTable("prediction_pools", {
   category: text("category").notNull(),
   icon: text("icon").notNull(),
   options: jsonb("options"), // Array of options
+  correctAnswer: text("correct_answer"), // For trivia: stores the correct answer
   inline: boolean("inline"),
   participants: integer("participants"),
   createdAt: timestamp("created_at"),

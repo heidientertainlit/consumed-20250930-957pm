@@ -178,7 +178,7 @@ serve(async (req) => {
       // Check if pool is still open for predictions
       const { data: pool } = await supabase
         .from('prediction_pools')
-        .select('status, points_reward, type, options')
+        .select('status, points_reward, type, options, correct_answer')
         .eq('id', pool_id)
         .single();
 
@@ -206,9 +206,14 @@ serve(async (req) => {
         } 
         // For quick trivia (2 options), check if answer is correct
         else if (Array.isArray(pool.options) && pool.options.length === 2 && typeof pool.options[0] === 'string') {
-          // Quick trivia - check correct answer stored in options[2] if exists
-          const correctAnswer = pool.options[2] || pool.options[0]; // Default to first option if no correct answer stored
-          pointsEarned = prediction === correctAnswer ? pool.points_reward : 0;
+          // Quick trivia - check correct answer from correct_answer field
+          const correctAnswer = pool.correct_answer;
+          if (!correctAnswer) {
+            console.warn(`No correct_answer set for trivia pool ${pool_id}`);
+            pointsEarned = 0;
+          } else {
+            pointsEarned = prediction === correctAnswer ? pool.points_reward : 0;
+          }
         }
       }
 
