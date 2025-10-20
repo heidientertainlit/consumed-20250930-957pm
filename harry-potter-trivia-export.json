@@ -1,0 +1,63 @@
+{
+  "id": "trivia-harry-potter-easy",
+  "title": "Harry Potter Trivia - Easy Level",
+  "description": "Test your basic Harry Potter knowledge with 10 easy questions!",
+  "type": "trivia",
+  "points_reward": 100,
+  "deadline": "2025-12-31",
+  "status": "open",
+  "category": "book",
+  "icon": "⚡",
+  "questions": [
+    {
+      "question": "What house is Harry Potter in?",
+      "options": ["Gryffindor", "Slytherin", "Hufflepuff", "Ravenclaw"],
+      "correct": "Gryffindor"
+    },
+    {
+      "question": "What is Hermione's last name?",
+      "options": ["Granger", "Weasley", "Potter", "Malfoy"],
+      "correct": "Granger"
+    },
+    {
+      "question": "Who is Harry's best friend?",
+      "options": ["Ron Weasley", "Draco Malfoy", "Neville Longbottom", "Dean Thomas"],
+      "correct": "Ron Weasley"
+    },
+    {
+      "question": "What is the name of Harry's owl?",
+      "options": ["Hedwig", "Scabbers", "Crookshanks", "Fawkes"],
+      "correct": "Hedwig"
+    },
+    {
+      "question": "Who is the headmaster of Hogwarts?",
+      "options": ["Albus Dumbledore", "Severus Snape", "Minerva McGonagall", "Rubeus Hagrid"],
+      "correct": "Albus Dumbledore"
+    },
+    {
+      "question": "What platform do students use to catch the Hogwarts Express?",
+      "options": ["Platform 9¾", "Platform 10", "Platform 8½", "Platform 11"],
+      "correct": "Platform 9¾"
+    },
+    {
+      "question": "What is the name of the wizarding bank?",
+      "options": ["Gringotts", "Diagon Alley", "Hogsmeade", "Knockturn Alley"],
+      "correct": "Gringotts"
+    },
+    {
+      "question": "What are non-magical people called?",
+      "options": ["Muggles", "Squibs", "Wizards", "Dementors"],
+      "correct": "Muggles"
+    },
+    {
+      "question": "What position does Harry play in Quidditch?",
+      "options": ["Seeker", "Keeper", "Beater", "Chaser"],
+      "correct": "Seeker"
+    },
+    {
+      "question": "Who is Harry's godfather?",
+      "options": ["Sirius Black", "Remus Lupin", "James Potter", "Peter Pettigrew"],
+      "correct": "Sirius Black"
+    }
+  ]
+}
