@@ -35,6 +35,7 @@ serve(async (req) => {
       // Get comments for a post
       const url = new URL(req.url);
       const post_id = url.searchParams.get('post_id');
+      const includeMeta = url.searchParams.get('include') === 'meta'; // Feature flag support
 
       if (!post_id) {
         return new Response(JSON.stringify({ error: 'Missing post_id' }), {
@@ -56,6 +57,7 @@ serve(async (req) => {
           content,
           created_at,
           user_id,
+          likes_count,
           users!inner(user_name, email)
         `)
         .eq('social_post_id', post_id)
@@ -68,10 +70,30 @@ serve(async (req) => {
         });
       }
 
-      const transformedComments = comments?.map(comment => ({
+      let transformedComments = comments?.map(comment => ({
         ...comment,
         username: comment.users?.user_name || comment.users?.email?.split('@')[0]
       }));
+
+      // If include=meta, add like metadata for each comment
+      if (includeMeta && transformedComments) {
+        const commentIds = transformedComments.map(c => c.id);
+        
+        // Get current user's likes for all comments
+        const { data: userLikes } = await serviceSupabase
+          .from('social_comment_likes')
+          .select('comment_id')
+          .in('comment_id', commentIds)
+          .eq('user_id', user.id);
+
+        const likedCommentIds = new Set(userLikes?.map(l => l.comment_id) || []);
+
+        transformedComments = transformedComments.map(comment => ({
+          ...comment,
+          likesCount: comment.likes_count || 0,
+          likedByCurrentUser: likedCommentIds.has(comment.id)
+        }));
+      }
 
       return new Response(JSON.stringify({ comments: transformedComments }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
