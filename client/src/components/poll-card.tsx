@@ -22,6 +22,7 @@ interface Poll {
   total_votes: number;
   options: PollOption[];
   expires_at?: string;
+  user_has_voted?: boolean;
 }
 
 interface PollCardProps {
@@ -34,13 +35,15 @@ interface PollCardProps {
 export default function PollCard({ poll, onVote, hasVoted = false, userVote }: PollCardProps) {
   const [selectedOption, setSelectedOption] = useState<number | null>(userVote || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showResults, setShowResults] = useState(hasVoted);
+  const [showResults, setShowResults] = useState(hasVoted || poll.user_has_voted);
   const [justSubmitted, setJustSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleVote = async (optionId: number) => {
     if (showResults || isSubmitting) return;
 
     setIsSubmitting(true);
+    setErrorMessage(null);
     try {
       await onVote(poll.id, optionId);
       setSelectedOption(optionId);
@@ -50,8 +53,15 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
         setJustSubmitted(false);
         setShowResults(true);
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to vote:", error);
+      // Check if already voted
+      if (error?.message?.includes('already voted') || error?.response?.status === 400) {
+        setShowResults(true);
+        setErrorMessage("You've already voted in this poll");
+      } else {
+        setErrorMessage("Failed to submit vote. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -209,6 +219,13 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
           >
             Learn More
           </Button>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{errorMessage}</p>
         </div>
       )}
 
