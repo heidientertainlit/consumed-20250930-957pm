@@ -435,7 +435,9 @@ export default function Feed() {
         username: comment.username,
         displayName: comment.username, // Use username as displayName for now
         avatar: ''
-      }
+      },
+      likesCount: comment.likesCount || 0,
+      likedByCurrentUser: comment.isLiked || false
     })) || [];
 
     console.log('🔄 Transformed comments:', transformedComments);
