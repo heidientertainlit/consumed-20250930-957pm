@@ -650,13 +650,10 @@ export default function UserProfile() {
 
       if (response.ok) {
         const data = await response.json();
-        // Show ONLY the system default lists (exclude "All" but include the 4 main ones)
-        const systemLists = data.lists?.filter((list: any) => 
-          list.id !== 'all' && 
-          ['Currently', 'Queue', 'Finished', 'Did Not Finish'].includes(list.title)
-        ) || [];
-        setUserLists(systemLists);
-        console.log('User lists loaded:', systemLists);
+        // Keep all lists including "All" for accurate item count calculation
+        // Filter is only for display purposes in some sections
+        setUserLists(data.lists || []);
+        console.log('User lists loaded:', data.lists?.length);
       } else {
         console.error('Failed to fetch user lists');
         setUserLists([]);
@@ -2574,7 +2571,7 @@ export default function UserProfile() {
             </div>
           ) : (
             <div className="space-y-4">
-              {userLists.map((list) => (
+              {userLists.filter(list => list.id !== 'all').map((list) => (
                 <div 
                   key={list.id} 
                   className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
