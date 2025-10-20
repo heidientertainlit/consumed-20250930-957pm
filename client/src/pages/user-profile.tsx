@@ -1477,10 +1477,8 @@ export default function UserProfile() {
 
   const availableYears = getAvailableYears();
 
-  // Calculate total items logged from all lists (exclude the 'All' aggregation list)
-  const totalItemsLogged = userLists
-    .filter(list => list.id !== 'all')
-    .reduce((acc, list) => acc + (list.items?.length || 0), 0);
+  // Calculate total items logged from the 'All' list (which contains all unique items)
+  const totalItemsLogged = userLists.find(list => list.id === 'all')?.items?.length || 0;
 
 
   return (

@@ -153,9 +153,7 @@ export default function Track() {
   });
 
   const consumptionStats = {
-    totalLogged: userLists
-      .filter((list: any) => list.id !== 'all')
-      .reduce((total: number, list: any) => total + (list.items?.length || 0), 0),
+    totalLogged: userLists.find((list: any) => list.id === 'all')?.items?.length || 0,
     pointsEarned: userPointsData?.points?.all_time || 0, // Use actual points from Supabase
   };
 
