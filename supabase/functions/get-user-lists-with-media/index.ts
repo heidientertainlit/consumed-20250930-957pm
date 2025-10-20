@@ -129,7 +129,7 @@ serve(async (req) => {
         lists: userSystemLists?.map(l => l.title)
       });
 
-      // AUTO-MIGRATION: Ensure user has ALL required system lists (backfill missing ones)
+      // FILTER: Only include the 5 standard system lists, exclude old duplicates
       const requiredSystemLists = [
         'Currently',
         'Queue',
@@ -138,7 +138,12 @@ serve(async (req) => {
         'Favorites'
       ];
 
-      const existingTitles = new Set(userSystemLists?.map(l => l.title) || []);
+      // Filter to only include standard system lists (ignore old lists like "Completed", "Currently Watching", etc.)
+      const filteredSystemLists = (userSystemLists || []).filter(list => 
+        requiredSystemLists.includes(list.title)
+      );
+
+      const existingTitles = new Set(filteredSystemLists.map(l => l.title));
       const missingLists = requiredSystemLists.filter(title => !existingTitles.has(title));
 
       if (missingLists.length > 0) {
@@ -175,7 +180,7 @@ serve(async (req) => {
           }
         }
 
-        // Re-fetch all system lists after backfill
+        // Re-fetch and filter system lists after backfill
         const { data: updatedSystemLists } = await supabase
           .from('lists')
           .select('id, title, is_private')
@@ -183,10 +188,13 @@ serve(async (req) => {
           .eq('is_default', true)
           .order('title');
         
-        systemLists = updatedSystemLists || [];
+        // Filter again to only include standard lists
+        systemLists = (updatedSystemLists || []).filter(list => 
+          requiredSystemLists.includes(list.title)
+        );
         console.log('System lists after backfill:', systemLists.length);
       } else {
-        systemLists = userSystemLists;
+        systemLists = filteredSystemLists;
       }
 
       // Fetch custom lists (is_default = false or null)
