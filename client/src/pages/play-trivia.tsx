@@ -174,10 +174,9 @@ export default function PlayTriviaPage() {
           </p>
         </div>
 
-        {/* LOW STAKES Section */}
+        {/* Trivia Games Section */}
         {lowStakesGames.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Low Stakes</h2>
             <div className="space-y-4">
               {lowStakesGames.map((game: any) => (
                 <Card key={game.id} className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
