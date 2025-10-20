@@ -87,6 +87,16 @@ export const socialPostComments = pgTable("social_post_comments", {
   postId: varchar("post_id").notNull().references(() => socialPosts.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
+  likesCount: integer("likes_count").notNull().default(0),
+  parentCommentId: varchar("parent_comment_id").references((): any => socialPostComments.id, { onDelete: "cascade" }), // For nested replies (Phase 2)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Comment likes table (many-to-many relationship)
+export const socialCommentLikes = pgTable("social_comment_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  commentId: varchar("comment_id").notNull().references(() => socialPostComments.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -206,6 +216,12 @@ export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
 
 export const insertSocialPostCommentSchema = createInsertSchema(socialPostComments).omit({
   id: true,
+  likesCount: true,
+  createdAt: true,
+});
+
+export const insertSocialCommentLikeSchema = createInsertSchema(socialCommentLikes).omit({
+  id: true,
   createdAt: true,
 });
 
@@ -259,6 +275,8 @@ export type SocialPost = typeof socialPosts.$inferSelect;
 export type InsertSocialPost = z.infer<typeof insertSocialPostSchema>;
 export type SocialPostComment = typeof socialPostComments.$inferSelect;
 export type InsertSocialPostComment = z.infer<typeof insertSocialPostCommentSchema>;
+export type SocialCommentLike = typeof socialCommentLikes.$inferSelect;
+export type InsertSocialCommentLike = z.infer<typeof insertSocialCommentLikeSchema>;
 export type PredictionPool = typeof predictionPools.$inferSelect;
 export type InsertPredictionPool = z.infer<typeof insertPredictionPoolSchema>;
 export type PredictionResult = typeof predictionResults.$inferSelect;
