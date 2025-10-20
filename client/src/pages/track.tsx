@@ -152,10 +152,17 @@ export default function Track() {
     enabled: !!session?.access_token,
   });
 
+  // Debug: Log all lists and their counts
+  console.log('📊 All lists:', userLists.map((list: any) => `${list.title}: ${list.items?.length || 0} items`));
+  
+  const listsToCount = userLists.filter((list: any) => list.id !== 'all');
+  console.log('📊 Lists being counted (excluding All):', listsToCount.map((list: any) => `${list.title}: ${list.items?.length || 0} items`));
+  
+  const totalCount = listsToCount.reduce((total: number, list: any) => total + (list.items?.length || 0), 0);
+  console.log('📊 Total items count:', totalCount);
+
   const consumptionStats = {
-    totalLogged: userLists
-      .filter((list: any) => list.id !== 'all')
-      .reduce((total: number, list: any) => total + (list.items?.length || 0), 0),
+    totalLogged: totalCount,
     pointsEarned: userPointsData?.points?.all_time || 0, // Use actual points from Supabase
   };
 
