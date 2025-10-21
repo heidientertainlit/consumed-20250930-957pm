@@ -236,11 +236,6 @@ export const insertPollSchema = createInsertSchema(polls).omit({
   updatedAt: true,
 });
 
-export const insertPollOptionSchema = createInsertSchema(pollOptions).omit({
-  id: true,
-  createdAt: true,
-});
-
 export const insertPollResponseSchema = createInsertSchema(pollResponses).omit({
   id: true,
   createdAt: true,
@@ -275,8 +270,6 @@ export type UserPrediction = typeof userPredictions.$inferSelect;
 export type InsertUserPrediction = z.infer<typeof insertUserPredictionSchema>;
 export type Poll = typeof polls.$inferSelect;
 export type InsertPoll = z.infer<typeof insertPollSchema>;
-export type PollOption = typeof pollOptions.$inferSelect;
-export type InsertPollOption = z.infer<typeof insertPollOptionSchema>;
 export type PollResponse = typeof pollResponses.$inferSelect;
 export type InsertPollResponse = z.infer<typeof insertPollResponseSchema>;
 export type CachedRecommendations = typeof cachedRecommendations.$inferSelect;
