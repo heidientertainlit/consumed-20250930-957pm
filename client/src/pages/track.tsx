@@ -692,16 +692,18 @@ export default function Track() {
         <DialogContent className="sm:max-w-md bg-white text-black">
           <DialogHeader>
             <DialogTitle className="text-black">Import History</DialogTitle>
-            <DialogDescription className="text-gray-600">
-              Import your entertainment history from Netflix or Goodreads. Upload a CSV or ZIP file to get started.
-              <button
-                onClick={() => setIsHelpModalOpen(true)}
-                className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-700 underline"
-              >
-                <HelpCircle className="h-3 w-3 mr-1" />
-                How to download
-              </button>
-              <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
+            <DialogDescription className="text-gray-600 space-y-3">
+              <div>
+                Import your entertainment history from Netflix or Goodreads. Upload a CSV or ZIP file to get started.
+                <button
+                  onClick={() => setIsHelpModalOpen(true)}
+                  className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-700 underline"
+                >
+                  <HelpCircle className="h-3 w-3 mr-1" />
+                  How to download
+                </button>
+              </div>
+              <div className="pt-3 border-t border-gray-200 text-sm">
                 Have history from other sources? Email it to{' '}
                 <a 
                   href="mailto:heidi@consumedapp.com" 
