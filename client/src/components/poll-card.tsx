@@ -39,14 +39,19 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleVote = async (optionId: number) => {
-    if (showResults || isSubmitting) return;
+  const handleSelectOption = (optionId: number) => {
+    if (showResults) return;
+    setSelectedOption(optionId);
+    setErrorMessage(null);
+  };
+
+  const handleSubmitVote = async () => {
+    if (!selectedOption || showResults || isSubmitting) return;
 
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
-      await onVote(poll.id, optionId);
-      setSelectedOption(optionId);
+      await onVote(poll.id, selectedOption);
       setJustSubmitted(true);
       // Show success message for 2 seconds before showing results
       setTimeout(() => {
@@ -113,7 +118,7 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-100 p-4 shadow-sm" data-testid={`poll-${poll.id}`}>
+    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-100 p-4 shadow-sm mb-4" data-testid={`poll-${poll.id}`}>
       {/* Header with badge */}
       <div className="flex items-center justify-between mb-3">
         <div className={cn(
@@ -155,14 +160,16 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
           return (
             <button
               key={option.id}
-              onClick={() => !showResults && handleVote(option.id)}
-              disabled={showResults || isSubmitting}
+              onClick={() => !showResults && handleSelectOption(option.id)}
+              disabled={showResults}
               className={cn(
                 "w-full text-left p-3 rounded-lg border transition-all duration-200 relative overflow-hidden bg-white",
                 showResults
                   ? "cursor-default"
                   : "hover:border-purple-300 hover:bg-purple-50 cursor-pointer",
-                isSelected && showResults
+                isSelected && !showResults
+                  ? "border-purple-500 bg-purple-50 ring-2 ring-purple-200"
+                  : isSelected && showResults
                   ? "border-purple-400 bg-purple-50"
                   : "border-purple-100"
               )}
@@ -208,6 +215,18 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
           );
         })}
       </div>
+
+      {/* Submit Button */}
+      {!showResults && (
+        <Button
+          onClick={handleSubmitVote}
+          disabled={!selectedOption || isSubmitting}
+          className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid={`poll-${poll.id}-submit`}
+        >
+          {isSubmitting ? "Submitting..." : "Submit Vote"}
+        </Button>
+      )}
 
       {/* Sponsor CTA */}
       {poll.type === "sponsored" && poll.sponsor_cta_url && showResults && (
