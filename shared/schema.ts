@@ -67,19 +67,22 @@ export const dnaProfiles = pgTable("dna_profiles", {
 export const socialPosts = pgTable("social_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  mediaTitle: text("media_title").notNull(),
-  mediaType: text("media_type").notNull(),
+  content: text("content"),
+  postType: text("post_type").default("update"),
+  rating: integer("rating"),
+  progress: integer("progress"),
+  mediaTitle: text("media_title"),
+  mediaType: text("media_type"),
   mediaCreator: text("media_creator"),
-  mediaImage: text("media_image"),
+  imageUrl: text("image_url"),
   mediaExternalId: text("media_external_id"),
   mediaExternalSource: text("media_external_source"),
   mediaDescription: text("media_description"),
-  rating: decimal("rating"),
-  thoughts: text("thoughts"),
-  audience: text("audience").default("all"), // 'all' or 'top-fans'
-  likes: integer("likes").default(0),
-  comments: integer("comments").default(0),
+  visibility: text("visibility").default("public"),
+  likesCount: integer("likes_count").default(0),
+  commentsCount: integer("comments_count").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const socialPostComments = pgTable("social_post_comments", {
@@ -199,9 +202,10 @@ export const insertListSchema = createInsertSchema(lists).omit({
 
 export const insertSocialPostSchema = createInsertSchema(socialPosts).omit({
   id: true,
-  likes: true,
-  comments: true,
+  likesCount: true,
+  commentsCount: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertSocialPostCommentSchema = createInsertSchema(socialPostComments).omit({

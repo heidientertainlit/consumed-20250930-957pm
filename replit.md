@@ -82,11 +82,9 @@ The application employs a modern full-stack architecture with a clear separation
 
 ### System Design Choices
 -   **Database Schema (Critical Naming Conventions)**:
-    -   **CRITICAL WARNING**: The Replit development database schema is DIFFERENT from the production Supabase database. ALWAYS use the production schema column names when writing edge functions.
-    -   **social_posts table (PRODUCTION SCHEMA - USE THIS)**:
+    -   **SYNCED (October 21, 2025)**: Development and production databases now use the same schema.
+    -   **social_posts table**:
         -   Columns: `id` (uuid), `user_id` (uuid), `content` (text), `post_type` (text), `rating` (integer), `progress` (integer), `created_at` (timestamp), `updated_at` (timestamp), `likes_count` (integer), `comments_count` (integer), `media_title` (text), `media_type` (text), `media_creator` (text), `image_url` (text), `media_external_id` (text), `media_external_source` (text), `media_description` (text), `visibility` (text)
-        -   **DO NOT use**: `thoughts` or `media_image` - these columns DO NOT exist in production
-        -   **ALWAYS use**: `content` and `image_url` - these are the correct production column names
     -   `users` table: `id`, `email`, `user_name` (CRITICAL: always use `user_name`, never `username`), `display_name`, `password`, `avatar`, `bio`, `is_admin`, `created_at`, `first_name`, `last_name`, `computed_favorite_media_types`, `computed_favorite_genres`.
     -   `list_items` table: `id`, `list_id`, `user_id`, `title`, `type`, `creator`, `image_url`, `notes` (NOT `review`), `created_at` (NOT `added_at`), `media_type`, `media_id`.
     -   `lists` table (UPDATED October 2025): 
