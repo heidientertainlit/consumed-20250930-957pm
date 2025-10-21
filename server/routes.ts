@@ -198,14 +198,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const poll = await pollsDb.getPollWithResults(parseInt(pollId));
       const pointsToAward = poll.points_reward || 5;
       
-      // Update user points (add to all_time points)
-      await sql`
-        INSERT INTO user_points (user_id, category, points)
-        VALUES (${userId}, 'all_time', ${pointsToAward})
-        ON CONFLICT (user_id, category)
-        DO UPDATE SET points = user_points.points + ${pointsToAward}
-      `;
-
+      // TODO: Update user points in Supabase (for now, just return success)
+      // Points will be tracked via poll_responses table
+      
       res.json({ ...poll, pointsAwarded: pointsToAward });
     } catch (error) {
       console.error('Vote submission error:', error);

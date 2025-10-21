@@ -257,24 +257,44 @@ export default function Feed() {
     },
   });
 
-  // Poll vote mutation
+  // Poll vote mutation (direct Supabase - matches prediction_pools pattern)
   const pollVoteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: number; optionId: number }) => {
       if (!session?.access_token || !user?.id) throw new Error('Not authenticated');
       
-      const response = await fetch(`/api/polls/${pollId}/vote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id, optionId }),
-      });
-
-      if (!response.ok) throw new Error('Failed to vote');
-      return response.json();
+      // Get poll details for points
+      const { data: poll } = await supabase
+        .from('polls')
+        .select('points_reward')
+        .eq('id', pollId)
+        .single();
+      
+      // Insert vote into poll_responses
+      const { data, error } = await supabase
+        .from('poll_responses')
+        .insert({
+          poll_id: pollId,
+          option_id: optionId,
+          user_id: user.id
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        // Check for duplicate vote
+        if (error.code === '23505') {
+          throw new Error('You have already voted in this poll');
+        }
+        throw new Error('Failed to submit vote');
+      }
+      
+      return { success: true, pointsAwarded: poll?.points_reward || 5 };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/polls", user?.id] });
+      if (data?.pointsAwarded) {
+        console.log(`✅ Poll vote submitted! Earned ${data.pointsAwarded} points`);
+      }
     },
   });
 
