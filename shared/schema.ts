@@ -135,7 +135,7 @@ export const userPredictions = pgTable("user_predictions", {
   createdAt: timestamp("created_at"),
 });
 
-// Polls system tables
+// Polls system tables (aligned with prediction_pools pattern)
 export const polls = pgTable("polls", {
   id: serial("id").primaryKey(),
   question: text("question").notNull(),
@@ -145,27 +145,17 @@ export const polls = pgTable("polls", {
   sponsorCtaUrl: text("sponsor_cta_url"),
   status: text("status").notNull().default("draft"), // 'draft', 'active', 'archived'
   pointsReward: integer("points_reward").notNull().default(5),
+  options: jsonb("options"), // Array of {id, label, description, imageUrl}
   expiresAt: timestamp("expires_at"),
   createdBy: varchar("created_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const pollOptions = pgTable("poll_options", {
-  id: serial("id").primaryKey(),
-  pollId: integer("poll_id").notNull().references(() => polls.id, { onDelete: "cascade" }),
-  label: text("label").notNull(),
-  description: text("description"),
-  orderIndex: integer("order_index").notNull().default(0),
-  imageUrl: text("image_url"),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
 export const pollResponses = pgTable("poll_responses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   pollId: integer("poll_id").notNull().references(() => polls.id, { onDelete: "cascade" }),
-  optionId: integer("option_id").notNull().references(() => pollOptions.id, { onDelete: "cascade" }),
+  optionId: integer("option_id").notNull(), // Now just stores ID, no FK to poll_options
   userId: varchar("user_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
