@@ -44,6 +44,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setTimeout(() => {
               window.location.href = returnUrl
             }, 100)
+          } else {
+            // For new signups without returnUrl, redirect to onboarding
+            // The ProtectedRoute will check if DNA profile exists
+            setTimeout(() => {
+              window.location.href = '/feed'
+            }, 100)
           }
         }
       }

@@ -10,6 +10,7 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
   const { user, loading, session } = useAuth();
   const [location, setLocation] = useLocation();
   const [checkingDNA, setCheckingDNA] = useState(true);
+  const [dnaChecked, setDnaChecked] = useState(false); // Prevent loop
 
   useEffect(() => {
     if (!loading && !user) {
@@ -25,6 +26,12 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
   // Check if user has completed DNA survey (skip check on onboarding page)
   useEffect(() => {
     const checkDNAProfile = async () => {
+      // Don't check again if already checked
+      if (dnaChecked) {
+        setCheckingDNA(false);
+        return;
+      }
+
       if (!user || !session) {
         setCheckingDNA(false);
         return;
@@ -33,38 +40,39 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
       // Skip check if already on onboarding page
       if (location === '/onboarding') {
         setCheckingDNA(false);
+        setDnaChecked(true);
         return;
       }
 
       try {
-        // Check dna_profiles table instead of users table
-        const response = await fetch(
-          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/dna_profiles?select=id&user_id=eq.${user.id}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0MDA1NDMsImV4cCI6MjA1MDk3NjU0M30.AEnCfg4VgwPmhTOK-K2gIOcY7y-l-KJdnvBPdC3WcYM',
-            },
-          }
-        );
+        // Use supabase client instead of fetch to avoid auth issues
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase
+          .from('dna_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        if (response.ok) {
-          const data = await response.json();
-          // Redirect to onboarding if no DNA profile exists
-          if (!data || data.length === 0) {
-            console.log('No DNA profile found, redirecting to onboarding');
-            setLocation('/onboarding');
-          }
+        if (error) {
+          console.error('DNA check error:', error);
+          // On error, allow user through
+        } else if (!data) {
+          console.log('🎯 No DNA profile found, redirecting to onboarding');
+          setLocation('/onboarding');
+        } else {
+          console.log('✅ DNA profile exists, user can proceed');
         }
       } catch (error) {
         console.error('Error checking DNA profile:', error);
+        // On error, allow user through
       } finally {
         setCheckingDNA(false);
+        setDnaChecked(true); // Mark as checked
       }
     };
 
     checkDNAProfile();
-  }, [user, session, location, setLocation]);
+  }, [user, session, location]);
 
   if (loading || !user || checkingDNA) {
     return (
