@@ -99,6 +99,42 @@ serve(async (req) => {
     // Count items with reviews (notes field)
     const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
 
+    // Get user's prediction/trivia points
+    const { data: predictions } = await supabase
+      .from('user_predictions')
+      .select('points_earned')
+      .eq('user_id', appUser.id);
+
+    const predictionPoints = (predictions || [])
+      .reduce((sum, pred) => sum + (pred.points_earned || 0), 0);
+
+    // Get user's poll votes with points
+    const { data: pollVotes } = await supabase
+      .from('poll_responses')
+      .select('poll_id')
+      .eq('user_id', appUser.id);
+
+    // Get poll points for each vote
+    let pollPoints = 0;
+    if (pollVotes && pollVotes.length > 0) {
+      const pollIds = [...new Set(pollVotes.map(v => v.poll_id))];
+      const { data: polls } = await supabase
+        .from('polls')
+        .select('id, points_reward')
+        .in('id', pollIds);
+      
+      if (polls) {
+        const pollPointsMap = polls.reduce((acc: any, p: any) => {
+          acc[p.id] = p.points_reward || 5;
+          return acc;
+        }, {});
+        
+        pollPoints = pollVotes.reduce((sum, vote) => {
+          return sum + (pollPointsMap[vote.poll_id] || 5);
+        }, 0);
+      }
+    }
+
     // Calculate totals
     const bookPoints = books.length * 15;
     const moviePoints = movies.length * 8;
@@ -108,7 +144,7 @@ serve(async (req) => {
     const gamePoints = games.length * 5;
     const reviewPoints = reviews.length * 10;
 
-    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints;
+    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + pollPoints;
 
     // Create the points data - we'll use a simple user_points table with category and points
     const pointsData = [
@@ -119,7 +155,9 @@ serve(async (req) => {
       { user_id: appUser.id, category: 'music', points: musicPoints },
       { user_id: appUser.id, category: 'podcasts', points: podcastPoints },
       { user_id: appUser.id, category: 'games', points: gamePoints },
-      { user_id: appUser.id, category: 'reviews', points: reviewPoints }
+      { user_id: appUser.id, category: 'reviews', points: reviewPoints },
+      { user_id: appUser.id, category: 'predictions', points: predictionPoints },
+      { user_id: appUser.id, category: 'polls', points: pollPoints }
     ];
 
     // First try to create the user_points table if it doesn't exist (this might fail, that's ok)
@@ -147,7 +185,9 @@ serve(async (req) => {
         music: musicPoints,
         podcasts: podcastPoints,
         games: gamePoints,
-        reviews: reviewPoints
+        reviews: reviewPoints,
+        predictions: predictionPoints,
+        polls: pollPoints
       },
       counts: {
         books: books.length,
@@ -157,6 +197,8 @@ serve(async (req) => {
         podcasts: podcasts.length,
         games: games.length,
         reviews: reviews.length,
+        predictions: predictions?.length || 0,
+        polls: pollVotes?.length || 0,
         total: listItems.length
       }
     }), {
