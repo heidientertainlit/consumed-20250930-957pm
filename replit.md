@@ -29,7 +29,8 @@ The application employs a modern full-stack architecture with a clear separation
 -   **Authentication**: Supabase Auth for user management, including password reset functionality.
 -   **User Management**: Users are auto-created in a custom `users` table upon first authentication, bridging `auth.users` and application user data.
 -   **Sharing System**: Unified sharing (`/src/lib/share.ts`) for lists, media, predictions, posts, and Entertainment DNA, controlled by the `VITE_FEATURE_SHARES` environment variable for deep linking versus text blurbs.
--   **Leaderboard System**: All leaderboard categories (media-based, game-based, fan points) are handled by a single `get-leaderboards` edge function for consistency and performance.
+-   **Leaderboard System**: All leaderboard categories (media-based, game-based, fan points, polls) are handled by a single `get-leaderboards` edge function for consistency and performance. Poll votes are counted in all_time, superstar, daily, and weekly leaderboards.
+-   **User Points System**: Central `calculate-user-points` edge function aggregates points from all activities: media tracking (books, movies, TV, music, podcasts, games), reviews, predictions/trivia games, and poll votes. Results stored in `user_points` table by category.
 -   **Trivia Scoring**: Points are awarded only for correct answers. Long-form trivia divides total points evenly per question (10 pts/question for 100pt game). Quick trivia awards full points for correct answer, zero for incorrect.
 
 ### Feature Specifications
@@ -68,14 +69,16 @@ The application employs a modern full-stack architecture with a clear separation
         -   **YouTube**: Direct YouTube link with "Find On" label
         -   **Books**: Links to Amazon, Goodreads, and Open Library with "Read On" label
         -   Platform logos and external links are displayed for each available platform
--   **Polls/Surveys System**: Database-backed polling system supporting branded (consumed/entertainlit) and sponsored polls with:
+-   **Polls/Surveys System (REFACTORED - October 21, 2025)**: Database-backed polling system supporting branded (consumed/entertainlit) and sponsored polls with:
+    -   **Architecture**: 2-table structure matching prediction_pools pattern (polls table with JSONB options column, poll_responses for vote tracking)
+    -   **Voting Flow**: Direct Supabase client-side voting with authenticated user context (bypasses Express, matches prediction_pools pattern)
     -   Real-time vote counting and percentage calculations
-    -   Duplicate vote prevention per user
-    -   Points rewards for participation
+    -   Duplicate vote prevention via unique constraint (poll_id, user_id) in poll_responses table
+    -   Points rewards for participation (5-10 points per poll)
     -   Sponsor branding and call-to-action support
     -   Poll lifecycle management (draft/active/archived statuses)
     -   Vote integrity validation (ensures options belong to their polls)
-    -   **Security Note**: Admin endpoints (poll creation/archiving) require authentication implementation (currently documented with TODO comments)
+    -   **Points Integration**: Poll votes counted in both leaderboards and user total points via calculate-user-points function
 
 ### System Design Choices
 -   **Database Schema (Critical Naming Conventions)**:
@@ -94,9 +97,8 @@ The application employs a modern full-stack architecture with a clear separation
         -   **Unique constraint**: (user_id, title) prevents duplicate lists per user
         -   Standard system lists: Currently, Queue, Finished, Did Not Finish, Favorites
         -   **Edge function inserts**: Only use `user_id`, `title`, `is_default`, `is_private` - NO description field
-    -   `polls` table: `id` (serial), `question`, `type` (consumed/entertainlit/sponsored), `sponsor_name`, `sponsor_logo_url`, `sponsor_cta_url`, `status` (draft/active/archived), `points_reward`, `expires_at`, `created_by`, `created_at`, `updated_at`.
-    -   `poll_options` table: `id` (serial), `poll_id`, `label`, `description`, `order_index`, `image_url`, `metadata`, `created_at`.
-    -   `poll_responses` table: `id` (UUID), `poll_id`, `option_id`, `user_id`, `created_at`.
+    -   `polls` table (REFACTORED October 21, 2025): `id` (serial), `question`, `type` (consumed/entertainlit/sponsored), `sponsor_name`, `sponsor_logo_url`, `sponsor_cta_url`, `status` (draft/active/archived), `points_reward`, `expires_at`, `created_by`, `created_at`, `updated_at`, `options` (JSONB array containing poll options with id, label, description fields).
+    -   `poll_responses` table: `id` (UUID), `poll_id`, `option_id` (references JSONB options[].id), `user_id`, `created_at`. Unique constraint on (poll_id, user_id) prevents duplicate votes.
 -   **Row Level Security (RLS)**: Strict RLS policies are implemented for `lists` and `list_items` to ensure data privacy and integrity.
     -   Lists SELECT: `auth.uid() = user_id OR visibility = 'public'`
     -   Lists MODIFY: `auth.uid() = user_id`
