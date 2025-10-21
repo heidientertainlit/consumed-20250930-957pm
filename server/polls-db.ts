@@ -18,12 +18,14 @@ export const pollsDb = {
 
   async getActivePolls(userId?: string) {
     // Get active polls
-    const { data: polls } = await supabase
+    const { data: polls, error } = await supabase
       .from('polls')
       .select('*')
       .eq('status', 'active')
       .or('expires_at.is.null,expires_at.gt.now()')
       .order('created_at', { ascending: false });
+    
+    console.log('📊 Supabase polls query:', { polls, error, count: polls?.length });
 
     if (!polls) return [];
 
@@ -31,11 +33,13 @@ export const pollsDb = {
     const pollsWithOptions = await Promise.all(
       polls.map(async (poll) => {
         // Get options with vote counts
-        const { data: options } = await supabase
+        const { data: options, error: optionsError } = await supabase
           .from('poll_options')
           .select('*')
           .eq('poll_id', poll.id)
           .order('order_index', { ascending: true });
+        
+        console.log(`📋 Options for poll ${poll.id}:`, { options, optionsError, count: options?.length });
 
         // Get total votes for this poll
         const { count: totalVotes } = await supabase
