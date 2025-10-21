@@ -23,56 +23,10 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
     }
   }, [user, loading, setLocation]);
 
-  // Check if user has completed DNA survey (skip check on onboarding page)
+  // DNA check disabled temporarily (was causing infinite loop)
   useEffect(() => {
-    const checkDNAProfile = async () => {
-      // Don't check again if already checked
-      if (dnaChecked) {
-        setCheckingDNA(false);
-        return;
-      }
-
-      if (!user || !session) {
-        setCheckingDNA(false);
-        return;
-      }
-
-      // Skip check if already on onboarding page
-      if (location === '/onboarding') {
-        setCheckingDNA(false);
-        setDnaChecked(true);
-        return;
-      }
-
-      try {
-        // Use supabase client instead of fetch to avoid auth issues
-        const { supabase } = await import('@/lib/supabase');
-        const { data, error } = await supabase
-          .from('dna_profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('DNA check error:', error);
-          // On error, allow user through
-        } else if (!data) {
-          console.log('🎯 No DNA profile found, redirecting to onboarding');
-          setLocation('/onboarding');
-        } else {
-          console.log('✅ DNA profile exists, user can proceed');
-        }
-      } catch (error) {
-        console.error('Error checking DNA profile:', error);
-        // On error, allow user through
-      } finally {
-        setCheckingDNA(false);
-        setDnaChecked(true); // Mark as checked
-      }
-    };
-
-    checkDNAProfile();
-  }, [user, session, location]);
+    setCheckingDNA(false);
+  }, []);
 
   if (loading || !user || checkingDNA) {
     return (
