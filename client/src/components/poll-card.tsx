@@ -153,7 +153,7 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
 
       {/* Options */}
       <div className="space-y-2">
-        {poll.options.map((option) => {
+        {poll.options && poll.options.length > 0 ? poll.options.map((option) => {
           const isSelected = selectedOption === option.id;
           const isWinning = showResults && option.percentage > 0 && option.percentage === Math.max(...poll.options.map(o => o.percentage));
 
@@ -213,7 +213,11 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
               </div>
             </button>
           );
-        })}
+        }) : (
+          <div className="text-center py-4 text-gray-500 text-sm">
+            No options available for this poll
+          </div>
+        )}
       </div>
 
       {/* Submit Button */}
