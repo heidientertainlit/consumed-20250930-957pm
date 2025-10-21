@@ -701,6 +701,16 @@ export default function Track() {
                 <HelpCircle className="h-3 w-3 mr-1" />
                 How to download
               </button>
+              <div className="mt-3 pt-3 border-t border-gray-200 text-sm">
+                Have history from other sources? Email it to{' '}
+                <a 
+                  href="mailto:heidi@consumedapp.com" 
+                  className="text-blue-600 hover:text-blue-700 underline font-medium"
+                >
+                  heidi@consumedapp.com
+                </a>
+                {' '}and we'll add it for you.
+              </div>
             </DialogDescription>
           </DialogHeader>
 
