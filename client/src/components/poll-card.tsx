@@ -90,7 +90,7 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
       case "consumed":
         return "consumed Poll";
       case "entertainlit":
-        return "entertainlit";
+        return "Consumed Poll";
       case "sponsored":
         return poll.sponsor_name || "Sponsored";
       default:
