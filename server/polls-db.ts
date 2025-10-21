@@ -7,17 +7,22 @@ const supabase = createClient(
 
 export const pollsDb = {
   async verifyOptionBelongsToPoll(optionId: number, pollId: number) {
-    const { data: option } = await supabase
-      .from('poll_options')
-      .select('poll_id')
-      .eq('id', optionId)
+    // Check if option exists in the poll's options JSONB array
+    const { data: poll } = await supabase
+      .from('polls')
+      .select('options')
+      .eq('id', pollId)
       .single();
     
-    return option && option.poll_id === pollId;
+    if (!poll?.options) return false;
+    
+    // Check if any option in the array has matching id
+    const options = poll.options as any[];
+    return options.some(opt => opt.id === optionId);
   },
 
   async getActivePolls(userId?: string) {
-    // Get active polls
+    // Get active polls with options in JSONB
     const { data: polls, error } = await supabase
       .from('polls')
       .select('*')
@@ -29,30 +34,24 @@ export const pollsDb = {
 
     if (!polls) return [];
 
-    // Get options and vote counts for each poll
-    const pollsWithOptions = await Promise.all(
+    // Enhance each poll with vote counts and user voting status
+    const pollsWithVoteData = await Promise.all(
       polls.map(async (poll) => {
-        // Get options with vote counts
-        const { data: options, error: optionsError } = await supabase
-          .from('poll_options')
-          .select('*')
-          .eq('poll_id', poll.id)
-          .order('order_index', { ascending: true });
-        
-        console.log(`📋 Options for poll ${poll.id}:`, { options, optionsError, count: options?.length });
-
         // Get total votes for this poll
         const { count: totalVotes } = await supabase
           .from('poll_responses')
           .select('*', { count: 'exact', head: true })
           .eq('poll_id', poll.id);
 
-        // Get vote count for each option
+        // Get options from JSONB and add vote counts
+        const options = (poll.options as any[]) || [];
+        
         const optionsWithCounts = await Promise.all(
-          (options || []).map(async (opt) => {
+          options.map(async (opt) => {
             const { count: voteCount } = await supabase
               .from('poll_responses')
               .select('*', { count: 'exact', head: true })
+              .eq('poll_id', poll.id)
               .eq('option_id', opt.id);
 
             return {
@@ -88,11 +87,11 @@ export const pollsDb = {
       })
     );
 
-    return pollsWithOptions;
+    return pollsWithVoteData;
   },
 
   async getPollWithResults(pollId: number) {
-    // Get poll
+    // Get poll with options from JSONB
     const { data: poll } = await supabase
       .from('polls')
       .select('*')
@@ -109,18 +108,15 @@ export const pollsDb = {
       .select('*', { count: 'exact', head: true })
       .eq('poll_id', pollId);
 
-    // Get options with vote counts
-    const { data: options } = await supabase
-      .from('poll_options')
-      .select('*')
-      .eq('poll_id', pollId)
-      .order('order_index', { ascending: true });
-
+    // Get options from JSONB and calculate vote counts
+    const options = (poll.options as any[]) || [];
+    
     const optionsWithCounts = await Promise.all(
-      (options || []).map(async (opt) => {
+      options.map(async (opt) => {
         const { count: voteCount } = await supabase
           .from('poll_responses')
           .select('*', { count: 'exact', head: true })
+          .eq('poll_id', pollId)
           .eq('option_id', opt.id);
 
         return {
@@ -163,7 +159,15 @@ export const pollsDb = {
   },
 
   async createPoll(pollData: any, options: any[]) {
-    // Insert poll
+    // Convert options to JSONB format with IDs
+    const optionsWithIds = options.map((opt, index) => ({
+      id: index + 1, // Simple incrementing IDs
+      label: opt.label || opt,
+      description: opt.description || null,
+      orderIndex: index
+    }));
+
+    // Insert poll with options as JSONB
     const { data: poll, error } = await supabase
       .from('polls')
       .insert({
@@ -174,6 +178,7 @@ export const pollsDb = {
         sponsor_cta_url: pollData.sponsorCtaUrl,
         status: pollData.status,
         points_reward: pollData.pointsReward,
+        options: optionsWithIds, // Store as JSONB
         expires_at: pollData.expiresAt,
         created_by: pollData.createdBy
       })
@@ -183,18 +188,6 @@ export const pollsDb = {
     if (error || !poll) {
       throw new Error('Failed to create poll');
     }
-
-    // Insert options
-    const optionsData = options.map((opt, index) => ({
-      poll_id: poll.id,
-      label: opt.label || opt,
-      description: opt.description || null,
-      order_index: index
-    }));
-
-    await supabase
-      .from('poll_options')
-      .insert(optionsData);
 
     return poll.id;
   },
