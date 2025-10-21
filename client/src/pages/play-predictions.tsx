@@ -174,10 +174,9 @@ export default function PlayPredictionsPage() {
           </p>
         </div>
 
-        {/* LOW STAKES Section */}
+        {/* Predictions */}
         {lowStakesGames.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Low Stakes</h2>
             <div className="space-y-4">
               {lowStakesGames.map((game: any) => (
                 <Card key={game.id} className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
@@ -269,10 +268,9 @@ export default function PlayPredictionsPage() {
           </div>
         )}
 
-        {/* HIGH STAKES Section */}
+        {/* High Stakes Predictions */}
         {highStakesGames.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">High Stakes</h2>
             <div className="space-y-4">
               {highStakesGames.map((game: any) => (
                 <Card key={game.id} className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 shadow-sm rounded-2xl overflow-hidden">
