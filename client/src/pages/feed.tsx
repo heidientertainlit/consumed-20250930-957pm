@@ -348,38 +348,23 @@ export default function Feed() {
   // Delete post mutation
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      console.log('🗑️ Deleting post:', postId);
-      if (!session?.access_token) throw new Error('Not authenticated');
+      console.log('🗑️ Deleting post directly from Supabase:', postId);
+      if (!user?.id) throw new Error('Not authenticated');
 
-      const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-delete`;
-      console.log('🗑️ Delete URL:', url);
+      // Delete directly using Supabase client
+      const { error } = await supabase
+        .from('social_posts')
+        .delete()
+        .eq('id', postId)
+        .eq('user_id', user.id); // Only delete if user owns the post
 
-      try {
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ post_id: postId }),
-        });
-
-        console.log('🗑️ Delete response status:', response.status);
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Delete error:', errorText);
-          throw new Error(errorText || 'Failed to delete post');
-        }
-        const result = await response.json();
-        console.log('✅ Delete success:', result);
-        return result;
-      } catch (error) {
-        console.error('❌ Delete fetch error:', error);
-        console.error('❌ Delete error type:', typeof error);
-        console.error('❌ Delete error message:', error?.message);
-        console.error('❌ Delete error stack:', error?.stack);
-        throw error;
+      if (error) {
+        console.error('❌ Delete error:', error);
+        throw new Error(error.message || 'Failed to delete post');
       }
+
+      console.log('✅ Post deleted successfully');
+      return { success: true };
     },
     onMutate: async (postId) => {
       // Optimistic update - immediately remove post from UI
