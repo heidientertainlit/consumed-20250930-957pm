@@ -19,7 +19,6 @@ import UserProfile from "@/pages/user-profile";
 import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
 import EdnaSharePage from "@/pages/edna-share";
-import OnboardingPage from "./pages/onboarding";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
 import NotFoundPage from "./pages/not-found";
@@ -35,11 +34,6 @@ function Router() {
         </Route>
         <Route path="/reset-password">
           <ResetPasswordPage />
-        </Route>
-        <Route path="/onboarding">
-          <ProtectedRoute>
-            <OnboardingPage />
-          </ProtectedRoute>
         </Route>
         <Route path="/">
           <ProtectedRoute>
