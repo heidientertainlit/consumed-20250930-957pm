@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb, serial, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -69,7 +69,7 @@ export const socialPosts = pgTable("social_posts", {
   userId: varchar("user_id").notNull().references(() => users.id),
   content: text("content"),
   postType: text("post_type").default("update"),
-  rating: integer("rating"),
+  rating: real("rating"),
   progress: integer("progress"),
   mediaTitle: text("media_title"),
   mediaType: text("media_type"),
