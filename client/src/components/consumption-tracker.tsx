@@ -267,21 +267,13 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-white border border-gray-200 max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between pb-4 flex-shrink-0">
+        <DialogHeader className="pb-4 flex-shrink-0">
           <div>
             <DialogTitle className="text-2xl font-bold text-gray-900">Track Media</DialogTitle>
             <p className="text-gray-500 text-sm mt-1">
               Share your entertainment experience with your friends.
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-6 w-6 p-0 hover:bg-gray-100"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
