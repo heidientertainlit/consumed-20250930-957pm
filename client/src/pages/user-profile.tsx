@@ -282,6 +282,19 @@ export default function UserProfile() {
     }
   };
 
+  // Auto-search as user types (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch();
+      } else {
+        setSearchResults([]);
+      }
+    }, 500); // 500ms delay after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategories]);
+
   // Search for friends
   const searchFriends = async (query: string) => {
     if (!query || query.length < 2 || !session?.access_token) {
@@ -2825,31 +2838,9 @@ export default function UserProfile() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search for movies, TV shows, books, podcasts, music..."
                     className="pl-10 py-3 text-base bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500"
+                    data-testid="input-highlight-search"
                   />
                 </div>
-
-                {/* Search Button */}
-                {searchQuery.trim() && (
-                  <div className="mt-4">
-                    <Button
-                      onClick={performSearch}
-                      disabled={searchMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      {searchMutation.isPending ? (
-                        <div className="flex items-center space-x-2">
-                          <Loader2 className="animate-spin h-4 w-4" />
-                          <span>Searching...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <Search className="h-4 w-4" />
-                          <span>Search</span>
-                        </div>
-                      )}
-                    </Button>
-                  </div>
-                )}
 
                 {/* Search Results */}
                 {searchResults.length > 0 && (
