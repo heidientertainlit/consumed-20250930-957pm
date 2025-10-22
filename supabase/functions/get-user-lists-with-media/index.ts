@@ -110,16 +110,20 @@ serve(async (req) => {
       }
     }
 
+    // Get user_id from query parameter (for viewing other users) or use logged-in user
+    const { searchParams } = new URL(req.url);
+    const targetUserId = searchParams.get('user_id') || appUser?.id;
+
     // Get user's personal system lists (is_default = true) and custom lists
     let systemLists = [];
     let customLists = [];
     
-    if (appUser) {
+    if (targetUserId) {
       // Check if user has personal system lists
       const { data: userSystemLists, error: systemListsError } = await supabase
         .from('lists')
         .select('id, title, is_private')
-        .eq('user_id', appUser.id)
+        .eq('user_id', targetUserId)
         .eq('is_default', true)
         .order('title');
 
@@ -184,7 +188,7 @@ serve(async (req) => {
         const { data: updatedSystemLists } = await supabase
           .from('lists')
           .select('id, title, is_private')
-          .eq('user_id', appUser.id)
+          .eq('user_id', targetUserId)
           .eq('is_default', true)
           .order('title');
         
@@ -202,7 +206,7 @@ serve(async (req) => {
         const { data: userCustomLists, error: customListsError } = await supabase
           .from('lists')
           .select('id, title, is_private')
-          .eq('user_id', appUser.id)
+          .eq('user_id', targetUserId)
           .or('is_default.is.null,is_default.eq.false')
           .order('title');
         
@@ -219,11 +223,11 @@ serve(async (req) => {
 
     // Get user's media items if authenticated
     let userItems = [];
-    if (appUser) {
+    if (targetUserId) {
       const { data: items, error: itemsError } = await supabase
         .from('list_items')
         .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id, external_id, external_source')
-        .eq('user_id', appUser.id)
+        .eq('user_id', targetUserId)
         .order('created_at', { ascending: false });
       
       if (itemsError) {

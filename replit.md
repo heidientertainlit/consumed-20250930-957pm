@@ -40,7 +40,7 @@ Preferred communication style: Simple, everyday language.
 -   **Custom Lists**: User-created lists with nested dropdown UI, simple creation dialog, and dedicated edge functions for safety.
 -   **Social Features**: Leaderboards, activity feeds, friend discovery, and "Inner Circle" for Super Fan identification.
 -   **Play Section**: Category-based navigation for Trivia, Polls, and Predictions. Inline Play cards appear in the Feed.
--   **Profile Management**: Editable display name and username with validation.
+-   **Profile Management**: Editable display name and username with validation. Viewing other users' profiles correctly displays their data (highlights, stats, DNA profile, consumption history) by passing `user_id` query parameters to edge functions.
 -   **Creator Recognition**: "Favorite Creators" are computed based on user media consumption.
 -   **Media Item Pages**: URL structure includes `mediaType` to differentiate content (e.g., `/media/{mediaType}/{source}/{externalId}`). Displays dynamic platform availability (Netflix, Spotify, Amazon, etc.) via "Watch On", "Listen On", or "Read On" links.
 -   **Polls/Surveys System**: Database-backed polling system supporting branded and sponsored polls with direct Supabase client-side voting, real-time vote counting, duplicate vote prevention, and points rewards.
@@ -48,7 +48,7 @@ Preferred communication style: Simple, everyday language.
 ### System Design Choices
 -   **Database Schema**: Development and production databases use a synced schema. Critical naming conventions include `user_name` (never `username`) in the `users` table, and specific columns for `social_posts`, `list_items`, `lists`, `polls`, and `poll_responses`. The `lists` table critically lacks `description` and `updated_at` columns in production.
 -   **Row Level Security (RLS)**: Strict RLS policies are implemented for `lists` and `list_items` to ensure data privacy (`auth.uid() = user_id OR visibility = 'public'`).
--   **Edge Functions**: All edge functions adhere to the database schema, including using `user_name` and auto-creation logic for new users. List-related edge functions explicitly select only existing columns (`id, title, is_default, is_private`) when inserting/updating lists to avoid errors with non-existent columns in the production Supabase environment.
+-   **Edge Functions**: All edge functions adhere to the database schema, including using `user_name` and auto-creation logic for new users. List-related edge functions explicitly select only existing columns (`id, title, is_default, is_private`) when inserting/updating lists to avoid errors with non-existent columns in the production Supabase environment. **Profile viewing edge functions** (`user-highlights`, `get-user-stats`, `get-user-lists-with-media`, `calculate-user-points`) accept a `user_id` query parameter to display other users' data correctly, falling back to the authenticated user's ID when not provided.
 -   **Privacy Toggle System**: UI toggle in `list-detail.tsx` updates `is_private` via `update-list-visibility` edge function, ensuring only `is_private` is modified.
 
 ## External Dependencies

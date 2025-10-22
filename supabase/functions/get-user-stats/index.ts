@@ -78,11 +78,15 @@ serve(async (req) => {
 
     console.log("App user lookup:", { appUser: appUser?.email });
 
+    // Get user_id from query parameter (for viewing other users) or use logged-in user
+    const { searchParams } = new URL(req.url);
+    const targetUserId = searchParams.get('user_id') || appUser.id;
+
     // Get all user's list items
     const { data: listItems, error: itemsError } = await supabase
       .from('list_items')
       .select('media_type, created_at, notes')
-      .eq('user_id', appUser.id);
+      .eq('user_id', targetUserId);
 
     if (itemsError) {
       console.error('Error fetching list items:', itemsError);

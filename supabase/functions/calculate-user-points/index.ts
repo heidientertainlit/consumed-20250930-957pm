@@ -72,12 +72,16 @@ serve(async (req) => {
       });
     }
 
+    // Get user_id from query parameter (for viewing other users) or use logged-in user
+    const { searchParams } = new URL(req.url);
+    const targetUserId = searchParams.get('user_id') || appUser.id;
+
     // Calculate points for each category based on list_items
     // Get all user's list items
     const { data: listItems } = await supabase
       .from('list_items')
       .select('*')
-      .eq('user_id', appUser.id);
+      .eq('user_id', targetUserId);
 
     if (!listItems) {
       return new Response(JSON.stringify({ 
@@ -103,7 +107,7 @@ serve(async (req) => {
     const { data: predictions } = await supabase
       .from('user_predictions')
       .select('points_earned')
-      .eq('user_id', appUser.id);
+      .eq('user_id', targetUserId);
 
     const predictionPoints = (predictions || [])
       .reduce((sum, pred) => sum + (pred.points_earned || 0), 0);
@@ -112,7 +116,7 @@ serve(async (req) => {
     const { data: pollVotes } = await supabase
       .from('poll_responses')
       .select('poll_id')
-      .eq('user_id', appUser.id);
+      .eq('user_id', targetUserId);
 
     // Get poll points for each vote
     let pollPoints = 0;
