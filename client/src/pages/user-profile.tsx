@@ -1379,13 +1379,22 @@ export default function UserProfile() {
   // Aggregate all media items from all lists for media history
   const getAllMediaItems = () => {
     const allItems: any[] = [];
+    const seenItems = new Set<string>(); // Track unique items by media_id
+    
     userLists.forEach(list => {
       if (list.items) {
         list.items.forEach((item: any) => {
-          allItems.push({
-            ...item,
-            listName: list.title
-          });
+          // Create a unique key based on media_id (which is unique per item)
+          const uniqueKey = item.media_id || `${item.title}-${item.media_type}-${item.creator}`;
+          
+          // Only add if we haven't seen this item before
+          if (!seenItems.has(uniqueKey)) {
+            seenItems.add(uniqueKey);
+            allItems.push({
+              ...item,
+              listName: list.title
+            });
+          }
         });
       }
     });
