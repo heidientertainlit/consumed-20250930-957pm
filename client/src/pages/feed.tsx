@@ -351,24 +351,32 @@ export default function Feed() {
       console.log('🗑️ Deleting post:', postId);
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-delete`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ post_id: postId }),
-      });
+      const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-delete`;
+      console.log('🗑️ Delete URL:', url);
 
-      console.log('🗑️ Delete response status:', response.status);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Delete error:', errorText);
-        throw new Error(errorText || 'Failed to delete post');
+      try {
+        const response = await fetch(url, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ post_id: postId }),
+        });
+
+        console.log('🗑️ Delete response status:', response.status);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Delete error:', errorText);
+          throw new Error(errorText || 'Failed to delete post');
+        }
+        const result = await response.json();
+        console.log('✅ Delete success:', result);
+        return result;
+      } catch (error) {
+        console.error('❌ Delete fetch error:', error);
+        throw error;
       }
-      const result = await response.json();
-      console.log('✅ Delete success:', result);
-      return result;
     },
     onMutate: async (postId) => {
       // Optimistic update - immediately remove post from UI
