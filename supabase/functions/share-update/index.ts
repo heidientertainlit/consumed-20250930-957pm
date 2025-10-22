@@ -34,41 +34,17 @@ serve(async (req) => {
       });
     }
 
-    // Get or create app user
-    let { data: appUser, error: appUserError } = await supabase
+    // Get app user - assume they already exist (created by Supabase trigger on signup)
+    const { data: appUser, error: appUserError } = await supabase
       .from('users')
       .select('id, email, user_name')
-      .eq('email', user.email)
+      .eq('id', user.id)
       .single();
 
-    if (appUserError && appUserError.code === 'PGRST116') {
-      // User doesn't exist, create them
-      console.log('Creating new user:', user.email);
-      const { data: newUser, error: createError } = await supabase
-        .from('users')
-        .insert({
-          id: user.id,
-          email: user.email,
-          user_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user',
-          first_name: user.user_metadata?.first_name || '',
-          last_name: user.user_metadata?.last_name || '',
-          display_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user'
-        })
-        .select('id, email, user_name')
-        .single();
-
-      if (createError) {
-        console.error('Failed to create user:', createError);
-        return new Response(JSON.stringify({ error: 'Failed to create user' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      appUser = newUser;
-    } else if (appUserError) {
+    if (appUserError) {
       console.error('App user error:', appUserError);
-      return new Response(JSON.stringify({ error: 'Database error' }), {
-        status: 500,
+      return new Response(JSON.stringify({ error: 'User not found. Please log in again.' }), {
+        status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
