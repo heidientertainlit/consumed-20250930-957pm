@@ -108,7 +108,7 @@ export default function UserProfile() {
 
     setIsLoadingHighlights(true);
     try {
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/user-highlights', {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/user-highlights?user_id=${viewingUserId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
