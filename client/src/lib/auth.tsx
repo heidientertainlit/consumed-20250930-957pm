@@ -49,62 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string; username?: string }) => {
-    // Ensure username is provided and valid
-    const username = metadata?.username?.trim() || email.split('@')[0];
-    const firstName = metadata?.firstName?.trim() || '';
-    const lastName = metadata?.lastName?.trim() || '';
-
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          first_name: firstName,
-          last_name: lastName,
-          user_name: username
+          first_name: metadata?.firstName || '',
+          last_name: metadata?.lastName || '',
+          user_name: metadata?.username || email.split('@')[0]
         }
       }
-    });
-    
-    if (error || !data.user) {
-      return { error, data };
-    }
-
-    // Wait a moment for auth to fully complete
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Call edge function to create user and system lists with proper permissions
-    try {
-      const signupResponse = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/signup',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            userId: data.user.id,
-            email,
-            firstName,
-            lastName,
-            username
-          }),
-        }
-      );
-
-      if (!signupResponse.ok) {
-        const errorData = await signupResponse.json();
-        console.error('Signup edge function failed:', errorData);
-        return { error: new Error(errorData.error || 'Failed to create user profile'), data };
-      }
-
-      console.log('User and system lists created successfully via edge function');
-    } catch (signupError) {
-      console.error('Failed to call signup edge function:', signupError);
-      return { error: new Error('Failed to create user profile'), data };
-    }
-
+    })
     return { error, data }
   }
 
