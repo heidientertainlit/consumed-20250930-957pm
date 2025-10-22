@@ -120,6 +120,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: new Error('Failed to create user profile'), data };
     }
 
+    // Create system lists immediately for new user to avoid slow first load
+    console.log('Creating system lists for new user...');
+    const systemLists = [
+      { title: 'Currently', is_default: true, is_private: false },
+      { title: 'Queue', is_default: true, is_private: false },
+      { title: 'Finished', is_default: true, is_private: false },
+      { title: 'Did Not Finish', is_default: true, is_private: false },
+      { title: 'Favorites', is_default: true, is_private: false },
+    ];
+
+    for (const list of systemLists) {
+      const { error: listError } = await supabase
+        .from('lists')
+        .insert({
+          user_id: data.user.id,
+          title: list.title,
+          is_default: list.is_default,
+          is_private: list.is_private,
+        });
+      
+      // Ignore duplicate key errors (23505) - list might already exist
+      if (listError && listError.code !== '23505') {
+        console.error(`Failed to create ${list.title} list:`, listError);
+      }
+    }
+    console.log('System lists created successfully');
+
     return { error, data }
   }
 
