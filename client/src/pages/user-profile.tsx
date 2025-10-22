@@ -1811,23 +1811,26 @@ export default function UserProfile() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent">
-                    Your Entertainment DNA
+                    {isOwnProfile ? 'Your' : 'Their'} Entertainment DNA
                   </h2>
                   {dnaProfileStatus === 'has_profile' && (
-                    <p className="text-sm text-gray-600">Your Entertainment Personality</p>
+                    <p className="text-sm text-gray-600">{isOwnProfile ? 'Your' : 'Their'} Entertainment Personality</p>
                   )}
-                  {dnaProfileStatus === 'no_profile' && (
+                  {dnaProfileStatus === 'no_profile' && isOwnProfile && (
                     <p className="text-sm text-gray-600">Discover your unique entertainment personality</p>
                   )}
+                  {dnaProfileStatus === 'no_profile' && !isOwnProfile && (
+                    <p className="text-sm text-gray-600">This user hasn't taken the DNA survey yet</p>
+                  )}
                   {dnaProfileStatus === 'generating' && (
-                    <p className="text-sm text-gray-600">Analyzing your entertainment preferences...</p>
+                    <p className="text-sm text-gray-600">Analyzing entertainment preferences...</p>
                   )}
                 </div>
               </div>
 
               {/* Action Buttons based on status */}
               <div className="flex items-center space-x-2 flex-shrink-0">
-                {dnaProfileStatus === 'no_profile' && (
+                {dnaProfileStatus === 'no_profile' && isOwnProfile && (
                   <Button 
                     size="sm"
                     onClick={handleTakeDNASurvey}

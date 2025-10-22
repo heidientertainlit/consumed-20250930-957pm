@@ -73,11 +73,15 @@ serve(async (req) => {
     }
 
     if (req.method === 'GET') {
+      // Get user_id from query parameter (for viewing other users) or use logged-in user
+      const { searchParams } = new URL(req.url);
+      const targetUserId = searchParams.get('user_id') || appUser.id;
+
       // Get user's highlights
       const { data: highlights, error: highlightsError } = await supabase
         .from('user_highlights')
         .select('*')
-        .eq('user_id', appUser.id)
+        .eq('user_id', targetUserId)
         .order('created_at', { ascending: false });
 
       if (highlightsError) {
