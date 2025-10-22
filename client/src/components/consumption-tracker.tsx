@@ -269,7 +269,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
       <DialogContent className="bg-white border border-gray-200 max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between pb-4 flex-shrink-0">
           <div>
-            <DialogTitle className="text-2xl font-bold text-gray-900">Share Update</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-900">Track Media</DialogTitle>
             <p className="text-gray-500 text-sm mt-1">
               Share your entertainment experience with your friends.
             </p>
