@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface RouteGuardProps {
   children: React.ReactNode;
