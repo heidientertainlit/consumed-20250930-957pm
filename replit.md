@@ -20,7 +20,14 @@ Preferred communication style: Simple, everyday language.
 -   **Backend**: Node.js with Express.js REST API, TypeScript, ES modules.
 -   **Database**: PostgreSQL with Drizzle ORM, hosted on Neon Database.
 -   **API Integration**: Unified API search using Spotify, TMDB, YouTube, and Open Library for media data.
--   **Authentication**: Supabase Auth handles user login, signup, and password reset. Critical system lists (Currently, Queue, Finished, Did Not Finish, Favorites) are created immediately during signup to prevent performance delays. No intermediate onboarding screens; users go directly to `/feed` after signup.
+-   **Authentication & Signup (CRITICAL - October 22, 2025)**:
+    -   **Supabase Auth**: User authentication via Supabase Auth for login/signup/password reset
+    -   **CRITICAL - Keep signup simple**: `signUp()` in `client/src/lib/auth.tsx` ONLY calls `supabase.auth.signUp()` with metadata
+    -   **DO NOT create users/lists in client code**: Violates RLS policies and causes "new row violates row-level security policy" errors
+    -   **User Creation**: Handled automatically by Supabase database trigger OR edge functions on first app access
+    -   **NO ONBOARDING FLOW**: Users go directly to `/feed` after signup
+    -   **Auth State Listener**: MUST NOT redirect users - causes infinite reload loops
+    -   **Login Redirect**: Simple redirect in `login.tsx` only
 -   **User Management**: Users are auto-created in a custom `users` table upon first authentication.
 -   **Sharing System**: Unified sharing (`/src/lib/share.ts`) for various content types, controlled by `VITE_FEATURE_SHARES` for deep linking vs. text blurbs.
 -   **Leaderboard System**: All leaderboard categories are handled by a single `get-leaderboards` edge function.
