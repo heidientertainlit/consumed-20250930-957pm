@@ -26,38 +26,10 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (!loading && user && session && !justSignedUp) {
-        // Check if user has completed onboarding by checking for EDNA profile
-        try {
-          const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/user_edna_profiles?select=id&user_id=eq.' + user.id, {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            },
-          });
-          
-          if (response.ok) {
-            const profiles = await response.json();
-            if (profiles && profiles.length > 0) {
-              // User has completed onboarding, go to feed
-              setLocation('/feed');
-            } else {
-              // User hasn't completed onboarding, send to onboarding
-              setLocation('/onboarding');
-            }
-          } else {
-            // Default to feed if we can't check
-            setLocation('/feed');
-          }
-        } catch (error) {
-          console.error('Error checking onboarding status:', error);
-          setLocation('/feed');
-        }
-      }
-    };
-
-    checkOnboardingStatus();
+    // Simple redirect: if user is logged in, go to feed
+    if (!loading && user && !justSignedUp) {
+      setLocation('/feed');
+    }
   }, [user, loading, justSignedUp, setLocation]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -128,12 +100,12 @@ export default function LoginPage() {
     } else {
       toast({
         title: "Welcome to Consumed!",
-        description: "Let's discover your Entertainment DNA.",
+        description: "Start tracking your entertainment.",
       });
       
-      // Redirect new users to onboarding
-      // Use window.location.href for a full page reload to ensure clean state
-      window.location.href = '/onboarding';
+      // Redirect new users to feed
+      setLocation('/feed');
+      setSubmitting(false);
     }
   };
 
