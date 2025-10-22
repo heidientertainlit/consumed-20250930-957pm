@@ -375,6 +375,9 @@ export default function Feed() {
         return result;
       } catch (error) {
         console.error('❌ Delete fetch error:', error);
+        console.error('❌ Delete error type:', typeof error);
+        console.error('❌ Delete error message:', error?.message);
+        console.error('❌ Delete error stack:', error?.stack);
         throw error;
       }
     },
