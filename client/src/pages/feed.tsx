@@ -167,6 +167,8 @@ export default function Feed() {
       return availableGames;
     },
     enabled: !!session?.access_token && !!user?.id,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   // Like mutation with optimistic updates
