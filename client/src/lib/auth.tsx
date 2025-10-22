@@ -73,79 +73,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Wait a moment for auth to fully complete
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Create user in custom users table immediately with upsert to handle duplicates
-    const { error: dbError } = await supabase
-      .from('users')
-      .upsert({
-        id: data.user.id,
-        email: email,
-        user_name: username,
-        first_name: firstName,
-        last_name: lastName,
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: false
-      });
+    // Call edge function to create user and system lists with proper permissions
+    try {
+      const signupResponse = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/signup',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            userId: data.user.id,
+            email,
+            firstName,
+            lastName,
+            username
+          }),
+        }
+      );
 
-    if (dbError) {
-      console.error('Failed to create user in database:', dbError);
-      // Return the error so signup knows it failed
-      return { error: dbError, data };
-    }
-
-    // Verify the insert completed by fetching the user with retries
-    let verifyData = null;
-    let verifyError = null;
-    for (let i = 0; i < 3; i++) {
-      const result = await supabase
-        .from('users')
-        .select('user_name, first_name, last_name')
-        .eq('id', data.user.id)
-        .single();
-      
-      verifyData = result.data;
-      verifyError = result.error;
-      
-      if (!verifyError && verifyData) {
-        console.log('User successfully created in database:', verifyData);
-        break;
+      if (!signupResponse.ok) {
+        const errorData = await signupResponse.json();
+        console.error('Signup edge function failed:', errorData);
+        return { error: new Error(errorData.error || 'Failed to create user profile'), data };
       }
-      
-      // Wait before retry
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
 
-    if (verifyError || !verifyData) {
-      console.error('Failed to verify user creation:', verifyError);
+      console.log('User and system lists created successfully via edge function');
+    } catch (signupError) {
+      console.error('Failed to call signup edge function:', signupError);
       return { error: new Error('Failed to create user profile'), data };
     }
-
-    // Create system lists immediately for new user to avoid slow first load
-    console.log('Creating system lists for new user...');
-    const systemLists = [
-      { title: 'Currently', is_default: true, is_private: false },
-      { title: 'Queue', is_default: true, is_private: false },
-      { title: 'Finished', is_default: true, is_private: false },
-      { title: 'Did Not Finish', is_default: true, is_private: false },
-      { title: 'Favorites', is_default: true, is_private: false },
-    ];
-
-    for (const list of systemLists) {
-      const { error: listError } = await supabase
-        .from('lists')
-        .insert({
-          user_id: data.user.id,
-          title: list.title,
-          is_default: list.is_default,
-          is_private: list.is_private,
-        });
-      
-      // Ignore duplicate key errors (23505) - list might already exist
-      if (listError && listError.code !== '23505') {
-        console.error(`Failed to create ${list.title} list:`, listError);
-      }
-    }
-    console.log('System lists created successfully');
 
     return { error, data }
   }
