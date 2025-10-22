@@ -73,13 +73,38 @@ export default function PlayTriviaPage() {
   // Submit prediction mutation
   const submitPrediction = useMutation({
     mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
-      return apiRequest('POST', '/api/predictions', {
-        poolId,
-        prediction: answer,
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/predictions/predict`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pool_id: poolId,
+          prediction: answer,
+        })
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit answer: ${errorText}`);
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/predictions/all'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
       toast({
         title: "Success!",
         description: "Your answer has been submitted",
