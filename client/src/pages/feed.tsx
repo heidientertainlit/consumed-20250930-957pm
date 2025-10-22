@@ -348,6 +348,7 @@ export default function Feed() {
   // Delete post mutation
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
+      console.log('🗑️ Deleting post:', postId);
       if (!session?.access_token) throw new Error('Not authenticated');
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-delete`, {
@@ -359,13 +360,44 @@ export default function Feed() {
         body: JSON.stringify({ post_id: postId }),
       });
 
+      console.log('🗑️ Delete response status:', response.status);
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ Delete error:', errorText);
         throw new Error(errorText || 'Failed to delete post');
       }
-      return await response.json();
+      const result = await response.json();
+      console.log('✅ Delete success:', result);
+      return result;
+    },
+    onMutate: async (postId) => {
+      // Optimistic update - immediately remove post from UI
+      console.log('⚡ Optimistic delete for:', postId);
+
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["social-feed"] });
+
+      // Snapshot previous value
+      const previousPosts = queryClient.getQueryData(["social-feed"]);
+
+      // Optimistically remove the post
+      queryClient.setQueryData(["social-feed"], (old: SocialPost[] | undefined) => {
+        if (!old) return old;
+        return old.filter(post => post.id !== postId);
+      });
+
+      // Return context for rollback on error
+      return { previousPosts };
+    },
+    onError: (error, postId, context) => {
+      console.error('💥 Delete mutation error:', error);
+      // Rollback on error
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["social-feed"], context.previousPosts);
+      }
     },
     onSuccess: () => {
+      console.log('🔄 Invalidating feed query after delete');
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
     },
   });
