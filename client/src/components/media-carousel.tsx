@@ -259,6 +259,13 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             className="w-full h-full object-cover"
             loading="lazy"
             onError={() => setImageError(true)}
+            onLoad={(e) => {
+              // Check if image is too small (Open Library returns tiny placeholders)
+              const img = e.currentTarget;
+              if (img.naturalWidth < 50 || img.naturalHeight < 50) {
+                setImageError(true);
+              }
+            }}
           />
         )}
         

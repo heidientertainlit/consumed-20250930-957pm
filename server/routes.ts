@@ -30,28 +30,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const nytData = await nytResponse.json();
       const books = nytData.results?.books || [];
 
-      // Fetch cover images for each book
-      const formattedBooks = await Promise.all(
-        books.slice(0, 10).map(async (book: any) => {
+      // Format book data with cover images
+      const formattedBooks = books.slice(0, 10).map((book: any) => {
           let imageUrl = '';
           
           // Get cover from Open Library (free, no quota limits)
+          // Note: Some books may return tiny placeholder images - frontend will handle fallback
           const isbn = book.primary_isbn13 || book.primary_isbn10;
           if (isbn) {
-            try {
-              const coverUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-              // Check if cover exists (Open Library returns tiny placeholder for missing covers)
-              const response = await fetch(coverUrl, { method: 'HEAD' });
-              const contentLength = response.headers.get('content-length');
-              
-              // Only use the cover if it's bigger than 1000 bytes (real covers are much larger)
-              if (contentLength && parseInt(contentLength) > 1000) {
-                imageUrl = coverUrl;
-              }
-            } catch (error) {
-              // If fetch fails, leave imageUrl empty to trigger frontend placeholder
-              console.error(`Failed to check cover for ISBN ${isbn}`);
-            }
+            imageUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
           }
 
           return {
@@ -66,8 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             weeksOnList: book.weeks_on_list,
             description: book.description,
           };
-        })
-      );
+        });
 
       res.json(formattedBooks);
     } catch (error) {
