@@ -188,16 +188,37 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   // Rate item mutation
   const rateMutation = useMutation({
     mutationFn: async (ratingValue: number) => {
-      const response = await fetch('/api/rate-item', {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      // Determine source based on media type
+      let externalSource = 'tmdb';
+      if (item.mediaType === 'book') {
+        externalSource = 'openlibrary';
+      } else if (item.mediaType === 'podcast') {
+        externalSource = 'spotify';
+      }
+
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rate-media', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
-          title: item.title,
+          media_external_id: item.id,
+          media_external_source: externalSource,
+          media_title: item.title,
+          media_type: item.mediaType || 'movie',
           rating: ratingValue,
-          type: item.mediaType || 'movie',
         }),
       });
-      if (!response.ok) throw new Error('Failed to rate item');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to rate item');
+      }
       return response.json();
     },
     onSuccess: (_, ratingValue) => {
@@ -206,6 +227,13 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         description: `You rated ${item.title} ${ratingValue} stars.`,
       });
       setShowRatingStars(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to submit rating. Please try again.",
+        variant: "destructive",
+      });
     },
   });
   
