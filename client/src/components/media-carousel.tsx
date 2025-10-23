@@ -20,6 +20,7 @@ interface MediaItem {
   year?: string;
   mediaType?: string;
   platform?: string; // e.g., "netflix", "disney", "hulu", "prime", "max", "peacock", "apple"
+  author?: string; // For books and podcasts
 }
 
 interface MediaCarouselProps {
