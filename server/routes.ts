@@ -64,6 +64,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get trending movies from TMDB with platform info
+  app.get("/api/tmdb/trending/movies", async (req, res) => {
+    try {
+      const TMDB_API_KEY = process.env.TMDB_API_KEY;
+      if (!TMDB_API_KEY) {
+        return res.status(500).json({ message: "TMDB API key not configured" });
+      }
+
+      // Fetch trending movies
+      const trendingResponse = await fetch(
+        `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}`
+      );
+      
+      if (!trendingResponse.ok) {
+        throw new Error('Failed to fetch from TMDB');
+      }
+
+      const trendingData = await trendingResponse.json();
+      
+      // Map provider IDs to platform names
+      const providerMap: Record<number, string> = {
+        8: 'netflix',
+        337: 'disney',
+        15: 'hulu',
+        9: 'prime',
+        384: 'max',
+        387: 'peacock',
+        350: 'apple',
+        531: 'paramount',
+      };
+
+      // Fetch platform info for each movie and format the response
+      const formattedMovies = await Promise.all(
+        trendingData.results.slice(0, 10).map(async (movie: any) => {
+          // Fetch watch providers for this movie
+          let platform = undefined;
+          try {
+            const providersResponse = await fetch(
+              `https://api.themoviedb.org/3/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`
+            );
+            if (providersResponse.ok) {
+              const providersData = await providersResponse.json();
+              const usProviders = providersData.results?.US;
+              
+              // Check flatrate (subscription) providers first
+              if (usProviders?.flatrate && usProviders.flatrate.length > 0) {
+                const providerId = usProviders.flatrate[0].provider_id;
+                platform = providerMap[providerId];
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to fetch providers for movie ${movie.id}:`, error);
+          }
+
+          return {
+            id: movie.id.toString(),
+            title: movie.title,
+            imageUrl: movie.poster_path 
+              ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+              : '',
+            rating: movie.vote_average ? Math.round(movie.vote_average * 10) / 10 : undefined,
+            year: movie.release_date ? new Date(movie.release_date).getFullYear().toString() : undefined,
+            mediaType: 'movie',
+            platform,
+          };
+        })
+      );
+
+      res.json(formattedMovies);
+    } catch (error) {
+      console.error('TMDB trending movies error:', error);
+      res.status(500).json({ message: "Failed to fetch trending movies" });
+    }
+  });
+
   // Get trending TV shows from TMDB with platform info
   app.get("/api/tmdb/trending/tv", async (req, res) => {
     try {
@@ -136,6 +211,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('TMDB trending error:', error);
       res.status(500).json({ message: "Failed to fetch trending TV shows" });
+    }
+  });
+
+  // Get trending podcasts from Spotify
+  app.get("/api/spotify/trending/podcasts", async (req, res) => {
+    try {
+      const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
+      const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
+      
+      if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
+        return res.status(500).json({ message: "Spotify API not configured" });
+      }
+
+      // Get Spotify access token
+      const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + Buffer.from(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET).toString('base64')
+        },
+        body: 'grant_type=client_credentials'
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to get Spotify access token');
+      }
+
+      const tokenData = await tokenResponse.json();
+      const accessToken = tokenData.access_token;
+
+      // Search for popular podcasts (using category-based search)
+      const searchResponse = await fetch(
+        `https://api.spotify.com/v1/search?q=genre:podcast&type=show&market=US&limit=10`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      if (!searchResponse.ok) {
+        throw new Error('Failed to fetch podcasts from Spotify');
+      }
+
+      const searchData = await searchResponse.json();
+      const shows = searchData.shows?.items || [];
+
+      const formattedPodcasts = shows.map((show: any) => ({
+        id: show.id,
+        title: show.name,
+        imageUrl: show.images && show.images.length > 0 ? show.images[0].url : '',
+        rating: undefined,
+        year: undefined,
+        mediaType: 'podcast',
+        platform: 'spotify',
+        author: show.publisher,
+      }));
+
+      res.json(formattedPodcasts);
+    } catch (error) {
+      console.error('Spotify trending podcasts error:', error);
+      res.status(500).json({ message: "Failed to fetch trending podcasts" });
+    }
+  });
+
+  // Get recommended items for user (personalized based on their consumption)
+  app.get("/api/recommended", async (req, res) => {
+    try {
+      // For now, return a mix of trending content
+      // TODO: Implement actual personalization based on user's lists and preferences
+      const TMDB_API_KEY = process.env.TMDB_API_KEY;
+      
+      if (!TMDB_API_KEY) {
+        return res.json([]);
+      }
+
+      // Get a mix of popular movies and TV shows
+      const moviesResponse = await fetch(
+        `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&page=1`
+      );
+      const tvResponse = await fetch(
+        `https://api.themoviedb.org/3/tv/popular?api_key=${TMDB_API_KEY}&page=1`
+      );
+
+      const movies = moviesResponse.ok ? await moviesResponse.json() : { results: [] };
+      const tv = tvResponse.ok ? await tvResponse.json() : { results: [] };
+
+      // Mix and match
+      const recommended = [
+        ...movies.results.slice(0, 3).map((item: any) => ({
+          id: `movie-${item.id}`,
+          title: item.title,
+          imageUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+          rating: item.vote_average ? Math.round(item.vote_average * 10) / 10 : undefined,
+          year: item.release_date ? new Date(item.release_date).getFullYear().toString() : undefined,
+          mediaType: 'movie',
+        })),
+        ...tv.results.slice(0, 3).map((item: any) => ({
+          id: `tv-${item.id}`,
+          title: item.name,
+          imageUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+          rating: item.vote_average ? Math.round(item.vote_average * 10) / 10 : undefined,
+          year: item.first_air_date ? new Date(item.first_air_date).getFullYear().toString() : undefined,
+          mediaType: 'tv',
+        })),
+      ];
+
+      // Shuffle for variety
+      res.json(recommended.sort(() => Math.random() - 0.5).slice(0, 10));
+    } catch (error) {
+      console.error('Recommended error:', error);
+      res.status(500).json({ message: "Failed to fetch recommendations" });
     }
   });
 

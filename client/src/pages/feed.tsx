@@ -724,6 +724,54 @@ export default function Feed() {
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
+  // Fetch trending movies
+  const { data: trendingMovies = [] } = useQuery({
+    queryKey: ['trending-movies'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/tmdb/trending/movies');
+        if (!response.ok) return [];
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching trending movies:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60,
+  });
+
+  // Fetch trending podcasts
+  const { data: trendingPodcasts = [] } = useQuery({
+    queryKey: ['trending-podcasts'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/spotify/trending/podcasts');
+        if (!response.ok) return [];
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching trending podcasts:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60,
+  });
+
+  // Fetch recommended content
+  const { data: recommendedContent = [] } = useQuery({
+    queryKey: ['recommended-content'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/recommended');
+        if (!response.ok) return [];
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching recommended content:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60,
+  });
+
   const handleMediaClick = (item: any) => {
     console.log("Clicked media item:", item);
     // TODO: Navigate to media detail page
@@ -845,9 +893,18 @@ export default function Feed() {
                   ? polls[pollCardIndex % polls.length]
                   : null;
 
-                // Inject MediaCarousel every 4th post (only books since TV is at top)
+                // Inject MediaCarousel every 4th post, rotating through types
                 const shouldShowMediaCarousel = (postIndex + 1) % 4 === 0;
-                const currentCarousel = { type: 'book', title: 'NY Times Bestsellers', items: bestsellerBooks };
+                const carouselIndex = Math.floor(postIndex / 4);
+                
+                // Rotation order: Books → Podcasts → Movies → Recommended → (repeat)
+                const carouselTypes = [
+                  { type: 'book', title: 'NY Times Bestsellers', items: bestsellerBooks },
+                  { type: 'podcast', title: 'Trending Podcasts', items: trendingPodcasts },
+                  { type: 'movie', title: 'Trending Movies', items: trendingMovies },
+                  { type: 'mixed', title: 'Recommended For You', items: recommendedContent },
+                ];
+                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length];
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
