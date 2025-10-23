@@ -44,10 +44,7 @@ export default function MediaCarousel({
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
             {title}
           </h3>
-          <p className="text-sm text-gray-400 mt-1">
-            <span className="md:hidden">Swipe to explore</span>
-            <span className="hidden md:inline">Drag or use arrows to browse</span>
-          </p>
+          <p className="text-sm text-gray-400 mt-1">Swipe to explore</p>
         </div>
         <Button
           variant="ghost"
@@ -66,12 +63,14 @@ export default function MediaCarousel({
           opts={{
             align: "start",
             loop: false,
-            dragFree: true, // Enables free scrolling on mobile
-            containScroll: "trimSnaps", // Better mobile behavior
+            dragFree: true,
+            containScroll: "trimSnaps",
+            watchDrag: true, // Enable drag detection
+            skipSnaps: false,
           }}
-          className="w-full cursor-grab active:cursor-grabbing"
+          className="w-full"
         >
-          <CarouselContent className="-ml-2 md:-ml-4">
+          <CarouselContent className="-ml-2 md:-ml-4 cursor-grab active:cursor-grabbing">
             {items.map((item) => (
               <CarouselItem
                 key={item.id}
