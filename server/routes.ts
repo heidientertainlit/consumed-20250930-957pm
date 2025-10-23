@@ -20,7 +20,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (!nytResponse.ok) {
-        throw new Error('Failed to fetch from NY Times');
+        const errorText = await nytResponse.text();
+        console.error('NYT API error:', nytResponse.status, errorText);
+        throw new Error(`Failed to fetch from NY Times: ${nytResponse.status}`);
       }
 
       const nytData = await nytResponse.json();
