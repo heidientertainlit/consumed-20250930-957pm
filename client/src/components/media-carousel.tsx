@@ -292,13 +292,13 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               </DropdownMenuItem>
               
               {/* Custom Lists */}
-              {lists.filter((list: any) => !list.is_default).length > 0 && (
+              {lists.filter((list: any) => list.isCustom).length > 0 && (
                 <>
                   <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t border-gray-700 mt-1 pt-2">
                     MY CUSTOM LISTS
                   </div>
                   {lists
-                    .filter((list: any) => !list.is_default)
+                    .filter((list: any) => list.isCustom)
                     .map((list: any) => (
                       <DropdownMenuItem
                         key={list.id}
