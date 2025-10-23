@@ -1,6 +1,24 @@
-import { Plus, Star, Film, Tv, Music, Book, Mic } from "lucide-react";
+import { Plus, Star, Film, Tv, Music, Book, Mic, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface MediaItem {
   id: string;
@@ -65,6 +83,12 @@ interface MediaCardProps {
 function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showRateDialog, setShowRateDialog] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const { session } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const handlePointerDown = () => {
     setIsDragging(false);
@@ -77,6 +101,70 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const handleClick = () => {
     if (!isDragging) {
       onItemClick?.(item);
+    }
+  };
+  
+  // Fetch user's lists
+  const { data: lists = [] } = useQuery({
+    queryKey: ['/api/user-lists'],
+    enabled: !!session?.access_token,
+  });
+  
+  // Add to list mutation
+  const addToListMutation = useMutation({
+    mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
+      return apiRequest(`/api/list-items`, {
+        method: 'POST',
+        body: JSON.stringify({
+          listType,
+          isCustomList: isCustom || false,
+          title: item.title,
+          type: item.mediaType || 'movie',
+          creator: '',
+          imageUrl: item.imageUrl,
+        }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Added to list!",
+        description: `${item.title} has been added to your list.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/user-lists'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add item to list. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Rate item mutation
+  const rateMutation = useMutation({
+    mutationFn: async (ratingValue: number) => {
+      // This would be implemented with your backend
+      console.log('Rating item:', item.title, 'with', ratingValue);
+      return Promise.resolve();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rated!",
+        description: `You rated ${item.title} ${rating} stars.`,
+      });
+      setShowRateDialog(false);
+      setRating(0);
+    },
+  });
+  
+  const handleAddToList = (listType: string, isCustom = false) => {
+    addToListMutation.mutate({ listType, isCustom });
+  };
+  
+  const handleSubmitRating = () => {
+    if (rating > 0) {
+      rateMutation.mutate(rating);
     }
   };
   
@@ -131,25 +219,64 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         
         {/* Mobile-friendly action buttons - bottom right */}
         <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
+                data-testid={`add-to-list-${item.id}`}
+                disabled={addToListMutation.isPending}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-gray-900 border-gray-700">
+              <DropdownMenuItem
+                onClick={() => handleAddToList('queue')}
+                className="cursor-pointer text-white hover:bg-gray-800"
+                disabled={addToListMutation.isPending}
+              >
+                Add to Queue
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleAddToList('currently')}
+                className="cursor-pointer text-white hover:bg-gray-800"
+                disabled={addToListMutation.isPending}
+              >
+                Add to Currently
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleAddToList('finished')}
+                className="cursor-pointer text-white hover:bg-gray-800"
+                disabled={addToListMutation.isPending}
+              >
+                Add to Finished
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleAddToList('dnf')}
+                className="cursor-pointer text-white hover:bg-gray-800"
+                disabled={addToListMutation.isPending}
+              >
+                Add to Did Not Finish
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleAddToList('favorites')}
+                className="cursor-pointer text-white hover:bg-gray-800"
+                disabled={addToListMutation.isPending}
+              >
+                Add to Favorites
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button
             size="icon"
             variant="secondary"
             className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
-              onAddToList?.(item);
-            }}
-            data-testid={`add-to-list-${item.id}`}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRate?.(item);
+              setShowRateDialog(true);
             }}
             data-testid={`rate-${item.id}`}
           >
@@ -179,6 +306,74 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           <p className="text-xs text-gray-400 mt-0.5">{item.year}</p>
         )}
       </div>
+      
+      {/* Rating Dialog */}
+      <Dialog open={showRateDialog} onOpenChange={setShowRateDialog}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Rate {item.title}</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              How would you rate this {item.mediaType || 'item'}?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Star Rating */}
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  className="transition-transform hover:scale-110"
+                  data-testid={`star-${star}`}
+                >
+                  <Star
+                    className={`h-10 w-10 ${
+                      star <= (hoverRating || rating)
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-gray-600'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+            
+            {/* Number Input */}
+            <div className="flex items-center justify-center gap-3">
+              <Input
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                value={rating || ''}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  if (val >= 0 && val <= 5) {
+                    setRating(val);
+                  }
+                }}
+                className="w-24 text-center bg-gray-800 border-gray-700 text-white"
+                placeholder="0"
+                data-testid="input-rating"
+              />
+              <span className="text-gray-400 text-sm">(0-5)</span>
+            </div>
+            
+            {/* Submit Button */}
+            <Button
+              onClick={handleSubmitRating}
+              disabled={rating === 0 || rateMutation.isPending}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              data-testid="button-submit-rating"
+            >
+              {rateMutation.isPending ? 'Submitting...' : 'Submit Rating'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
