@@ -230,7 +230,13 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                 <Plus className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto">
+            <DropdownMenuContent 
+              align="end" 
+              side="top" 
+              sideOffset={8}
+              alignOffset={-16}
+              className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
+            >
               <DropdownMenuItem
                 onClick={() => handleAddToList('queue')}
                 className="cursor-pointer text-white hover:bg-gray-800"
