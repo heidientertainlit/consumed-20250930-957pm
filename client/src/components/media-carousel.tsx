@@ -2,12 +2,14 @@ import { Plus, Star, Film, Tv, Music, Book, Mic, ChevronDown } from "lucide-reac
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,7 +107,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   };
   
   // Fetch user's lists
-  const { data: lists = [] } = useQuery({
+  const { data: lists = [] } = useQuery<any[]>({
     queryKey: ['/api/user-lists'],
     enabled: !!session?.access_token,
   });
@@ -113,8 +115,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   // Add to list mutation
   const addToListMutation = useMutation({
     mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
-      return apiRequest(`/api/list-items`, {
+      const response = await fetch('/api/list-items', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listType,
           isCustomList: isCustom || false,
@@ -124,6 +127,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           imageUrl: item.imageUrl,
         }),
       });
+      if (!response.ok) throw new Error('Failed to add to list');
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -267,6 +272,27 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               >
                 Add to Favorites
               </DropdownMenuItem>
+              
+              {/* Custom Lists */}
+              {lists.filter((list: any) => !list.is_default).length > 0 && (
+                <>
+                  <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t border-gray-700 mt-1 pt-2">
+                    MY CUSTOM LISTS
+                  </div>
+                  {lists
+                    .filter((list: any) => !list.is_default)
+                    .map((list: any) => (
+                      <DropdownMenuItem
+                        key={list.id}
+                        onClick={() => handleAddToList(list.id, true)}
+                        className="cursor-pointer text-white hover:bg-gray-800"
+                        disabled={addToListMutation.isPending}
+                      >
+                        Add to {list.title}
+                      </DropdownMenuItem>
+                    ))}
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -307,17 +333,17 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         )}
       </div>
       
-      {/* Rating Dialog */}
-      <Dialog open={showRateDialog} onOpenChange={setShowRateDialog}>
-        <DialogContent className="bg-gray-900 border-gray-700 text-white">
-          <DialogHeader>
-            <DialogTitle>Rate {item.title}</DialogTitle>
-            <DialogDescription className="text-gray-400">
+      {/* Rating Drawer - slides up from bottom on mobile */}
+      <Drawer open={showRateDialog} onOpenChange={setShowRateDialog}>
+        <DrawerContent className="bg-gray-900 border-gray-700 text-white">
+          <DrawerHeader>
+            <DrawerTitle className="text-center">Rate {item.title}</DrawerTitle>
+            <DrawerDescription className="text-gray-400 text-center">
               How would you rate this {item.mediaType || 'item'}?
-            </DialogDescription>
-          </DialogHeader>
+            </DrawerDescription>
+          </DrawerHeader>
           
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 py-6 px-4">
             {/* Star Rating */}
             <div className="flex justify-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -327,11 +353,11 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  className="transition-transform hover:scale-110"
+                  className="transition-transform hover:scale-110 active:scale-95"
                   data-testid={`star-${star}`}
                 >
                   <Star
-                    className={`h-10 w-10 ${
+                    className={`h-12 w-12 ${
                       star <= (hoverRating || rating)
                         ? 'text-yellow-400 fill-yellow-400'
                         : 'text-gray-600'
@@ -355,25 +381,31 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                     setRating(val);
                   }
                 }}
-                className="w-24 text-center bg-gray-800 border-gray-700 text-white"
+                className="w-28 text-center bg-gray-800 border-gray-700 text-white text-lg"
                 placeholder="0"
                 data-testid="input-rating"
               />
-              <span className="text-gray-400 text-sm">(0-5)</span>
+              <span className="text-gray-400">(0-5)</span>
             </div>
-            
-            {/* Submit Button */}
+          </div>
+          
+          <DrawerFooter className="px-4 pb-6">
             <Button
               onClick={handleSubmitRating}
               disabled={rating === 0 || rateMutation.isPending}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
               data-testid="button-submit-rating"
             >
               {rateMutation.isPending ? 'Submitting...' : 'Submit Rating'}
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+            <DrawerClose asChild>
+              <Button variant="outline" className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 py-6">
+                Cancel
+              </Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
