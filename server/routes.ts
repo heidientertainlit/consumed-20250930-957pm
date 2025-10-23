@@ -6,6 +6,74 @@ import { pollsDb } from "./polls-db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  // Get NY Times bestsellers with Google Books covers
+  app.get("/api/nyt/bestsellers", async (req, res) => {
+    try {
+      const NYT_API_KEY = process.env.NYT_API_KEY;
+      if (!NYT_API_KEY) {
+        return res.status(500).json({ message: "NYT API key not configured" });
+      }
+
+      // Fetch NYT bestseller list (combined print & e-book fiction)
+      const nytResponse = await fetch(
+        `https://api.nytimes.com/svc/books/v3/lists/current/combined-print-and-e-book-fiction.json?api-key=${NYT_API_KEY}`
+      );
+      
+      if (!nytResponse.ok) {
+        throw new Error('Failed to fetch from NY Times');
+      }
+
+      const nytData = await nytResponse.json();
+      const books = nytData.results?.books || [];
+
+      // Fetch cover images from Google Books for each book
+      const formattedBooks = await Promise.all(
+        books.slice(0, 10).map(async (book: any) => {
+          let imageUrl = '';
+          
+          // Try to get cover from Google Books using ISBN
+          const isbn = book.primary_isbn13 || book.primary_isbn10;
+          if (isbn) {
+            try {
+              const googleBooksResponse = await fetch(
+                `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+              );
+              if (googleBooksResponse.ok) {
+                const googleData = await googleBooksResponse.json();
+                if (googleData.items && googleData.items[0]?.volumeInfo?.imageLinks) {
+                  imageUrl = googleData.items[0].volumeInfo.imageLinks.thumbnail || 
+                            googleData.items[0].volumeInfo.imageLinks.smallThumbnail || '';
+                  // Upgrade to higher quality if available
+                  imageUrl = imageUrl.replace('zoom=1', 'zoom=2');
+                }
+              }
+            } catch (error) {
+              console.error(`Failed to fetch cover for ISBN ${isbn}:`, error);
+            }
+          }
+
+          return {
+            id: isbn || book.rank.toString(),
+            title: book.title,
+            author: book.author,
+            imageUrl,
+            rating: undefined, // NYT doesn't provide ratings
+            year: undefined,
+            mediaType: 'book',
+            rank: book.rank,
+            weeksOnList: book.weeks_on_list,
+            description: book.description,
+          };
+        })
+      );
+
+      res.json(formattedBooks);
+    } catch (error) {
+      console.error('NYT bestsellers error:', error);
+      res.status(500).json({ message: "Failed to fetch bestsellers" });
+    }
+  });
+
   // Get trending TV shows from TMDB with platform info
   app.get("/api/tmdb/trending/tv", async (req, res) => {
     try {

@@ -704,6 +704,26 @@ export default function Feed() {
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
+  // Fetch NY Times bestseller books
+  const { data: bestsellerBooks = [] } = useQuery({
+    queryKey: ['bestseller-books'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/nyt/bestsellers');
+        if (!response.ok) {
+          console.error('Failed to fetch bestseller books');
+          return [];
+        }
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error fetching bestseller books:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+  });
+
   const handleMediaClick = (item: any) => {
     console.log("Clicked media item:", item);
     // TODO: Navigate to media detail page
@@ -749,17 +769,6 @@ export default function Feed() {
               Share Update
             </Button>
           </div>
-
-          {/* Media Carousel Demo */}
-          <MediaCarousel
-            title="Top Trending TV Shows"
-            mediaType="tv"
-            items={trendingTVShows}
-            onItemClick={handleMediaClick}
-            onAddToList={handleAddToList}
-            onRate={handleRateMedia}
-          />
-
 
           {isLoading ? (
             <div className="space-y-4">
@@ -824,8 +833,29 @@ export default function Feed() {
                   ? polls[pollCardIndex % polls.length]
                   : null;
 
+                // Inject MediaCarousel every 4th post, alternating between TV shows and books
+                const shouldShowMediaCarousel = (postIndex + 1) % 4 === 0;
+                const carouselIndex = Math.floor(postIndex / 4);
+                const carouselTypes = [
+                  { type: 'tv', title: 'Top Trending TV Shows', items: trendingTVShows },
+                  { type: 'book', title: 'NY Times Bestsellers', items: bestsellerBooks },
+                ];
+                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length];
+
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
+                    {/* Insert MediaCarousel every 4th post */}
+                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
+                      <MediaCarousel
+                        title={currentCarousel.title}
+                        mediaType={currentCarousel.type}
+                        items={currentCarousel.items}
+                        onItemClick={handleMediaClick}
+                        onAddToList={handleAddToList}
+                        onRate={handleRateMedia}
+                      />
+                    )}
+
                     {/* Insert PlayCard every 3rd post */}
                     {shouldShowPlayCard && canPlayInline && (
                       <PlayCard 
