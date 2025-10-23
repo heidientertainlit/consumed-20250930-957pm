@@ -305,7 +305,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           {/* Inline vertical star rating */}
           {showRatingStars && (
             <div 
-              className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-2 shadow-2xl border border-white/20 flex flex-col gap-1"
+              className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5"
               onClick={(e) => e.stopPropagation()}
             >
               {[5, 4, 3, 2, 1].map((stars) => (
@@ -314,24 +314,17 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                   type="button"
                   onClick={() => handleRateClick(stars)}
                   disabled={rateMutation.isPending}
-                  className="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-purple-600/50 transition-colors"
+                  className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
                   data-testid={`star-${stars}`}
                 >
-                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                  <span className="text-white text-sm font-medium">{stars}</span>
+                  <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                  <span className="text-white text-xs font-medium">{stars}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {/* Rating badge (if exists) */}
-        {item.rating && (
-          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1">
-            <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-            <span className="text-xs font-bold text-white">{item.rating}</span>
-          </div>
-        )}
       </div>
 
       {/* Title & Year */}
