@@ -44,7 +44,10 @@ export default function MediaCarousel({
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
             {title}
           </h3>
-          <p className="text-sm text-gray-400 mt-1">Swipe to explore</p>
+          <p className="text-sm text-gray-400 mt-1">
+            <span className="md:hidden">Swipe to explore</span>
+            <span className="hidden md:inline">Drag or use arrows to browse</span>
+          </p>
         </div>
         <Button
           variant="ghost"
