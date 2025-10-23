@@ -123,19 +123,49 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   // Add to list mutation
   const addToListMutation = useMutation({
     mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
-      const response = await fetch('/api/list-items', {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      // Determine source based on media type
+      let externalSource = 'tmdb';
+      if (item.mediaType === 'book') {
+        externalSource = 'openlibrary';
+      } else if (item.mediaType === 'podcast') {
+        externalSource = 'spotify';
+      }
+
+      const mediaData = {
+        title: item.title,
+        mediaType: item.mediaType || 'movie',
+        creator: item.author || '',
+        imageUrl: item.imageUrl,
+        externalId: item.id,
+        externalSource
+      };
+
+      // Use different endpoints for custom vs default lists
+      const url = isCustom 
+        ? 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list'
+        : 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media';
+
+      const body = isCustom
+        ? { media: mediaData, customListId: listType }
+        : { media: mediaData, listType };
+
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          listType,
-          isCustomList: isCustom || false,
-          title: item.title,
-          type: item.mediaType || 'movie',
-          creator: '',
-          imageUrl: item.imageUrl,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
       });
-      if (!response.ok) throw new Error('Failed to add to list');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add to list');
+      }
       return response.json();
     },
     onSuccess: () => {
