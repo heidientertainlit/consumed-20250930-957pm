@@ -6,6 +6,81 @@ import { pollsDb } from "./polls-db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  // Get trending TV shows from TMDB with platform info
+  app.get("/api/tmdb/trending/tv", async (req, res) => {
+    try {
+      const TMDB_API_KEY = process.env.TMDB_API_KEY;
+      if (!TMDB_API_KEY) {
+        return res.status(500).json({ message: "TMDB API key not configured" });
+      }
+
+      // Fetch trending TV shows
+      const trendingResponse = await fetch(
+        `https://api.themoviedb.org/3/trending/tv/week?api_key=${TMDB_API_KEY}`
+      );
+      
+      if (!trendingResponse.ok) {
+        throw new Error('Failed to fetch from TMDB');
+      }
+
+      const trendingData = await trendingResponse.json();
+      
+      // Map provider IDs to platform names
+      const providerMap: Record<number, string> = {
+        8: 'netflix',
+        337: 'disney',
+        15: 'hulu',
+        9: 'prime',
+        384: 'max',
+        387: 'peacock',
+        350: 'apple',
+        531: 'paramount',
+      };
+
+      // Fetch platform info for each show and format the response
+      const formattedShows = await Promise.all(
+        trendingData.results.slice(0, 10).map(async (show: any) => {
+          // Fetch watch providers for this show
+          let platform = undefined;
+          try {
+            const providersResponse = await fetch(
+              `https://api.themoviedb.org/3/tv/${show.id}/watch/providers?api_key=${TMDB_API_KEY}`
+            );
+            if (providersResponse.ok) {
+              const providersData = await providersResponse.json();
+              const usProviders = providersData.results?.US;
+              
+              // Check flatrate (subscription) providers first
+              if (usProviders?.flatrate && usProviders.flatrate.length > 0) {
+                const providerId = usProviders.flatrate[0].provider_id;
+                platform = providerMap[providerId];
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to fetch providers for show ${show.id}:`, error);
+          }
+
+          return {
+            id: show.id.toString(),
+            title: show.name,
+            imageUrl: show.poster_path 
+              ? `https://image.tmdb.org/t/p/w500${show.poster_path}`
+              : '',
+            rating: show.vote_average ? Math.round(show.vote_average * 10) / 10 : undefined,
+            year: show.first_air_date ? new Date(show.first_air_date).getFullYear().toString() : undefined,
+            mediaType: 'tv',
+            platform,
+          };
+        })
+      );
+
+      res.json(formattedShows);
+    } catch (error) {
+      console.error('TMDB trending error:', error);
+      res.status(500).json({ message: "Failed to fetch trending TV shows" });
+    }
+  });
+
   // Get user
   app.get("/api/users/:id", async (req, res) => {
     try {
