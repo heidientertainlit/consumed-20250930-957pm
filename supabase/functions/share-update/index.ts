@@ -116,6 +116,57 @@ serve(async (req) => {
       }
 
       console.log('Post created successfully:', post.id);
+
+      // Also save rating to unified media_ratings table for Entertainment DNA
+      if (rating && media_external_id && media_external_source && media_title && media_type) {
+        console.log('Saving rating to media_ratings table...');
+        
+        // Check if rating already exists
+        const { data: existingRating } = await supabase
+          .from('media_ratings')
+          .select('id')
+          .eq('user_id', appUser.id)
+          .eq('media_external_id', media_external_id)
+          .eq('media_external_source', media_external_source)
+          .maybeSingle();
+
+        if (existingRating) {
+          // Update existing rating
+          const { error: updateError } = await supabase
+            .from('media_ratings')
+            .update({
+              rating,
+              media_title,
+              media_type,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingRating.id);
+
+          if (updateError) {
+            console.error('Failed to update media_ratings:', updateError);
+          } else {
+            console.log('Updated existing rating in media_ratings');
+          }
+        } else {
+          // Create new rating
+          const { error: insertError } = await supabase
+            .from('media_ratings')
+            .insert({
+              user_id: appUser.id,
+              media_external_id,
+              media_external_source,
+              media_title,
+              media_type,
+              rating
+            });
+
+          if (insertError) {
+            console.error('Failed to insert into media_ratings:', insertError);
+          } else {
+            console.log('Created new rating in media_ratings');
+          }
+        }
+      }
       return new Response(JSON.stringify({ post }), {
         status: 201,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
