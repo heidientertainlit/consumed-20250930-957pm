@@ -770,6 +770,18 @@ export default function Feed() {
             </Button>
           </div>
 
+          {/* Static Trending TV Shows Carousel */}
+          {trendingTVShows.length > 0 && (
+            <MediaCarousel
+              title="Top Trending TV Shows"
+              mediaType="tv"
+              items={trendingTVShows}
+              onItemClick={handleMediaClick}
+              onAddToList={handleAddToList}
+              onRate={handleRateMedia}
+            />
+          )}
+
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4].map((n) => (
@@ -833,14 +845,9 @@ export default function Feed() {
                   ? polls[pollCardIndex % polls.length]
                   : null;
 
-                // Inject MediaCarousel every 4th post, alternating between TV shows and books
+                // Inject MediaCarousel every 4th post (only books since TV is at top)
                 const shouldShowMediaCarousel = (postIndex + 1) % 4 === 0;
-                const carouselIndex = Math.floor(postIndex / 4);
-                const carouselTypes = [
-                  { type: 'tv', title: 'Top Trending TV Shows', items: trendingTVShows },
-                  { type: 'book', title: 'NY Times Bestsellers', items: bestsellerBooks },
-                ];
-                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length];
+                const currentCarousel = { type: 'book', title: 'NY Times Bestsellers', items: bestsellerBooks };
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
