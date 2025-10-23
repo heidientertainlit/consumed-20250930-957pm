@@ -19,6 +19,7 @@ interface MediaItem {
   rating?: number;
   year?: string;
   mediaType?: string;
+  platform?: string; // e.g., "netflix", "disney", "hulu", "prime", "max", "peacock", "apple"
 }
 
 interface MediaCarouselProps {
@@ -206,6 +207,26 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     }
   };
 
+  // Get platform badge info
+  const getPlatformBadge = () => {
+    if (!item.platform) return null;
+    
+    const platforms: Record<string, { letter: string; bg: string; text: string }> = {
+      netflix: { letter: 'N', bg: 'bg-red-600', text: 'text-white' },
+      disney: { letter: 'D', bg: 'bg-blue-600', text: 'text-white' },
+      hulu: { letter: 'H', bg: 'bg-green-500', text: 'text-white' },
+      prime: { letter: 'P', bg: 'bg-sky-500', text: 'text-white' },
+      max: { letter: 'M', bg: 'bg-purple-700', text: 'text-white' },
+      peacock: { letter: 'P', bg: 'bg-yellow-400', text: 'text-black' },
+      apple: { letter: 'A', bg: 'bg-black', text: 'text-white' },
+      paramount: { letter: 'P', bg: 'bg-blue-500', text: 'text-white' },
+    };
+    
+    return platforms[item.platform.toLowerCase()] || null;
+  };
+
+  const platformBadge = getPlatformBadge();
+
   return (
     <div className="group relative">
       {/* Poster */}
@@ -233,6 +254,13 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        
+        {/* Platform badge - top left */}
+        {platformBadge && (
+          <div className={`absolute top-2 left-2 ${platformBadge.bg} ${platformBadge.text} w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shadow-lg`}>
+            {platformBadge.letter}
+          </div>
+        )}
         
         {/* Mobile-friendly action buttons - bottom right */}
         <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
