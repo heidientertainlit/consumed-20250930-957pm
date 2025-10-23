@@ -209,7 +209,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     },
   });
   
-  const handleAddToList = (listType: string, isCustom = false) => {
+  const handleAddToList = (listType: string, isCustom = false, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     addToListMutation.mutate({ listType, isCustom });
   };
   
@@ -332,35 +333,35 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
             >
               <DropdownMenuItem
-                onClick={() => handleAddToList('queue')}
+                onClick={(e) => handleAddToList('queue', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
                 Add to Queue
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleAddToList('currently')}
+                onClick={(e) => handleAddToList('currently', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
                 Add to Currently
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleAddToList('finished')}
+                onClick={(e) => handleAddToList('finished', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
                 Add to Finished
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleAddToList('dnf')}
+                onClick={(e) => handleAddToList('dnf', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
                 Add to Did Not Finish
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleAddToList('favorites')}
+                onClick={(e) => handleAddToList('favorites', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
@@ -378,7 +379,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                     .map((list: any) => (
                       <DropdownMenuItem
                         key={list.id}
-                        onClick={() => handleAddToList(list.id, true)}
+                        onClick={(e) => handleAddToList(list.id, true, e)}
                         className="cursor-pointer text-white hover:bg-gray-800"
                         disabled={addToListMutation.isPending}
                       >
