@@ -96,10 +96,28 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   };
   
   // Fetch user's lists
-  const { data: lists = [] } = useQuery<any[]>({
-    queryKey: ['/api/user-lists'],
+  const { data: userListsData } = useQuery<any>({
+    queryKey: ['user-lists-with-media'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user lists');
+      }
+
+      return response.json();
+    },
     enabled: !!session?.access_token,
   });
+
+  const lists = userListsData?.lists || [];
   
   // Add to list mutation
   const addToListMutation = useMutation({
@@ -124,7 +142,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         title: "Added to list!",
         description: `${item.title} has been added to your list.`,
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/user-lists'] });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
     },
     onError: () => {
       toast({
