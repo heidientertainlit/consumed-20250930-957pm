@@ -1,14 +1,6 @@
 import { ChevronRight, Plus, Star, Film, Tv, Music, Book, Mic } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { cn } from "@/lib/utils";
 
 interface MediaItem {
   id: string;
@@ -57,44 +49,18 @@ export default function MediaCarousel({
         </Button>
       </div>
 
-      {/* Carousel */}
-      <div className="relative px-2">
-        <Carousel
-          opts={{
-            align: "start",
-            loop: false,
-            dragFree: true,
-            containScroll: "trimSnaps",
-            watchDrag: true, // Enable drag detection
-            skipSnaps: false,
-          }}
-          className="w-full"
-        >
-          <CarouselContent className="-ml-2 md:-ml-4 cursor-grab active:cursor-grabbing">
-            {items.map((item) => (
-              <CarouselItem
-                key={item.id}
-                className="pl-2 md:pl-4 basis-[45%] xs:basis-[40%] sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
-              >
-                <MediaCard
-                  item={item}
-                  onItemClick={onItemClick}
-                  onAddToList={onAddToList}
-                  onRate={onRate}
-                />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-2 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
-          <CarouselNext className="right-2 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
-        </Carousel>
-        
-        {/* Scroll indicator for mobile */}
-        <div className="flex md:hidden justify-center mt-3 gap-1">
-          {items.slice(0, 5).map((_, idx) => (
-            <div key={idx} className="h-1 w-8 bg-gray-700 rounded-full" />
-          ))}
-        </div>
+      {/* Scrollable carousel */}
+      <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide px-2">
+        {items.map((item) => (
+          <div key={item.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
+            <MediaCard
+              item={item}
+              onItemClick={onItemClick}
+              onAddToList={onAddToList}
+              onRate={onRate}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
