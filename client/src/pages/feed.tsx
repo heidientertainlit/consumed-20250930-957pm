@@ -5,6 +5,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PollCard from "@/components/poll-card";
 import PlayCard from "@/components/play-card";
+import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import CommentsSection from "@/components/comments-section";
@@ -683,6 +684,81 @@ export default function Feed() {
     });
   };
 
+  // Mock TV show data for carousel demo
+  const mockTVShows = [
+    {
+      id: "1",
+      title: "The Last of Us",
+      imageUrl: "https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg",
+      rating: 8.8,
+      year: "2023"
+    },
+    {
+      id: "2",
+      title: "Wednesday",
+      imageUrl: "https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7Jz20NpMygczOkv.jpg",
+      rating: 8.1,
+      year: "2022"
+    },
+    {
+      id: "3",
+      title: "The Bear",
+      imageUrl: "https://image.tmdb.org/t/p/w500/zsFGNGW1CRmfkdLYW5rxshfmHm.jpg",
+      rating: 8.6,
+      year: "2022"
+    },
+    {
+      id: "4",
+      title: "Succession",
+      imageUrl: "https://image.tmdb.org/t/p/w500/7HW47XbkNQ5fiwQFYGWdw9gs144.jpg",
+      rating: 8.9,
+      year: "2018"
+    },
+    {
+      id: "5",
+      title: "Stranger Things",
+      imageUrl: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
+      rating: 8.7,
+      year: "2016"
+    },
+    {
+      id: "6",
+      title: "Breaking Bad",
+      imageUrl: "https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg",
+      rating: 9.5,
+      year: "2008"
+    },
+    {
+      id: "7",
+      title: "The Office",
+      imageUrl: "https://image.tmdb.org/t/p/w500/qWnJzyZhyy74gjpSjIXWmuk0ifX.jpg",
+      rating: 9.0,
+      year: "2005"
+    },
+    {
+      id: "8",
+      title: "Game of Thrones",
+      imageUrl: "https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
+      rating: 9.2,
+      year: "2011"
+    },
+  ];
+
+  const handleMediaClick = (item: any) => {
+    console.log("Clicked media item:", item);
+    // TODO: Navigate to media detail page
+  };
+
+  const handleAddToList = (item: any) => {
+    console.log("Add to list:", item);
+    // TODO: Open list picker
+  };
+
+  const handleRateMedia = (item: any) => {
+    console.log("Rate media:", item);
+    // TODO: Open rating dialog
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
@@ -713,6 +789,16 @@ export default function Feed() {
               Share Update
             </Button>
           </div>
+
+          {/* Media Carousel Demo */}
+          <MediaCarousel
+            title="Trending TV Shows"
+            mediaType="tv"
+            items={mockTVShows}
+            onItemClick={handleMediaClick}
+            onAddToList={handleAddToList}
+            onRate={handleRateMedia}
+          />
 
 
           {isLoading ? (
