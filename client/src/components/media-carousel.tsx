@@ -85,8 +85,8 @@ export default function MediaCarousel({
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden md:flex -left-4 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
-          <CarouselNext className="hidden md:flex -right-4 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
+          <CarouselPrevious className="left-2 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
+          <CarouselNext className="right-2 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
         </Carousel>
         
         {/* Scroll indicator for mobile */}
