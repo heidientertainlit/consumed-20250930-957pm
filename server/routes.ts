@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const nytData = await nytResponse.json();
       const books = nytData.results?.books || [];
 
-      // Fetch cover images from Google Books for each book
+      // Fetch cover images for each book
       const formattedBooks = await Promise.all(
         books.slice(0, 10).map(async (book: any) => {
           let imageUrl = '';
@@ -38,9 +38,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get cover from Open Library (free, no quota limits)
           const isbn = book.primary_isbn13 || book.primary_isbn10;
           if (isbn) {
-            // Open Library Cover API - free and reliable
-            // Size options: S (small), M (medium), L (large)
-            imageUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
+            try {
+              // First try Open Library
+              const coverUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+              const coverResponse = await fetch(coverUrl, { method: 'HEAD' });
+              
+              // Check if cover exists (Open Library returns 200 even for missing covers,
+              // but the content-length will be very small for placeholder images)
+              const contentLength = coverResponse.headers.get('content-length');
+              if (coverResponse.ok && contentLength && parseInt(contentLength) > 1000) {
+                imageUrl = coverUrl;
+              }
+            } catch (error) {
+              console.error(`Failed to verify cover for ISBN ${isbn}:`, error);
+            }
           }
 
           return {
