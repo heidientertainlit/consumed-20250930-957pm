@@ -63,14 +63,16 @@ export default function MediaCarousel({
           opts={{
             align: "start",
             loop: false,
+            dragFree: true, // Enables free scrolling on mobile
+            containScroll: "trimSnaps", // Better mobile behavior
           }}
-          className="w-full"
+          className="w-full cursor-grab active:cursor-grabbing"
         >
           <CarouselContent className="-ml-2 md:-ml-4">
             {items.map((item) => (
               <CarouselItem
                 key={item.id}
-                className="pl-2 md:pl-4 basis-1/3 sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
+                className="pl-2 md:pl-4 basis-[45%] xs:basis-[40%] sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
               >
                 <MediaCard
                   item={item}
@@ -81,9 +83,16 @@ export default function MediaCarousel({
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden sm:flex -left-4 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
-          <CarouselNext className="hidden sm:flex -right-4 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
+          <CarouselPrevious className="hidden md:flex -left-4 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
+          <CarouselNext className="hidden md:flex -right-4 bg-gray-800/90 hover:bg-gray-700 text-white border-gray-700" />
         </Carousel>
+        
+        {/* Scroll indicator for mobile */}
+        <div className="flex md:hidden justify-center mt-3 gap-1">
+          {items.slice(0, 5).map((_, idx) => (
+            <div key={idx} className="h-1 w-8 bg-gray-700 rounded-full" />
+          ))}
+        </div>
       </div>
     </div>
   );
