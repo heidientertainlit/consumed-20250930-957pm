@@ -238,10 +238,19 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         data-testid={`media-card-${item.id}`}
       >
         {imageError || !item.imageUrl ? (
-          // Fallback gradient placeholder
-          <div className="w-full h-full bg-gradient-to-br from-gray-800 via-purple-900/30 to-gray-900 flex items-center justify-center">
-            {getMediaIcon()}
-          </div>
+          // Fallback placeholder - styled like a book cover for books, gradient for others
+          item.mediaType?.toLowerCase() === 'book' ? (
+            <div className="w-full h-full bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 flex flex-col items-center justify-center p-4 border-l-4 border-amber-700">
+              <Book className="h-12 w-12 text-amber-200/60 mb-3" />
+              <p className="text-amber-100 text-xs font-serif text-center leading-tight line-clamp-4">
+                {item.title}
+              </p>
+            </div>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-800 via-purple-900/30 to-gray-900 flex items-center justify-center">
+              {getMediaIcon()}
+            </div>
+          )
         ) : (
           <img
             src={item.imageUrl}
