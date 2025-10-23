@@ -50,8 +50,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       </div>
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50">
-        <div className="flex justify-evenly items-center h-20">
+      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50 pb-safe">
+        <div className="flex justify-evenly items-center h-20 pb-2">
           <Link
             href="/feed"
             className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
