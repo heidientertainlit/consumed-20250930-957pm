@@ -774,7 +774,24 @@ export default function Feed() {
 
   const handleMediaClick = (item: any) => {
     console.log("Clicked media item:", item);
-    // TODO: Navigate to media detail page
+    
+    // Determine the media type and source for the URL
+    const mediaType = item.mediaType || 'movie';
+    let source = 'tmdb'; // Default to TMDB
+    
+    // Determine source based on media type
+    if (mediaType === 'book') {
+      source = 'openlibrary';
+    } else if (mediaType === 'podcast') {
+      source = 'spotify';
+    } else if (mediaType === 'movie' || mediaType === 'tv') {
+      source = 'tmdb';
+    }
+    
+    const externalId = item.id;
+    
+    // Navigate to media detail page
+    setLocation(`/media/${mediaType}/${source}/${externalId}`);
   };
 
   const handleAddToList = (item: any) => {
