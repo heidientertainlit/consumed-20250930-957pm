@@ -240,9 +240,10 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         {imageError || !item.imageUrl ? (
           // Fallback placeholder - styled like a book cover for books, gradient for others
           item.mediaType?.toLowerCase() === 'book' ? (
-            <div className="w-full h-full bg-gradient-to-br from-amber-900 via-amber-800 to-amber-950 flex flex-col items-center justify-center p-4 border-l-4 border-amber-700">
-              <Book className="h-12 w-12 text-amber-200/60 mb-3" />
-              <p className="text-amber-100 text-xs font-serif text-center leading-tight line-clamp-4">
+            <div className="w-full h-full bg-gradient-to-br from-amber-700 via-amber-600 to-amber-800 flex flex-col items-center justify-center p-4 border-2 border-amber-900/50 shadow-inner">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
+              <Book className="h-14 w-14 text-amber-200/70 mb-4 relative z-10" />
+              <p className="text-amber-50 text-sm font-serif text-center leading-tight line-clamp-3 relative z-10 font-semibold">
                 {item.title}
               </p>
             </div>
