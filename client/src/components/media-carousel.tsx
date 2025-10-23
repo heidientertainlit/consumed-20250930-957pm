@@ -109,6 +109,21 @@ interface MediaCardProps {
 
 function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const handlePointerDown = () => {
+    setIsDragging(false);
+  };
+  
+  const handlePointerMove = () => {
+    setIsDragging(true);
+  };
+  
+  const handleClick = () => {
+    if (!isDragging) {
+      onItemClick?.(item);
+    }
+  };
   
   // Get icon based on media type
   const getMediaIcon = () => {
@@ -136,7 +151,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       {/* Poster */}
       <div
         className="relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl group-hover:ring-2 group-hover:ring-purple-500"
-        onClick={() => onItemClick?.(item)}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onClick={handleClick}
         data-testid={`media-card-${item.id}`}
       >
         {imageError || !item.imageUrl ? (
