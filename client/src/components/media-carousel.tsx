@@ -76,6 +76,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [showRatingStars, setShowRatingStars] = useState(false);
+  const [hoveredStar, setHoveredStar] = useState<number | null>(null);
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -313,11 +314,19 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                   key={stars}
                   type="button"
                   onClick={() => handleRateClick(stars)}
+                  onMouseEnter={() => setHoveredStar(stars)}
+                  onMouseLeave={() => setHoveredStar(null)}
                   disabled={rateMutation.isPending}
                   className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
                   data-testid={`star-${stars}`}
                 >
-                  <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                  <Star 
+                    className={`h-4 w-4 transition-all ${
+                      hoveredStar === stars
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-gray-400'
+                    }`}
+                  />
                   <span className="text-white text-xs font-medium">{stars}</span>
                 </button>
               ))}
