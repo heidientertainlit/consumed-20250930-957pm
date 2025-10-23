@@ -1,4 +1,4 @@
-import { ChevronRight, Plus, Star, Film, Tv, Music, Book, Mic } from "lucide-react";
+import { Plus, Star, Film, Tv, Music, Book, Mic } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -31,22 +31,11 @@ export default function MediaCarousel({
   return (
     <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-3xl p-6 shadow-lg border border-gray-800/50" data-testid={`carousel-${mediaType}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            {title}
-          </h3>
-          <p className="text-sm text-gray-400 mt-1">Swipe to explore</p>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/20"
-          data-testid="carousel-see-all"
-        >
-          See All
-          <ChevronRight className="ml-1 h-4 w-4" />
-        </Button>
+      <div className="mb-4">
+        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+          {title}
+        </h3>
+        <p className="text-sm text-gray-400 mt-1">Swipe to explore</p>
       </div>
 
       {/* Scrollable carousel */}
