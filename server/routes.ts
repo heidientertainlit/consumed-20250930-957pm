@@ -10,6 +10,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/nyt/bestsellers", async (req, res) => {
     try {
       const NYT_API_KEY = process.env.NYT_API_KEY;
+      const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
+      
       if (!NYT_API_KEY) {
         return res.status(500).json({ message: "NYT API key not configured" });
       }
@@ -33,25 +35,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         books.slice(0, 10).map(async (book: any) => {
           let imageUrl = '';
           
-          // Try to get cover from Google Books using ISBN
+          // Get cover from Open Library (free, no quota limits)
           const isbn = book.primary_isbn13 || book.primary_isbn10;
           if (isbn) {
-            try {
-              const googleBooksResponse = await fetch(
-                `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
-              );
-              if (googleBooksResponse.ok) {
-                const googleData = await googleBooksResponse.json();
-                if (googleData.items && googleData.items[0]?.volumeInfo?.imageLinks) {
-                  imageUrl = googleData.items[0].volumeInfo.imageLinks.thumbnail || 
-                            googleData.items[0].volumeInfo.imageLinks.smallThumbnail || '';
-                  // Upgrade to higher quality if available
-                  imageUrl = imageUrl.replace('zoom=1', 'zoom=2');
-                }
-              }
-            } catch (error) {
-              console.error(`Failed to fetch cover for ISBN ${isbn}:`, error);
-            }
+            // Open Library Cover API - free and reliable
+            // Size options: S (small), M (medium), L (large)
+            imageUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
           }
 
           return {
