@@ -38,8 +38,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get cover from Open Library (free, no quota limits)
           const isbn = book.primary_isbn13 || book.primary_isbn10;
           if (isbn) {
-            // Open Library Cover API - fallback handled by frontend
-            imageUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+            try {
+              const coverUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+              // Check if cover exists (Open Library returns tiny placeholder for missing covers)
+              const response = await fetch(coverUrl, { method: 'HEAD' });
+              const contentLength = response.headers.get('content-length');
+              
+              // Only use the cover if it's bigger than 1000 bytes (real covers are much larger)
+              if (contentLength && parseInt(contentLength) > 1000) {
+                imageUrl = coverUrl;
+              }
+            } catch (error) {
+              // If fetch fails, leave imageUrl empty to trigger frontend placeholder
+              console.error(`Failed to check cover for ISBN ${isbn}`);
+            }
           }
 
           return {
