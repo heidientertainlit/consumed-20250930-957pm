@@ -171,6 +171,18 @@ export const cachedRecommendations = pgTable("cached_recommendations", {
   expiresAt: timestamp("expires_at").notNull(),
 });
 
+export const mediaRatings = pgTable("media_ratings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  mediaExternalId: text("media_external_id").notNull(),
+  mediaExternalSource: text("media_external_source").notNull(), // 'tmdb', 'spotify', 'openlibrary', 'youtube'
+  mediaTitle: text("media_title").notNull(),
+  mediaType: text("media_type").notNull(), // 'movie', 'tv', 'book', 'podcast', 'music'
+  rating: integer("rating").notNull(), // 1-5 stars
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -250,6 +262,12 @@ export const insertCachedRecommendationsSchema = createInsertSchema(cachedRecomm
   generatedAt: true,
 });
 
+export const insertMediaRatingSchema = createInsertSchema(mediaRatings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -278,3 +296,5 @@ export type PollResponse = typeof pollResponses.$inferSelect;
 export type InsertPollResponse = z.infer<typeof insertPollResponseSchema>;
 export type CachedRecommendations = typeof cachedRecommendations.$inferSelect;
 export type InsertCachedRecommendations = z.infer<typeof insertCachedRecommendationsSchema>;
+export type MediaRating = typeof mediaRatings.$inferSelect;
+export type InsertMediaRating = z.infer<typeof insertMediaRatingSchema>;
