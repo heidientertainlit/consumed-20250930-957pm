@@ -143,34 +143,34 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           />
         )}
         
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Gradient overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Quick actions on hover */}
-        <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        {/* Mobile-friendly action buttons - bottom right */}
+        <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
           <Button
             size="icon"
             variant="secondary"
-            className="h-10 w-10 rounded-full bg-white/90 hover:bg-white text-black shadow-lg"
+            className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
               onAddToList?.(item);
             }}
             data-testid={`add-to-list-${item.id}`}
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
           </Button>
           <Button
             size="icon"
             variant="secondary"
-            className="h-10 w-10 rounded-full bg-white/90 hover:bg-white text-black shadow-lg"
+            className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
               onRate?.(item);
             }}
             data-testid={`rate-${item.id}`}
           >
-            <Star className="h-5 w-5" />
+            <Star className="h-4 w-4" />
           </Button>
         </div>
 
