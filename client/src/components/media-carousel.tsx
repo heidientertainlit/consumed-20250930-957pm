@@ -1,22 +1,12 @@
-import { Plus, Star, Film, Tv, Music, Book, Mic, ChevronDown } from "lucide-react";
+import { Plus, Star, Film, Tv, Music, Book, Mic } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
@@ -85,9 +75,7 @@ interface MediaCardProps {
 function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [showRateDialog, setShowRateDialog] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
+  const [showRatingStars, setShowRatingStars] = useState(false);
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -149,17 +137,24 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   // Rate item mutation
   const rateMutation = useMutation({
     mutationFn: async (ratingValue: number) => {
-      // This would be implemented with your backend
-      console.log('Rating item:', item.title, 'with', ratingValue);
-      return Promise.resolve();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Rated!",
-        description: `You rated ${item.title} ${rating} stars.`,
+      const response = await fetch('/api/rate-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: item.title,
+          rating: ratingValue,
+          type: item.mediaType || 'movie',
+        }),
       });
-      setShowRateDialog(false);
-      setRating(0);
+      if (!response.ok) throw new Error('Failed to rate item');
+      return response.json();
+    },
+    onSuccess: (_, ratingValue) => {
+      toast({
+        title: "Rating submitted!",
+        description: `You rated ${item.title} ${ratingValue} stars.`,
+      });
+      setShowRatingStars(false);
     },
   });
   
@@ -167,10 +162,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     addToListMutation.mutate({ listType, isCustom });
   };
   
-  const handleSubmitRating = () => {
-    if (rating > 0) {
-      rateMutation.mutate(rating);
-    }
+  const handleRateClick = (stars: number) => {
+    rateMutation.mutate(stars);
   };
   
   // Get icon based on media type
@@ -302,12 +295,34 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
-              setShowRateDialog(true);
+              setShowRatingStars(!showRatingStars);
             }}
             data-testid={`rate-${item.id}`}
           >
             <Star className="h-4 w-4" />
           </Button>
+          
+          {/* Inline vertical star rating */}
+          {showRatingStars && (
+            <div 
+              className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-2 shadow-2xl border border-white/20 flex flex-col gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {[5, 4, 3, 2, 1].map((stars) => (
+                <button
+                  key={stars}
+                  type="button"
+                  onClick={() => handleRateClick(stars)}
+                  disabled={rateMutation.isPending}
+                  className="flex items-center gap-1 px-2 py-1.5 rounded hover:bg-purple-600/50 transition-colors"
+                  data-testid={`star-${stars}`}
+                >
+                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                  <span className="text-white text-sm font-medium">{stars}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Rating badge (if exists) */}
@@ -333,79 +348,6 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         )}
       </div>
       
-      {/* Rating Drawer - slides up from bottom on mobile */}
-      <Drawer open={showRateDialog} onOpenChange={setShowRateDialog}>
-        <DrawerContent className="bg-gray-900 border-gray-700 text-white">
-          <DrawerHeader>
-            <DrawerTitle className="text-center">Rate {item.title}</DrawerTitle>
-            <DrawerDescription className="text-gray-400 text-center">
-              How would you rate this {item.mediaType || 'item'}?
-            </DrawerDescription>
-          </DrawerHeader>
-          
-          <div className="space-y-6 py-6 px-4">
-            {/* Star Rating */}
-            <div className="flex justify-center gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  className="transition-transform hover:scale-110 active:scale-95"
-                  data-testid={`star-${star}`}
-                >
-                  <Star
-                    className={`h-12 w-12 ${
-                      star <= (hoverRating || rating)
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-gray-600'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-            
-            {/* Number Input */}
-            <div className="flex items-center justify-center gap-3">
-              <Input
-                type="number"
-                min="0"
-                max="5"
-                step="0.1"
-                value={rating || ''}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  if (val >= 0 && val <= 5) {
-                    setRating(val);
-                  }
-                }}
-                className="w-28 text-center bg-gray-800 border-gray-700 text-white text-lg"
-                placeholder="0"
-                data-testid="input-rating"
-              />
-              <span className="text-gray-400">(0-5)</span>
-            </div>
-          </div>
-          
-          <DrawerFooter className="px-4 pb-6">
-            <Button
-              onClick={handleSubmitRating}
-              disabled={rating === 0 || rateMutation.isPending}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
-              data-testid="button-submit-rating"
-            >
-              {rateMutation.isPending ? 'Submitting...' : 'Submit Rating'}
-            </Button>
-            <DrawerClose asChild>
-              <Button variant="outline" className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 py-6">
-                Cancel
-              </Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
     </div>
   );
 }
