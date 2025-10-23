@@ -691,56 +691,64 @@ export default function Feed() {
       title: "The Last of Us",
       imageUrl: "https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg",
       rating: 8.8,
-      year: "2023"
+      year: "2023",
+      mediaType: "tv"
     },
     {
       id: "2",
       title: "Wednesday",
       imageUrl: "https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7Jz20NpMygczOkv.jpg",
       rating: 8.1,
-      year: "2022"
+      year: "2022",
+      mediaType: "tv"
     },
     {
       id: "3",
       title: "The Bear",
-      imageUrl: "https://image.tmdb.org/t/p/w500/zsFGNGW1CRmfkdLYW5rxshfmHm.jpg",
+      imageUrl: "", // Intentionally empty to show fallback
       rating: 8.6,
-      year: "2022"
+      year: "2022",
+      mediaType: "tv"
     },
     {
       id: "4",
       title: "Succession",
       imageUrl: "https://image.tmdb.org/t/p/w500/7HW47XbkNQ5fiwQFYGWdw9gs144.jpg",
       rating: 8.9,
-      year: "2018"
+      year: "2018",
+      mediaType: "tv"
     },
     {
       id: "5",
       title: "Stranger Things",
       imageUrl: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
       rating: 8.7,
-      year: "2016"
+      year: "2016",
+      mediaType: "tv"
     },
     {
       id: "6",
       title: "Breaking Bad",
       imageUrl: "https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg",
       rating: 9.5,
-      year: "2008"
+      year: "2008",
+      mediaType: "tv"
     },
     {
       id: "7",
       title: "The Office",
       imageUrl: "https://image.tmdb.org/t/p/w500/qWnJzyZhyy74gjpSjIXWmuk0ifX.jpg",
       rating: 9.0,
-      year: "2005"
+      year: "2005",
+      mediaType: "tv"
     },
     {
       id: "8",
       title: "Game of Thrones",
       imageUrl: "https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
       rating: 9.2,
-      year: "2011"
+      year: "2011",
+      mediaType: "tv"
     },
   ];
 

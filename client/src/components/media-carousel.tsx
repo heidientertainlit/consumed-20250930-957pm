@@ -1,4 +1,5 @@
-import { ChevronRight, Plus, Star } from "lucide-react";
+import { ChevronRight, Plus, Star, Film, Tv, Music, Book, Mic } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -15,6 +16,7 @@ interface MediaItem {
   imageUrl: string;
   rating?: number;
   year?: string;
+  mediaType?: string;
 }
 
 interface MediaCarouselProps {
@@ -95,6 +97,29 @@ interface MediaCardProps {
 }
 
 function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
+  const [imageError, setImageError] = useState(false);
+  
+  // Get icon based on media type
+  const getMediaIcon = () => {
+    const iconClass = "h-16 w-16 text-white/40";
+    switch (item.mediaType?.toLowerCase()) {
+      case 'movie':
+        return <Film className={iconClass} />;
+      case 'tv':
+      case 'tv-show':
+        return <Tv className={iconClass} />;
+      case 'music':
+      case 'album':
+        return <Music className={iconClass} />;
+      case 'book':
+        return <Book className={iconClass} />;
+      case 'podcast':
+        return <Mic className={iconClass} />;
+      default:
+        return <Tv className={iconClass} />;
+    }
+  };
+
   return (
     <div className="group relative">
       {/* Poster */}
@@ -103,12 +128,20 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         onClick={() => onItemClick?.(item)}
         data-testid={`media-card-${item.id}`}
       >
-        <img
-          src={item.imageUrl}
-          alt={item.title}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+        {imageError || !item.imageUrl ? (
+          // Fallback gradient placeholder
+          <div className="w-full h-full bg-gradient-to-br from-gray-800 via-purple-900/30 to-gray-900 flex items-center justify-center">
+            {getMediaIcon()}
+          </div>
+        ) : (
+          <img
+            src={item.imageUrl}
+            alt={item.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={() => setImageError(true)}
+          />
+        )}
         
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
