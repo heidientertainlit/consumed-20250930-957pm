@@ -62,12 +62,13 @@ serve(async (req) => {
       });
     }
 
-    // Add collaborator (no permission column)
+    // Add collaborator with role
     const { data, error } = await supabase
       .from('list_collaborators')
       .insert({
         list_id: listId,
-        user_id: userId
+        user_id: userId,
+        role: 'editor'
       })
       .select()
       .single();
