@@ -171,8 +171,9 @@ export default function MediaDetail() {
       return { recommendations: [] };
     }
 
+    // TODO: Switch back to get-recommendations after deploying edge functions
     const response = await fetch(
-      `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-recommendations`,
+      `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations`,
       {
         method: "GET",
         headers: {
