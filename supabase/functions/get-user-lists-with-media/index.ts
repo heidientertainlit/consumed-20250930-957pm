@@ -273,7 +273,8 @@ serve(async (req) => {
       id: list.id,
       title: list.title,
       items: itemsByListId[list.id] || [],
-      is_private: list.is_private
+      is_private: list.is_private,
+      is_default: true
     }));
 
     // Convert custom lists to expected format
@@ -291,7 +292,8 @@ serve(async (req) => {
     const allList = {
       id: 'all',
       title: 'All',
-      items: userItems
+      items: userItems,
+      is_default: true
     };
 
     // Assemble final lists
