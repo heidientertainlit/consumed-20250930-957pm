@@ -129,7 +129,7 @@ serve(async (req) => {
         lists: userSystemLists?.map(l => l.title)
       });
 
-      // Only include standard system lists
+      // Only include standard system lists with uniqueness check
       const requiredSystemLists = [
         'Currently',
         'Queue',
@@ -138,9 +138,15 @@ serve(async (req) => {
         'Favorites'
       ];
 
-      const filteredSystemLists = (userSystemLists || []).filter(list => 
-        requiredSystemLists.includes(list.title)
-      );
+      // Filter and deduplicate - keep only first occurrence of each title
+      const seenTitles = new Set();
+      const filteredSystemLists = (userSystemLists || [])
+        .filter(list => {
+          if (!requiredSystemLists.includes(list.title)) return false;
+          if (seenTitles.has(list.title)) return false;
+          seenTitles.add(list.title);
+          return true;
+        });
 
       const existingTitles = new Set(filteredSystemLists.map(l => l.title));
       const missingLists = requiredSystemLists.filter(title => !existingTitles.has(title));
@@ -178,9 +184,14 @@ serve(async (req) => {
           .eq('is_default', true)
           .order('title');
         
-        systemLists = (updatedSystemLists || []).filter(list => 
-          requiredSystemLists.includes(list.title)
-        );
+        // Deduplicate after backfill
+        const seenAfterBackfill = new Set();
+        systemLists = (updatedSystemLists || []).filter(list => {
+          if (!requiredSystemLists.includes(list.title)) return false;
+          if (seenAfterBackfill.has(list.title)) return false;
+          seenAfterBackfill.add(list.title);
+          return true;
+        });
         console.log('System lists after backfill:', systemLists.length);
       } else {
         systemLists = filteredSystemLists;
