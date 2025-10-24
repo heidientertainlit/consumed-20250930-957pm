@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,11 +11,15 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
 import { supabase } from "@/lib/supabase";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import UserSearch from "@/components/user-search";
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
   // Removed privacy state - all lists are now public for MVP
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [isCollaboratorsDialogOpen, setIsCollaboratorsDialogOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { session } = useAuth();
@@ -304,6 +308,125 @@ export default function ListDetail() {
     }
   };
 
+  // Fetch collaborators for the current list
+  const { data: collaborators = [], refetch: refetchCollaborators } = useQuery({
+    queryKey: ['list-collaborators', sharedListData?.id],
+    queryFn: async () => {
+      if (!sharedListData?.id || !session?.access_token) return [];
+
+      const { data, error } = await supabase
+        .from('list_collaborators')
+        .select('*, users(id, user_name, display_name)')
+        .eq('list_id', sharedListData.id);
+
+      if (error) {
+        console.error('Failed to fetch collaborators:', error);
+        return [];
+      }
+
+      return data.map((collab: any) => ({
+        id: collab.id,
+        userId: collab.user_id,
+        userName: collab.users?.user_name || 'Unknown',
+        displayName: collab.users?.display_name || collab.users?.user_name || 'Unknown',
+        permission: collab.permission || 'edit',
+        addedAt: collab.added_at
+      }));
+    },
+    enabled: !!sharedListData?.id && !!session?.access_token,
+  });
+
+  // Add collaborator mutation
+  const addCollaboratorMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!session?.access_token || !sharedListData?.id) {
+        throw new Error('Authentication or list ID required');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-list-collaborator`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            listId: sharedListData.id,
+            userId,
+            permission: 'edit'
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to add collaborator');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchCollaborators();
+      toast({
+        title: "Collaborator Added",
+        description: "User can now access and edit this list",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to Add Collaborator",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Remove collaborator mutation
+  const removeCollaboratorMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!session?.access_token || !sharedListData?.id) {
+        throw new Error('Authentication or list ID required');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/remove-list-collaborator`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            listId: sharedListData.id,
+            userId
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to remove collaborator');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchCollaborators();
+      toast({
+        title: "Collaborator Removed",
+        description: "User no longer has access to this list",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to Remove Collaborator",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
   // Show loading state instead of "List not found" during data fetch
   if (listsLoading) {
     return (
@@ -438,8 +561,34 @@ export default function ListDetail() {
                   </>
                 )}
               </Button>
+
+              {/* Manage Collaborators - Only show for list owner */}
+              {!sharedUserId && session && (
+                <Button
+                  onClick={() => setIsCollaboratorsDialogOpen(true)}
+                  variant="outline"
+                  data-testid="button-manage-collaborators"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                >
+                  <Users size={16} className="mr-2" />
+                  Collaborators
+                  {collaborators.length > 0 && (
+                    <Badge className="ml-2 bg-purple-600 text-white">{collaborators.length}</Badge>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
+
+          {/* Show "Shared with you" indicator if viewing someone else's list or if you're a collaborator */}
+          {(sharedUserId || (collaborators.length > 0 && !sharedUserId)) && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+              <Users size={14} />
+              <span>
+                {sharedUserId ? "Shared by another user" : `Shared with ${collaborators.length} ${collaborators.length === 1 ? 'person' : 'people'}`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* List Items */}
@@ -541,6 +690,82 @@ export default function ListDetail() {
         onClose={() => setIsTrackModalOpen(false)}
         defaultListType={listData?.name && listData.name !== 'All' ? getListTypeFromTitle(listData.name) : undefined}
       />
+
+      {/* Manage Collaborators Dialog */}
+      <Dialog open={isCollaboratorsDialogOpen} onOpenChange={setIsCollaboratorsDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-manage-collaborators">
+          <DialogHeader>
+            <DialogTitle>Manage Collaborators</DialogTitle>
+            <DialogDescription>
+              Add friends to collaborate on "{listData?.name}". They'll be able to add and remove items.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* User Search */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Add Collaborators</h3>
+              <UserSearch
+                onSelectUser={(user) => addCollaboratorMutation.mutate(user.id)}
+                excludeUserIds={[session?.user?.id || '', ...collaborators.map(c => c.userId)]}
+                placeholder="Search by username or name..."
+              />
+            </div>
+
+            {/* Current Collaborators */}
+            {collaborators.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-3">
+                  Current Collaborators ({collaborators.length})
+                </h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {collaborators.map((collaborator: any) => (
+                    <div
+                      key={collaborator.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      data-testid={`collaborator-${collaborator.userId}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-purple-600 text-white">
+                            {collaborator.displayName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-gray-900" data-testid={`text-collaborator-name-${collaborator.userId}`}>
+                            {collaborator.displayName}
+                          </p>
+                          <p className="text-sm text-gray-600" data-testid={`text-collaborator-username-${collaborator.userId}`}>
+                            @{collaborator.userName}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeCollaboratorMutation.mutate(collaborator.userId)}
+                        disabled={removeCollaboratorMutation.isPending}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        data-testid={`button-remove-collaborator-${collaborator.userId}`}
+                      >
+                        <UserMinus size={16} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {collaborators.length === 0 && (
+              <div className="text-center py-6">
+                <Users className="mx-auto text-gray-400 mb-2" size={32} />
+                <p className="text-sm text-gray-500">No collaborators yet</p>
+                <p className="text-xs text-gray-400 mt-1">Search above to add friends</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
