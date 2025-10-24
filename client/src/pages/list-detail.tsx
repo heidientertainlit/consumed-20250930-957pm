@@ -562,8 +562,8 @@ export default function ListDetail() {
                 )}
               </Button>
 
-              {/* Manage Collaborators - Only show for list owner */}
-              {!sharedUserId && session && (
+              {/* Manage Collaborators - Only show for custom lists (not system lists) */}
+              {!sharedUserId && session && !sharedListData?.is_default && (
                 <Button
                   onClick={() => setIsCollaboratorsDialogOpen(true)}
                   variant="outline"
