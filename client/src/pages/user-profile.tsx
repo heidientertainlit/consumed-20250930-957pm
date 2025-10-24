@@ -294,7 +294,9 @@ export default function UserProfile() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add recommendation');
+        const errorText = await response.text();
+        console.error('Add recommendation error response:', response.status, errorText);
+        throw new Error(`Failed to add recommendation: ${response.status} - ${errorText}`);
       }
       return response.json();
     },

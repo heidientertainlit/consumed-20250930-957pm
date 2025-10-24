@@ -764,20 +764,35 @@ export default function Feed() {
     staleTime: 1000 * 60 * 60,
   });
 
-  // Fetch recommended content
+  // Fetch DNA-based personalized recommendations (cached, instant <1s load!)
+  const fetchRecommendations = async () => {
+    if (!session?.access_token) {
+      console.log('No session token available for recommendations');
+      return [];
+    }
+
+    const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-recommendations", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return data.recommendations || [];
+  };
+
   const { data: recommendedContent = [] } = useQuery({
     queryKey: ['recommended-content'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/recommended');
-        if (!response.ok) return [];
-        return await response.json();
-      } catch (error) {
-        console.error('Error fetching recommended content:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60,
+    queryFn: fetchRecommendations,
+    enabled: !!session?.access_token,
+    staleTime: 5 * 60 * 1000, // Refetch after 5 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    retry: false,
   });
 
   const handleMediaClick = (item: any) => {
