@@ -697,7 +697,7 @@ export default function Feed() {
     queryKey: ['trending-tv-shows'],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/tmdb/trending/tv');
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`);
         if (!response.ok) {
           console.error('Failed to fetch trending TV shows');
           return [];
@@ -722,7 +722,7 @@ export default function Feed() {
     queryKey: ['bestseller-books'],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/nyt/bestsellers');
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-bestseller-books`);
         if (!response.ok) {
           console.error('Failed to fetch bestseller books');
           return [];
@@ -748,7 +748,7 @@ export default function Feed() {
     queryKey: ['trending-movies'],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/tmdb/trending/movies');
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-movies`);
         if (!response.ok) return [];
         const data = await response.json();
         // Add externalId and externalSource for MediaCarousel compatibility
@@ -770,7 +770,7 @@ export default function Feed() {
     queryKey: ['trending-podcasts'],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/spotify/trending/podcasts');
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-podcasts`);
         if (!response.ok) return [];
         const data = await response.json();
         // Add externalId and externalSource for MediaCarousel compatibility
