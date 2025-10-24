@@ -41,6 +41,8 @@ export default function Track() {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [selectedFilter, setSelectedFilter] = useState("Currently");
   const [isRebuilding, setIsRebuilding] = useState(false);
+  const [ratingStars, setRatingStars] = useState<Record<string, boolean>>({});
+  const [hoveredStar, setHoveredStar] = useState<Record<string, number | null>>({});
   const [, setLocation] = useLocation();
 
   const handleTrackConsumption = () => {
@@ -290,6 +292,55 @@ export default function Track() {
 
   const handleAddRecommendation = (recommendation: any, listType: string) => {
     addRecommendationMutation.mutate({ recommendation, listType });
+  };
+
+  // Rate recommendation mutation
+  const rateRecommendationMutation = useMutation({
+    mutationFn: async ({ recommendation, rating }: { recommendation: any; rating: number }) => {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rate-media', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          media_external_id: recommendation.external_id,
+          media_external_source: recommendation.external_source,
+          media_title: recommendation.title,
+          media_type: recommendation.media_type || recommendation.type,
+          rating: rating,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to rate item');
+      }
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Rating submitted!",
+        description: `You rated ${variables.recommendation.title} ${variables.rating} stars.`,
+      });
+      // Close the rating stars
+      setRatingStars(prev => ({ ...prev, [variables.recommendation.id]: false }));
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to submit rating. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRateRecommendation = (recommendation: any, rating: number) => {
+    rateRecommendationMutation.mutate({ recommendation, rating });
   };
 
   // Handle file upload for media import
@@ -600,23 +651,143 @@ export default function Track() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                     
                     {/* Action Buttons - Always visible at bottom */}
-                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3">
-                      <button
-                        onClick={() => handleAddRecommendation(rec, 'queue')}
-                        disabled={addRecommendationMutation.isPending}
-                        className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg disabled:opacity-50"
-                        data-testid={`button-add-${rec.id}`}
+                    <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
+                            data-testid={`add-to-list-${rec.id}`}
+                            disabled={addRecommendationMutation.isPending}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent 
+                          align="end" 
+                          side="top" 
+                          sideOffset={8}
+                          alignOffset={-16}
+                          className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
+                        >
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddRecommendation(rec, 'queue');
+                            }}
+                            className="cursor-pointer text-white hover:bg-gray-800"
+                            disabled={addRecommendationMutation.isPending}
+                          >
+                            Add to Queue
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddRecommendation(rec, 'currently');
+                            }}
+                            className="cursor-pointer text-white hover:bg-gray-800"
+                            disabled={addRecommendationMutation.isPending}
+                          >
+                            Add to Currently
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddRecommendation(rec, 'finished');
+                            }}
+                            className="cursor-pointer text-white hover:bg-gray-800"
+                            disabled={addRecommendationMutation.isPending}
+                          >
+                            Add to Finished
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddRecommendation(rec, 'dnf');
+                            }}
+                            className="cursor-pointer text-white hover:bg-gray-800"
+                            disabled={addRecommendationMutation.isPending}
+                          >
+                            Add to Did Not Finish
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddRecommendation(rec, 'favorites');
+                            }}
+                            className="cursor-pointer text-white hover:bg-gray-800"
+                            disabled={addRecommendationMutation.isPending}
+                          >
+                            Add to Favorites
+                          </DropdownMenuItem>
+                          
+                          {/* Custom Lists */}
+                          {customLists.length > 0 && (
+                            <>
+                              <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t border-gray-700 mt-1 pt-2">
+                                MY CUSTOM LISTS
+                              </div>
+                              {customLists.map((list: any) => (
+                                <DropdownMenuItem
+                                  key={list.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddRecommendation(rec, list.id);
+                                  }}
+                                  className="cursor-pointer text-white hover:bg-gray-800"
+                                  disabled={addRecommendationMutation.isPending}
+                                >
+                                  Add to {list.title}
+                                </DropdownMenuItem>
+                              ))}
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRatingStars(prev => ({ ...prev, [rec.id]: !prev[rec.id] }));
+                        }}
+                        data-testid={`rate-${rec.id}`}
                       >
-                        <Plus className="w-5 h-5 text-black" />
-                      </button>
-                      <button
-                        onClick={() => handleAddRecommendation(rec, 'favorites')}
-                        disabled={addRecommendationMutation.isPending}
-                        className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg disabled:opacity-50"
-                        data-testid={`button-favorite-${rec.id}`}
-                      >
-                        <Star className="w-5 h-5 text-black" />
-                      </button>
+                        <Star className="h-4 w-4" />
+                      </Button>
+                      
+                      {/* Inline vertical star rating */}
+                      {ratingStars[rec.id] && (
+                        <div 
+                          className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {[5, 4, 3, 2, 1].map((stars) => (
+                            <button
+                              key={stars}
+                              type="button"
+                              onClick={() => handleRateRecommendation(rec, stars)}
+                              onMouseEnter={() => setHoveredStar(prev => ({ ...prev, [rec.id]: stars }))}
+                              onMouseLeave={() => setHoveredStar(prev => ({ ...prev, [rec.id]: null }))}
+                              disabled={rateRecommendationMutation.isPending}
+                              className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
+                              data-testid={`star-${stars}`}
+                            >
+                              <Star 
+                                className={`h-4 w-4 transition-all ${
+                                  hoveredStar[rec.id] === stars
+                                    ? 'text-yellow-400 fill-yellow-400'
+                                    : 'text-gray-400'
+                                }`}
+                              />
+                              <span className="text-white text-xs font-medium">{stars}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   
