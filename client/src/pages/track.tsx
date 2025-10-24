@@ -594,28 +594,29 @@ export default function Track() {
 
         {/* Recommendations Section */}
         {(recommendationsLoading || isGeneratingRecommendations || (Array.isArray(recommendations) && recommendations.length > 0)) && (
-          <div className="mb-6">
-            <div className="flex items-center mb-3">
-              <Sparkles className="text-purple-700 mr-2" size={20} />
-              <h2 className="text-xl font-bold text-gray-800">Recommended for You</h2>
+          <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-3xl p-6 shadow-lg border border-gray-800/50 mb-6">
+            <div className="flex items-center mb-4">
+              <Sparkles className="text-purple-400 mr-2" size={20} />
+              <h3 className="text-xl font-bold text-white">Recommended for You</h3>
               {isGeneratingRecommendations && (
-                <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full animate-pulse" data-testid="generating-badge">
+                <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full animate-pulse border border-blue-500/30" data-testid="generating-badge">
                   Generating...
                 </span>
               )}
               {!isGeneratingRecommendations && isStaleRecommendations && (
-                <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full" data-testid="refreshing-badge">
+                <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full border border-yellow-500/30" data-testid="refreshing-badge">
                   Refreshing...
                 </span>
               )}
             </div>
+            <p className="text-sm text-gray-400 mb-4">Swipe to explore</p>
 
-            <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
+            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide px-2">
               {recommendationsLoading ? (
                 // Loading skeleton cards
                 [...Array(4)].map((_, index) => (
-                  <div key={`loading-${index}`} className="flex-shrink-0 w-44">
-                    <div className="relative rounded-xl overflow-hidden bg-slate-700 aspect-[2/3] animate-pulse">
+                  <div key={`loading-${index}`} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
+                    <div className="relative rounded-lg overflow-hidden bg-slate-700 aspect-[2/3] animate-pulse">
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                     </div>
                     <div className="mt-2">
@@ -630,8 +631,8 @@ export default function Track() {
                   const showFallback = !rec.image_url || imageErrors[uniqueId];
                   
                   return (
-                    <div key={uniqueId} className="flex-shrink-0 w-44" data-testid={`recommendation-card-${uniqueId}`}>
-                      <div className="relative rounded-xl overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
+                    <div key={uniqueId} className="flex-shrink-0 w-32 sm:w-36 md:w-40" data-testid={`recommendation-card-${uniqueId}`}>
+                      <div className="relative rounded-lg overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
                         {/* Poster Image or Fallback */}
                         {showFallback ? (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 p-4">
@@ -795,12 +796,12 @@ export default function Track() {
                   
                   {/* Title and Year */}
                   <div className="mt-2 px-1">
-                    <h3 className="font-semibold text-sm text-white truncate" title={rec.title}>
+                    <h4 className="text-sm font-semibold text-white line-clamp-2 leading-tight" title={rec.title}>
                       {rec.title}
-                    </h3>
-                    <p className="text-xs text-white/60">
-                      {rec.year || new Date().getFullYear()}
-                    </p>
+                    </h4>
+                    {rec.year && (
+                      <p className="text-xs text-gray-400 mt-0.5">{rec.year}</p>
+                    )}
                   </div>
                 </div>
                   );
