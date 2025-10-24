@@ -152,6 +152,13 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         externalSource
       };
 
+      console.log('🎯 MediaCarousel: Adding to list', {
+        item,
+        mediaData,
+        listId,
+        isCustom,
+      });
+
       // Use different endpoints for custom vs default lists
       const url = isCustom 
         ? 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list'
@@ -171,9 +178,18 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add to list');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Failed to add to list:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+          url,
+          body,
+        });
+        throw new Error(errorData.error || errorData.message || 'Failed to add to list');
       }
+      
+      console.log('✅ Successfully added to list!');
       return response.json();
     },
     onSuccess: () => {
