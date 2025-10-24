@@ -14,6 +14,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { useMutation } from "@tanstack/react-query";
 import { copyLink } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
 import { queryClient } from "@/lib/queryClient";
@@ -101,6 +108,14 @@ export default function UserProfile() {
   // Highlights state
   const [highlights, setHighlights] = useState<any[]>([]);
   const [isLoadingHighlights, setIsLoadingHighlights] = useState(false);
+
+  // DNA Recommendations state
+  const [dnaRecommendations, setDnaRecommendations] = useState<any[]>([]);
+  const [isDnaRecsLoading, setIsDnaRecsLoading] = useState(false);
+  const [isDnaRecsGenerating, setIsDnaRecsGenerating] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [ratingStars, setRatingStars] = useState<Record<string, boolean>>({});
+  const [hoveredStar, setHoveredStar] = useState<Record<string, number | null>>({});
 
   // Fetch highlights from Supabase
   const fetchHighlights = async () => {
@@ -217,6 +232,133 @@ export default function UserProfile() {
       });
     }
   };
+
+  // Fetch DNA-based recommendations
+  const fetchDNARecommendations = async () => {
+    if (!session?.access_token || dnaProfileStatus !== 'has_profile') return;
+
+    setIsDnaRecsLoading(true);
+    try {
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-recommendations", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDnaRecommendations(data.recommendations || []);
+        setIsDnaRecsGenerating(data.isGenerating || false);
+      }
+    } catch (error) {
+      console.error('Error fetching DNA recommendations:', error);
+    } finally {
+      setIsDnaRecsLoading(false);
+    }
+  };
+
+  // Add to list mutation
+  const addDNARecommendationMutation = useMutation({
+    mutationFn: async ({ recommendation, listType }: { recommendation: any; listType: string }) => {
+      if (!session?.access_token) {
+        throw new Error("Authentication required");
+      }
+
+      const isCustomList = userLists.some((list: any) => list.id === listType && list.isCustom);
+      const endpoint = isCustomList 
+        ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
+        : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          media: {
+            title: recommendation.title,
+            mediaType: recommendation.media_type,
+            creator: recommendation.creator,
+            imageUrl: recommendation.image_url,
+            externalId: recommendation.external_id,
+            externalSource: recommendation.external_source,
+            description: recommendation.description,
+          },
+          rating: null,
+          review: null,
+          ...(isCustomList ? { customListId: listType } : { listType: listType }),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add recommendation');
+      }
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      const listTitle = data.listTitle || 'list';
+      toast({
+        title: "Added to list!",
+        description: `${variables.recommendation.title} added to ${listTitle}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
+      fetchUserLists(); // Refresh lists
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add recommendation",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Rate recommendation mutation
+  const rateDNARecommendationMutation = useMutation({
+    mutationFn: async ({ recommendation, rating }: { recommendation: any; rating: number }) => {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rate-media', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          media_external_id: recommendation.external_id,
+          media_external_source: recommendation.external_source,
+          media_title: recommendation.title,
+          media_type: recommendation.media_type || recommendation.type,
+          rating: rating,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to rate item');
+      }
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Rating submitted!",
+        description: `You rated ${variables.recommendation.title} ${variables.rating} stars.`,
+      });
+      const uniqueId = `${variables.recommendation.external_source}-${variables.recommendation.external_id}`;
+      setRatingStars(prev => ({ ...prev, [uniqueId]: false }));
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to submit rating. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Media search states for highlights
   const [searchQuery, setSearchQuery] = useState("");
@@ -549,6 +691,13 @@ export default function UserProfile() {
       }
     }
   }, [session?.access_token, viewingUserId]);
+
+  // Fetch DNA recommendations when DNA profile exists
+  useEffect(() => {
+    if (session?.access_token && dnaProfileStatus === 'has_profile' && isOwnProfile) {
+      fetchDNARecommendations();
+    }
+  }, [session?.access_token, dnaProfileStatus, isOwnProfile]);
 
   // Handle save profile
   const handleSaveProfile = async () => {
@@ -2086,6 +2235,222 @@ export default function UserProfile() {
                   <span>{isDNAExpanded ? 'Hide Details' : 'See What This Means For You'}</span>
                   {isDNAExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
+              </div>
+            )}
+
+            {/* DNA-Based Recommendations Section */}
+            {dnaProfileStatus === 'has_profile' && isOwnProfile && (isDnaRecsLoading || isDnaRecsGenerating || (Array.isArray(dnaRecommendations) && dnaRecommendations.length > 0)) && (
+              <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-3xl p-6 shadow-lg border border-gray-800/50 mt-6">
+                <div className="flex items-center mb-4">
+                  <Sparkles className="text-purple-400 mr-2" size={20} />
+                  <h3 className="text-xl font-bold text-white">Based on Your Entertainment DNA</h3>
+                  {isDnaRecsGenerating && (
+                    <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full animate-pulse border border-blue-500/30" data-testid="generating-badge">
+                      Generating...
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-400 mb-4">Swipe to explore</p>
+
+                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide px-2">
+                  {isDnaRecsLoading ? (
+                    // Loading skeleton cards
+                    [...Array(4)].map((_, index) => (
+                      <div key={`loading-${index}`} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
+                        <div className="relative rounded-lg overflow-hidden bg-slate-700 aspect-[2/3] animate-pulse">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        </div>
+                        <div className="mt-2">
+                          <div className="h-4 bg-slate-700 rounded w-3/4 animate-pulse"></div>
+                          <div className="h-3 bg-slate-700 rounded w-1/4 mt-1 animate-pulse"></div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    dnaRecommendations.map((rec: any, index: number) => {
+                      const uniqueId = `${rec.external_source}-${rec.external_id}`;
+                      const showFallback = !rec.image_url || imageErrors[uniqueId];
+                      
+                      return (
+                        <div key={uniqueId} className="flex-shrink-0 w-32 sm:w-36 md:w-40" data-testid={`dna-recommendation-card-${uniqueId}`}>
+                          <div className="relative rounded-lg overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
+                            {/* Poster Image or Fallback */}
+                            {showFallback ? (
+                              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 p-4">
+                                <div className="text-center">
+                                  <p className="text-white font-bold text-sm mb-2 line-clamp-3">{rec.title}</p>
+                                  <p className="text-slate-300 text-xs uppercase tracking-wider">{rec.media_type || rec.type}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <img 
+                                src={rec.image_url} 
+                                alt={rec.title}
+                                className="w-full h-full object-cover"
+                                onError={() => setImageErrors(prev => ({ ...prev, [uniqueId]: true }))}
+                              />
+                            )}
+                        
+                            {/* Gradient Overlay - Always visible */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                            
+                            {/* Action Buttons - Always visible at bottom */}
+                            <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
+                                    data-testid={`add-to-list-${uniqueId}`}
+                                    disabled={addDNARecommendationMutation.isPending}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent 
+                                  align="end" 
+                                  side="top" 
+                                  sideOffset={8}
+                                  alignOffset={-16}
+                                  className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
+                                >
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'queue' });
+                                    }}
+                                    className="cursor-pointer text-white hover:bg-gray-800"
+                                    disabled={addDNARecommendationMutation.isPending}
+                                  >
+                                    Add to Queue
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'currently' });
+                                    }}
+                                    className="cursor-pointer text-white hover:bg-gray-800"
+                                    disabled={addDNARecommendationMutation.isPending}
+                                  >
+                                    Add to Currently
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'finished' });
+                                    }}
+                                    className="cursor-pointer text-white hover:bg-gray-800"
+                                    disabled={addDNARecommendationMutation.isPending}
+                                  >
+                                    Add to Finished
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'dnf' });
+                                    }}
+                                    className="cursor-pointer text-white hover:bg-gray-800"
+                                    disabled={addDNARecommendationMutation.isPending}
+                                  >
+                                    Add to Did Not Finish
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'favorites' });
+                                    }}
+                                    className="cursor-pointer text-white hover:bg-gray-800"
+                                    disabled={addDNARecommendationMutation.isPending}
+                                  >
+                                    Add to Favorites
+                                  </DropdownMenuItem>
+                                  
+                                  {/* Custom Lists */}
+                                  {userLists.filter((list: any) => list.isCustom).length > 0 && (
+                                    <>
+                                      <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t border-gray-700 mt-1 pt-2">
+                                        MY CUSTOM LISTS
+                                      </div>
+                                      {userLists
+                                        .filter((list: any) => list.isCustom)
+                                        .map((list: any) => (
+                                          <DropdownMenuItem
+                                            key={list.id}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              addDNARecommendationMutation.mutate({ recommendation: rec, listType: list.id });
+                                            }}
+                                            className="cursor-pointer text-white hover:bg-gray-800"
+                                            disabled={addDNARecommendationMutation.isPending}
+                                          >
+                                            Add to {list.title}
+                                          </DropdownMenuItem>
+                                        ))}
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                              
+                              <Button
+                                size="icon"
+                                variant="secondary"
+                                className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRatingStars(prev => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
+                                }}
+                                data-testid={`rate-${uniqueId}`}
+                              >
+                                <Star className="h-4 w-4" />
+                              </Button>
+                              
+                              {/* Inline vertical star rating */}
+                              {ratingStars[uniqueId] && (
+                                <div 
+                                  className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {[5, 4, 3, 2, 1].map((stars) => (
+                                    <button
+                                      key={stars}
+                                      type="button"
+                                      onClick={() => rateDNARecommendationMutation.mutate({ recommendation: rec, rating: stars })}
+                                      onMouseEnter={() => setHoveredStar(prev => ({ ...prev, [uniqueId]: stars }))}
+                                      onMouseLeave={() => setHoveredStar(prev => ({ ...prev, [uniqueId]: null }))}
+                                      disabled={rateDNARecommendationMutation.isPending}
+                                      className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
+                                      data-testid={`star-${stars}`}
+                                    >
+                                      <Star 
+                                        className={`h-4 w-4 transition-all ${
+                                          hoveredStar[uniqueId] === stars
+                                            ? 'text-yellow-400 fill-yellow-400'
+                                            : 'text-gray-400'
+                                        }`}
+                                      />
+                                      <span className="text-white text-xs font-medium">{stars}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Title and Year */}
+                          <div className="mt-2 px-1">
+                            <h4 className="text-sm font-semibold text-white line-clamp-2 leading-tight" title={rec.title}>
+                              {rec.title}
+                            </h4>
+                            {rec.year && (
+                              <p className="text-xs text-gray-400 mt-0.5">{rec.year}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
           </div>
