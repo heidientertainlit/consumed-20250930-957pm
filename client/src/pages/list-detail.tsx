@@ -693,10 +693,10 @@ export default function ListDetail() {
 
       {/* Manage Collaborators Dialog */}
       <Dialog open={isCollaboratorsDialogOpen} onOpenChange={setIsCollaboratorsDialogOpen}>
-        <DialogContent className="max-w-md" data-testid="dialog-manage-collaborators">
+        <DialogContent className="max-w-md bg-white" data-testid="dialog-manage-collaborators">
           <DialogHeader>
-            <DialogTitle>Manage Collaborators</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-gray-900">Manage Collaborators</DialogTitle>
+            <DialogDescription className="text-gray-600">
               Add friends to collaborate on "{listData?.name}". They'll be able to add and remove items.
             </DialogDescription>
           </DialogHeader>
