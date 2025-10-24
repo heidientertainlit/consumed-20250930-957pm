@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { supabase } from "@/lib/supabase";
 
 interface User {
   id: string;
@@ -29,23 +30,19 @@ export default function UserSearch({ onSelectUser, excludeUserIds = [], placehol
       if (!searchTerm || searchTerm.length < 2) return [];
       if (!session?.access_token) return [];
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-friendships?action=search&query=${encodeURIComponent(searchTerm)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Use Supabase client to search users table directly
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, user_name, display_name')
+        .or(`user_name.ilike.%${searchTerm}%,display_name.ilike.%${searchTerm}%`)
+        .limit(10);
 
-      if (!response.ok) {
-        console.error('User search failed');
+      if (error) {
+        console.error('User search failed:', error);
         return [];
       }
 
-      const data = await response.json();
-      return (data.users || []).filter((user: User) => !excludeUserIds.includes(user.id));
+      return (data || []).filter((user: User) => !excludeUserIds.includes(user.id));
     },
     enabled: searchTerm.length >= 2 && !!session?.access_token,
   });
@@ -59,7 +56,7 @@ export default function UserSearch({ onSelectUser, excludeUserIds = [], placehol
           placeholder={placeholder}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 bg-white text-gray-900 border-gray-300"
           data-testid="input-user-search"
         />
       </div>
