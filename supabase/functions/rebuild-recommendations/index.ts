@@ -222,11 +222,11 @@ For each recommendation, provide:
 - reason: specific explanation (2-3 sentences, reference specific titles they've enjoyed)
 - confidence: 1-10 score
 - year: release year (number)
-- image_url: poster/cover image URL (use TMDB for movies/TV, Spotify for music/podcasts, Open Library for books)
-- external_id: TMDB ID for movies/TV, Spotify ID for music/podcasts, ISBN for books
-- external_source: "tmdb" for movies/TV, "spotify" for music/podcasts, "openlibrary" for books
 
-IMPORTANT: All recommendations must be real, existing media with valid IDs and images.
+IMPORTANT: 
+- All recommendations must be real, existing media
+- DO NOT generate image URLs or IDs - these will be fetched from real APIs
+- Be specific with exact titles and years to ensure we can find them
 
 Return ONLY valid JSON:
 {
@@ -237,10 +237,7 @@ Return ONLY valid JSON:
       "creator": "string",
       "reason": "string",
       "confidence": number,
-      "year": number,
-      "image_url": "string",
-      "external_id": "string",
-      "external_source": "string"
+      "year": number
     }
   ]
 }`;
@@ -291,9 +288,82 @@ Return ONLY valid JSON:
 
       const openaiResult = await openaiResponse.json();
       const recommendationsText = openaiResult.choices[0].message.content;
-      const recommendations = JSON.parse(recommendationsText);
+      const aiRecommendations = JSON.parse(recommendationsText);
 
-      console.log("Recommendations generated:", recommendations.recommendations?.length || 0);
+      console.log("AI recommendations generated:", aiRecommendations.recommendations?.length || 0);
+
+      // Fetch real poster images from actual APIs
+      console.log("Fetching real poster images from APIs...");
+      const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
+      
+      const enrichedRecs = await Promise.all(
+        (aiRecommendations.recommendations || []).map(async (rec: any) => {
+          try {
+            const type = rec.type.toLowerCase();
+            
+            // For movies/TV shows - use TMDB
+            if (type.includes('movie') || type.includes('tv') || type.includes('show')) {
+              if (!tmdbApiKey) {
+                console.warn('TMDB API key not configured, skipping image fetch');
+                return { ...rec, external_source: 'tmdb', external_id: '', image_url: '' };
+              }
+
+              const mediaType = type.includes('tv') || type.includes('show') ? 'tv' : 'movie';
+              const searchUrl = `https://api.themoviedb.org/3/search/${mediaType}?api_key=${tmdbApiKey}&query=${encodeURIComponent(rec.title)}&year=${rec.year || ''}`;
+              
+              const tmdbRes = await fetch(searchUrl);
+              if (tmdbRes.ok) {
+                const tmdbData = await tmdbRes.json();
+                if (tmdbData.results && tmdbData.results.length > 0) {
+                  const result = tmdbData.results[0];
+                  return {
+                    ...rec,
+                    media_type: mediaType === 'tv' ? 'tv' : 'movie',
+                    image_url: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : '',
+                    external_id: result.id.toString(),
+                    external_source: 'tmdb'
+                  };
+                }
+              }
+            }
+            
+            // For books - use Google Books
+            else if (type.includes('book')) {
+              const searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(rec.title)}`;
+              const booksRes = await fetch(searchUrl);
+              if (booksRes.ok) {
+                const booksData = await booksRes.json();
+                if (booksData.items && booksData.items.length > 0) {
+                  const book = booksData.items[0];
+                  const imageUrl = book.volumeInfo?.imageLinks?.thumbnail || 
+                                 book.volumeInfo?.imageLinks?.smallThumbnail || '';
+                  const isbn = book.volumeInfo?.industryIdentifiers?.[0]?.identifier || book.id;
+                  
+                  return {
+                    ...rec,
+                    media_type: 'book',
+                    image_url: imageUrl.replace('http:', 'https:'),
+                    external_id: isbn,
+                    external_source: 'openlibrary'
+                  };
+                }
+              }
+            }
+            
+            // For music/podcasts - could add Spotify API here
+            // For now, return without image for unsupported types
+            console.warn(`No API configured for type: ${type}`);
+            return { ...rec, external_source: '', external_id: '', image_url: '' };
+            
+          } catch (error) {
+            console.error(`Error fetching metadata for ${rec.title}:`, error);
+            return { ...rec, external_source: '', external_id: '', image_url: '' };
+          }
+        })
+      );
+
+      const recommendations = { recommendations: enrichedRecs };
+      console.log("Enriched with real poster images:", enrichedRecs.filter((r: any) => r.image_url).length);
 
       // Save to cache
       const now = new Date();
