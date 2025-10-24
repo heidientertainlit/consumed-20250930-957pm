@@ -543,64 +543,19 @@ export default function Track() {
         {/* Recommendations Section */}
         {(recommendationsLoading || isGeneratingRecommendations || (Array.isArray(recommendations) && recommendations.length > 0)) && (
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center">
-                <Sparkles className="text-purple-700 mr-2" size={20} />
-                <h2 className="text-xl font-bold text-gray-800">Recommended for You</h2>
-                {isGeneratingRecommendations && (
-                  <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full animate-pulse" data-testid="generating-badge">
-                    Generating...
-                  </span>
-                )}
-                {!isGeneratingRecommendations && isStaleRecommendations && (
-                  <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full" data-testid="refreshing-badge">
-                    Refreshing...
-                  </span>
-                )}
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={async () => {
-                  if (!session?.access_token || isRebuilding) {
-                    return;
-                  }
-                  setIsRebuilding(true);
-                  console.log('🔄 Triggering recommendation rebuild...');
-                  try {
-                    const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rebuild-recommendations", {
-                      method: "POST",
-                      headers: {
-                        "Authorization": `Bearer ${session.access_token}`,
-                        "Content-Type": "application/json"
-                      }
-                    });
-                    console.log('Rebuild response:', response.status, response.ok);
-                    if (response.ok) {
-                      toast({ 
-                        title: "Regenerating recommendations...", 
-                        description: "This will take 10-20 seconds. They'll appear automatically!" 
-                      });
-                      // Start polling immediately
-                      queryClient.invalidateQueries({ queryKey: ["media-recommendations"] });
-                    } else {
-                      const errorText = await response.text();
-                      console.error('Rebuild failed:', errorText);
-                      toast({ title: "Rebuild failed", description: errorText, variant: "destructive" });
-                      setIsRebuilding(false);
-                    }
-                  } catch (error) {
-                    console.error("Rebuild error:", error);
-                    toast({ title: "Error", description: String(error), variant: "destructive" });
-                    setIsRebuilding(false);
-                  }
-                }}
-                disabled={isRebuilding || isGeneratingRecommendations}
-                className="text-xs"
-                data-testid="button-rebuild-recommendations"
-              >
-                {isRebuilding || isGeneratingRecommendations ? "Rebuilding..." : "Rebuild"}
-              </Button>
+            <div className="flex items-center mb-3">
+              <Sparkles className="text-purple-700 mr-2" size={20} />
+              <h2 className="text-xl font-bold text-gray-800">Recommended for You</h2>
+              {isGeneratingRecommendations && (
+                <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full animate-pulse" data-testid="generating-badge">
+                  Generating...
+                </span>
+              )}
+              {!isGeneratingRecommendations && isStaleRecommendations && (
+                <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full" data-testid="refreshing-badge">
+                  Refreshing...
+                </span>
+              )}
             </div>
 
             <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
