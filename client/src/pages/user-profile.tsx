@@ -32,8 +32,9 @@ export default function UserProfile() {
 
   // Get user ID from URL using wouter's useRoute
   const [match, params] = useRoute('/user/:id');
-  const viewingUserId = params?.id || user?.id; // Use URL param or fallback to current user
-  const isOwnProfile = !params?.id || viewingUserId === user?.id;
+  // If params.id is "profile" or not set, use current user's ID (own profile)
+  const viewingUserId = (params?.id && params.id !== 'profile') ? params.id : user?.id;
+  const isOwnProfile = !params?.id || params.id === 'profile' || viewingUserId === user?.id;
 
   // Store return URL for redirect after login
   useEffect(() => {
@@ -1132,26 +1133,40 @@ export default function UserProfile() {
   };
 
   const fetchDNAProfile = async () => {
-    if (!session?.access_token) {
-      throw new Error('No authentication token available');
+    if (!session?.access_token || !viewingUserId) {
+      console.log('No session or viewing user ID available');
+      setDnaProfileStatus('no_profile');
+      return;
     }
 
-    const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/dna-profile', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-dna?user_id=${viewingUserId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null; // No profile exists
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('No DNA profile found for user');
+          setDnaProfileStatus('no_profile');
+          setDnaProfile(null);
+          return;
+        }
+        throw new Error(`Failed to fetch profile: ${response.statusText}`);
       }
-      throw new Error(`Failed to fetch profile: ${response.statusText}`);
-    }
 
-    return response.json();
+      const data = await response.json();
+      console.log('DNA Profile fetched successfully:', data);
+      setDnaProfile(data);
+      setDnaProfileStatus('has_profile');
+    } catch (error) {
+      console.error('Error fetching DNA profile:', error);
+      setDnaProfileStatus('no_profile');
+      setDnaProfile(null);
+    }
   };
 
   const handleTakeDNASurvey = async () => {
@@ -1240,8 +1255,7 @@ export default function UserProfile() {
       await generateDNAProfile();
       console.log("DNA Profile generated successfully");
       // Refresh the profile data from the database
-      await fetchDnaProfile();
-      setDnaProfileStatus('has_profile');
+      await fetchDNAProfile();
     } catch (error) {
       console.error("Failed to generate DNA profile:", error);
       setDnaProfileStatus('no_profile');
