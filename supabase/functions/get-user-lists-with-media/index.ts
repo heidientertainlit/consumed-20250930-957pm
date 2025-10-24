@@ -219,6 +219,32 @@ serve(async (req) => {
       } catch (error) {
         console.error('Custom lists query failed (non-fatal):', error);
       }
+
+      // Fetch collaborative lists (lists where user is a collaborator)
+      if (appUser?.id) {
+        try {
+          const { data: collaborativeLists, error: collabError } = await supabase
+            .from('list_collaborators')
+            .select('list_id, lists!inner(id, title, is_private, user_id)')
+            .eq('user_id', appUser.id);
+
+          if (!collabError && collaborativeLists) {
+            // Add collaborative lists to custom lists
+            const collabListsFormatted = collaborativeLists.map((collab: any) => ({
+              id: collab.lists.id,
+              title: collab.lists.title,
+              is_private: collab.lists.is_private,
+              isCollaborative: true,
+              owner_id: collab.lists.user_id
+            }));
+            
+            customLists = [...customLists, ...collabListsFormatted];
+            console.log("Added collaborative lists:", collabListsFormatted.length);
+          }
+        } catch (error) {
+          console.error('Collaborative lists query failed (non-fatal):', error);
+        }
+      }
     }
 
     // Get user's media items if authenticated
@@ -261,7 +287,9 @@ serve(async (req) => {
       title: list.title,
       items: itemsByListId[list.id] || [],
       isCustom: true,
-      isPrivate: list.is_private
+      isPrivate: list.is_private,
+      isCollaborative: list.isCollaborative || false,
+      owner_id: list.owner_id || targetUserId
     }));
 
     // Add "All" category at the beginning
