@@ -214,11 +214,13 @@ export default function OnboardingPage() {
         });
         
         // Pre-generate recommendations in background (don't await - fire and forget)
-        fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations', {
-          method: 'GET',
+        fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rebuild-recommendations', {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({}),
         }).catch(() => {
           // Silent fail - recommendations will be generated on first visit to track page if this fails
         });

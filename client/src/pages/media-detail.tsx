@@ -165,20 +165,14 @@ export default function MediaDetail() {
     }
   };
 
-  // Fetch context-aware recommendations based on current media
+  // Fetch cached recommendations (instant <1s load!)
   const fetchRecommendations = async () => {
-    if (!session?.access_token || !mediaItem) {
+    if (!session?.access_token) {
       return { recommendations: [] };
     }
 
-    const queryParams = new URLSearchParams({
-      currentMediaTitle: mediaItem.title,
-      currentMediaType: mediaItem.type || params?.type || 'unknown',
-      currentMediaCreator: mediaItem.creator || ''
-    });
-
     const response = await fetch(
-      `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations?${queryParams}`,
+      `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-recommendations`,
       {
         method: "GET",
         headers: {
@@ -189,11 +183,11 @@ export default function MediaDetail() {
 
     if (!response.ok) {
       console.error('[Recommendations] Fetch failed:', response.status);
-      return { recommendations: [] };
+      return { recommendations: [], isStale: false, isGenerating: false };
     }
 
     const data = await response.json();
-    console.log('[Recommendations] Context-aware recommendations received:', data.count);
+    console.log('[Recommendations] Cached recommendations received:', data.recommendations?.length || 0);
     return data;
   };
 

@@ -157,17 +157,17 @@ export default function Track() {
     pointsEarned: userPointsData?.points?.all_time || 0, // Use actual points from Supabase
   };
 
-  // Get personalized recommendations from Supabase
+  // Get personalized recommendations from cached system (instant <1s load!)
   const fetchRecommendations = async () => {
     if (!session?.access_token) {
       console.log('No session token available for recommendations');
       return null;
     }
 
-    console.log('[DEBUG] Fetching recommendations from edge function...');
+    console.log('[DEBUG] Fetching cached recommendations...');
     const startTime = Date.now();
 
-    const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations", {
+    const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-recommendations", {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${session.access_token}`,
@@ -175,44 +175,27 @@ export default function Track() {
     });
 
     const elapsed = Date.now() - startTime;
-    console.log(`[DEBUG] Edge function response received in ${elapsed}ms, status: ${response.status}`);
+    console.log(`[DEBUG] Cached recommendations received in ${elapsed}ms, status: ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[DEBUG] Recommendations fetch failed:', response.status, errorText);
       
-      // Return default recommendations when DNA-based recommendations fail
+      // Return empty state when fetch fails
       return {
-        recommendations: [
-          {
-            id: 'rec-default-1',
-            title: 'The Bear',
-            media_type: 'tv',
-            creator: 'Christopher Storer',
-            image_url: 'https://image.tmdb.org/t/p/w300/rSPOTWpnPHiKfwfWUKiCPD5gk2Y.jpg',
-            description: 'A young chef from the fine dining world returns to Chicago to run his family sandwich shop.',
-            external_id: '136315',
-            external_source: 'tmdb',
-            reason: 'Award-winning series perfect for starting your entertainment journey'
-          },
-          {
-            id: 'rec-default-2',
-            title: 'Dune',
-            media_type: 'book',
-            creator: 'Frank Herbert',
-            image_url: 'https://covers.openlibrary.org/b/id/12562342-M.jpg',
-            description: 'Epic science fiction novel about politics, religion, and power on a desert planet.',
-            external_id: 'OL17364865M',
-            external_source: 'openlibrary',
-            reason: 'Essential sci-fi reading that influenced countless works'
-          }
-        ]
+        recommendations: [],
+        isStale: false,
+        isGenerating: false
       };
     }
 
     const data = await response.json();
-    console.log('[DEBUG] Recommendations data received:', data);
-    console.log(`[DEBUG] Total time: ${Date.now() - startTime}ms`);
+    console.log('[DEBUG] Recommendations data:', {
+      count: data.recommendations?.length || 0,
+      isStale: data.isStale,
+      isGenerating: data.isGenerating,
+      totalTime: `${Date.now() - startTime}ms`
+    });
     return data;
   };
 
@@ -220,12 +203,14 @@ export default function Track() {
     queryKey: ["media-recommendations"],
     queryFn: fetchRecommendations,
     enabled: !!session?.access_token,
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes for instant revisits
-    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
-    retry: false, // Don't retry on failure for faster error state
+    staleTime: 5 * 60 * 1000, // Refetch after 5 minutes to check for updates
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    retry: false,
   });
 
   const recommendations = recommendationsData?.recommendations || [];
+  const isStaleRecommendations = recommendationsData?.isStale || false;
+  const isGeneratingRecommendations = recommendationsData?.isGenerating || false;
 
   // React Query mutation for adding recommendations to lists
   const addRecommendationMutation = useMutation({
@@ -544,11 +529,21 @@ export default function Track() {
         </div>
 
         {/* Recommendations Section */}
-        {(recommendationsLoading || (Array.isArray(recommendations) && recommendations.length > 0)) && (
+        {(recommendationsLoading || isGeneratingRecommendations || (Array.isArray(recommendations) && recommendations.length > 0)) && (
           <div className="mb-6">
             <div className="flex items-center mb-3">
               <Sparkles className="text-purple-700 mr-2" size={20} />
               <h2 className="text-xl font-bold text-gray-800">Recommended for You</h2>
+              {isGeneratingRecommendations && (
+                <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full animate-pulse" data-testid="generating-badge">
+                  Generating...
+                </span>
+              )}
+              {!isGeneratingRecommendations && isStaleRecommendations && (
+                <span className="ml-2 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full" data-testid="refreshing-badge">
+                  Refreshing...
+                </span>
+              )}
             </div>
 
             <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
