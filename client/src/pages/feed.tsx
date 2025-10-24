@@ -886,48 +886,12 @@ export default function Feed() {
             </Button>
           </div>
 
-          {/* Static Trending Carousels */}
-          {trendingMovies.length > 0 && (
-            <MediaCarousel
-              title="Trending Movies"
-              mediaType="movie"
-              items={trendingMovies}
-              onItemClick={handleMediaClick}
-            />
-          )}
-          
+          {/* Static Trending TV Shows Carousel */}
           {trendingTVShows.length > 0 && (
             <MediaCarousel
               title="Top Trending TV Shows"
               mediaType="tv"
               items={trendingTVShows}
-              onItemClick={handleMediaClick}
-            />
-          )}
-          
-          {bestsellerBooks.length > 0 && (
-            <MediaCarousel
-              title="NY Times Bestsellers"
-              mediaType="book"
-              items={bestsellerBooks}
-              onItemClick={handleMediaClick}
-            />
-          )}
-          
-          {trendingPodcasts.length > 0 && (
-            <MediaCarousel
-              title="Trending Podcasts"
-              mediaType="podcast"
-              items={trendingPodcasts}
-              onItemClick={handleMediaClick}
-            />
-          )}
-          
-          {recommendedContent.length > 0 && (
-            <MediaCarousel
-              title="Recommended For You"
-              mediaType="mixed"
-              items={recommendedContent}
               onItemClick={handleMediaClick}
             />
           )}
@@ -995,8 +959,30 @@ export default function Feed() {
                   ? polls[pollCardIndex % polls.length]
                   : null;
 
+                // Inject MediaCarousel every 4th post, rotating through types
+                const shouldShowMediaCarousel = (postIndex + 1) % 4 === 0;
+                const carouselIndex = Math.floor(postIndex / 4);
+                
+                // Rotation order: Books → Podcasts → Movies → Recommended → (repeat)
+                const carouselTypes = [
+                  { type: 'book', title: 'NY Times Bestsellers', items: bestsellerBooks },
+                  { type: 'podcast', title: 'Trending Podcasts', items: trendingPodcasts },
+                  { type: 'movie', title: 'Trending Movies', items: trendingMovies },
+                  { type: 'mixed', title: 'Recommended For You', items: recommendedContent },
+                ];
+                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length];
+
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
+                    {/* Insert MediaCarousel every 4th post */}
+                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
+                      <MediaCarousel
+                        title={currentCarousel.title}
+                        mediaType={currentCarousel.type}
+                        items={currentCarousel.items}
+                        onItemClick={handleMediaClick}
+                      />
+                    )}
 
                     {/* Insert PlayCard every 3rd post */}
                     {shouldShowPlayCard && canPlayInline && (
