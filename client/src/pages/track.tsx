@@ -107,28 +107,38 @@ export default function Track() {
     queryKey: ['user-lists-with-media'],
     queryFn: async () => {
       if (!session?.access_token) {
-        console.log('No session token available');
+        console.error('[LISTS] No session token available');
         return null;
       }
 
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-      });
+      console.log('[LISTS] Fetching user lists...');
+      
+      try {
+        const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Supabase lists fetch failed:', response.status, errorText);
-        throw new Error('Failed to fetch user lists');
+        console.log('[LISTS] Response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[LISTS] Fetch failed:', response.status, errorText);
+          throw new Error(`Failed to fetch user lists: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('[LISTS] Success! Data:', data);
+        return data;
+      } catch (error) {
+        console.error('[LISTS] Exception:', error);
+        throw error;
       }
-
-      const data = await response.json();
-      console.log('Supabase lists data:', data);
-      return data;
     },
     enabled: !!session?.access_token,
+    retry: false,
   });
 
   // Extract lists and stats from the response
