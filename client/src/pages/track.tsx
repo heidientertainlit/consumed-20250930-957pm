@@ -555,7 +555,11 @@ export default function Track() {
                 size="sm"
                 variant="outline"
                 onClick={async () => {
-                  if (!session?.access_token) return;
+                  if (!session?.access_token) {
+                    console.log('No session available');
+                    return;
+                  }
+                  console.log('🔄 Triggering recommendation rebuild...');
                   try {
                     const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rebuild-recommendations", {
                       method: "POST",
@@ -564,12 +568,19 @@ export default function Track() {
                         "Content-Type": "application/json"
                       }
                     });
+                    console.log('Rebuild response:', response.status, response.ok);
                     if (response.ok) {
-                      toast({ title: "Regenerating recommendations...", description: "This will take 10-20 seconds" });
-                      queryClient.invalidateQueries({ queryKey: ["media-recommendations"] });
+                      toast({ title: "Regenerating recommendations...", description: "This will take 10-20 seconds. They'll appear automatically!" });
+                      // Force immediate refetch
+                      window.location.reload();
+                    } else {
+                      const errorText = await response.text();
+                      console.error('Rebuild failed:', errorText);
+                      toast({ title: "Rebuild failed", description: errorText, variant: "destructive" });
                     }
                   } catch (error) {
-                    console.error("Rebuild failed:", error);
+                    console.error("Rebuild error:", error);
+                    toast({ title: "Error", description: String(error), variant: "destructive" });
                   }
                 }}
                 className="text-xs"
