@@ -33,7 +33,7 @@ serve(async (req) => {
       // Look up app user by email, CREATE if doesn't exist
       let { data: foundAppUser, error: appUserError } = await supabase
         .from('users')
-        .select('id, email, user_name')  // FIXED: using user_name instead of username
+        .select('id, email, user_name')
         .eq('email', user.email)
         .single();
 
@@ -62,7 +62,6 @@ serve(async (req) => {
 
         if (createError) {
           console.error('Failed to create user:', createError);
-          // Continue without user instead of failing
           appUser = null;
         } else {
           appUser = newUser;
@@ -77,7 +76,6 @@ serve(async (req) => {
             'Favorites'
           ];
 
-          // Use individual inserts with error handling for idempotency
           for (const listTitle of systemLists) {
             const { error: listError } = await supabaseAdmin
               .from('lists')
@@ -90,7 +88,6 @@ serve(async (req) => {
               .select('id, title, is_default, is_private')
               .maybeSingle();
             
-            // Ignore duplicate key errors (23505), fail on others
             if (listError && listError.code !== '23505') {
               console.error(`Failed to create ${listTitle} list:`, listError);
               return new Response(JSON.stringify({ 
@@ -114,12 +111,11 @@ serve(async (req) => {
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get('user_id') || appUser?.id;
 
-    // Get user's personal system lists (is_default = true) and custom lists
     let systemLists = [];
     let customLists = [];
     
     if (targetUserId) {
-      // Check if user has personal system lists
+      // Fetch system lists
       const { data: userSystemLists, error: systemListsError } = await supabase
         .from('lists')
         .select('id, title, is_private')
@@ -133,7 +129,7 @@ serve(async (req) => {
         lists: userSystemLists?.map(l => l.title)
       });
 
-      // FILTER: Only include the 5 standard system lists, exclude old duplicates
+      // Only include standard system lists
       const requiredSystemLists = [
         'Currently',
         'Queue',
@@ -142,7 +138,6 @@ serve(async (req) => {
         'Favorites'
       ];
 
-      // Filter to only include standard system lists (ignore old lists like "Completed", "Currently Watching", etc.)
       const filteredSystemLists = (userSystemLists || []).filter(list => 
         requiredSystemLists.includes(list.title)
       );
@@ -150,7 +145,7 @@ serve(async (req) => {
       const existingTitles = new Set(filteredSystemLists.map(l => l.title));
       const missingLists = requiredSystemLists.filter(title => !existingTitles.has(title));
 
-      if (missingLists.length > 0) {
+      if (missingLists.length > 0 && appUser?.id) {
         console.log(`Auto-migration: Backfilling ${missingLists.length} missing system lists`);
         
         const supabaseAdmin = createClient(
@@ -158,7 +153,6 @@ serve(async (req) => {
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
 
-        // Create missing lists individually with error handling
         for (const listTitle of missingLists) {
           const { error: listError } = await supabaseAdmin
             .from('lists')
@@ -171,20 +165,12 @@ serve(async (req) => {
             .select('id, title, is_default, is_private')
             .maybeSingle();
           
-          // Ignore duplicate key errors (23505), fail on others
           if (listError && listError.code !== '23505') {
             console.error(`Failed to backfill ${listTitle} list:`, listError);
-            return new Response(JSON.stringify({ 
-              error: `Failed to backfill system list ${listTitle}: ${listError.message}`,
-              lists: []
-            }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
           }
         }
 
-        // Re-fetch and filter system lists after backfill
+        // Re-fetch system lists after backfill
         const { data: updatedSystemLists } = await supabase
           .from('lists')
           .select('id, title, is_private')
@@ -192,7 +178,6 @@ serve(async (req) => {
           .eq('is_default', true)
           .order('title');
         
-        // Filter again to only include standard lists
         systemLists = (updatedSystemLists || []).filter(list => 
           requiredSystemLists.includes(list.title)
         );
@@ -201,7 +186,7 @@ serve(async (req) => {
         systemLists = filteredSystemLists;
       }
 
-      // Fetch custom lists (is_default = false or null)
+      // Fetch custom lists
       try {
         const { data: userCustomLists, error: customListsError } = await supabase
           .from('lists')
@@ -229,7 +214,6 @@ serve(async (req) => {
             .eq('user_id', appUser.id);
 
           if (!collabError && collaborativeLists) {
-            // Add collaborative lists to custom lists
             const collabListsFormatted = collaborativeLists.map((collab: any) => ({
               id: collab.lists.id,
               title: collab.lists.title,
@@ -247,7 +231,7 @@ serve(async (req) => {
       }
     }
 
-    // Get user's media items if authenticated
+    // Get user's media items
     let userItems = [];
     if (targetUserId) {
       const { data: items, error: itemsError } = await supabase
@@ -292,14 +276,14 @@ serve(async (req) => {
       owner_id: list.owner_id || targetUserId
     }));
 
-    // Add "All" category at the beginning
+    // Add "All" category
     const allList = {
       id: 'all',
       title: 'All',
       items: userItems
     };
 
-    // Assemble final lists: All + System Lists + Custom Lists
+    // Assemble final lists
     const finalLists = [allList, ...listsWithItems, ...customListsWithItems];
     
     console.log("Returning final lists:", finalLists.map(l => `${l.title} (${l.items.length} items)`));
