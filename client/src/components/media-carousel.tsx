@@ -190,12 +190,18 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       }
       
       console.log('✅ Successfully added to list!');
-      return response.json();
+      const result = await response.json();
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      // Check if this was a duplicate (already in list)
+      const isDuplicate = result?.message === 'Item already in list';
+      
       toast({
-        title: "Added to list!",
-        description: `${item.title} has been added to your list.`,
+        title: isDuplicate ? "Already in list!" : "Added to list!",
+        description: isDuplicate 
+          ? `${item.title} is already in this list.`
+          : `${item.title} has been added to your list.`,
       });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
     },

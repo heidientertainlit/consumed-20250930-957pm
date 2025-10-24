@@ -187,6 +187,30 @@ serve(async (req) => {
       .single();
 
     if (mediaError) {
+      // Handle duplicate key error gracefully (23505 = duplicate key violation)
+      if (mediaError.code === '23505') {
+        console.log('Media item already exists in this list, returning success');
+        
+        // Fetch the existing item
+        const { data: existingItem } = await supabase
+          .from('list_items')
+          .select()
+          .eq('user_id', appUser.id)
+          .eq('list_id', targetList?.id || null)
+          .eq('external_id', externalId)
+          .eq('external_source', externalSource)
+          .maybeSingle();
+        
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Item already in list',
+          item: existingItem
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
       console.error('Error adding media item:', mediaError);
       return new Response(JSON.stringify({
         error: 'Failed to add media item: ' + mediaError.message
