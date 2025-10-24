@@ -167,7 +167,7 @@ export default function Track() {
     console.log('[DEBUG] Fetching cached recommendations...');
     const startTime = Date.now();
 
-    const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations", {
+    const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-recommendations", {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${session.access_token}`,
