@@ -155,7 +155,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       console.log('🎯 MediaCarousel: Adding to list', {
         item,
         mediaData,
-        listId,
+        listType,
         isCustom,
       });
 
