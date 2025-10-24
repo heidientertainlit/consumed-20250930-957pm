@@ -35,12 +35,14 @@ Preferred communication style: Simple, everyday language.
 -   **Trivia Scoring**: Points awarded only for correct answers, with specific logic for long-form vs. quick trivia.
 -   **Smart Recommendations Caching System (October 24, 2025)**: 
     -   **Instant Loading**: Recommendations load in <1 second via `user_recommendations` cache table
-    -   **Background AI Generation**: GPT-4o analyzes 6 data sources (DNA profile, highlights, consumption history, 4-5 star ratings, social posts, custom lists) and generates 8-10 personalized recommendations
+    -   **Background AI Generation**: GPT-4o analyzes 6 data sources (DNA profile, highlights, consumption history, 4-5 star ratings, social posts, custom lists) and generates 8-10 personalized recommendations with poster images
     -   **`get-recommendations` Edge Function**: Serves cached recommendations instantly, triggers background rebuild if stale (>6h) or expired (>24h), never shows empty state during regeneration
-    -   **`rebuild-recommendations` Edge Function**: Fetches comprehensive user data, calls OpenAI GPT-4o, caches results with 24h expiration and 6h staleness threshold, preserves existing cache during generation and on errors
+    -   **`rebuild-recommendations` Edge Function**: Fetches comprehensive user data, calls OpenAI GPT-4o to generate recommendations with `image_url`, `year`, `external_id`, `external_source`, caches results with 24h expiration and 6h staleness threshold, preserves existing cache during generation and on errors
     -   **Security**: Regular users can only rebuild their own recommendations; service role (cron jobs) can rebuild for any user
-    -   **Freshness Indicators**: UI shows "Generating..." badge for first-time users, "Refreshing..." badge when cache is stale but still serving data
-    -   **Error Handling**: Failed generations preserve last good recommendations to ensure users never lose data
+    -   **Auto-Polling**: Frontend polls every 5 seconds while `isGenerating=true`, stops automatically when recommendations are ready - no manual refresh needed
+    -   **Mobile-First UI**: Netflix-style poster cards (2:3 aspect ratio) with always-visible action buttons (+ and ⭐), gradient overlay, fallback design for missing images
+    -   **Freshness Indicators**: UI shows "Generating..." badge for first-time users, "Rebuilding..." button state during regeneration
+    -   **Error Handling**: Failed generations preserve last good recommendations to ensure users never lose data, secure fallback design prevents XSS vulnerabilities
 
 ### Feature Specifications
 -   **Media Tracking**: Simplified list-based system for tracking entertainment items with privacy control.

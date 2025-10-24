@@ -40,6 +40,7 @@ export default function Track() {
   const [isUploading, setIsUploading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [selectedFilter, setSelectedFilter] = useState("Currently");
+  const [isRebuilding, setIsRebuilding] = useState(false);
   const [, setLocation] = useLocation();
 
   const handleTrackConsumption = () => {
@@ -217,6 +218,11 @@ export default function Track() {
   const recommendations = recommendationsData?.recommendations || [];
   const isStaleRecommendations = recommendationsData?.isStale || false;
   const isGeneratingRecommendations = recommendationsData?.isGenerating || false;
+
+  // Reset rebuilding state when generation completes
+  if (isRebuilding && !isGeneratingRecommendations && recommendations.length > 0) {
+    setIsRebuilding(false);
+  }
 
   // React Query mutation for adding recommendations to lists
   const addRecommendationMutation = useMutation({
@@ -556,10 +562,10 @@ export default function Track() {
                 size="sm"
                 variant="outline"
                 onClick={async () => {
-                  if (!session?.access_token) {
-                    console.log('No session available');
+                  if (!session?.access_token || isRebuilding) {
                     return;
                   }
+                  setIsRebuilding(true);
                   console.log('🔄 Triggering recommendation rebuild...');
                   try {
                     const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rebuild-recommendations", {
@@ -571,23 +577,29 @@ export default function Track() {
                     });
                     console.log('Rebuild response:', response.status, response.ok);
                     if (response.ok) {
-                      toast({ title: "Regenerating recommendations...", description: "This will take 10-20 seconds. They'll appear automatically!" });
-                      // Force immediate refetch
-                      window.location.reload();
+                      toast({ 
+                        title: "Regenerating recommendations...", 
+                        description: "This will take 10-20 seconds. They'll appear automatically!" 
+                      });
+                      // Start polling immediately
+                      queryClient.invalidateQueries({ queryKey: ["media-recommendations"] });
                     } else {
                       const errorText = await response.text();
                       console.error('Rebuild failed:', errorText);
                       toast({ title: "Rebuild failed", description: errorText, variant: "destructive" });
+                      setIsRebuilding(false);
                     }
                   } catch (error) {
                     console.error("Rebuild error:", error);
                     toast({ title: "Error", description: String(error), variant: "destructive" });
+                    setIsRebuilding(false);
                   }
                 }}
+                disabled={isRebuilding || isGeneratingRecommendations}
                 className="text-xs"
                 data-testid="button-rebuild-recommendations"
               >
-                Rebuild
+                {isRebuilding || isGeneratingRecommendations ? "Rebuilding..." : "Rebuild"}
               </Button>
             </div>
 
