@@ -328,7 +328,8 @@ export default function Track() {
         description: `You rated ${variables.recommendation.title} ${variables.rating} stars.`,
       });
       // Close the rating stars
-      setRatingStars(prev => ({ ...prev, [variables.recommendation.id]: false }));
+      const uniqueId = `${variables.recommendation.external_source}-${variables.recommendation.external_id}`;
+      setRatingStars(prev => ({ ...prev, [uniqueId]: false }));
     },
     onError: () => {
       toast({
@@ -624,11 +625,12 @@ export default function Track() {
                   </div>
                 ))
               ) : (
-                recommendations.map((rec: any) => {
-                  const showFallback = !rec.image_url || imageErrors[rec.id];
+                recommendations.map((rec: any, index: number) => {
+                  const uniqueId = `${rec.external_source}-${rec.external_id}`;
+                  const showFallback = !rec.image_url || imageErrors[uniqueId];
                   
                   return (
-                    <div key={rec.id} className="flex-shrink-0 w-44" data-testid={`recommendation-card-${rec.id}`}>
+                    <div key={uniqueId} className="flex-shrink-0 w-44" data-testid={`recommendation-card-${uniqueId}`}>
                       <div className="relative rounded-xl overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
                         {/* Poster Image or Fallback */}
                         {showFallback ? (
@@ -643,7 +645,7 @@ export default function Track() {
                             src={rec.image_url} 
                             alt={rec.title}
                             className="w-full h-full object-cover"
-                            onError={() => setImageErrors(prev => ({ ...prev, [rec.id]: true }))}
+                            onError={() => setImageErrors(prev => ({ ...prev, [uniqueId]: true }))}
                           />
                         )}
                     
@@ -658,7 +660,7 @@ export default function Track() {
                             size="icon"
                             variant="secondary"
                             className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
-                            data-testid={`add-to-list-${rec.id}`}
+                            data-testid={`add-to-list-${uniqueId}`}
                             disabled={addRecommendationMutation.isPending}
                           >
                             <Plus className="h-4 w-4" />
@@ -752,15 +754,15 @@ export default function Track() {
                         className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setRatingStars(prev => ({ ...prev, [rec.id]: !prev[rec.id] }));
+                          setRatingStars(prev => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
                         }}
-                        data-testid={`rate-${rec.id}`}
+                        data-testid={`rate-${uniqueId}`}
                       >
                         <Star className="h-4 w-4" />
                       </Button>
                       
                       {/* Inline vertical star rating */}
-                      {ratingStars[rec.id] && (
+                      {ratingStars[uniqueId] && (
                         <div 
                           className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5"
                           onClick={(e) => e.stopPropagation()}
@@ -770,15 +772,15 @@ export default function Track() {
                               key={stars}
                               type="button"
                               onClick={() => handleRateRecommendation(rec, stars)}
-                              onMouseEnter={() => setHoveredStar(prev => ({ ...prev, [rec.id]: stars }))}
-                              onMouseLeave={() => setHoveredStar(prev => ({ ...prev, [rec.id]: null }))}
+                              onMouseEnter={() => setHoveredStar(prev => ({ ...prev, [uniqueId]: stars }))}
+                              onMouseLeave={() => setHoveredStar(prev => ({ ...prev, [uniqueId]: null }))}
                               disabled={rateRecommendationMutation.isPending}
                               className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
                               data-testid={`star-${stars}`}
                             >
                               <Star 
                                 className={`h-4 w-4 transition-all ${
-                                  hoveredStar[rec.id] === stars
+                                  hoveredStar[uniqueId] === stars
                                     ? 'text-yellow-400 fill-yellow-400'
                                     : 'text-gray-400'
                                 }`}
