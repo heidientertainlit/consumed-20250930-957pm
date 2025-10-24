@@ -216,11 +216,17 @@ TASK:
 Generate 8-10 personalized entertainment recommendations based on ALL the data above. Consider patterns in their consumption, ratings, and engagement.
 
 For each recommendation, provide:
-- title: exact title
-- type: one of [Movie, TV Show, Book, Music, Podcast, Game, YouTube]
-- creator: director/author/artist
+- title: exact title (must be real, existing media)
+- type: one of [Movie, TV Show, Book, Music, Podcast, Game]
+- creator: director/author/artist/studio
 - reason: specific explanation (2-3 sentences, reference specific titles they've enjoyed)
 - confidence: 1-10 score
+- year: release year (number)
+- image_url: poster/cover image URL (use TMDB for movies/TV, Spotify for music/podcasts, Open Library for books)
+- external_id: TMDB ID for movies/TV, Spotify ID for music/podcasts, ISBN for books
+- external_source: "tmdb" for movies/TV, "spotify" for music/podcasts, "openlibrary" for books
+
+IMPORTANT: All recommendations must be real, existing media with valid IDs and images.
 
 Return ONLY valid JSON:
 {
@@ -230,7 +236,11 @@ Return ONLY valid JSON:
       "type": "string",
       "creator": "string",
       "reason": "string",
-      "confidence": number
+      "confidence": number,
+      "year": number,
+      "image_url": "string",
+      "external_id": "string",
+      "external_source": "string"
     }
   ]
 }`;
