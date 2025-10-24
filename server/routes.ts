@@ -581,68 +581,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Proxy to Supabase social-feed edge function
-  app.get("/api/social-feed", async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
-      const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/social-feed`, {
-        method: 'GET',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Social feed error:', response.status, errorText);
-        return res.status(response.status).json({ error: errorText });
-      }
-
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      console.error('Social feed proxy error:', error);
-      res.status(500).json({ error: "Failed to fetch social feed" });
-    }
-  });
-
-  // Proxy to Supabase recommendations edge function
-  app.get("/api/media-recommendations", async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
-      const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-media-recommendations`, {
-        method: 'GET',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Recommendations error:', response.status, errorText);
-        return res.status(response.status).json({ error: errorText });
-      }
-
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      console.error('Recommendations proxy error:', error);
-      res.status(500).json({ error: "Failed to fetch recommendations" });
-    }
-  });
-
   const httpServer = createServer(app);
   return httpServer;
 }

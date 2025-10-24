@@ -47,7 +47,7 @@ const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
     throw new Error('No authentication token available');
   }
 
-  const response = await fetch(`/api/social-feed`, {
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${session.access_token}`,
