@@ -163,12 +163,18 @@ export const pollResponses = pgTable("poll_responses", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const cachedRecommendations = pgTable("cached_recommendations", {
+export const userRecommendations = pgTable("user_recommendations", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id).unique(),
   recommendations: jsonb("recommendations").notNull(),
+  dataSourcesUsed: jsonb("data_sources_used"), // Track which data sources were available
+  sourceModel: text("source_model").notNull().default("gpt-4o"), // AI model used
+  status: text("status").notNull().default("ready"), // 'ready', 'generating', 'failed'
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
+  staleAfter: timestamp("stale_after").notNull(), // When to show "refreshing" badge
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const mediaRatings = pgTable("media_ratings", {
@@ -257,9 +263,11 @@ export const insertPollResponseSchema = createInsertSchema(pollResponses).omit({
   createdAt: true,
 });
 
-export const insertCachedRecommendationsSchema = createInsertSchema(cachedRecommendations).omit({
+export const insertUserRecommendationsSchema = createInsertSchema(userRecommendations).omit({
   id: true,
   generatedAt: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertMediaRatingSchema = createInsertSchema(mediaRatings).omit({
@@ -294,7 +302,7 @@ export type Poll = typeof polls.$inferSelect;
 export type InsertPoll = z.infer<typeof insertPollSchema>;
 export type PollResponse = typeof pollResponses.$inferSelect;
 export type InsertPollResponse = z.infer<typeof insertPollResponseSchema>;
-export type CachedRecommendations = typeof cachedRecommendations.$inferSelect;
-export type InsertCachedRecommendations = z.infer<typeof insertCachedRecommendationsSchema>;
+export type UserRecommendations = typeof userRecommendations.$inferSelect;
+export type InsertUserRecommendations = z.infer<typeof insertUserRecommendationsSchema>;
 export type MediaRating = typeof mediaRatings.$inferSelect;
 export type InsertMediaRating = z.infer<typeof insertMediaRatingSchema>;

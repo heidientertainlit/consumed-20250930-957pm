@@ -1,0 +1,323 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    // Use service role for background operations
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get user ID from request body or auth header
+    const body = await req.json();
+    let userId = body.userId;
+
+    // If no userId in body, try to get from auth header
+    if (!userId) {
+      const authClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '', 
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
+        {
+          global: {
+            headers: { Authorization: req.headers.get('Authorization') }
+          }
+        }
+      );
+
+      const { data: { user } } = await authClient.auth.getUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      userId = user.id;
+    }
+
+    console.log('Rebuilding recommendations for user:', userId);
+
+    // Mark as generating
+    await supabase
+      .from('user_recommendations')
+      .upsert({
+        user_id: userId,
+        status: 'generating',
+        recommendations: { recommendations: [] },
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+        stale_after: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours
+      }, {
+        onConflict: 'user_id'
+      });
+
+    // Fetch all data sources
+    console.log('Fetching comprehensive user data...');
+
+    // 1. DNA Profile
+    const { data: dnaProfile } = await supabase
+      .from('dna_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    // 2. User Highlights
+    const { data: highlights } = await supabase
+      .from('user_highlights')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    // 3. Consumption History
+    const { data: consumptionHistory } = await supabase
+      .from('list_items')
+      .select('title, media_type, creator, external_id, external_source')
+      .eq('user_id', userId)
+      .order('id', { ascending: false })
+      .limit(20);
+
+    // 4. Highly Rated Media
+    const { data: highRatings } = await supabase
+      .from('media_ratings')
+      .select('media_title, media_type, rating, media_external_id, media_external_source')
+      .eq('user_id', userId)
+      .gte('rating', 4)
+      .order('rating', { ascending: false })
+      .limit(15);
+
+    // 5. Social Posts
+    const { data: socialPosts } = await supabase
+      .from('social_posts')
+      .select('content, media_title, media_type, rating, media_creator')
+      .eq('user_id', userId)
+      .not('media_title', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    // 6. Custom Lists
+    const { data: customLists } = await supabase
+      .from('lists')
+      .select('title')
+      .eq('user_id', userId)
+      .eq('is_default', false)
+      .limit(10);
+
+    const userProfile = {
+      dnaProfile: dnaProfile ? {
+        label: dnaProfile.label,
+        tagline: dnaProfile.tagline,
+        profileText: dnaProfile.profile_text,
+        favoriteGenres: dnaProfile.favorite_genres,
+        favoriteMediaTypes: dnaProfile.favorite_media_types,
+      } : null,
+      highlights: highlights?.map(h => ({
+        title: h.title,
+        creator: h.creator,
+        type: h.media_type
+      })) || [],
+      recentConsumption: consumptionHistory?.map(item => ({
+        title: item.title,
+        type: item.media_type,
+        creator: item.creator
+      })) || [],
+      highlyRated: highRatings?.map(r => ({
+        title: r.media_title,
+        type: r.media_type,
+        rating: r.rating
+      })) || [],
+      socialActivity: socialPosts?.map(p => ({
+        title: p.media_title,
+        type: p.media_type,
+        rating: p.rating,
+        review: p.content
+      })) || [],
+      customListThemes: customLists?.map(l => l.title) || []
+    };
+
+    console.log('User profile compiled:', {
+      hasDNA: !!userProfile.dnaProfile,
+      highlightsCount: userProfile.highlights.length,
+      consumptionCount: userProfile.recentConsumption.length,
+      ratingsCount: userProfile.highlyRated.length,
+      postsCount: userProfile.socialActivity.length,
+      listsCount: userProfile.customListThemes.length
+    });
+
+    // Build AI prompt
+    const prompt = `You are an advanced entertainment recommendation engine analyzing a comprehensive user profile.
+
+USER PROFILE:
+
+${userProfile.dnaProfile ? `
+Entertainment DNA Profile:
+- Label: ${userProfile.dnaProfile.label || 'Not set'}
+- Tagline: ${userProfile.dnaProfile.tagline || 'Not set'}
+- Profile: ${userProfile.dnaProfile.profileText || 'Not set'}
+- Favorite Genres: ${JSON.stringify(userProfile.dnaProfile.favoriteGenres) || 'Not set'}
+- Favorite Media Types: ${JSON.stringify(userProfile.dnaProfile.favoriteMediaTypes) || 'Not set'}
+` : 'DNA Profile: Not completed yet'}
+
+Highlighted Favorites (${userProfile.highlights.length}):
+${userProfile.highlights.slice(0, 5).map(h => `- ${h.title} by ${h.creator} (${h.type})`).join('\n') || 'None'}
+
+Recent Consumption (${userProfile.recentConsumption.length} items):
+${userProfile.recentConsumption.slice(0, 10).map(c => `- ${c.title} (${c.type})`).join('\n') || 'None'}
+
+Highly Rated Media (${userProfile.highlyRated.length} items, 4-5 stars):
+${userProfile.highlyRated.slice(0, 8).map(r => `- ${r.title} (${r.type}) - ${r.rating} stars`).join('\n') || 'None'}
+
+Social Posts & Reviews (${userProfile.socialActivity.length}):
+${userProfile.socialActivity.slice(0, 5).map(p => `- ${p.title} (${p.type}): ${p.review?.substring(0, 100) || 'No review'}`).join('\n') || 'None'}
+
+Custom List Themes (${userProfile.customListThemes.length}):
+${userProfile.customListThemes.join(', ') || 'None'}
+
+TASK:
+Generate 8-10 personalized entertainment recommendations based on ALL the data above. Consider patterns in their consumption, ratings, and engagement.
+
+For each recommendation, provide:
+- title: exact title
+- type: one of [Movie, TV Show, Book, Music, Podcast, Game, YouTube]
+- creator: director/author/artist
+- reason: specific explanation (2-3 sentences, reference specific titles they've enjoyed)
+- confidence: 1-10 score
+
+Return ONLY valid JSON:
+{
+  "recommendations": [
+    {
+      "title": "string",
+      "type": "string",
+      "creator": "string",
+      "reason": "string",
+      "confidence": number
+    }
+  ]
+}`;
+
+    // Call OpenAI
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    console.log("Calling OpenAI API (gpt-4o)...");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert entertainment recommendation engine. Always respond with valid JSON.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 1500,
+          temperature: 0.8
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!openaiResponse.ok) {
+        const errorText = await openaiResponse.text();
+        throw new Error(`OpenAI API error: ${openaiResponse.status} - ${errorText}`);
+      }
+
+      const openaiResult = await openaiResponse.json();
+      const recommendationsText = openaiResult.choices[0].message.content;
+      const recommendations = JSON.parse(recommendationsText);
+
+      console.log("Recommendations generated:", recommendations.recommendations?.length || 0);
+
+      // Save to cache
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+      const staleAfter = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours
+
+      await supabase
+        .from('user_recommendations')
+        .upsert({
+          user_id: userId,
+          recommendations,
+          data_sources_used: {
+            dnaProfile: !!userProfile.dnaProfile,
+            highlights: userProfile.highlights.length,
+            consumption: userProfile.recentConsumption.length,
+            ratings: userProfile.highlyRated.length,
+            social: userProfile.socialActivity.length,
+            customLists: userProfile.customListThemes.length
+          },
+          source_model: 'gpt-4o',
+          status: 'ready',
+          generated_at: now.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          stale_after: staleAfter.toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+
+      console.log("Recommendations cached successfully");
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Recommendations rebuilt successfully',
+        count: recommendations.recommendations?.length || 0
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      // Mark as failed
+      await supabase
+        .from('user_recommendations')
+        .upsert({
+          user_id: userId,
+          status: 'failed',
+          recommendations: { recommendations: [] },
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          stale_after: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+        }, {
+          onConflict: 'user_id'
+        });
+
+      throw error;
+    }
+
+  } catch (error) {
+    console.error('Rebuild recommendations error:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message || 'Failed to rebuild recommendations'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});
