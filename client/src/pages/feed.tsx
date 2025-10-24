@@ -893,6 +893,8 @@ export default function Feed() {
               mediaType="tv"
               items={trendingTVShows}
               onItemClick={handleMediaClick}
+              onAddToList={undefined}
+              onRate={undefined}
             />
           )}
 
@@ -981,6 +983,8 @@ export default function Feed() {
                         mediaType={currentCarousel.type}
                         items={currentCarousel.items}
                         onItemClick={handleMediaClick}
+                        onAddToList={undefined}
+                        onRate={undefined}
                       />
                     )}
 
