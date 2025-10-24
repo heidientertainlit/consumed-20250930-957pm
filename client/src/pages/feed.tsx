@@ -794,6 +794,8 @@ export default function Feed() {
       year: rec.year?.toString(),
       mediaType: rec.media_type || rec.type,
       author: rec.creator,
+      externalId: rec.external_id, // Pass through for proper API calls
+      externalSource: rec.external_source, // Pass through for proper API calls
     }));
   };
 

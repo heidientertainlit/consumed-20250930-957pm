@@ -21,6 +21,8 @@ interface MediaItem {
   mediaType?: string;
   platform?: string; // e.g., "netflix", "disney", "hulu", "prime", "max", "peacock", "apple"
   author?: string; // For books and podcasts
+  externalId?: string; // For DNA recommendations
+  externalSource?: string; // For DNA recommendations
 }
 
 interface MediaCarouselProps {
@@ -128,12 +130,17 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         throw new Error('Not authenticated');
       }
 
-      // Determine source based on media type
-      let externalSource = 'tmdb';
-      if (item.mediaType === 'book') {
-        externalSource = 'openlibrary';
-      } else if (item.mediaType === 'podcast') {
-        externalSource = 'spotify';
+      // Use explicit external source/ID if provided (DNA recommendations), otherwise infer from media type
+      let externalSource = item.externalSource || 'tmdb';
+      let externalId = item.externalId || item.id;
+      
+      if (!item.externalSource) {
+        // Fallback: determine source based on media type for non-DNA recommendations
+        if (item.mediaType === 'book') {
+          externalSource = 'openlibrary';
+        } else if (item.mediaType === 'podcast') {
+          externalSource = 'spotify';
+        }
       }
 
       const mediaData = {
@@ -141,7 +148,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         mediaType: item.mediaType || 'movie',
         creator: item.author || '',
         imageUrl: item.imageUrl,
-        externalId: item.id,
+        externalId,
         externalSource
       };
 
@@ -192,12 +199,17 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         throw new Error('Not authenticated');
       }
 
-      // Determine source based on media type
-      let externalSource = 'tmdb';
-      if (item.mediaType === 'book') {
-        externalSource = 'openlibrary';
-      } else if (item.mediaType === 'podcast') {
-        externalSource = 'spotify';
+      // Use explicit external source/ID if provided (DNA recommendations), otherwise infer from media type
+      let externalSource = item.externalSource || 'tmdb';
+      let externalId = item.externalId || item.id;
+      
+      if (!item.externalSource) {
+        // Fallback: determine source based on media type for non-DNA recommendations
+        if (item.mediaType === 'book') {
+          externalSource = 'openlibrary';
+        } else if (item.mediaType === 'podcast') {
+          externalSource = 'spotify';
+        }
       }
 
       const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rate-media', {
@@ -207,7 +219,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          media_external_id: item.id,
+          media_external_id: externalId,
           media_external_source: externalSource,
           media_title: item.title,
           media_type: item.mediaType || 'movie',
