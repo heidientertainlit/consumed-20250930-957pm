@@ -886,69 +886,14 @@ export default function Feed() {
             </Button>
           </div>
 
-          {/* DNA-Based Recommendations Section - COPIED FROM PROFILE PAGE */}
-          {recommendedContent.length > 0 && (
-            <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-3xl p-6 shadow-lg border border-gray-800/50 mb-6">
-              <div className="flex items-center mb-4">
-                <h3 className="text-xl font-bold text-white">Recommended For You</h3>
-              </div>
-              <p className="text-sm text-gray-400 mb-4">Swipe to explore</p>
-
-              <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide px-2">
-                {recommendedContent.map((rec: any) => {
-                  const uniqueId = `${rec.externalSource}-${rec.externalId}`;
-                  
-                  return (
-                    <div key={uniqueId} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
-                      <div className="relative rounded-lg overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
-                        <img 
-                          src={rec.imageUrl} 
-                          alt={rec.title}
-                          className="w-full h-full object-cover"
-                        />
-                    
-                        {/* Gradient Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                        
-                        {/* Action Buttons */}
-                        <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
-                          <button
-                            className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg flex items-center justify-center"
-                            onClick={() => {
-                              // Simple add to Queue
-                              fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                  "Authorization": `Bearer ${session?.access_token}`,
-                                },
-                                body: JSON.stringify({
-                                  media: {
-                                    title: rec.title,
-                                    mediaType: rec.mediaType,
-                                    creator: rec.author,
-                                    imageUrl: rec.imageUrl,
-                                    externalId: rec.externalId,
-                                    externalSource: rec.externalSource,
-                                  },
-                                  listType: 'queue',
-                                }),
-                              });
-                            }}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-2">
-                        <p className="text-white text-sm font-medium line-clamp-2">{rec.title}</p>
-                        {rec.year && <p className="text-gray-400 text-xs">{rec.year}</p>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+          {/* Static Trending TV Shows Carousel */}
+          {trendingTVShows.length > 0 && (
+            <MediaCarousel
+              title="Top Trending TV Shows"
+              mediaType="tv"
+              items={trendingTVShows}
+              onItemClick={handleMediaClick}
+            />
           )}
 
           {isLoading ? (
@@ -1029,17 +974,15 @@ export default function Feed() {
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
-                    {/* Insert MediaCarousel every 4th post - DISABLED FOR NOW */}
-                    {/* {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
+                    {/* Insert MediaCarousel every 4th post */}
+                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
                       <MediaCarousel
                         title={currentCarousel.title}
                         mediaType={currentCarousel.type}
                         items={currentCarousel.items}
                         onItemClick={handleMediaClick}
-                        onAddToList={undefined}
-                        onRate={undefined}
                       />
-                    )} */}
+                    )}
 
                     {/* Insert PlayCard every 3rd post */}
                     {shouldShowPlayCard && canPlayInline && (
