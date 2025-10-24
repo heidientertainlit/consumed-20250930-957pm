@@ -2255,13 +2255,52 @@ export default function UserProfile() {
             {/* DNA-Based Recommendations Section */}
             {dnaProfileStatus === 'has_profile' && isOwnProfile && (isDnaRecsLoading || isDnaRecsGenerating || (Array.isArray(dnaRecommendations) && dnaRecommendations.length > 0)) && (
               <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-3xl p-6 shadow-lg border border-gray-800/50 mt-6">
-                <div className="flex items-center mb-4">
-                  <Sparkles className="text-purple-400 mr-2" size={20} />
-                  <h3 className="text-xl font-bold text-white">Based on Your Entertainment DNA</h3>
-                  {isDnaRecsGenerating && (
-                    <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full animate-pulse border border-blue-500/30" data-testid="generating-badge">
-                      Generating...
-                    </span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <Sparkles className="text-purple-400 mr-2" size={20} />
+                    <h3 className="text-xl font-bold text-white">Based on Your Entertainment DNA</h3>
+                    {isDnaRecsGenerating && (
+                      <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full animate-pulse border border-blue-500/30" data-testid="generating-badge">
+                        Generating...
+                      </span>
+                    )}
+                  </div>
+                  {!isDnaRecsGenerating && dnaRecommendations.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        if (!session?.access_token) return;
+                        setIsDnaRecsGenerating(true);
+                        try {
+                          await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rebuild-recommendations', {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${session.access_token}`,
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({}),
+                          });
+                          toast({
+                            title: "Rebuilding Recommendations",
+                            description: "Your recommendations are being regenerated with fresh data. This may take a minute.",
+                          });
+                        } catch (error) {
+                          console.error('Failed to rebuild recommendations:', error);
+                          setIsDnaRecsGenerating(false);
+                          toast({
+                            title: "Error",
+                            description: "Failed to rebuild recommendations. Please try again.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      className="text-xs bg-purple-600 hover:bg-purple-700 text-white border-purple-500"
+                      data-testid="button-rebuild-recommendations"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Rebuild
+                    </Button>
                   )}
                 </div>
                 <p className="text-sm text-gray-400 mb-4">Swipe to explore</p>
