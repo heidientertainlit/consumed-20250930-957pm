@@ -553,124 +553,82 @@ export default function Track() {
             <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
               {recommendationsLoading ? (
                 // Loading skeleton cards
-                [...Array(2)].map((_, index) => (
-                  <div key={`loading-${index}`} className="flex-shrink-0 w-80 bg-gradient-to-r from-slate-700 to-purple-700 rounded-xl p-4 text-white shadow-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <div className="bg-white/20 p-1.5 rounded-lg mr-2 animate-pulse">
-                          <div className="w-4 h-4 bg-white/30 rounded"></div>
-                        </div>
-                        <div className="bg-white/30 h-4 w-12 rounded animate-pulse"></div>
-                      </div>
-                      <div className="bg-white/30 h-8 w-20 rounded animate-pulse"></div>
+                [...Array(4)].map((_, index) => (
+                  <div key={`loading-${index}`} className="flex-shrink-0 w-44">
+                    <div className="relative rounded-xl overflow-hidden bg-slate-700 aspect-[2/3] animate-pulse">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                     </div>
-                    <div className="bg-white/30 h-6 w-3/4 rounded mb-2 animate-pulse"></div>
-                    <div className="space-y-2">
-                      <div className="bg-white/20 h-3 w-full rounded animate-pulse"></div>
-                      <div className="bg-white/20 h-3 w-5/6 rounded animate-pulse"></div>
-                      <div className="bg-white/20 h-3 w-4/5 rounded animate-pulse"></div>
+                    <div className="mt-2">
+                      <div className="h-4 bg-slate-700 rounded w-3/4 animate-pulse"></div>
+                      <div className="h-3 bg-slate-700 rounded w-1/4 mt-1 animate-pulse"></div>
                     </div>
                   </div>
                 ))
               ) : (
                 recommendations.map((rec: any) => (
-                <div key={rec.id} className="flex-shrink-0 w-80 bg-gradient-to-r from-slate-700 to-purple-700 rounded-xl p-4 text-white shadow-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium capitalize opacity-90">{rec.media_type}</span>
-                    </div>
-                    <div className="flex">
-                      <Button
-                        size="sm"
+                <div key={rec.id} className="flex-shrink-0 w-44" data-testid={`recommendation-card-${rec.id}`}>
+                  <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-[2/3] bg-slate-800">
+                    {/* Poster Image */}
+                    {rec.image_url ? (
+                      <img 
+                        src={rec.image_url} 
+                        alt={rec.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300"%3E%3Crect fill="%23334155" width="200" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23cbd5e1" font-size="14" font-family="sans-serif"%3ENo Image%3C/text%3E%3C/svg%3E';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-700">
+                        <span className="text-slate-400 text-sm">No Image</span>
+                      </div>
+                    )}
+                    
+                    {/* Platform Badge */}
+                    {rec.external_source === 'tmdb' && (
+                      <div className="absolute top-2 left-2 w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center font-bold text-white text-sm shadow-lg">
+                        N
+                      </div>
+                    )}
+                    {rec.external_source === 'spotify' && (
+                      <div className="absolute top-2 left-2 w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center font-bold text-white text-sm shadow-lg">
+                        S
+                      </div>
+                    )}
+                    
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    {/* Action Buttons */}
+                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <button
                         onClick={() => handleAddRecommendation(rec, 'queue')}
                         disabled={addRecommendationMutation.isPending}
-                        className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-3 py-1 text-xs rounded-r-none border-r border-gray-300"
-                        data-testid={`add-to-queue-${rec.id}`}
+                        className="w-10 h-10 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-all hover:scale-110 disabled:opacity-50"
+                        data-testid={`button-add-${rec.id}`}
                       >
-                        <Plus size={14} className="mr-1" />
-                        {addRecommendationMutation.isPending ? "Adding..." : "Queue"}
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            size="sm"
-                            disabled={addRecommendationMutation.isPending}
-                            className="bg-gray-400 hover:bg-gray-300 disabled:bg-gray-400 text-white px-2 py-1 text-xs rounded-l-none"
-                            data-testid={`add-dropdown-${rec.id}`}
-                          >
-                            <ChevronDown size={14} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem
-                            onClick={() => handleAddRecommendation(rec, 'currently')}
-                            className="cursor-pointer"
-                            disabled={addRecommendationMutation.isPending}
-                          >
-                            Add to Currently
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAddRecommendation(rec, 'finished')}
-                            className="cursor-pointer"
-                            disabled={addRecommendationMutation.isPending}
-                          >
-                            Add to Finished
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAddRecommendation(rec, 'dnf')}
-                            className="cursor-pointer"
-                            disabled={addRecommendationMutation.isPending}
-                          >
-                            Add to Did Not Finish
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAddRecommendation(rec, 'favorites')}
-                            className="cursor-pointer"
-                            disabled={addRecommendationMutation.isPending}
-                          >
-                            Add to Favorites
-                          </DropdownMenuItem>
-                          
-                          {/* Custom Lists Section */}
-                          {customLists.length > 0 && (
-                            <>
-                              <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t mt-1 pt-2">
-                                MY CUSTOM LISTS
-                              </div>
-                              {customLists.map((list: any) => (
-                                <DropdownMenuItem
-                                  key={list.id}
-                                  onClick={() => handleAddRecommendation(rec, list.id)}
-                                  className="cursor-pointer pl-4"
-                                  disabled={addRecommendationMutation.isPending}
-                                >
-                                  <List className="text-purple-600 mr-2 h-4 w-4" />
-                                  Add to {list.title}
-                                </DropdownMenuItem>
-                              ))}
-                            </>
-                          )}
-                          
-                          {/* Create New List */}
-                          <div className="border-t mt-1 pt-1">
-                            <DropdownMenuItem
-                              onClick={() => setIsCreateListDialogOpen(true)}
-                              className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
-                              disabled={addRecommendationMutation.isPending}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Create New List
-                            </DropdownMenuItem>
-                          </div>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        <Plus className="w-5 h-5 text-black" />
+                      </button>
+                      <button
+                        onClick={() => handleAddRecommendation(rec, 'favorites')}
+                        disabled={addRecommendationMutation.isPending}
+                        className="w-10 h-10 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-all hover:scale-110 disabled:opacity-50"
+                        data-testid={`button-favorite-${rec.id}`}
+                      >
+                        <Star className="w-5 h-5 text-black" />
+                      </button>
                     </div>
                   </div>
-
-                  <h3 className="font-bold text-lg mb-1">{rec.title}</h3>
-                  <p className="text-white/80 text-sm leading-relaxed">
-                    {rec.description}
-                  </p>
+                  
+                  {/* Title and Year */}
+                  <div className="mt-2 px-1">
+                    <h3 className="font-semibold text-sm text-white truncate" title={rec.title}>
+                      {rec.title}
+                    </h3>
+                    <p className="text-xs text-white/60">
+                      {rec.year || new Date().getFullYear()}
+                    </p>
+                  </div>
                 </div>
                 ))
               )}
