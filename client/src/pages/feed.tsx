@@ -830,15 +830,6 @@ export default function Feed() {
     setLocation(`/media/${mediaType}/${source}/${externalId}`);
   };
 
-  const handleAddToList = (item: any) => {
-    console.log("Add to list:", item);
-    // TODO: Open list picker
-  };
-
-  const handleRateMedia = (item: any) => {
-    console.log("Rate media:", item);
-    // TODO: Open rating dialog
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
@@ -878,8 +869,6 @@ export default function Feed() {
               mediaType="tv"
               items={trendingTVShows}
               onItemClick={handleMediaClick}
-              onAddToList={handleAddToList}
-              onRate={handleRateMedia}
             />
           )}
 
@@ -968,8 +957,6 @@ export default function Feed() {
                         mediaType={currentCarousel.type}
                         items={currentCarousel.items}
                         onItemClick={handleMediaClick}
-                        onAddToList={handleAddToList}
-                        onRate={handleRateMedia}
                       />
                     )}
 
