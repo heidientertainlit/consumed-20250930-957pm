@@ -611,7 +611,7 @@ export default function Track() {
                   
                   return (
                     <div key={rec.id} className="flex-shrink-0 w-44" data-testid={`recommendation-card-${rec.id}`}>
-                      <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-[2/3] bg-slate-800">
+                      <div className="relative rounded-xl overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
                         {/* Poster Image or Fallback */}
                         {showFallback ? (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 p-4">
@@ -629,27 +629,15 @@ export default function Track() {
                           />
                         )}
                     
-                    {/* Platform Badge */}
-                    {rec.external_source === 'tmdb' && (
-                      <div className="absolute top-2 left-2 w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center font-bold text-white text-sm shadow-lg">
-                        N
-                      </div>
-                    )}
-                    {rec.external_source === 'spotify' && (
-                      <div className="absolute top-2 left-2 w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center font-bold text-white text-sm shadow-lg">
-                        S
-                      </div>
-                    )}
+                    {/* Gradient Overlay - Always visible */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                     
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    
-                    {/* Action Buttons */}
-                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {/* Action Buttons - Always visible at bottom */}
+                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3">
                       <button
                         onClick={() => handleAddRecommendation(rec, 'queue')}
                         disabled={addRecommendationMutation.isPending}
-                        className="w-10 h-10 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-all hover:scale-110 disabled:opacity-50"
+                        className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg disabled:opacity-50"
                         data-testid={`button-add-${rec.id}`}
                       >
                         <Plus className="w-5 h-5 text-black" />
@@ -657,7 +645,7 @@ export default function Track() {
                       <button
                         onClick={() => handleAddRecommendation(rec, 'favorites')}
                         disabled={addRecommendationMutation.isPending}
-                        className="w-10 h-10 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg transition-all hover:scale-110 disabled:opacity-50"
+                        className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg disabled:opacity-50"
                         data-testid={`button-favorite-${rec.id}`}
                       >
                         <Star className="w-5 h-5 text-black" />
