@@ -29,6 +29,17 @@ Preferred communication style: Simple, everyday language.
     -   **Auth State Listener**: MUST NOT redirect users - causes infinite reload loops
     -   **Login Redirect**: Simple redirect in `login.tsx` only
 -   **User Management**: Users are auto-created in a custom `users` table upon first authentication.
+-   **Notification System (October 24, 2025)**:
+    -   **Unified Notification Infrastructure**: Real-time notification system for all user interactions
+    -   **Database Table**: `notifications` with columns: `id`, `user_id`, `type`, `triggered_by_user_id`, `message`, `read`, `created_at`, `post_id`, `comment_id`, `list_id`
+    -   **Edge Function**: `send-notification` centralized function for creating all notification types, uses service role to bypass RLS
+    -   **Supported Types**: `comment`, `like`, `friend_request`, `friend_accepted`, `follow`, `mention`, `inner_circle`, `collaborator_added`
+    -   **Frontend Component**: `NotificationBell` component with real-time Supabase subscriptions, unread count badge, mark-as-read functionality
+    -   **Real-time Updates**: Supabase Realtime subscriptions automatically update notification bell when new notifications arrive
+    -   **Navigation Logic**: Notifications link to relevant pages (posts via `post_id`, lists via `list_id`, etc.)
+    -   **Usage Pattern**: Edge functions call `send-notification` with service role key after completing actions (e.g., `add-list-collaborator` sends notification after adding collaborator)
+    -   **Self-notification Prevention**: System automatically prevents users from receiving notifications for their own actions
+    -   **How to Add New Notification Types**: (1) Add type to `NotificationRequest` interface in `send-notification/index.ts`, (2) Add icon case to `getNotificationIcon()` in `NotificationBell`, (3) Add navigation logic to `handleNotificationClick()` if needed, (4) Call `send-notification` edge function from triggering action with appropriate payload
 -   **Sharing System**: Unified sharing (`/src/lib/share.ts`) for various content types, controlled by `VITE_FEATURE_SHARES` for deep linking vs. text blurbs.
 -   **Leaderboard System**: All leaderboard categories are handled by a single `get-leaderboards` edge function.
 -   **User Points System**: `calculate-user-points` edge function aggregates points from all user activities.
@@ -48,8 +59,15 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 -   **Media Tracking**: Simplified list-based system for tracking entertainment items with privacy control.
--   **Personal System Lists**: Each user receives personal copies of 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) which are auto-created on signup or first access. These lists are user-specific, have full privacy control, and are designed for idempotent creation.
+-   **Personal System Lists**: Each user receives personal copies of 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) which are auto-created on signup or first access. These lists are user-specific, have full privacy control, and are designed for idempotent creation. **Database Constraint**: Unique index `lists_user_title_default_key` prevents duplicate system lists per user.
 -   **Custom Lists**: User-created lists with nested dropdown UI, simple creation dialog, and dedicated edge functions for safety.
+-   **Collaborative Lists (October 24, 2025)**:
+    -   **Custom Lists Only**: Collaboration feature restricted to custom lists (not system lists like "Currently", "Queue")
+    -   **Database Table**: `list_collaborators` with columns: `id`, `list_id`, `user_id`, `role` (defaults to 'editor'), `created_at`
+    -   **RLS Policies**: INSERT (list owners only), SELECT (owners + collaborators), DELETE (owners only)
+    -   **Edge Functions**: `add-list-collaborator` (adds collaborator + sends notification), `remove-list-collaborator` (removes collaborator), `get-list-collaborators` (fetches collaborator list with user data)
+    -   **UI Protection**: Collaborators button hidden on system lists via `is_default` field check in `list-detail.tsx`
+    -   **Notifications**: Adding a collaborator sends real-time notification via `send-notification` edge function
 -   **Social Features**: Leaderboards, activity feeds, friend discovery, and "Inner Circle" for Super Fan identification.
 -   **Play Section**: Category-based navigation for Trivia, Polls, and Predictions. Inline Play cards appear in the Feed.
 -   **Profile Management**: Editable display name and username with validation. Viewing other users' profiles correctly displays their data (highlights, stats, DNA profile, consumption history) by passing `user_id` query parameters to edge functions.
