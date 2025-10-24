@@ -886,8 +886,8 @@ export default function Feed() {
             </Button>
           </div>
 
-          {/* Static Trending TV Shows Carousel */}
-          {trendingTVShows.length > 0 && (
+          {/* Static Trending TV Shows Carousel - DISABLED FOR NOW, using simple cards */}
+          {/* {trendingTVShows.length > 0 && (
             <MediaCarousel
               title="Top Trending TV Shows"
               mediaType="tv"
@@ -896,7 +896,7 @@ export default function Feed() {
               onAddToList={undefined}
               onRate={undefined}
             />
-          )}
+          )} */}
 
           {isLoading ? (
             <div className="space-y-4">
@@ -976,8 +976,8 @@ export default function Feed() {
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
-                    {/* Insert MediaCarousel every 4th post */}
-                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
+                    {/* Insert MediaCarousel every 4th post - DISABLED FOR NOW */}
+                    {/* {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
                       <MediaCarousel
                         title={currentCarousel.title}
                         mediaType={currentCarousel.type}
@@ -986,7 +986,7 @@ export default function Feed() {
                         onAddToList={undefined}
                         onRate={undefined}
                       />
-                    )}
+                    )} */}
 
                     {/* Insert PlayCard every 3rd post */}
                     {shouldShowPlayCard && canPlayInline && (
