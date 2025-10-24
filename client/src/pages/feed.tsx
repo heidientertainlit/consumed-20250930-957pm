@@ -783,7 +783,18 @@ export default function Feed() {
     }
 
     const data = await response.json();
-    return data.recommendations || [];
+    const recommendations = data.recommendations || [];
+    
+    // Transform DNA recommendations to MediaCarousel format
+    return recommendations.map((rec: any) => ({
+      id: `${rec.external_source}-${rec.external_id}`,
+      title: rec.title,
+      imageUrl: rec.image_url, // Transform snake_case to camelCase
+      rating: rec.confidence,
+      year: rec.year?.toString(),
+      mediaType: rec.media_type || rec.type,
+      author: rec.creator,
+    }));
   };
 
   const { data: recommendedContent = [] } = useQuery({

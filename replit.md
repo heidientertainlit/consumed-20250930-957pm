@@ -36,13 +36,15 @@ Preferred communication style: Simple, everyday language.
 -   **Smart Recommendations Caching System (October 24, 2025)**: 
     -   **Instant Loading**: Recommendations load in <1 second via `user_recommendations` cache table
     -   **Background AI Generation**: GPT-4o analyzes 6 data sources (DNA profile, highlights, consumption history, 4-5 star ratings, social posts, custom lists) and generates 8-10 personalized recommendations with poster images
+    -   **Real Poster Images**: After AI generates recommendations, `rebuild-recommendations` fetches actual poster images from TMDB (movies/TV) and Google Books (books) APIs to prevent AI hallucinations
     -   **`get-recommendations` Edge Function**: Serves cached recommendations instantly, triggers background rebuild if stale (>6h) or expired (>24h), never shows empty state during regeneration
-    -   **`rebuild-recommendations` Edge Function**: Fetches comprehensive user data, calls OpenAI GPT-4o to generate recommendations with `image_url`, `year`, `external_id`, `external_source`, caches results with 24h expiration and 6h staleness threshold, preserves existing cache during generation and on errors
+    -   **`rebuild-recommendations` Edge Function**: Fetches comprehensive user data, calls OpenAI GPT-4o to generate recommendations with titles/reasons, then enriches with real poster images from APIs, caches results with 24h expiration and 6h staleness threshold, preserves existing cache during generation and on errors
     -   **Security**: Regular users can only rebuild their own recommendations; service role (cron jobs) can rebuild for any user
     -   **Auto-Polling**: Frontend polls every 5 seconds while `isGenerating=true`, stops automatically when recommendations are ready - no manual refresh needed
     -   **Mobile-First UI**: Netflix-style poster cards (2:3 aspect ratio) with always-visible action buttons (+ and ⭐), gradient overlay, fallback design for missing images
     -   **Freshness Indicators**: UI shows "Generating..." badge for first-time users, "Rebuilding..." button state during regeneration
     -   **Error Handling**: Failed generations preserve last good recommendations to ensure users never lose data, secure fallback design prevents XSS vulnerabilities
+    -   **Multi-Page Integration**: DNA recommendations appear on Track page, Profile page, and Feed page (via MediaCarousel with data transformation for consistent UI)
 
 ### Feature Specifications
 -   **Media Tracking**: Simplified list-based system for tracking entertainment items with privacy control.
