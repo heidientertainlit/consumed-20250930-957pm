@@ -38,6 +38,7 @@ export default function Track() {
   const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [selectedFilter, setSelectedFilter] = useState("Currently");
   const [, setLocation] = useLocation();
 
@@ -605,24 +606,28 @@ export default function Track() {
                   </div>
                 ))
               ) : (
-                recommendations.map((rec: any) => (
-                <div key={rec.id} className="flex-shrink-0 w-44" data-testid={`recommendation-card-${rec.id}`}>
-                  <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-[2/3] bg-slate-800">
-                    {/* Poster Image */}
-                    {rec.image_url ? (
-                      <img 
-                        src={rec.image_url} 
-                        alt={rec.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="300"%3E%3Crect fill="%23334155" width="200" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23cbd5e1" font-size="14" font-family="sans-serif"%3ENo Image%3C/text%3E%3C/svg%3E';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-700">
-                        <span className="text-slate-400 text-sm">No Image</span>
-                      </div>
-                    )}
+                recommendations.map((rec: any) => {
+                  const showFallback = !rec.image_url || imageErrors[rec.id];
+                  
+                  return (
+                    <div key={rec.id} className="flex-shrink-0 w-44" data-testid={`recommendation-card-${rec.id}`}>
+                      <div className="relative rounded-xl overflow-hidden group cursor-pointer aspect-[2/3] bg-slate-800">
+                        {/* Poster Image or Fallback */}
+                        {showFallback ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 p-4">
+                            <div className="text-center">
+                              <p className="text-white font-bold text-sm mb-2 line-clamp-3">{rec.title}</p>
+                              <p className="text-slate-300 text-xs uppercase tracking-wider">{rec.media_type || rec.type}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <img 
+                            src={rec.image_url} 
+                            alt={rec.title}
+                            className="w-full h-full object-cover"
+                            onError={() => setImageErrors(prev => ({ ...prev, [rec.id]: true }))}
+                          />
+                        )}
                     
                     {/* Platform Badge */}
                     {rec.external_source === 'tmdb' && (
@@ -670,7 +675,8 @@ export default function Track() {
                     </p>
                   </div>
                 </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
