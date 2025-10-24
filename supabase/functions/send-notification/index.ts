@@ -7,11 +7,12 @@ const corsHeaders = {
 
 interface NotificationRequest {
   userId: string;
-  type: 'comment' | 'like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle';
+  type: 'comment' | 'like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle' | 'collaborator_added';
   triggeredByUserId: string;
   message: string;
   postId?: string;
   commentId?: string;
+  listId?: string;
 }
 
 Deno.serve(async (req) => {
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
     // Use service role to bypass RLS
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    const { userId, type, triggeredByUserId, message, postId, commentId }: NotificationRequest = await req.json();
+    const { userId, type, triggeredByUserId, message, postId, commentId, listId }: NotificationRequest = await req.json();
 
     // Don't send notification to yourself
     if (userId === triggeredByUserId) {
@@ -46,6 +47,7 @@ Deno.serve(async (req) => {
         message,
         post_id: postId,
         comment_id: commentId,
+        list_id: listId,
         read: false,
       })
       .select()

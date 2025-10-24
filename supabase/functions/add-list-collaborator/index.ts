@@ -41,10 +41,10 @@ serve(async (req) => {
       });
     }
 
-    // Verify that the authenticated user owns the list
+    // Verify that the authenticated user owns the list and get list title
     const { data: list, error: listError } = await supabase
       .from('lists')
-      .select('user_id')
+      .select('user_id, title')
       .eq('id', listId)
       .single();
 
@@ -79,6 +79,36 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // Get the current user's name for the notification
+    const { data: currentUser } = await supabase
+      .from('users')
+      .select('user_name')
+      .eq('id', user.id)
+      .single();
+
+    const userName = currentUser?.user_name || 'Someone';
+
+    // Send notification to the new collaborator
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+        },
+        body: JSON.stringify({
+          userId: userId,
+          type: 'collaborator_added',
+          triggeredByUserId: user.id,
+          message: `${userName} added you as a collaborator on "${list.title}"`,
+          listId: listId
+        })
+      });
+    } catch (notifError) {
+      console.error('Error sending notification:', notifError);
+      // Don't fail the request if notification fails
     }
 
     return new Response(JSON.stringify({ success: true, data }), {

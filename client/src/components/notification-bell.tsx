@@ -19,6 +19,7 @@ interface Notification {
   read: boolean;
   created_at: string;
   post_id?: string;
+  list_id?: string;
   triggered_by_user_id: string;
 }
 
@@ -108,6 +109,11 @@ export function NotificationBell() {
       window.location.href = `/feed?post=${notification.post_id}`;
     }
 
+    // Navigate to the list if available (for collaborator notifications)
+    if (notification.list_id && notification.type === 'collaborator_added') {
+      window.location.href = `/track`; // Navigate to Track page where lists are shown
+    }
+
     setOpen(false);
   };
 
@@ -127,6 +133,8 @@ export function NotificationBell() {
         return '@';
       case 'inner_circle':
         return '⭐';
+      case 'collaborator_added':
+        return '📝';
       default:
         return '🔔';
     }
