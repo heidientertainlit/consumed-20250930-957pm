@@ -82,11 +82,19 @@ export default function Feed() {
   };
 
 
-  const { data: socialPosts, isLoading } = useQuery({
+  const { data: socialPosts, isLoading, error: feedError } = useQuery({
     queryKey: ["social-feed"],
     queryFn: () => fetchSocialFeed(session),
     enabled: !!session?.access_token,
+    retry: false,
   });
+
+  // Log feed errors for debugging
+  useEffect(() => {
+    if (feedError) {
+      console.error('❌ Feed fetch error:', feedError);
+    }
+  }, [feedError]);
 
   // Initialize likedPosts from feed data
   useEffect(() => {
