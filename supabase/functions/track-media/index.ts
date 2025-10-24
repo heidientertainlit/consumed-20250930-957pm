@@ -143,13 +143,15 @@ serve(async (req) => {
       console.log('Looking for personal list with title:', listTitle);
 
       // Find USER'S personal list by title (is_default = true means it's a system list)
+      // Use .limit(1) + .maybeSingle() to handle potential duplicates gracefully
       const { data: systemList, error: listError } = await supabase
         .from('lists')
         .select('id, title')
         .eq('user_id', appUser.id)
         .eq('title', listTitle)
         .eq('is_default', true)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       console.log('System list lookup result:', { systemList, listError });
 
