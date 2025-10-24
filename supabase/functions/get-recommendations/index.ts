@@ -75,9 +75,9 @@ serve(async (req) => {
     const isExpired = now > expiresAt;
     const isStale = now > staleAfter;
 
-    // If expired, trigger rebuild and return empty
-    if (isExpired) {
-      console.log('Cached recommendations expired, triggering rebuild');
+    // If expired, trigger rebuild but STILL SERVE old cache (don't leave user with empty state)
+    if (isExpired && cached.status !== 'generating') {
+      console.log('Cached recommendations expired, triggering rebuild while serving stale cache');
       
       fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/rebuild-recommendations`, {
         method: 'POST',
@@ -88,16 +88,7 @@ serve(async (req) => {
         body: JSON.stringify({ userId: user.id })
       }).catch(err => console.error('Failed to trigger rebuild:', err));
 
-      return new Response(JSON.stringify({
-        success: true,
-        recommendations: [],
-        isStale: true,
-        isGenerating: true,
-        message: 'Refreshing your recommendations...'
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      // Continue to serve the existing cache below with isStale=true flag
     }
 
     // If stale but not expired, serve cache and trigger background rebuild
@@ -114,11 +105,12 @@ serve(async (req) => {
       }).catch(err => console.error('Failed to trigger rebuild:', err));
     }
 
-    // Return cached recommendations
+    // Return cached recommendations (even if expired - we serve stale data while rebuilding)
     console.log('Serving cached recommendations:', {
       count: cached.recommendations?.recommendations?.length || 0,
       generatedAt: cached.generated_at,
-      isStale
+      isStale: isStale || isExpired,
+      isExpired
     });
 
     return new Response(JSON.stringify({
@@ -127,7 +119,7 @@ serve(async (req) => {
       dataSourcesUsed: cached.data_sources_used,
       generatedAt: cached.generated_at,
       expiresAt: cached.expires_at,
-      isStale,
+      isStale: isStale || isExpired, // Mark as stale if past stale_after OR expired
       isGenerating: cached.status === 'generating',
       model: cached.source_model
     }), {

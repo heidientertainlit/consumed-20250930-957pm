@@ -18,45 +18,76 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get user ID from request body or auth header
-    const body = await req.json();
-    let userId = body.userId;
+    // Check if request is from service role (for cron jobs)
+    const authHeader = req.headers.get('Authorization') || '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const isServiceRole = authHeader.includes(serviceRoleKey) && serviceRoleKey.length > 0;
 
-    // If no userId in body, try to get from auth header
-    if (!userId) {
+    let userId: string;
+    const body = await req.json().catch(() => ({}));
+
+    if (isServiceRole) {
+      // Service role can rebuild for any user (cron jobs, admin operations)
+      if (!body.userId) {
+        return new Response(JSON.stringify({ error: 'userId required for service role calls' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      userId = body.userId;
+      console.log('Service role rebuild for user:', userId);
+    } else {
+      // Regular user can only rebuild their own recommendations
       const authClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '', 
         Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
         {
           global: {
-            headers: { Authorization: req.headers.get('Authorization') }
+            headers: { Authorization: authHeader }
           }
         }
       );
 
-      const { data: { user } } = await authClient.auth.getUser();
-      if (!user) {
+      const { data: { user }, error: authError } = await authClient.auth.getUser();
+      if (authError || !user) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      userId = user.id;
-    }
 
+      // Security: Regular users can ONLY rebuild their own recommendations
+      const targetUserId = body.userId;
+      if (targetUserId && targetUserId !== user.id) {
+        return new Response(JSON.stringify({ error: 'Can only rebuild your own recommendations' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      userId = user.id;
+      console.log('User rebuild for:', user.email);
+    }
     console.log('Rebuilding recommendations for user:', userId);
 
-    // Mark as generating
+    // Check current cache and preserve existing recommendations while generating
+    const { data: existingCache } = await supabase
+      .from('user_recommendations')
+      .select('recommendations')
+      .eq('user_id', userId)
+      .single();
+
+    // Mark as generating WITHOUT clearing existing recommendations
     await supabase
       .from('user_recommendations')
       .upsert({
         user_id: userId,
         status: 'generating',
-        recommendations: { recommendations: [] },
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-        stale_after: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours
+        // CRITICAL: Preserve existing recommendations during rebuild
+        recommendations: existingCache?.recommendations || { recommendations: [] },
       }, {
-        onConflict: 'user_id'
+        onConflict: 'user_id',
+        ignoreDuplicates: false
       });
 
     // Fetch all data sources
@@ -295,17 +326,18 @@ Return ONLY valid JSON:
     } catch (error) {
       clearTimeout(timeoutId);
       
-      // Mark as failed
+      // Mark as failed but PRESERVE existing cache (don't punish users for our errors)
+      console.error('OpenAI generation failed, preserving last cache:', error);
       await supabase
         .from('user_recommendations')
         .upsert({
           user_id: userId,
           status: 'failed',
-          recommendations: { recommendations: [] },
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          stale_after: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+          // CRITICAL: Keep the existing recommendations we preserved earlier
+          recommendations: existingCache?.recommendations || { recommendations: [] },
         }, {
-          onConflict: 'user_id'
+          onConflict: 'user_id',
+          ignoreDuplicates: false
         });
 
       throw error;
