@@ -32,7 +32,7 @@ serve(async (req) => {
       });
     }
 
-    const { listId, userId, permission = 'edit' } = await req.json();
+    const { listId, userId } = await req.json();
 
     if (!listId || !userId) {
       return new Response(JSON.stringify({ error: 'Missing required fields: listId and userId' }), {
@@ -62,13 +62,12 @@ serve(async (req) => {
       });
     }
 
-    // Add collaborator
+    // Add collaborator (no permission column)
     const { data, error } = await supabase
       .from('list_collaborators')
       .insert({
         list_id: listId,
-        user_id: userId,
-        permission: permission
+        user_id: userId
       })
       .select()
       .single();

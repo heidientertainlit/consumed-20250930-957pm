@@ -329,7 +329,6 @@ export default function ListDetail() {
         userId: collab.user_id,
         userName: collab.users?.user_name || 'Unknown',
         displayName: collab.users?.display_name || collab.users?.user_name || 'Unknown',
-        permission: collab.permission || 'edit',
         addedAt: collab.added_at
       }));
     },
@@ -353,8 +352,7 @@ export default function ListDetail() {
           },
           body: JSON.stringify({
             listId: sharedListData.id,
-            userId,
-            permission: 'edit'
+            userId
           }),
         }
       );
