@@ -703,7 +703,12 @@ export default function Feed() {
           return [];
         }
         const data = await response.json();
-        return data;
+        // Add externalId and externalSource for MediaCarousel compatibility
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'tmdb'
+        }));
       } catch (error) {
         console.error('Error fetching trending TV shows:', error);
         return [];
@@ -723,7 +728,13 @@ export default function Feed() {
           return [];
         }
         const data = await response.json();
-        return data;
+        // Add externalId and externalSource for MediaCarousel compatibility
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'openlibrary',
+          mediaType: 'book'
+        }));
       } catch (error) {
         console.error('Error fetching bestseller books:', error);
         return [];
@@ -739,7 +750,13 @@ export default function Feed() {
       try {
         const response = await fetch('/api/tmdb/trending/movies');
         if (!response.ok) return [];
-        return await response.json();
+        const data = await response.json();
+        // Add externalId and externalSource for MediaCarousel compatibility
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'tmdb'
+        }));
       } catch (error) {
         console.error('Error fetching trending movies:', error);
         return [];
@@ -755,7 +772,14 @@ export default function Feed() {
       try {
         const response = await fetch('/api/spotify/trending/podcasts');
         if (!response.ok) return [];
-        return await response.json();
+        const data = await response.json();
+        // Add externalId and externalSource for MediaCarousel compatibility
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'spotify',
+          mediaType: 'podcast'
+        }));
       } catch (error) {
         console.error('Error fetching trending podcasts:', error);
         return [];
