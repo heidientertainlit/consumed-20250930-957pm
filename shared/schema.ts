@@ -86,19 +86,19 @@ export const socialPosts = pgTable("social_posts", {
 });
 
 export const socialPostComments = pgTable("social_post_comments", {
-  id: serial("id").primaryKey(), // Match production: INTEGER serial, not UUID
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   postId: varchar("post_id").notNull().references(() => socialPosts.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   likesCount: integer("likes_count").notNull().default(0),
-  parentCommentId: integer("parent_comment_id").references((): any => socialPostComments.id, { onDelete: "cascade" }), // For nested replies (Phase 2)
+  parentCommentId: varchar("parent_comment_id").references((): any => socialPostComments.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Comment likes table (many-to-many relationship)
 export const socialCommentLikes = pgTable("social_comment_likes", {
-  id: serial("id").primaryKey(), // Match production: INTEGER serial
-  commentId: integer("comment_id").notNull().references(() => socialPostComments.id, { onDelete: "cascade" }),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  commentId: varchar("comment_id").notNull().references(() => socialPostComments.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
