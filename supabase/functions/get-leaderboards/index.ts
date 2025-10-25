@@ -17,7 +17,8 @@ serve(async (req) => {
     const category = searchParams.get('category') || 'all_time';
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')) : 10;
 
-    const supabase = createClient(
+    // Use regular client for authentication
+    const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '', 
       Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
       {
@@ -28,13 +29,19 @@ serve(async (req) => {
     );
 
     // Get auth user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    // Use service role client for leaderboard queries (bypass RLS to count all activity)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '', 
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     // Get or create app user
     let { data: appUser, error: appUserError } = await supabase
