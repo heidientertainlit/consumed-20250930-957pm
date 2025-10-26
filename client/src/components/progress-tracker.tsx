@@ -195,12 +195,12 @@ export function ProgressTracker({
     return (
       <div className="mb-3 flex gap-2" data-testid={`progress-tracker-${itemId}`}>
         <Button
-          onClick={() => moveToListMutation.mutate('finished')}
+          onClick={() => moveToListMutation.mutate('favorites')}
           disabled={moveToListMutation.isPending}
-          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-lg"
-          data-testid={`button-mark-finished-${itemId}`}
+          className="flex-1 bg-purple-800 hover:bg-purple-900 text-white text-xs py-1.5 h-8 rounded-lg"
+          data-testid={`button-add-to-favorites-${itemId}`}
         >
-          Finished
+          Favorites
         </Button>
         <Button
           onClick={() => moveToListMutation.mutate('dnf')}
@@ -211,12 +211,12 @@ export function ProgressTracker({
           DNF
         </Button>
         <Button
-          onClick={() => moveToListMutation.mutate('favorites')}
+          onClick={() => moveToListMutation.mutate('finished')}
           disabled={moveToListMutation.isPending}
-          className="flex-1 bg-purple-800 hover:bg-purple-900 text-white text-xs py-1.5 h-8 rounded-lg"
-          data-testid={`button-add-to-favorites-${itemId}`}
+          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-lg"
+          data-testid={`button-mark-finished-${itemId}`}
         >
-          Favorites
+          Finished
         </Button>
       </div>
     );
