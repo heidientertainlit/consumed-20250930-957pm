@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -226,73 +227,34 @@ export function ProgressTracker({
     <div className="mb-3" data-testid={`progress-tracker-${itemId}`}>
       {/* Mode toggle for books and TV shows */}
       {canToggleMode && (
-        <div className="flex gap-2 mb-2">
-          {isBook ? (
-            <>
-              <Button
-                size="sm"
-                variant={mode === 'page' ? 'default' : 'outline'}
-                onClick={() => {
-                  setMode('page');
-                  if (currentMode === 'percent') {
-                    setProgress(0);
-                  }
-                }}
-                className={mode === 'page' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
-                data-testid={`button-mode-page-${itemId}`}
-              >
-                Page #
-              </Button>
-              <Button
-                size="sm"
-                variant={mode === 'percent' ? 'default' : 'outline'}
-                onClick={() => {
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">
+              {isBook ? 'Page #' : 'Episode'}
+            </span>
+            <Switch
+              checked={mode === 'percent'}
+              onCheckedChange={(checked) => {
+                if (checked) {
                   setMode('percent');
                   setProgress(0);
                   setTotal(0);
-                }}
-                className={mode === 'percent' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
-                data-testid={`button-mode-percent-${itemId}`}
-              >
-                Percent
-              </Button>
-            </>
-          ) : isTv ? (
-            <>
-              <Button
-                size="sm"
-                variant={mode === 'episode' ? 'default' : 'outline'}
-                onClick={() => {
-                  setMode('episode');
+                } else {
+                  setMode(isBook ? 'page' : 'episode');
                   if (currentMode === 'percent') {
                     setProgress(0);
                   }
-                }}
-                className={mode === 'episode' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
-                data-testid={`button-mode-episode-${itemId}`}
-              >
-                Episode
-              </Button>
-              <Button
-                size="sm"
-                variant={mode === 'percent' ? 'default' : 'outline'}
-                onClick={() => {
-                  setMode('percent');
-                  setProgress(0);
-                  setTotal(0);
-                }}
-                className={mode === 'percent' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
-                data-testid={`button-mode-percent-${itemId}`}
-              >
-                Percent
-              </Button>
-            </>
-          ) : null}
+                }
+              }}
+              data-testid={`switch-mode-${itemId}`}
+            />
+            <span className="text-sm text-gray-600">Percent</span>
+          </div>
           <Button
             size="sm"
             onClick={handleUpdateProgress}
             disabled={updateProgressMutation.isPending}
-            className="bg-black hover:bg-gray-800 text-white ml-auto"
+            className="bg-black hover:bg-gray-800 text-white"
             data-testid={`button-update-progress-${itemId}`}
           >
             {updateProgressMutation.isPending ? 'Updating...' : 'Update Progress'}
