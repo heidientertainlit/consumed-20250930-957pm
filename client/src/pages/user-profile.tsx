@@ -122,6 +122,11 @@ export default function UserProfile() {
   const [creatorSearchQuery, setCreatorSearchQuery] = useState("");
   const [creatorSearchResults, setCreatorSearchResults] = useState<any[]>([]);
   const [isSearchingCreators, setIsSearchingCreators] = useState(false);
+  
+  // Followed creators state
+  const [followedCreators, setFollowedCreators] = useState<any[]>([]);
+  const [isLoadingFollowedCreators, setIsLoadingFollowedCreators] = useState(false);
+  const [isFollowingCreator, setIsFollowingCreator] = useState<string | null>(null);
 
   // Fetch highlights from Supabase
   const fetchHighlights = async () => {
@@ -532,6 +537,101 @@ export default function UserProfile() {
     }
   };
 
+  // Fetch followed creators
+  const fetchFollowedCreators = async () => {
+    if (!session?.access_token) return;
+
+    setIsLoadingFollowedCreators(true);
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY,
+        {
+          global: {
+            headers: { Authorization: `Bearer ${session.access_token}` }
+          }
+        }
+      );
+
+      const { data, error } = await supabase
+        .from('followed_creators')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching followed creators:', error);
+      } else {
+        setFollowedCreators(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching followed creators:', error);
+    } finally {
+      setIsLoadingFollowedCreators(false);
+    }
+  };
+
+  // Follow or unfollow a creator
+  const handleFollowCreator = async (creator: any, action: 'follow' | 'unfollow') => {
+    if (!session?.access_token) return;
+
+    const creatorKey = `${creator.external_source}-${creator.external_id}`;
+    setIsFollowingCreator(creatorKey);
+
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/follow-creator', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action,
+          creatorName: creator.name,
+          creatorRole: creator.role,
+          creatorImage: creator.image || null,
+          externalId: creator.external_id,
+          externalSource: creator.external_source
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: action === 'follow' ? "Following!" : "Unfollowed",
+          description: action === 'follow' 
+            ? `You're now following ${creator.name}` 
+            : `You unfollowed ${creator.name}`,
+        });
+        // Refresh the followed creators list
+        fetchFollowedCreators();
+      } else {
+        const data = await response.json();
+        toast({
+          title: "Error",
+          description: data.error || "Unable to update following status.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing creator:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsFollowingCreator(null);
+    }
+  };
+
+  // Helper to check if a creator is already followed
+  const isCreatorFollowed = (creator: any) => {
+    return followedCreators.some(fc => 
+      fc.external_id === creator.external_id && 
+      fc.external_source === creator.external_source
+    );
+  };
+
   // Send friend request
   const sendFriendRequest = async (friendId: string) => {
     if (!session?.access_token) return;
@@ -738,6 +838,9 @@ export default function UserProfile() {
       fetchUserPoints();
       fetchUserPredictions();
       fetchHighlights();
+      if (isOwnProfile) {
+        fetchFollowedCreators();
+      }
       if (!isOwnProfile) {
         checkFriendshipStatus();
       }
@@ -2586,14 +2689,28 @@ export default function UserProfile() {
                     {creator.name}
                   </p>
                   <p className="text-xs text-gray-600 truncate px-1">{creator.role}</p>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    className="w-full mt-2 text-xs h-7 border-purple-300 text-purple-600 hover:bg-purple-50"
-                    data-testid={`button-follow-${creator.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  >
-                    + Follow
-                  </Button>
+                  {isOwnProfile && (
+                    <Button 
+                      size="sm"
+                      variant={isCreatorFollowed(creator) ? "default" : "outline"}
+                      className={`w-full mt-2 text-xs h-7 ${
+                        isCreatorFollowed(creator)
+                          ? 'bg-purple-600 text-white hover:bg-purple-700'
+                          : 'border-purple-300 text-purple-600 hover:bg-purple-50'
+                      }`}
+                      onClick={() => handleFollowCreator(creator, isCreatorFollowed(creator) ? 'unfollow' : 'follow')}
+                      disabled={isFollowingCreator === `${creator.external_source}-${creator.external_id}`}
+                      data-testid={`button-follow-${creator.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      {isFollowingCreator === `${creator.external_source}-${creator.external_id}` ? (
+                        <Loader2 className="animate-spin" size={14} />
+                      ) : isCreatorFollowed(creator) ? (
+                        'Following'
+                      ) : (
+                        '+ Follow'
+                      )}
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
