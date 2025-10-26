@@ -74,6 +74,15 @@ Preferred communication style: Simple, everyday language.
 -   **Creator Recognition**: "Favorite Creators" are computed based on user media consumption.
 -   **Media Item Pages**: URL structure includes `mediaType` to differentiate content (e.g., `/media/{mediaType}/{source}/{externalId}`). Displays dynamic platform availability (Netflix, Spotify, Amazon, etc.) via "Watch On", "Listen On", or "Read On" links.
 -   **Polls/Surveys System**: Database-backed polling system supporting branded and sponsored polls with direct Supabase client-side voting, real-time vote counting, duplicate vote prevention, and points rewards.
+-   **Creator Follow System (October 26, 2025)**:
+    -   **Database Table**: `followed_creators` with columns: `id`, `user_id`, `creator_name`, `creator_role`, `creator_image`, `external_id`, `external_source`, `created_at`
+    -   **Unique Constraint**: `(user_id, external_id, external_source)` prevents duplicate follows
+    -   **Creator Search**: Multi-source search across TMDB (directors/actors/writers/producers), Spotify (musicians), and Google Books (authors) via `search-creators` edge function
+    -   **Content Safety**: 1M+ follower threshold for Spotify images, filters for tribute/karaoke/cover artists, deduplication by creator name
+    -   **Follow/Unfollow**: `follow-creator` edge function handles authentication, duplicate detection (409 conflict), and removal with optimistic UI updates
+    -   **Creator Updates**: `get-creator-updates` edge function fetches latest releases from followed creators (movies/TV from TMDB, albums from Spotify, books from Google Books) within the last 2 years
+    -   **Feed Integration**: Creator update cards appear in the main feed every 6th post, displaying new releases with poster images, release dates, and direct links to media pages
+    -   **UI Components**: Follow buttons in user profile with loading states, "Following" vs "+ Follow" states, and inline creator search with debounced queries (500ms delay)
 
 ### System Design Choices
 -   **Database Schema**: Development and production databases use a synced schema. Critical naming conventions include `user_name` (never `username`) in the `users` table, and specific columns for `social_posts`, `list_items`, `lists`, `polls`, and `poll_responses`. The `lists` table critically lacks `description` and `updated_at` columns in production.
