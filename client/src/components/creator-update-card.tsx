@@ -11,6 +11,7 @@ interface CreatorUpdate {
   overview?: string;
   external_id: string;
   external_source: string;
+  is_classic?: boolean;
 }
 
 interface CreatorUpdateCardProps {
@@ -34,6 +35,22 @@ export default function CreatorUpdateCard({ update, onClick }: CreatorUpdateCard
   };
 
   const getTypeLabel = () => {
+    if (update.is_classic) {
+      switch (update.type) {
+        case 'album':
+        case 'single':
+          return 'Popular Album';
+        case 'movie':
+          return 'Classic Film';
+        case 'tv':
+          return 'Popular Show';
+        case 'book':
+          return 'Classic Book';
+        default:
+          return 'Popular Work';
+      }
+    }
+    
     switch (update.type) {
       case 'album':
         return 'New Album';

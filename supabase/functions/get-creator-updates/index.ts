@@ -22,7 +22,6 @@ serve(async (req) => {
       }
     );
 
-    // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
@@ -32,7 +31,6 @@ serve(async (req) => {
       });
     }
 
-    // Fetch user's followed creators
     const { data: followedCreators, error: followError } = await supabase
       .from('followed_creators')
       .select('*')
@@ -54,11 +52,9 @@ serve(async (req) => {
 
     const updates: any[] = [];
 
-    // Process each followed creator
     for (const creator of followedCreators) {
       try {
         if (creator.external_source === 'tmdb') {
-          // Fetch latest movies/TV shows from TMDB person
           const tmdbKey = Deno.env.get('TMDB_API_KEY');
           if (tmdbKey) {
             const creditsResponse = await fetch(
@@ -68,40 +64,39 @@ serve(async (req) => {
             if (creditsResponse.ok) {
               const creditsData = await creditsResponse.json();
               
-              // Get the correct work based on creator role
-              let recentWorks: any[] = [];
-              
-              if (creator.creator_role === 'Director') {
-                // For directors, use crew and filter for directing jobs
-                recentWorks = (creditsData.crew || []).filter((work: any) => 
-                  work.job === 'Director'
-                );
-              } else if (creator.creator_role === 'Writer') {
-                // For writers, use crew and filter for writing jobs
-                recentWorks = (creditsData.crew || []).filter((work: any) => 
-                  work.department === 'Writing' || work.job === 'Screenplay' || work.job === 'Writer'
-                );
-              } else if (creator.creator_role === 'Producer') {
-                // For producers, use crew and filter for producing jobs
-                recentWorks = (creditsData.crew || []).filter((work: any) => 
-                  work.job === 'Producer' || work.job === 'Executive Producer'
-                );
-              } else {
-                // For actors or other roles, use cast
-                recentWorks = creditsData.cast || [];
-              }
-              
-              // Get works from the last 2 years that have ACTUALLY been released
               const twoYearsAgo = new Date();
               twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
               const today = new Date();
               
-              const recentReleases = recentWorks
+              // Function to get role-filtered works
+              const getRoleFilteredWorks = () => {
+                if (creator.creator_role === 'Director') {
+                  return (creditsData.crew || []).filter((work: any) => 
+                    work.job === 'Director'
+                  );
+                } else if (creator.creator_role === 'Writer') {
+                  return (creditsData.crew || []).filter((work: any) => 
+                    work.department === 'Writing' || work.job === 'Screenplay' || work.job === 'Writer'
+                  );
+                } else if (creator.creator_role === 'Producer') {
+                  return (creditsData.crew || []).filter((work: any) => 
+                    work.job === 'Producer' || work.job === 'Executive Producer'
+                  );
+                } else {
+                  return creditsData.cast || [];
+                }
+              };
+              
+              const allRoleWorks = getRoleFilteredWorks();
+              
+              let worksToShow: any[] = [];
+              
+              // Try to find recent releases (past 2 years, already released)
+              const recentReleases = allRoleWorks
                 .filter((work: any) => {
                   const releaseDate = work.release_date || work.first_air_date;
                   if (!releaseDate) return false;
                   const workDate = new Date(releaseDate);
-                  // Only show released content (not future releases)
                   return workDate >= twoYearsAgo && workDate <= today;
                 })
                 .sort((a: any, b: any) => {
@@ -109,9 +104,24 @@ serve(async (req) => {
                   const dateB = b.release_date || b.first_air_date || '';
                   return dateB.localeCompare(dateA);
                 })
-                .slice(0, 3); // Top 3 recent works
+                .slice(0, 3);
 
-              recentReleases.forEach((work: any) => {
+              if (recentReleases.length > 0) {
+                worksToShow = recentReleases;
+              } else {
+                // No recent releases - show most popular classic works (still role-filtered)
+                worksToShow = allRoleWorks
+                  .filter((work: any) => {
+                    const releaseDate = work.release_date || work.first_air_date;
+                    if (!releaseDate) return false;
+                    const workDate = new Date(releaseDate);
+                    return workDate <= today;
+                  })
+                  .sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0))
+                  .slice(0, 3);
+              }
+
+              worksToShow.forEach((work: any) => {
                 updates.push({
                   creator_name: creator.creator_name,
                   creator_role: creator.creator_role,
@@ -124,18 +134,17 @@ serve(async (req) => {
                     : null,
                   external_id: work.id.toString(),
                   external_source: 'tmdb',
-                  overview: work.overview
+                  overview: work.overview,
+                  is_classic: recentReleases.length === 0
                 });
               });
             }
           }
         } else if (creator.external_source === 'spotify') {
-          // Fetch latest albums from Spotify artist
           const clientId = Deno.env.get('SPOTIFY_CLIENT_ID');
           const clientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
           
           if (clientId && clientSecret) {
-            // Get access token
             const authResponse = await fetch('https://accounts.spotify.com/api/token', {
               method: 'POST',
               headers: {
@@ -149,9 +158,8 @@ serve(async (req) => {
               const authData = await authResponse.json();
               const accessToken = authData.access_token;
               
-              // Fetch artist's albums
               const albumsResponse = await fetch(
-                `https://api.spotify.com/v1/artists/${creator.external_id}/albums?include_groups=album,single&market=US&limit=10`,
+                `https://api.spotify.com/v1/artists/${creator.external_id}/albums?include_groups=album,single&market=US&limit=50`,
                 {
                   headers: {
                     'Authorization': `Bearer ${accessToken}`
@@ -161,23 +169,35 @@ serve(async (req) => {
               
               if (albumsResponse.ok) {
                 const albumsData = await albumsResponse.json();
-                
-                // Get albums from the last 2 years that have ACTUALLY been released
                 const twoYearsAgo = new Date();
                 twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
                 const today = new Date();
+                
+                let albumsToShow: any[] = [];
                 
                 const recentAlbums = (albumsData.items || [])
                   .filter((album: any) => {
                     if (!album.release_date) return false;
                     const albumDate = new Date(album.release_date);
-                    // Only show released albums (not future releases)
                     return albumDate >= twoYearsAgo && albumDate <= today;
                   })
                   .sort((a: any, b: any) => b.release_date.localeCompare(a.release_date))
-                  .slice(0, 3); // Top 3 recent albums
+                  .slice(0, 3);
 
-                recentAlbums.forEach((album: any) => {
+                if (recentAlbums.length > 0) {
+                  albumsToShow = recentAlbums;
+                } else {
+                  albumsToShow = (albumsData.items || [])
+                    .filter((album: any) => {
+                      if (!album.release_date) return false;
+                      const albumDate = new Date(album.release_date);
+                      return albumDate <= today && album.album_type === 'album';
+                    })
+                    .sort((a: any, b: any) => b.release_date.localeCompare(a.release_date))
+                    .slice(0, 3);
+                }
+
+                albumsToShow.forEach((album: any) => {
                   updates.push({
                     creator_name: creator.creator_name,
                     creator_role: creator.creator_role,
@@ -188,41 +208,53 @@ serve(async (req) => {
                     image: album.images?.[0]?.url || null,
                     external_id: album.id,
                     external_source: 'spotify',
-                    overview: `${album.total_tracks} tracks`
+                    overview: `${album.total_tracks} tracks`,
+                    is_classic: recentAlbums.length === 0
                   });
                 });
               }
             }
           }
         } else if (creator.external_source === 'googlebooks') {
-          // Fetch latest books from Google Books author
           const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
           const authorQuery = `inauthor:"${encodeURIComponent(creator.creator_name)}"`;
           const booksUrl = googleBooksKey 
-            ? `https://www.googleapis.com/books/v1/volumes?q=${authorQuery}&orderBy=newest&maxResults=5&key=${googleBooksKey}`
-            : `https://www.googleapis.com/books/v1/volumes?q=${authorQuery}&orderBy=newest&maxResults=5`;
+            ? `https://www.googleapis.com/books/v1/volumes?q=${authorQuery}&orderBy=newest&maxResults=20&key=${googleBooksKey}`
+            : `https://www.googleapis.com/books/v1/volumes?q=${authorQuery}&orderBy=newest&maxResults=20`;
           
           const booksResponse = await fetch(booksUrl);
           
           if (booksResponse.ok) {
             const booksData = await booksResponse.json();
-            
-            // Get books from the last 2 years that have ACTUALLY been published
             const twoYearsAgo = new Date();
             twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
             const today = new Date();
+            
+            let booksToShow: any[] = [];
             
             const recentBooks = (booksData.items || [])
               .filter((book: any) => {
                 const publishedDate = book.volumeInfo?.publishedDate;
                 if (!publishedDate) return false;
                 const bookDate = new Date(publishedDate);
-                // Only show published books (not future releases)
                 return bookDate >= twoYearsAgo && bookDate <= today;
               })
-              .slice(0, 3); // Top 3 recent books
+              .slice(0, 3);
 
-            recentBooks.forEach((book: any) => {
+            if (recentBooks.length > 0) {
+              booksToShow = recentBooks;
+            } else {
+              booksToShow = (booksData.items || [])
+                .filter((book: any) => {
+                  const publishedDate = book.volumeInfo?.publishedDate;
+                  if (!publishedDate) return false;
+                  const bookDate = new Date(publishedDate);
+                  return bookDate <= today;
+                })
+                .slice(0, 3);
+            }
+
+            booksToShow.forEach((book: any) => {
               const volumeInfo = book.volumeInfo || {};
               updates.push({
                 creator_name: creator.creator_name,
@@ -234,18 +266,17 @@ serve(async (req) => {
                 image: volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
                 external_id: book.id,
                 external_source: 'googlebooks',
-                overview: volumeInfo.description?.substring(0, 200) || ''
+                overview: volumeInfo.description?.substring(0, 200) || '',
+                is_classic: recentBooks.length === 0
               });
             });
           }
         }
       } catch (error) {
         console.error(`Error fetching updates for creator ${creator.creator_name}:`, error);
-        // Continue processing other creators even if one fails
       }
     }
 
-    // Sort all updates by release date (most recent first)
     updates.sort((a, b) => {
       const dateA = a.release_date || '';
       const dateB = b.release_date || '';

@@ -80,9 +80,14 @@ Preferred communication style: Simple, everyday language.
     -   **Creator Search**: Multi-source search across TMDB (directors/actors/writers/producers), Spotify (musicians), and Google Books (authors) via `search-creators` edge function
     -   **Content Safety**: 1M+ follower threshold for Spotify images, filters for tribute/karaoke/cover artists, deduplication by creator name
     -   **Follow/Unfollow**: `follow-creator` edge function handles authentication, duplicate detection (409 conflict), and removal with optimistic UI updates
-    -   **Creator Updates**: `get-creator-updates` edge function fetches latest releases from followed creators (movies/TV from TMDB, albums from Spotify, books from Google Books) within the last 2 years
-    -   **Feed Integration**: Creator update cards appear in the main feed every 6th post, displaying new releases with poster images, release dates, and direct links to media pages
-    -   **UI Components**: Follow buttons in user profile with loading states, "Following" vs "+ Follow" states, inline creator search with debounced queries (500ms delay), CreatorUpdateCard (purple gradient)
+    -   **Creator Updates (CRITICAL - October 26, 2025)**: `get-creator-updates` edge function fetches content from followed creators with intelligent fallback:
+        -   **Primary**: Shows releases from past 2 years that have ACTUALLY been released (filters out future releases with `releaseDate <= today`)
+        -   **Fallback**: If no recent releases exist, automatically shows MOST POPULAR classic works (sorted by popularity for TMDB, most recent full albums for Spotify/Google Books)
+        -   **Date Filtering**: All sources (TMDB, Spotify, Google Books) filter `releaseDate >= twoYearsAgo && releaseDate <= today` to prevent future/unreleased content
+        -   **Role-Based Accuracy**: Directors show only directed films (crew with job="Director"), actors show only acting roles (cast), writers/producers use appropriate crew filters
+        -   **Classic Flag**: Updates include `is_classic` boolean to distinguish popular fallback content from new releases
+    -   **Feed Integration**: Creator update cards appear in the main feed every 6th post, displaying releases with poster images, release dates, "New" vs "Classic Film"/"Popular Album" badges, and direct links to media pages
+    -   **UI Components**: Follow buttons in user profile with loading states, "Following" vs "+ Follow" states, inline creator search with debounced queries (500ms delay), CreatorUpdateCard (purple gradient) with dynamic badge text based on `is_classic` flag
 
 ### System Design Choices
 -   **Database Schema**: Development and production databases use a synced schema. Critical naming conventions include `user_name` (never `username`) in the `users` table, and specific columns for `social_posts`, `list_items`, `lists`, `polls`, and `poll_responses`. The `lists` table critically lacks `description` and `updated_at` columns in production.
