@@ -67,7 +67,29 @@ serve(async (req) => {
 
             if (creditsResponse.ok) {
               const creditsData = await creditsResponse.json();
-              const recentWorks = creditsData.cast || [];
+              
+              // Get the correct work based on creator role
+              let recentWorks: any[] = [];
+              
+              if (creator.creator_role === 'Director') {
+                // For directors, use crew and filter for directing jobs
+                recentWorks = (creditsData.crew || []).filter((work: any) => 
+                  work.job === 'Director'
+                );
+              } else if (creator.creator_role === 'Writer') {
+                // For writers, use crew and filter for writing jobs
+                recentWorks = (creditsData.crew || []).filter((work: any) => 
+                  work.department === 'Writing' || work.job === 'Screenplay' || work.job === 'Writer'
+                );
+              } else if (creator.creator_role === 'Producer') {
+                // For producers, use crew and filter for producing jobs
+                recentWorks = (creditsData.crew || []).filter((work: any) => 
+                  work.job === 'Producer' || work.job === 'Executive Producer'
+                );
+              } else {
+                // For actors or other roles, use cast
+                recentWorks = creditsData.cast || [];
+              }
               
               // Get works from the last 2 years
               const twoYearsAgo = new Date();
