@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -425,6 +425,57 @@ export default function ListDetail() {
     }
   });
 
+  // Delete custom list mutation
+  const deleteListMutation = useMutation({
+    mutationFn: async (listId: string) => {
+      if (!session?.access_token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-custom-list`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ list_id: listId })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete list');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      toast({
+        title: "List Deleted",
+        description: data.message || "Your custom list has been deleted",
+      });
+      setLocation('/track');
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleDeleteList = () => {
+    if (!sharedListData?.id) return;
+    
+    if (confirm(`Are you sure you want to delete "${sharedListData.title}"? This action cannot be undone.`)) {
+      deleteListMutation.mutate(sharedListData.id);
+    }
+  };
+
   // Show loading state instead of "List not found" during data fetch
   if (listsLoading) {
     return (
@@ -573,6 +624,20 @@ export default function ListDetail() {
                   {collaborators.length > 0 && (
                     <Badge className="ml-2 bg-purple-600 text-white">{collaborators.length}</Badge>
                   )}
+                </Button>
+              )}
+
+              {/* Delete List - Only show for custom lists (not system lists) */}
+              {!sharedUserId && session && !sharedListData?.is_default && (
+                <Button
+                  onClick={handleDeleteList}
+                  variant="outline"
+                  disabled={deleteListMutation.isPending}
+                  data-testid="button-delete-list"
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  {deleteListMutation.isPending ? 'Deleting...' : 'Delete List'}
                 </Button>
               )}
             </div>
