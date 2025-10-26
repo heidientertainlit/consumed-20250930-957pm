@@ -9,6 +9,7 @@ import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import CommentsSection from "@/components/comments-section";
+import CreatorUpdateCard from "@/components/creator-update-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
@@ -1062,21 +1063,9 @@ export default function Feed() {
 
                     {/* Insert Creator Update Card every 6th post */}
                     {shouldShowCreatorUpdate && currentCreatorUpdate && (
-                      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-4" data-testid="card-creator-update">
-                        {/* Header */}
-                        <div className="flex items-center space-x-3 mb-4">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
-                            <Users size={20} className="text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-semibold text-purple-600">New from {currentCreatorUpdate.creator_name}</div>
-                            <div className="text-xs text-gray-500">{currentCreatorUpdate.creator_role}</div>
-                          </div>
-                        </div>
-
-                        {/* Update Content */}
-                        <div 
-                          className="bg-gray-50 rounded-2xl p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                      <div className="mb-4">
+                        <CreatorUpdateCard 
+                          update={currentCreatorUpdate}
                           onClick={() => {
                             const mediaType = currentCreatorUpdate.type === 'book' ? 'book' : 
                                              currentCreatorUpdate.type === 'album' || currentCreatorUpdate.type === 'single' ? 'music' : 
@@ -1084,48 +1073,7 @@ export default function Feed() {
                                              currentCreatorUpdate.type === 'tv' ? 'tv' : 'mixed';
                             setLocation(`/media/${mediaType}/${currentCreatorUpdate.external_source}/${currentCreatorUpdate.external_id}`);
                           }}
-                          data-testid="button-view-creator-update"
-                        >
-                          <div className="flex items-start space-x-4">
-                            {/* Media Image */}
-                            {currentCreatorUpdate.image && (
-                              <div className="w-20 h-28 rounded-lg overflow-hidden flex-shrink-0">
-                                <img 
-                                  src={currentCreatorUpdate.image} 
-                                  alt={currentCreatorUpdate.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            )}
-                            {!currentCreatorUpdate.image && (
-                              <div className="w-20 h-28 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center flex-shrink-0">
-                                <Film size={32} className="text-purple-600" />
-                              </div>
-                            )}
-
-                            {/* Media Info */}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-900 text-base mb-1 line-clamp-2">
-                                {currentCreatorUpdate.title}
-                              </h3>
-                              <div className="text-sm text-gray-600 mb-2 capitalize">
-                                {currentCreatorUpdate.type} • {new Date(currentCreatorUpdate.release_date).toLocaleDateString('en-US', { 
-                                  year: 'numeric', 
-                                  month: 'short', 
-                                  day: 'numeric' 
-                                })}
-                              </div>
-                              {currentCreatorUpdate.overview && (
-                                <p className="text-xs text-gray-500 line-clamp-2">
-                                  {currentCreatorUpdate.overview}
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Arrow */}
-                            <ChevronRight className="text-gray-400 flex-shrink-0" size={20} />
-                          </div>
-                        </div>
+                        />
                       </div>
                     )}
 
