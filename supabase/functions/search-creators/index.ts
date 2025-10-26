@@ -105,10 +105,15 @@ serve(async (req) => {
               
               // Only include if not low-quality OR if they have significant followers
               if (!isLowQuality || (artist.followers?.total || 0) > 50000) {
+                // Safety filter: Only show images for verified/popular artists (10k+ followers)
+                // This prevents fake accounts with inappropriate images from showing
+                const followerCount = artist.followers?.total || 0;
+                const safeToShowImage = followerCount >= 10000;
+                
                 results.push({
                   name: artist.name,
                   role: 'Musician',
-                  image: artist.images?.[0]?.url || '',
+                  image: safeToShowImage ? (artist.images?.[0]?.url || '') : '',
                   external_id: artist.id,
                   external_source: 'spotify',
                   genres: artist.genres?.slice(0, 3),
