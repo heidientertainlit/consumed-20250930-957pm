@@ -151,7 +151,7 @@ serve(async (req) => {
       }
     }
 
-    // Search music via Spotify API  
+    // Search music via Spotify API (albums and tracks)
     if (!type || type === 'music') {
       try {
         const clientId = Deno.env.get('SPOTIFY_CLIENT_ID');
@@ -172,8 +172,8 @@ serve(async (req) => {
             const authData = await authResponse.json();
             const accessToken = authData.access_token;
             
-            // Now search for music
-            const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`, {
+            // Search for both albums and tracks
+            const spotifyResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,track&limit=10`, {
               headers: {
                 'Authorization': `Bearer ${accessToken}`
               }
@@ -181,7 +181,24 @@ serve(async (req) => {
             
             if (spotifyResponse.ok) {
               const spotifyData = await spotifyResponse.json();
-              spotifyData.tracks?.items?.forEach((track) => {
+              
+              // Process albums first (prioritize full albums)
+              spotifyData.albums?.items?.slice(0, 5).forEach((album) => {
+                if (isContentAppropriate(album, 'music')) {
+                  results.push({
+                    title: album.name,
+                    type: 'music',
+                    creator: album.artists?.[0]?.name || 'Unknown Artist',
+                    image: album.images?.[0]?.url || '',
+                    external_id: album.id,
+                    external_source: 'spotify',
+                    description: `Album • ${album.total_tracks || 0} tracks • ${album.release_date?.substring(0, 4) || 'Unknown year'}`
+                  });
+                }
+              });
+              
+              // Then process tracks (limit to 5 to balance with albums)
+              spotifyData.tracks?.items?.slice(0, 5).forEach((track) => {
                 if (isContentAppropriate(track, 'music')) {
                   results.push({
                     title: track.name,
@@ -190,7 +207,7 @@ serve(async (req) => {
                     image: track.album?.images?.[0]?.url || '',
                     external_id: track.id,
                     external_source: 'spotify',
-                    description: `From the album ${track.album?.name || 'Unknown Album'}`
+                    description: `Track • From the album ${track.album?.name || 'Unknown Album'}`
                   });
                 }
               });
