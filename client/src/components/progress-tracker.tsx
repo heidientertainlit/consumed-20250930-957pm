@@ -197,7 +197,7 @@ export function ProgressTracker({
         <Button
           onClick={() => moveToListMutation.mutate('finished')}
           disabled={moveToListMutation.isPending}
-          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-2"
+          className="flex-1 bg-purple-400 hover:bg-purple-500 text-white text-xs py-1.5 h-8 rounded-lg"
           data-testid={`button-mark-finished-${itemId}`}
         >
           Finished
@@ -205,7 +205,7 @@ export function ProgressTracker({
         <Button
           onClick={() => moveToListMutation.mutate('dnf')}
           disabled={moveToListMutation.isPending}
-          className="flex-1 bg-purple-700 hover:bg-purple-800 text-white text-xs py-2"
+          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-1.5 h-8 rounded-lg"
           data-testid={`button-did-not-finish-${itemId}`}
         >
           DNF
@@ -213,7 +213,7 @@ export function ProgressTracker({
         <Button
           onClick={() => moveToListMutation.mutate('favorites')}
           disabled={moveToListMutation.isPending}
-          className="flex-1 bg-purple-800 hover:bg-purple-900 text-white text-xs py-2"
+          className="flex-1 bg-purple-800 hover:bg-purple-900 text-white text-xs py-1.5 h-8 rounded-lg"
           data-testid={`button-add-to-favorites-${itemId}`}
         >
           Favorites
