@@ -92,15 +92,29 @@ serve(async (req) => {
           if (spotifyResponse.ok) {
             const spotifyData = await spotifyResponse.json();
             spotifyData.artists?.items?.forEach((artist: any) => {
-              results.push({
-                name: artist.name,
-                role: 'Musician',
-                image: artist.images?.[0]?.url || '',
-                external_id: artist.id,
-                external_source: 'spotify',
-                genres: artist.genres?.slice(0, 3),
-                followers: artist.followers?.total
-              });
+              // Filter out low-quality results (tribute bands, karaoke, etc.)
+              const name = artist.name.toLowerCase();
+              const isLowQuality = 
+                name.includes('tribute') ||
+                name.includes('karaoke') ||
+                name.includes('piano') ||
+                name.includes('cover') ||
+                name.includes('- topic') ||
+                name.includes('orchestra') ||
+                name.includes('instrumental');
+              
+              // Only include if not low-quality OR if they have significant followers
+              if (!isLowQuality || (artist.followers?.total || 0) > 50000) {
+                results.push({
+                  name: artist.name,
+                  role: 'Musician',
+                  image: artist.images?.[0]?.url || '',
+                  external_id: artist.id,
+                  external_source: 'spotify',
+                  genres: artist.genres?.slice(0, 3),
+                  followers: artist.followers?.total
+                });
+              }
             });
           }
         }
