@@ -127,9 +127,10 @@ export function ProgressTracker({
     return 0;
   };
 
-  const canToggleMode = mediaType === 'book';
+  const isBook = mediaType === 'book';
   const isMusic = mediaType === 'music' || mediaType === 'album';
   const isTv = mediaType === 'tv' || mediaType === 'series';
+  const canToggleMode = isBook || isTv;
 
   // Music only shows "Mark as Finished" button
   if (isMusic) {
@@ -155,36 +156,70 @@ export function ProgressTracker({
 
   return (
     <div className="mb-3" data-testid={`progress-tracker-${itemId}`}>
-      {/* Mode toggle for books */}
+      {/* Mode toggle for books and TV shows */}
       {canToggleMode && (
         <div className="flex gap-2 mb-2">
-          <Button
-            size="sm"
-            variant={mode === 'page' ? 'default' : 'outline'}
-            onClick={() => {
-              setMode('page');
-              if (currentMode === 'percent') {
-                setProgress(0);
-              }
-            }}
-            className={mode === 'page' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
-            data-testid={`button-mode-page-${itemId}`}
-          >
-            Page #
-          </Button>
-          <Button
-            size="sm"
-            variant={mode === 'percent' ? 'default' : 'outline'}
-            onClick={() => {
-              setMode('percent');
-              setProgress(0);
-              setTotal(0);
-            }}
-            className={mode === 'percent' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
-            data-testid={`button-mode-percent-${itemId}`}
-          >
-            Percent
-          </Button>
+          {isBook ? (
+            <>
+              <Button
+                size="sm"
+                variant={mode === 'page' ? 'default' : 'outline'}
+                onClick={() => {
+                  setMode('page');
+                  if (currentMode === 'percent') {
+                    setProgress(0);
+                  }
+                }}
+                className={mode === 'page' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
+                data-testid={`button-mode-page-${itemId}`}
+              >
+                Page #
+              </Button>
+              <Button
+                size="sm"
+                variant={mode === 'percent' ? 'default' : 'outline'}
+                onClick={() => {
+                  setMode('percent');
+                  setProgress(0);
+                  setTotal(0);
+                }}
+                className={mode === 'percent' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
+                data-testid={`button-mode-percent-${itemId}`}
+              >
+                Percent
+              </Button>
+            </>
+          ) : isTv ? (
+            <>
+              <Button
+                size="sm"
+                variant={mode === 'episode' ? 'default' : 'outline'}
+                onClick={() => {
+                  setMode('episode');
+                  if (currentMode === 'percent') {
+                    setProgress(0);
+                  }
+                }}
+                className={mode === 'episode' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
+                data-testid={`button-mode-episode-${itemId}`}
+              >
+                Episode
+              </Button>
+              <Button
+                size="sm"
+                variant={mode === 'percent' ? 'default' : 'outline'}
+                onClick={() => {
+                  setMode('percent');
+                  setProgress(0);
+                  setTotal(0);
+                }}
+                className={mode === 'percent' ? 'bg-purple-600 text-white' : 'border-purple-600 text-purple-600'}
+                data-testid={`button-mode-percent-${itemId}`}
+              >
+                Percent
+              </Button>
+            </>
+          ) : null}
         </div>
       )}
 
