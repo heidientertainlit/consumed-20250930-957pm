@@ -2037,7 +2037,7 @@ export default function UserProfile() {
 
         {/* Entertainment DNA */}
         <div className="px-4 mb-8">
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm"></div>
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
             {/* Responsive Header: Stack on mobile, horizontal on larger screens */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <div className="flex items-center space-x-3">
@@ -2541,6 +2541,7 @@ export default function UserProfile() {
             )}
           </div>
         </div>
+      </div>
 
 
 
