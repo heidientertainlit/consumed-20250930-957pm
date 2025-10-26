@@ -20,6 +20,7 @@ export default function ListDetail() {
   // Removed privacy state - all lists are now public for MVP
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isCollaboratorsDialogOpen, setIsCollaboratorsDialogOpen] = useState(false);
+  const [localProgress, setLocalProgress] = useState<{ [itemId: string]: number }>({});
 
   const queryClient = useQueryClient();
   const { session } = useAuth();
@@ -113,7 +114,8 @@ export default function ListDetail() {
       creator: item.creator || 'Unknown',
       type: item.media_type ? capitalizeFirst(item.media_type) : 'Mixed',
       artwork: item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop",
-      progress: 0,
+      progress: item.progress || 0,
+      total: item.total || null,
       addedDate: new Date(item.created_at).toLocaleDateString(),
       addedBy: "You",
       external_id: item.external_id,
@@ -262,6 +264,67 @@ export default function ListDetail() {
 
   const handleRemoveItem = (itemId: string) => {
     deleteMutation.mutate(itemId);
+  };
+
+  // Progress update mutation
+  const updateProgressMutation = useMutation({
+    mutationFn: async ({ itemId, progress, total }: { itemId: string; progress: number; total?: number }) => {
+      if (!session?.access_token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ item_id: itemId, progress, total }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update progress: ${errorText}`);
+      }
+
+      return { itemId, progress };
+    },
+    onSuccess: async (data) => {
+      // Refetch to get fresh data, then clear local progress
+      await queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      // Clear local progress after refetch completes
+      setLocalProgress(prev => {
+        const newState = { ...prev };
+        delete newState[data.itemId];
+        return newState;
+      });
+    },
+    onError: (error, variables) => {
+      // Revert local progress on error
+      setLocalProgress(prev => {
+        const newState = { ...prev };
+        delete newState[variables.itemId];
+        return newState;
+      });
+      toast({
+        title: "Progress Update Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleProgressUpdate = (itemId: string, progress: number, total?: number) => {
+    // Only allow progress updates if user is authenticated
+    if (!session?.access_token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to update progress",
+        variant: "destructive"
+      });
+      return;
+    }
+    updateProgressMutation.mutate({ itemId, progress, total });
   };
 
   // Privacy toggle mutation - Direct Supabase update (no edge function)
@@ -711,17 +774,62 @@ export default function ListDetail() {
                         </Button>
                       </div>
 
-                    {item.progress > 0 && (
+                    {/* Progress tracker - show for Currently list (only for list owners) */}
+                    {listData?.name === "Currently" && !sharedUserId && session?.access_token && (
                       <div className="mb-3">
-                        <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-                          <span>Progress</span>
-                          <span>{item.progress}%</span>
+                        <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+                          <span className="font-medium">Progress</span>
+                          <span className="text-purple-600 font-semibold">{localProgress[item.id] ?? item.progress ?? 0}%</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${item.progress}%` }}
-                          ></div>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={localProgress[item.id] ?? item.progress ?? 0}
+                            onChange={(e) => {
+                              const newProgress = parseInt(e.target.value);
+                              setLocalProgress(prev => ({ ...prev, [item.id]: newProgress }));
+                            }}
+                            onMouseUp={(e) => {
+                              const target = e.target as HTMLInputElement;
+                              handleProgressUpdate(item.id, parseInt(target.value));
+                            }}
+                            onTouchEnd={(e) => {
+                              const target = e.target as HTMLInputElement;
+                              handleProgressUpdate(item.id, parseInt(target.value));
+                            }}
+                            onBlur={(e) => {
+                              // Handle keyboard users (arrow keys, etc.)
+                              const target = e.target as HTMLInputElement;
+                              const currentProgress = parseInt(target.value);
+                              const serverProgress = item.progress ?? 0;
+                              // Only update if value actually changed
+                              if (currentProgress !== serverProgress) {
+                                handleProgressUpdate(item.id, currentProgress);
+                              }
+                            }}
+                            className="flex-1 h-2 bg-gray-200 rounded-full appearance-none cursor-pointer progress-slider"
+                            style={{
+                              background: `linear-gradient(to right, rgb(147, 51, 234) 0%, rgb(147, 51, 234) ${localProgress[item.id] ?? item.progress ?? 0}%, rgb(229, 231, 235) ${localProgress[item.id] ?? item.progress ?? 0}%, rgb(229, 231, 235) 100%)`
+                            }}
+                            data-testid={`progress-slider-${item.id}`}
+                          />
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                const newProgress = Math.min((localProgress[item.id] ?? item.progress ?? 0) + 10, 100);
+                                setLocalProgress(prev => ({ ...prev, [item.id]: newProgress }));
+                                handleProgressUpdate(item.id, newProgress);
+                              }}
+                              className="h-6 w-6 p-0 text-purple-600 hover:bg-purple-50"
+                              data-testid={`button-progress-increment-${item.id}`}
+                            >
+                              +
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
