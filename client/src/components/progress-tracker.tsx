@@ -130,25 +130,88 @@ export function ProgressTracker({
   const isBook = mediaType === 'book';
   const isMusic = mediaType === 'music' || mediaType === 'album';
   const isTv = mediaType === 'tv' || mediaType === 'series';
+  const isMovie = mediaType === 'movie' || mediaType === 'film';
+  const isPodcast = mediaType === 'podcast';
   const canToggleMode = isBook || isTv;
+  const showQuickActions = isMusic || isMovie || isPodcast;
 
-  // Music only shows "Mark as Finished" button
-  if (isMusic) {
+  // Move item to different list mutation
+  const moveToListMutation = useMutation({
+    mutationFn: async (targetList: string) => {
+      if (!session?.access_token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/move-item-to-list",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            target_list: targetList,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to move item: ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: async (data, targetList) => {
+      await queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      const listNames: { [key: string]: string } = {
+        'finished': 'Finished',
+        'dnf': 'Did Not Finish',
+        'favorites': 'Favorites'
+      };
+      toast({
+        title: "Item Moved",
+        description: `Moved to ${listNames[targetList] || targetList}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Move Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Movies, Music, and Podcasts show three quick action buttons
+  if (showQuickActions) {
     return (
-      <div className="mb-3" data-testid={`progress-tracker-${itemId}`}>
+      <div className="mb-3 flex gap-2" data-testid={`progress-tracker-${itemId}`}>
         <Button
-          onClick={() => {
-            updateProgressMutation.mutate({
-              newProgress: 100,
-              newTotal: undefined,
-              newMode: 'percent',
-            });
-          }}
-          disabled={updateProgressMutation.isPending}
-          className="w-full bg-purple-800 hover:bg-purple-900 text-white"
+          onClick={() => moveToListMutation.mutate('finished')}
+          disabled={moveToListMutation.isPending}
+          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-2"
           data-testid={`button-mark-finished-${itemId}`}
         >
-          Mark as Finished
+          Finished
+        </Button>
+        <Button
+          onClick={() => moveToListMutation.mutate('dnf')}
+          disabled={moveToListMutation.isPending}
+          className="flex-1 bg-purple-700 hover:bg-purple-800 text-white text-xs py-2"
+          data-testid={`button-did-not-finish-${itemId}`}
+        >
+          DNF
+        </Button>
+        <Button
+          onClick={() => moveToListMutation.mutate('favorites')}
+          disabled={moveToListMutation.isPending}
+          className="flex-1 bg-purple-800 hover:bg-purple-900 text-white text-xs py-2"
+          data-testid={`button-add-to-favorites-${itemId}`}
+        >
+          Favorites
         </Button>
       </div>
     );
