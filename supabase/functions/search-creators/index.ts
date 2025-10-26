@@ -105,15 +105,13 @@ serve(async (req) => {
               
               // Only include if not low-quality OR if they have significant followers
               if (!isLowQuality || (artist.followers?.total || 0) > 50000) {
-                // Safety filter: Only show images for extremely popular artists (5M+ followers)
-                // This ensures only well-established, mainstream artists show images
-                const followerCount = artist.followers?.total || 0;
-                const safeToShowImage = followerCount >= 5000000;
+                // Safety filter: Don't show ANY Spotify images to avoid inappropriate content
+                // Purple placeholder is safer for all musicians
                 
                 results.push({
                   name: artist.name,
                   role: 'Musician',
-                  image: safeToShowImage ? (artist.images?.[0]?.url || '') : '',
+                  image: '', // Always purple placeholder for musicians to ensure family-friendly content
                   external_id: artist.id,
                   external_source: 'spotify',
                   genres: artist.genres?.slice(0, 3),
