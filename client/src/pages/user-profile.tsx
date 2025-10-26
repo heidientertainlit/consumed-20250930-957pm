@@ -2661,15 +2661,8 @@ export default function UserProfile() {
 
             {/* Horizontal Scrollable Creator Cards */}
             <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
-              {/* Show search results if available, otherwise show default suggestions */}
-              {(creatorSearchResults.length > 0 ? creatorSearchResults : [
-                { name: "Martin Scorsese", role: "Director", image: "" },
-                { name: "Taylor Swift", role: "Musician", image: "" },
-                { name: "Greta Gerwig", role: "Director", image: "" },
-                { name: "Kendrick Lamar", role: "Musician", image: "" },
-                { name: "Denis Villeneuve", role: "Director", image: "" },
-                { name: "Billie Eilish", role: "Musician", image: "" },
-              ]).map((creator, i) => (
+              {/* Show search results if available, otherwise show message to search */}
+              {creatorSearchResults.length > 0 ? creatorSearchResults.map((creator, i) => (
                 <div key={`${creator.name}-${i}`} className="flex-shrink-0 w-28 text-center">
                   {creator.image ? (
                     <img 
@@ -2712,7 +2705,17 @@ export default function UserProfile() {
                     </Button>
                   )}
                 </div>
-              ))}
+              )) : (
+                <div className="w-full text-center py-8">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="text-purple-600" size={32} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Search for Creators</h3>
+                  <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                    Try searching for: Martin Scorsese, Taylor Swift, Brandon Sanderson, Reese Witherspoon, or your favorite artists and authors
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Empty State (hidden for now) */}
