@@ -45,8 +45,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
       });
       
       await queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await queryClient.refetchQueries({ queryKey: ['user-lists-with-media'] });
       
       setTitle("");
       onOpenChange(false);
