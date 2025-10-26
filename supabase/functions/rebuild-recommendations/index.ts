@@ -142,6 +142,13 @@ serve(async (req) => {
       .eq('is_default', false)
       .limit(10);
 
+    // 7. Followed Creators
+    const { data: followedCreators } = await supabase
+      .from('followed_creators')
+      .select('creator_name, creator_role')
+      .eq('user_id', userId)
+      .limit(20);
+
     const userProfile = {
       dnaProfile: dnaProfile ? {
         label: dnaProfile.label,
@@ -171,7 +178,11 @@ serve(async (req) => {
         rating: p.rating,
         review: p.content
       })) || [],
-      customListThemes: customLists?.map(l => l.title) || []
+      customListThemes: customLists?.map(l => l.title) || [],
+      followedCreators: followedCreators?.map(c => ({
+        name: c.creator_name,
+        role: c.creator_role
+      })) || []
     };
 
     console.log('User profile compiled:', {
@@ -180,7 +191,8 @@ serve(async (req) => {
       consumptionCount: userProfile.recentConsumption.length,
       ratingsCount: userProfile.highlyRated.length,
       postsCount: userProfile.socialActivity.length,
-      listsCount: userProfile.customListThemes.length
+      listsCount: userProfile.customListThemes.length,
+      followedCreatorsCount: userProfile.followedCreators.length
     });
 
     // Build AI prompt
@@ -212,8 +224,11 @@ ${userProfile.socialActivity.slice(0, 5).map(p => `- ${p.title} (${p.type}): ${p
 Custom List Themes (${userProfile.customListThemes.length}):
 ${userProfile.customListThemes.join(', ') || 'None'}
 
+Followed Creators (${userProfile.followedCreators.length}):
+${userProfile.followedCreators.slice(0, 15).map(c => `- ${c.name} (${c.role})`).join('\n') || 'None'}
+
 TASK:
-Generate 8-10 personalized entertainment recommendations based on ALL the data above. Consider patterns in their consumption, ratings, and engagement.
+Generate 8-10 personalized entertainment recommendations based on ALL the data above. Consider patterns in their consumption, ratings, engagement, AND the creators they follow. If they follow specific directors, musicians, or authors, PRIORITIZE recommending new/recent work from those creators or similar artists.
 
 For each recommendation, provide:
 - title: exact title (must be real, existing media)
