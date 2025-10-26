@@ -155,8 +155,38 @@ serve(async (req) => {
       console.error('Google Books author search error:', error);
     }
 
+    // Deduplicate by name, keeping the most relevant/popular entry
+    const deduplicatedMap = new Map();
+    
+    results.forEach((creator) => {
+      const nameLower = creator.name.toLowerCase();
+      
+      if (!deduplicatedMap.has(nameLower)) {
+        deduplicatedMap.set(nameLower, creator);
+      } else {
+        const existing = deduplicatedMap.get(nameLower);
+        
+        // Prefer entries with images
+        if (creator.image && !existing.image) {
+          deduplicatedMap.set(nameLower, creator);
+        }
+        // If both have images or neither do, prefer by popularity
+        else if ((creator.image && existing.image) || (!creator.image && !existing.image)) {
+          const creatorPopularity = creator.followers || creator.work_count || 0;
+          const existingPopularity = existing.followers || existing.work_count || 0;
+          
+          if (creatorPopularity > existingPopularity) {
+            deduplicatedMap.set(nameLower, creator);
+          }
+        }
+      }
+    });
+    
+    // Convert map back to array
+    const deduplicatedResults = Array.from(deduplicatedMap.values());
+    
     // Sort results by relevance (exact matches first, then by popularity)
-    const sortedResults = results.sort((a, b) => {
+    const sortedResults = deduplicatedResults.sort((a, b) => {
       const queryLower = query.toLowerCase();
       const aNameLower = a.name.toLowerCase();
       const bNameLower = b.name.toLowerCase();
