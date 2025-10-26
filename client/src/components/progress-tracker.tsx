@@ -197,7 +197,7 @@ export function ProgressTracker({
         <Button
           onClick={() => moveToListMutation.mutate('finished')}
           disabled={moveToListMutation.isPending}
-          className="flex-1 bg-purple-400 hover:bg-purple-500 text-white text-xs py-1.5 h-8 rounded-lg"
+          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-lg"
           data-testid={`button-mark-finished-${itemId}`}
         >
           Finished
