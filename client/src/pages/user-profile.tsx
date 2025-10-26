@@ -1966,75 +1966,6 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Follow Creators Section */}
-        <div className="px-4 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Users className="text-white" size={20} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Follow Creators</h2>
-                  <p className="text-sm text-gray-600">Track your favorite artists, directors, and authors</p>
-                </div>
-              </div>
-              {isOwnProfile && (
-                <Button 
-                  size="sm"
-                  className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
-                  data-testid="button-add-creators"
-                >
-                  <Plus size={16} className="mr-2" />
-                  Add Creators
-                </Button>
-              )}
-            </div>
-
-            {/* Followed Creators Grid - Placeholder */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {/* Placeholder creator cards */}
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 text-center border border-gray-200">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <User className="text-purple-600" size={28} />
-                  </div>
-                  <h4 className="font-semibold text-gray-900 text-sm mb-1">Creator Name</h4>
-                  <p className="text-xs text-gray-600 mb-2">Category</p>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    className="w-full text-xs"
-                  >
-                    Following
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            {/* Empty State (will replace placeholder when no creators) */}
-            {false && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="text-purple-600" size={32} />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Creators Followed Yet</h3>
-                <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                  Start following your favorite artists, directors, authors, and more to get updates about their work in your feed
-                </p>
-                {isOwnProfile && (
-                  <Button 
-                    className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
-                  >
-                    <Plus size={16} className="mr-2" />
-                    Follow Creators
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Entertainment DNA */}
         <div className="px-4 mb-8">
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
@@ -2543,9 +2474,66 @@ export default function UserProfile() {
         </div>
       </div>
 
+        {/* Follow Creators Section */}
+        <div className="px-4 mb-8">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Users className="text-white" size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Follow Creators</h2>
+                  <p className="text-sm text-gray-600">Track your favorite artists, directors, and authors</p>
+                </div>
+              </div>
+              {isOwnProfile && (
+                <Button 
+                  size="sm"
+                  className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add
+                </Button>
+              )}
+            </div>
 
+            {/* Followed Creators Grid - Placeholder */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Placeholder creator cards */}
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex flex-col items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-3">
+                    <Users className="text-purple-600" size={24} />
+                  </div>
+                  <div className="w-full h-4 bg-gray-200 rounded mb-2 animate-pulse"></div>
+                  <div className="w-2/3 h-3 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
 
-
+            {/* Empty State (hidden for now) */}
+            {false && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="text-purple-600" size={32} />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Creators Followed Yet</h3>
+                <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                  Start following your favorite artists, directors, authors, and more to get updates about their work in your feed
+                </p>
+                {isOwnProfile && (
+                  <Button 
+                    className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Follow Creators
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Currently Consuming */}
         <div className="px-4 mb-8">
