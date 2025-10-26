@@ -2718,16 +2718,56 @@ export default function UserProfile() {
               )}
             </div>
 
-            {/* Empty State (hidden for now) */}
-            {false && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="text-purple-600" size={32} />
+            {/* Creators I'm Following Section */}
+            {followedCreators.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Creators I'm Following</h3>
+                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
+                  {followedCreators.map((creator) => (
+                    <div key={creator.id} className="flex-shrink-0 w-28 text-center">
+                      {creator.creator_image ? (
+                        <img 
+                          src={creator.creator_image} 
+                          alt={creator.creator_name}
+                          className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2 ${creator.creator_image ? 'hidden' : ''}`}>
+                        <Users className="text-purple-600" size={32} />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 truncate px-1" title={creator.creator_name}>
+                        {creator.creator_name}
+                      </p>
+                      <p className="text-xs text-gray-600 truncate px-1">{creator.creator_role}</p>
+                      {isOwnProfile && (
+                        <Button 
+                          size="sm"
+                          variant="default"
+                          className="w-full mt-2 text-xs h-7 bg-purple-600 text-white hover:bg-purple-700"
+                          onClick={() => handleFollowCreator({
+                            name: creator.creator_name,
+                            role: creator.creator_role,
+                            image: creator.creator_image,
+                            external_id: creator.external_id,
+                            external_source: creator.external_source
+                          }, 'unfollow')}
+                          disabled={isFollowingCreator === `${creator.external_source}-${creator.external_id}`}
+                          data-testid={`button-unfollow-${creator.creator_name.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          {isFollowingCreator === `${creator.external_source}-${creator.external_id}` ? (
+                            <Loader2 className="animate-spin" size={14} />
+                          ) : (
+                            'Following'
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Creators Followed Yet</h3>
-                <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                  Start following your favorite artists, directors, authors, and more to get updates about their work in your feed
-                </p>
               </div>
             )}
           </div>
