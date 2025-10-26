@@ -91,8 +91,8 @@ export default function Feed() {
     isLoading, 
     error: feedError,
     fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage
+    hasNextPage = false,
+    isFetchingNextPage = false
   } = useInfiniteQuery({
     queryKey: ["social-feed"],
     queryFn: ({ pageParam = 0 }) => fetchSocialFeed({ pageParam, session }),
