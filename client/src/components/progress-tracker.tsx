@@ -211,7 +211,7 @@ export function ProgressTracker({
                 min="0"
                 value={progress}
                 onChange={(e) => setProgress(parseInt(e.target.value) || 0)}
-                className="h-9"
+                className="h-9 bg-white text-black border-gray-300"
                 placeholder="0"
                 data-testid={`input-progress-${itemId}`}
               />
@@ -225,7 +225,7 @@ export function ProgressTracker({
                 min="0"
                 value={total}
                 onChange={(e) => setTotal(parseInt(e.target.value) || 0)}
-                className="h-9"
+                className="h-9 bg-white text-black border-gray-300"
                 placeholder="0"
                 data-testid={`input-total-${itemId}`}
               />
@@ -234,23 +234,33 @@ export function ProgressTracker({
         </div>
       )}
 
-      {/* Progress bar */}
-      <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-300"
-          style={{ width: `${getPercentComplete()}%` }}
-        />
+      {/* Action buttons */}
+      <div className="flex gap-2 mt-3">
+        <Button
+          onClick={handleUpdateProgress}
+          disabled={updateProgressMutation.isPending}
+          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+          data-testid={`button-update-progress-${itemId}`}
+        >
+          {updateProgressMutation.isPending ? 'Updating...' : 'UPDATE PROGRESS'}
+        </Button>
+        <Button
+          onClick={() => {
+            setProgress(100);
+            setMode('percent');
+            updateProgressMutation.mutate({
+              newProgress: 100,
+              newTotal: undefined,
+              newMode: 'percent',
+            });
+          }}
+          disabled={updateProgressMutation.isPending}
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+          data-testid={`button-mark-finished-${itemId}`}
+        >
+          Mark as Finished
+        </Button>
       </div>
-
-      {/* Update button */}
-      <Button
-        onClick={handleUpdateProgress}
-        disabled={updateProgressMutation.isPending}
-        className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white"
-        data-testid={`button-update-progress-${itemId}`}
-      >
-        {updateProgressMutation.isPending ? 'Updating...' : 'UPDATE PROGRESS'}
-      </Button>
     </div>
   );
 }
