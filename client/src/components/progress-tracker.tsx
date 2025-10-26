@@ -229,7 +229,7 @@ export function ProgressTracker({
       {canToggleMode && (
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">
+            <span className={`text-sm font-medium ${mode !== 'percent' ? 'text-purple-600' : 'text-gray-500'}`}>
               {isBook ? 'Page #' : 'Episode'}
             </span>
             <Switch
@@ -246,9 +246,12 @@ export function ProgressTracker({
                   }
                 }
               }}
+              className="data-[state=checked]:bg-purple-600"
               data-testid={`switch-mode-${itemId}`}
             />
-            <span className="text-sm text-gray-600">Percent</span>
+            <span className={`text-sm font-medium ${mode === 'percent' ? 'text-purple-600' : 'text-gray-500'}`}>
+              Percent
+            </span>
           </div>
           <Button
             size="sm"
