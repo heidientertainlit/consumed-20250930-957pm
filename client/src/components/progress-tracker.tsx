@@ -39,6 +39,15 @@ export function ProgressTracker({
   const [total, setTotal] = useState(currentTotal);
   const [mode, setMode] = useState<ProgressMode>(currentMode || getDefaultMode());
 
+  // Media type checks
+  const isBook = mediaType === 'book';
+  const isMusic = mediaType === 'music' || mediaType === 'album';
+  const isTv = mediaType === 'tv' || mediaType === 'series';
+  const isMovie = mediaType === 'movie' || mediaType === 'film';
+  const isPodcast = mediaType === 'podcast';
+  const canToggleMode = isBook || isTv;
+  const showQuickActions = isMusic || isMovie || isPodcast;
+
   const updateProgressMutation = useMutation({
     mutationFn: async ({
       newProgress,
@@ -111,6 +120,10 @@ export function ProgressTracker({
     } else if (mode === 'page') {
       return total > 0 ? `Page ${progress} of ${total}` : `Page ${progress}`;
     } else if (mode === 'episode') {
+      // For TV shows, total = season, progress = episode
+      if (isTv) {
+        return total > 0 ? `Season ${total} Episode ${progress}` : `Episode ${progress}`;
+      }
       return total > 0 ? `Episode ${progress} of ${total}` : `Episode ${progress}`;
     } else if (mode === 'track') {
       return total > 0 ? `Track ${progress} of ${total}` : `Track ${progress}`;
@@ -126,14 +139,6 @@ export function ProgressTracker({
     }
     return 0;
   };
-
-  const isBook = mediaType === 'book';
-  const isMusic = mediaType === 'music' || mediaType === 'album';
-  const isTv = mediaType === 'tv' || mediaType === 'series';
-  const isMovie = mediaType === 'movie' || mediaType === 'film';
-  const isPodcast = mediaType === 'podcast';
-  const canToggleMode = isBook || isTv;
-  const showQuickActions = isMusic || isMovie || isPodcast;
 
   // Move item to different list mutation
   const moveToListMutation = useMutation({
@@ -321,38 +326,73 @@ export function ProgressTracker({
         </div>
       ) : (
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <label className="text-xs text-gray-500 block mb-1">
-                {mode === 'page' && "I'm on page"}
-                {mode === 'episode' && "I'm on episode"}
-                {mode === 'track' && "I'm on track"}
-              </label>
-              <Input
-                type="number"
-                min="0"
-                value={progress}
-                onChange={(e) => setProgress(parseInt(e.target.value) || 0)}
-                className="h-9 bg-white text-black border-gray-300"
-                placeholder="0"
-                data-testid={`input-progress-${itemId}`}
-              />
+          {/* TV shows have separate Season and Episode inputs */}
+          {isTv && mode === 'episode' ? (
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label className="text-xs text-gray-500 block mb-1">
+                  Season
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={total || 1}
+                  onChange={(e) => setTotal(parseInt(e.target.value) || 1)}
+                  className="h-9 bg-white text-black border-gray-300"
+                  placeholder="1"
+                  data-testid={`input-season-${itemId}`}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-gray-500 block mb-1">
+                  Episode
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={progress || 1}
+                  onChange={(e) => setProgress(parseInt(e.target.value) || 1)}
+                  className="h-9 bg-white text-black border-gray-300"
+                  placeholder="1"
+                  data-testid={`input-episode-${itemId}`}
+                />
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="text-xs text-gray-500 block mb-1">
-                Total {mode === 'page' ? 'pages' : mode === 'episode' ? 'episodes' : 'tracks'} (optional)
-              </label>
-              <Input
-                type="number"
-                min="0"
-                value={total}
-                onChange={(e) => setTotal(parseInt(e.target.value) || 0)}
-                className="h-9 bg-white text-black border-gray-300"
-                placeholder="0"
-                data-testid={`input-total-${itemId}`}
-              />
+          ) : (
+            /* Books and other media types */
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <label className="text-xs text-gray-500 block mb-1">
+                  {mode === 'page' && "I'm on page"}
+                  {mode === 'episode' && "I'm on episode"}
+                  {mode === 'track' && "I'm on track"}
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={progress}
+                  onChange={(e) => setProgress(parseInt(e.target.value) || 0)}
+                  className="h-9 bg-white text-black border-gray-300"
+                  placeholder="0"
+                  data-testid={`input-progress-${itemId}`}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-gray-500 block mb-1">
+                  Total {mode === 'page' ? 'pages' : mode === 'episode' ? 'episodes' : 'tracks'} (optional)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={total}
+                  onChange={(e) => setTotal(parseInt(e.target.value) || 0)}
+                  className="h-9 bg-white text-black border-gray-300"
+                  placeholder="0"
+                  data-testid={`input-total-${itemId}`}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
