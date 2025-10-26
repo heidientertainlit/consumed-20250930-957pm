@@ -131,7 +131,7 @@ export function NotificationBell() {
       case 'friend_accepted':
         // Go to the user's profile who sent/accepted the request
         if (notification.triggered_by_user_id) {
-          window.location.href = `/profile/${notification.triggered_by_user_id}`;
+          window.location.href = `/user/${notification.triggered_by_user_id}`;
         } else {
           window.location.href = '/friends';
         }
@@ -141,7 +141,7 @@ export function NotificationBell() {
       case 'inner_circle':
         // Go to the follower's profile
         if (notification.triggered_by_user_id) {
-          window.location.href = `/profile/${notification.triggered_by_user_id}`;
+          window.location.href = `/user/${notification.triggered_by_user_id}`;
         }
         break;
 
