@@ -192,7 +192,7 @@ serve(async (req) => {
                     image: album.images?.[0]?.url || '',
                     external_id: album.id,
                     external_source: 'spotify',
-                    description: `Album • ${album.total_tracks || 0} tracks • ${album.release_date?.substring(0, 4) || 'Unknown year'}`
+                    description: `ALBUM • ${album.total_tracks || 0} tracks • ${album.release_date?.substring(0, 4) || 'Unknown year'}`
                   });
                 }
               });
@@ -207,7 +207,7 @@ serve(async (req) => {
                     image: track.album?.images?.[0]?.url || '',
                     external_id: track.id,
                     external_source: 'spotify',
-                    description: `Track • From the album ${track.album?.name || 'Unknown Album'}`
+                    description: `TRACK • ${track.album?.name || 'Unknown Album'}`
                   });
                 }
               });
