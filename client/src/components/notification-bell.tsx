@@ -104,14 +104,56 @@ export function NotificationBell() {
       markAsReadMutation.mutate(notification.id);
     }
 
-    // Navigate to the post if available
-    if (notification.post_id) {
-      window.location.href = `/feed?post=${notification.post_id}`;
-    }
+    // Navigate based on notification type and available data
+    switch (notification.type) {
+      case 'comment':
+      case 'like':
+      case 'mention':
+      case 'comment_like':
+        // Post-related notifications - go to the specific post
+        if (notification.post_id) {
+          window.location.href = `/feed?post=${notification.post_id}`;
+        } else {
+          window.location.href = '/feed';
+        }
+        break;
 
-    // Navigate to the list if available (for collaborator notifications)
-    if (notification.list_id && notification.type === 'collaborator_added') {
-      window.location.href = `/track`; // Navigate to Track page where lists are shown
+      case 'collaborator_added':
+        // Go directly to the specific list
+        if (notification.list_id) {
+          window.location.href = `/list/${notification.list_id}`;
+        } else {
+          window.location.href = '/track';
+        }
+        break;
+
+      case 'friend_request':
+      case 'friend_accepted':
+        // Go to the user's profile who sent/accepted the request
+        if (notification.triggered_by_user_id) {
+          window.location.href = `/profile/${notification.triggered_by_user_id}`;
+        } else {
+          window.location.href = '/friends';
+        }
+        break;
+
+      case 'follow':
+      case 'inner_circle':
+        // Go to the follower's profile
+        if (notification.triggered_by_user_id) {
+          window.location.href = `/profile/${notification.triggered_by_user_id}`;
+        }
+        break;
+
+      default:
+        // Fallback: if there's a post_id, go to feed; if list_id, go to that list
+        if (notification.post_id) {
+          window.location.href = `/feed?post=${notification.post_id}`;
+        } else if (notification.list_id) {
+          window.location.href = `/list/${notification.list_id}`;
+        } else {
+          window.location.href = '/feed';
+        }
     }
 
     setOpen(false);
