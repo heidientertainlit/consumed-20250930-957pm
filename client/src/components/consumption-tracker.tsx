@@ -376,7 +376,11 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
                             {result.creator && (
                               <p className="text-sm text-gray-500 truncate">by {result.creator}</p>
                             )}
-                            <p className="text-xs text-purple-600 capitalize">{result.type}</p>
+                            {result.description ? (
+                              <p className="text-xs text-purple-600">{result.description}</p>
+                            ) : (
+                              <p className="text-xs text-purple-600 capitalize">{result.type}</p>
+                            )}
                           </div>
                         </div>
                       ))}
