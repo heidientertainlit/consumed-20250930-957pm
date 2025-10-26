@@ -118,6 +118,11 @@ export default function UserProfile() {
   const [ratingStars, setRatingStars] = useState<Record<string, boolean>>({});
   const [hoveredStar, setHoveredStar] = useState<Record<string, number | null>>({});
 
+  // Creator search states
+  const [creatorSearchQuery, setCreatorSearchQuery] = useState("");
+  const [creatorSearchResults, setCreatorSearchResults] = useState<any[]>([]);
+  const [isSearchingCreators, setIsSearchingCreators] = useState(false);
+
   // Fetch highlights from Supabase
   const fetchHighlights = async () => {
     if (!session?.access_token || !viewingUserId) return;
@@ -440,6 +445,19 @@ export default function UserProfile() {
     return () => clearTimeout(timer);
   }, [searchQuery, selectedCategories]);
 
+  // Auto-search creators as user types (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (creatorSearchQuery.trim()) {
+        searchCreators(creatorSearchQuery);
+      } else {
+        setCreatorSearchResults([]);
+      }
+    }, 500); // 500ms delay after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [creatorSearchQuery]);
+
   // Search for friends
   const searchFriends = async (query: string) => {
     if (!query || query.length < 2 || !session?.access_token) {
@@ -480,6 +498,37 @@ export default function UserProfile() {
       });
     } finally {
       setIsSearchingFriends(false);
+    }
+  };
+
+  // Search for creators
+  const searchCreators = async (query: string) => {
+    if (!query || query.trim().length < 2 || !session?.access_token) {
+      setCreatorSearchResults([]);
+      return;
+    }
+
+    setIsSearchingCreators(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/search-creators', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: query.trim() })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCreatorSearchResults(data.results || []);
+      } else {
+        console.error('Creator search failed:', response.status);
+      }
+    } catch (error) {
+      console.error('Creator search error:', error);
+    } finally {
+      setIsSearchingCreators(false);
     }
   };
 
@@ -2493,34 +2542,55 @@ export default function UserProfile() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
+                  value={creatorSearchQuery}
+                  onChange={(e) => setCreatorSearchQuery(e.target.value)}
                   placeholder="Search for creators (e.g., Martin Scorsese, Taylor Swift...)"
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   data-testid="input-search-creators"
                 />
+                {isSearchingCreators && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="animate-spin text-purple-600" size={20} />
+                  </div>
+                )}
               </div>
             )}
 
             {/* Horizontal Scrollable Creator Cards */}
             <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
-              {/* Placeholder creator cards */}
-              {[
-                { name: "Martin Scorsese", role: "Director" },
-                { name: "Taylor Swift", role: "Musician" },
-                { name: "Greta Gerwig", role: "Director" },
-                { name: "Kendrick Lamar", role: "Musician" },
-                { name: "Denis Villeneuve", role: "Director" },
-                { name: "Billie Eilish", role: "Musician" },
-              ].map((creator, i) => (
-                <div key={i} className="flex-shrink-0 w-28 text-center">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2">
+              {/* Show search results if available, otherwise show default suggestions */}
+              {(creatorSearchResults.length > 0 ? creatorSearchResults : [
+                { name: "Martin Scorsese", role: "Director", image: "" },
+                { name: "Taylor Swift", role: "Musician", image: "" },
+                { name: "Greta Gerwig", role: "Director", image: "" },
+                { name: "Kendrick Lamar", role: "Musician", image: "" },
+                { name: "Denis Villeneuve", role: "Director", image: "" },
+                { name: "Billie Eilish", role: "Musician", image: "" },
+              ]).map((creator, i) => (
+                <div key={`${creator.name}-${i}`} className="flex-shrink-0 w-28 text-center">
+                  {creator.image ? (
+                    <img 
+                      src={creator.image} 
+                      alt={creator.name}
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2 ${creator.image ? 'hidden' : ''}`}>
                     <Users className="text-purple-600" size={32} />
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 truncate px-1">{creator.name}</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate px-1" title={creator.name}>
+                    {creator.name}
+                  </p>
                   <p className="text-xs text-gray-600 truncate px-1">{creator.role}</p>
                   <Button 
                     size="sm"
                     variant="outline"
                     className="w-full mt-2 text-xs h-7 border-purple-300 text-purple-600 hover:bg-purple-50"
+                    data-testid={`button-follow-${creator.name.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     + Follow
                   </Button>
