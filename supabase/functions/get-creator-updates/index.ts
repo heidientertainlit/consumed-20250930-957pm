@@ -91,15 +91,18 @@ serve(async (req) => {
                 recentWorks = creditsData.cast || [];
               }
               
-              // Get works from the last 2 years
+              // Get works from the last 2 years that have ACTUALLY been released
               const twoYearsAgo = new Date();
               twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+              const today = new Date();
               
               const recentReleases = recentWorks
                 .filter((work: any) => {
                   const releaseDate = work.release_date || work.first_air_date;
                   if (!releaseDate) return false;
-                  return new Date(releaseDate) >= twoYearsAgo;
+                  const workDate = new Date(releaseDate);
+                  // Only show released content (not future releases)
+                  return workDate >= twoYearsAgo && workDate <= today;
                 })
                 .sort((a: any, b: any) => {
                   const dateA = a.release_date || a.first_air_date || '';
@@ -159,14 +162,17 @@ serve(async (req) => {
               if (albumsResponse.ok) {
                 const albumsData = await albumsResponse.json();
                 
-                // Get albums from the last 2 years
+                // Get albums from the last 2 years that have ACTUALLY been released
                 const twoYearsAgo = new Date();
                 twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+                const today = new Date();
                 
                 const recentAlbums = (albumsData.items || [])
                   .filter((album: any) => {
                     if (!album.release_date) return false;
-                    return new Date(album.release_date) >= twoYearsAgo;
+                    const albumDate = new Date(album.release_date);
+                    // Only show released albums (not future releases)
+                    return albumDate >= twoYearsAgo && albumDate <= today;
                   })
                   .sort((a: any, b: any) => b.release_date.localeCompare(a.release_date))
                   .slice(0, 3); // Top 3 recent albums
@@ -201,15 +207,18 @@ serve(async (req) => {
           if (booksResponse.ok) {
             const booksData = await booksResponse.json();
             
-            // Get books from the last 2 years
+            // Get books from the last 2 years that have ACTUALLY been published
             const twoYearsAgo = new Date();
             twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+            const today = new Date();
             
             const recentBooks = (booksData.items || [])
               .filter((book: any) => {
                 const publishedDate = book.volumeInfo?.publishedDate;
                 if (!publishedDate) return false;
-                return new Date(publishedDate) >= twoYearsAgo;
+                const bookDate = new Date(publishedDate);
+                // Only show published books (not future releases)
+                return bookDate >= twoYearsAgo && bookDate <= today;
               })
               .slice(0, 3); // Top 3 recent books
 
