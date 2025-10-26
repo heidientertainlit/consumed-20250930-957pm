@@ -288,6 +288,15 @@ export function ProgressTracker({
               </Button>
             </>
           ) : null}
+          <Button
+            size="sm"
+            onClick={handleUpdateProgress}
+            disabled={updateProgressMutation.isPending}
+            className="bg-black hover:bg-gray-800 text-white ml-auto"
+            data-testid={`button-update-progress-${itemId}`}
+          >
+            {updateProgressMutation.isPending ? 'Updating...' : 'Update Progress'}
+          </Button>
         </div>
       )}
 
@@ -413,14 +422,6 @@ export function ProgressTracker({
           data-testid={`button-did-not-finish-${itemId}`}
         >
           DNF
-        </Button>
-        <Button
-          onClick={handleUpdateProgress}
-          disabled={updateProgressMutation.isPending}
-          className="flex-1 bg-black hover:bg-gray-800 text-white text-xs py-1.5 h-8 rounded-lg"
-          data-testid={`button-update-progress-${itemId}`}
-        >
-          {updateProgressMutation.isPending ? 'Updating...' : 'Update Progress'}
         </Button>
         <Button
           onClick={() => moveToListMutation.mutate('finished')}
