@@ -79,6 +79,13 @@ serve(async (req) => {
     if (req.method === 'GET') {
       console.log('Getting social posts...');
       
+      // Get pagination params from query string
+      const url = new URL(req.url);
+      const limit = parseInt(url.searchParams.get('limit') || '15', 10);
+      const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+      
+      console.log('Pagination:', { limit, offset });
+      
       const { data: posts, error } = await supabase
         .from('social_posts')
         .select(`
@@ -101,7 +108,7 @@ serve(async (req) => {
           media_description
         `)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .range(offset, offset + limit - 1);
 
       if (error) {
         console.log('Query failed:', error);

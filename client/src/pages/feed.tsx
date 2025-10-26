@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
@@ -43,12 +43,15 @@ interface SocialPost {
   }>;
 }
 
-const fetchSocialFeed = async (session: any): Promise<SocialPost[]> => {
+const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number; session: any }): Promise<SocialPost[]> => {
   if (!session?.access_token) {
     throw new Error('No authentication token available');
   }
 
-  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed`, {
+  const limit = 15; // Posts per page
+  const offset = pageParam * limit;
+
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed?limit=${limit}&offset=${offset}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${session.access_token}`,
@@ -73,6 +76,7 @@ export default function Feed() {
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Feature flag for comment likes
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
@@ -82,13 +86,46 @@ export default function Feed() {
     window.location.assign(path);
   };
 
-
-  const { data: socialPosts, isLoading, error: feedError } = useQuery({
+  const { 
+    data: infinitePosts, 
+    isLoading, 
+    error: feedError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery({
     queryKey: ["social-feed"],
-    queryFn: () => fetchSocialFeed(session),
+    queryFn: ({ pageParam = 0 }) => fetchSocialFeed({ pageParam, session }),
     enabled: !!session?.access_token,
     retry: false,
+    getNextPageParam: (lastPage, allPages) => {
+      // If we got less than 15 posts, we've reached the end
+      if (lastPage.length < 15) return undefined;
+      return allPages.length; // Return the next page number
+    },
+    initialPageParam: 0,
   });
+
+  // Flatten all pages into a single array
+  const socialPosts = infinitePosts?.pages.flat() || [];
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: '200px' } // Trigger 200px before reaching the bottom
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Log feed errors for debugging
   useEffect(() => {
@@ -246,19 +283,24 @@ export default function Feed() {
       // Check if already liked
       const isAlreadyLiked = likedPosts.has(postId);
 
-      // Optimistically update posts - toggle like
-      queryClient.setQueryData(["social-feed"], (old: SocialPost[] | undefined) => {
+      // Optimistically update posts - toggle like (handle infinite query structure)
+      queryClient.setQueryData(["social-feed"], (old: any) => {
         if (!old) return old;
-        return old.map(post => 
-          post.id === postId 
-            ? { 
-                ...post, 
-                likes: isAlreadyLiked 
-                  ? Math.max((post.likes || 0) - 1, 0)  // Unlike: decrement (min 0)
-                  : (post.likes || 0) + 1                // Like: increment
-              }
-            : post
-        );
+        return {
+          ...old,
+          pages: old.pages.map((page: SocialPost[]) => 
+            page.map(post => 
+              post.id === postId 
+                ? { 
+                    ...post, 
+                    likes: isAlreadyLiked 
+                      ? Math.max((post.likes || 0) - 1, 0)  // Unlike: decrement (min 0)
+                      : (post.likes || 0) + 1                // Like: increment
+                  }
+                : post
+            )
+          )
+        };
       });
 
       // Update local like state - toggle
@@ -413,10 +455,15 @@ export default function Feed() {
       // Snapshot previous value
       const previousPosts = queryClient.getQueryData(["social-feed"]);
 
-      // Optimistically remove the post
-      queryClient.setQueryData(["social-feed"], (old: SocialPost[] | undefined) => {
+      // Optimistically remove the post (handle infinite query structure)
+      queryClient.setQueryData(["social-feed"], (old: any) => {
         if (!old) return old;
-        return old.filter(post => post.id !== postId);
+        return {
+          ...old,
+          pages: old.pages.map((page: SocialPost[]) => 
+            page.filter(post => post.id !== postId)
+          )
+        };
       });
 
       // Return context for rollback on error
@@ -1232,6 +1279,26 @@ export default function Feed() {
                 </div>
               );
               })}
+
+              {/* Infinite Scroll Loading Indicator */}
+              {isFetchingNextPage && (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                  <p className="text-gray-500 mt-3">Loading more posts...</p>
+                </div>
+              )}
+
+              {/* Intersection Observer Target */}
+              {hasNextPage && !isFetchingNextPage && (
+                <div ref={loadMoreRef} className="h-20" />
+              )}
+
+              {/* End of Feed Indicator */}
+              {!hasNextPage && socialPosts.length > 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">🎉 You've reached the end!</p>
+                </div>
+              )}
 
             </div>
           ) : (
