@@ -128,6 +128,30 @@ export function ProgressTracker({
   };
 
   const canToggleMode = mediaType === 'book';
+  const isMusic = mediaType === 'music' || mediaType === 'album';
+  const isTv = mediaType === 'tv' || mediaType === 'series';
+
+  // Music only shows "Mark as Finished" button
+  if (isMusic) {
+    return (
+      <div className="mb-3" data-testid={`progress-tracker-${itemId}`}>
+        <Button
+          onClick={() => {
+            updateProgressMutation.mutate({
+              newProgress: 100,
+              newTotal: undefined,
+              newMode: 'percent',
+            });
+          }}
+          disabled={updateProgressMutation.isPending}
+          className="w-full bg-purple-800 hover:bg-purple-900 text-white"
+          data-testid={`button-mark-finished-${itemId}`}
+        >
+          Mark as Finished
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-3" data-testid={`progress-tracker-${itemId}`}>
@@ -255,7 +279,7 @@ export function ProgressTracker({
             });
           }}
           disabled={updateProgressMutation.isPending}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+          className="flex-1 bg-purple-800 hover:bg-purple-900 text-white"
           data-testid={`button-mark-finished-${itemId}`}
         >
           Mark as Finished
