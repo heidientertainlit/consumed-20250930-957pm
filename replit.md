@@ -81,8 +81,9 @@ Preferred communication style: Simple, everyday language.
     -   **Content Safety**: 1M+ follower threshold for Spotify images, filters for tribute/karaoke/cover artists, deduplication by creator name
     -   **Follow/Unfollow**: `follow-creator` edge function handles authentication, duplicate detection (409 conflict), and removal with optimistic UI updates
     -   **Creator Updates**: `get-creator-updates` edge function fetches latest releases from followed creators (movies/TV from TMDB, albums from Spotify, books from Google Books) within the last 2 years
-    -   **Feed Integration**: Creator update cards appear in the main feed every 6th post, displaying new releases with poster images, release dates, and direct links to media pages
-    -   **UI Components**: Follow buttons in user profile with loading states, "Following" vs "+ Follow" states, and inline creator search with debounced queries (500ms delay)
+    -   **Creator News**: `get-creator-updates` edge function also fetches news articles from NewsAPI for followed creators (last 30 days, max 2 articles per creator, limited to first 5 creators)
+    -   **Feed Integration**: Creator update cards appear in the main feed every 6th post, creator news cards appear every 12th post (less frequent to keep users in app)
+    -   **UI Components**: Follow buttons in user profile with loading states, "Following" vs "+ Follow" states, inline creator search with debounced queries (500ms delay), CreatorUpdateCard (purple gradient) and CreatorNewsCard (blue gradient)
 
 ### System Design Choices
 -   **Database Schema**: Development and production databases use a synced schema. Critical naming conventions include `user_name` (never `username`) in the `users` table, and specific columns for `social_posts`, `list_items`, `lists`, `polls`, and `poll_responses`. The `lists` table critically lacks `description` and `updated_at` columns in production.
@@ -98,6 +99,7 @@ Preferred communication style: Simple, everyday language.
     -   TMDB (API key)
     -   YouTube (API key)
     -   Open Library (no authentication)
+    -   NewsAPI (API key - for creator news articles)
 -   **Core Libraries**:
     -   `@neondatabase/serverless`
     -   `drizzle-orm`
