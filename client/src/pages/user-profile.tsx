@@ -2477,37 +2477,53 @@ export default function UserProfile() {
         {/* Follow Creators Section */}
         <div className="px-4 mb-8">
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Users className="text-white" size={20} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Follow Creators</h2>
-                  <p className="text-sm text-gray-600">Track your favorite artists, directors, and authors</p>
-                </div>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <Users className="text-white" size={20} />
               </div>
-              {isOwnProfile && (
-                <Button 
-                  size="sm"
-                  className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
-                >
-                  <Plus size={16} className="mr-2" />
-                  Add
-                </Button>
-              )}
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Follow Creators</h2>
+                <p className="text-sm text-gray-600">Track your favorite artists, directors, and authors</p>
+              </div>
             </div>
 
-            {/* Followed Creators Grid - Placeholder */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Search Bar */}
+            {isOwnProfile && (
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search for creators (e.g., Martin Scorsese, Taylor Swift...)"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                  data-testid="input-search-creators"
+                />
+              </div>
+            )}
+
+            {/* Horizontal Scrollable Creator Cards */}
+            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
               {/* Placeholder creator cards */}
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex flex-col items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-3">
-                    <Users className="text-purple-600" size={24} />
+              {[
+                { name: "Martin Scorsese", role: "Director" },
+                { name: "Taylor Swift", role: "Musician" },
+                { name: "Greta Gerwig", role: "Director" },
+                { name: "Kendrick Lamar", role: "Musician" },
+                { name: "Denis Villeneuve", role: "Director" },
+                { name: "Billie Eilish", role: "Musician" },
+              ].map((creator, i) => (
+                <div key={i} className="flex-shrink-0 w-28 text-center">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2">
+                    <Users className="text-purple-600" size={32} />
                   </div>
-                  <div className="w-full h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="w-2/3 h-3 bg-gray-200 rounded"></div>
+                  <p className="text-sm font-semibold text-gray-900 truncate px-1">{creator.name}</p>
+                  <p className="text-xs text-gray-600 truncate px-1">{creator.role}</p>
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-2 text-xs h-7 border-purple-300 text-purple-600 hover:bg-purple-50"
+                  >
+                    + Follow
+                  </Button>
                 </div>
               ))}
             </div>
@@ -2522,14 +2538,6 @@ export default function UserProfile() {
                 <p className="text-gray-600 mb-4 max-w-md mx-auto">
                   Start following your favorite artists, directors, authors, and more to get updates about their work in your feed
                 </p>
-                {isOwnProfile && (
-                  <Button 
-                    className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
-                  >
-                    <Plus size={16} className="mr-2" />
-                    Follow Creators
-                  </Button>
-                )}
               </div>
             )}
           </div>
