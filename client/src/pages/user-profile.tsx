@@ -1666,8 +1666,9 @@ export default function UserProfile() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Navigation onTrackConsumption={handleTrackConsumption} />
+    <>
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={handleTrackConsumption} />
 
       <div className="max-w-4xl mx-auto">
         {/* Profile Header */}
@@ -3829,6 +3830,6 @@ export default function UserProfile() {
           setIsAuthModalOpen(false);
         }}
       />
-    </div>
+    </>
   );
 }
