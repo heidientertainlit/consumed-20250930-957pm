@@ -128,8 +128,12 @@ export function NotificationBell() {
         break;
 
       case 'friend_request':
+        // Someone sent YOU a friend request - go to Friends page to approve/reject
+        window.location.href = '/friends';
+        break;
+
       case 'friend_accepted':
-        // Go to the user's profile who sent/accepted the request
+        // Someone accepted YOUR friend request - go to their profile
         if (notification.triggered_by_user_id) {
           window.location.href = `/user/${notification.triggered_by_user_id}`;
         } else {
