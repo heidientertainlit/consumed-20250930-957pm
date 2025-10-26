@@ -399,28 +399,36 @@ export function ProgressTracker({
       {/* Action buttons */}
       <div className="flex gap-2 mt-3">
         <Button
-          onClick={handleUpdateProgress}
-          disabled={updateProgressMutation.isPending}
-          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
-          data-testid={`button-update-progress-${itemId}`}
+          onClick={() => moveToListMutation.mutate('favorites')}
+          disabled={moveToListMutation.isPending}
+          className="flex-1 bg-purple-800 hover:bg-purple-900 text-white text-xs py-1.5 h-8 rounded-lg"
+          data-testid={`button-add-to-favorites-${itemId}`}
         >
-          {updateProgressMutation.isPending ? 'Updating...' : 'UPDATE PROGRESS'}
+          Favorites
         </Button>
         <Button
-          onClick={() => {
-            setProgress(100);
-            setMode('percent');
-            updateProgressMutation.mutate({
-              newProgress: 100,
-              newTotal: undefined,
-              newMode: 'percent',
-            });
-          }}
+          onClick={() => moveToListMutation.mutate('dnf')}
+          disabled={moveToListMutation.isPending}
+          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-1.5 h-8 rounded-lg"
+          data-testid={`button-did-not-finish-${itemId}`}
+        >
+          DNF
+        </Button>
+        <Button
+          onClick={handleUpdateProgress}
           disabled={updateProgressMutation.isPending}
-          className="flex-1 bg-purple-800 hover:bg-purple-900 text-white"
+          className="flex-1 bg-black hover:bg-gray-800 text-white text-xs py-1.5 h-8 rounded-lg"
+          data-testid={`button-update-progress-${itemId}`}
+        >
+          {updateProgressMutation.isPending ? 'Updating...' : 'Update Progress'}
+        </Button>
+        <Button
+          onClick={() => moveToListMutation.mutate('finished')}
+          disabled={moveToListMutation.isPending}
+          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-lg"
           data-testid={`button-mark-finished-${itemId}`}
         >
-          Mark as Finished
+          Finished
         </Button>
       </div>
     </div>
