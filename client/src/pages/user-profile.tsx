@@ -2506,8 +2506,8 @@ export default function UserProfile() {
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-3">
                     <Users className="text-purple-600" size={24} />
                   </div>
-                  <div className="w-full h-4 bg-gray-200 rounded mb-2 animate-pulse"></div>
-                  <div className="w-2/3 h-3 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="w-full h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="w-2/3 h-3 bg-gray-200 rounded"></div>
                 </div>
               ))}
             </div>
