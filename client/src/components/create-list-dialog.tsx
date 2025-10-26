@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
 
 interface CreateListDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
+  const [, setLocation] = useLocation();
 
   const createListMutation = useMutation({
     mutationFn: async (listTitle: string) => {
@@ -36,14 +38,20 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "List Created!",
         description: `"${data.list.title}" has been added to your custom lists`,
       });
-      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      
+      await queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       setTitle("");
       onOpenChange(false);
+      
+      setLocation(`/list/${data.list.id}`);
     },
     onError: (error: Error) => {
       toast({
