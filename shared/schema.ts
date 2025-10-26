@@ -189,6 +189,17 @@ export const mediaRatings = pgTable("media_ratings", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const followedCreators = pgTable("followed_creators", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  creatorName: text("creator_name").notNull(),
+  creatorRole: text("creator_role").notNull(), // 'Director', 'Actor', 'Musician', 'Author', 'Writer', 'Producer'
+  creatorImage: text("creator_image"),
+  externalId: text("external_id").notNull(),
+  externalSource: text("external_source").notNull(), // 'tmdb', 'spotify', 'googlebooks'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -276,6 +287,11 @@ export const insertMediaRatingSchema = createInsertSchema(mediaRatings).omit({
   updatedAt: true,
 });
 
+export const insertFollowedCreatorSchema = createInsertSchema(followedCreators).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -306,3 +322,5 @@ export type UserRecommendations = typeof userRecommendations.$inferSelect;
 export type InsertUserRecommendations = z.infer<typeof insertUserRecommendationsSchema>;
 export type MediaRating = typeof mediaRatings.$inferSelect;
 export type InsertMediaRating = z.infer<typeof insertMediaRatingSchema>;
+export type FollowedCreator = typeof followedCreators.$inferSelect;
+export type InsertFollowedCreator = z.infer<typeof insertFollowedCreatorSchema>;
