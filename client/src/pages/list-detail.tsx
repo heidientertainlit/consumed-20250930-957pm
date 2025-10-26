@@ -433,7 +433,7 @@ export default function ListDetail() {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-custom-list`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-list`,
         {
           method: 'POST',
           headers: {
