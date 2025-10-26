@@ -109,28 +109,50 @@ serve(async (req) => {
       console.error('Spotify artist search error:', error);
     }
 
-    // Search Open Library for authors
+    // Search Google Books for authors
     try {
-      const authorResponse = await fetch(
-        `https://openlibrary.org/search/authors.json?q=${encodeURIComponent(query)}&limit=10`
-      );
+      const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+      const authorQuery = `inauthor:${encodeURIComponent(query)}`;
+      const booksUrl = googleBooksKey 
+        ? `https://www.googleapis.com/books/v1/volumes?q=${authorQuery}&maxResults=10&key=${googleBooksKey}`
+        : `https://www.googleapis.com/books/v1/volumes?q=${authorQuery}&maxResults=10`;
       
-      if (authorResponse.ok) {
-        const authorData = await authorResponse.json();
-        authorData.docs?.forEach((author: any) => {
-          results.push({
-            name: author.name,
-            role: 'Author',
-            image: '', // Open Library doesn't provide author images in search
-            external_id: author.key,
-            external_source: 'openlibrary',
-            work_count: author.work_count,
-            top_work: author.top_work
+      const booksResponse = await fetch(booksUrl);
+      
+      if (booksResponse.ok) {
+        const booksData = await booksResponse.json();
+        const authorMap = new Map();
+        
+        // Extract unique authors from book results
+        booksData.items?.forEach((book: any) => {
+          const authors = book.volumeInfo?.authors || [];
+          authors.forEach((authorName: string) => {
+            // Trust Google Books relevance - they already filtered by inauthor:query
+            if (!authorMap.has(authorName)) {
+              authorMap.set(authorName, {
+                name: authorName,
+                role: 'Author',
+                image: book.volumeInfo?.imageLinks?.thumbnail || '',
+                external_id: book.id,
+                external_source: 'googlebooks',
+                work_count: 1,
+                sample_book: book.volumeInfo?.title
+              });
+            } else {
+              // Increment work count for duplicate authors
+              const existing = authorMap.get(authorName);
+              existing.work_count++;
+            }
           });
+        });
+        
+        // Add unique authors to results
+        authorMap.forEach((author) => {
+          results.push(author);
         });
       }
     } catch (error) {
-      console.error('Open Library author search error:', error);
+      console.error('Google Books author search error:', error);
     }
 
     // Sort results by relevance (exact matches first, then by popularity)
