@@ -10,7 +10,6 @@ import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vo
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
-import CreatorNewsCard from "@/components/creator-news-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
@@ -182,11 +181,11 @@ export default function Feed() {
     refetchOnWindowFocus: false,
   });
 
-  // Fetch creator updates and news
-  const { data: creatorData } = useQuery({
+  // Fetch creator updates
+  const { data: creatorUpdates = [] } = useQuery({
     queryKey: ["/api/creator-updates"],
     queryFn: async () => {
-      if (!session?.access_token) return { updates: [], news: [] };
+      if (!session?.access_token) return [];
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-creator-updates`, {
         method: 'GET',
@@ -198,19 +197,16 @@ export default function Feed() {
 
       if (!response.ok) {
         console.error('Failed to fetch creator updates');
-        return { updates: [], news: [] };
+        return [];
       }
 
       const data = await response.json();
-      return { updates: data.updates || [], news: data.news || [] };
+      return data.updates || [];
     },
     enabled: !!session?.access_token,
     retry: false,
     refetchOnWindowFocus: false,
   });
-
-  const creatorUpdates = creatorData?.updates || [];
-  const creatorNews = creatorData?.news || [];
 
   // Like mutation with optimistic updates
   const likeMutation = useMutation({
@@ -1022,13 +1018,6 @@ export default function Feed() {
                   ? creatorUpdates[creatorUpdateIndex % creatorUpdates.length]
                   : null;
 
-                // Inject Creator News Card every 12th post
-                const shouldShowCreatorNews = (postIndex + 1) % 12 === 0;
-                const creatorNewsIndex = Math.floor(postIndex / 12);
-                const currentCreatorNews = creatorNews && creatorNews.length > 0 
-                  ? creatorNews[creatorNewsIndex % creatorNews.length]
-                  : null;
-
                 // Inject MediaCarousel every 4th post, rotating through types
                 const shouldShowMediaCarousel = (postIndex + 1) % 4 === 0;
                 const carouselIndex = Math.floor(postIndex / 4);
@@ -1084,15 +1073,6 @@ export default function Feed() {
                                              currentCreatorUpdate.type === 'tv' ? 'tv' : 'mixed';
                             setLocation(`/media/${mediaType}/${currentCreatorUpdate.external_source}/${currentCreatorUpdate.external_id}`);
                           }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Insert Creator News Card every 12th post */}
-                    {shouldShowCreatorNews && currentCreatorNews && (
-                      <div className="mb-4">
-                        <CreatorNewsCard 
-                          article={currentCreatorNews}
                         />
                       </div>
                     )}

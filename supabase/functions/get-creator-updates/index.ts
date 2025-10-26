@@ -243,65 +243,7 @@ serve(async (req) => {
       return dateB.localeCompare(dateA);
     });
 
-    // Fetch news articles for followed creators
-    const newsArticles: any[] = [];
-    const newsApiKey = Deno.env.get('NEWS_API_KEY');
-    
-    if (newsApiKey && followedCreators.length > 0) {
-      // Limit to first 5 creators to avoid hitting API limits
-      const creatorsForNews = followedCreators.slice(0, 5);
-      
-      for (const creator of creatorsForNews) {
-        try {
-          // Search for news about this creator
-          const query = encodeURIComponent(creator.creator_name);
-          const newsUrl = `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&language=en&pageSize=2&apiKey=${newsApiKey}`;
-          
-          const newsResponse = await fetch(newsUrl);
-          
-          if (newsResponse.ok) {
-            const newsData = await newsResponse.json();
-            
-            if (newsData.articles && newsData.articles.length > 0) {
-              // Get articles from the last 30 days
-              const thirtyDaysAgo = new Date();
-              thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-              
-              const recentArticles = newsData.articles
-                .filter((article: any) => {
-                  if (!article.publishedAt) return false;
-                  return new Date(article.publishedAt) >= thirtyDaysAgo;
-                })
-                .slice(0, 2); // Max 2 articles per creator
-              
-              recentArticles.forEach((article: any) => {
-                newsArticles.push({
-                  creator_name: creator.creator_name,
-                  title: article.title,
-                  description: article.description,
-                  url: article.url,
-                  urlToImage: article.urlToImage,
-                  publishedAt: article.publishedAt,
-                  source: article.source
-                });
-              });
-            }
-          }
-        } catch (error) {
-          console.error(`Error fetching news for creator ${creator.creator_name}:`, error);
-          // Continue processing other creators even if one fails
-        }
-      }
-    }
-
-    // Sort news by published date (most recent first)
-    newsArticles.sort((a, b) => {
-      const dateA = a.publishedAt || '';
-      const dateB = b.publishedAt || '';
-      return dateB.localeCompare(dateA);
-    });
-
-    return new Response(JSON.stringify({ updates, news: newsArticles }), {
+    return new Response(JSON.stringify({ updates }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
