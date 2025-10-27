@@ -247,7 +247,7 @@ export default function Feed() {
 
   // Like mutation with optimistic updates
   const likeMutation = useMutation({
-    mutationFn: async (postId: string) => {
+    mutationFn: async ({ postId }: { postId: string; wasLiked: boolean }) => {
       console.log('❤️ Submitting like:', { postId });
       if (!session?.access_token) throw new Error('Not authenticated');
 
@@ -270,18 +270,16 @@ export default function Feed() {
       console.log('✅ Like success:', result);
       return result;
     },
-    onMutate: async (postId) => {
+    onMutate: async ({ postId, wasLiked }) => {
       // Optimistic update - immediately update UI
-      console.log('⚡ Optimistic like update for:', postId);
+      console.log('⚡ Optimistic like update for:', postId, 'wasLiked:', wasLiked);
 
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["social-feed"] });
 
-      // Snapshot previous value
+      // Snapshot previous values
       const previousPosts = queryClient.getQueryData(["social-feed"]);
-
-      // Check if already liked
-      const isAlreadyLiked = likedPosts.has(postId);
+      const previousLikedPosts = new Set(likedPosts);
 
       // Optimistically update posts - toggle like (handle infinite query structure)
       queryClient.setQueryData(["social-feed"], (old: any) => {
@@ -293,7 +291,7 @@ export default function Feed() {
               post.id === postId 
                 ? { 
                     ...post, 
-                    likes: isAlreadyLiked 
+                    likes: wasLiked 
                       ? Math.max((post.likes || 0) - 1, 0)  // Unlike: decrement (min 0)
                       : (post.likes || 0) + 1                // Like: increment
                   }
@@ -306,7 +304,7 @@ export default function Feed() {
       // Update local like state - toggle
       setLikedPosts(prev => {
         const newSet = new Set(prev);
-        if (isAlreadyLiked) {
+        if (wasLiked) {
           newSet.delete(postId);
         } else {
           newSet.add(postId);
@@ -314,22 +312,20 @@ export default function Feed() {
         return newSet;
       });
 
-      return { previousPosts };
+      return { previousPosts, previousLikedPosts, wasLiked };
     },
-    onError: (err, postId, context) => {
+    onError: (err, { postId }, context) => {
       console.log('💥 Like mutation error - reverting optimistic update:', err);
 
-      // Revert optimistic update
+      // Revert optimistic update to query cache
       if (context?.previousPosts) {
         queryClient.setQueryData(["social-feed"], context.previousPosts);
       }
 
-      // Revert local like state
-      setLikedPosts(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(postId);
-        return newSet;
-      });
+      // Revert local like state to previous value
+      if (context?.previousLikedPosts) {
+        setLikedPosts(context.previousLikedPosts);
+      }
     },
     onSettled: () => {
       // Always refetch after mutation (success or error)
@@ -656,17 +652,8 @@ export default function Feed() {
   };
 
   const handleLike = (postId: string) => {
-    const isLiked = likedPosts.has(postId);
-    if (isLiked) {
-      setLikedPosts(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(postId);
-        return newSet;
-      });
-    } else {
-      setLikedPosts(prev => new Set(prev).add(postId));
-    }
-    likeMutation.mutate(postId);
+    const wasLiked = likedPosts.has(postId);
+    likeMutation.mutate({ postId, wasLiked });
   };
 
   const handleComment = (postId: string, parentCommentId?: string, replyContent?: string) => {
