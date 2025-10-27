@@ -57,7 +57,7 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_URL') ?? '', 
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
-      
+
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
         .insert({
@@ -90,13 +90,13 @@ serve(async (req) => {
     // Handle individual trivia challenge leaderboards
     if (category.startsWith('trivia_challenge_')) {
       const poolId = category.replace('trivia_challenge_', '');
-      
+
       // Get predictions for this specific challenge
       const { data: predictions, error: predictionsError } = await supabase
         .from('user_predictions')
         .select('user_id, points_earned')
         .eq('pool_id', poolId);
-        
+
       if (predictionsError) {
         return new Response(JSON.stringify({ error: 'Failed to fetch challenge predictions' }), {
           status: 500,
@@ -108,7 +108,7 @@ serve(async (req) => {
       const { data: users, error: usersError } = await supabase
         .from('users')
         .select('id, user_name');
-        
+
       if (usersError) {
         return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
           status: 500,
@@ -123,7 +123,7 @@ serve(async (req) => {
       }, {});
 
       const userPoints: { [key: string]: number } = {};
-      
+
       predictions.forEach((prediction: any) => {
         const userId = prediction.user_id;
         userPoints[userId] = (userPoints[userId] || 0) + prediction.points_earned;
@@ -153,12 +153,12 @@ serve(async (req) => {
       if (category === 'vote_leader') gameType = 'vote';
       else if (category === 'predict_leader') gameType = 'predict';  
       else if (category === 'trivia_leader') gameType = 'trivia';
-      
+
       // Get all predictions
       const { data: predictions, error: predictionsError } = await supabase
         .from('user_predictions')
         .select('user_id, points_earned, pool_id');
-        
+
       if (predictionsError) {
         return new Response(JSON.stringify({ error: 'Failed to fetch predictions' }), {
           status: 500,
@@ -171,7 +171,7 @@ serve(async (req) => {
         .from('prediction_pools')
         .select('id, type')
         .eq('type', gameType);
-        
+
       if (gamesError) {
         return new Response(JSON.stringify({ error: 'Failed to fetch games' }), {
           status: 500,
@@ -183,7 +183,7 @@ serve(async (req) => {
       const { data: users, error: usersError } = await supabase
         .from('users')
         .select('id, user_name');
-        
+
       if (usersError) {
         return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
           status: 500,
@@ -199,7 +199,7 @@ serve(async (req) => {
       }, {});
 
       const userPoints: { [key: string]: number } = {};
-      
+
       predictions.forEach((prediction: any) => {
         if (gameIds.includes(prediction.pool_id)) {
           const userId = prediction.user_id;
@@ -218,24 +218,24 @@ serve(async (req) => {
         const { data: pollVotes } = await supabase
           .from('poll_responses')
           .select('user_id, poll_id');
-        
+
         if (pollVotes && pollVotes.length > 0) {
           // Get unique poll IDs
           const pollIds = [...new Set(pollVotes.map(v => v.poll_id))];
-          
+
           // Get poll points for each poll
           const { data: polls } = await supabase
             .from('polls')
             .select('id, points_reward')
             .in('id', pollIds);
-          
+
           if (polls) {
             // Create a map of poll_id -> points_reward
             const pollPointsMap = polls.reduce((acc: any, p: any) => {
               acc[p.id] = p.points_reward || 1;
               return acc;
             }, {});
-            
+
             // Add poll points to user totals
             pollVotes.forEach((vote: any) => {
               const userId = vote.user_id;
@@ -269,7 +269,7 @@ serve(async (req) => {
       const { data: creatorStats, error: statsError } = await supabase
         .from('user_creator_stats')
         .select('user_id, creator_name, fan_points, media_types');
-        
+
       if (statsError) {
         return new Response(JSON.stringify({ error: 'Failed to fetch creator stats' }), {
           status: 500,
@@ -281,7 +281,7 @@ serve(async (req) => {
       const { data: users, error: usersError } = await supabase
         .from('users')
         .select('id, user_name');
-        
+
       if (usersError) {
         return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
           status: 500,
@@ -340,11 +340,11 @@ serve(async (req) => {
       }, {});
 
       const userMaxPoints: { [key: string]: { points: number; creator: string; mediaTypes: string[] } } = {};
-      
+
       creatorStats.forEach((stat: any) => {
         const userId = stat.user_id;
         const creatorName = stat.creator_name;
-        
+
         // Skip generic/unknown creator names
         if (!creatorName || 
             creatorName.toLowerCase() === 'unknown' || 
@@ -354,7 +354,7 @@ serve(async (req) => {
             creatorName.toLowerCase() === 'sports') {
           return;
         }
-        
+
         if (!userMaxPoints[userId] || stat.fan_points > userMaxPoints[userId].points) {
           userMaxPoints[userId] = {
             points: stat.fan_points,
@@ -386,7 +386,7 @@ serve(async (req) => {
     // Handle standard media-based categories
     let dateFilter = '';
     const now = new Date();
-    
+
     if (category === 'daily') {
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       dateFilter = yesterday.toISOString();
@@ -457,13 +457,13 @@ serve(async (req) => {
           .from('polls')
           .select('id, points_reward')
           .in('id', pollIds);
-        
+
         if (polls) {
           const pollPointsMap = polls.reduce((acc: any, p: any) => {
             acc[p.id] = p.points_reward || 5;
             return acc;
           }, {});
-          
+
           pollPoints = pollVotes.reduce((sum, vote) => {
             return sum + (pollPointsMap[vote.poll_id] || 5);
           }, 0);
@@ -479,7 +479,7 @@ serve(async (req) => {
         const podcasts = listItems.filter(item => item.media_type === 'podcast');
         const games = listItems.filter(item => item.media_type === 'game');
         const sports = listItems.filter(item => item.media_type === 'sports');
-        
+
         // Count items with reviews (notes field)
         const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
 
