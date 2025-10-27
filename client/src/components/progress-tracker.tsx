@@ -269,7 +269,7 @@ export function ProgressTracker({
                   }
                 }
               }}
-              className="data-[state=checked]:bg-purple-600 scale-125"
+              className="scale-125 border-purple-600 bg-gray-200 data-[state=checked]:bg-purple-600 [&>span]:bg-white [&>span]:data-[state=checked]:bg-white"
               data-testid={`switch-mode-${itemId}`}
             />
             <span className={`text-sm font-semibold ${mode === 'percent' ? 'text-purple-600' : 'text-gray-400'}`}>
