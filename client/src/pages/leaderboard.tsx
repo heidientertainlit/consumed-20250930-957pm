@@ -315,7 +315,7 @@ export default function Leaderboard() {
               <Share2 className="w-5 h-5 text-gray-600" />
             </button>
           </div>
-          <p className="text-gray-600">See the top fans and trackers in the community — ranked by points from logging, sharing, and engaging with entertainment.</p>
+          <p className="text-gray-600">See the top fans and trackers. Earn your own points by logging, sharing, and engaging with entertainment.</p>
         </div>
 
         {/* Categories Section */}

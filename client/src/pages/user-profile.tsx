@@ -2215,8 +2215,7 @@ export default function UserProfile() {
                     Discover Your Entertainment DNA
                   </h3>
                   <p className="text-sm text-gray-600 max-w-md mx-auto">
-                    Take our comprehensive survey to unlock your unique entertainment personality profile. 
-                    Get personalized recommendations and connect with others who share your taste.
+                    Unlock your unique entertainment personality profile. Get personalized recommendations and connect with others who share your taste.
                   </p>
                 </div>
                 <Button 

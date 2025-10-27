@@ -560,7 +560,7 @@ export default function Track() {
         {/* Lists Section */}
         <div className="mb-4 md:mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Lists</h2>
-          <p className="text-gray-600 text-sm mb-4 md:mb-6">View your default lists. They include what you're on now, what you've finished, or what's next.</p>
+          <p className="text-gray-600 text-sm mb-4 md:mb-6">See what you're on now, what you've finished, or what's next.</p>
 
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-3 md:mb-4">
             {/* Filter Dropdown */}

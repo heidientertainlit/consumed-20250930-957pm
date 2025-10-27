@@ -962,11 +962,10 @@ export default function Feed() {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-black mb-3">
-            Activity Feed
+            Feed
           </h1>
           <p className="text-base text-gray-600">
-            See what your friends are watching, reading, and listening to — and join the conversation.
-            Ask questions, share reactions, or post what's on your mind.
+            See what your friends are watching, reading, and listening to. Ask questions, share reactions, or post what's on your mind.
           </p>
         </div>
 
