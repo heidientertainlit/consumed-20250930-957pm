@@ -196,52 +196,54 @@ export function ProgressTracker({
   // Movies, Music, and Podcasts show single button with dropdown
   if (showQuickActions) {
     return (
-      <div className="mb-3 flex" data-testid={`progress-tracker-${itemId}`}>
-        <Button
-          onClick={() => moveToListMutation.mutate('finished')}
-          disabled={moveToListMutation.isPending}
-          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-r-none"
-          data-testid={`button-mark-finished-${itemId}`}
-        >
-          Finished
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              disabled={moveToListMutation.isPending}
-              className="px-2 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 border-l-0 rounded-l-none h-8"
-              data-testid={`button-dropdown-${itemId}`}
-            >
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={() => moveToListMutation.mutate('currently')}
-              className="cursor-pointer"
-            >
-              Currently
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => moveToListMutation.mutate('queue')}
-              className="cursor-pointer"
-            >
-              Queue
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => moveToListMutation.mutate('favorites')}
-              className="cursor-pointer"
-            >
-              Favorites
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => moveToListMutation.mutate('dnf')}
-              className="cursor-pointer"
-            >
-              Did Not Finish
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="mb-3 flex justify-center" data-testid={`progress-tracker-${itemId}`}>
+        <div className="flex w-48">
+          <Button
+            onClick={() => moveToListMutation.mutate('finished')}
+            disabled={moveToListMutation.isPending}
+            className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-r-none"
+            data-testid={`button-mark-finished-${itemId}`}
+          >
+            Finished
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={moveToListMutation.isPending}
+                className="px-2 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 border-l-0 rounded-l-none h-8"
+                data-testid={`button-dropdown-${itemId}`}
+              >
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => moveToListMutation.mutate('currently')}
+                className="cursor-pointer"
+              >
+                Currently
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => moveToListMutation.mutate('queue')}
+                className="cursor-pointer"
+              >
+                Queue
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => moveToListMutation.mutate('favorites')}
+                className="cursor-pointer"
+              >
+                Favorites
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => moveToListMutation.mutate('dnf')}
+                className="cursor-pointer"
+              >
+                Did Not Finish
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     );
   }
@@ -394,52 +396,54 @@ export function ProgressTracker({
       )}
 
       {/* Action button with dropdown */}
-      <div className="flex mt-3">
-        <Button
-          onClick={() => moveToListMutation.mutate('finished')}
-          disabled={moveToListMutation.isPending}
-          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-r-none"
-          data-testid={`button-mark-finished-${itemId}`}
-        >
-          Finished
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              disabled={moveToListMutation.isPending}
-              className="px-2 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 border-l-0 rounded-l-none h-8"
-              data-testid={`button-dropdown-${itemId}`}
-            >
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={() => moveToListMutation.mutate('currently')}
-              className="cursor-pointer"
-            >
-              Currently
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => moveToListMutation.mutate('queue')}
-              className="cursor-pointer"
-            >
-              Queue
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => moveToListMutation.mutate('favorites')}
-              className="cursor-pointer"
-            >
-              Favorites
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => moveToListMutation.mutate('dnf')}
-              className="cursor-pointer"
-            >
-              Did Not Finish
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex justify-center mt-3">
+        <div className="flex w-48">
+          <Button
+            onClick={() => moveToListMutation.mutate('finished')}
+            disabled={moveToListMutation.isPending}
+            className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-r-none"
+            data-testid={`button-mark-finished-${itemId}`}
+          >
+            Finished
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={moveToListMutation.isPending}
+                className="px-2 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 border-l-0 rounded-l-none h-8"
+                data-testid={`button-dropdown-${itemId}`}
+              >
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => moveToListMutation.mutate('currently')}
+                className="cursor-pointer"
+              >
+                Currently
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => moveToListMutation.mutate('queue')}
+                className="cursor-pointer"
+              >
+                Queue
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => moveToListMutation.mutate('favorites')}
+                className="cursor-pointer"
+              >
+                Favorites
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => moveToListMutation.mutate('dnf')}
+                className="cursor-pointer"
+              >
+                Did Not Finish
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
