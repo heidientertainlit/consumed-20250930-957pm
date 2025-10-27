@@ -361,7 +361,52 @@ export default function MediaDetail() {
       <div className="min-h-screen bg-gray-50 pb-20">
         <Navigation onTrackConsumption={handleTrackConsumption} />
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="text-center">Media not found</div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                setLocation('/');
+              }
+            }}
+            className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            data-testid="button-back"
+          >
+            <ArrowLeft size={24} className="text-gray-600" />
+          </Button>
+
+          <div className="max-w-md mx-auto mt-16">
+            <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ExternalLink className="text-purple-600" size={32} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Media Not Available
+              </h2>
+              <p className="text-gray-600 mb-6">
+                We couldn't find detailed information for this item. It might be unavailable or not yet in our database.
+              </p>
+              <div className="space-y-3">
+                <Button
+                  onClick={() => setLocation('/track')}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  data-testid="button-browse-media"
+                >
+                  Browse Your Media
+                </Button>
+                <Button
+                  onClick={() => window.history.back()}
+                  variant="outline"
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-100"
+                  data-testid="button-go-back"
+                >
+                  Go Back
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
