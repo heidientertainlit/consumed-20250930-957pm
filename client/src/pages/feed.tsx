@@ -147,15 +147,40 @@ export default function Feed() {
     }
   }, [socialPosts]);
 
-  // Fetch active polls (filter out already voted)
+  // Fetch active polls (from prediction_pools with type='vote')
   const { data: polls = [] } = useQuery({
-    queryKey: ["/api/polls", user?.id],
+    queryKey: ["prediction-pools-vote", user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/polls?userId=${user?.id}`);
-      if (!response.ok) throw new Error('Failed to fetch polls');
-      const allPolls = await response.json();
-      // Only show polls the user hasn't voted on yet
-      return allPolls.filter((poll: any) => !poll.user_has_voted);
+      if (!session?.access_token || !user?.id) return [];
+
+      console.log('🗳️ Fetching vote games from prediction_pools...');
+
+      // Get user's existing votes
+      const { data: userVotes } = await supabase
+        .from('user_predictions')
+        .select('pool_id')
+        .eq('user_id', user.id);
+
+      const votedPoolIds = new Set(userVotes?.map(p => p.pool_id) || []);
+
+      // Get all open vote-type games
+      const { data, error } = await supabase
+        .from('prediction_pools')
+        .select('*')
+        .eq('status', 'open')
+        .eq('type', 'vote')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching vote games:', error);
+        return [];
+      }
+
+      // Filter out games user has already voted on
+      const unvotedPolls = (data || []).filter(poll => !votedPoolIds.has(poll.id));
+      console.log('✅ Loaded vote games (polls):', unvotedPolls.length, 'unvoted out of', data?.length || 0);
+      
+      return unvotedPolls;
     },
     enabled: !!session?.access_token && !!user?.id,
   });
@@ -334,25 +359,27 @@ export default function Feed() {
     },
   });
 
-  // Poll vote mutation (direct Supabase - matches prediction_pools pattern)
+  // Poll vote mutation (uses prediction_pools + user_predictions)
   const pollVoteMutation = useMutation({
-    mutationFn: async ({ pollId, optionId }: { pollId: number; optionId: number }) => {
+    mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
       if (!session?.access_token || !user?.id) throw new Error('Not authenticated');
       
-      // Get poll details for points
+      // Get poll details from prediction_pools
       const { data: poll } = await supabase
-        .from('polls')
+        .from('prediction_pools')
         .select('points_reward')
         .eq('id', pollId)
         .single();
       
-      // Insert vote into poll_responses
+      // Insert vote into user_predictions (unified with other game types)
       const { data, error } = await supabase
-        .from('poll_responses')
+        .from('user_predictions')
         .insert({
-          poll_id: pollId,
-          option_id: optionId,
-          user_id: user.id
+          pool_id: pollId,
+          prediction: optionId,
+          user_id: user.id,
+          points_earned: poll?.points_reward || 1,
+          is_correct: true // Votes always earn points
         })
         .select()
         .single();
@@ -365,10 +392,10 @@ export default function Feed() {
         throw new Error('Failed to submit vote');
       }
       
-      return { success: true, pointsAwarded: poll?.points_reward || 5 };
+      return { success: true, pointsAwarded: poll?.points_reward || 1 };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/polls", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["prediction-pools-vote", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
       if (data?.pointsAwarded) {
         console.log(`✅ Poll vote submitted! Earned ${data.pointsAwarded} points`);
@@ -376,8 +403,11 @@ export default function Feed() {
     },
   });
 
-  const handlePollVote = async (pollId: number, optionId: number) => {
-    await pollVoteMutation.mutateAsync({ pollId, optionId });
+  const handlePollVote = async (pollId: string | number, optionId: string | number) => {
+    await pollVoteMutation.mutateAsync({ 
+      pollId: String(pollId), 
+      optionId: String(optionId) 
+    });
   };
 
   // Comment mutation with support for replies

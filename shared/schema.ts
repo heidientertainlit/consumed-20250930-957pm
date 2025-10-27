@@ -108,7 +108,7 @@ export const predictionPools = pgTable("prediction_pools", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
-  type: text("type").notNull(), // "vote", "weekly", "awards", "bracket"
+  type: text("type").notNull(), // "vote", "weekly", "awards", "bracket", "trivia"
   pointsReward: integer("points_reward").notNull(),
   deadline: text("deadline").notNull(),
   status: text("status").notNull(), // "open", "locked", "completed"
@@ -118,6 +118,9 @@ export const predictionPools = pgTable("prediction_pools", {
   correctAnswer: text("correct_answer"), // For trivia: stores the correct answer
   inline: boolean("inline"),
   participants: integer("participants"),
+  sponsorName: text("sponsor_name"), // Sponsor branding
+  sponsorLogoUrl: text("sponsor_logo_url"), // Sponsor logo URL
+  sponsorCtaUrl: text("sponsor_cta_url"), // Sponsor call-to-action URL
   createdAt: timestamp("created_at"),
 });
 
