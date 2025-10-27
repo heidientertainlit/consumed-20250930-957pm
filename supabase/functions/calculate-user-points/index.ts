@@ -103,7 +103,7 @@ serve(async (req) => {
     // Count items with reviews (notes field)
     const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
 
-    // Get user's prediction/trivia points
+    // Get user's prediction/trivia/poll points (all in user_predictions now)
     const { data: predictions } = await supabase
       .from('user_predictions')
       .select('points_earned')
@@ -112,32 +112,9 @@ serve(async (req) => {
     const predictionPoints = (predictions || [])
       .reduce((sum, pred) => sum + (pred.points_earned || 0), 0);
 
-    // Get user's poll votes with points
-    const { data: pollVotes } = await supabase
-      .from('poll_responses')
-      .select('poll_id')
-      .eq('user_id', targetUserId);
-
-    // Get poll points for each vote
-    let pollPoints = 0;
-    if (pollVotes && pollVotes.length > 0) {
-      const pollIds = [...new Set(pollVotes.map(v => v.poll_id))];
-      const { data: polls } = await supabase
-        .from('polls')
-        .select('id, points_reward')
-        .in('id', pollIds);
-      
-      if (polls) {
-        const pollPointsMap = polls.reduce((acc: any, p: any) => {
-          acc[p.id] = p.points_reward || 5;
-          return acc;
-        }, {});
-        
-        pollPoints = pollVotes.reduce((sum, vote) => {
-          return sum + (pollPointsMap[vote.poll_id] || 5);
-        }, 0);
-      }
-    }
+    // Poll points are now included in user_predictions (consolidated system)
+    // No need to query poll_responses separately
+    const pollPoints = 0; // Legacy variable, kept for backwards compatibility
 
     // Calculate totals
     const bookPoints = books.length * 15;
@@ -202,7 +179,7 @@ serve(async (req) => {
         games: games.length,
         reviews: reviews.length,
         predictions: predictions?.length || 0,
-        polls: pollVotes?.length || 0,
+        polls: 0, // Poll votes now counted in predictions
         total: listItems.length
       }
     }), {
