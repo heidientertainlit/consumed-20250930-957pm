@@ -505,6 +505,58 @@ export default function Track() {
           </div>
         )}
 
+        {/* Queue Preview Section */}
+        {(() => {
+          const queueList = userLists.find((list: any) => list.title === "Queue");
+          const queueItems = queueList?.items || [];
+          
+          if (queueItems.length > 0) {
+            return (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                  Looking for something to consume? Here's what's in your Queue:
+                </h3>
+                
+                {/* Horizontal scrollable list */}
+                <div className="relative">
+                  <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    {queueItems.slice(0, 10).map((item: any) => (
+                      <div
+                        key={item.id}
+                        className="flex-shrink-0 w-32 snap-start cursor-pointer active:scale-95 transition-transform"
+                        onClick={() => setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`)}
+                        data-testid={`queue-item-${item.id}`}
+                      >
+                        <div className="relative rounded-lg overflow-hidden shadow-md mb-2 aspect-[2/3]">
+                          <img
+                            src={item.image_url || '/placeholder.png'}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/placeholder.png';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        </div>
+                        <h4 className="text-sm font-medium text-gray-800 line-clamp-2 leading-tight">
+                          {item.title}
+                        </h4>
+                        {item.creator && item.creator !== 'Unknown' && (
+                          <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
+                            {item.creator}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         {/* Lists Section */}
         <div className="mb-4 md:mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Lists</h2>
