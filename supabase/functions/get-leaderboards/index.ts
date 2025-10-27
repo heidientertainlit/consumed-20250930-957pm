@@ -212,6 +212,40 @@ serve(async (req) => {
         }
       });
 
+      // For vote_leader, also include poll votes (from poll_responses table)
+      if (category === 'vote_leader') {
+        // Get all poll votes
+        const { data: pollVotes } = await supabase
+          .from('poll_responses')
+          .select('user_id, poll_id');
+        
+        if (pollVotes && pollVotes.length > 0) {
+          // Get unique poll IDs
+          const pollIds = [...new Set(pollVotes.map(v => v.poll_id))];
+          
+          // Get poll points for each poll
+          const { data: polls } = await supabase
+            .from('polls')
+            .select('id, points_reward')
+            .in('id', pollIds);
+          
+          if (polls) {
+            // Create a map of poll_id -> points_reward
+            const pollPointsMap = polls.reduce((acc: any, p: any) => {
+              acc[p.id] = p.points_reward || 1;
+              return acc;
+            }, {});
+            
+            // Add poll points to user totals
+            pollVotes.forEach((vote: any) => {
+              const userId = vote.user_id;
+              const points = pollPointsMap[vote.poll_id] || 1;
+              userPoints[userId] = (userPoints[userId] || 0) + points;
+            });
+          }
+        }
+      }
+
       // Convert to leaderboard format
       const leaderboard = Object.entries(userPoints)
         .map(([userId, points]) => ({
