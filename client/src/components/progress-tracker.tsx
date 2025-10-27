@@ -200,7 +200,7 @@ export function ProgressTracker({
         <Button
           onClick={() => moveToListMutation.mutate('finished')}
           disabled={moveToListMutation.isPending}
-          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-sm py-2 rounded-r-none"
+          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-r-none"
           data-testid={`button-mark-finished-${itemId}`}
         >
           Finished
@@ -209,10 +209,10 @@ export function ProgressTracker({
           <DropdownMenuTrigger asChild>
             <Button
               disabled={moveToListMutation.isPending}
-              className="px-3 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 border-l-0 rounded-l-none"
+              className="px-2 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 border-l-0 rounded-l-none h-8"
               data-testid={`button-dropdown-${itemId}`}
             >
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
@@ -251,8 +251,8 @@ export function ProgressTracker({
       {/* Mode toggle for books and TV shows */}
       {canToggleMode && (
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${mode !== 'percent' ? 'text-purple-600' : 'text-gray-500'}`}>
+          <div className="flex items-center gap-3">
+            <span className={`text-sm font-semibold ${mode !== 'percent' ? 'text-purple-600' : 'text-gray-400'}`}>
               {isBook ? 'Page #' : 'Episode'}
             </span>
             <Switch
@@ -269,10 +269,10 @@ export function ProgressTracker({
                   }
                 }
               }}
-              className="data-[state=checked]:bg-purple-600"
+              className="data-[state=checked]:bg-purple-600 scale-125"
               data-testid={`switch-mode-${itemId}`}
             />
-            <span className={`text-sm font-medium ${mode === 'percent' ? 'text-purple-600' : 'text-gray-500'}`}>
+            <span className={`text-sm font-semibold ${mode === 'percent' ? 'text-purple-600' : 'text-gray-400'}`}>
               Percent
             </span>
           </div>
@@ -398,7 +398,7 @@ export function ProgressTracker({
         <Button
           onClick={() => moveToListMutation.mutate('finished')}
           disabled={moveToListMutation.isPending}
-          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-sm py-2 rounded-r-none"
+          className="flex-1 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 text-xs py-1.5 h-8 rounded-r-none"
           data-testid={`button-mark-finished-${itemId}`}
         >
           Finished
@@ -407,10 +407,10 @@ export function ProgressTracker({
           <DropdownMenuTrigger asChild>
             <Button
               disabled={moveToListMutation.isPending}
-              className="px-3 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 border-l-0 rounded-l-none"
+              className="px-2 bg-white hover:bg-gray-50 text-purple-800 border-2 border-purple-800 border-l-0 rounded-l-none h-8"
               data-testid={`button-dropdown-${itemId}`}
             >
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
