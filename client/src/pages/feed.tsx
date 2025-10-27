@@ -369,6 +369,7 @@ export default function Feed() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/polls", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
       if (data?.pointsAwarded) {
         console.log(`✅ Poll vote submitted! Earned ${data.pointsAwarded} points`);
       }
