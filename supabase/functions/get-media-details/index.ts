@@ -187,21 +187,61 @@ serve(async (req) => {
         }
       }
     } else if (source === 'openlibrary') {
-      const response = await fetch(`https://openlibrary.org/works/${externalId}.json`);
+      let response;
+      let data;
       
-      if (response.ok) {
-        const data = await response.json();
-        const authorResponse = await fetch(`https://openlibrary.org${data.authors?.[0]?.author?.key}.json`);
+      // Check if externalId is an ISBN (all digits and hyphens)
+      const isISBN = /^[\d-]+$/.test(externalId);
+      
+      if (isISBN) {
+        // Lookup by ISBN first to get the work ID
+        response = await fetch(`https://openlibrary.org/isbn/${externalId}.json`);
+        
+        if (response.ok) {
+          const bookData = await response.json();
+          // Get the work details using the work key
+          if (bookData.works?.[0]?.key) {
+            const workId = bookData.works[0].key.replace('/works/', '');
+            const workResponse = await fetch(`https://openlibrary.org/works/${workId}.json`);
+            if (workResponse.ok) {
+              data = await workResponse.json();
+              data.isbn = externalId; // Store ISBN for later use
+            }
+          } else {
+            // Fallback: use the book edition data directly
+            data = bookData;
+            data.first_publish_date = bookData.publish_date;
+            data.subjects = bookData.subjects || [];
+          }
+        }
+      } else {
+        // Standard work ID lookup
+        response = await fetch(`https://openlibrary.org/works/${externalId}.json`);
+        if (response.ok) {
+          data = await response.json();
+        }
+      }
+      
+      if (data) {
+        const authorResponse = await fetch(`https://openlibrary.org${data.authors?.[0]?.author?.key || data.authors?.[0]?.key}.json`);
         const authorData = authorResponse.ok ? await authorResponse.json() : null;
+
+        // Get cover image - prefer ISBN-based lookup for better quality
+        let coverUrl = null;
+        if (data.isbn || isISBN) {
+          coverUrl = `https://covers.openlibrary.org/b/isbn/${data.isbn || externalId}-L.jpg`;
+        } else if (data.covers?.[0]) {
+          coverUrl = `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg`;
+        }
 
         mediaDetails = {
           title: data.title,
           type: 'Book',
-          creator: authorData?.name || 'Unknown Author',
-          artwork: data.covers?.[0] ? `https://covers.openlibrary.org/b/id/${data.covers[0]}-L.jpg` : null,
+          creator: authorData?.name || data.by_statement || 'Unknown Author',
+          artwork: coverUrl,
           description: typeof data.description === 'string' ? data.description : data.description?.value || 'No description available.',
           rating: '4.2',
-          releaseDate: data.first_publish_date,
+          releaseDate: data.first_publish_date || data.publish_date,
           category: data.subjects?.[0] || 'Fiction',
           language: 'English',
           totalEpisodes: 0,
@@ -222,7 +262,7 @@ serve(async (req) => {
             {
               name: 'Open Library',
               logo: 'https://openlibrary.org/static/images/openlibrary-logo-tighter.svg',
-              url: `https://openlibrary.org/works/${externalId}`
+              url: isISBN ? `https://openlibrary.org/isbn/${externalId}` : `https://openlibrary.org/works/${externalId}`
             }
           ]
         };
