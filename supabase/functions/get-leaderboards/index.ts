@@ -8,6 +8,10 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Version logging to verify deployment
+  const BUILD_VERSION = '2025-10-27-poll-votes-fix';
+  console.info('🚀 get-leaderboards BUILD:', BUILD_VERSION);
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -565,13 +569,23 @@ serve(async (req) => {
       .slice(0, limit);
 
     return new Response(JSON.stringify(sortedLeaderboard), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'x-build-version': BUILD_VERSION
+      }
     });
 
   } catch (error) {
     console.error('Get leaderboards error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'x-build-version': BUILD_VERSION
+      },
       status: 500
     });
   }
