@@ -196,7 +196,7 @@ export function ProgressTracker({
   // Movies, Music, and Podcasts show single button with dropdown
   if (showQuickActions) {
     return (
-      <div className="mb-3 flex justify-center" data-testid={`progress-tracker-${itemId}`}>
+      <div className="mb-3" data-testid={`progress-tracker-${itemId}`}>
         <div className="flex w-48">
           <Button
             onClick={() => moveToListMutation.mutate('finished')}
@@ -396,7 +396,7 @@ export function ProgressTracker({
       )}
 
       {/* Action button with dropdown */}
-      <div className="flex justify-center mt-3">
+      <div className="mt-3">
         <div className="flex w-48">
           <Button
             onClick={() => moveToListMutation.mutate('finished')}
