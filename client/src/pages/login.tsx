@@ -330,7 +330,7 @@ export default function LoginPage() {
           <DialogHeader>
             <DialogTitle className="text-black">Reset Password</DialogTitle>
             <DialogDescription className="text-gray-600">
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email address and we'll send you a link to reset your password. (Make sure to check your spam for the email)
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForgotPassword} className="space-y-4 py-4">
