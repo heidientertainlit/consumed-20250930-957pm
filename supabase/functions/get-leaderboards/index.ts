@@ -569,23 +569,13 @@ serve(async (req) => {
       .slice(0, limit);
 
     return new Response(JSON.stringify(sortedLeaderboard), {
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        'x-build-version': BUILD_VERSION
-      }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error('Get leaderboards error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        'x-build-version': BUILD_VERSION
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500
     });
   }

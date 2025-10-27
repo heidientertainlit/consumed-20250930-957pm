@@ -39,7 +39,7 @@ const fetchLeaderboard = async (session: any, category: string = 'all_time', lim
     limit: limit.toString(),
   });
 
-  const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-leaderboards?${params}`, {
+  const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-leaderboards-v2?${params}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${session.access_token}`,
