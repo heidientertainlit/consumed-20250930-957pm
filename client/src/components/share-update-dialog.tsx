@@ -263,13 +263,13 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
         <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
           {/* Spoiler Warning Checkbox - At Top */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center space-x-3">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-center space-x-2">
               <Checkbox
                 id="spoilers"
                 checked={containsSpoilers}
                 onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
-                className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 w-5 h-5"
+                className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 w-4 h-4"
                 data-testid="spoiler-checkbox"
               />
               <label
@@ -283,7 +283,8 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
           {/* Media Types Selection */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Select a media type for more accurate results.</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Add Media To your Post</h3>
+            <p className="text-sm text-gray-600 mb-3">Select a media type for more accurate results</p>
 
             {/* Category Checkboxes - 2 Column Layout */}
             <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-6">
@@ -330,11 +331,8 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
                 );
               })}
             </div>
-          </div>
 
-          {/* Search for Media Section */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Specific Media to your post</h3>
+            <p className="text-sm text-gray-600 mb-3">Search for media</p>
 
             {/* Search Input with blue border like in screenshot */}
             <Input
