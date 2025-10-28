@@ -79,6 +79,7 @@ export const socialPosts = pgTable("social_posts", {
   mediaExternalSource: text("media_external_source"),
   mediaDescription: text("media_description"),
   visibility: text("visibility").default("public"),
+  containsSpoilers: boolean("contains_spoilers").default(false),
   likesCount: integer("likes_count").default(0),
   commentsCount: integer("comments_count").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),

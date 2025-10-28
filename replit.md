@@ -30,6 +30,7 @@ Preferred communication style: Simple, everyday language.
 -   **Trivia Scoring**: Points are awarded only for correct answers, with specific logic for different trivia formats.
 -   **Smart Recommendations Caching System**: Provides instant loading of personalized recommendations (<1 second) via a `user_recommendations` cache table. Background AI generation (GPT-4o) analyzes diverse user data, and `rebuild-recommendations` edge function enriches these with real poster images from TMDB/Google Books. The system ensures recommendations are never empty during regeneration and features auto-polling for updates.
 -   **Creator Follow System**: Manages following creators using a `followed_creators` table. Includes multi-source creator search, follow/unfollow functionality via edge functions, and a `get-creator-updates` edge function to fetch recent and popular content from followed creators, integrated into the main feed.
+-   **Spoiler Protection System**: Posts can be marked as containing spoilers via a checkbox in the share dialog. Spoiler posts show a blurred preview with a reveal overlay in the feed, protecting users from unwanted spoilers until they choose to view the content.
 
 ### Feature Specifications
 -   **Media Tracking**: Simplified list-based system for tracking entertainment items with privacy controls.
@@ -42,6 +43,7 @@ Preferred communication style: Simple, everyday language.
 -   **Creator Recognition**: "Favorite Creators" are computed based on user media consumption.
 -   **Media Item Pages**: Displays dynamic platform availability (e.g., Netflix, Spotify) via "Watch On", "Listen On", or "Read On" links.
 -   **Polls/Surveys System**: Database-backed polling system supporting branded and sponsored polls with real-time voting, duplicate vote prevention, and points rewards.
+-   **Spoiler Tags**: Users can mark posts as containing spoilers when sharing updates, with content hidden behind a reveal button in the feed to protect other users from spoilers.
 
 ### System Design Choices
 -   **Database Schema**: Synced development and production schemas with strict naming conventions (e.g., `user_name`). Critical tables like `lists` and `list_items` are designed to ensure data integrity and avoid non-existent columns in production.

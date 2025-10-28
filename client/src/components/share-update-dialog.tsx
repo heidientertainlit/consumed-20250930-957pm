@@ -38,6 +38,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
   const [rating, setRating] = useState<string>("");
   const [starHover, setStarHover] = useState<number>(0);
   const [isPosting, setIsPosting] = useState(false);
+  const [containsSpoilers, setContainsSpoilers] = useState(false);
 
   const mediaTypes = [
     { id: "all", label: "All Types" },
@@ -159,6 +160,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
     setSelectedMedia(null);
     setRating("");
     setThoughts("");
+    setContainsSpoilers(false);
   };
 
   const handlePost = async () => {
@@ -187,7 +189,8 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
       media_image_url: selectedMedia.image,
       rating: rating ? parseFloat(rating) : null,
       media_external_id: selectedMedia.external_id || null,
-      media_external_source: selectedMedia.external_source || null
+      media_external_source: selectedMedia.external_source || null,
+      contains_spoilers: containsSpoilers
     };
     
     console.log('📤 Posting data:', postData);
@@ -462,6 +465,23 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
               <div className="absolute bottom-3 right-3 text-sm text-gray-400 pointer-events-none">
                 {thoughts.length}/500
               </div>
+            </div>
+            
+            {/* Spoiler Warning Checkbox */}
+            <div className="flex items-center space-x-2 mt-4">
+              <Checkbox
+                id="spoilers"
+                checked={containsSpoilers}
+                onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
+                className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 w-5 h-5"
+                data-testid="spoiler-checkbox"
+              />
+              <label
+                htmlFor="spoilers"
+                className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+              >
+                ⚠️ This post contains spoilers
+              </label>
             </div>
           </div>
         </div>

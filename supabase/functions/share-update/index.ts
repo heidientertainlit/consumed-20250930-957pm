@@ -86,7 +86,7 @@ serve(async (req) => {
         });
       }
 
-      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source } = body;
+      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers } = body;
 
       console.log('Creating post for user:', appUser.id);
       console.log('Request body:', body);
@@ -102,7 +102,8 @@ serve(async (req) => {
           image_url: media_image_url,
           rating,
           media_external_id: media_external_id || null,
-          media_external_source: media_external_source || null
+          media_external_source: media_external_source || null,
+          contains_spoilers: contains_spoilers || false
         })
         .select()
         .single();

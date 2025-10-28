@@ -105,7 +105,8 @@ serve(async (req) => {
           image_url, 
           media_external_id, 
           media_external_source, 
-          media_description
+          media_description,
+          contains_spoilers
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -161,6 +162,7 @@ serve(async (req) => {
           comments: post.comments_count || 0,
           shares: 0,
           likedByCurrentUser: likedPostIds.has(post.id),
+          containsSpoilers: post.contains_spoilers || false,
           rating: post.rating,
           progress: post.progress,
           mediaItems: hasMedia ? [{
