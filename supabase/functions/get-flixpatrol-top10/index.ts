@@ -23,64 +23,64 @@ serve(async (req) => {
       throw new Error('TMDB_API_KEY not configured');
     }
 
-    // FlixPatrol company and country codes
-    const NETFLIX_ID = 'cmp_IA6TdMqwf6kuyQvxo9bJ4nKX';
-    // US country code - will find this dynamically
+    // Platform and country IDs
+    const platforms = [
+      { id: 'cmp_IA6TdMqwf6kuyQvxo9bJ4nKX', name: 'Netflix' },
+      { id: 'cmp_oGtsgdpOrjIu3XzTEnWPt87Y', name: 'Disney+' },
+      { id: 'cmp_6UhCvnTeRkgZUtcNGslX9bJL', name: 'HBO Max' },
+      { id: 'cmp_qypvowjqFhEIpCc0HlQ6VoYk', name: 'Amazon Prime' },
+      { id: 'cmp_9iwHIMYOCvD6zprSPoHgTJau', name: 'Hulu' },
+    ];
     
-    // First, get the US country code by querying countries endpoint
-    console.log('Fetching US country code...');
-    const countriesResponse = await fetch('https://api.flixpatrol.com/v2/countries', {
-      headers: {
-        'Authorization': `Basic ${btoa(`${FLIXPATROL_API_KEY}:`)}`,
-      },
-    });
-
-    if (!countriesResponse.ok) {
-      throw new Error(`Failed to fetch countries: ${countriesResponse.status}`);
-    }
-
-    const countries = await countriesResponse.json();
-    const usCountry = countries.find((c: any) => c.code === 'US');
-    
-    if (!usCountry) {
-      throw new Error('US country code not found');
-    }
-
-    const US_ID = usCountry.id;
-    console.log('US country ID:', US_ID);
-
-    // Get today's date in YYYY-MM-DD format
+    const US_COUNTRY_ID = 'cnt_RpYbGi0mzOncND8jVoZ2HSTv';
     const today = new Date().toISOString().split('T')[0];
 
-    // Fetch Netflix US top 10 TV shows for today
-    console.log('Fetching Netflix US top 10 TV shows...');
-    const top10Url = new URL('https://api.flixpatrol.com/v2/top10s');
-    top10Url.searchParams.append('company[eq]', NETFLIX_ID);
-    top10Url.searchParams.append('country[eq]', US_ID);
-    top10Url.searchParams.append('type[eq]', '3'); // 3 = TV Shows
-    top10Url.searchParams.append('date[from]', today);
-    top10Url.searchParams.append('date[to]', today);
-    top10Url.searchParams.append('ranking[lte]', '20'); // Top 20
+    console.log(`Fetching top 10s from ${platforms.length} platforms for ${today}`);
 
-    const top10Response = await fetch(top10Url.toString(), {
-      headers: {
-        'Authorization': `Basic ${btoa(`${FLIXPATROL_API_KEY}:`)}`,
-      },
-    });
+    // Fetch from all platforms in parallel
+    const allResults = await Promise.all(
+      platforms.map(async (platform) => {
+        try {
+          const top10Url = new URL('https://api.flixpatrol.com/v2/top10s');
+          top10Url.searchParams.append('company[eq]', platform.id);
+          top10Url.searchParams.append('country[eq]', US_COUNTRY_ID);
+          top10Url.searchParams.append('type[eq]', '3'); // 3 = TV Shows
+          top10Url.searchParams.append('date[from]', today);
+          top10Url.searchParams.append('date[to]', today);
+          top10Url.searchParams.append('ranking[lte]', '10'); // Top 10 per platform
 
-    if (!top10Response.ok) {
-      throw new Error(`Failed to fetch top 10: ${top10Response.status} ${await top10Response.text()}`);
-    }
+          const response = await fetch(top10Url.toString(), {
+            headers: {
+              'Authorization': `Basic ${btoa(`${FLIXPATROL_API_KEY}:`)}`,
+            },
+          });
 
-    const top10Data = await top10Response.json();
-    console.log(`Found ${top10Data.length} titles in Netflix US top 10`);
+          if (!response.ok) {
+            console.error(`Failed to fetch ${platform.name} top 10: ${response.status}`);
+            return [];
+          }
 
-    // For each title, we need to:
-    // 1. Get the full title info from FlixPatrol (to get TMDB ID)
-    // 2. Fetch poster image from TMDB
+          const data = await response.json();
+          console.log(`${platform.name}: Found ${data.length} titles`);
+          
+          return data.map((item: any) => ({
+            ...item,
+            platformName: platform.name,
+          }));
+        } catch (error) {
+          console.error(`Error fetching ${platform.name}:`, error);
+          return [];
+        }
+      })
+    );
 
+    // Flatten all results
+    const allTop10Items = allResults.flat();
+    console.log(`Total items from all platforms: ${allTop10Items.length}`);
+
+    // Enrich with TMDB data
     const enrichedTitles = await Promise.all(
-      top10Data.map(async (item: any) => {
+      allTop10Items.map(async (item: any) => {
         try {
           // Fetch title details from FlixPatrol
           const titleResponse = await fetch(`https://api.flixpatrol.com/v2/titles/${item.movie}`, {
@@ -96,11 +96,11 @@ serve(async (req) => {
 
           const titleData = await titleResponse.json();
           
-          // Extract TMDB ID from title data
-          const tmdbId = titleData.tmdb?.id || titleData.imdb; // Fallback to IMDb if no TMDB
+          // Get TMDB ID
+          const tmdbId = titleData.tmdb?.id;
           
           if (!tmdbId) {
-            console.error(`No TMDB ID found for title ${item.movie}`);
+            console.log(`No TMDB ID for ${titleData.name}, skipping`);
             return null;
           }
 
@@ -123,28 +123,36 @@ serve(async (req) => {
           }
 
           return {
-            id: tmdbId,
+            id: `${item.platformName}-${tmdbId}`,
             title,
             year,
             imageUrl: posterPath,
             mediaType: 'tv',
             ranking: item.ranking,
+            platform: item.platformName,
             externalId: tmdbId,
             externalSource: 'tmdb',
           };
         } catch (error) {
-          console.error(`Error enriching title ${item.movie}:`, error);
+          console.error(`Error enriching title:`, error);
           return null;
         }
       })
     );
 
-    // Filter out nulls and sort by ranking
+    // Filter nulls, remove duplicates, and sort
+    const seenTitles = new Set();
     const finalTitles = enrichedTitles
-      .filter(t => t !== null)
-      .sort((a, b) => a.ranking - b.ranking);
+      .filter(t => {
+        if (!t || !t.externalId) return false;
+        if (seenTitles.has(t.externalId)) return false;
+        seenTitles.add(t.externalId);
+        return true;
+      })
+      .sort((a, b) => a.ranking - b.ranking)
+      .slice(0, 30); // Limit to 30 total shows across all platforms
 
-    console.log(`Successfully enriched ${finalTitles.length} titles`);
+    console.log(`Successfully enriched ${finalTitles.length} unique titles`);
 
     return new Response(JSON.stringify(finalTitles), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

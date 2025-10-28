@@ -818,23 +818,30 @@ export default function Feed() {
     });
   };
 
-  // Fetch trending TV shows from TMDB with platform info
+  // Fetch top 10 TV shows from multiple platforms (FlixPatrol)
   const { data: trendingTVShows = [] } = useQuery({
-    queryKey: ['trending-tv-shows'],
+    queryKey: ['flixpatrol-multi-platform-top10'],
     queryFn: async () => {
       try {
         const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
+        console.log('📺 Fetching multi-platform top 10 from FlixPatrol...');
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-flixpatrol-top10`, {
           headers: {
             'Authorization': `Bearer ${anonKey}`,
             'Content-Type': 'application/json',
           },
         });
         if (!response.ok) {
-          console.error('Failed to fetch trending TV shows');
+          console.error('❌ Failed to fetch FlixPatrol top 10:', response.status, await response.text());
           return [];
         }
         const data = await response.json();
+        console.log('✅ FlixPatrol data received:', data.length, 'shows');
+        
+        if (data.error) {
+          console.error('❌ FlixPatrol API error:', data.error);
+          return [];
+        }
         // Add externalId and externalSource for MediaCarousel compatibility
         return data.map((item: any) => ({
           ...item,
@@ -1035,10 +1042,10 @@ export default function Feed() {
             </Button>
           </div>
 
-          {/* Static Trending TV Shows Carousel */}
+          {/* Multi-Platform Top 10 TV Shows (FlixPatrol) */}
           {trendingTVShows.length > 0 && (
             <MediaCarousel
-              title="Top Trending TV Shows"
+              title="Top Streaming TV Shows (Netflix, Disney+, HBO, Amazon, Hulu)"
               mediaType="tv"
               items={trendingTVShows}
               onItemClick={handleMediaClick}
