@@ -222,20 +222,23 @@ export default function PlayPollsPage() {
                       <>
                         <div className="text-gray-600 text-sm font-medium">Quick Vote:</div>
                         <div className="grid grid-cols-2 gap-3">
-                          {(game.options || []).slice(0, 2).map((option: string, index: number) => (
-                            <button
-                              key={option}
-                              onClick={() => handleOptionSelect(game.id, option)}
-                              className={`p-4 text-left rounded-lg border-2 transition-all ${
-                                selectedAnswers[game.id] === option
-                                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                              }`}
-                              data-testid={`option-${game.id}-${index}`}
-                            >
-                              <div className="text-sm font-medium text-gray-900">{option}</div>
-                            </button>
-                          ))}
+                          {(game.options || []).slice(0, 2).map((option: any, index: number) => {
+                            const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => handleOptionSelect(game.id, optionText)}
+                                className={`p-4 text-left rounded-lg border-2 transition-all ${
+                                  selectedAnswers[game.id] === optionText
+                                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                }`}
+                                data-testid={`option-${game.id}-${index}`}
+                              >
+                                <div className="text-sm font-medium text-gray-900">{optionText}</div>
+                              </button>
+                            );
+                          })}
                         </div>
                         <Button
                           onClick={() => handleSubmitAnswer(game)}

@@ -460,9 +460,16 @@ export default function Feed() {
   });
 
   const handlePollVote = async (pollId: string | number, optionId: string | number) => {
+    // Find the poll and get the actual option text from the ID
+    const poll = polls.find(p => p.id === pollId);
+    const option = poll?.options?.find((opt: any) => opt.id === optionId);
+    const optionText = option?.label || String(optionId);
+    
+    console.log('🗳️ Voting:', { pollId, optionId, optionText });
+    
     await pollVoteMutation.mutateAsync({ 
       pollId: String(pollId), 
-      optionId: String(optionId) 
+      optionId: optionText // Pass the label, not the numeric ID
     });
   };
 
