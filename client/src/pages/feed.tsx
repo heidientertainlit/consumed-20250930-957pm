@@ -184,13 +184,16 @@ export default function Feed() {
       // Get vote counts for all polls
       const { data: allVotes } = await supabase
         .from('user_predictions')
-        .select('pool_id, prediction');
+        .select('pool_id, prediction, user_id');
 
-      // Filter out games user has already voted on and transform for PollCard
-      const unvotedPolls = (data || [])
-        .filter(poll => !votedPoolIds.has(poll.id))
+      // Transform ALL polls (including voted ones) for PollCard
+      // Keep voted polls to show results with percentages
+      const allPolls = (data || [])
         .map(poll => {
-          console.log('🔍 Transforming poll:', poll.id, 'Options type:', typeof poll.options, 'First option:', poll.options?.[0]);
+          const hasVoted = votedPoolIds.has(poll.id);
+          const userVote = userVotes?.find(v => v.pool_id === poll.id);
+          
+          console.log('🔍 Transforming poll:', poll.id, 'Has voted:', hasVoted);
           
           // Transform options from string array to PollCard format
           const options = Array.isArray(poll.options) 
@@ -230,13 +233,14 @@ export default function Feed() {
             total_votes: totalVotes,
             options,
             expires_at: poll.deadline,
-            user_has_voted: false,
+            user_has_voted: hasVoted,
           };
-        });
+        })
+        .slice(0, 5); // Limit to 5 polls in feed
 
-      console.log('✅ Loaded vote games (polls):', unvotedPolls.length, 'unvoted out of', data?.length || 0);
+      console.log('✅ Loaded vote games (polls):', allPolls.length, 'total polls');
       
-      return unvotedPolls;
+      return allPolls;
     },
     enabled: !!session?.access_token && !!user?.id,
   });
