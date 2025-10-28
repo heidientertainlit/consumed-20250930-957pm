@@ -818,13 +818,12 @@ export default function Feed() {
     });
   };
 
-  // Fetch top 10 TV shows from multiple platforms (FlixPatrol)
+  // Fetch trending TV shows from TMDB
   const { data: trendingTVShows = [] } = useQuery({
     queryKey: ['trending-tv-shows'],
     queryFn: async () => {
       try {
         const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        console.log('📺 Fetching multi-platform top 10 from FlixPatrol...');
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
           headers: {
             'Authorization': `Bearer ${anonKey}`,
@@ -832,16 +831,10 @@ export default function Feed() {
           },
         });
         if (!response.ok) {
-          console.error('❌ Failed to fetch FlixPatrol top 10:', response.status, await response.text());
+          console.error('Failed to fetch trending TV shows');
           return [];
         }
         const data = await response.json();
-        console.log('✅ FlixPatrol data received:', data.length, 'shows');
-        
-        if (data.error) {
-          console.error('❌ FlixPatrol API error:', data.error);
-          return [];
-        }
         // Add externalId and externalSource for MediaCarousel compatibility
         return data.map((item: any) => ({
           ...item,
@@ -1042,10 +1035,10 @@ export default function Feed() {
             </Button>
           </div>
 
-          {/* Multi-Platform Top 10 TV Shows (FlixPatrol) */}
+          {/* Static Trending TV Shows Carousel */}
           {trendingTVShows.length > 0 && (
             <MediaCarousel
-              title="Top Streaming TV Shows (Netflix, Disney+, HBO, Amazon, Hulu)"
+              title="Top Trending TV Shows"
               mediaType="tv"
               items={trendingTVShows}
               onItemClick={handleMediaClick}
