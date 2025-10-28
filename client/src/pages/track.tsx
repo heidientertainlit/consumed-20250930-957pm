@@ -570,15 +570,11 @@ export default function Track() {
               </SelectTrigger>
               <SelectContent className="bg-white">
                 {/* System Lists */}
-                {systemListTitles.map((filter) => {
-                  const list = userLists.find((l: any) => l.title === filter);
-                  const itemCount = list?.items?.length || 0;
-                  return (
-                    <SelectItem key={filter} value={filter} className="text-black hover:bg-gray-100 text-lg py-4">
-                      {filter} ({itemCount})
-                    </SelectItem>
-                  );
-                })}
+                {systemListTitles.map((filter) => (
+                  <SelectItem key={filter} value={filter} className="text-black hover:bg-gray-100 text-lg py-4">
+                    {filter}
+                  </SelectItem>
+                ))}
                 
                 {/* Custom Lists Separator */}
                 {customLists.length > 0 && (
@@ -592,7 +588,7 @@ export default function Track() {
                   <SelectItem key={list.id} value={list.title} className="text-black hover:bg-gray-100 text-lg py-4 pl-6">
                     <div className="flex items-center">
                       <List className="text-purple-600 mr-2" size={16} />
-                      {list.title} ({list.items?.length || 0})
+                      {list.title}
                     </div>
                   </SelectItem>
                 ))}
