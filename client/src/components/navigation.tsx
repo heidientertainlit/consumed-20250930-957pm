@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
+import DirectSearchDialog from "./direct-search-dialog";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -10,6 +12,7 @@ interface NavigationProps {
 export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const [location] = useLocation();
   const { user } = useAuth();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <>
@@ -24,12 +27,19 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             />
           </Link>
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              data-testid="search-button"
+            >
+              <Search className="text-white" size={18} />
+            </button>
             <Link href="/discover">
               <button
                 className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
                 data-testid="discover-button"
               >
-                <span className="text-white text-sm">🔍✨</span>
+                <span className="text-white text-lg">✨</span>
               </button>
             </Link>
             <NotificationBell />
@@ -90,6 +100,12 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
         </div>
       </nav>
+
+      {/* Direct Search Dialog */}
+      <DirectSearchDialog 
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
     </>
   );
 }

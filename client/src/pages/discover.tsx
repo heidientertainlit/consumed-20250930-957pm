@@ -252,22 +252,31 @@ export default function Discover() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-semibold text-black mb-3 flex items-center gap-2">
-            <span>🔍✨</span> Discover
+            <span>✨</span> Discover
           </h1>
           <p className="text-base text-gray-600">
-            Search for anything or explore trending content across all platforms
+            Get AI-powered recommendations or explore trending content across all platforms
           </p>
         </div>
 
-        {/* Search Section */}
+        {/* AI Recommendation Engine Section */}
         <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-3xl p-6 shadow-sm border border-purple-100">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Sparkles className="text-purple-600" size={20} />
+              AI Recommendation Engine
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Describe what you're in the mood for and get personalized suggestions
+            </p>
+          </div>
           <div className="relative">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <Input
                   type="text"
-                  placeholder="Search for movies, shows, books, music..."
+                  placeholder="Try 'uplifting movies' or 'sci-fi like Blade Runner'..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
