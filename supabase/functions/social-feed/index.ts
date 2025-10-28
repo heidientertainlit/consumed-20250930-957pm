@@ -50,25 +50,39 @@ serve(async (req) => {
       
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
-        .insert({
+        .upsert({
           id: user.id,
           email: user.email,
           user_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user',
           first_name: user.user_metadata?.first_name || '',
           last_name: user.user_metadata?.last_name || '',
           display_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user'
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
         })
         .select('id, email, user_name')
         .single();
 
       if (createError) {
-        console.error('Failed to create user:', createError);
-        return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+        console.error('Failed to create/update user:', createError);
+        // Try to fetch existing user instead
+        const { data: existingUser } = await supabaseAdmin
+          .from('users')
+          .select('id, email, user_name')
+          .eq('id', user.id)
+          .single();
+        appUser = existingUser || null;
+      } else {
+        appUser = newUser;
+      }
+      
+      if (!appUser) {
+        return new Response(JSON.stringify({ error: 'Failed to initialize user' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      appUser = newUser;
     } else if (appUserError) {
       console.error('App user error:', appUserError);
       return new Response(JSON.stringify({ error: 'Database error' }), {
