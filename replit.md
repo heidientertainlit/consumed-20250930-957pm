@@ -11,9 +11,13 @@ Preferred communication style: Simple, everyday language.
 ### UI/UX Decisions
 -   **Mobile-first design**: Optimized for mobile devices.
 -   **Dark gradient theme**: Sophisticated dark theme throughout the application.
--   **Bottom navigation**: Primary navigation uses a persistent bottom bar (Feed, Track, Play, Leaderboard).
+-   **Bottom navigation**: Primary navigation uses a persistent bottom bar (Feed, Track, Play, Leaderboard, Friends).
+-   **Top navigation**: Search (🔍) for direct friend/media lookup, Discover (✨) for AI recommendations, Notifications, and Profile.
 -   **Component Library**: shadcn/ui, built with Radix UI primitives and styled with Tailwind CSS.
 -   **Button Theme**: All buttons default to purple (`bg-purple-600`) with white text; outline buttons use a purple border with a white background. No black buttons are used.
+-   **Dual Search System**: 
+    -   **Direct Search** (🔍 in top nav): Quick search for friends and entertainment to add to lists or send friend requests. Uses `DirectSearchDialog` component with real-time debounced search across `media-search` and `search-users` edge functions.
+    -   **Discover Page** (✨ in top nav): AI-powered recommendation engine for conversational queries. Users describe what they're looking for (e.g., "uplifting movies" or "sci-fi like Blade Runner") and receive personalized suggestions via the `conversational-search` edge function.
 
 ### Technical Implementations
 -   **Frontend**: React 18 with TypeScript, Wouter for routing, TanStack Query for server state management, and Vite for building.
@@ -44,6 +48,7 @@ Preferred communication style: Simple, everyday language.
 -   **Media Item Pages**: Displays dynamic platform availability (e.g., Netflix, Spotify) via "Watch On", "Listen On", or "Read On" links.
 -   **Polls/Surveys System**: Database-backed polling system supporting branded and sponsored polls with real-time voting, duplicate vote prevention, and points rewards.
 -   **Spoiler Tags**: Users can mark posts as containing spoilers when sharing updates, with content hidden behind a reveal button in the feed to protect other users from spoilers.
+-   **Discover Page**: Dedicated page (`/discover`) featuring AI-powered recommendation engine at the top and trending content carousels below. Includes sections for personalized recommendations, trending TV shows, movies, NY Times bestsellers, and podcasts. Users can ask conversational questions to get tailored suggestions.
 
 ### System Design Choices
 -   **Database Schema**: Synced development and production schemas with strict naming conventions (e.g., `user_name`). Critical tables like `lists` and `list_items` are designed to ensure data integrity and avoid non-existent columns in production.
