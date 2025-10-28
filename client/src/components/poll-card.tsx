@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { CheckCircle2, TrendingUp, Calendar, Trophy } from "lucide-react";
+import { useState } from "react";
+import { TrendingUp, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -32,50 +32,29 @@ interface PollCardProps {
   userVote?: number;
 }
 
-export default function PollCard({ poll, onVote, hasVoted = false, userVote }: PollCardProps) {
-  const [selectedOption, setSelectedOption] = useState<number | null>(userVote || null);
+export default function PollCard({ poll, onVote }: PollCardProps) {
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showResults, setShowResults] = useState(hasVoted || poll.user_has_voted);
-  const [justSubmitted, setJustSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Sync showResults with poll.user_has_voted when it changes
-  useEffect(() => {
-    if (poll.user_has_voted && !showResults) {
-      setShowResults(true);
-    }
-  }, [poll.user_has_voted, showResults]);
-
   const handleSelectOption = (optionId: number) => {
-    if (showResults) return;
     setSelectedOption(optionId);
     setErrorMessage(null);
   };
 
   const handleSubmitVote = async () => {
-    if (!selectedOption || showResults || isSubmitting) return;
+    if (!selectedOption || isSubmitting) return;
 
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
-      console.log('🗳️ Submitting vote for poll:', poll.id, 'option:', selectedOption);
       await onVote(poll.id, selectedOption);
-      console.log('✅ Vote submitted successfully!');
-      setJustSubmitted(true);
-      setShowResults(true); // Show results immediately with points
-      // Keep the success message for 3 seconds, then just show results
-      setTimeout(() => {
-        setJustSubmitted(false);
-      }, 3000);
+      // Poll will disappear from feed after successful vote
     } catch (error: any) {
-      console.error("❌ Failed to vote:", error);
-      console.error("Error details:", error?.message, error?.stack);
-      // Check if already voted
-      if (error?.message?.includes('already voted') || error?.response?.status === 400) {
-        setShowResults(true);
+      if (error?.message?.includes('already voted')) {
         setErrorMessage("You've already voted in this poll");
       } else {
-        setErrorMessage(`Failed to submit vote. ${error?.message || 'Please try again.'}`);
+        setErrorMessage("Failed to submit vote. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -108,23 +87,8 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
     }
   };
 
-  // Show success banner at top when just submitted
-  const successBanner = justSubmitted && (
-    <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-4 mb-4 shadow-sm" data-testid={`poll-${poll.id}-success`}>
-      <div className="flex items-center justify-center space-x-2 text-white">
-        <Trophy size={20} />
-        <div className="text-sm font-semibold">
-          Vote Submitted! +{poll.points_reward} pts
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-100 p-4 shadow-sm mb-4" data-testid={`poll-${poll.id}`}>
-      {/* Success banner */}
-      {successBanner}
-      
       {/* Header with badge */}
       <div className="flex items-center justify-between mb-3">
         <div className={cn(
@@ -161,61 +125,26 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
       <div className="space-y-2">
         {poll.options && poll.options.length > 0 ? poll.options.map((option) => {
           const isSelected = selectedOption === option.id;
-          const isWinning = showResults && option.percentage > 0 && option.percentage === Math.max(...poll.options.map(o => o.percentage));
 
           return (
             <button
               key={option.id}
-              onClick={() => !showResults && handleSelectOption(option.id)}
-              disabled={showResults}
+              onClick={() => handleSelectOption(option.id)}
               className={cn(
-                "w-full text-left p-3 rounded-lg border transition-all duration-200 relative overflow-hidden bg-white",
-                showResults
-                  ? "cursor-default"
-                  : "hover:border-purple-300 hover:bg-purple-50 cursor-pointer",
-                isSelected && !showResults
+                "w-full text-left p-3 rounded-lg border transition-all duration-200 bg-white hover:border-purple-300 hover:bg-purple-50 cursor-pointer",
+                isSelected
                   ? "border-purple-500 bg-purple-50 ring-2 ring-purple-200"
-                  : isSelected && showResults
-                  ? "border-purple-400 bg-purple-50"
                   : "border-purple-100"
               )}
               data-testid={`poll-${poll.id}-option-${option.id}`}
             >
-              {/* Results bar background */}
-              {showResults && (
-                <div
-                  className={cn(
-                    "absolute inset-0 transition-all duration-500",
-                    isWinning ? "bg-purple-50" : "bg-gray-50"
-                  )}
-                  style={{ width: `${option.percentage}%` }}
-                />
-              )}
-
-              {/* Content */}
-              <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-800">{option.label}</span>
-                    {isSelected && showResults && (
-                      <CheckCircle2 size={14} className="text-purple-600" />
-                    )}
-                  </div>
+                  <span className="text-sm font-medium text-gray-800">{option.label}</span>
                   {option.description && (
                     <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
                   )}
                 </div>
-
-                {showResults && (
-                  <div className="ml-3 text-right">
-                    <div className="font-semibold text-sm text-gray-900">
-                      {option.percentage}%
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {option.vote_count} {option.vote_count === 1 ? 'vote' : 'votes'}
-                    </div>
-                  </div>
-                )}
               </div>
             </button>
           );
@@ -227,29 +156,14 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
       </div>
 
       {/* Submit Button */}
-      {!showResults && (
-        <Button
-          onClick={handleSubmitVote}
-          disabled={!selectedOption || isSubmitting}
-          className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          data-testid={`poll-${poll.id}-submit`}
-        >
-          {isSubmitting ? "Submitting..." : "Submit Vote"}
-        </Button>
-      )}
-
-      {/* Sponsor CTA */}
-      {poll.type === "sponsored" && poll.sponsor_cta_url && showResults && (
-        <div className="mt-3 pt-3 border-t border-gray-200">
-          <Button
-            onClick={() => window.open(poll.sponsor_cta_url, '_blank')}
-            className="w-full text-sm bg-gradient-to-r from-orange-600 to-pink-600 hover:from-orange-700 hover:to-pink-700 text-white"
-            data-testid={`poll-${poll.id}-cta`}
-          >
-            Learn More
-          </Button>
-        </div>
-      )}
+      <Button
+        onClick={handleSubmitVote}
+        disabled={!selectedOption || isSubmitting}
+        className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        data-testid={`poll-${poll.id}-submit`}
+      >
+        {isSubmitting ? "Submitting..." : "Submit Vote"}
+      </Button>
 
       {/* Error Message */}
       {errorMessage && (
@@ -259,7 +173,7 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
       )}
 
       {/* Footer with expiry */}
-      {poll.expires_at && !showResults && (
+      {poll.expires_at && (
         <div className="mt-3 pt-3 border-t border-gray-100 flex items-center space-x-1.5 text-xs text-gray-500">
           <Calendar size={12} />
           <span>Ends {new Date(poll.expires_at).toLocaleDateString()}</span>

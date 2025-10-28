@@ -178,49 +178,22 @@ export default function Feed() {
         return [];
       }
 
-      console.log('📊 Total vote-type polls from DB:', data?.length);
-      console.log('👤 User has voted on:', votedPoolIds.size, 'polls');
-
-      // Get vote counts for all polls
-      const { data: allVotes } = await supabase
-        .from('user_predictions')
-        .select('pool_id, prediction, user_id');
-
-      // Transform ALL polls (including voted ones) for PollCard
-      // Keep voted polls to show results with percentages
-      const allPolls = (data || [])
+      // Filter out polls user has already voted on - they disappear after voting
+      const unvotedPolls = (data || [])
+        .filter(poll => !votedPoolIds.has(poll.id))
         .map(poll => {
-          const hasVoted = votedPoolIds.has(poll.id);
-          const userVote = userVotes?.find(v => v.pool_id === poll.id);
-          
-          console.log('🔍 Transforming poll:', poll.id, 'Has voted:', hasVoted);
-          
-          // Transform options from string array to PollCard format
+          // Transform options from string array to simple format
           const options = Array.isArray(poll.options) 
             ? poll.options.map((option: any, index: number) => {
-                // Handle both string and object formats
                 const optionLabel = typeof option === 'string' ? option : (option.label || option.text || String(option));
-                // Count votes for this option
-                const voteCount = (allVotes || []).filter(
-                  v => v.pool_id === poll.id && v.prediction === optionLabel
-                ).length;
-                
                 return {
                   id: index + 1,
                   label: optionLabel,
-                  vote_count: voteCount,
-                  percentage: 0, // Will be calculated below
+                  vote_count: 0,
+                  percentage: 0,
                 };
               })
             : [];
-
-          // Calculate total votes and percentages
-          const totalVotes = options.reduce((sum: number, opt: any) => sum + opt.vote_count, 0);
-          options.forEach((opt: any) => {
-            opt.percentage = totalVotes > 0 
-              ? Math.round((opt.vote_count / totalVotes) * 100) 
-              : 0;
-          });
 
           return {
             id: poll.id,
@@ -230,17 +203,15 @@ export default function Feed() {
             sponsor_logo_url: poll.sponsorLogoUrl,
             sponsor_cta_url: poll.sponsorCtaUrl,
             points_reward: poll.pointsReward || 1,
-            total_votes: totalVotes,
+            total_votes: 0,
             options,
             expires_at: poll.deadline,
-            user_has_voted: hasVoted,
+            user_has_voted: false,
           };
         })
-        .slice(0, 5); // Limit to 5 polls in feed
-
-      console.log('✅ Loaded vote games (polls):', allPolls.length, 'total polls');
+        .slice(0, 5);
       
-      return allPolls;
+      return unvotedPolls;
     },
     enabled: !!session?.access_token && !!user?.id,
   });
@@ -422,30 +393,14 @@ export default function Feed() {
   // Poll vote mutation (uses prediction_pools + user_predictions)
   const pollVoteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      console.log('🔵 pollVoteMutation starting:', { pollId, optionId, userId: user?.id });
+      if (!session?.access_token || !user?.id) throw new Error('Not authenticated');
       
-      if (!session?.access_token || !user?.id) {
-        console.error('❌ Not authenticated:', { hasSession: !!session, hasUser: !!user });
-        throw new Error('Not authenticated');
-      }
-      
-      // Get poll details from prediction_pools
-      console.log('📊 Fetching poll details...');
-      const { data: poll, error: pollError } = await supabase
+      const { data: poll } = await supabase
         .from('prediction_pools')
         .select('points_reward')
         .eq('id', pollId)
         .single();
       
-      if (pollError) {
-        console.error('❌ Error fetching poll:', pollError);
-        throw new Error(`Could not find poll: ${pollError.message}`);
-      }
-      
-      console.log('✅ Poll details:', poll);
-      
-      // Insert vote into user_predictions (unified with other game types)
-      console.log('💾 Inserting vote into user_predictions...');
       const { data, error } = await supabase
         .from('user_predictions')
         .insert({
@@ -453,21 +408,18 @@ export default function Feed() {
           prediction: optionId,
           user_id: user.id,
           points_earned: poll?.points_reward || 1,
-          is_correct: true // Votes always earn points
+          is_correct: true
         })
         .select()
         .single();
       
       if (error) {
-        console.error('❌ Error inserting vote:', error);
-        // Check for duplicate vote
         if (error.code === '23505') {
           throw new Error('You have already voted in this poll');
         }
-        throw new Error(`Database error: ${error.message} (code: ${error.code})`);
+        throw new Error('Failed to submit vote');
       }
       
-      console.log('✅ Vote inserted successfully:', data);
       return { success: true, pointsAwarded: poll?.points_reward || 1 };
     },
     onSuccess: (data) => {
@@ -480,26 +432,14 @@ export default function Feed() {
   });
 
   const handlePollVote = async (pollId: string | number, optionId: string | number) => {
-    try {
-      // Find the poll and get the actual option text from the ID
-      const poll = polls.find(p => p.id === pollId);
-      const option = poll?.options?.find((opt: any) => opt.id === optionId);
-      const optionText = option?.label || String(optionId);
-      
-      console.log('🗳️ Voting:', { pollId, optionId, optionText, poll, option });
-      
-      if (!optionText) {
-        throw new Error('Could not find option text for selected option');
-      }
-      
-      await pollVoteMutation.mutateAsync({ 
-        pollId: String(pollId), 
-        optionId: optionText // Pass the label, not the numeric ID
-      });
-    } catch (error) {
-      console.error('❌ handlePollVote error:', error);
-      throw error;
-    }
+    const poll = polls.find(p => p.id === pollId);
+    const option = poll?.options?.find((opt: any) => opt.id === optionId);
+    const optionText = option?.label || String(optionId);
+    
+    await pollVoteMutation.mutateAsync({ 
+      pollId: String(pollId), 
+      optionId: optionText
+    });
   };
 
   // Comment mutation with support for replies
