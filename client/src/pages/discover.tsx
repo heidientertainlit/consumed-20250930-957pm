@@ -44,6 +44,93 @@ export default function Discover() {
   const { session } = useAuth();
   const [, setLocation] = useLocation();
 
+  // Fetch Netflix Top TV Shows
+  const { data: netflixTVShows = [] } = useQuery({
+    queryKey: ['netflix-top-tv'],
+    queryFn: async () => {
+      try {
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-flixpatrol-platform`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ platform: 'netflix', mediaType: 'tv' })
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'tmdb'
+        }));
+      } catch (error) {
+        console.error('Error fetching Netflix TV shows:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60 * 6,
+  });
+
+  // Fetch HBO Max Top TV Shows
+  const { data: hboTVShows = [] } = useQuery({
+    queryKey: ['hbo-top-tv'],
+    queryFn: async () => {
+      try {
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-flixpatrol-platform`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ platform: 'hbo', mediaType: 'tv' })
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'tmdb'
+        }));
+      } catch (error) {
+        console.error('Error fetching HBO TV shows:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60 * 6,
+  });
+
+  // Fetch Paramount+ Top Movies
+  const { data: paramountMovies = [] } = useQuery({
+    queryKey: ['paramount-top-movies'],
+    queryFn: async () => {
+      try {
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-flixpatrol-platform`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ platform: 'paramount', mediaType: 'movie' })
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'tmdb'
+        }));
+      } catch (error) {
+        console.error('Error fetching Paramount movies:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60 * 6,
+  });
+
   // Fetch trending TV shows
   const { data: trendingTVShows = [] } = useQuery({
     queryKey: ['trending-tv-shows'],
@@ -245,49 +332,49 @@ export default function Discover() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black pb-24">
       <Navigation />
       
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-3 flex items-center gap-2">
+          <h1 className="text-3xl font-semibold text-white mb-3 flex items-center gap-2">
             <span>✨</span> Discover
           </h1>
-          <p className="text-base text-gray-600">
+          <p className="text-base text-gray-300">
             Get AI-powered recommendations or explore trending content across all platforms
           </p>
         </div>
 
         {/* AI Recommendation Engine Section */}
-        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-3xl p-6 shadow-sm border border-purple-100">
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Sparkles className="text-purple-600" size={20} />
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Sparkles className="text-purple-400" size={20} />
               AI Recommendation Engine
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-400 mt-1">
               Describe what you're in the mood for and get personalized suggestions
             </p>
           </div>
           <div className="relative">
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
                 <Input
                   type="text"
                   placeholder="Try 'uplifting movies' or 'sci-fi like Blade Runner'..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-12 pr-4 py-6 text-lg rounded-2xl border-2 border-purple-200 focus:border-purple-400 bg-white"
+                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 border-gray-700 focus:border-purple-500 bg-gray-800 text-white placeholder:text-gray-500"
                   data-testid="search-input"
                 />
               </div>
               <Button
                 onClick={handleSearch}
                 disabled={isSearching || !searchQuery.trim()}
-                className="px-8 py-6 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold"
+                className="px-8 py-6 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold"
                 data-testid="search-submit"
               >
                 {isSearching ? (
@@ -303,12 +390,12 @@ export default function Discover() {
           {searchResults && (
             <div className="mt-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Results</h3>
+                <h3 className="text-lg font-semibold text-white">Results</h3>
                 <Button
                   onClick={resetSearch}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-gray-400 hover:text-white"
                   data-testid="clear-search"
                 >
                   <X size={16} className="mr-1" />
@@ -317,27 +404,27 @@ export default function Discover() {
               </div>
 
               {searchResults.type === 'error' && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                  <p className="text-red-800">{searchResults.message}</p>
+                <div className="bg-red-900/30 border border-red-700/50 rounded-xl p-4">
+                  <p className="text-red-300">{searchResults.message}</p>
                 </div>
               )}
 
               {searchResults.type === 'conversational' && searchResults.recommendations && (
                 <div className="space-y-3">
                   {searchResults.explanation && (
-                    <p className="text-gray-700 mb-4">{searchResults.explanation}</p>
+                    <p className="text-gray-300 mb-4">{searchResults.explanation}</p>
                   )}
                   {searchResults.recommendations.map((rec, idx) => (
                     <div
                       key={idx}
-                      className="bg-white rounded-xl p-4 border border-gray-200 hover:border-purple-300 transition-colors"
+                      className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-purple-500/50 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         {getMediaIcon(rec.type)}
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">{rec.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{rec.description}</p>
-                          <span className="inline-block mt-2 text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                          <h4 className="font-semibold text-white">{rec.title}</h4>
+                          <p className="text-sm text-gray-400 mt-1">{rec.description}</p>
+                          <span className="inline-block mt-2 text-xs px-2 py-1 bg-purple-600/30 text-purple-300 rounded-full">
                             {rec.type}
                           </span>
                         </div>
@@ -353,7 +440,7 @@ export default function Discover() {
                     <div
                       key={result.id}
                       onClick={() => handleResultClick(result)}
-                      className="bg-white rounded-xl p-4 border border-gray-200 hover:border-purple-300 transition-colors cursor-pointer"
+                      className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-purple-500/50 transition-colors cursor-pointer"
                       data-testid={`search-result-${result.id}`}
                     >
                       <div className="flex items-start gap-4">
@@ -367,20 +454,20 @@ export default function Discover() {
                         <div className="flex-1">
                           <div className="flex items-start gap-2">
                             {getMediaIcon(result.type)}
-                            <h4 className="font-semibold text-gray-900 flex-1">{result.title}</h4>
+                            <h4 className="font-semibold text-white flex-1">{result.title}</h4>
                           </div>
                           {result.year && (
-                            <p className="text-sm text-gray-500 mt-1">{result.year}</p>
+                            <p className="text-sm text-gray-400 mt-1">{result.year}</p>
                           )}
                           {result.description && (
-                            <p className="text-sm text-gray-600 mt-2 line-clamp-2">{result.description}</p>
+                            <p className="text-sm text-gray-300 mt-2 line-clamp-2">{result.description}</p>
                           )}
                           <div className="flex items-center gap-3 mt-2">
-                            <span className="inline-block text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                            <span className="inline-block text-xs px-2 py-1 bg-purple-600/30 text-purple-300 rounded-full">
                               {result.type}
                             </span>
                             {result.rating && (
-                              <span className="text-xs text-gray-600">⭐ {result.rating}</span>
+                              <span className="text-xs text-gray-400">⭐ {result.rating}</span>
                             )}
                           </div>
                         </div>
@@ -394,13 +481,43 @@ export default function Discover() {
         </div>
 
         {/* Trending Content Sections */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Personalized Recommendations */}
           {recommendedContent.length > 0 && (
             <MediaCarousel
               title="Recommended For You"
               mediaType="mixed"
               items={recommendedContent}
+              onItemClick={handleMediaClick}
+            />
+          )}
+
+          {/* Netflix Top TV Shows */}
+          {netflixTVShows.length > 0 && (
+            <MediaCarousel
+              title="Top 10 on Netflix"
+              mediaType="tv"
+              items={netflixTVShows}
+              onItemClick={handleMediaClick}
+            />
+          )}
+
+          {/* HBO Max Top TV Shows */}
+          {hboTVShows.length > 0 && (
+            <MediaCarousel
+              title="Top 10 on HBO Max"
+              mediaType="tv"
+              items={hboTVShows}
+              onItemClick={handleMediaClick}
+            />
+          )}
+
+          {/* Paramount+ Top Movies */}
+          {paramountMovies.length > 0 && (
+            <MediaCarousel
+              title="Top 10 on Paramount+"
+              mediaType="movie"
+              items={paramountMovies}
               onItemClick={handleMediaClick}
             />
           )}

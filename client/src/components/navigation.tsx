@@ -26,29 +26,29 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               className="h-8 w-auto"
             />
           </Link>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              className="hover:opacity-70 transition-opacity"
               data-testid="search-button"
             >
-              <Search className="text-white" size={18} />
+              <Search className="text-white" size={20} />
             </button>
             <Link href="/discover">
               <button
-                className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                className="hover:opacity-70 transition-opacity"
                 data-testid="discover-button"
               >
-                <span className="text-white text-lg">✨</span>
+                <span className="text-white text-xl">✨</span>
               </button>
             </Link>
             <NotificationBell />
             <Link href={user?.id ? `/user/${user.id}` : "/login"}>
               <button
-                className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                className="hover:opacity-70 transition-opacity"
                 data-testid="profile-button"
               >
-                <User className="text-white" size={18} />
+                <User className="text-white" size={20} />
               </button>
             </Link>
           </div>
