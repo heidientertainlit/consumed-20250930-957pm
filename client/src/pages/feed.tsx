@@ -422,16 +422,30 @@ export default function Feed() {
   // Poll vote mutation (uses prediction_pools + user_predictions)
   const pollVoteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      if (!session?.access_token || !user?.id) throw new Error('Not authenticated');
+      console.log('🔵 pollVoteMutation starting:', { pollId, optionId, userId: user?.id });
+      
+      if (!session?.access_token || !user?.id) {
+        console.error('❌ Not authenticated:', { hasSession: !!session, hasUser: !!user });
+        throw new Error('Not authenticated');
+      }
       
       // Get poll details from prediction_pools
-      const { data: poll } = await supabase
+      console.log('📊 Fetching poll details...');
+      const { data: poll, error: pollError } = await supabase
         .from('prediction_pools')
         .select('points_reward')
         .eq('id', pollId)
         .single();
       
+      if (pollError) {
+        console.error('❌ Error fetching poll:', pollError);
+        throw new Error(`Could not find poll: ${pollError.message}`);
+      }
+      
+      console.log('✅ Poll details:', poll);
+      
       // Insert vote into user_predictions (unified with other game types)
+      console.log('💾 Inserting vote into user_predictions...');
       const { data, error } = await supabase
         .from('user_predictions')
         .insert({
@@ -445,13 +459,15 @@ export default function Feed() {
         .single();
       
       if (error) {
+        console.error('❌ Error inserting vote:', error);
         // Check for duplicate vote
         if (error.code === '23505') {
           throw new Error('You have already voted in this poll');
         }
-        throw new Error('Failed to submit vote');
+        throw new Error(`Database error: ${error.message} (code: ${error.code})`);
       }
       
+      console.log('✅ Vote inserted successfully:', data);
       return { success: true, pointsAwarded: poll?.points_reward || 1 };
     },
     onSuccess: (data) => {
