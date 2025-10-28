@@ -248,7 +248,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           <div>
             <DialogTitle className="text-2xl font-bold text-gray-900">Share Update</DialogTitle>
             <p className="text-gray-500 text-sm mt-1">
-              Share your entertainment experience with your friends.
+              Share thoughts on a show, rate your latest read, or start a conversation about your favorite character.
             </p>
           </div>
           <Button
