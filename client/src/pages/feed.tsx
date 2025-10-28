@@ -1178,10 +1178,10 @@ export default function Feed() {
                           <div className="absolute inset-0 flex items-center justify-center">
                             <button
                               onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-1.5"
+                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-1"
                               data-testid={`reveal-spoiler-${post.id}`}
                             >
-                              <Eye size={14} />
+                              <Eye size={12} />
                               <span>Show Spoiler</span>
                             </button>
                           </div>
