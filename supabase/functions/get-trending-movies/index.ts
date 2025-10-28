@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
 };
 
 serve(async (req) => {
@@ -20,9 +21,9 @@ serve(async (req) => {
       });
     }
 
-    // Fetch trending movies
+    // ✨ CHANGED: From 'week' to 'day' for fresher content
     const trendingResponse = await fetch(
-      `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}`
+      `https://api.themoviedb.org/3/trending/movie/day?api_key=${TMDB_API_KEY}`
     );
     
     if (!trendingResponse.ok) {
