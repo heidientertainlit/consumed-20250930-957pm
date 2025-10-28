@@ -1,13 +1,41 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
+}
+
+interface MediaResult {
+  title: string;
+  type: string;
+  creator?: string;
+  image?: string;
+  year?: number;
+  external_id?: string;
+  external_source?: string;
+  description?: string;
+}
+
+interface UserResult {
+  id: string;
+  user_name: string;
+  display_name?: string;
+  email?: string;
 }
 
 export default function Navigation({ onTrackConsumption }: NavigationProps) {
@@ -16,6 +44,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Auto-focus when search expands
   useEffect(() => {
@@ -24,27 +54,191 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
     }
   }, [isSearchExpanded]);
 
-  // Debounced search
-  const { data: searchResults } = useQuery({
-    queryKey: ['inline-search', searchQuery],
+  // Debounced media search
+  const mediaQuery = useQuery<MediaResult[]>({
+    queryKey: ['inline-media-search', searchQuery],
     queryFn: async () => {
-      if (!searchQuery.trim() || !session?.access_token) return null;
+      if (!searchQuery.trim() || !session?.access_token) return [];
 
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${anonKey}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query: searchQuery })
       });
 
-      if (!response.ok) return null;
-      return response.json();
+      if (!response.ok) {
+        console.error('Media search failed:', response.status);
+        throw new Error('Media search failed');
+      }
+      const data = await response.json();
+      return data.results || [];
     },
     enabled: !!searchQuery.trim() && !!session?.access_token && isSearchExpanded,
     staleTime: 1000 * 60 * 5,
+    retry: 1,
+  });
+
+  // Debounced user search
+  const userQuery = useQuery<UserResult[]>({
+    queryKey: ['inline-user-search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim() || !session?.access_token) return [];
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'searchUsers', query: searchQuery })
+      });
+
+      if (!response.ok) {
+        console.error('User search failed:', response.status);
+        throw new Error('User search failed');
+      }
+      const data = await response.json();
+      return data.users || [];
+    },
+    enabled: !!searchQuery.trim() && !!session?.access_token && isSearchExpanded,
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  });
+
+  // Only use cached data if query is successful and search is active
+  const mediaResults = (mediaQuery.status === 'success' && searchQuery.trim() && isSearchExpanded) 
+    ? (mediaQuery.data || []) 
+    : [];
+  const userResults = (userQuery.status === 'success' && searchQuery.trim() && isSearchExpanded) 
+    ? (userQuery.data || []) 
+    : [];
+  const isLoadingMedia = mediaQuery.isLoading;
+  const isLoadingUsers = userQuery.isLoading;
+
+  // Fetch user's lists for add to list functionality
+  const { data: userListsData } = useQuery<any>({
+    queryKey: ['user-lists-for-nav'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user lists');
+      }
+
+      return response.json();
+    },
+    enabled: !!session?.access_token && isSearchExpanded,
+  });
+
+  const systemLists = userListsData?.lists?.filter((list: any) => list.is_default) || [];
+  const customLists = userListsData?.lists?.filter((list: any) => !list.is_default) || [];
+
+  // Add to list mutation
+  const addToListMutation = useMutation({
+    mutationFn: async ({ media, listType, isCustom }: { media: MediaResult; listType: string; isCustom?: boolean }) => {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const mediaData = {
+        title: media.title,
+        mediaType: media.type || 'movie',
+        creator: media.creator || '',
+        imageUrl: media.image || '',
+        externalId: media.external_id || '',
+        externalSource: media.external_source || 'tmdb'
+      };
+
+      const url = isCustom 
+        ? 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list'
+        : 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media';
+
+      const body = isCustom
+        ? { media: mediaData, customListId: listType }
+        : { media: mediaData, listType };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || errorData.message || 'Failed to add to list');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (result, variables) => {
+      const isDuplicate = result?.message === 'Item already in list';
+      
+      toast({
+        title: isDuplicate ? "Already in list!" : "Added to list!",
+        description: isDuplicate 
+          ? `${variables.media.title} is already in this list.`
+          : `${variables.media.title} has been added to your list.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-for-nav'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add item to list. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Send friend request mutation
+  const sendFriendRequestMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'sendRequest', friend_id: friendId })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send friend request');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Friend request sent!",
+        description: "You'll be notified when they accept.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send friend request.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSearchToggle = () => {
@@ -56,11 +250,37 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
     }
   };
 
-  const handleResultClick = (result: any) => {
+  const handleMediaClick = (result: MediaResult) => {
     setIsSearchExpanded(false);
     setSearchQuery("");
-    setLocation(`/media/${result.type}/${result.id}`);
+    const type = result.type;
+    const source = result.external_source || 'tmdb';
+    const id = result.external_id;
+    
+    if (type && source && id) {
+      setLocation(`/media/${type}/${source}/${id}`);
+    }
   };
+
+  const handleUserClick = (userId: string) => {
+    setIsSearchExpanded(false);
+    setSearchQuery("");
+    setLocation(`/user/${userId}`);
+  };
+
+  const handleAddToList = (media: MediaResult, listType: string, isCustom: boolean, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    addToListMutation.mutate({ media, listType, isCustom });
+  };
+
+  const handleSendFriendRequest = (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    sendFriendRequestMutation.mutate(userId);
+  };
+
+  const hasResults = mediaResults.length > 0 || userResults.length > 0;
+  const isLoading = isLoadingMedia || isLoadingUsers;
+  const hasError = mediaQuery.status === 'error' || userQuery.status === 'error';
 
   return (
     <>
@@ -98,28 +318,164 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                   </button>
                   
                   {/* Search Results Dropdown */}
-                  {searchResults && searchResults.length > 0 && (
-                    <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-xl max-h-96 overflow-y-auto">
-                      {searchResults.slice(0, 5).map((result: any) => (
-                        <div
-                          key={result.id}
-                          onClick={() => handleResultClick(result)}
-                          className="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                          data-testid={`inline-result-${result.id}`}
-                        >
-                          {result.poster_url && (
-                            <img
-                              src={result.poster_url}
-                              alt={result.title}
-                              className="w-12 h-16 object-cover rounded"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <p className="font-semibold text-black text-sm">{result.title}</p>
-                            <p className="text-xs text-gray-600">{result.type} {result.year && `• ${result.year}`}</p>
+                  {hasResults && searchQuery && !hasError && !isLoading && (
+                    <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-xl max-h-[500px] overflow-y-auto">
+                      {/* User Results */}
+                      {userResults.length > 0 && (
+                        <div className="border-b border-gray-200">
+                          <div className="px-3 py-2 bg-gray-50 sticky top-0">
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
+                              <User size={14} />
+                              People
+                            </h3>
                           </div>
+                          {userResults.slice(0, 3).map((userResult) => (
+                            <div
+                              key={userResult.id}
+                              className="flex items-center justify-between gap-3 p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                              data-testid={`inline-user-${userResult.id}`}
+                            >
+                              <div
+                                onClick={() => handleUserClick(userResult.id)}
+                                className="flex items-center gap-3 flex-1 cursor-pointer"
+                              >
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                  {userResult.display_name?.[0] || userResult.user_name[0]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-black text-sm truncate">
+                                    {userResult.display_name || userResult.user_name}
+                                  </p>
+                                  <p className="text-xs text-gray-600 truncate">@{userResult.user_name}</p>
+                                </div>
+                              </div>
+                              <Button
+                                onClick={(e) => handleSendFriendRequest(userResult.id, e)}
+                                size="sm"
+                                variant="outline"
+                                className="border-purple-300 text-purple-700 hover:bg-purple-50 text-xs px-2 py-1 h-7"
+                                data-testid={`add-friend-${userResult.id}`}
+                              >
+                                <Plus size={12} className="mr-1" />
+                                Add
+                              </Button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+
+                      {/* Media Results */}
+                      {mediaResults.length > 0 && (
+                        <div>
+                          <div className="px-3 py-2 bg-gray-50 sticky top-0">
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
+                              <Search size={14} />
+                              Media
+                            </h3>
+                          </div>
+                          {mediaResults.slice(0, 5).map((result, idx) => (
+                            <div
+                              key={`${result.external_id}-${idx}`}
+                              className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                              data-testid={`inline-result-${result.external_id}`}
+                            >
+                              <div
+                                onClick={() => handleMediaClick(result)}
+                                className="flex items-center gap-3 flex-1 cursor-pointer min-w-0"
+                              >
+                                {result.image && (
+                                  <img
+                                    src={result.image}
+                                    alt={result.title}
+                                    className="w-12 h-16 object-cover rounded flex-shrink-0"
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-black text-sm truncate">{result.title}</p>
+                                  <p className="text-xs text-gray-600 truncate">
+                                    {result.type} {result.year && `• ${result.year}`}
+                                  </p>
+                                  {result.creator && (
+                                    <p className="text-xs text-gray-500 truncate">{result.creator}</p>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Add to List Dropdown */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7 flex-shrink-0"
+                                    data-testid={`add-to-list-${result.external_id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Plus size={12} className="mr-1" />
+                                    Add
+                                    <ChevronDown size={12} className="ml-1" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuLabel className="text-xs">Add to List</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  
+                                  {/* System Lists */}
+                                  {systemLists.map((list: any) => (
+                                    <DropdownMenuItem
+                                      key={list.id}
+                                      onClick={(e) => handleAddToList(result, list.id, false, e)}
+                                      className="text-sm"
+                                    >
+                                      {list.title}
+                                    </DropdownMenuItem>
+                                  ))}
+                                  
+                                  {/* Custom Lists */}
+                                  {customLists.length > 0 && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuLabel className="text-xs">Custom Lists</DropdownMenuLabel>
+                                      {customLists.map((list: any) => (
+                                        <DropdownMenuItem
+                                          key={list.id}
+                                          onClick={(e) => handleAddToList(result, list.id, true, e)}
+                                          className="text-sm"
+                                        >
+                                          {list.title}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Loading State */}
+                  {searchQuery && isLoading && (
+                    <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-xl p-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                        <p className="text-sm text-gray-600">Searching...</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Error State */}
+                  {searchQuery && !isLoading && hasError && (
+                    <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-xl p-4">
+                      <p className="text-sm text-red-600 text-center">Search failed. Please try again.</p>
+                    </div>
+                  )}
+                  
+                  {/* No Results Message */}
+                  {searchQuery && !isLoading && !hasError && !hasResults && (
+                    <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-xl p-4">
+                      <p className="text-sm text-gray-500 text-center">No results found for "{searchQuery}"</p>
                     </div>
                   )}
                 </div>
