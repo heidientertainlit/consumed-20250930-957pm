@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle2, TrendingUp, Calendar, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,13 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
   const [showResults, setShowResults] = useState(hasVoted || poll.user_has_voted);
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Sync showResults with poll.user_has_voted when it changes
+  useEffect(() => {
+    if (poll.user_has_voted && !showResults) {
+      setShowResults(true);
+    }
+  }, [poll.user_has_voted, showResults]);
 
   const handleSelectOption = (optionId: number) => {
     if (showResults) return;
