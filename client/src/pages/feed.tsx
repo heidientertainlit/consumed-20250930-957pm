@@ -818,20 +818,20 @@ export default function Feed() {
     });
   };
 
-  // Fetch trending TV shows from TMDB with platform info
+  // Fetch Netflix US top 10 TV shows from FlixPatrol
   const { data: trendingTVShows = [] } = useQuery({
-    queryKey: ['trending-tv-shows'],
+    queryKey: ['flixpatrol-netflix-top10'],
     queryFn: async () => {
       try {
         const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-flixpatrol-top10`, {
           headers: {
             'Authorization': `Bearer ${anonKey}`,
             'Content-Type': 'application/json',
           },
         });
         if (!response.ok) {
-          console.error('Failed to fetch trending TV shows');
+          console.error('Failed to fetch Netflix top 10');
           return [];
         }
         const data = await response.json();
@@ -1035,10 +1035,10 @@ export default function Feed() {
             </Button>
           </div>
 
-          {/* Static Trending TV Shows Carousel */}
+          {/* Netflix US Top 10 TV Shows (FlixPatrol) */}
           {trendingTVShows.length > 0 && (
             <MediaCarousel
-              title="Top Trending TV Shows"
+              title="Netflix US Top 10 TV Shows"
               mediaType="tv"
               items={trendingTVShows}
               onItemClick={handleMediaClick}
