@@ -178,6 +178,9 @@ export default function Feed() {
         return [];
       }
 
+      console.log('📊 Total vote-type polls from DB:', data?.length);
+      console.log('👤 User has voted on:', votedPoolIds.size, 'polls');
+
       // Get vote counts for all polls
       const { data: allVotes } = await supabase
         .from('user_predictions')
@@ -187,17 +190,21 @@ export default function Feed() {
       const unvotedPolls = (data || [])
         .filter(poll => !votedPoolIds.has(poll.id))
         .map(poll => {
+          console.log('🔍 Transforming poll:', poll.id, 'Options type:', typeof poll.options, 'First option:', poll.options?.[0]);
+          
           // Transform options from string array to PollCard format
           const options = Array.isArray(poll.options) 
-            ? poll.options.map((option: string, index: number) => {
+            ? poll.options.map((option: any, index: number) => {
+                // Handle both string and object formats
+                const optionLabel = typeof option === 'string' ? option : (option.label || option.text || String(option));
                 // Count votes for this option
                 const voteCount = (allVotes || []).filter(
-                  v => v.pool_id === poll.id && v.prediction === option
+                  v => v.pool_id === poll.id && v.prediction === optionLabel
                 ).length;
                 
                 return {
                   id: index + 1,
-                  label: option,
+                  label: optionLabel,
                   vote_count: voteCount,
                   percentage: 0, // Will be calculated below
                 };
