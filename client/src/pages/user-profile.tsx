@@ -2627,32 +2627,32 @@ export default function UserProfile() {
 
         {/* Follow Creators Section */}
         <div className="px-4 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center space-x-3 mb-4">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center space-x-3 mb-3">
               <div className="w-10 h-10 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <Users className="text-white" size={20} />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Follow Creators</h2>
-                <p className="text-sm text-gray-600">Track your favorite artists, directors, and authors</p>
+                <h2 className="text-lg font-bold text-gray-900">Follow Creators</h2>
+                <p className="text-xs text-gray-600">Track your favorite artists, directors, and authors</p>
               </div>
             </div>
 
             {/* Search Bar */}
             {isOwnProfile && (
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
                   value={creatorSearchQuery}
                   onChange={(e) => setCreatorSearchQuery(e.target.value)}
                   placeholder="Search for creators (e.g., Martin Scorsese, Taylor Swift...)"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   data-testid="input-search-creators"
                 />
                 {isSearchingCreators && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <Loader2 className="animate-spin text-purple-600" size={20} />
+                    <Loader2 className="animate-spin text-purple-600" size={18} />
                   </div>
                 )}
               </div>
@@ -2705,12 +2705,12 @@ export default function UserProfile() {
                   )}
                 </div>
               )) : (
-                <div className="w-full text-center py-8">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="text-purple-600" size={32} />
+                <div className="w-full text-center py-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Users className="text-purple-600" size={24} />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Search for Creators</h3>
-                  <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">Search for Creators</h3>
+                  <p className="text-sm text-gray-600 max-w-md mx-auto">
                     Try searching for: Martin Scorsese, Taylor Swift, Brandon Sanderson, Reese Witherspoon, or your favorite artists and authors
                   </p>
                 </div>
