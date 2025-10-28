@@ -820,12 +820,12 @@ export default function Feed() {
 
   // Fetch top 10 TV shows from multiple platforms (FlixPatrol)
   const { data: trendingTVShows = [] } = useQuery({
-    queryKey: ['flixpatrol-multi-platform-top10'],
+    queryKey: ['trending-tv-shows'],
     queryFn: async () => {
       try {
         const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
         console.log('📺 Fetching multi-platform top 10 from FlixPatrol...');
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-flixpatrol-top10`, {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
           headers: {
             'Authorization': `Bearer ${anonKey}`,
             'Content-Type': 'application/json',

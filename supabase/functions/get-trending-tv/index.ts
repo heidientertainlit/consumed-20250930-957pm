@@ -1,96 +1,168 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
 };
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const FLIXPATROL_API_KEY = Deno.env.get('FLIXPATROL_API_KEY');
     const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
     
+    if (!FLIXPATROL_API_KEY) {
+      throw new Error('FLIXPATROL_API_KEY not configured');
+    }
+
     if (!TMDB_API_KEY) {
-      return new Response(JSON.stringify({ error: 'TMDB API key not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      throw new Error('TMDB_API_KEY not configured');
     }
 
-    // ✨ CHANGED: From 'week' to 'day' for fresher content
-    const trendingResponse = await fetch(
-      `https://api.themoviedb.org/3/trending/tv/day?api_key=${TMDB_API_KEY}`
-    );
+    // Platform and country IDs
+    const platforms = [
+      { id: 'cmp_IA6TdMqwf6kuyQvxo9bJ4nKX', name: 'Netflix' },
+      { id: 'cmp_oGtsgdpOrjIu3XzTEnWPt87Y', name: 'Disney+' },
+      { id: 'cmp_6UhCvnTeRkgZUtcNGslX9bJL', name: 'HBO Max' },
+      { id: 'cmp_qypvowjqFhEIpCc0HlQ6VoYk', name: 'Amazon Prime' },
+      { id: 'cmp_9iwHIMYOCvD6zprSPoHgTJau', name: 'Hulu' },
+    ];
     
-    if (!trendingResponse.ok) {
-      throw new Error('Failed to fetch from TMDB');
-    }
+    const US_COUNTRY_ID = 'cnt_RpYbGi0mzOncND8jVoZ2HSTv';
+    const today = new Date().toISOString().split('T')[0];
 
-    const trendingData = await trendingResponse.json();
-    
-    // Map provider IDs to platform names
-    const providerMap: Record<number, string> = {
-      8: 'netflix',
-      337: 'disney',
-      15: 'hulu',
-      9: 'prime',
-      384: 'max',
-      387: 'peacock',
-      350: 'apple',
-      531: 'paramount',
-    };
+    console.log(`Fetching top 10s from ${platforms.length} platforms for ${today}`);
 
-    // Fetch platform info for each TV show and format the response
-    const formattedShows = await Promise.all(
-      trendingData.results.slice(0, 20).map(async (show: any) => {
-        // Fetch watch providers for this show
-        let platform = undefined;
+    // Fetch from all platforms in parallel
+    const allResults = await Promise.all(
+      platforms.map(async (platform) => {
         try {
-          const providersResponse = await fetch(
-            `https://api.themoviedb.org/3/tv/${show.id}/watch/providers?api_key=${TMDB_API_KEY}`
-          );
-          if (providersResponse.ok) {
-            const providersData = await providersResponse.json();
-            const usProviders = providersData.results?.US;
-            
-            // Check flatrate (subscription) providers first
-            if (usProviders?.flatrate && usProviders.flatrate.length > 0) {
-              const providerId = usProviders.flatrate[0].provider_id;
-              platform = providerMap[providerId];
-            }
-          }
-        } catch (error) {
-          console.error(`Failed to fetch providers for show ${show.id}:`, error);
-        }
+          const top10Url = new URL('https://api.flixpatrol.com/v2/top10s');
+          top10Url.searchParams.append('company[eq]', platform.id);
+          top10Url.searchParams.append('country[eq]', US_COUNTRY_ID);
+          top10Url.searchParams.append('type[eq]', '3'); // 3 = TV Shows
+          top10Url.searchParams.append('date[from]', today);
+          top10Url.searchParams.append('date[to]', today);
+          top10Url.searchParams.append('ranking[lte]', '10'); // Top 10 per platform
 
-        return {
-          id: show.id.toString(),
-          title: show.name,
-          imageUrl: show.poster_path 
-            ? `https://image.tmdb.org/t/p/w500${show.poster_path}`
-            : '',
-          rating: show.vote_average ? Math.round(show.vote_average * 10) / 10 : undefined,
-          year: show.first_air_date ? new Date(show.first_air_date).getFullYear().toString() : undefined,
-          mediaType: 'tv',
-          platform,
-        };
+          const response = await fetch(top10Url.toString(), {
+            headers: {
+              'Authorization': `Basic ${btoa(`${FLIXPATROL_API_KEY}:`)}`,
+            },
+          });
+
+          if (!response.ok) {
+            console.error(`Failed to fetch ${platform.name} top 10: ${response.status}`);
+            return [];
+          }
+
+          const data = await response.json();
+          console.log(`${platform.name}: Found ${data.length} titles`);
+          
+          return data.map((item: any) => ({
+            ...item,
+            platformName: platform.name,
+          }));
+        } catch (error) {
+          console.error(`Error fetching ${platform.name}:`, error);
+          return [];
+        }
       })
     );
 
-    return new Response(JSON.stringify(formattedShows), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    // Flatten all results
+    const allTop10Items = allResults.flat();
+    console.log(`Total items from all platforms: ${allTop10Items.length}`);
+
+    // Enrich with TMDB data
+    const enrichedTitles = await Promise.all(
+      allTop10Items.map(async (item: any) => {
+        try {
+          // Fetch title details from FlixPatrol
+          const titleResponse = await fetch(`https://api.flixpatrol.com/v2/titles/${item.movie}`, {
+            headers: {
+              'Authorization': `Basic ${btoa(`${FLIXPATROL_API_KEY}:`)}`,
+            },
+          });
+
+          if (!titleResponse.ok) {
+            console.error(`Failed to fetch title ${item.movie}`);
+            return null;
+          }
+
+          const titleData = await titleResponse.json();
+          
+          // Get TMDB ID
+          const tmdbId = titleData.tmdb?.id;
+          
+          if (!tmdbId) {
+            console.log(`No TMDB ID for ${titleData.name}, skipping`);
+            return null;
+          }
+
+          // Fetch poster from TMDB
+          const tmdbResponse = await fetch(
+            `https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${TMDB_API_KEY}`
+          );
+
+          let posterPath = null;
+          let title = titleData.name || 'Unknown Title';
+          let year = null;
+
+          if (tmdbResponse.ok) {
+            const tmdbData = await tmdbResponse.json();
+            posterPath = tmdbData.poster_path 
+              ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}`
+              : null;
+            title = tmdbData.name || title;
+            year = tmdbData.first_air_date?.split('-')[0];
+          }
+
+          return {
+            id: `${item.platformName}-${tmdbId}`,
+            title,
+            year,
+            imageUrl: posterPath,
+            mediaType: 'tv',
+            ranking: item.ranking,
+            platform: item.platformName,
+            externalId: tmdbId,
+            externalSource: 'tmdb',
+          };
+        } catch (error) {
+          console.error(`Error enriching title:`, error);
+          return null;
+        }
+      })
+    );
+
+    // Filter nulls, remove duplicates, and sort
+    const seenTitles = new Set();
+    const finalTitles = enrichedTitles
+      .filter(t => {
+        if (!t || !t.externalId) return false;
+        if (seenTitles.has(t.externalId)) return false;
+        seenTitles.add(t.externalId);
+        return true;
+      })
+      .sort((a, b) => a.ranking - b.ranking)
+      .slice(0, 30); // Limit to 30 total shows across all platforms
+
+    console.log(`Successfully enriched ${finalTitles.length} unique titles`);
+
+    return new Response(JSON.stringify(finalTitles), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error fetching trending TV shows:', error);
-    return new Response(JSON.stringify({ error: 'Failed to fetch trending TV shows' }), {
+    console.error('Error in get-trending-tv:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
