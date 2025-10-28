@@ -84,6 +84,17 @@ export default function Feed() {
   // Feature flag for comment likes
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
   console.log('🎯 Feed: VITE_FEED_COMMENT_LIKES =', import.meta.env.VITE_FEED_COMMENT_LIKES, 'enabled =', commentLikesEnabled);
+  
+  // Debug session state
+  useEffect(() => {
+    console.log('🔍 Feed Session Debug:', {
+      hasSession: !!session,
+      hasAccessToken: !!session?.access_token,
+      hasUser: !!user,
+      userId: user?.id,
+      sessionKeys: session ? Object.keys(session) : 'no session'
+    });
+  }, [session, user]);
   // Using window.location.assign for navigation as we are not using react-router-dom
   const setLocation = (path: string) => {
     window.location.assign(path);
