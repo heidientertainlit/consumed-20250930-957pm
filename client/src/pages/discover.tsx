@@ -12,7 +12,11 @@ interface Recommendation {
   title: string;
   type: string;
   description: string;
-  searchTerm: string;
+  searchTerm?: string;
+  poster_url?: string;
+  external_id?: string;
+  external_source?: string;
+  year?: string;
 }
 
 interface DirectResult {
@@ -440,15 +444,16 @@ export default function Discover() {
                   placeholder="Try 'uplifting movies' or 'sci-fi like Blade Runner'..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 border-gray-300 focus:border-purple-500 bg-white text-black placeholder:text-gray-500"
+                  onKeyDown={(e) => e.key === 'Enter' && !isSearching && handleSearch()}
+                  disabled={isSearching}
+                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 border-purple-300 focus:border-purple-500 bg-white text-black placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
                   data-testid="search-input"
                 />
               </div>
               <Button
                 onClick={handleSearch}
                 disabled={isSearching || !searchQuery.trim()}
-                className="px-8 py-6 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold"
+                className="px-8 py-6 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold disabled:opacity-50"
                 data-testid="search-submit"
               >
                 {isSearching ? (
@@ -458,6 +463,19 @@ export default function Discover() {
                 )}
               </Button>
             </div>
+            
+            {/* Loading State Message */}
+            {isSearching && (
+              <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="animate-spin text-purple-600" size={20} />
+                  <div>
+                    <p className="text-purple-900 font-semibold">AI is analyzing your request...</p>
+                    <p className="text-purple-700 text-sm">This may take 10-30 seconds</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Search Results */}
@@ -484,27 +502,59 @@ export default function Discover() {
               )}
 
               {searchResults.type === 'conversational' && searchResults.recommendations && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {searchResults.explanation && (
-                    <p className="text-gray-700 mb-4">{searchResults.explanation}</p>
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+                      <p className="text-purple-900 font-medium">{searchResults.explanation}</p>
+                    </div>
                   )}
-                  {searchResults.recommendations.map((rec, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-purple-400 transition-colors"
-                    >
-                      <div className="flex items-start gap-3">
-                        {getMediaIcon(rec.type)}
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-black">{rec.title}</h4>
-                          <p className="text-sm text-gray-700 mt-1">{rec.description}</p>
-                          <span className="inline-block mt-2 text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
-                            {rec.type}
-                          </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {searchResults.recommendations.map((rec, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          if (rec.external_id && rec.external_source) {
+                            setLocation(`/media/${rec.type}/${rec.external_source}/${rec.external_id}`);
+                          }
+                        }}
+                        className={`bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all ${
+                          rec.external_id ? 'cursor-pointer' : ''
+                        }`}
+                        data-testid={`ai-result-${idx}`}
+                      >
+                        <div className="flex gap-4">
+                          {rec.poster_url ? (
+                            <img
+                              src={rec.poster_url}
+                              alt={rec.title}
+                              className="w-20 h-28 object-cover rounded-lg shadow-sm flex-shrink-0"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-20 h-28 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              {getMediaIcon(rec.type)}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-2 mb-2">
+                              <h4 className="font-bold text-black text-lg flex-1">{rec.title}</h4>
+                            </div>
+                            {rec.year && (
+                              <p className="text-sm text-gray-600 mb-2">📅 {rec.year}</p>
+                            )}
+                            <p className="text-sm text-gray-700 line-clamp-3 mb-2">{rec.description}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-block text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+                                {rec.type}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
 
