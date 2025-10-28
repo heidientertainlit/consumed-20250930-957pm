@@ -262,6 +262,25 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 min-h-0">
+          {/* Spoiler Warning Checkbox - At Top */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="spoilers"
+                checked={containsSpoilers}
+                onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
+                className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 w-5 h-5"
+                data-testid="spoiler-checkbox"
+              />
+              <label
+                htmlFor="spoilers"
+                className="text-sm font-semibold text-red-800 cursor-pointer select-none"
+              >
+                ⚠️ This post contains spoilers
+              </label>
+            </div>
+          </div>
+
           {/* Media Types Selection */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
@@ -465,23 +484,6 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
               <div className="absolute bottom-3 right-3 text-sm text-gray-400 pointer-events-none">
                 {thoughts.length}/500
               </div>
-            </div>
-            
-            {/* Spoiler Warning Checkbox */}
-            <div className="flex items-center space-x-2 mt-4">
-              <Checkbox
-                id="spoilers"
-                checked={containsSpoilers}
-                onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
-                className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 w-5 h-5"
-                data-testid="spoiler-checkbox"
-              />
-              <label
-                htmlFor="spoilers"
-                className="text-sm font-medium text-gray-700 cursor-pointer select-none"
-              >
-                ⚠️ This post contains spoilers
-              </label>
             </div>
           </div>
         </div>
