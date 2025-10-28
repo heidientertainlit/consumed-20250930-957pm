@@ -503,11 +503,6 @@ export default function Discover() {
 
               {searchResults.type === 'conversational' && searchResults.recommendations && (
                 <div className="space-y-4">
-                  {searchResults.explanation && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
-                      <p className="text-purple-900 font-medium">{searchResults.explanation}</p>
-                    </div>
-                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {searchResults.recommendations.map((rec, idx) => (
                       <div
