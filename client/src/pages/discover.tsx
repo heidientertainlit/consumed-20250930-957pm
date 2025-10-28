@@ -347,27 +347,27 @@ export default function Discover() {
         </div>
 
         {/* AI Recommendation Engine Section */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Sparkles className="text-purple-400" size={20} />
+            <h2 className="text-lg font-bold text-black flex items-center gap-2">
+              <Sparkles className="text-purple-600" size={20} />
               AI Recommendation Engine
             </h2>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-sm text-gray-700 mt-1">
               Describe what you're in the mood for and get personalized suggestions
             </p>
           </div>
           <div className="relative">
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <Input
                   type="text"
                   placeholder="Try 'uplifting movies' or 'sci-fi like Blade Runner'..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 border-gray-700 focus:border-purple-500 bg-gray-800 text-white placeholder:text-gray-500"
+                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 border-gray-300 focus:border-purple-500 bg-white text-black placeholder:text-gray-500"
                   data-testid="search-input"
                 />
               </div>
@@ -390,12 +390,12 @@ export default function Discover() {
           {searchResults && (
             <div className="mt-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Results</h3>
+                <h3 className="text-lg font-semibold text-black">Results</h3>
                 <Button
                   onClick={resetSearch}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-600 hover:text-black"
                   data-testid="clear-search"
                 >
                   <X size={16} className="mr-1" />
@@ -404,27 +404,27 @@ export default function Discover() {
               </div>
 
               {searchResults.type === 'error' && (
-                <div className="bg-red-900/30 border border-red-700/50 rounded-xl p-4">
-                  <p className="text-red-300">{searchResults.message}</p>
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-red-800">{searchResults.message}</p>
                 </div>
               )}
 
               {searchResults.type === 'conversational' && searchResults.recommendations && (
                 <div className="space-y-3">
                   {searchResults.explanation && (
-                    <p className="text-gray-300 mb-4">{searchResults.explanation}</p>
+                    <p className="text-gray-700 mb-4">{searchResults.explanation}</p>
                   )}
                   {searchResults.recommendations.map((rec, idx) => (
                     <div
                       key={idx}
-                      className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-purple-500/50 transition-colors"
+                      className="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-purple-400 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         {getMediaIcon(rec.type)}
                         <div className="flex-1">
-                          <h4 className="font-semibold text-white">{rec.title}</h4>
-                          <p className="text-sm text-gray-400 mt-1">{rec.description}</p>
-                          <span className="inline-block mt-2 text-xs px-2 py-1 bg-purple-600/30 text-purple-300 rounded-full">
+                          <h4 className="font-semibold text-black">{rec.title}</h4>
+                          <p className="text-sm text-gray-700 mt-1">{rec.description}</p>
+                          <span className="inline-block mt-2 text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
                             {rec.type}
                           </span>
                         </div>
@@ -440,7 +440,7 @@ export default function Discover() {
                     <div
                       key={result.id}
                       onClick={() => handleResultClick(result)}
-                      className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-purple-500/50 transition-colors cursor-pointer"
+                      className="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-purple-400 transition-colors cursor-pointer"
                       data-testid={`search-result-${result.id}`}
                     >
                       <div className="flex items-start gap-4">
@@ -454,20 +454,20 @@ export default function Discover() {
                         <div className="flex-1">
                           <div className="flex items-start gap-2">
                             {getMediaIcon(result.type)}
-                            <h4 className="font-semibold text-white flex-1">{result.title}</h4>
+                            <h4 className="font-semibold text-black flex-1">{result.title}</h4>
                           </div>
                           {result.year && (
-                            <p className="text-sm text-gray-400 mt-1">{result.year}</p>
+                            <p className="text-sm text-gray-600 mt-1">{result.year}</p>
                           )}
                           {result.description && (
-                            <p className="text-sm text-gray-300 mt-2 line-clamp-2">{result.description}</p>
+                            <p className="text-sm text-gray-700 mt-2 line-clamp-2">{result.description}</p>
                           )}
                           <div className="flex items-center gap-3 mt-2">
-                            <span className="inline-block text-xs px-2 py-1 bg-purple-600/30 text-purple-300 rounded-full">
+                            <span className="inline-block text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
                               {result.type}
                             </span>
                             {result.rating && (
-                              <span className="text-xs text-gray-400">⭐ {result.rating}</span>
+                              <span className="text-xs text-gray-600">⭐ {result.rating}</span>
                             )}
                           </div>
                         </div>

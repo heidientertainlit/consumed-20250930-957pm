@@ -26,7 +26,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               className="h-8 w-auto"
             />
           </Link>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <button
               onClick={() => setIsSearchOpen(true)}
               className="hover:opacity-70 transition-opacity"
