@@ -178,8 +178,55 @@ export default function Feed() {
         return [];
       }
 
-      // Filter out games user has already voted on
-      const unvotedPolls = (data || []).filter(poll => !votedPoolIds.has(poll.id));
+      // Get vote counts for all polls
+      const { data: allVotes } = await supabase
+        .from('user_predictions')
+        .select('pool_id, prediction');
+
+      // Filter out games user has already voted on and transform for PollCard
+      const unvotedPolls = (data || [])
+        .filter(poll => !votedPoolIds.has(poll.id))
+        .map(poll => {
+          // Transform options from string array to PollCard format
+          const options = Array.isArray(poll.options) 
+            ? poll.options.map((option: string, index: number) => {
+                // Count votes for this option
+                const voteCount = (allVotes || []).filter(
+                  v => v.pool_id === poll.id && v.prediction === option
+                ).length;
+                
+                return {
+                  id: index + 1,
+                  label: option,
+                  vote_count: voteCount,
+                  percentage: 0, // Will be calculated below
+                };
+              })
+            : [];
+
+          // Calculate total votes and percentages
+          const totalVotes = options.reduce((sum: number, opt: any) => sum + opt.vote_count, 0);
+          options.forEach((opt: any) => {
+            opt.percentage = totalVotes > 0 
+              ? Math.round((opt.vote_count / totalVotes) * 100) 
+              : 0;
+          });
+
+          return {
+            id: poll.id,
+            question: poll.title,
+            type: poll.type,
+            sponsor_name: poll.sponsorName,
+            sponsor_logo_url: poll.sponsorLogoUrl,
+            sponsor_cta_url: poll.sponsorCtaUrl,
+            points_reward: poll.pointsReward || 1,
+            total_votes: totalVotes,
+            options,
+            expires_at: poll.deadline,
+            user_has_voted: false,
+          };
+        });
+
       console.log('✅ Loaded vote games (polls):', unvotedPolls.length, 'unvoted out of', data?.length || 0);
       
       return unvotedPolls;

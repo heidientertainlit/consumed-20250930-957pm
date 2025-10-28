@@ -46,7 +46,7 @@ serve(async (req) => {
 
     // Fetch platform info for each movie and format the response
     const formattedMovies = await Promise.all(
-      trendingData.results.slice(0, 10).map(async (movie: any) => {
+      trendingData.results.slice(0, 20).map(async (movie: any) => {
         // Fetch watch providers for this movie
         let platform = undefined;
         try {

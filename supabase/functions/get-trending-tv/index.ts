@@ -46,7 +46,7 @@ serve(async (req) => {
 
     // Fetch platform info for each TV show and format the response
     const formattedShows = await Promise.all(
-      trendingData.results.slice(0, 10).map(async (show: any) => {
+      trendingData.results.slice(0, 20).map(async (show: any) => {
         // Fetch watch providers for this show
         let platform = undefined;
         try {
