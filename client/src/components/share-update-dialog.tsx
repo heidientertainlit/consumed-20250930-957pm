@@ -276,7 +276,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
                 htmlFor="spoilers"
                 className="text-sm font-semibold text-red-800 cursor-pointer select-none"
               >
-                ⚠️ This post contains spoilers
+                ⚠️ Check if post contains spoilers
               </label>
             </div>
           </div>

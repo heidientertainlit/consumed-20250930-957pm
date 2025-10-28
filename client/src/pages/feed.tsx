@@ -1166,64 +1166,35 @@ export default function Feed() {
                       )}
                     </div>
 
-                  {/* Spoiler Content Wrapper */}
-                  {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
-                    <div className="relative mb-4">
-                      <div className="blur-lg select-none pointer-events-none">
-                        {/* Blurred Content Preview */}
-                        {post.content && (
-                          <div className="mb-4">
-                            <p className="text-gray-800">{post.content}</p>
+                  {/* Post Content with Spoiler Blur */}
+                  {post.content && (
+                    <div className="mb-4 relative">
+                      {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
+                        <>
+                          {/* Blurred Text */}
+                          <p className="text-gray-800 blur-md select-none">{post.content}</p>
+                          
+                          {/* Spoiler Badge Overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <button
+                              onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
+                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-2"
+                              data-testid={`reveal-spoiler-${post.id}`}
+                            >
+                              <Eye size={18} />
+                              <span>Show Spoiler</span>
+                            </button>
                           </div>
-                        )}
-                        {post.mediaItems && post.mediaItems.length > 0 && (
-                          <div className="space-y-3">
-                            {post.mediaItems.map((media, index) => (
-                              <div key={index} className="bg-gray-100 rounded-2xl p-4">
-                                <div className="flex items-center space-x-4">
-                                  <div className="w-16 h-24 rounded-lg bg-gray-300"></div>
-                                  <div className="flex-1">
-                                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                                    <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Spoiler Warning Overlay */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-50/95 to-white/95 backdrop-blur-sm">
-                        <div className="text-center p-6">
-                          <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                            <EyeOff className="text-red-600" size={32} />
-                          </div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">Spoiler Warning</h3>
-                          <p className="text-gray-600 mb-4">This post contains spoilers</p>
-                          <Button
-                            onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
-                            className="bg-red-600 hover:bg-red-700 text-white px-6"
-                            data-testid={`reveal-spoiler-${post.id}`}
-                          >
-                            <Eye size={18} className="mr-2" />
-                            Show Anyway
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Post Content */}
-                      {post.content && (
-                        <div className="mb-4">
-                          <p className="text-gray-800">{post.content}</p>
-                        </div>
+                        </>
+                      ) : (
+                        <p className="text-gray-800">{post.content}</p>
                       )}
+                    </div>
+                  )}
 
-                      {/* Media Cards */}
-                      {post.mediaItems && post.mediaItems.length > 0 && (
-                        <div className="space-y-3 mb-4">
+                  {/* Media Cards - Always Visible */}
+                  {post.mediaItems && post.mediaItems.length > 0 && (
+                    <div className="space-y-3 mb-4">
                       {post.mediaItems.map((media, index) => {
                         const isClickable = media.externalId && media.externalSource;
                         return (
@@ -1288,9 +1259,7 @@ export default function Feed() {
                         </div>
                         );
                       })}
-                        </div>
-                      )}
-                    </>
+                    </div>
                   )}
 
                   {/* Interaction Bar */}
