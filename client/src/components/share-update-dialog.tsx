@@ -248,7 +248,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           <div>
             <DialogTitle className="text-2xl font-bold text-gray-900">Share Update</DialogTitle>
             <p className="text-gray-500 text-sm mt-1">
-              Share thoughts on a show, rate your latest read, or start a conversation about your favorite character.
+              Share thoughts on a show, rate your latest read, or give a hot take on your latest binge.
             </p>
           </div>
           <Button
@@ -283,7 +283,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
           {/* Media Types Selection */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Media Types to Search</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Select a media type for more accurate results.</h3>
 
             {/* Category Checkboxes - 2 Column Layout */}
             <div className="grid grid-cols-2 gap-y-3 gap-x-6 mb-6">
@@ -334,7 +334,7 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
 
           {/* Search for Media Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search for Media</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Specific Media to your post</h3>
 
             {/* Search Input with blue border like in screenshot */}
             <Input
@@ -429,6 +429,24 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
             )}
           </div>
 
+          {/* Review Section - Always Visible */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Thoughts</h3>
+            <div className="relative">
+              <Textarea
+                value={thoughts}
+                onChange={(e) => setThoughts(e.target.value)}
+                placeholder="Share your thoughts about this media..."
+                maxLength={500}
+                className="min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
+                data-testid="thoughts-textarea"
+              />
+              <div className="absolute bottom-3 right-3 text-sm text-gray-400 pointer-events-none">
+                {thoughts.length}/500
+              </div>
+            </div>
+          </div>
+
           {/* Rating Section - Always Visible */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Rate this media (optional)</h3>
@@ -465,24 +483,6 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
                   data-testid="rating-input"
                 />
                 <span className="text-sm text-gray-500">(0–5)</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Review Section - Always Visible */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Thoughts (Review)</h3>
-            <div className="relative">
-              <Textarea
-                value={thoughts}
-                onChange={(e) => setThoughts(e.target.value)}
-                placeholder="Share your thoughts about this media..."
-                maxLength={500}
-                className="min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
-                data-testid="thoughts-textarea"
-              />
-              <div className="absolute bottom-3 right-3 text-sm text-gray-400 pointer-events-none">
-                {thoughts.length}/500
               </div>
             </div>
           </div>
