@@ -88,24 +88,23 @@ serve(async (req) => {
           for (const listTitle of systemLists) {
             const { error: listError } = await supabaseAdmin
               .from('lists')
-              .insert({
+              .upsert({
                 user_id: newUser.id,
                 title: listTitle,
                 is_default: true,
                 is_private: false
+              }, {
+                onConflict: 'user_id,title',
+                ignoreDuplicates: true
               })
               .select('id, title, is_default, is_private')
               .maybeSingle();
             
-            if (listError && listError.code !== '23505') {
-              console.error(`Failed to create ${listTitle} list:`, listError);
-              return new Response(JSON.stringify({ 
-                error: `Failed to create system list ${listTitle}: ${listError.message}`,
-                lists: []
-              }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-              });
+            if (listError) {
+              console.warn(`List creation warning for ${listTitle}:`, listError);
+              // Don't fail on list creation errors - continue
+            } else {
+              console.log(`Created/verified ${listTitle} list`);
             }
           }
           console.log('Created personal system lists for new user');

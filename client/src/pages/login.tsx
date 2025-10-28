@@ -171,7 +171,7 @@ export default function LoginPage() {
           </div>
           <p className="text-purple-300 text-lg italic mb-6">entertained ... with benefits</p>
           <p className="text-purple-100 text-sm max-w-lg mx-auto">
-            Track, Predict, & Connect over the entertainment you love. And get rewarded for it.
+            Track, Play, Connect over the entertainment you love — all in one place.
           </p>
         </div>
         
@@ -330,7 +330,7 @@ export default function LoginPage() {
           <DialogHeader>
             <DialogTitle className="text-black">Reset Password</DialogTitle>
             <DialogDescription className="text-gray-600">
-              Enter your email address and we'll send you a link to reset your password. (Make sure to check your spam for the email)
+              Enter your email address and we'll send you a link to reset your password. <strong>(Make sure to check your spam for the email)</strong>
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForgotPassword} className="space-y-4 py-4">
