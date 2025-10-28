@@ -58,21 +58,24 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
+      console.log('🗳️ Submitting vote for poll:', poll.id, 'option:', selectedOption);
       await onVote(poll.id, selectedOption);
+      console.log('✅ Vote submitted successfully!');
       setJustSubmitted(true);
-      // Show success message for 2 seconds before showing results
+      setShowResults(true); // Show results immediately with points
+      // Keep the success message for 3 seconds, then just show results
       setTimeout(() => {
         setJustSubmitted(false);
-        setShowResults(true);
-      }, 2000);
+      }, 3000);
     } catch (error: any) {
-      console.error("Failed to vote:", error);
+      console.error("❌ Failed to vote:", error);
+      console.error("Error details:", error?.message, error?.stack);
       // Check if already voted
       if (error?.message?.includes('already voted') || error?.response?.status === 400) {
         setShowResults(true);
         setErrorMessage("You've already voted in this poll");
       } else {
-        setErrorMessage("Failed to submit vote. Please try again.");
+        setErrorMessage(`Failed to submit vote. ${error?.message || 'Please try again.'}`);
       }
     } finally {
       setIsSubmitting(false);
@@ -105,27 +108,23 @@ export default function PollCard({ poll, onVote, hasVoted = false, userVote }: P
     }
   };
 
-  // Show success message immediately after submission
-  if (justSubmitted) {
-    return (
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-300 p-6 shadow-sm" data-testid={`poll-${poll.id}-success`}>
-        <div className="flex flex-col items-center space-y-3 text-center">
-          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-            <Trophy size={32} className="text-white" />
-          </div>
-          <div className="text-xl font-bold text-green-800">
-            Submitted!
-          </div>
-          <div className="text-green-700">
-            You earned <span className="font-bold text-2xl">{poll.points_reward}</span> points
-          </div>
+  // Show success banner at top when just submitted
+  const successBanner = justSubmitted && (
+    <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-4 mb-4 shadow-sm" data-testid={`poll-${poll.id}-success`}>
+      <div className="flex items-center justify-center space-x-2 text-white">
+        <Trophy size={20} />
+        <div className="text-sm font-semibold">
+          Vote Submitted! +{poll.points_reward} pts
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-100 p-4 shadow-sm mb-4" data-testid={`poll-${poll.id}`}>
+      {/* Success banner */}
+      {successBanner}
+      
       {/* Header with badge */}
       <div className="flex items-center justify-between mb-3">
         <div className={cn(
