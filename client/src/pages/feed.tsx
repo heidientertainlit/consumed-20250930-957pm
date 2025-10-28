@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tanstack/react-query";
+import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
@@ -1177,11 +1178,19 @@ export default function Feed() {
                   <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                     {/* User Info and Date */}
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User size={24} className="text-gray-600" />
-                      </div>
+                      <Link href={`/user/${post.user.id}`}>
+                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
+                          <User size={24} className="text-gray-600" />
+                        </div>
+                      </Link>
                       <div className="flex-1">
-                        <div className="font-semibold text-gray-900">{post.user.username}</div>
+                        <Link 
+                          href={`/user/${post.user.id}`}
+                          className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                          data-testid={`link-user-${post.user.id}`}
+                        >
+                          {post.user.username}
+                        </Link>
                         <div className="text-sm text-gray-500">{formatFullDate(post.timestamp)}</div>
                       </div>
                       {user?.id === post.user.id && (

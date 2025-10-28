@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Send, User, Trash2, Heart, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,14 +104,20 @@ function CommentItem({
         className="flex items-start space-x-2"
         style={{ marginLeft: depth > 0 ? `${indentPx}px` : '0' }}
       >
-        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 relative z-10">
-          <User size={16} className="text-gray-600" />
-        </div>
+        <Link href={`/user/${comment.user.id}`}>
+          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 relative z-10 cursor-pointer hover:bg-gray-300 transition-colors">
+            <User size={16} className="text-gray-600" />
+          </div>
+        </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1 flex-wrap">
-            <span className="font-medium text-sm text-gray-900">
+            <Link 
+              href={`/user/${comment.user.id}`}
+              className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+              data-testid={`link-commenter-${comment.user.id}`}
+            >
               {comment.user.displayName}
-            </span>
+            </Link>
             <span className="text-xs text-gray-500">
               {formatCommentDate(comment.createdAt)}
             </span>
