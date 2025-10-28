@@ -104,7 +104,7 @@ export default function Track() {
 
   // Get user's lists and media data from Supabase
   const { data: userListsData, isLoading: listsLoading, error: listsError } = useQuery({
-    queryKey: ['user-lists-with-media'],
+    queryKey: ['user-lists-with-media', 'own'],
     queryFn: async () => {
       if (!session?.access_token) {
         console.error('[LISTS] No session token available');
