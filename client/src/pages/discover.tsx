@@ -41,8 +41,18 @@ export default function Discover() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedMediaFilter, setSelectedMediaFilter] = useState<string>("all");
   const { session } = useAuth();
   const [, setLocation] = useLocation();
+
+  const mediaFilters = [
+    { id: "all", label: "All" },
+    { id: "tv", label: "TV Shows" },
+    { id: "movie", label: "Movies" },
+    { id: "book", label: "Books" },
+    { id: "podcast", label: "Podcasts" },
+    { id: "game", label: "Gaming" },
+  ];
 
   // Fetch Netflix Top TV Shows
   const { data: netflixTVShows = [] } = useQuery({
@@ -102,6 +112,35 @@ export default function Discover() {
     staleTime: 1000 * 60 * 60 * 6,
   });
 
+  // Fetch Netflix Top Movies
+  const { data: netflixMovies = [] } = useQuery({
+    queryKey: ['netflix-top-movies'],
+    queryFn: async () => {
+      try {
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-flixpatrol-platform`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ platform: 'netflix', mediaType: 'movie' })
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'tmdb'
+        }));
+      } catch (error) {
+        console.error('Error fetching Netflix movies:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60 * 6,
+  });
+
   // Fetch Paramount+ Top Movies
   const { data: paramountMovies = [] } = useQuery({
     queryKey: ['paramount-top-movies'],
@@ -129,6 +168,23 @@ export default function Discover() {
       }
     },
     staleTime: 1000 * 60 * 60 * 6,
+  });
+
+  // Fetch Top Gaming (using Twitch/IGDB via placeholder - will use trending games)
+  const { data: topGames = [] } = useQuery({
+    queryKey: ['top-games'],
+    queryFn: async () => {
+      // Placeholder - in real implementation, integrate with IGDB or Twitch API
+      // For now, return some popular games
+      return [
+        { id: '1', title: 'Elden Ring', imageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg', mediaType: 'game' },
+        { id: '2', title: 'The Last of Us Part II', imageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co2f3r.jpg', mediaType: 'game' },
+        { id: '3', title: 'Baldurs Gate 3', imageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co5y7n.jpg', mediaType: 'game' },
+        { id: '4', title: 'Zelda: Tears of the Kingdom', imageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co5vmg.jpg', mediaType: 'game' },
+        { id: '5', title: 'God of War Ragnarök', imageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co5s5v.jpg', mediaType: 'game' },
+      ];
+    },
+    staleTime: 1000 * 60 * 60 * 24, // Cache for 24 hours
   });
 
   // Fetch trending TV shows
@@ -346,6 +402,24 @@ export default function Discover() {
           </p>
         </div>
 
+        {/* Media Type Filters */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-6">
+          {mediaFilters.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => setSelectedMediaFilter(filter.id)}
+              className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                selectedMediaFilter === filter.id
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              }`}
+              data-testid={`filter-${filter.id}`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
         {/* AI Recommendation Engine Section */}
         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
           <div className="mb-4">
@@ -483,7 +557,7 @@ export default function Discover() {
         {/* Trending Content Sections */}
         <div className="space-y-8">
           {/* Personalized Recommendations */}
-          {recommendedContent.length > 0 && (
+          {recommendedContent.length > 0 && (selectedMediaFilter === "all") && (
             <MediaCarousel
               title="Recommended For You"
               mediaType="mixed"
@@ -493,19 +567,29 @@ export default function Discover() {
           )}
 
           {/* Netflix Top TV Shows */}
-          {netflixTVShows.length > 0 && (
+          {netflixTVShows.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "tv") && (
             <MediaCarousel
-              title="Top 10 on Netflix"
+              title="Top 10 TV Shows on Netflix"
               mediaType="tv"
               items={netflixTVShows}
               onItemClick={handleMediaClick}
             />
           )}
 
-          {/* HBO Max Top TV Shows */}
-          {hboTVShows.length > 0 && (
+          {/* Netflix Top Movies */}
+          {netflixMovies.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "movie") && (
             <MediaCarousel
-              title="Top 10 on HBO Max"
+              title="Top 10 Movies on Netflix"
+              mediaType="movie"
+              items={netflixMovies}
+              onItemClick={handleMediaClick}
+            />
+          )}
+
+          {/* HBO Max Top TV Shows */}
+          {hboTVShows.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "tv") && (
+            <MediaCarousel
+              title="Top 10 TV Shows on HBO Max"
               mediaType="tv"
               items={hboTVShows}
               onItemClick={handleMediaClick}
@@ -513,9 +597,9 @@ export default function Discover() {
           )}
 
           {/* Paramount+ Top Movies */}
-          {paramountMovies.length > 0 && (
+          {paramountMovies.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "movie") && (
             <MediaCarousel
-              title="Top 10 on Paramount+"
+              title="Top 10 Movies on Paramount+"
               mediaType="movie"
               items={paramountMovies}
               onItemClick={handleMediaClick}
@@ -523,7 +607,7 @@ export default function Discover() {
           )}
 
           {/* Trending TV Shows */}
-          {trendingTVShows.length > 0 && (
+          {trendingTVShows.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "tv") && (
             <MediaCarousel
               title="Trending TV Shows"
               mediaType="tv"
@@ -533,7 +617,7 @@ export default function Discover() {
           )}
 
           {/* Trending Movies */}
-          {trendingMovies.length > 0 && (
+          {trendingMovies.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "movie") && (
             <MediaCarousel
               title="Trending Movies"
               mediaType="movie"
@@ -542,8 +626,18 @@ export default function Discover() {
             />
           )}
 
+          {/* Top Gaming */}
+          {topGames.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "game") && (
+            <MediaCarousel
+              title="Top Gaming"
+              mediaType="game"
+              items={topGames}
+              onItemClick={handleMediaClick}
+            />
+          )}
+
           {/* NY Times Bestsellers */}
-          {bestsellerBooks.length > 0 && (
+          {bestsellerBooks.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "book") && (
             <MediaCarousel
               title="NY Times Bestsellers"
               mediaType="book"
@@ -553,7 +647,7 @@ export default function Discover() {
           )}
 
           {/* Trending Podcasts */}
-          {trendingPodcasts.length > 0 && (
+          {trendingPodcasts.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "podcast") && (
             <MediaCarousel
               title="Trending Podcasts"
               mediaType="podcast"
