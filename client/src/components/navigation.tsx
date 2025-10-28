@@ -1,9 +1,5 @@
-import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, Search, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import SearchModal from "./search-modal";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 
@@ -13,7 +9,6 @@ interface NavigationProps {
 
 export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const [location] = useLocation();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { user } = useAuth();
 
   return (
@@ -29,13 +24,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             />
           </Link>
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-              data-testid="search-button"
-            >
-              <Search className="text-white" size={18} />
-            </button>
+            <Link href="/discover">
+              <button
+                className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                data-testid="discover-button"
+              >
+                <span className="text-white text-sm">🔍✨</span>
+              </button>
+            </Link>
             <NotificationBell />
             <Link href={user?.id ? `/user/${user.id}` : "/login"}>
               <button
@@ -94,12 +90,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
         </div>
       </nav>
-
-      {/* Search Modal */}
-      <SearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
     </>
   );
 }
