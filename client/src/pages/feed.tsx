@@ -420,7 +420,7 @@ export default function Feed() {
           prediction: optionId,
           user_id: user.id,
           points_earned: poll?.points_reward || 1,
-          is_correct: true
+          is_winner: null
         })
         .select()
         .single();
