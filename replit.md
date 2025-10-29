@@ -46,7 +46,7 @@ Preferred communication style: Simple, everyday language.
 -   **Profile Management**: Editable display name and username with validation. Supports viewing other users' profiles by passing `user_id` query parameters to edge functions.
 -   **Creator Recognition**: "Favorite Creators" are computed based on user media consumption.
 -   **Media Item Pages**: Displays dynamic platform availability (e.g., Netflix, Spotify) via "Watch On", "Listen On", or "Read On" links.
--   **Polls/Surveys System**: Database-backed polling system supporting branded and sponsored polls with real-time voting, duplicate vote prevention, and points rewards.
+-   **Polls/Surveys System**: Uses the unified voting system (`prediction_pools` + `user_predictions` tables) to support polls, predictions, and trivia. All game types support sponsors, real-time voting, duplicate vote prevention, and points rewards. The `PlayCard` component handles rendering and submission for all game types.
 -   **Spoiler Tags**: Users can mark posts as containing spoilers when sharing updates, with content hidden behind a reveal button in the feed to protect other users from spoilers.
 -   **Discover Page**: Dedicated page (`/discover`) featuring AI-powered recommendation engine at the top and trending content carousels below. Includes sections for personalized recommendations, trending TV shows, movies, NY Times bestsellers, and podcasts. Users can ask conversational questions to get tailored suggestions.
 
