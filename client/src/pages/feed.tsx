@@ -4,7 +4,6 @@ import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
-import PollCard from "@/components/poll-card";
 import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff } from "lucide-react";
@@ -160,73 +159,6 @@ export default function Feed() {
       console.log('✅ Initialized liked posts:', likedIds.size);
     }
   }, [socialPosts]);
-
-  // Fetch active polls (from prediction_pools with type='vote')
-  const { data: polls = [] } = useQuery({
-    queryKey: ["prediction-pools-vote", user?.id],
-    queryFn: async () => {
-      if (!session?.access_token || !user?.id) return [];
-
-      console.log('🗳️ Fetching vote games from prediction_pools...');
-
-      // Get user's existing votes
-      const { data: userVotes } = await supabase
-        .from('user_predictions')
-        .select('pool_id')
-        .eq('user_id', user.id);
-
-      const votedPoolIds = new Set(userVotes?.map(p => p.pool_id) || []);
-
-      // Get all open vote-type games
-      const { data, error } = await supabase
-        .from('prediction_pools')
-        .select('*')
-        .eq('status', 'open')
-        .eq('type', 'vote')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching vote games:', error);
-        return [];
-      }
-
-      // Filter out polls user has already voted on - they disappear after voting
-      const unvotedPolls = (data || [])
-        .filter(poll => !votedPoolIds.has(poll.id))
-        .map(poll => {
-          // Transform options from string array to simple format
-          const options = Array.isArray(poll.options) 
-            ? poll.options.map((option: any, index: number) => {
-                const optionLabel = typeof option === 'string' ? option : (option.label || option.text || String(option));
-                return {
-                  id: index + 1,
-                  label: optionLabel,
-                  vote_count: 0,
-                  percentage: 0,
-                };
-              })
-            : [];
-
-          return {
-            id: poll.id,
-            question: poll.title,
-            type: poll.type,
-            sponsor_name: poll.sponsorName,
-            sponsor_logo_url: poll.sponsorLogoUrl,
-            sponsor_cta_url: poll.sponsorCtaUrl,
-            points_reward: poll.pointsReward || 1,
-            total_votes: 0,
-            options,
-            expires_at: poll.deadline,
-            user_has_voted: false,
-          };
-        })
-        .slice(0, 5);
-      
-      return unvotedPolls;
-    },
-    enabled: !!session?.access_token && !!user?.id,
-  });
 
   // Fetch Play games for inline play
   const { data: playGames = [] } = useQuery({
@@ -401,58 +333,6 @@ export default function Feed() {
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
     },
   });
-
-  // Poll vote mutation (uses prediction_pools + user_predictions)
-  const pollVoteMutation = useMutation({
-    mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      if (!session?.access_token || !user?.id) throw new Error('Not authenticated');
-      
-      const { data: poll } = await supabase
-        .from('prediction_pools')
-        .select('points_reward')
-        .eq('id', pollId)
-        .single();
-      
-      const { data, error } = await supabase
-        .from('user_predictions')
-        .insert({
-          pool_id: pollId,
-          prediction: optionId,
-          user_id: user.id,
-          points_earned: poll?.points_reward || 1,
-          is_winner: null
-        })
-        .select()
-        .single();
-      
-      if (error) {
-        if (error.code === '23505') {
-          throw new Error('You have already voted in this poll');
-        }
-        throw new Error('Failed to submit vote');
-      }
-      
-      return { success: true, pointsAwarded: poll?.points_reward || 1 };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["prediction-pools-vote", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
-      if (data?.pointsAwarded) {
-        console.log(`✅ Poll vote submitted! Earned ${data.pointsAwarded} points`);
-      }
-    },
-  });
-
-  const handlePollVote = async (pollId: string | number, optionId: string | number) => {
-    const poll = polls.find(p => p.id === pollId);
-    const option = poll?.options?.find((opt: any) => opt.id === optionId);
-    const optionText = option?.label || String(optionId);
-    
-    await pollVoteMutation.mutateAsync({ 
-      pollId: String(pollId), 
-      optionId: optionText
-    });
-  };
 
   // Comment mutation with support for replies
   const commentMutation = useMutation({
@@ -703,27 +583,6 @@ export default function Feed() {
 
   const handleShareUpdate = () => {
     setIsShareDialogOpen(true);
-  };
-
-  // Poll voting mutation
-  const voteMutation = useMutation({
-    mutationFn: async ({ pollId, optionId }: { pollId: number; optionId: number }) => {
-      if (!user?.id) throw new Error('Not authenticated');
-      return apiRequest('POST', `/api/polls/${pollId}/vote`, { optionId, userId: user.id });
-    },
-    onSuccess: (data: any) => {
-      // Refetch polls with user vote status
-      queryClient.invalidateQueries({ queryKey: ["/api/polls", user?.id] });
-
-      // Log points earned
-      if (data?.pointsAwarded) {
-        console.log(`✅ Vote submitted! Earned ${data.pointsAwarded} points`);
-      }
-    },
-  });
-
-  const handleVote = async (pollId: number, optionId: number) => {
-    await voteMutation.mutateAsync({ pollId, optionId });
   };
 
   const handleLike = (postId: string) => {
@@ -1112,13 +971,6 @@ export default function Feed() {
                 // Only show quick games inline (no long-form trivia or multi-category predictions)
                 const canPlayInline = currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory;
 
-                // Inject PollCard every 5th post
-                const shouldShowPollCard = (postIndex + 1) % 5 === 0;
-                const pollCardIndex = Math.floor(postIndex / 5);
-                const currentPoll = polls && polls.length > 0 
-                  ? polls[pollCardIndex % polls.length]
-                  : null;
-
                 // Inject Creator Update Card every 6th post
                 const shouldShowCreatorUpdate = (postIndex + 1) % 6 === 0;
                 const creatorUpdateIndex = Math.floor(postIndex / 6);
@@ -1158,14 +1010,6 @@ export default function Feed() {
                         onComplete={() => {
                           queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
                         }}
-                      />
-                    )}
-
-                    {/* Insert PollCard every 5th post */}
-                    {shouldShowPollCard && currentPoll && (
-                      <PollCard 
-                        poll={currentPoll}
-                        onVote={handlePollVote}
                       />
                     )}
 
