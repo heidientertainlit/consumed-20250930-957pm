@@ -218,39 +218,8 @@ serve(async (req) => {
         }
       });
 
-      // For vote_leader, also include poll votes (from poll_responses table)
-      if (category === 'vote_leader') {
-        // Get all poll votes
-        const { data: pollVotes } = await supabase
-          .from('poll_responses')
-          .select('user_id, poll_id');
-
-        if (pollVotes && pollVotes.length > 0) {
-          // Get unique poll IDs
-          const pollIds = [...new Set(pollVotes.map(v => v.poll_id))];
-
-          // Get poll points for each poll
-          const { data: polls } = await supabase
-            .from('polls')
-            .select('id, points_reward')
-            .in('id', pollIds);
-
-          if (polls) {
-            // Create a map of poll_id -> points_reward
-            const pollPointsMap = polls.reduce((acc: any, p: any) => {
-              acc[p.id] = p.points_reward || 1;
-              return acc;
-            }, {});
-
-            // Add poll points to user totals
-            pollVotes.forEach((vote: any) => {
-              const userId = vote.user_id;
-              const points = pollPointsMap[vote.poll_id] || 1;
-              userPoints[userId] = (userPoints[userId] || 0) + points;
-            });
-          }
-        }
-      }
+      // vote_leader points are already included in predictions array above
+      // (votes are stored as type='vote' in prediction_pools/user_predictions)
 
       // Convert to leaderboard format
       const leaderboard = Object.entries(userPoints)
@@ -442,39 +411,9 @@ serve(async (req) => {
 
       const { data: predictions } = await predictionQuery;
 
-      // Get user's poll votes with points
-      let pollQuery = supabase
-        .from('poll_responses')
-        .select('poll_id, created_at')
-        .eq('user_id', user.id);
-
-      // Apply date filter to polls too
-      if (dateFilter) {
-        pollQuery = pollQuery.gte('created_at', dateFilter);
-      }
-
-      const { data: pollVotes } = await pollQuery;
-
-      // Get poll points for each vote
-      let pollPoints = 0;
-      if (pollVotes && pollVotes.length > 0) {
-        const pollIds = [...new Set(pollVotes.map(v => v.poll_id))];
-        const { data: polls } = await supabase
-          .from('polls')
-          .select('id, points_reward')
-          .in('id', pollIds);
-
-        if (polls) {
-          const pollPointsMap = polls.reduce((acc: any, p: any) => {
-            acc[p.id] = p.points_reward || 5;
-            return acc;
-          }, {});
-
-          pollPoints = pollVotes.reduce((sum, vote) => {
-            return sum + (pollPointsMap[vote.poll_id] || 5);
-          }, 0);
-        }
-      }
+      // All voting (polls, predictions, trivia) is now in user_predictions
+      // pollPoints are included in predictionPoints above
+      const pollPoints = 0; // Legacy variable, all points now in predictions
 
       if (listItems) {
         // Count items by media type

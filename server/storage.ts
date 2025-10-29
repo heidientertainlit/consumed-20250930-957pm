@@ -20,14 +20,6 @@ export interface IStorage {
 
   // Survey questions
   getAllQuestions(): Promise<any[]>;
-  
-  // Polls operations
-  getActivePolls(): Promise<any[]>;
-  getPollWithResults(pollId: number): Promise<any>;
-  getUserPollResponse(pollId: number, userId: string): Promise<any>;
-  createPollResponse(response: { pollId: number; optionId: number; userId: string }): Promise<void>;
-  createPoll(poll: any, options: any[]): Promise<number>;
-  updatePollStatus(pollId: number, status: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -260,32 +252,6 @@ export class MemStorage implements IStorage {
         options: ["Yes", "No", "Sometimes"]
       }
     ];
-  }
-
-  // Polls operations - Using database directly
-  async getActivePolls(): Promise<any[]> {
-    // This will be implemented with database connection
-    throw new Error("Use database polls API instead");
-  }
-
-  async getPollWithResults(pollId: number): Promise<any> {
-    throw new Error("Use database polls API instead");
-  }
-
-  async getUserPollResponse(pollId: number, userId: string): Promise<any> {
-    throw new Error("Use database polls API instead");
-  }
-
-  async createPollResponse(response: { pollId: number; optionId: number; userId: string }): Promise<void> {
-    throw new Error("Use database polls API instead");
-  }
-
-  async createPoll(poll: any, options: any[]): Promise<number> {
-    throw new Error("Use database polls API instead");
-  }
-
-  async updatePollStatus(pollId: number, status: string): Promise<void> {
-    throw new Error("Use database polls API instead");
   }
 
 }
