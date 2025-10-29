@@ -51,7 +51,6 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
       setIsSubmitted(true);
       setEarnedPoints(data?.pointsAwarded || game.points_reward || 10);
       queryClient.invalidateQueries({ queryKey: ['/api/predictions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/polls'] });
       onComplete?.();
     },
   });
