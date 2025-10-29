@@ -170,17 +170,20 @@ serve(async (req) => {
         for (const listTitle of missingLists) {
           const { error: listError } = await supabaseAdmin
             .from('lists')
-            .insert({
+            .upsert({
               user_id: appUser.id,
               title: listTitle,
               is_default: true,
               is_private: false
+            }, {
+              onConflict: 'user_id,title',
+              ignoreDuplicates: true
             })
             .select('id, title, is_default, is_private')
             .maybeSingle();
           
-          if (listError && listError.code !== '23505') {
-            console.error(`Failed to backfill ${listTitle} list:`, listError);
+          if (listError) {
+            console.warn(`Backfill warning for ${listTitle}:`, listError);
           }
         }
 
