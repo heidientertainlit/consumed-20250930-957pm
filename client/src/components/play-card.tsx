@@ -36,6 +36,7 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
           user_id: user.id,
           pool_id: game.id,
           prediction: answer,
+          points_earned: game.points_reward || 10,
         })
         .select()
         .single();
@@ -51,6 +52,9 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
       setIsSubmitted(true);
       setEarnedPoints(data?.pointsAwarded || game.points_reward || 10);
       queryClient.invalidateQueries({ queryKey: ['/api/predictions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/play-games'] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['user-points'] });
       onComplete?.();
     },
   });
