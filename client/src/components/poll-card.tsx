@@ -12,7 +12,7 @@ interface PollOption {
 }
 
 interface Poll {
-  id: number;
+  id: string | number;
   question: string;
   type: "consumed" | "entertainlit" | "sponsored";
   sponsor_name?: string;
@@ -27,7 +27,7 @@ interface Poll {
 
 interface PollCardProps {
   poll: Poll;
-  onVote: (pollId: number, optionId: number) => Promise<void>;
+  onVote: (pollId: string | number, optionId: string | number) => Promise<void>;
   hasVoted?: boolean;
   userVote?: number;
 }
