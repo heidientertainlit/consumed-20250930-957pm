@@ -20,6 +20,7 @@ import UserProfile from "@/pages/user-profile";
 import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
 import EdnaSharePage from "@/pages/edna-share";
+import AdminDashboard from "@/pages/admin";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
 import NotFoundPage from "./pages/not-found";
@@ -113,6 +114,11 @@ function Router() {
         </Route>
         <Route path="/edna/:id">
           <EdnaSharePage />
+        </Route>
+        <Route path="/admin">
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
         </Route>
         <Route component={NotFoundPage} />
       </Switch>
