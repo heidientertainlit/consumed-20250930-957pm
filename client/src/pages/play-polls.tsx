@@ -271,10 +271,13 @@ export default function PlayPollsPage() {
 
                   <CardContent className="space-y-4">
                     {allPredictions[game.id] ? (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                        <div className="text-green-800 font-medium">✓ Submitted</div>
-                        <div className="text-green-700 text-sm">
-                          You voted for "{allPredictions[game.id]}"
+                      <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-5 text-center">
+                        <div className="text-blue-900 font-bold text-lg mb-2">✓ You've Already Voted on This Poll</div>
+                        <div className="text-blue-700 text-sm font-medium mb-1">
+                          Your vote: "{allPredictions[game.id]}"
+                        </div>
+                        <div className="text-blue-600 text-xs mt-2">
+                          You can only vote once per poll
                         </div>
                       </div>
                     ) : (
