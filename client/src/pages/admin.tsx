@@ -673,34 +673,56 @@ export default function AdminDashboard() {
                     <CardHeader>
                       <CardTitle className="text-white">Cross-Platform Affinity Insights</CardTitle>
                       <CardDescription className="text-gray-400">
-                        "Netflix viewers also read X books, Taylor Swift fans watch Y movies"
+                        Powered by Entertainment DNA, recommendations, creators, and platform usage
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                        {partnerships?.affinityInsights && partnerships.affinityInsights.length > 0 ? partnerships.affinityInsights.slice(0, 20).map((insight, idx) => (
-                          <div 
-                            key={idx} 
-                            className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 hover:border-purple-500/50 transition-colors"
-                          >
-                            <div className="text-sm text-gray-300 mb-2">
-                              {insight.insight_text}
-                            </div>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-400">
-                                {insight.source_category === 'creator' ? '👤 Creator' : '📺 Platform'}: {insight.source_name}
-                              </span>
-                              <div className="text-right">
-                                <div className="text-purple-400 font-semibold">
-                                  {insight.affinity_percentage}% affinity
-                                </div>
-                                <div className="text-gray-500">
-                                  {insight.affinity_count} users
+                        {partnerships?.affinityInsights && partnerships.affinityInsights.length > 0 ? partnerships.affinityInsights.slice(0, 20).map((insight, idx) => {
+                          const getCategoryIcon = (category: string) => {
+                            switch(category) {
+                              case 'creator': return '👤';
+                              case 'platform': return '📺';
+                              case 'dna': return '🧬';
+                              case 'recommendation': return '✨';
+                              default: return '📊';
+                            }
+                          };
+                          
+                          const getCategoryLabel = (category: string) => {
+                            switch(category) {
+                              case 'creator': return 'Creator';
+                              case 'platform': return 'Platform';
+                              case 'dna': return 'DNA Profile';
+                              case 'recommendation': return 'AI Recommendations';
+                              default: return 'Other';
+                            }
+                          };
+                          
+                          return (
+                            <div 
+                              key={idx} 
+                              className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 hover:border-purple-500/50 transition-colors"
+                            >
+                              <div className="text-sm text-gray-300 mb-2">
+                                {insight.insight_text}
+                              </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-400">
+                                  {getCategoryIcon(insight.source_category)} {getCategoryLabel(insight.source_category)}: {insight.source_name}
+                                </span>
+                                <div className="text-right">
+                                  <div className="text-purple-400 font-semibold">
+                                    {insight.affinity_percentage}% affinity
+                                  </div>
+                                  <div className="text-gray-500">
+                                    {insight.affinity_count} users
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        )) : (
+                          );
+                        }) : (
                           <p className="text-gray-400 col-span-2">No affinity data available</p>
                         )}
                       </div>

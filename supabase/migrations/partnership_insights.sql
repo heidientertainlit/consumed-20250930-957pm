@@ -225,7 +225,7 @@ BEGIN
     FROM dna_profiles dp
     CROSS JOIN LATERAL jsonb_array_elements_text(dp.favorite_genres) genre
     INNER JOIN list_items li ON li.user_id = dp.user_id
-    CROSS JOIN dna_profiles dp2 ON dp2.label = dp.label
+    INNER JOIN dna_profiles dp2 ON dp2.label = dp.label
     WHERE dp.label IS NOT NULL
       AND dp.label != ''
       AND li.title IS NOT NULL
@@ -263,7 +263,7 @@ BEGIN
     FROM user_recommendations ur
     CROSS JOIN LATERAL jsonb_array_elements(ur.recommendations) rec_item
     INNER JOIN list_items li ON li.user_id = ur.user_id AND li.media_type != rec_item->>'media_type'
-    CROSS JOIN user_recommendations ur2
+    INNER JOIN user_recommendations ur2 ON ur2.user_id != ur.user_id
     CROSS JOIN LATERAL jsonb_array_elements(ur2.recommendations) rec_item2
     WHERE rec_item->>'title' = rec_item2->>'title'
       AND li.title IS NOT NULL
