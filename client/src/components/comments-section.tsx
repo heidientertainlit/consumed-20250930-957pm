@@ -91,7 +91,7 @@ function CommentItem({
   const shouldShowVerticalLine = depth > 0;
 
   return (
-    <div className="relative">
+    <div className="relative" id={`comment-${comment.id}`}>
       {/* Vertical threading line */}
       {shouldShowVerticalLine && (
         <div 

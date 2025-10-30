@@ -19,6 +19,7 @@ interface Notification {
   read: boolean;
   created_at: string;
   post_id?: string;
+  comment_id?: string;
   list_id?: string;
   triggered_by_user_id: string;
 }
@@ -107,12 +108,16 @@ export function NotificationBell() {
     // Navigate based on notification type and available data
     switch (notification.type) {
       case 'comment':
+      case 'comment_reply':
       case 'like':
       case 'mention':
       case 'comment_like':
-        // Post-related notifications - go to the specific post
+        // Post-related notifications - go to the specific post and comment
         if (notification.post_id) {
-          window.location.href = `/feed?post=${notification.post_id}`;
+          const url = notification.comment_id 
+            ? `/feed?post=${notification.post_id}&comment=${notification.comment_id}`
+            : `/feed?post=${notification.post_id}`;
+          window.location.href = url;
         } else {
           window.location.href = '/feed';
         }

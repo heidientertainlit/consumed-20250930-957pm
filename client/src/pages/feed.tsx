@@ -80,6 +80,11 @@ export default function Feed() {
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
   
+  // Check for URL parameters to scroll to specific post/comment
+  const urlParams = new URLSearchParams(window.location.search);
+  const highlightPostId = urlParams.get('post');
+  const highlightCommentId = urlParams.get('comment');
+  
   // Feature flag for comment likes
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
   console.log('🎯 Feed: VITE_FEED_COMMENT_LIKES =', import.meta.env.VITE_FEED_COMMENT_LIKES, 'enabled =', commentLikesEnabled);
@@ -159,6 +164,36 @@ export default function Feed() {
       console.log('✅ Initialized liked posts:', likedIds.size);
     }
   }, [socialPosts]);
+
+  // Handle scrolling to specific post/comment from notification
+  useEffect(() => {
+    if (highlightPostId && socialPosts.length > 0) {
+      // Auto-expand comments for the highlighted post
+      setExpandedComments(prev => new Set(prev).add(highlightPostId));
+      
+      // Wait for comments to load and then scroll
+      setTimeout(() => {
+        if (highlightCommentId) {
+          // Scroll to specific comment
+          const commentElement = document.getElementById(`comment-${highlightCommentId}`);
+          if (commentElement) {
+            commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Highlight the comment briefly
+            commentElement.classList.add('bg-purple-100', 'dark:bg-purple-900/30');
+            setTimeout(() => {
+              commentElement.classList.remove('bg-purple-100', 'dark:bg-purple-900/30');
+            }, 2000);
+          }
+        } else {
+          // Just scroll to the post
+          const postElement = document.getElementById(`post-${highlightPostId}`);
+          if (postElement) {
+            postElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      }, 500); // Give time for comments to render
+    }
+  }, [highlightPostId, highlightCommentId, socialPosts]);
 
   // Fetch Play games for inline play
   const { data: playGames = [] } = useQuery({
@@ -1030,7 +1065,7 @@ export default function Feed() {
                     )}
 
                   {/* Original Post */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm" id={`post-${post.id}`}>
                     {/* User Info and Date */}
                     <div className="flex items-center space-x-3 mb-4">
                       <Link href={`/user/${post.user.id}`}>
