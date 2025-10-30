@@ -60,6 +60,17 @@ interface PartnershipData {
     overlap_users: number;
     overlap_percentage: number;
   }>;
+  affinityInsights: Array<{
+    source_name: string;
+    source_type: string;
+    source_category: string;
+    target_title: string;
+    target_creator: string;
+    target_type: string;
+    affinity_count: number;
+    affinity_percentage: number;
+    insight_text: string;
+  }>;
   trending: Array<{
     media_type: string;
     title: string;
@@ -653,6 +664,45 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         )) || <p className="text-gray-400">No data available</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Cross-Platform Affinity Insights */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30 lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="text-white">Cross-Platform Affinity Insights</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        "Netflix viewers also read X books, Taylor Swift fans watch Y movies"
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                        {partnerships?.affinityInsights && partnerships.affinityInsights.length > 0 ? partnerships.affinityInsights.slice(0, 20).map((insight, idx) => (
+                          <div 
+                            key={idx} 
+                            className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 hover:border-purple-500/50 transition-colors"
+                          >
+                            <div className="text-sm text-gray-300 mb-2">
+                              {insight.insight_text}
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-400">
+                                {insight.source_category === 'creator' ? '👤 Creator' : '📺 Platform'}: {insight.source_name}
+                              </span>
+                              <div className="text-right">
+                                <div className="text-purple-400 font-semibold">
+                                  {insight.affinity_percentage}% affinity
+                                </div>
+                                <div className="text-gray-500">
+                                  {insight.affinity_count} users
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )) : (
+                          <p className="text-gray-400 col-span-2">No affinity data available</p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

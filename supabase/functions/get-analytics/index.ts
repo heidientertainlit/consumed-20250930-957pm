@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
         // Fetch all partnership insights
         const [
           crossPlatformResult,
+          affinityResult,
           trendingResult,
           dnaResult,
           completionResult,
@@ -96,6 +97,7 @@ Deno.serve(async (req) => {
           partnershipSummaryResult
         ] = await Promise.all([
           supabaseAdmin.rpc('get_cross_platform_engagement'),
+          supabaseAdmin.rpc('get_platform_affinity_insights'),
           supabaseAdmin.rpc('get_trending_content'),
           supabaseAdmin.rpc('get_dna_clusters'),
           supabaseAdmin.rpc('get_completion_rates'),
@@ -106,6 +108,7 @@ Deno.serve(async (req) => {
 
         // Check for errors
         if (crossPlatformResult.error) throw new Error(`Cross-platform engagement error: ${crossPlatformResult.error.message}`);
+        if (affinityResult.error) throw new Error(`Platform affinity error: ${affinityResult.error.message}`);
         if (trendingResult.error) throw new Error(`Trending content error: ${trendingResult.error.message}`);
         if (dnaResult.error) throw new Error(`DNA clusters error: ${dnaResult.error.message}`);
         if (completionResult.error) throw new Error(`Completion rates error: ${completionResult.error.message}`);
@@ -115,6 +118,7 @@ Deno.serve(async (req) => {
 
         result = {
           crossPlatform: crossPlatformResult.data || [],
+          affinityInsights: affinityResult.data || [],
           trending: trendingResult.data || [],
           dnaClusters: dnaResult.data || [],
           completionRates: completionResult.data || [],
