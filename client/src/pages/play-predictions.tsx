@@ -10,7 +10,7 @@ import ConsumptionTracker from '@/components/consumption-tracker';
 import FeedbackFooter from '@/components/feedback-footer';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
 import GameShareModal from "@/components/game-share-modal";
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PlayPredictionsPage() {
@@ -69,21 +69,85 @@ export default function PlayPredictionsPage() {
 
   const allPredictions = userPredictionsData || {};
 
-  // Submit prediction mutation
+  // Submit prediction mutation - directly to Supabase
   const submitPrediction = useMutation({
     mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
-      return apiRequest('POST', '/api/predictions', {
-        poolId,
+      console.log('🚀 Saving prediction to user_predictions table...');
+      
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Must be logged in to submit predictions');
+      }
+      
+      const { data: game, error: gameError } = await supabase
+        .from('prediction_pools')
+        .select('points_reward, type')
+        .eq('id', poolId)
+        .single();
+        
+      if (gameError || !game) {
+        throw new Error('Game not found');
+      }
+      
+      const gameType = game.type;
+      let immediatePoints = 0;
+      
+      if (gameType === 'vote' || gameType === 'trivia') {
+        immediatePoints = game.points_reward;
+      } else if (gameType === 'predict') {
+        immediatePoints = 0;
+      }
+
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .insert({
+          user_id: user.id,
+          pool_id: poolId,
+          prediction: answer,
+          points_earned: immediatePoints,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('❌ Error saving prediction:', error);
+        throw new Error('Failed to save prediction');
+      }
+      
+      console.log('✅ Prediction saved successfully:', data);
+      
+      return { 
+        success: true, 
+        points_earned: immediatePoints,
+        pool_id: poolId,
         prediction: answer,
-      });
+        game_type: gameType
+      };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/predictions/all'] });
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      
       toast({
-        title: "Success!",
-        description: "Your prediction has been submitted",
+        title: "Prediction Submitted!",
+        description: data.game_type === 'predict' 
+          ? `You predicted "${data.prediction}" - points will be awarded when the result is known!`
+          : `You earned ${data.points_earned} points!`,
       });
     },
+    onError: () => {
+      toast({
+        title: "Submission Failed",
+        description: "Could not submit your prediction. Please try again.",
+        variant: "destructive"
+      });
+    }
   });
 
   const handleOptionSelect = (gameId: string, option: string) => {
@@ -95,7 +159,14 @@ export default function PlayPredictionsPage() {
 
   const handleSubmitAnswer = async (game: any) => {
     const answer = selectedAnswers[game.id];
-    if (!answer) return;
+    if (!answer) {
+      toast({
+        title: "Please select an option",
+        description: "Choose one of the options before submitting.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     await submitPrediction.mutateAsync({
       poolId: game.id,
