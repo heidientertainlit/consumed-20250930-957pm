@@ -12,6 +12,7 @@ import { PredictionGameModal } from '@/components/prediction-game-modal';
 import GameShareModal from "@/components/game-share-modal";
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 export default function PlayPredictionsPage() {
   const [, setLocation] = useLocation();
@@ -32,10 +33,6 @@ export default function PlayPredictionsPage() {
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['/api/predictions/pools'],
     queryFn: async () => {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
       const { data: pools, error } = await supabase
         .from('prediction_pools')
         .select('*')
@@ -50,10 +47,6 @@ export default function PlayPredictionsPage() {
   const { data: userPredictionsData } = useQuery({
     queryKey: ['/api/predictions/user-predictions'],
     queryFn: async () => {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return {};
       const { data, error } = await supabase
@@ -73,11 +66,6 @@ export default function PlayPredictionsPage() {
   const submitPrediction = useMutation({
     mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
       console.log('🚀 Saving prediction to user_predictions table...');
-      
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
       
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {

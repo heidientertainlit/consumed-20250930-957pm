@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
 import { TriviaGameModal } from "@/components/trivia-game-modal";
 import { PredictionGameModal } from "@/components/prediction-game-modal";
+import { supabase } from "@/lib/supabase";
 
 // All game data now comes from the database via API
 
@@ -25,14 +26,6 @@ function usePredictionPools() {
     queryKey: ['/api/predictions/pools'],
     queryFn: async () => {
       console.log('🎮 Fetching games directly from Supabase database...');
-      
-      // Import Supabase client
-      const { createClient } = await import('@supabase/supabase-js');
-      
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
       
       // Query prediction_pools table directly
       const { data: pools, error } = await supabase
@@ -58,13 +51,6 @@ function useUserPredictions() {
   return useQuery({
     queryKey: ['/api/predictions/user-predictions'],
     queryFn: async () => {
-      const { createClient } = await import('@supabase/supabase-js');
-      
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return { predictions: {}, fullData: [] };
@@ -110,14 +96,6 @@ function useSubmitPrediction() {
   return useMutation({
     mutationFn: async ({ poolId, prediction }: { poolId: string; prediction: string }) => {
       console.log('🚀 Saving submission to user_predictions table...');
-      
-      // Import Supabase client
-      const { createClient } = await import('@supabase/supabase-js');
-      
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
       
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
