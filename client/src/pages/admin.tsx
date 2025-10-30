@@ -144,10 +144,11 @@ export default function AdminDashboard() {
     refetchInterval: 60000, // Refresh every minute
   });
 
-  const { data: partnerships, isLoading: partnershipsLoading } = useQuery<PartnershipData>({
+  const { data: partnerships, isLoading: partnershipsLoading, error: partnershipsError } = useQuery<PartnershipData>({
     queryKey: ['admin-partnerships'],
     enabled: !!session,
     queryFn: async () => {
+      console.log('[PARTNERSHIPS] Fetching partnership insights...');
       const response = await fetch(
         `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics?type=partnerships`,
         {
@@ -157,15 +158,24 @@ export default function AdminDashboard() {
         }
       );
 
+      console.log('[PARTNERSHIPS] Response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('[PARTNERSHIPS] Error:', errorData);
         throw new Error(`Failed to fetch partnership insights: ${JSON.stringify(errorData)}`);
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('[PARTNERSHIPS] Data received:', data);
+      return data;
     },
     refetchInterval: 60000,
   });
+
+  if (partnershipsError) {
+    console.error('[PARTNERSHIPS] Query error:', partnershipsError);
+  }
 
   if (error) {
     console.error('[ANALYTICS] Query error:', error);

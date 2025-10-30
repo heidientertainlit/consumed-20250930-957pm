@@ -69,43 +69,43 @@ BEGIN
   RETURN QUERY
   WITH recent_adds AS (
     SELECT 
-      media_type,
-      title,
-      creator,
-      external_id,
-      external_source,
+      list_items.media_type as item_media_type,
+      list_items.title as item_title,
+      list_items.creator as item_creator,
+      list_items.external_id as item_external_id,
+      list_items.external_source as item_external_source,
       COUNT(*) as adds
     FROM list_items
-    WHERE created_at >= NOW() - INTERVAL '7 days'
-      AND title IS NOT NULL
-    GROUP BY media_type, title, creator, external_id, external_source
+    WHERE list_items.created_at >= NOW() - INTERVAL '7 days'
+      AND list_items.title IS NOT NULL
+    GROUP BY list_items.media_type, list_items.title, list_items.creator, list_items.external_id, list_items.external_source
   ),
   recent_posts AS (
     SELECT 
-      media_type,
-      media_title as title,
-      media_creator as creator,
-      media_external_id as external_id,
-      media_external_source as external_source,
+      social_posts.media_type as post_media_type,
+      social_posts.media_title as post_title,
+      social_posts.media_creator as post_creator,
+      social_posts.media_external_id as post_external_id,
+      social_posts.media_external_source as post_external_source,
       COUNT(*) as posts
     FROM social_posts
-    WHERE created_at >= NOW() - INTERVAL '7 days'
-      AND media_title IS NOT NULL
-    GROUP BY media_type, media_title, media_creator, media_external_id, media_external_source
+    WHERE social_posts.created_at >= NOW() - INTERVAL '7 days'
+      AND social_posts.media_title IS NOT NULL
+    GROUP BY social_posts.media_type, social_posts.media_title, social_posts.media_creator, social_posts.media_external_id, social_posts.media_external_source
   )
   SELECT 
-    COALESCE(ra.media_type, rp.media_type) as media_type,
-    COALESCE(ra.title, rp.title) as title,
-    COALESCE(ra.creator, rp.creator) as creator,
-    COALESCE(ra.external_id, rp.external_id) as external_id,
-    COALESCE(ra.external_source, rp.external_source) as external_source,
+    COALESCE(ra.item_media_type, rp.post_media_type) as media_type,
+    COALESCE(ra.item_title, rp.post_title) as title,
+    COALESCE(ra.item_creator, rp.post_creator) as creator,
+    COALESCE(ra.item_external_id, rp.post_external_id) as external_id,
+    COALESCE(ra.item_external_source, rp.post_external_source) as external_source,
     COALESCE(ra.adds, 0) as adds_count,
     COALESCE(rp.posts, 0) as posts_count,
     COALESCE(ra.adds, 0) + COALESCE(rp.posts, 0) as total_engagement
   FROM recent_adds ra
   FULL OUTER JOIN recent_posts rp 
-    ON ra.external_id = rp.external_id 
-    AND ra.external_source = rp.external_source
+    ON ra.item_external_id = rp.post_external_id 
+    AND ra.item_external_source = rp.post_external_source
   ORDER BY total_engagement DESC
   LIMIT 50;
 END;
