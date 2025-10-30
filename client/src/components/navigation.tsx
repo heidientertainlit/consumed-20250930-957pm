@@ -216,7 +216,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action: 'sendRequest', friend_id: friendId })
+        body: JSON.stringify({ action: 'sendRequest', friendId: friendId })
       });
       
       if (!response.ok) {
