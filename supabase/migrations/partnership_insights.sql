@@ -196,11 +196,92 @@ BEGIN
     HAVING COUNT(DISTINCT li1.user_id) >= 2
     ORDER BY affinity_count DESC
     LIMIT 30
+  ),
+  -- DNA-based affinity: Users with similar Entertainment DNA profiles
+  dna_affinities AS (
+    SELECT 
+      dp.label::TEXT as source_name,
+      COALESCE(genre, 'mixed')::TEXT as source_type,
+      'dna'::TEXT as source_category,
+      li.title::TEXT as target_title,
+      li.creator::TEXT as target_creator,
+      li.media_type::TEXT as target_type,
+      COUNT(DISTINCT dp.user_id) as affinity_count,
+      ROUND((COUNT(DISTINCT dp.user_id)::NUMERIC / NULLIF(COUNT(DISTINCT dp2.user_id), 0)) * 100, 1) as affinity_percentage,
+      CONCAT(
+        'Users with "', dp.label, '" DNA who love ', genre, ' also enjoy ',
+        CASE 
+          WHEN li.media_type = 'book' THEN 'reading'
+          WHEN li.media_type = 'music' THEN 'listening to'
+          WHEN li.media_type IN ('movie', 'tv') THEN 'watching'
+          ELSE 'enjoying'
+        END,
+        ' "', li.title, '"',
+        CASE WHEN li.creator IS NOT NULL AND li.creator != '' 
+          THEN CONCAT(' by ', li.creator)
+          ELSE ''
+        END
+      ) as insight
+    FROM dna_profiles dp
+    CROSS JOIN LATERAL jsonb_array_elements_text(dp.favorite_genres) genre
+    INNER JOIN list_items li ON li.user_id = dp.user_id
+    CROSS JOIN dna_profiles dp2 ON dp2.label = dp.label
+    WHERE dp.label IS NOT NULL
+      AND dp.label != ''
+      AND li.title IS NOT NULL
+      AND li.title != ''
+    GROUP BY dp.label, genre, li.title, li.creator, li.media_type
+    HAVING COUNT(DISTINCT dp.user_id) >= 2
+    ORDER BY affinity_count DESC
+    LIMIT 20
+  ),
+  -- Recommendation-based affinity: Users who liked similar recommendations
+  recommendation_affinities AS (
+    SELECT 
+      rec_item->>'title' as source_name,
+      rec_item->>'media_type' as source_type,
+      'recommendation'::TEXT as source_category,
+      li.title::TEXT as target_title,
+      li.creator::TEXT as target_creator,
+      li.media_type::TEXT as target_type,
+      COUNT(DISTINCT ur.user_id) as affinity_count,
+      ROUND((COUNT(DISTINCT ur.user_id)::NUMERIC / NULLIF(COUNT(DISTINCT ur2.user_id), 0)) * 100, 1) as affinity_percentage,
+      CONCAT(
+        'Users who received recommendations for "', rec_item->>'title', '" also ',
+        CASE 
+          WHEN li.media_type = 'book' THEN 'read'
+          WHEN li.media_type = 'music' THEN 'listen to'
+          WHEN li.media_type IN ('movie', 'tv') THEN 'watch'
+          ELSE 'enjoy'
+        END,
+        ' "', li.title, '"',
+        CASE WHEN li.creator IS NOT NULL AND li.creator != '' 
+          THEN CONCAT(' by ', li.creator)
+          ELSE ''
+        END
+      ) as insight
+    FROM user_recommendations ur
+    CROSS JOIN LATERAL jsonb_array_elements(ur.recommendations) rec_item
+    INNER JOIN list_items li ON li.user_id = ur.user_id AND li.media_type != rec_item->>'media_type'
+    CROSS JOIN user_recommendations ur2
+    CROSS JOIN LATERAL jsonb_array_elements(ur2.recommendations) rec_item2
+    WHERE rec_item->>'title' = rec_item2->>'title'
+      AND li.title IS NOT NULL
+      AND li.title != ''
+      AND rec_item->>'title' IS NOT NULL
+    GROUP BY rec_item->>'title', rec_item->>'media_type', li.title, li.creator, li.media_type
+    HAVING COUNT(DISTINCT ur.user_id) >= 2
+    ORDER BY affinity_count DESC
+    LIMIT 20
   )
   -- Combine all affinities
   SELECT * FROM creator_affinities
   UNION ALL
   SELECT * FROM platform_affinities
+  UNION ALL
+  SELECT * FROM dna_affinities
+  UNION ALL
+  SELECT * FROM recommendation_affinities
   ORDER BY affinity_count DESC, affinity_percentage DESC
   LIMIT 50;
 END;
