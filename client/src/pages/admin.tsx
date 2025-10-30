@@ -468,8 +468,13 @@ export default function AdminDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-5xl font-bold text-white mb-2" data-testid="north-star-metric">
-              {summary.engagement_rate?.toFixed(1) || 0}%
+            <div className="flex items-end gap-4 mb-4">
+              <div className="text-5xl font-bold text-white" data-testid="north-star-metric">
+                {summary.engagement_rate?.toFixed(1) || 0}%
+              </div>
+              <div className="text-2xl text-gray-300 pb-2">
+                ({Math.round((summary.wau || 0) * (summary.engagement_rate || 0) / 100)} / {summary.wau || 0} weekly active users)
+              </div>
             </div>
             <p className="text-gray-300">
               This is your core engagement metric - users who Track, Play, Connect, or Predict at least twice per week.
