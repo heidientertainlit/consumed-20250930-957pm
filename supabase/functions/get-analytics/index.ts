@@ -79,9 +79,40 @@ Deno.serve(async (req) => {
         break;
 
       case 'stickiness':
-        const { data: stickinessData, error: stickinessError } = await supabaseAdmin.rpc('get_stickiness_ratio');
+        const { data: stickinessData, error: stickinessError} = await supabaseAdmin.rpc('get_stickiness_ratio');
         if (stickinessError) throw stickinessError;
         result = { stickiness: stickinessData?.[0] || {} };
+        break;
+
+      case 'partnerships':
+        // Fetch all partnership insights
+        const [
+          crossPlatformResult,
+          trendingResult,
+          dnaResult,
+          completionResult,
+          viralResult,
+          creatorResult,
+          summaryResult
+        ] = await Promise.all([
+          supabaseAdmin.rpc('get_cross_platform_engagement'),
+          supabaseAdmin.rpc('get_trending_content'),
+          supabaseAdmin.rpc('get_dna_clusters'),
+          supabaseAdmin.rpc('get_completion_rates'),
+          supabaseAdmin.rpc('get_viral_content'),
+          supabaseAdmin.rpc('get_creator_influence'),
+          supabaseAdmin.rpc('get_partnership_summary')
+        ]);
+
+        result = {
+          crossPlatform: crossPlatformResult.data || [],
+          trending: trendingResult.data || [],
+          dnaClusters: dnaResult.data || [],
+          completionRates: completionResult.data || [],
+          viral: viralResult.data || [],
+          creators: creatorResult.data || [],
+          partnershipSummary: summaryResult.data?.[0] || {}
+        };
         break;
 
       default:
