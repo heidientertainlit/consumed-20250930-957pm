@@ -12,6 +12,18 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// User sessions for tracking time spent and engagement
+export const userSessions = pgTable("user_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sessionId: text("session_id").notNull(),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  endedAt: timestamp("ended_at"),
+  lastHeartbeat: timestamp("last_heartbeat"),
+  clientMetadata: jsonb("client_metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Lists table to match existing Supabase schema
 export const lists = pgTable("lists", {
   id: serial("id").primaryKey(), // Keep existing serial ID

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
+import { sessionTracker } from './sessionTracker'
 
 interface AuthContextType {
   user: User | null
@@ -26,6 +27,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+      
+      // Start session tracking if user is logged in
+      if (session?.user?.id) {
+        sessionTracker.startSession(session.user.id)
+      }
     })
 
     // Listen for auth changes
@@ -35,10 +41,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
+        
+        // Handle session tracking based on auth state
+        if (event === 'SIGNED_IN' && session?.user?.id) {
+          sessionTracker.startSession(session.user.id)
+        } else if (event === 'SIGNED_OUT') {
+          sessionTracker.endSession()
+        }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+      // Clean up session on unmount
+      sessionTracker.endSession()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {

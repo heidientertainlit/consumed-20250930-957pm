@@ -84,6 +84,20 @@ Deno.serve(async (req) => {
         result = { stickiness: stickinessData?.[0] || {} };
         break;
 
+      case 'churn':
+        const churnPeriod = parseInt(url.searchParams.get('period') || '30');
+        const { data: churnData, error: churnError } = await supabaseAdmin.rpc('get_churn_metrics', { period_days: churnPeriod });
+        if (churnError) throw churnError;
+        result = { churn: churnData?.[0] || {} };
+        break;
+
+      case 'sessions':
+        const sessionPeriod = url.searchParams.get('period') || '7 days';
+        const { data: sessionData, error: sessionError } = await supabaseAdmin.rpc('get_session_engagement', { period_text: sessionPeriod });
+        if (sessionError) throw sessionError;
+        result = { sessions: sessionData?.[0] || {} };
+        break;
+
       case 'partnerships':
         // Fetch all partnership insights
         const [

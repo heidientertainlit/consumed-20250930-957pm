@@ -19,6 +19,27 @@ interface DashboardSummary {
   avg_actions_per_user: number;
 }
 
+interface ChurnData {
+  churn_period: string;
+  total_users: number;
+  active_users: number;
+  at_risk_users: number;
+  churned_users: number;
+  churn_rate: number;
+  at_risk_rate: number;
+}
+
+interface SessionData {
+  time_period: string;
+  total_sessions: number;
+  total_users: number;
+  avg_session_duration_minutes: number;
+  median_session_duration_minutes: number;
+  total_time_spent_hours: number;
+  avg_sessions_per_user: number;
+  avg_daily_time_per_user_minutes: number;
+}
+
 interface AnalyticsData {
   summary: DashboardSummary;
   retention: Array<{
@@ -184,6 +205,44 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
+  // Churn metrics query
+  const { data: churnData, isLoading: churnLoading } = useQuery<{ churn: ChurnData }>({
+    queryKey: ['admin-churn', 30],
+    enabled: !!session,
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics?metric=churn&period=30`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch churn metrics');
+      return await response.json();
+    },
+    refetchInterval: 60000,
+  });
+
+  // Session engagement query
+  const { data: sessionData, isLoading: sessionLoading } = useQuery<{ sessions: SessionData }>({
+    queryKey: ['admin-sessions', '7 days'],
+    enabled: !!session,
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics?metric=sessions&period=7 days`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch session metrics');
+      return await response.json();
+    },
+    refetchInterval: 60000,
+  });
+
   if (partnershipsError) {
     console.error('[PARTNERSHIPS] Query error:', partnershipsError);
   }
@@ -289,6 +348,61 @@ export default function AdminDashboard() {
               <p className="text-sm text-pink-100 mt-1">
                 Last 7 days
               </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Churn & Session Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="bg-gradient-to-br from-red-600 to-red-700 border-red-500/30 text-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp size={18} />
+                Churn Rate (30 Days)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {churnLoading ? (
+                <Skeleton className="h-10 w-24" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold" data-testid="metric-churn-rate">
+                    {churnData?.churn?.churn_rate?.toFixed(1) || 0}%
+                  </div>
+                  <p className="text-sm text-red-100 mt-1">
+                    {churnData?.churn?.churned_users || 0} churned, {churnData?.churn?.at_risk_users || 0} at risk
+                  </p>
+                  <div className="mt-2 text-xs text-red-100 space-y-1">
+                    <div>Active: {churnData?.churn?.active_users || 0} users</div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-indigo-600 to-indigo-700 border-indigo-500/30 text-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Target size={18} />
+                Avg Time Spent (7 Days)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sessionLoading ? (
+                <Skeleton className="h-10 w-24" />
+              ) : (
+                <>
+                  <div className="text-3xl font-bold" data-testid="metric-time-spent">
+                    {sessionData?.sessions?.avg_session_duration_minutes?.toFixed(0) || 0}m
+                  </div>
+                  <p className="text-sm text-indigo-100 mt-1">
+                    Per session • {sessionData?.sessions?.total_sessions || 0} sessions
+                  </p>
+                  <div className="mt-2 text-xs text-indigo-100 space-y-1">
+                    <div>{sessionData?.sessions?.avg_daily_time_per_user_minutes?.toFixed(0) || 0} min/day per user</div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
