@@ -334,7 +334,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         {imageError || !item.imageUrl ? (
           // Fallback placeholder - styled like a book cover for books, gradient for others
           item.mediaType?.toLowerCase() === 'book' ? (
-            <div className="w-full h-full bg-gradient-to-br from-purple-700 via-purple-600 to-purple-900 flex flex-col items-center justify-center p-4 border-2 border-purple-900/50 shadow-inner">
+            <div className="w-full h-full bg-gradient-to-br from-purple-700 via-purple-600 to-purple-900 flex flex-col items-center justify-center p-4 border-2 border-purple-900/50 shadow-inner pointer-events-none">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
               <Book className="h-14 w-14 text-purple-200/70 mb-4 relative z-10" />
               <p className="text-purple-50 text-sm font-serif text-center leading-tight line-clamp-3 relative z-10 font-semibold">
@@ -342,7 +342,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               </p>
             </div>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-800 via-purple-900/30 to-gray-900 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-gray-800 via-purple-900/30 to-gray-900 flex items-center justify-center pointer-events-none">
               {getMediaIcon()}
             </div>
           )
@@ -374,13 +374,13 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         )}
         
         {/* Mobile-friendly action buttons - bottom right */}
-        <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
+        <div className="absolute bottom-2 right-2 flex gap-1.5 z-20 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button
                 size="icon"
                 variant="secondary"
-                className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
+                className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg pointer-events-auto"
                 data-testid={`add-to-list-${item.id}`}
                 disabled={addToListMutation.isPending}
               >
@@ -456,7 +456,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           <Button
             size="icon"
             variant="secondary"
-            className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
+            className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg pointer-events-auto"
             onClick={(e) => {
               e.stopPropagation();
               setShowRatingStars(!showRatingStars);
