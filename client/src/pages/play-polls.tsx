@@ -47,19 +47,28 @@ export default function PlayPollsPage() {
     queryKey: ['/api/predictions/user-predictions'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return {};
+      if (!user) {
+        console.log('🚫 No user logged in');
+        return {};
+      }
+      console.log('👤 Fetching predictions for user:', user.id);
       const { data, error } = await supabase
         .from('user_predictions')
         .select('pool_id, prediction')
         .eq('user_id', user.id);
-      if (error) return {};
+      if (error) {
+        console.error('❌ Error fetching predictions:', error);
+        return {};
+      }
       const predictions: Record<string, string> = {};
       data?.forEach((pred) => { predictions[pred.pool_id] = pred.prediction; });
+      console.log('✅ User predictions loaded for POLLS:', predictions);
       return predictions;
     },
   });
 
   const allPredictions = userPredictionsData || {};
+  console.log('🎯 POLLS: allPredictions object:', allPredictions);
 
   // Submit vote mutation - directly to Supabase
   const submitPrediction = useMutation({
