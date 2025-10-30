@@ -116,12 +116,12 @@ BEGIN
   -- Creator affinity: Users who like Creator X also like Content Y
   creator_affinities AS (
     SELECT 
-      pc.creator as source_name,
-      pc.media_type as source_type,
-      'creator' as source_category,
-      li2.title as target_title,
-      li2.creator as target_creator,
-      li2.media_type as target_type,
+      pc.creator::TEXT as source_name,
+      pc.media_type::TEXT as source_type,
+      'creator'::TEXT as source_category,
+      li2.title::TEXT as target_title,
+      li2.creator::TEXT as target_creator,
+      li2.media_type::TEXT as target_type,
       COUNT(DISTINCT li1.user_id) as affinity_count,
       ROUND((COUNT(DISTINCT li1.user_id)::NUMERIC / pc.user_count) * 100, 1) as affinity_percentage,
       CONCAT(
@@ -153,12 +153,12 @@ BEGIN
   -- Platform affinity: Netflix viewers also read X books
   platform_affinities AS (
     SELECT 
-      pp.platform_name as source_name,
-      pp.media_type as source_type,
-      'platform' as source_category,
-      li2.title as target_title,
-      li2.creator as target_creator,
-      li2.media_type as target_type,
+      pp.platform_name::TEXT as source_name,
+      pp.media_type::TEXT as source_type,
+      'platform'::TEXT as source_category,
+      li2.title::TEXT as target_title,
+      li2.creator::TEXT as target_creator,
+      li2.media_type::TEXT as target_type,
       COUNT(DISTINCT li1.user_id) as affinity_count,
       ROUND((COUNT(DISTINCT li1.user_id)::NUMERIC / pp.user_count) * 100, 1) as affinity_percentage,
       CONCAT(
@@ -249,6 +249,10 @@ BEGIN
     FROM social_posts
     WHERE social_posts.created_at >= NOW() - INTERVAL '7 days'
       AND social_posts.media_title IS NOT NULL
+      AND social_posts.media_title != ''
+      AND LENGTH(social_posts.media_title) > 2
+      AND social_posts.media_title !~ '^[0-9:\.]+$'
+      AND social_posts.media_title NOT LIKE '%@%'
     GROUP BY social_posts.media_type, social_posts.media_title, social_posts.media_creator, social_posts.media_external_id, social_posts.media_external_source
   )
   SELECT 
