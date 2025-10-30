@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const metric = url.searchParams.get('metric');
+    const metric = url.searchParams.get('metric') || url.searchParams.get('type');
 
     // Use SERVICE_ROLE_KEY for database access
     const supabaseAdmin = createClient(
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
           completionResult,
           viralResult,
           creatorResult,
-          summaryResult
+          partnershipSummaryResult
         ] = await Promise.all([
           supabaseAdmin.rpc('get_cross_platform_engagement'),
           supabaseAdmin.rpc('get_trending_content'),
@@ -104,6 +104,15 @@ Deno.serve(async (req) => {
           supabaseAdmin.rpc('get_partnership_summary')
         ]);
 
+        // Check for errors
+        if (crossPlatformResult.error) throw new Error(`Cross-platform engagement error: ${crossPlatformResult.error.message}`);
+        if (trendingResult.error) throw new Error(`Trending content error: ${trendingResult.error.message}`);
+        if (dnaResult.error) throw new Error(`DNA clusters error: ${dnaResult.error.message}`);
+        if (completionResult.error) throw new Error(`Completion rates error: ${completionResult.error.message}`);
+        if (viralResult.error) throw new Error(`Viral content error: ${viralResult.error.message}`);
+        if (creatorResult.error) throw new Error(`Creator influence error: ${creatorResult.error.message}`);
+        if (partnershipSummaryResult.error) throw new Error(`Partnership summary error: ${partnershipSummaryResult.error.message}`);
+
         result = {
           crossPlatform: crossPlatformResult.data || [],
           trending: trendingResult.data || [],
@@ -111,7 +120,7 @@ Deno.serve(async (req) => {
           completionRates: completionResult.data || [],
           viral: viralResult.data || [],
           creators: creatorResult.data || [],
-          partnershipSummary: summaryResult.data?.[0] || {}
+          partnershipSummary: partnershipSummaryResult.data?.[0] || {}
         };
         break;
 

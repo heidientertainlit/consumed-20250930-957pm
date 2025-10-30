@@ -53,6 +53,62 @@ interface AnalyticsData {
   }>;
 }
 
+interface PartnershipData {
+  crossPlatform: Array<{
+    primary_media_type: string;
+    secondary_media_type: string;
+    overlap_users: number;
+    overlap_percentage: number;
+  }>;
+  trending: Array<{
+    media_type: string;
+    title: string;
+    creator: string;
+    adds_count: number;
+    posts_count: number;
+    total_engagement: number;
+  }>;
+  dnaClusters: Array<{
+    cluster_label: string;
+    user_count: number;
+    top_genres: string[];
+    top_media_types: string[];
+    avg_items_tracked: number;
+  }>;
+  completionRates: Array<{
+    media_type: string;
+    total_items: number;
+    avg_progress: number;
+    items_completed: number;
+    completion_rate: number;
+  }>;
+  viral: Array<{
+    media_type: string;
+    title: string;
+    posts_count: number;
+    likes_count: number;
+    comments_count: number;
+    virality_score: number;
+  }>;
+  creators: Array<{
+    creator_name: string;
+    creator_role: string;
+    followers_count: number;
+    media_tracked: number;
+    social_posts: number;
+    influence_score: number;
+  }>;
+  partnershipSummary: {
+    total_content_tracked: number;
+    total_social_posts: number;
+    avg_completion_rate: number;
+    top_trending_title: string;
+    top_trending_engagement: number;
+    most_viral_title: string;
+    most_viral_score: number;
+  };
+}
+
 const COLORS = ['#9333ea', '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff'];
 
 export default function AdminDashboard() {
@@ -86,6 +142,29 @@ export default function AdminDashboard() {
       return data;
     },
     refetchInterval: 60000, // Refresh every minute
+  });
+
+  const { data: partnerships, isLoading: partnershipsLoading } = useQuery<PartnershipData>({
+    queryKey: ['admin-partnerships'],
+    enabled: !!session,
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics?type=partnerships`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch partnership insights: ${JSON.stringify(errorData)}`);
+      }
+
+      return response.json();
+    },
+    refetchInterval: 60000,
   });
 
   if (error) {
@@ -200,6 +279,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="retention" data-testid="tab-retention">Retention</TabsTrigger>
             <TabsTrigger value="engagement" data-testid="tab-engagement">Engagement</TabsTrigger>
             <TabsTrigger value="activation" data-testid="tab-activation">Activation</TabsTrigger>
+            <TabsTrigger value="partnerships" data-testid="tab-partnerships">Partnership Insights</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -465,6 +545,223 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Partnership Insights Tab */}
+          <TabsContent value="partnerships" className="space-y-4">
+            {partnershipsLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Skeleton className="h-96" />
+                <Skeleton className="h-96" />
+              </div>
+            ) : (
+              <>
+                {/* Summary Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="bg-gradient-to-br from-orange-600 to-orange-700 border-orange-500/30 text-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Content Tracked</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">
+                        {partnerships?.partnershipSummary?.total_content_tracked?.toLocaleString() || 0}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-teal-600 to-teal-700 border-teal-500/30 text-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Avg Completion Rate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">
+                        {partnerships?.partnershipSummary?.avg_completion_rate?.toFixed(1) || 0}%
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-rose-600 to-rose-700 border-rose-500/30 text-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Social Posts</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">
+                        {partnerships?.partnershipSummary?.total_social_posts?.toLocaleString() || 0}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Cross-Platform Engagement */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30">
+                    <CardHeader>
+                      <CardTitle className="text-white">Cross-Platform Engagement</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        "Users who watch also listen to..."
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3 max-h-80 overflow-y-auto">
+                        {partnerships?.crossPlatform?.slice(0, 10).map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-300">
+                              {item.primary_media_type} → {item.secondary_media_type}
+                            </span>
+                            <div className="text-right">
+                              <div className="text-white font-semibold">
+                                {item.overlap_percentage.toFixed(1)}%
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {item.overlap_users} users
+                              </div>
+                            </div>
+                          </div>
+                        )) || <p className="text-gray-400">No data available</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Trending Content */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30">
+                    <CardHeader>
+                      <CardTitle className="text-white">Trending Content (7 Days)</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Most added & discussed
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3 max-h-80 overflow-y-auto">
+                        {partnerships?.trending?.slice(0, 10).map((item, idx) => (
+                          <div key={idx} className="border-b border-gray-700 pb-2">
+                            <div className="text-white font-medium truncate">{item.title}</div>
+                            <div className="flex justify-between text-xs text-gray-400 mt-1">
+                              <span>{item.creator || item.media_type}</span>
+                              <span className="text-purple-400 font-semibold">
+                                {item.total_engagement} actions
+                              </span>
+                            </div>
+                          </div>
+                        )) || <p className="text-gray-400">No data available</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Completion Rates by Media Type */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30">
+                    <CardHeader>
+                      <CardTitle className="text-white">Completion Rates by Type</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        What % of content users finish
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={partnerships?.completionRates || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
+                          <XAxis 
+                            dataKey="media_type" 
+                            stroke="#9ca3af"
+                            tick={{ fill: '#9ca3af' }}
+                          />
+                          <YAxis stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #6b7280' }}
+                            labelStyle={{ color: '#f3f4f6' }}
+                          />
+                          <Bar dataKey="completion_rate" fill="#10b981" name="Completion %" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Viral Content */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30">
+                    <CardHeader>
+                      <CardTitle className="text-white">Most Viral Content</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Social sharing & engagement
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3 max-h-80 overflow-y-auto">
+                        {partnerships?.viral?.slice(0, 8).map((item, idx) => (
+                          <div key={idx} className="border-b border-gray-700 pb-2">
+                            <div className="text-white font-medium truncate">{item.title}</div>
+                            <div className="flex justify-between text-xs text-gray-400 mt-1">
+                              <span>
+                                {item.posts_count} posts · {item.likes_count} likes · {item.comments_count} comments
+                              </span>
+                              <span className="text-pink-400 font-semibold">
+                                Score: {item.virality_score}
+                              </span>
+                            </div>
+                          </div>
+                        )) || <p className="text-gray-400">No data available</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* DNA Clusters */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30">
+                    <CardHeader>
+                      <CardTitle className="text-white">Entertainment DNA Clusters</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Personality-based content preferences
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {partnerships?.dnaClusters?.map((cluster, idx) => (
+                          <div key={idx} className="border-b border-gray-700 pb-3">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-white font-semibold">{cluster.cluster_label}</span>
+                              <span className="text-purple-400">{cluster.user_count} users</span>
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              Avg tracked: {cluster.avg_items_tracked?.toFixed(1)} items
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {cluster.top_genres?.slice(0, 3).join(', ')}
+                            </div>
+                          </div>
+                        )) || <p className="text-gray-400">No data available</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Creator Influence */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30">
+                    <CardHeader>
+                      <CardTitle className="text-white">Top Influential Creators</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Driving the most engagement
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3 max-h-80 overflow-y-auto">
+                        {partnerships?.creators?.slice(0, 10).map((creator, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-sm border-b border-gray-700 pb-2">
+                            <div>
+                              <div className="text-white font-medium">{creator.creator_name}</div>
+                              <div className="text-xs text-gray-400">{creator.creator_role}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-purple-400 font-semibold">
+                                {creator.influence_score}
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {creator.followers_count} followers
+                              </div>
+                            </div>
+                          </div>
+                        )) || <p className="text-gray-400">No data available</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
           </TabsContent>
         </Tabs>
 

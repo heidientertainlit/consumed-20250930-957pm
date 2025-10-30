@@ -169,7 +169,7 @@ BEGIN
   RETURN QUERY
   WITH user_weekly_actions AS (
     SELECT 
-      DATE_TRUNC('week', all_actions.created_at)::DATE as week_start,
+      DATE_TRUNC('week', all_actions.created_at)::DATE as action_week,
       all_actions.user_id,
       COUNT(*) as action_count
     FROM (
@@ -184,16 +184,16 @@ BEGIN
       SELECT user_id, created_at FROM social_post_likes
     ) all_actions
     WHERE all_actions.created_at >= CURRENT_DATE - INTERVAL '12 weeks'
-    GROUP BY week_start, all_actions.user_id
+    GROUP BY action_week, all_actions.user_id
   )
   SELECT 
-    uwa.week_start,
+    uwa.action_week as week_start,
     COUNT(DISTINCT uwa.user_id) as total_weekly_users,
     COUNT(DISTINCT CASE WHEN uwa.action_count >= 2 THEN uwa.user_id END) as engaged_users,
     ROUND((COUNT(DISTINCT CASE WHEN uwa.action_count >= 2 THEN uwa.user_id END)::NUMERIC / NULLIF(COUNT(DISTINCT uwa.user_id), 0)) * 100, 2) as engagement_rate
   FROM user_weekly_actions uwa
-  GROUP BY uwa.week_start
-  ORDER BY uwa.week_start DESC;
+  GROUP BY uwa.action_week
+  ORDER BY uwa.action_week DESC;
 END;
 $$ LANGUAGE plpgsql;
 
