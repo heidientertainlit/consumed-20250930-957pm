@@ -8,9 +8,8 @@ import { Vote, Star, Users, UserPlus, ChevronLeft } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import FeedbackFooter from '@/components/feedback-footer';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { copyLink } from "@/lib/share";
 import GameShareModal from "@/components/game-share-modal";
 
 export default function PlayPollsPage() {
@@ -69,21 +68,83 @@ export default function PlayPollsPage() {
 
   const allPredictions = userPredictionsData || {};
 
-  // Submit prediction mutation
+  // Submit vote mutation - directly to Supabase
   const submitPrediction = useMutation({
     mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
-      return apiRequest('POST', '/api/predictions', {
-        poolId,
+      console.log('🚀 Saving vote to user_predictions table...');
+      
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Must be logged in to vote');
+      }
+      
+      const { data: game, error: gameError } = await supabase
+        .from('prediction_pools')
+        .select('points_reward, type')
+        .eq('id', poolId)
+        .single();
+        
+      if (gameError || !game) {
+        throw new Error('Poll not found');
+      }
+      
+      const gameType = game.type;
+      let immediatePoints = 0;
+      
+      if (gameType === 'vote' || gameType === 'trivia') {
+        immediatePoints = game.points_reward;
+      } else if (gameType === 'predict') {
+        immediatePoints = 0;
+      }
+
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .insert({
+          user_id: user.id,
+          pool_id: poolId,
+          prediction: answer,
+          points_earned: immediatePoints,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('❌ Error saving vote:', error);
+        throw new Error('Failed to save vote');
+      }
+      
+      console.log('✅ Vote saved successfully:', data);
+      
+      return { 
+        success: true, 
+        points_earned: immediatePoints,
+        pool_id: poolId,
         prediction: answer,
-      });
+        game_type: gameType
+      };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/predictions/all'] });
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      
       toast({
-        title: "Success!",
-        description: "Your vote has been submitted",
+        title: "Vote Submitted!",
+        description: `You voted for "${data.prediction}" and earned ${data.points_earned} points!`,
       });
     },
+    onError: () => {
+      toast({
+        title: "Submission Failed",
+        description: "Could not submit your vote. Please try again.",
+        variant: "destructive"
+      });
+    }
   });
 
   const handleOptionSelect = (gameId: string, option: string) => {
@@ -95,7 +156,14 @@ export default function PlayPollsPage() {
 
   const handleSubmitAnswer = async (game: any) => {
     const answer = selectedAnswers[game.id];
-    if (!answer) return;
+    if (!answer) {
+      toast({
+        title: "Please select an option",
+        description: "Choose one of the options before submitting.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     await submitPrediction.mutateAsync({
       poolId: game.id,
