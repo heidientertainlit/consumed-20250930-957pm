@@ -104,6 +104,9 @@ export default function PlayPollsPage() {
         
       if (error) {
         console.error('❌ Error saving vote:', error);
+        if (error.code === '23505') {
+          throw new Error('You have already voted on this poll');
+        }
         throw new Error('Failed to save vote');
       }
       

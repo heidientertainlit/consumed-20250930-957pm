@@ -105,6 +105,9 @@ export default function PlayPredictionsPage() {
         
       if (error) {
         console.error('❌ Error saving prediction:', error);
+        if (error.code === '23505') {
+          throw new Error('You have already submitted a prediction for this');
+        }
         throw new Error('Failed to save prediction');
       }
       
