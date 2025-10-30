@@ -279,13 +279,10 @@ export default function PlayPredictionsPage() {
 
                   <CardContent className="space-y-4">
                     {allPredictions[game.id] ? (
-                      <div className="bg-green-50 border-2 border-green-300 rounded-lg p-5 text-center">
-                        <div className="text-green-900 font-bold text-lg mb-2">✓ Prediction Submitted Successfully!</div>
-                        <div className="text-green-700 text-sm font-medium mb-1">
-                          Your prediction: "{allPredictions[game.id]}"
-                        </div>
-                        <div className="text-green-600 text-xs mt-2">
-                          Points will be awarded when the result is known
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                        <div className="text-green-800 font-medium">✓ Submitted</div>
+                        <div className="text-green-700 text-sm">
+                          You predicted "{allPredictions[game.id]}"
                         </div>
                       </div>
                     ) : game.isMultiCategory ? (

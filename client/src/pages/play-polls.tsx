@@ -47,28 +47,19 @@ export default function PlayPollsPage() {
     queryKey: ['/api/predictions/user-predictions'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log('🚫 No user logged in');
-        return {};
-      }
-      console.log('👤 Fetching predictions for user:', user.id);
+      if (!user) return {};
       const { data, error } = await supabase
         .from('user_predictions')
         .select('pool_id, prediction')
         .eq('user_id', user.id);
-      if (error) {
-        console.error('❌ Error fetching predictions:', error);
-        return {};
-      }
+      if (error) return {};
       const predictions: Record<string, string> = {};
       data?.forEach((pred) => { predictions[pred.pool_id] = pred.prediction; });
-      console.log('✅ User predictions loaded for POLLS:', predictions);
       return predictions;
     },
   });
 
   const allPredictions = userPredictionsData || {};
-  console.log('🎯 POLLS: allPredictions object:', allPredictions);
 
   // Submit vote mutation - directly to Supabase
   const submitPrediction = useMutation({
@@ -280,13 +271,10 @@ export default function PlayPollsPage() {
 
                   <CardContent className="space-y-4">
                     {allPredictions[game.id] ? (
-                      <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-5 text-center">
-                        <div className="text-blue-900 font-bold text-lg mb-2">✓ You've Already Voted on This Poll</div>
-                        <div className="text-blue-700 text-sm font-medium mb-1">
-                          Your vote: "{allPredictions[game.id]}"
-                        </div>
-                        <div className="text-blue-600 text-xs mt-2">
-                          You can only vote once per poll
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                        <div className="text-green-800 font-medium">✓ Submitted</div>
+                        <div className="text-green-700 text-sm">
+                          You voted for "{allPredictions[game.id]}"
                         </div>
                       </div>
                     ) : (
