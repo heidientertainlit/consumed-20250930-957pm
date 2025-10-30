@@ -58,10 +58,12 @@ const COLORS = ['#9333ea', '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff'];
 export default function AdminDashboard() {
   const { session } = useAuth();
 
-  const { data: analytics, isLoading } = useQuery<AnalyticsData>({
+  const { data: analytics, isLoading, error } = useQuery<AnalyticsData>({
     queryKey: ['admin-analytics'],
     enabled: !!session,
     queryFn: async () => {
+      console.log('[ANALYTICS] Fetching with token:', session?.access_token?.substring(0, 20) + '...');
+      
       const response = await fetch(
         `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics`,
         {
@@ -71,14 +73,24 @@ export default function AdminDashboard() {
         }
       );
 
+      console.log('[ANALYTICS] Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch analytics');
+        const errorData = await response.json();
+        console.error('[ANALYTICS] Error:', errorData);
+        throw new Error(`Failed to fetch analytics: ${JSON.stringify(errorData)}`);
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('[ANALYTICS] Data received:', data);
+      return data;
     },
     refetchInterval: 60000, // Refresh every minute
   });
+
+  if (error) {
+    console.error('[ANALYTICS] Query error:', error);
+  }
 
   if (isLoading) {
     return (
