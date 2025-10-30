@@ -117,16 +117,20 @@ export default function DirectSearchDialog({ isOpen, onClose }: DirectSearchDial
     e.stopPropagation();
     
     try {
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/send-friend-request', {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ friend_id: userId })
+        body: JSON.stringify({ action: 'sendRequest', friendId: userId })
       });
       
-      if (!response.ok) throw new Error('Failed to send friend request');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send friend request');
+      }
       
       toast({
         title: "Friend request sent!",
@@ -136,7 +140,7 @@ export default function DirectSearchDialog({ isOpen, onClose }: DirectSearchDial
       console.error('Error sending friend request:', error);
       toast({
         title: "Error",
-        description: "Failed to send friend request. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send friend request. Please try again.",
         variant: "destructive",
       });
     }
