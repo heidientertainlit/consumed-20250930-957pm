@@ -26,7 +26,7 @@ BEGIN
     UNION ALL
     SELECT user_id, created_at::DATE FROM user_predictions
     UNION ALL
-    SELECT user_id, created_at::DATE FROM post_likes
+    SELECT user_id, created_at::DATE FROM social_post_likes
   )
   SELECT 
     CASE 
@@ -66,7 +66,7 @@ BEGIN
     UNION
     SELECT user_id FROM user_predictions WHERE created_at >= NOW() - INTERVAL '1 day'
     UNION
-    SELECT user_id FROM post_likes WHERE created_at >= NOW() - INTERVAL '1 day'
+    SELECT user_id FROM social_post_likes WHERE created_at >= NOW() - INTERVAL '1 day'
   )
   SELECT COUNT(DISTINCT user_id) INTO daily_active FROM user_actions;
 
@@ -80,7 +80,7 @@ BEGIN
     UNION
     SELECT user_id FROM user_predictions WHERE created_at >= NOW() - INTERVAL '30 days'
     UNION
-    SELECT user_id FROM post_likes WHERE created_at >= NOW() - INTERVAL '30 days'
+    SELECT user_id FROM social_post_likes WHERE created_at >= NOW() - INTERVAL '30 days'
   )
   SELECT COUNT(DISTINCT user_id) INTO monthly_active FROM user_actions;
 
@@ -172,7 +172,7 @@ BEGIN
       UNION ALL
       SELECT user_id, created_at FROM user_predictions
       UNION ALL
-      SELECT user_id, created_at FROM post_likes
+      SELECT user_id, created_at FROM social_post_likes
     ) all_actions
     WHERE created_at >= CURRENT_DATE - INTERVAL '12 weeks'
     GROUP BY week_start, user_id
@@ -257,7 +257,7 @@ BEGIN
       UNION ALL
       SELECT user_id, created_at FROM user_predictions
       UNION ALL
-      SELECT user_id, created_at FROM post_likes
+      SELECT user_id, created_at FROM social_post_likes
     ) all_actions
     WHERE created_at >= NOW() - INTERVAL '7 days'
     GROUP BY user_id
@@ -364,7 +364,7 @@ BEGIN
     UNION
     SELECT user_id FROM user_predictions WHERE created_at >= NOW() - INTERVAL '1 day'
     UNION
-    SELECT user_id FROM post_likes WHERE created_at >= NOW() - INTERVAL '1 day'
+    SELECT user_id FROM social_post_likes WHERE created_at >= NOW() - INTERVAL '1 day'
   )
   SELECT COUNT(DISTINCT user_id) INTO daily_active FROM user_actions;
 
@@ -378,7 +378,7 @@ BEGIN
     UNION
     SELECT user_id FROM user_predictions WHERE created_at >= NOW() - INTERVAL '7 days'
     UNION
-    SELECT user_id FROM post_likes WHERE created_at >= NOW() - INTERVAL '7 days'
+    SELECT user_id FROM social_post_likes WHERE created_at >= NOW() - INTERVAL '7 days'
   )
   SELECT COUNT(DISTINCT user_id) INTO weekly_active FROM user_actions;
 
@@ -392,7 +392,7 @@ BEGIN
     UNION
     SELECT user_id FROM user_predictions WHERE created_at >= NOW() - INTERVAL '30 days'
     UNION
-    SELECT user_id FROM post_likes WHERE created_at >= NOW() - INTERVAL '30 days'
+    SELECT user_id FROM social_post_likes WHERE created_at >= NOW() - INTERVAL '30 days'
   )
   SELECT COUNT(DISTINCT user_id) INTO monthly_active FROM user_actions;
 
@@ -414,7 +414,7 @@ BEGIN
       UNION ALL
       SELECT user_id FROM user_predictions WHERE created_at >= NOW() - INTERVAL '7 days'
       UNION ALL
-      SELECT user_id FROM post_likes WHERE created_at >= NOW() - INTERVAL '7 days'
+      SELECT user_id FROM social_post_likes WHERE created_at >= NOW() - INTERVAL '7 days'
     ) all_actions
     GROUP BY user_id
   )
@@ -435,7 +435,7 @@ BEGIN
       UNION ALL
       SELECT user_id FROM user_predictions WHERE created_at >= NOW() - INTERVAL '7 days'
       UNION ALL
-      SELECT user_id FROM post_likes WHERE created_at >= NOW() - INTERVAL '7 days'
+      SELECT user_id FROM social_post_likes WHERE created_at >= NOW() - INTERVAL '7 days'
     ) all_actions
     GROUP BY user_id
   )
