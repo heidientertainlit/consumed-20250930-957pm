@@ -243,6 +243,63 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
+  // Session frequency query
+  const { data: frequencyData } = useQuery<{ sessionFrequency: { avg_sessions_per_user: number; total_sessions: number } }>({
+    queryKey: ['admin-frequency', 7],
+    enabled: !!session,
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics?metric=session-frequency&period=7`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch frequency metrics');
+      return await response.json();
+    },
+    refetchInterval: 60000,
+  });
+
+  // Points analytics query
+  const { data: pointsData } = useQuery<{ points: { total_points_awarded: number; avg_points_per_user: number } }>({
+    queryKey: ['admin-points'],
+    enabled: !!session,
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics?metric=points`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch points metrics');
+      return await response.json();
+    },
+    refetchInterval: 60000,
+  });
+
+  // Lists analytics query
+  const { data: listsData } = useQuery<{ lists: { total_custom_lists: number; avg_custom_lists_per_user: number } }>({
+    queryKey: ['admin-lists'],
+    enabled: !!session,
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics?metric=lists`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch lists metrics');
+      return await response.json();
+    },
+    refetchInterval: 60000,
+  });
+
   if (partnershipsError) {
     console.error('[PARTNERSHIPS] Query error:', partnershipsError);
   }
@@ -277,7 +334,7 @@ export default function AdminDashboard() {
             <h1 className="text-4xl font-bold text-white mb-2" data-testid="admin-title">
               Analytics Dashboard
             </h1>
-            <p className="text-gray-300">VC-Ready Metrics for Consumed</p>
+            <p className="text-gray-300">Real-time engagement and growth metrics</p>
           </div>
           <div className="bg-purple-600/20 backdrop-blur-sm border border-purple-500/30 rounded-lg px-4 py-2">
             <p className="text-sm text-purple-300">Last updated: {new Date().toLocaleTimeString()}</p>
@@ -403,6 +460,60 @@ export default function AdminDashboard() {
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* New Metrics Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-gradient-to-br from-cyan-600 to-cyan-700 border-cyan-500/30 text-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Activity size={18} />
+                Session Frequency (7d)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold" data-testid="metric-session-frequency">
+                {frequencyData?.sessionFrequency?.avg_sessions_per_user?.toFixed(1) || 0}
+              </div>
+              <p className="text-sm text-cyan-100 mt-1">
+                Opens per user • {frequencyData?.sessionFrequency?.total_sessions || 0} total
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-amber-600 to-amber-700 border-amber-500/30 text-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Target size={18} />
+                Points Earned
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold" data-testid="metric-total-points">
+                {pointsData?.points?.total_points_awarded?.toLocaleString() || 0}
+              </div>
+              <p className="text-sm text-amber-100 mt-1">
+                Avg: {pointsData?.points?.avg_points_per_user?.toFixed(0) || 0} per user
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-teal-600 to-teal-700 border-teal-500/30 text-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Heart size={18} />
+                Custom Lists
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold" data-testid="metric-custom-lists">
+                {listsData?.lists?.total_custom_lists?.toLocaleString() || 0}
+              </div>
+              <p className="text-sm text-teal-100 mt-1">
+                Avg: {listsData?.lists?.avg_custom_lists_per_user?.toFixed(1) || 0} per user
+              </p>
             </CardContent>
           </Card>
         </div>

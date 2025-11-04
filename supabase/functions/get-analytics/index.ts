@@ -98,6 +98,25 @@ Deno.serve(async (req) => {
         result = { sessions: sessionData?.[0] || {} };
         break;
 
+      case 'session-frequency':
+        const freqPeriod = parseInt(url.searchParams.get('period') || '7');
+        const { data: freqData, error: freqError } = await supabaseAdmin.rpc('get_session_frequency', { period_days: freqPeriod });
+        if (freqError) throw freqError;
+        result = { sessionFrequency: freqData?.[0] || {} };
+        break;
+
+      case 'points':
+        const { data: pointsData, error: pointsError } = await supabaseAdmin.rpc('get_points_analytics');
+        if (pointsError) throw pointsError;
+        result = { points: pointsData?.[0] || {} };
+        break;
+
+      case 'lists':
+        const { data: listsData, error: listsError } = await supabaseAdmin.rpc('get_lists_analytics');
+        if (listsError) throw listsError;
+        result = { lists: listsData?.[0] || {} };
+        break;
+
       case 'partnerships':
         // Fetch all partnership insights
         const [
