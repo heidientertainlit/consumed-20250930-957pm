@@ -21,6 +21,7 @@ import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
 import EdnaSharePage from "@/pages/edna-share";
 import AdminDashboard from "@/pages/admin";
+import CTVDemo from "@/pages/ctv";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
 import NotFoundPage from "./pages/not-found";
@@ -119,6 +120,9 @@ function Router() {
           <ProtectedRoute>
             <AdminDashboard />
           </ProtectedRoute>
+        </Route>
+        <Route path="/ctv">
+          <CTVDemo />
         </Route>
         <Route component={NotFoundPage} />
       </Switch>
