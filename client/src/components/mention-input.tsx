@@ -99,6 +99,7 @@ export default function MentionInput({
         
         // Filter friends based on query
         const filtered = friends.filter((f) => {
+          if (!f?.friend) return false;
           const displayName = `${f.friend.first_name || ""} ${f.friend.last_name || ""}`.trim();
           const username = f.friend.user_name || "";
           return (
@@ -158,6 +159,7 @@ export default function MentionInput({
   };
 
   const getDisplayName = (friend: Friend) => {
+    if (!friend?.friend) return "Unknown User";
     const fullName = `${friend.friend.first_name || ""} ${friend.friend.last_name || ""}`.trim();
     return fullName || friend.friend.user_name || "Unknown User";
   };
