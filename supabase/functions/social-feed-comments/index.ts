@@ -233,21 +233,29 @@ serve(async (req) => {
 
       // Send notification if we have a recipient
       if (notifyUserId) {
-        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-          },
-          body: JSON.stringify({
-            userId: notifyUserId,
-            type: notificationType,
-            triggeredByUserId: user.id,
-            message: notificationMessage,
-            postId: post_id,
-            commentId: comment.id
-          })
-        });
+        try {
+          const notifResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+            },
+            body: JSON.stringify({
+              userId: notifyUserId,
+              type: notificationType,
+              triggeredByUserId: user.id,
+              message: notificationMessage,
+              postId: post_id,
+              commentId: comment.id
+            })
+          });
+          
+          if (!notifResponse.ok) {
+            console.error('Failed to send notification:', await notifResponse.text());
+          }
+        } catch (notifError) {
+          console.error('Error sending notification:', notifError);
+        }
       }
 
       return new Response(JSON.stringify({ comment: transformedComment }), {
