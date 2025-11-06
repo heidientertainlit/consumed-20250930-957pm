@@ -119,6 +119,60 @@ serve(async (req) => {
 
       console.log('Post created successfully:', post.id);
 
+      // Extract @mentions and send notifications
+      if (content) {
+        // Whitelist pattern: @ must be at start OR preceded by allowed punctuation/whitespace
+        // Allows: "@alex", " @alex", ",@alex", "(@alex", "FYI:@alex", "!@alex"
+        // Blocks: "user@alex", "http://@alex", "?ref=@alex", "&id=@alex"
+        const mentionPattern = /(^|[\s,;:!?(){}\[\]"'<>\-])@([\w.-]+)/g;
+        const mentions: string[] = [];
+        let match;
+        
+        while ((match = mentionPattern.exec(content)) !== null) {
+          mentions.push(match[2]); // Group 2 is the username (group 1 is delimiter)
+        }
+
+        if (mentions.length > 0) {
+          console.log('Found mentions:', mentions);
+          
+          // Look up user IDs for mentioned usernames
+          const { data: mentionedUsers } = await supabase
+            .from('users')
+            .select('id, user_name')
+            .in('user_name', mentions);
+
+          if (mentionedUsers && mentionedUsers.length > 0) {
+            // Send notification to each mentioned user (excluding post author)
+            for (const mentionedUser of mentionedUsers) {
+              if (mentionedUser.id !== appUser.id) { // Don't notify if mentioning yourself
+                try {
+                  const notifResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+                    },
+                    body: JSON.stringify({
+                      userId: mentionedUser.id,
+                      type: 'mention',
+                      triggeredByUserId: appUser.id,
+                      message: `${appUser.user_name} mentioned you in a post`,
+                      postId: post.id
+                    })
+                  });
+                  
+                  if (!notifResponse.ok) {
+                    console.error('Failed to send mention notification:', await notifResponse.text());
+                  }
+                } catch (notifError) {
+                  console.error('Error sending mention notification:', notifError);
+                }
+              }
+            }
+          }
+        }
+      }
+
       // Also save rating to unified media_ratings table for Entertainment DNA
       if (rating && media_external_id && media_external_source && media_title && media_type) {
         console.log('Saving rating to media_ratings table...');

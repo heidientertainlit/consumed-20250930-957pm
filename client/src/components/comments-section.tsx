@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Send, User, Trash2, Heart, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { renderMentions } from "@/lib/mentions";
+import MentionInput from "@/components/mention-input";
 
 interface Comment {
   id: string;
@@ -45,6 +46,7 @@ interface CommentItemProps {
   postId: string;
   onSubmitReply: (parentCommentId: string, content: string) => void;
   isSubmitting: boolean;
+  session: any;
 }
 
 function CommentItem({
@@ -58,6 +60,7 @@ function CommentItem({
   postId,
   onSubmitReply,
   isSubmitting,
+  session,
 }: CommentItemProps) {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
@@ -132,7 +135,7 @@ function CommentItem({
               </button>
             )}
           </div>
-          <p className="text-sm text-gray-800 mb-2 break-words">{comment.content}</p>
+          <p className="text-sm text-gray-800 mb-2 break-words">{renderMentions(comment.content)}</p>
           
           {/* Action buttons */}
           <div className="flex items-center space-x-3">
@@ -187,15 +190,15 @@ function CommentItem({
           {/* Reply Input */}
           {showReplyInput && (
             <form onSubmit={handleSubmitReply} className="mt-2 flex items-center space-x-2">
-              <Input
-                type="text"
+              <MentionInput
                 placeholder="Write a reply..."
                 value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                className="flex-1 bg-white text-black placeholder:text-gray-500 text-sm"
+                onChange={setReplyContent}
+                className="bg-white text-black placeholder:text-gray-500 text-sm"
                 disabled={isSubmitting}
                 autoFocus
-                data-testid={`input-reply-${comment.id}`}
+                session={session}
+                testId={`input-reply-${comment.id}`}
               />
               <Button
                 type="submit"
@@ -240,6 +243,7 @@ function CommentItem({
               postId={postId}
               onSubmitReply={onSubmitReply}
               isSubmitting={isSubmitting}
+              session={session}
             />
           ))}
         </div>
@@ -286,26 +290,24 @@ export default function CommentsSection({
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
           <User size={16} className="text-gray-600" />
         </div>
-        <div className="flex-1 flex items-center space-x-2">
-          <Input
-            type="text"
-            placeholder="Write a comment..."
-            value={commentInput}
-            onChange={(e) => onCommentInputChange(e.target.value)}
-            className="flex-1 bg-white text-black placeholder:text-gray-500"
-            disabled={isSubmitting}
-            data-testid="input-new-comment"
-          />
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!commentInput.trim() || isSubmitting}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
-            data-testid="button-submit-comment"
-          >
-            <Send size={16} />
-          </Button>
-        </div>
+        <MentionInput
+          placeholder="Write a comment..."
+          value={commentInput}
+          onChange={onCommentInputChange}
+          className="bg-white text-black placeholder:text-gray-500"
+          disabled={isSubmitting}
+          session={session}
+          testId="input-new-comment"
+        />
+        <Button
+          type="submit"
+          size="sm"
+          disabled={!commentInput.trim() || isSubmitting}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
+          data-testid="button-submit-comment"
+        >
+          <Send size={16} />
+        </Button>
       </form>
 
       {/* Comments List */}
@@ -336,6 +338,7 @@ export default function CommentsSection({
               postId={postId}
               onSubmitReply={handleSubmitReply}
               isSubmitting={isSubmitting}
+              session={session}
             />
           ))}
         </div>

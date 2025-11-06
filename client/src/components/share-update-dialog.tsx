@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Star, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import MentionTextarea from "@/components/mention-textarea";
 
 interface ShareUpdateDialogProps {
   isOpen: boolean;
@@ -430,19 +430,16 @@ export default function ShareUpdateDialog({ isOpen, onClose, audience = "all" }:
           {/* Review Section - Always Visible */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Thoughts</h3>
-            <div className="relative">
-              <Textarea
-                value={thoughts}
-                onChange={(e) => setThoughts(e.target.value)}
-                placeholder="Share your thoughts about this media..."
-                maxLength={500}
-                className="min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
-                data-testid="thoughts-textarea"
-              />
-              <div className="absolute bottom-3 right-3 text-sm text-gray-400 pointer-events-none">
-                {thoughts.length}/500
-              </div>
-            </div>
+            <p className="text-sm text-gray-600 mb-2">Type @ to mention a friend</p>
+            <MentionTextarea
+              value={thoughts}
+              onChange={setThoughts}
+              placeholder="Share your thoughts about this media..."
+              maxLength={500}
+              className="resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
+              session={session}
+              testId="thoughts-textarea"
+            />
           </div>
 
           {/* Rating Section - Always Visible */}

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { apiRequest } from "@/lib/queryClient";
+import { renderMentions } from "@/lib/mentions";
 
 interface SocialPost {
   id: string;
@@ -1111,7 +1112,7 @@ export default function Feed() {
                           </div>
                         </>
                       ) : (
-                        <p className="text-gray-800">{post.content}</p>
+                        <p className="text-gray-800">{renderMentions(post.content)}</p>
                       )}
                     </div>
                   )}

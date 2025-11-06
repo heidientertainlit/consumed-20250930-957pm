@@ -258,6 +258,65 @@ serve(async (req) => {
         }
       }
 
+      // Extract @mentions and send notifications (with deduplication)
+      if (content) {
+        // Whitelist pattern: @ must be at start OR preceded by allowed punctuation/whitespace
+        // Allows: "@alex", " @alex", ",@alex", "(@alex", "FYI:@alex", "!@alex"
+        // Blocks: "user@alex", "http://@alex", "?ref=@alex", "&id=@alex"
+        const mentionPattern = /(^|[\s,;:!?(){}\[\]"'<>\-])@([\w.-]+)/g;
+        const mentions: string[] = [];
+        let match;
+        
+        while ((match = mentionPattern.exec(content)) !== null) {
+          mentions.push(match[2]); // Group 2 is the username (group 1 is delimiter)
+        }
+
+        if (mentions.length > 0) {
+          console.log('Found mentions in comment:', mentions);
+          
+          // Look up user IDs for mentioned usernames
+          const { data: mentionedUsers } = await serviceSupabase
+            .from('users')
+            .select('id, user_name')
+            .in('user_name', mentions);
+
+          if (mentionedUsers && mentionedUsers.length > 0) {
+            // Deduplicate: don't send mention notification if user already received comment notification
+            const alreadyNotified = notifyUserId; // User who already got comment/reply notification
+            
+            // Send notification to each mentioned user
+            for (const mentionedUser of mentionedUsers) {
+              // Skip if: mentioning yourself OR already notified as post/comment author
+              if (mentionedUser.id !== user.id && mentionedUser.id !== alreadyNotified) {
+                try {
+                  const notifResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+                    },
+                    body: JSON.stringify({
+                      userId: mentionedUser.id,
+                      type: 'mention',
+                      triggeredByUserId: user.id,
+                      message: `${commenterName} mentioned you in a comment`,
+                      postId: post_id,
+                      commentId: comment.id
+                    })
+                  });
+                  
+                  if (!notifResponse.ok) {
+                    console.error('Failed to send mention notification:', await notifResponse.text());
+                  }
+                } catch (notifError) {
+                  console.error('Error sending mention notification:', notifError);
+                }
+              }
+            }
+          }
+        }
+      }
+
       return new Response(JSON.stringify({ comment: transformedComment }), {
         status: 201,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
