@@ -865,17 +865,6 @@ export default function UserProfile() {
       return;
     }
 
-    // Validate username
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (editUsername && !usernameRegex.test(editUsername)) {
-      toast({
-        title: "Invalid Username",
-        description: "Username must be 3-20 characters and contain only letters, numbers, and underscores",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsSavingProfile(true);
     try {
       const { createClient } = await import('@supabase/supabase-js');
@@ -884,30 +873,10 @@ export default function UserProfile() {
         import.meta.env.VITE_SUPABASE_ANON_KEY
       );
 
-      // Check if username is already taken (if changed)
-      if (editUsername !== userProfileData?.user_name) {
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('user_name', editUsername)
-          .single();
-
-        if (existingUser) {
-          toast({
-            title: "Username Taken",
-            description: "This username is already in use. Please choose another.",
-            variant: "destructive"
-          });
-          setIsSavingProfile(false);
-          return;
-        }
-      }
-
-      // Update users table
+      // Update users table (only first/last name - username is permanent)
       const { error: updateError } = await supabase
         .from('users')
         .update({
-          user_name: editUsername,
           first_name: editFirstName || null,
           last_name: editLastName || null
         })
@@ -924,7 +893,7 @@ export default function UserProfile() {
         return;
       }
 
-      // Update local state with new profile data
+      // Update local state with new profile data (keep existing username)
       setUserProfileData({
         user_name: editUsername,
         first_name: editFirstName || null,
@@ -4006,13 +3975,12 @@ export default function UserProfile() {
                 <Input
                   id="username"
                   value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value.toLowerCase())}
-                  placeholder="username"
-                  className="w-full bg-white text-black border-gray-300 placeholder:text-gray-500"
+                  disabled
+                  className="w-full bg-gray-100 text-gray-600 border-gray-300 cursor-not-allowed"
                   data-testid="input-username"
                 />
-                <p className="text-xs text-black mt-1">
-                  3-20 characters, letters, numbers, and underscores only
+                <p className="text-xs text-gray-600 mt-1">
+                  Usernames cannot be changed to prevent broken mentions
                 </p>
               </div>
 
@@ -4030,7 +3998,7 @@ export default function UserProfile() {
                 <Button
                   onClick={handleSaveProfile}
                   className="flex-1 bg-purple-600 text-white hover:bg-purple-700"
-                  disabled={isSavingProfile || !editUsername}
+                  disabled={isSavingProfile}
                   data-testid="button-save-profile"
                 >
                   {isSavingProfile ? (
