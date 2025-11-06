@@ -23,6 +23,16 @@ export default function PlayTriviaPage() {
   const [shareModalGame, setShareModalGame] = useState<any>(null);
   const [submissionResults, setSubmissionResults] = useState<Record<string, { correct: boolean; points: number }>>({});
   const [showCelebration, setShowCelebration] = useState<{ points: number } | null>(null);
+  const [celebrationTimer, setCelebrationTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Cleanup celebration timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (celebrationTimer) {
+        clearTimeout(celebrationTimer);
+      }
+    };
+  }, [celebrationTimer]);
 
   // Extract game ID from URL hash if present (format: /play/trivia#game-id)
   const gameIdFromUrl = window.location.hash.replace('#', '');
@@ -146,9 +156,10 @@ export default function PlayTriviaPage() {
       if (isCorrect && pointsEarned > 0) {
         setShowCelebration({ points: pointsEarned });
         // Auto-hide celebration after 3 seconds
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           setShowCelebration(null);
         }, 3000);
+        setCelebrationTimer(timer);
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
