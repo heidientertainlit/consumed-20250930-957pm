@@ -26,14 +26,28 @@ interface Notification {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserId(user.id);
+      }
+    });
+  }, []);
 
   // Fetch notifications
   const { data: notifications = [], refetch } = useQuery<Notification[]>({
-    queryKey: ['/api/notifications'],
+    queryKey: ['/api/notifications', userId],
+    enabled: !!userId,
     queryFn: async () => {
+      if (!userId) return [];
+      
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -56,35 +70,41 @@ export function NotificationBell() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications', userId] });
     },
   });
 
   // Mark all as read
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
+      if (!userId) return;
+      
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
+        .eq('user_id', userId)
         .eq('read', false);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications', userId] });
     },
   });
 
   // Subscribe to realtime notifications
   useEffect(() => {
+    if (!userId) return;
+
     const channel = supabase
-      .channel('notifications')
+      .channel(`notifications:${userId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           console.log('New notification received:', payload);
@@ -97,7 +117,7 @@ export function NotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch]);
+  }, [refetch, userId]);
 
   const handleNotificationClick = (notification: Notification) => {
     // Mark as read
@@ -112,6 +132,7 @@ export function NotificationBell() {
       case 'like':
       case 'mention':
       case 'comment_like':
+      case 'post_like':
         // Post-related notifications - go to the specific post and comment
         if (notification.post_id) {
           const url = notification.comment_id 
@@ -171,8 +192,11 @@ export function NotificationBell() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'like':
+      case 'post_like':
+      case 'comment_like':
         return '❤️';
       case 'comment':
+      case 'comment_reply':
         return '💬';
       case 'friend_request':
         return '👋';
