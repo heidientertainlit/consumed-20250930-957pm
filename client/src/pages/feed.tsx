@@ -178,17 +178,32 @@ export default function Feed() {
           const commentElement = document.getElementById(`comment-${highlightCommentId}`);
           if (commentElement) {
             commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Highlight the comment briefly
+            // Add transition for smooth fade effect
+            commentElement.style.transition = 'background-color 0.6s ease-in-out';
+            // Highlight the comment briefly with a subtle glow
             commentElement.classList.add('bg-purple-100', 'dark:bg-purple-900/30');
             setTimeout(() => {
               commentElement.classList.remove('bg-purple-100', 'dark:bg-purple-900/30');
-            }, 2000);
+              // Remove transition after animation completes
+              setTimeout(() => {
+                commentElement.style.transition = '';
+              }, 600);
+            }, 1500);
           }
         } else {
           // Just scroll to the post
           const postElement = document.getElementById(`post-${highlightPostId}`);
           if (postElement) {
             postElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Add subtle highlight to post too
+            postElement.style.transition = 'box-shadow 0.6s ease-in-out';
+            postElement.style.boxShadow = '0 0 0 3px rgba(168, 85, 247, 0.3)';
+            setTimeout(() => {
+              postElement.style.boxShadow = '';
+              setTimeout(() => {
+                postElement.style.transition = '';
+              }, 600);
+            }, 1500);
           }
         }
       }, 500); // Give time for comments to render
