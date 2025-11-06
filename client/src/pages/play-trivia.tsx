@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { copyLink } from "@/lib/share";
 import GameShareModal from "@/components/game-share-modal";
+import CelebrationModal from '@/components/celebration-modal';
 
 export default function PlayTriviaPage() {
   const [location, setLocation] = useLocation();
@@ -21,6 +22,7 @@ export default function PlayTriviaPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
   const [submissionResults, setSubmissionResults] = useState<Record<string, { correct: boolean; points: number }>>({});
+  const [showCelebration, setShowCelebration] = useState<{ points: number } | null>(null);
 
   // Extract game ID from URL hash if present (format: /play/trivia#game-id)
   const gameIdFromUrl = window.location.hash.replace('#', '');
@@ -139,6 +141,15 @@ export default function PlayTriviaPage() {
         ...prev,
         [game.id]: { correct: isCorrect, points: pointsEarned }
       }));
+
+      // Show celebration modal for correct answers
+      if (isCorrect && pointsEarned > 0) {
+        setShowCelebration({ points: pointsEarned });
+        // Auto-hide celebration after 3 seconds
+        setTimeout(() => {
+          setShowCelebration(null);
+        }, 3000);
+      }
     } catch (error) {
       console.error('Error submitting answer:', error);
       toast({
@@ -272,10 +283,11 @@ export default function PlayTriviaPage() {
                             </div>
                           </div>
                         ) : (
-                          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                            <div className="text-red-800 font-bold text-lg">✗ Incorrect</div>
-                            <div className="text-red-700 text-sm mt-1">
-                              No points earned this time
+                          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 text-center">
+                            <div className="text-4xl mb-2">💪</div>
+                            <div className="text-blue-900 font-bold text-lg mb-2">Keep Going!</div>
+                            <div className="text-blue-700 text-sm">
+                              Every attempt makes you smarter. Try another trivia challenge!
                             </div>
                           </div>
                         )
@@ -428,6 +440,14 @@ export default function PlayTriviaPage() {
           gameId={shareModalGame.id}
           gameTitle={shareModalGame.title}
           gameType={shareModalGame.type || "trivia"}
+        />
+      )}
+
+      {/* Celebration Modal for Correct Answers */}
+      {showCelebration && (
+        <CelebrationModal
+          points={showCelebration.points}
+          onClose={() => setShowCelebration(null)}
         />
       )}
 
