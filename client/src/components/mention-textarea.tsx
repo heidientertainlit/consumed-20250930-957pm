@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { User } from "lucide-react";
+import { MENTION_TRIGGER_PATTERN } from "@/lib/mention-constants";
 
 interface Friend {
   id: string;
@@ -81,9 +82,9 @@ export default function MentionTextarea({
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
 
     if (lastAtIndex !== -1) {
-      // Check if @ is at start or preceded by whitespace (not in middle of email/URL)
-      const charBeforeAt = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] : " ";
-      const isValidTrigger = lastAtIndex === 0 || /\s/.test(charBeforeAt);
+      // Check if @ trigger pattern matches (at start or after whitespace/punctuation)
+      const textUpToAndIncludingAt = textBeforeCursor.substring(0, lastAtIndex + 1);
+      const isValidTrigger = MENTION_TRIGGER_PATTERN.test(textUpToAndIncludingAt);
       
       if (!isValidTrigger) {
         setShowMentions(false);
