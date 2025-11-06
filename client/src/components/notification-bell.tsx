@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
+import { useLocation } from 'wouter';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,7 @@ interface Notification {
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
 
   // Get current user
   useEffect(() => {
@@ -125,6 +127,9 @@ export function NotificationBell() {
       markAsReadMutation.mutate(notification.id);
     }
 
+    // Close dropdown before navigating
+    setOpen(false);
+
     // Navigate based on notification type and available data
     switch (notification.type) {
       case 'comment':
@@ -138,32 +143,32 @@ export function NotificationBell() {
           const url = notification.comment_id 
             ? `/feed?post=${notification.post_id}&comment=${notification.comment_id}`
             : `/feed?post=${notification.post_id}`;
-          window.location.href = url;
+          setLocation(url);
         } else {
-          window.location.href = '/feed';
+          setLocation('/feed');
         }
         break;
 
       case 'collaborator_added':
         // Go directly to the specific list
         if (notification.list_id) {
-          window.location.href = `/list/${notification.list_id}`;
+          setLocation(`/list/${notification.list_id}`);
         } else {
-          window.location.href = '/track';
+          setLocation('/track');
         }
         break;
 
       case 'friend_request':
         // Someone sent YOU a friend request - go to Friends page to approve/reject
-        window.location.href = '/friends';
+        setLocation('/friends');
         break;
 
       case 'friend_accepted':
         // Someone accepted YOUR friend request - go to their profile
         if (notification.triggered_by_user_id) {
-          window.location.href = `/user/${notification.triggered_by_user_id}`;
+          setLocation(`/user/${notification.triggered_by_user_id}`);
         } else {
-          window.location.href = '/friends';
+          setLocation('/friends');
         }
         break;
 
@@ -171,22 +176,20 @@ export function NotificationBell() {
       case 'inner_circle':
         // Go to the follower's profile
         if (notification.triggered_by_user_id) {
-          window.location.href = `/user/${notification.triggered_by_user_id}`;
+          setLocation(`/user/${notification.triggered_by_user_id}`);
         }
         break;
 
       default:
         // Fallback: if there's a post_id, go to feed; if list_id, go to that list
         if (notification.post_id) {
-          window.location.href = `/feed?post=${notification.post_id}`;
+          setLocation(`/feed?post=${notification.post_id}`);
         } else if (notification.list_id) {
-          window.location.href = `/list/${notification.list_id}`;
+          setLocation(`/list/${notification.list_id}`);
         } else {
-          window.location.href = '/feed';
+          setLocation('/feed');
         }
     }
-
-    setOpen(false);
   };
 
   const getNotificationIcon = (type: string) => {
