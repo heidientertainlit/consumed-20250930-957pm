@@ -21,9 +21,9 @@ Preferred communication style: Simple, everyday language.
 
 ### Technical Implementations
 -   **Frontend**: React 18 with TypeScript, Wouter for routing, TanStack Query for server state management, and Vite for building.
--   **Backend**: Node.js with Express.js REST API, TypeScript, ES modules.
--   **Database**: PostgreSQL with Drizzle ORM, hosted on Neon Database.
--   **API Integration**: Unified API search using Spotify, TMDB, YouTube, and Open Library for media data.
+-   **Backend**: Supabase Edge Functions (Deno runtime) for all server-side logic including notifications, comments, social features, analytics, recommendations, and API integrations. **NO Express.js - use Supabase Edge Functions exclusively.**
+-   **Database**: Supabase PostgreSQL for ALL data storage including users, posts, lists, notifications, analytics, sessions, and all application data. **NO Neon Database - use Supabase PostgreSQL exclusively.**
+-   **API Integration**: Unified API search using Spotify, TMDB, YouTube, and Open Library for media data, called from Supabase Edge Functions.
 -   **Authentication & Signup**: Supabase Auth for login/signup/password reset, with user creation handled automatically by a Supabase database trigger or edge function. Signup is simplified, directing users directly to the `/feed` after completion.
 -   **User Management**: Users are automatically created in a custom `users` table upon first authentication.
 -   **Notification System**: A unified real-time notification system with a `notifications` database table, managed by a centralized `send-notification` edge function. Supports various notification types (comment, like, friend request, etc.) and features a `NotificationBell` component with real-time updates and navigation logic.
@@ -61,15 +61,15 @@ Preferred communication style: Simple, everyday language.
 
 ## External Dependencies
 
--   **Database**: Supabase (PostgreSQL), Neon Database (serverless PostgreSQL).
--   **APIs**:
+-   **Database & Backend**: Supabase (PostgreSQL + Edge Functions) - **ALL application data and server logic**
+-   **External APIs** (called from Supabase Edge Functions):
     -   Spotify (OAuth2 client credentials)
     -   TMDB (API key)
     -   YouTube (API key)
     -   Open Library (no authentication)
--   **Core Libraries**:
-    -   `@neondatabase/serverless`
-    -   `drizzle-orm`
+    -   OpenAI (GPT-4o for recommendations)
+-   **Frontend Libraries**:
+    -   `@supabase/supabase-js`
     -   `@tanstack/react-query`
     -   `@radix-ui/*`
     -   `wouter`
