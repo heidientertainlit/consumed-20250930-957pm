@@ -919,7 +919,13 @@ export default function FriendsUpdates() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen bg-gray-50 pb-32" style={{ fontFamily: 'Inter, sans-serif !important' }}>
+      <style>{`
+        #friendsupdates-page * {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        }
+      `}</style>
+      <div id="friendsupdates-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -1311,7 +1317,7 @@ export default function FriendsUpdates() {
           queryClient.invalidateQueries({ queryKey: ["social-feed"] });
         }}
       />
-
+      </div>
     </div>
   );
 }
