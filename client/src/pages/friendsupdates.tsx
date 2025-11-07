@@ -924,6 +924,9 @@ export default function FriendsUpdates() {
         #friendsupdates-page * {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
+        #friendsupdates-page h1 {
+          font-family: 'Poppins', sans-serif !important;
+        }
       `}</style>
       <div id="friendsupdates-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
