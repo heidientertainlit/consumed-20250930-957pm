@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Film, MessageSquare, Gamepad2, Users, BarChart3, Sparkles } from "lucide-react";
+import { X, Film, MessageSquare, Gamepad2, Users, BarChart3, Sparkles, Eye } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import MentionTextarea from "@/components/mention-textarea";
@@ -19,6 +20,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   const [postMode, setPostMode] = useState<PostMode>("text");
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
+  const [containsSpoilers, setContainsSpoilers] = useState(false);
 
   const actionIcons = [
     { id: "media" as PostMode, icon: Film, label: "Add Media", color: "text-purple-600" },
@@ -52,6 +54,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
           content: content.trim(),
           type: "text",
           visibility: "public",
+          contains_spoilers: containsSpoilers,
         }),
       });
 
@@ -65,6 +68,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
       // Reset and close
       setContent("");
       setPostMode("text");
+      setContainsSpoilers(false);
       onClose();
     } catch (error) {
       console.error("Post error:", error);
@@ -92,13 +96,13 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl p-0 gap-0 bg-white">
+      <DialogContent className="max-w-xl p-0 gap-0 bg-white">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
           <button onClick={onClose} className="text-gray-600 hover:text-gray-900 text-sm">
             Cancel
           </button>
-          <h2 className="text-base font-semibold text-gray-900">New thread</h2>
+          <h2 className="text-sm font-semibold text-gray-900">New thread</h2>
           <div className="w-14" /> {/* Spacer for alignment */}
         </div>
 
@@ -119,21 +123,20 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 value={content}
                 onChange={setContent}
                 placeholder="What's new?"
-                className="border-none p-0 min-h-[100px] text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
+                className="border-none p-0 min-h-[80px] text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
                 session={session}
               />
 
               {/* Action Icons */}
-              <div className="flex gap-4 mt-4 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 mt-3 pt-3 border-t border-gray-200">
                 {actionIcons.map((action) => (
                   <button
                     key={action.id}
                     onClick={() => handleModeClick(action.id)}
-                    className={`flex flex-col items-center gap-1 hover:opacity-70 transition-opacity ${action.color}`}
+                    className={`hover:opacity-70 transition-opacity ${action.color}`}
                     title={action.label}
                   >
-                    <action.icon className="w-5 h-5" />
-                    <span className="text-xs">{action.label.split(' ')[0]}</span>
+                    <action.icon className="w-4 h-4" />
                   </button>
                 ))}
               </div>
@@ -142,14 +145,25 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between bg-white">
-          <div className="text-sm text-gray-500">
-            Reply options
+        <div className="px-4 py-2.5 border-t border-gray-200 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="spoilers"
+              checked={containsSpoilers}
+              onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+              className="h-4 w-4"
+            />
+            <label
+              htmlFor="spoilers"
+              className="text-xs text-gray-600 cursor-pointer select-none"
+            >
+              Contains spoilers
+            </label>
           </div>
           <Button
             onClick={handlePost}
             disabled={isPosting || (!content.trim() && postMode === "text")}
-            className="bg-black hover:bg-gray-800 text-white px-6"
+            className="bg-black hover:bg-gray-800 text-white px-5 py-1.5 h-auto text-sm"
           >
             {isPosting ? "Posting..." : "Post"}
           </Button>
