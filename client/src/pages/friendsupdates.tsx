@@ -1124,23 +1124,23 @@ export default function FriendsUpdates() {
                     )}
 
                   {/* Original Post */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm" id={`post-${post.id}`}>
+                  <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" id={`post-${post.id}`}>
                     {/* User Info and Date */}
-                    <div className="flex items-center space-x-3 mb-4">
+                    <div className="flex items-center space-x-2 mb-3">
                       <Link href={`/user/${post.user.id}`}>
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
-                          <User size={24} className="text-gray-600" />
+                        <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
+                          <User size={18} className="text-gray-600" />
                         </div>
                       </Link>
                       <div className="flex-1">
                         <Link 
                           href={`/user/${post.user.id}`}
-                          className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                          className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                           data-testid={`link-user-${post.user.id}`}
                         >
                           {post.user.username}
                         </Link>
-                        <div className="text-sm text-gray-500">{formatFullDate(post.timestamp)}</div>
+                        <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                       </div>
                       {user?.id === post.user.id && (
                         <button
@@ -1149,109 +1149,94 @@ export default function FriendsUpdates() {
                           data-testid={`button-delete-post-${post.id}`}
                           title="Delete post"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       )}
                     </div>
 
-                  {/* Post Content with Spoiler Blur */}
-                  {post.content && (
-                    <div className="mb-4 relative">
-                      {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
-                        <>
-                          {/* Blurred Text */}
-                          <p className="text-gray-800 blur-md select-none">{post.content}</p>
-                          
-                          {/* Spoiler Badge Overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <button
-                              onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
-                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-1"
-                              data-testid={`reveal-spoiler-${post.id}`}
-                            >
-                              <Eye size={12} />
-                              <span>Show Spoiler</span>
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-gray-800">{renderMentions(post.content)}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Media Cards - Always Visible */}
-                  {post.mediaItems && post.mediaItems.length > 0 && (
-                    <div className="space-y-3 mb-4">
-                      {post.mediaItems.map((media, index) => {
+                  {/* Compact Post Layout */}
+                  {post.content ? (
+                    <>
+                      {/* Has Commentary - Show text + media poster */}
+                      <div className="mb-2 relative">
+                        {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
+                          <>
+                            <p className="text-gray-800 text-sm blur-md select-none">{post.content}</p>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <button
+                                onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
+                                className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-1"
+                                data-testid={`reveal-spoiler-${post.id}`}
+                              >
+                                <Eye size={12} />
+                                <span>Show Spoiler</span>
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-gray-800 text-sm">{renderMentions(post.content)}</p>
+                        )}
+                      </div>
+                      
+                      {/* Media Poster (Large) */}
+                      {post.mediaItems && post.mediaItems.length > 0 && post.mediaItems.map((media, index) => {
                         const isClickable = media.externalId && media.externalSource;
                         return (
-                        <div 
-                          key={index} 
-                          className={`bg-gray-100 rounded-2xl p-4 transition-colors ${
-                            isClickable ? 'cursor-pointer hover:bg-gray-200' : 'cursor-default'
-                          }`}
-                          onClick={() => {
-                            if (isClickable) {
-                              setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                            }
-                          }}
-                        >
-                          <div className="flex items-center space-x-4">
-                            {/* Media Artwork */}
-                            <div className="w-16 h-24 rounded-lg overflow-hidden">
-                              <img 
-                                src={media.imageUrl || getMediaArtwork(media.title, media.mediaType)}
-                                alt={`${media.title} artwork`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-
-                            {/* Media Info */}
-                            <div className="flex-1">
-                              <h3 className={`font-semibold text-gray-900 text-lg mb-1 line-clamp-2 transition-colors ${
-                                isClickable ? 'hover:text-purple-600' : ''
-                              }`}>
-                                {media.title}
-                              </h3>
-
-                              {/* Creator Info */}
-                              {media.creator && (
-                                <div className="text-gray-600 text-sm mb-2">
-                                  by {media.creator}
-                                </div>
-                              )}
-
-                              <div className="text-gray-600 text-sm capitalize mb-2">
-                                {media.mediaType}
+                          <div 
+                            key={index} 
+                            className={`border border-gray-200 rounded-lg overflow-hidden mb-2 ${
+                              isClickable ? 'cursor-pointer hover:bg-gray-50' : ''
+                            }`}
+                            onClick={() => {
+                              if (isClickable) {
+                                setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                              }
+                            }}
+                          >
+                            {media.imageUrl && (
+                              <div className="aspect-video bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center overflow-hidden">
+                                <img 
+                                  src={media.imageUrl}
+                                  alt={media.title}
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
-                              {media.rating && (
-                                <div className="flex items-center">
-                                  <div className="flex text-yellow-400">
-                                    {Array.from({ length: 5 }, (_, i) => (
-                                      <Star
-                                        key={i}
-                                        size={16}
-                                        fill={i < media.rating! ? "currentColor" : "none"}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-gray-600 ml-2">({media.rating}/5)</span>
-                                </div>
-                              )}
+                            )}
+                            <div className="p-2">
+                              <p className="font-semibold text-sm text-gray-900">{media.title}</p>
+                              {media.creator && <p className="text-xs text-gray-500">{media.creator}</p>}
                             </div>
-
-                            {/* Arrow - only show if clickable */}
-                            {isClickable && <ChevronRight className="text-gray-400" size={20} />}
                           </div>
-                        </div>
                         );
                       })}
-                    </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Just Tracking - Inline text mention */}
+                      {post.mediaItems && post.mediaItems.length > 0 && post.mediaItems.map((media, index) => {
+                        const isClickable = media.externalId && media.externalSource;
+                        return (
+                          <p key={index} className="text-gray-800 text-sm mb-2">
+                            Added{' '}
+                            {isClickable ? (
+                              <button
+                                onClick={() => setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`)}
+                                className="font-semibold text-purple-600 hover:underline"
+                              >
+                                {media.title}
+                              </button>
+                            ) : (
+                              <span className="font-semibold">{media.title}</span>
+                            )}
+                            {' '}to their list
+                          </p>
+                        );
+                      })}
+                    </>
                   )}
 
                   {/* Interaction Bar */}
-                  <div className="pt-2 border-t border-gray-100 space-y-3">
+                  <div className="pt-2 border-t border-gray-100 mt-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-6">
                         <button 
