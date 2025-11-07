@@ -7,6 +7,7 @@ import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 import Track from "@/pages/track";
 import Feed from "@/pages/feed";
+import FriendsUpdates from "@/pages/friendsupdates";
 import Discover from "@/pages/discover";
 import Leaderboard from "@/pages/leaderboard";
 import Play from "@/pages/play";
@@ -56,6 +57,11 @@ function Router() {
         <Route path="/feed">
           <ProtectedRoute>
             <Feed />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/friendsupdates">
+          <ProtectedRoute>
+            <FriendsUpdates />
           </ProtectedRoute>
         </Route>
         <Route path="/discover">
