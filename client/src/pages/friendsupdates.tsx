@@ -1321,33 +1321,75 @@ export default function FriendsUpdates() {
           ) : socialPosts && socialPosts.length > 0 ? (
             <div className="space-y-4">
               {/* Compact Recommendations - Only on "For Me" tab */}
-              {feedFilter === "for-me" && recommendedContent && recommendedContent.length > 0 && (
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs text-gray-700 font-medium">
-                      Based on what you like and what your friends are consuming
-                    </p>
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {recommendedContent.slice(0, 5).map((item: any, idx: number) => (
-                      <div
-                        key={idx}
-                        onClick={() => handleMediaClick(item)}
-                        className="flex-shrink-0 w-20 cursor-pointer hover:opacity-80 transition-opacity"
-                      >
-                        <div className="w-20 h-28 rounded overflow-hidden mb-1">
-                          <img
-                            src={item.imageUrl || getMediaArtwork(item.title, item.mediaType)}
-                            alt={item.title}
-                            className="w-full h-full object-cover"
-                          />
+              {feedFilter === "for-me" && recommendedContent && recommendedContent.length > 0 && (() => {
+                // Extract unique friend names from recent posts
+                const uniqueFriends = Array.from(
+                  new Set(
+                    socialPosts
+                      .filter((p: SocialPost) => p.user.id !== user?.id)
+                      .slice(0, 10)
+                      .map((p: SocialPost) => p.user.username)
+                  )
+                ).slice(0, 3);
+                
+                return (
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-2">
+                    <style>{`
+                      @keyframes scrollFriends {
+                        0%, 33% { opacity: 1; transform: translateY(0); }
+                        36%, 100% { opacity: 0; transform: translateY(-10px); }
+                      }
+                      .friend-scroll {
+                        animation: scrollFriends 6s infinite;
+                      }
+                      .friend-scroll:nth-child(2) {
+                        animation-delay: 2s;
+                      }
+                      .friend-scroll:nth-child(3) {
+                        animation-delay: 4s;
+                      }
+                    `}</style>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs text-gray-700 font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Based on what you like and what your friends are consuming
+                      </p>
+                      {uniqueFriends.length > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-gray-600 h-4 overflow-hidden relative">
+                          <span className="opacity-60">·</span>
+                          <div className="relative w-20 h-4">
+                            {uniqueFriends.map((friendName, idx) => (
+                              <span 
+                                key={idx}
+                                className="friend-scroll absolute inset-0 font-medium text-purple-600"
+                              >
+                                {friendName}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                        <p className="text-xs text-gray-800 font-medium line-clamp-1">{item.title}</p>
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {recommendedContent.slice(0, 5).map((item: any, idx: number) => (
+                        <div
+                          key={idx}
+                          onClick={() => handleMediaClick(item)}
+                          className="flex-shrink-0 w-20 cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          <div className="w-20 h-28 rounded overflow-hidden mb-1">
+                            <img
+                              src={item.imageUrl || getMediaArtwork(item.title, item.mediaType)}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-800 font-medium line-clamp-1">{item.title}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
               
               {socialPosts.map((post: SocialPost, postIndex: number) => {
                 // Inject PlayCard every 3rd post
