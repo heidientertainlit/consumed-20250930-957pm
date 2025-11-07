@@ -275,7 +275,6 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
                 <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
               )}
               <span className="text-xs text-gray-700">{platform.name}</span>
-              <ExternalLink size={10} className="text-gray-400" />
             </a>
           ))
         ) : null}
@@ -1321,6 +1320,35 @@ export default function FriendsUpdates() {
             </div>
           ) : socialPosts && socialPosts.length > 0 ? (
             <div className="space-y-4">
+              {/* Compact Recommendations - Only on "For Me" tab */}
+              {feedFilter === "for-me" && recommendedContent && recommendedContent.length > 0 && (
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs text-gray-700 font-medium">
+                      Based on what you like and what your friends are consuming
+                    </p>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {recommendedContent.slice(0, 5).map((item: any, idx: number) => (
+                      <div
+                        key={idx}
+                        onClick={() => handleMediaClick(item)}
+                        className="flex-shrink-0 w-20 cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        <div className="w-20 h-28 rounded overflow-hidden mb-1">
+                          <img
+                            src={item.imageUrl || getMediaArtwork(item.title, item.mediaType)}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-800 font-medium line-clamp-1">{item.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {socialPosts.map((post: SocialPost, postIndex: number) => {
                 // Inject PlayCard every 3rd post
                 const shouldShowPlayCard = (postIndex + 1) % 3 === 0;
