@@ -141,7 +141,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
 
           {/* Question */}
           <p className="text-sm font-medium text-gray-900 mb-3">
-            {game.question || game.title}
+            {game.prediction || game.question || game.title}
           </p>
 
           {/* Options */}
