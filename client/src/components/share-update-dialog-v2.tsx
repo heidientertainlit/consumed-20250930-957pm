@@ -92,25 +92,25 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl p-0 gap-0">
+      <DialogContent className="max-w-2xl p-0 gap-0 bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-900">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+          <button onClick={onClose} className="text-gray-600 hover:text-gray-900 text-sm">
             Cancel
           </button>
-          <h2 className="text-base font-semibold">New thread</h2>
+          <h2 className="text-base font-semibold text-gray-900">New thread</h2>
           <div className="w-14" /> {/* Spacer for alignment */}
         </div>
 
         {/* Content */}
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 bg-white">
           {/* User Info */}
           <div className="flex gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
               {user?.email?.substring(0, 2).toUpperCase() || 'ME'}
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm mb-1">
+              <p className="font-semibold text-sm mb-1 text-gray-900">
                 {user?.email?.split('@')[0] || 'consumedapp'}
               </p>
               
@@ -119,12 +119,12 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 value={content}
                 onChange={setContent}
                 placeholder="What's new?"
-                className="border-none p-0 min-h-[100px] text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="border-none p-0 min-h-[100px] text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
                 session={session}
               />
 
               {/* Action Icons */}
-              <div className="flex gap-4 mt-4 pt-4 border-t">
+              <div className="flex gap-4 mt-4 pt-4 border-t border-gray-200">
                 {actionIcons.map((action) => (
                   <button
                     key={action.id}
@@ -142,7 +142,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between bg-white">
           <div className="text-sm text-gray-500">
             Reply options
           </div>
