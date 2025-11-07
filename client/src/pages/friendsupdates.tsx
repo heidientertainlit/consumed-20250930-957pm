@@ -6,17 +6,21 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Badge as UIBadge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
 import { renderMentions } from "@/lib/mentions";
+import { copyLink } from "@/lib/share";
 
 interface SocialPost {
   id: string;
@@ -68,6 +72,229 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
 
   return response.json();
 };
+
+// Media Card Quick Actions Component
+function MediaCardActions({ media, session }: { media: any; session: any }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Fetch media details to get platform data
+  const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['media-details', media.externalSource, media.externalId],
+    queryFn: async () => {
+      if (!session?.access_token || !media.externalId || !media.externalSource) {
+        return null;
+      }
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-media-details?source=${media.externalSource}&id=${media.externalId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!session?.access_token && !!media.externalId && !!media.externalSource,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  // Fetch user lists for Add to List dropdown
+  const { data: userLists } = useQuery({
+    queryKey: ['user-lists-with-media'],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-user-lists-with-media`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+  });
+
+  // Add to list mutation
+  const addToListMutation = useMutation({
+    mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const mediaData = {
+        title: media.title,
+        mediaType: media.mediaType || 'movie',
+        creator: media.creator || '',
+        imageUrl: media.imageUrl,
+        externalId: media.externalId,
+        externalSource: media.externalSource
+      };
+
+      const url = isCustom 
+        ? `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/add-to-custom-list`
+        : `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/track-media`;
+
+      const body = isCustom
+        ? { media: mediaData, customListId: listType }
+        : { media: mediaData, listType };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || errorData.message || 'Failed to add to list');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (result) => {
+      const isDuplicate = result?.message?.toLowerCase().includes('already');
+      
+      toast({
+        title: isDuplicate ? "Already in list!" : "Added to list!",
+        description: isDuplicate 
+          ? `${media.title} is already in this list.`
+          : `${media.title} has been added to your list.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add item to list. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleShare = async () => {
+    try {
+      await copyLink({
+        kind: 'media',
+        obj: {
+          type: media.mediaType?.toLowerCase(),
+          source: media.externalSource,
+          id: media.externalId
+        }
+      });
+      toast({
+        title: "Link copied!",
+        description: "Media link has been copied to your clipboard.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const platforms = mediaDetails?.platforms || [];
+  const defaultLists = userLists?.filter((list: any) => list.is_default) || [];
+  const customLists = userLists?.filter((list: any) => !list.is_default) || [];
+
+  return (
+    <div className="pt-2 mt-2 border-t border-gray-200 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+      {/* Left: Platform chips */}
+      <div className="flex items-center gap-1 flex-1 min-w-0">
+        {isLoadingDetails ? (
+          <div className="h-5 w-20 bg-gray-200 animate-pulse rounded" />
+        ) : platforms.length > 0 ? (
+          platforms.slice(0, 3).map((platform: any, idx: number) => (
+            <a
+              key={idx}
+              href={platform.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+              data-testid={`platform-chip-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
+            >
+              {platform.logo && (
+                <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
+              )}
+              <span className="text-xs text-gray-700">{platform.name}</span>
+              <ExternalLink size={10} className="text-gray-400" />
+            </a>
+          ))
+        ) : (
+          <UIBadge variant="outline" className="text-xs text-gray-500">No platforms</UIBadge>
+        )}
+      </div>
+
+      {/* Center: Add to List */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+            disabled={addToListMutation.isPending}
+            data-testid="button-add-to-list"
+          >
+            <Plus size={14} className="mr-1" />
+            <span className="text-xs">Add</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center" className="w-48">
+          {defaultLists.map((list: any) => (
+            <DropdownMenuItem
+              key={list.id}
+              onClick={() => addToListMutation.mutate({ listType: list.list_type, isCustom: false })}
+              data-testid={`add-to-${list.name.toLowerCase().replace(/\s+/g, '-')}`}
+            >
+              {list.name}
+            </DropdownMenuItem>
+          ))}
+          {customLists.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              {customLists.map((list: any) => (
+                <DropdownMenuItem
+                  key={list.id}
+                  onClick={() => addToListMutation.mutate({ listType: list.id, isCustom: true })}
+                  data-testid={`add-to-custom-${list.id}`}
+                >
+                  {list.name}
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Right: Share */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0 text-gray-600 hover:text-purple-600 hover:bg-purple-50"
+        onClick={handleShare}
+        data-testid="button-share-media"
+      >
+        <Share size={14} />
+      </Button>
+    </div>
+  );
+}
 
 export default function FriendsUpdates() {
   // Load Inter font for this page only
@@ -1185,16 +1412,16 @@ export default function FriendsUpdates() {
                         return (
                           <div 
                             key={index} 
-                            className={`bg-gray-50 rounded-lg p-3 transition-colors ${
-                              isClickable ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'
-                            }`}
-                            onClick={() => {
-                              if (isClickable) {
-                                setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                              }
-                            }}
+                            className="bg-gray-50 rounded-lg p-3 transition-colors"
                           >
-                            <div className="flex items-center space-x-3">
+                            <div 
+                              className={`flex items-center space-x-3 ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
+                              onClick={() => {
+                                if (isClickable) {
+                                  setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                }
+                              }}
+                            >
                               <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0">
                                 <img 
                                   src={media.imageUrl || getMediaArtwork(media.title, media.mediaType)}
@@ -1217,6 +1444,11 @@ export default function FriendsUpdates() {
                               </div>
                               {isClickable && <ChevronRight className="text-gray-400 flex-shrink-0" size={16} />}
                             </div>
+                            
+                            {/* Quick Actions */}
+                            {media.externalId && media.externalSource && (
+                              <MediaCardActions media={media} session={session} />
+                            )}
                           </div>
                         );
                       })}
