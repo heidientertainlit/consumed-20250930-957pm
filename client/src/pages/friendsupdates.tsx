@@ -69,6 +69,18 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
 };
 
 export default function FriendsUpdates() {
+  // Load Inter font for this page only
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -907,7 +919,7 @@ export default function FriendsUpdates() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-gray-50 pb-32" style={{ fontFamily: 'Inter, sans-serif' }}>
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
