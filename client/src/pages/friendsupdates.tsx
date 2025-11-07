@@ -209,8 +209,9 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   };
 
   const platforms = mediaDetails?.platforms || [];
-  const defaultLists = userLists?.filter((list: any) => list.is_default) || [];
-  const customLists = userLists?.filter((list: any) => !list.is_default) || [];
+  const listsArray = Array.isArray(userLists) ? userLists : [];
+  const defaultLists = listsArray.filter((list: any) => list.is_default);
+  const customLists = listsArray.filter((list: any) => !list.is_default);
 
   return (
     <div className="pt-2 mt-2 border-t border-gray-200 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
