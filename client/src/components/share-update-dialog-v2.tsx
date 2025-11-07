@@ -123,20 +123,21 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 value={content}
                 onChange={setContent}
                 placeholder="What's new?"
-                className="border-none p-0 min-h-[80px] text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
+                className="border-none p-0 min-h-[60px] text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
                 session={session}
               />
 
               {/* Action Icons */}
-              <div className="flex gap-3 mt-3 pt-3 border-t border-gray-200">
+              <div className="flex gap-4 mt-3 pt-3 border-t border-gray-200">
                 {actionIcons.map((action) => (
                   <button
                     key={action.id}
                     onClick={() => handleModeClick(action.id)}
-                    className={`hover:opacity-70 transition-opacity ${action.color}`}
+                    className={`flex flex-col items-center gap-0.5 hover:opacity-70 transition-opacity ${action.color}`}
                     title={action.label}
                   >
                     <action.icon className="w-4 h-4" />
+                    <span className="text-[10px] leading-tight">{action.label.split(' ')[0]}</span>
                   </button>
                 ))}
               </div>

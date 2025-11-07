@@ -90,6 +90,7 @@ export default function FriendsUpdates() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
+  const [feedFilter, setFeedFilter] = useState("for-me");
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -973,6 +974,32 @@ export default function FriendsUpdates() {
               >
                 Post
               </Button>
+            </div>
+          </div>
+
+          {/* Feed Filter Tabs */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-2 shadow-sm overflow-x-auto">
+            <div className="flex gap-2">
+              {[
+                { id: "for-me", label: "For Me" },
+                { id: "friends", label: "Friends Updates" },
+                { id: "everyone", label: "Everyone" },
+                { id: "tribes", label: "My Tribes" },
+                { id: "discover", label: "Discover" }
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => setFeedFilter(filter.id)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    feedFilter === filter.id
+                      ? "bg-black text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-100"
+                  }`}
+                  data-testid={`filter-${filter.id}`}
+                >
+                  {filter.label}
+                </button>
+              ))}
             </div>
           </div>
 
