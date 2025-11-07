@@ -1346,7 +1346,7 @@ export default function FriendsUpdates() {
                       }
                     `}</style>
                     <p className="text-sm text-gray-800 font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                      Based on what you like and what your friends are consuming
+                      Quick Glimpse
                     </p>
                     <div className="h-6 overflow-hidden">
                       <div className="ticker-wrapper">
