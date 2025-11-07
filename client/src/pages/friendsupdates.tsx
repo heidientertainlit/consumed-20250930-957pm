@@ -1335,26 +1335,26 @@ export default function FriendsUpdates() {
                 if (friendActivities.length === 0) return null;
                 
                 return (
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-2.5 overflow-hidden">
                     <style>{`
                       @keyframes tickerScroll {
                         0% { transform: translateY(0); }
-                        100% { transform: translateY(-${friendActivities.length * 20}px); }
+                        100% { transform: translateY(-${friendActivities.length * 24}px); }
                       }
                       .ticker-wrapper {
                         animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
                       }
                     `}</style>
-                    <p className="text-xs text-gray-700 font-semibold mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    <p className="text-xs text-gray-700 font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                       Based on what you like and what your friends are consuming
                     </p>
-                    <div className="h-5 overflow-hidden">
+                    <div className="h-6 overflow-hidden">
                       <div className="ticker-wrapper">
                         {/* Duplicate for seamless loop */}
                         {[...friendActivities, ...friendActivities].map((activity, idx) => (
                           <div 
                             key={idx}
-                            className="h-5 flex items-center text-xs text-gray-700"
+                            className="h-6 flex items-center text-xs text-gray-700"
                           >
                             <span className="font-semibold text-purple-600">{activity.username}</span>
                             <span className="mx-1 opacity-60">{activity.action}</span>
