@@ -208,7 +208,48 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
     }
   };
 
-  const platforms = mediaDetails?.platforms || [];
+  // Get platforms with fallbacks
+  const getPlatforms = () => {
+    // If API returned platforms, use them
+    if (mediaDetails?.platforms && mediaDetails.platforms.length > 0) {
+      return mediaDetails.platforms;
+    }
+    
+    // Fallback platforms based on media type
+    const mediaType = media.mediaType?.toLowerCase();
+    
+    if (mediaType === 'podcast') {
+      return [
+        { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
+        { name: 'Apple', url: `https://podcasts.apple.com/search?term=${encodeURIComponent(media.title)}` },
+      ];
+    }
+    
+    if (mediaType === 'music') {
+      return [
+        { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
+        { name: 'Apple', url: `https://music.apple.com/search?term=${encodeURIComponent(media.title)}` },
+      ];
+    }
+    
+    if (mediaType === 'movie' || mediaType === 'tv') {
+      return [
+        { name: 'Netflix', url: `https://www.netflix.com/search?q=${encodeURIComponent(media.title)}` },
+        { name: 'Prime', url: `https://www.amazon.com/s?k=${encodeURIComponent(media.title)}` },
+      ];
+    }
+    
+    if (mediaType === 'book') {
+      return [
+        { name: 'Amazon', url: `https://www.amazon.com/s?k=${encodeURIComponent(media.title)}` },
+        { name: 'Goodreads', url: `https://www.goodreads.com/search?q=${encodeURIComponent(media.title)}` },
+      ];
+    }
+    
+    return [];
+  };
+  
+  const platforms = getPlatforms();
   const listsArray = Array.isArray(userLists) ? userLists : [];
   const defaultLists = listsArray.filter((list: any) => list.is_default);
   const customLists = listsArray.filter((list: any) => !list.is_default);
@@ -237,9 +278,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
               <ExternalLink size={10} className="text-gray-400" />
             </a>
           ))
-        ) : (
-          <UIBadge variant="outline" className="text-xs text-gray-500">No platforms</UIBadge>
-        )}
+        ) : null}
       </div>
 
       {/* Center: Add to List */}
