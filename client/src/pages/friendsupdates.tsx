@@ -335,6 +335,69 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   );
 }
 
+// Helper function to render post content with star ratings
+function renderPostWithRating(content: string) {
+  // Match rating pattern at start: "4.5." or "5." or "10." etc
+  const ratingMatch = content.match(/^\s*(\d{1,2}(?:\.\d{1,2})?)\s*[.:]\s*/);
+  
+  if (!ratingMatch) {
+    return renderMentions(content);
+  }
+  
+  const rawRating = parseFloat(ratingMatch[1]);
+  
+  // Only render stars for ratings between 0-5
+  if (rawRating < 0 || rawRating > 5) {
+    return renderMentions(content);
+  }
+  
+  // Round to nearest 0.5 for clean star display
+  const rating = Math.round(rawRating * 2) / 2;
+  const restOfText = content.slice(ratingMatch[0].length);
+  
+  return (
+    <>
+      <span className="inline-flex items-center gap-1 mr-2">
+        {Array.from({ length: 5 }, (_, i) => {
+          const fillLevel = Math.max(0, Math.min(1, rating - i));
+          
+          if (fillLevel === 1) {
+            // Full star
+            return (
+              <Star
+                key={i}
+                size={14}
+                className="text-yellow-400 fill-yellow-400"
+              />
+            );
+          } else if (fillLevel === 0.5) {
+            // Half star
+            return (
+              <span key={i} className="relative inline-block w-3.5 h-3.5">
+                <Star size={14} className="absolute text-gray-300 fill-gray-300" />
+                <span className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+                  <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                </span>
+              </span>
+            );
+          } else {
+            // Empty star
+            return (
+              <Star
+                key={i}
+                size={14}
+                className="text-gray-300 fill-gray-300"
+              />
+            );
+          }
+        })}
+        <span className="font-medium text-gray-700">{rawRating}</span>
+      </span>
+      {renderMentions(restOfText)}
+    </>
+  );
+}
+
 export default function FriendsUpdates() {
   // Load Inter font for this page only
   useEffect(() => {
@@ -1510,7 +1573,9 @@ export default function FriendsUpdates() {
                           </div>
                         </>
                       ) : (
-                        <p className="text-gray-800 text-sm">{renderMentions(post.content)}</p>
+                        <div className="text-gray-800 text-sm">
+                          {renderPostWithRating(post.content)}
+                        </div>
                       )}
                     </div>
                   ) : null}
