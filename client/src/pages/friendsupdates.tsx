@@ -931,7 +931,7 @@ export default function FriendsUpdates() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-3">
+          <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Feed
           </h1>
           <p className="text-base text-gray-600">
