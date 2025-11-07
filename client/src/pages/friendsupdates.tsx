@@ -1320,72 +1320,48 @@ export default function FriendsUpdates() {
             </div>
           ) : socialPosts && socialPosts.length > 0 ? (
             <div className="space-y-4">
-              {/* Compact Recommendations - Only on "For Me" tab */}
-              {feedFilter === "for-me" && recommendedContent && recommendedContent.length > 0 && (() => {
-                // Extract unique friend names from recent posts
-                const uniqueFriends = Array.from(
-                  new Set(
-                    socialPosts
-                      .filter((p: SocialPost) => p.user.id !== user?.id)
-                      .slice(0, 10)
-                      .map((p: SocialPost) => p.user.username)
-                  )
-                ).slice(0, 3);
+              {/* Compact Friend Activity Ticker - Only on "For Me" tab */}
+              {feedFilter === "for-me" && (() => {
+                // Extract friend activities from recent posts with media
+                const friendActivities = socialPosts
+                  .filter((p: SocialPost) => p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
+                  .slice(0, 6)
+                  .map((p: SocialPost) => ({
+                    username: p.user.username,
+                    media: p.mediaItems[0].title,
+                    action: p.content ? 'is loving' : 'added'
+                  }));
+                
+                if (friendActivities.length === 0) return null;
                 
                 return (
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-2">
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-2 overflow-hidden">
                     <style>{`
-                      @keyframes scrollFriends {
-                        0%, 33% { opacity: 1; transform: translateY(0); }
-                        36%, 100% { opacity: 0; transform: translateY(-10px); }
+                      @keyframes tickerScroll {
+                        0% { transform: translateY(0); }
+                        100% { transform: translateY(-${friendActivities.length * 20}px); }
                       }
-                      .friend-scroll {
-                        animation: scrollFriends 6s infinite;
-                      }
-                      .friend-scroll:nth-child(2) {
-                        animation-delay: 2s;
-                      }
-                      .friend-scroll:nth-child(3) {
-                        animation-delay: 4s;
+                      .ticker-wrapper {
+                        animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
                       }
                     `}</style>
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-xs text-gray-700 font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        Based on what you like and what your friends are consuming
-                      </p>
-                      {uniqueFriends.length > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-gray-600 h-4 overflow-hidden relative">
-                          <span className="opacity-60">·</span>
-                          <div className="relative w-20 h-4">
-                            {uniqueFriends.map((friendName, idx) => (
-                              <span 
-                                key={idx}
-                                className="friend-scroll absolute inset-0 font-medium text-purple-600"
-                              >
-                                {friendName}
-                              </span>
-                            ))}
+                    <p className="text-xs text-gray-700 font-semibold mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      Based on what you like and what your friends are consuming
+                    </p>
+                    <div className="h-5 overflow-hidden">
+                      <div className="ticker-wrapper">
+                        {/* Duplicate for seamless loop */}
+                        {[...friendActivities, ...friendActivities].map((activity, idx) => (
+                          <div 
+                            key={idx}
+                            className="h-5 flex items-center text-xs text-gray-700"
+                          >
+                            <span className="font-semibold text-purple-600">{activity.username}</span>
+                            <span className="mx-1 opacity-60">{activity.action}</span>
+                            <span className="font-medium">{activity.media}</span>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {recommendedContent.slice(0, 5).map((item: any, idx: number) => (
-                        <div
-                          key={idx}
-                          onClick={() => handleMediaClick(item)}
-                          className="flex-shrink-0 w-20 cursor-pointer hover:opacity-80 transition-opacity"
-                        >
-                          <div className="w-20 h-28 rounded overflow-hidden mb-1">
-                            <img
-                              src={item.imageUrl || getMediaArtwork(item.title, item.mediaType)}
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <p className="text-xs text-gray-800 font-medium line-clamp-1">{item.title}</p>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
