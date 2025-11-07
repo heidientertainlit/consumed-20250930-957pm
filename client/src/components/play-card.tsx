@@ -107,17 +107,14 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
 
   if (isSubmitted) {
     return (
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 shadow-sm rounded-2xl mb-4">
-        <CardContent className="p-6 text-center">
-          <div className="flex flex-col items-center space-y-3">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-              <Trophy size={32} className="text-white" />
+      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-300 shadow-sm rounded-lg mb-3">
+        <CardContent className="p-3 text-center">
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <Trophy size={16} className="text-white" />
             </div>
-            <div className="text-xl font-bold text-green-800">
-              Challenge Complete!
-            </div>
-            <div className="text-green-700">
-              You earned <span className="font-bold text-2xl">{earnedPoints}</span> points
+            <div className="text-sm font-semibold text-green-800">
+              +{earnedPoints} points earned!
             </div>
           </div>
         </CardContent>
@@ -126,54 +123,50 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 shadow-md rounded-2xl mb-4">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center space-x-2">
+    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 shadow-sm rounded-lg mb-3">
+      <CardHeader className="pb-2 pt-3 px-3">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center space-x-1.5">
             {getGameIcon()}
-            <Badge className={`${getGameBadgeColor()} hover:${getGameBadgeColor()} text-xs font-medium uppercase`}>
-              {getGameType()} Challenge
+            <Badge className={`${getGameBadgeColor()} hover:${getGameBadgeColor()} text-xs font-medium`}>
+              {getGameType()}
             </Badge>
           </div>
           <div className="flex items-center space-x-1">
-            <Star size={14} className="text-purple-600" />
-            <span className="font-bold text-purple-600">{game.points_reward || game.points || 10} pts</span>
+            <Star size={12} className="text-purple-600" />
+            <span className="text-xs font-semibold text-purple-600">{game.points_reward || game.points || 10}pts</span>
           </div>
         </div>
         
-        <h3 className="text-lg font-bold text-gray-900 mb-1">
+        <h3 className="text-sm font-semibold text-gray-900">
           {game.title || game.question}
         </h3>
         {game.description && (
-          <p className="text-sm text-gray-600">{game.description}</p>
+          <p className="text-xs text-gray-600 mt-0.5">{game.description}</p>
         )}
         
         {game.participants && (
-          <div className="flex items-center space-x-1 text-sm text-gray-600 mt-2">
-            <Users size={14} />
+          <div className="flex items-center space-x-1 text-xs text-gray-500 mt-1">
+            <Users size={12} />
             <span>{game.participants} played</span>
           </div>
         )}
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <div className="text-gray-700 text-sm font-medium mb-2">
-          {game.type === 'trivia' ? 'Select your answer:' : game.type === 'vote' ? 'Cast your vote:' : 'Make your prediction:'}
-        </div>
-        
-        <div className="grid grid-cols-1 gap-2">
+      <CardContent className="space-y-2 px-3 pb-3">
+        <div className="grid grid-cols-1 gap-1.5">
           {options.map((option: string, index: number) => (
             <button
               key={`${game.id}-option-${index}`}
               onClick={() => setSelectedAnswer(option)}
-              className={`p-4 text-left rounded-xl border-2 transition-all ${
+              className={`p-2 text-left rounded-lg border transition-all ${
                 selectedAnswer === option
-                  ? 'border-purple-500 bg-purple-100 ring-2 ring-purple-200'
+                  ? 'border-purple-500 bg-purple-100'
                   : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
               }`}
               data-testid={`play-card-option-${index}`}
             >
-              <div className="font-medium text-gray-900">{option}</div>
+              <div className="text-xs font-medium text-gray-900">{option}</div>
             </button>
           ))}
         </div>
@@ -181,10 +174,10 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
         <Button 
           onClick={handleSubmit}
           disabled={!selectedAnswer || submitMutation.isPending}
-          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white disabled:opacity-50 rounded-xl py-6 font-bold"
+          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white disabled:opacity-50 rounded-lg py-2 text-xs font-semibold"
           data-testid="play-card-submit"
         >
-          {submitMutation.isPending ? 'Submitting...' : `Submit & Earn ${game.points_reward || game.points || 10} Points`}
+          {submitMutation.isPending ? 'Submitting...' : `Submit for ${game.points_reward || game.points || 10} pts`}
         </Button>
       </CardContent>
     </Card>
