@@ -9,9 +9,10 @@ import { apiRequest } from "@/lib/queryClient";
 interface PlayCardProps {
   game: any;
   onComplete?: () => void;
+  compact?: boolean;
 }
 
-export default function PlayCard({ game, onComplete }: PlayCardProps) {
+export default function PlayCard({ game, onComplete, compact = false }: PlayCardProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
@@ -105,6 +106,77 @@ export default function PlayCard({ game, onComplete }: PlayCardProps) {
 
   const options = getOptions();
 
+  // Compact version for friendsupdate page
+  if (compact) {
+    if (isSubmitted) {
+      return (
+        <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl mb-4">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <Trophy size={16} className="text-white" />
+              </div>
+              <div className="text-sm font-medium text-gray-700">
+                Submitted! You'll see results when it ends.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl mb-4">
+        <CardContent className="p-4">
+          {/* Header */}
+          <div className="flex items-center space-x-2 mb-3">
+            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+              {getGameIcon()}
+            </div>
+            <div>
+              <span className="text-xs font-semibold text-purple-600">{getGameType()}</span>
+              {game.title && <span className="text-xs text-gray-500 ml-2">{game.title}</span>}
+            </div>
+          </div>
+
+          {/* Question */}
+          <p className="text-sm font-medium text-gray-900 mb-3">
+            {game.question || game.title}
+          </p>
+
+          {/* Options */}
+          <div className="space-y-2 mb-3">
+            {options.map((option: string, index: number) => (
+              <button
+                key={`${game.id}-option-${index}`}
+                onClick={() => setSelectedAnswer(option)}
+                className={`w-full p-2.5 text-left rounded-lg border text-sm transition-all ${
+                  selectedAnswer === option
+                    ? 'border-purple-500 bg-purple-50 font-medium'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+                data-testid={`play-card-option-${index}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          {/* Predict with Friends Button */}
+          <Button 
+            onClick={handleSubmit}
+            disabled={!selectedAnswer || submitMutation.isPending}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 rounded-lg"
+            data-testid="play-card-predict-with-friends"
+          >
+            {submitMutation.isPending ? 'Submitting...' : 'Predict with Friends'}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Regular version
   if (isSubmitted) {
     return (
       <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-300 shadow-sm rounded-lg mb-3">

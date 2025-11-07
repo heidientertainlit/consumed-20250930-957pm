@@ -1423,6 +1423,7 @@ export default function FriendsUpdates() {
                               <div key={game.id} className="snap-center flex-shrink-0 w-full">
                                 <PlayCard 
                                   game={game}
+                                  compact={true}
                                   onComplete={() => {
                                     queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
                                   }}
