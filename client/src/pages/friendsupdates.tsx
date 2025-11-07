@@ -11,6 +11,7 @@ import ShareUpdateDialog from "@/components/share-update-dialog";
 import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
+import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -419,7 +420,7 @@ export default function FriendsUpdates() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
-  const [feedFilter, setFeedFilter] = useState("for-me");
+  const [feedFilter, setFeedFilter] = useState("friends");
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -1310,10 +1311,9 @@ export default function FriendsUpdates() {
           <div className="bg-white rounded-2xl border border-gray-200 p-2 shadow-sm overflow-x-auto">
             <div className="flex gap-2">
               {[
-                { id: "for-me", label: "For Me" },
-                { id: "friends", label: "Friends Updates" },
+                { id: "friends", label: "Friends" },
                 { id: "everyone", label: "Everyone" },
-                { id: "tribes", label: "My Tribes" },
+                { id: "predictions", label: "Predictions" },
                 { id: "discover", label: "Discover" }
               ].map((filter) => (
                 <button
@@ -1383,8 +1383,8 @@ export default function FriendsUpdates() {
             </div>
           ) : socialPosts && socialPosts.length > 0 ? (
             <div className="space-y-4">
-              {/* Compact Friend Activity Ticker - Only on "For Me" tab */}
-              {feedFilter === "for-me" && (() => {
+              {/* Compact Friend Activity Ticker - Only on "Friends" tab */}
+              {feedFilter === "friends" && (() => {
                 // Extract friend activities from recent posts with media
                 const friendActivities = socialPosts
                   .filter((p: SocialPost) => p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
@@ -1429,6 +1429,56 @@ export default function FriendsUpdates() {
                   </div>
                 );
               })()}
+              
+              {/* Collaborative Predictions - Only on "Predictions" tab */}
+              {feedFilter === "predictions" && (
+                <div className="space-y-4">
+                  <CollaborativePredictionCard 
+                    prediction={{
+                      id: "pred-1",
+                      question: "Will Dune Part 2 win Best Picture at the Oscars?",
+                      creator: { username: "heidi" },
+                      invitedFriend: { username: "trey" },
+                      creatorPrediction: "Yes",
+                      friendPrediction: "No",
+                      mediaTitle: "Dune Part 2",
+                      participantCount: 8,
+                      userHasAnswered: false
+                    }}
+                    onCastPrediction={() => console.log("Cast prediction")}
+                  />
+                  
+                  <CollaborativePredictionCard 
+                    prediction={{
+                      id: "pred-2",
+                      question: "Will Taylor Swift release another album this year?",
+                      creator: { username: "sarah" },
+                      invitedFriend: { username: "maya" },
+                      creatorPrediction: "Yes - in November",
+                      friendPrediction: undefined,
+                      mediaTitle: "Taylor Swift",
+                      participantCount: 2,
+                      userHasAnswered: false
+                    }}
+                    onCastPrediction={() => console.log("Cast prediction")}
+                  />
+                  
+                  <CollaborativePredictionCard 
+                    prediction={{
+                      id: "pred-3",
+                      question: "Will they finish watching Breaking Bad?",
+                      creator: { username: "alex" },
+                      invitedFriend: { username: "jordan" },
+                      creatorPrediction: "Yes - they're hooked!",
+                      friendPrediction: "Probably, but it'll take months",
+                      mediaTitle: "Breaking Bad",
+                      participantCount: 15,
+                      userHasAnswered: true
+                    }}
+                    onCastPrediction={() => console.log("Cast prediction")}
+                  />
+                </div>
+              )}
               
               {socialPosts.map((post: SocialPost, postIndex: number) => {
                 // Inject PlayCard every 3rd post
