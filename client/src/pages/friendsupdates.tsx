@@ -1410,15 +1410,39 @@ export default function FriendsUpdates() {
                       />
                     )}
 
-                    {/* Insert PlayCard every 3rd post */}
-                    {shouldShowPlayCard && canPlayInline && (
-                      <PlayCard 
-                        game={currentGame}
-                        onComplete={() => {
-                          queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
-                        }}
-                      />
-                    )}
+                    {/* Insert Play Carousel every 3rd post */}
+                    {shouldShowPlayCard && playGames && playGames.length > 0 && (() => {
+                      // Filter to only quick games that can play inline
+                      const inlineGames = playGames.filter((g: any) => !g.isLongForm && !g.isMultiCategory);
+                      if (inlineGames.length === 0) return null;
+                      
+                      return (
+                        <div className="mb-4">
+                          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+                            {inlineGames.slice(0, 5).map((game: any, idx: number) => (
+                              <div key={game.id} className="snap-center flex-shrink-0 w-full">
+                                <PlayCard 
+                                  game={game}
+                                  onComplete={() => {
+                                    queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          {inlineGames.length > 1 && (
+                            <div className="flex justify-center gap-1.5 mt-2">
+                              {inlineGames.slice(0, 5).map((_: any, idx: number) => (
+                                <div 
+                                  key={idx}
+                                  className="w-1.5 h-1.5 rounded-full bg-purple-300"
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Insert Creator Update Card every 6th post */}
                     {shouldShowCreatorUpdate && currentCreatorUpdate && (
