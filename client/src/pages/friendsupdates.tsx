@@ -925,26 +925,34 @@ export default function FriendsUpdates() {
         {/* Activity Stream */}
         <div className="space-y-6">
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-            <Button
-              onClick={handleShareUpdate}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200"
-              data-testid="share-update-button"
-            >
-              <MessageCircle size={24} className="mr-3" />
-              Share Update
-            </Button>
+          {/* Threads-Style Composer */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                {user?.email?.substring(0, 2).toUpperCase() || 'ME'}
+              </div>
+              
+              {/* Input */}
+              <button
+                onClick={handleShareUpdate}
+                className="flex-1 text-left text-gray-400 text-base px-0"
+                data-testid="composer-input"
+              >
+                What's new?
+              </button>
+              
+              {/* Post Button */}
+              <Button
+                onClick={handleShareUpdate}
+                variant="outline"
+                className="text-sm font-semibold px-6 border-gray-300 hover:bg-gray-50"
+                data-testid="share-update-button"
+              >
+                Post
+              </Button>
+            </div>
           </div>
-
-          {/* Static Trending TV Shows Carousel */}
-          {trendingTVShows.length > 0 && (
-            <MediaCarousel
-              title="Top Trending TV Shows"
-              mediaType="tv"
-              items={trendingTVShows}
-              onItemClick={handleMediaClick}
-            />
-          )}
 
           {isLoading ? (
             <div className="space-y-4">
