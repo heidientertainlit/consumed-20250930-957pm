@@ -8,6 +8,7 @@ import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
+import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import { Button } from "@/components/ui/button";
@@ -1312,7 +1313,7 @@ export default function FriendsUpdates() {
         onClose={() => setIsTrackModalOpen(false)}
       />
 
-      <ShareUpdateDialog
+      <ShareUpdateDialogV2
         isOpen={isShareDialogOpen}
         onClose={() => {
           setIsShareDialogOpen(false);
