@@ -1154,38 +1154,39 @@ export default function FriendsUpdates() {
                       )}
                     </div>
 
-                  {/* Compact Post Layout */}
+                  {/* Post Content */}
                   {post.content ? (
-                    <>
-                      {/* Has Commentary - Show text + media poster */}
-                      <div className="mb-2 relative">
-                        {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
-                          <>
-                            <p className="text-gray-800 text-sm blur-md select-none">{post.content}</p>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <button
-                                onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
-                                className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-1"
-                                data-testid={`reveal-spoiler-${post.id}`}
-                              >
-                                <Eye size={12} />
-                                <span>Show Spoiler</span>
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-gray-800 text-sm">{renderMentions(post.content)}</p>
-                        )}
-                      </div>
-                      
-                      {/* Media Poster (Large) */}
-                      {post.mediaItems && post.mediaItems.length > 0 && post.mediaItems.map((media, index) => {
+                    <div className="mb-2 relative">
+                      {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
+                        <>
+                          <p className="text-gray-800 text-sm blur-md select-none">{post.content}</p>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <button
+                              onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
+                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-1"
+                              data-testid={`reveal-spoiler-${post.id}`}
+                            >
+                              <Eye size={12} />
+                              <span>Show Spoiler</span>
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-gray-800 text-sm">{renderMentions(post.content)}</p>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {/* Media Cards */}
+                  {post.content && post.mediaItems && post.mediaItems.length > 0 ? (
+                    <div className="space-y-2 mb-2">
+                      {post.mediaItems.map((media, index) => {
                         const isClickable = media.externalId && media.externalSource;
                         return (
                           <div 
                             key={index} 
-                            className={`border border-gray-200 rounded-lg overflow-hidden mb-2 ${
-                              isClickable ? 'cursor-pointer hover:bg-gray-50' : ''
+                            className={`bg-gray-50 rounded-lg p-3 transition-colors ${
+                              isClickable ? 'cursor-pointer hover:bg-gray-100' : 'cursor-default'
                             }`}
                             onClick={() => {
                               if (isClickable) {
@@ -1193,46 +1194,57 @@ export default function FriendsUpdates() {
                               }
                             }}
                           >
-                            {media.imageUrl && (
-                              <div className="aspect-video bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center overflow-hidden">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0">
                                 <img 
-                                  src={media.imageUrl}
-                                  alt={media.title}
+                                  src={media.imageUrl || getMediaArtwork(media.title, media.mediaType)}
+                                  alt={`${media.title} artwork`}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                            )}
-                            <div className="p-2">
-                              <p className="font-semibold text-sm text-gray-900">{media.title}</p>
-                              {media.creator && <p className="text-xs text-gray-500">{media.creator}</p>}
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                                  {media.title}
+                                </h3>
+                                {media.creator && (
+                                  <div className="text-gray-600 text-xs mb-1">
+                                    by {media.creator}
+                                  </div>
+                                )}
+                                <div className="text-gray-500 text-xs capitalize">
+                                  {media.mediaType}
+                                </div>
+                              </div>
+                              {isClickable && <ChevronRight className="text-gray-400 flex-shrink-0" size={16} />}
                             </div>
                           </div>
                         );
                       })}
-                    </>
+                    </div>
                   ) : (
-                    <>
-                      {/* Just Tracking - Inline text mention */}
-                      {post.mediaItems && post.mediaItems.length > 0 && post.mediaItems.map((media, index) => {
-                        const isClickable = media.externalId && media.externalSource;
-                        return (
-                          <p key={index} className="text-gray-800 text-sm mb-2">
-                            Added{' '}
-                            {isClickable ? (
-                              <button
-                                onClick={() => setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`)}
-                                className="font-semibold text-purple-600 hover:underline"
-                              >
-                                {media.title}
-                              </button>
-                            ) : (
-                              <span className="font-semibold">{media.title}</span>
-                            )}
-                            {' '}to their list
-                          </p>
-                        );
-                      })}
-                    </>
+                    !post.content && post.mediaItems && post.mediaItems.length > 0 && (
+                      <div className="mb-2">
+                        {post.mediaItems.map((media, index) => {
+                          const isClickable = media.externalId && media.externalSource;
+                          return (
+                            <p key={index} className="text-gray-800 text-sm">
+                              Added{' '}
+                              {isClickable ? (
+                                <button
+                                  onClick={() => setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`)}
+                                  className="font-semibold text-purple-600 hover:underline"
+                                >
+                                  {media.title}
+                                </button>
+                              ) : (
+                                <span className="font-semibold">{media.title}</span>
+                              )}
+                              {' '}to their list
+                            </p>
+                          );
+                        })}
+                      </div>
+                    )
                   )}
 
                   {/* Interaction Bar */}
