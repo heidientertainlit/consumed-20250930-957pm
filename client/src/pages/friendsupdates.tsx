@@ -1345,7 +1345,7 @@ export default function FriendsUpdates() {
                         animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
                       }
                     `}</style>
-                    <p className="text-xs text-gray-700 font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    <p className="text-sm text-gray-800 font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
                       Based on what you like and what your friends are consuming
                     </p>
                     <div className="h-6 overflow-hidden">
