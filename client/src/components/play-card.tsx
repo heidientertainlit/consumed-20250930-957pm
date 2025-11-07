@@ -150,7 +150,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
               <button
                 key={`${game.id}-option-${index}`}
                 onClick={() => setSelectedAnswer(option)}
-                className={`w-full p-2.5 text-left rounded-lg border text-sm transition-all ${
+                className={`w-full p-2.5 text-left rounded-lg border text-sm text-gray-900 transition-all ${
                   selectedAnswer === option
                     ? 'border-purple-500 bg-purple-50 font-medium'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
