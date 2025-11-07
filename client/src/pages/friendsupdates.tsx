@@ -989,11 +989,17 @@ export default function FriendsUpdates() {
               ].map((filter) => (
                 <button
                   key={filter.id}
-                  onClick={() => setFeedFilter(filter.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  onClick={() => {
+                    if (filter.id === "discover") {
+                      setLocation("/discover");
+                    } else {
+                      setFeedFilter(filter.id);
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border-2 ${
                     feedFilter === filter.id
-                      ? "bg-black text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-100"
+                      ? "bg-white text-purple-600 border-purple-600"
+                      : "bg-white text-gray-700 border-transparent hover:bg-gray-100"
                   }`}
                   data-testid={`filter-${filter.id}`}
                 >
