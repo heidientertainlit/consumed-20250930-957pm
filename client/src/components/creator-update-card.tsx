@@ -1,4 +1,4 @@
-import { Users, Music, Film, Book, ChevronRight, Sparkles } from "lucide-react";
+import { Users, Music, Film, Book, ChevronRight, Sparkles, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 interface CreatorUpdate {
@@ -72,62 +72,65 @@ export default function CreatorUpdateCard({ update, onClick }: CreatorUpdateCard
     const now = new Date();
     const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (diffInDays === 0) return 'Released today';
-    if (diffInDays === 1) return 'Released yesterday';
-    if (diffInDays < 7) return `Released ${diffInDays} days ago`;
-    if (diffInDays < 30) return `Released ${Math.floor(diffInDays / 7)} weeks ago`;
+    if (diffInDays === 0) return 'today';
+    if (diffInDays === 1) return 'yesterday';
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}w ago`;
     
     return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
       month: 'short',
       day: 'numeric'
     });
   };
 
+  const getNewsHeadline = () => {
+    const typeEmoji = update.type === 'album' || update.type === 'single' ? '🎵' : 
+                      update.type === 'movie' ? '🎬' : 
+                      update.type === 'book' ? '📚' : '🆕';
+    
+    if (update.is_classic) {
+      return `${typeEmoji} ${update.creator_name}'s "${update.title}" is trending`;
+    }
+    
+    const action = update.type === 'album' ? 'dropped a new album' :
+                   update.type === 'single' ? 'released a new single' :
+                   update.type === 'movie' ? 'has a new film out' :
+                   update.type === 'book' ? 'published a new book' :
+                   'released new content';
+    
+    return `${typeEmoji} ${update.creator_name} just ${action}`;
+  };
+
   return (
     <Card 
-      className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-pink-50 border-2 border-purple-100 cursor-pointer shadow-md active:scale-[0.98] transition-transform"
+      className="bg-white border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
       onClick={onClick}
       data-testid="card-creator-update"
     >
-      {/* Decorative gradient blob */}
-      <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl" />
-      
-      <div className="relative p-6">
-        {/* Header with Creator Info */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            {/* Icon */}
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
-              {getMediaIcon()}
-            </div>
-            
-            {/* Creator Details */}
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                  {update.creator_name}
-                </span>
-                <Sparkles size={14} className="text-purple-500" />
-              </div>
-              <div className="text-xs text-gray-500 font-medium">
-                {update.creator_role}
-              </div>
-            </div>
+      <div className="p-4">
+        {/* Tweet-style header */}
+        <div className="flex items-start gap-3 mb-3">
+          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <TrendingUp size={16} className="text-purple-600" />
           </div>
-
-          {/* "New" Badge */}
-          <div className="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full shadow-md">
-            {getTypeLabel()}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-bold text-gray-900 text-sm">Pop Culture Updates</span>
+              <span className="text-gray-400 text-xs">· {formatDate(update.release_date)}</span>
+            </div>
+            {/* Tweet-style headline */}
+            <p className="text-gray-900 text-sm font-medium mb-3">
+              {getNewsHeadline()}
+            </p>
           </div>
         </div>
 
-        {/* Media Content */}
-        <div className="flex items-start space-x-4 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm">
-          {/* Album/Movie/Book Cover */}
-          <div className="relative flex-shrink-0">
+        {/* Media card - Twitter style */}
+        <div className="border border-gray-200 rounded-2xl overflow-hidden">
+          <div className="flex items-start gap-3 p-3">
+            {/* Compact artwork */}
             {update.image ? (
-              <div className="w-24 h-32 rounded-xl overflow-hidden shadow-lg ring-2 ring-purple-200">
+              <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                 <img 
                   src={update.image} 
                   alt={update.title}
@@ -135,46 +138,30 @@ export default function CreatorUpdateCard({ update, onClick }: CreatorUpdateCard
                 />
               </div>
             ) : (
-              <div className="w-24 h-32 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center shadow-lg">
+              <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                 {update.type === 'album' || update.type === 'single' ? (
-                  <Music size={36} className="text-purple-600" />
+                  <Music size={24} className="text-gray-400" />
                 ) : update.type === 'movie' ? (
-                  <Film size={36} className="text-purple-600" />
+                  <Film size={24} className="text-gray-400" />
                 ) : (
-                  <Book size={36} className="text-purple-600" />
+                  <Book size={24} className="text-gray-400" />
                 )}
               </div>
             )}
-          </div>
 
-          {/* Details */}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-2">
-              {update.title}
-            </h3>
-            
-            <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
-              <span className="font-medium">{formatDate(update.release_date)}</span>
-            </div>
-
-            {update.overview && (
-              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                {update.overview}
-              </p>
-            )}
-          </div>
-
-          {/* View Arrow */}
-          <div className="flex-shrink-0 self-center">
-            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-              <ChevronRight className="text-purple-600" size={18} />
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
+                {update.title}
+              </h3>
+              <p className="text-xs text-gray-500 mb-1">by {update.creator_name}</p>
+              {update.overview && (
+                <p className="text-xs text-gray-600 line-clamp-2">
+                  {update.overview}
+                </p>
+              )}
             </div>
           </div>
-        </div>
-
-        {/* Footer hint */}
-        <div className="mt-3 text-xs text-center text-gray-400 font-medium">
-          Tap to view details
         </div>
       </div>
     </Card>
