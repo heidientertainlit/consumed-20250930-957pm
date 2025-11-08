@@ -6,7 +6,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
 import CommentsSection from "@/components/comments-section";
@@ -421,6 +421,7 @@ export default function FriendsUpdates() {
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("friends");
+  const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -471,6 +472,18 @@ export default function FriendsUpdates() {
 
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
+
+  // Filter posts by media type
+  const filteredPosts = mediaTypeFilter === "all" 
+    ? socialPosts 
+    : socialPosts.filter(post => {
+        // Check if any media items match the selected type
+        if (!post.mediaItems || post.mediaItems.length === 0) return false;
+        return post.mediaItems.some(media => {
+          const mediaType = media.mediaType?.toLowerCase();
+          return mediaType === mediaTypeFilter;
+        });
+      });
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -1324,6 +1337,38 @@ export default function FriendsUpdates() {
             </div>
           </div>
 
+          {/* Media Type Filter Pills */}
+          <div className="px-4 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2">
+              {[
+                { id: "all", label: "All", icon: null },
+                { id: "movie", label: "Movies", icon: Film },
+                { id: "tv", label: "TV", icon: Tv2 },
+                { id: "book", label: "Books", icon: Book },
+                { id: "music", label: "Music", icon: Music },
+                { id: "podcast", label: "Podcasts", icon: Headphones },
+                { id: "game", label: "Games", icon: Gamepad2 }
+              ].map((filter) => {
+                const Icon = filter.icon;
+                return (
+                  <button
+                    key={filter.id}
+                    onClick={() => setMediaTypeFilter(filter.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${
+                      mediaTypeFilter === filter.id
+                        ? "bg-purple-50 text-purple-600 border-purple-500"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                    data-testid={`media-filter-${filter.id}`}
+                  >
+                    {Icon && <Icon className="h-3 w-3" />}
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4].map((n) => (
@@ -1367,12 +1412,12 @@ export default function FriendsUpdates() {
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : socialPosts && socialPosts.length > 0 ? (
+          ) : filteredPosts && filteredPosts.length > 0 ? (
             <div className="space-y-4">
               {/* Compact Friend Activity Ticker - Only on "Friends" tab */}
               {feedFilter === "friends" && (() => {
                 // Extract friend activities from recent posts with media
-                const friendActivities = socialPosts
+                const friendActivities = filteredPosts
                   .filter((p: SocialPost) => p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
                   .slice(0, 6)
                   .map((p: SocialPost) => ({
@@ -1466,7 +1511,7 @@ export default function FriendsUpdates() {
                 </div>
               )}
               
-              {socialPosts.map((post: SocialPost, postIndex: number) => {
+              {filteredPosts.map((post: SocialPost, postIndex: number) => {
                 // Inject PlayCard every 3rd post
                 const shouldShowPlayCard = (postIndex + 1) % 3 === 0;
                 const playCardIndex = Math.floor(postIndex / 3);
@@ -1762,12 +1807,20 @@ export default function FriendsUpdates() {
               )}
 
               {/* End of Feed Indicator */}
-              {!hasNextPage && socialPosts.length > 0 && (
+              {!hasNextPage && filteredPosts.length > 0 && (
                 <div className="text-center py-8">
                   <p className="text-gray-500">🎉 You've reached the end!</p>
                 </div>
               )}
 
+            </div>
+          ) : mediaTypeFilter !== "all" ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="text-5xl mb-4">🔍</div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">No {mediaTypeFilter === "movie" ? "Movies" : mediaTypeFilter === "tv" ? "TV Shows" : mediaTypeFilter === "book" ? "Books" : mediaTypeFilter === "music" ? "Music" : mediaTypeFilter === "podcast" ? "Podcasts" : "Games"} Found</h3>
+              <p className="text-gray-600 max-w-sm mx-auto">
+                Try selecting a different media type filter or check back later for updates.
+              </p>
             </div>
           ) : (
             <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
