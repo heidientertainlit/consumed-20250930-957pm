@@ -43,10 +43,10 @@ export default function MediaCarousel({
   onRate,
 }: MediaCarouselProps) {
   return (
-    <div className="w-full bg-white rounded-2xl p-3 shadow-sm border border-gray-200" data-testid={`carousel-${mediaType}`}>
+    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-3 shadow-lg border border-gray-800/50" data-testid={`carousel-${mediaType}`}>
       {/* Header */}
       <div className="mb-2">
-        <h3 className="text-sm font-semibold text-gray-900">
+        <h3 className="text-sm font-semibold text-white">
           {title}
         </h3>
       </div>
@@ -491,13 +491,13 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       {/* Title */}
       <div className="mt-1.5">
         <h4
-          className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight"
+          className="text-xs font-medium text-white line-clamp-2 leading-tight"
           title={item.title}
         >
           {item.title}
         </h4>
         {item.author && (
-          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.author}</p>
+          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{item.author}</p>
         )}
       </div>
       
