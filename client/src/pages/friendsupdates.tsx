@@ -1532,7 +1532,7 @@ export default function FriendsUpdates() {
                             ))}
                           </div>
                           {inlineGames.length > 1 && (
-                            <div className="flex justify-center gap-1.5 mt-2">
+                            <div className="flex justify-center gap-1.5 mt-1">
                               {inlineGames.slice(0, 5).map((_: any, idx: number) => (
                                 <div 
                                   key={idx}

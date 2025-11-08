@@ -127,10 +127,10 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
 
     return (
       <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl mb-4">
-        <CardContent className="p-4">
+        <CardContent className="p-3">
           {/* Header */}
-          <div className="flex items-center space-x-2 mb-3">
-            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+          <div className="flex items-center space-x-2 mb-2">
+            <div className="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center">
               {getGameIcon()}
             </div>
             <div>
@@ -140,17 +140,17 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
           </div>
 
           {/* Question */}
-          <p className="text-sm font-medium text-gray-900 mb-3">
+          <p className="text-sm font-medium text-gray-900 mb-2">
             {game.prediction || game.question || game.title}
           </p>
 
           {/* Options */}
-          <div className="space-y-2 mb-3">
+          <div className="space-y-1.5 mb-2">
             {options.map((option: string, index: number) => (
               <button
                 key={`${game.id}-option-${index}`}
                 onClick={() => setSelectedAnswer(option)}
-                className={`w-full p-2.5 text-left rounded-lg border text-sm text-gray-900 transition-all ${
+                className={`w-full py-2 px-3 text-left rounded-lg border text-sm text-gray-900 transition-all ${
                   selectedAnswer === option
                     ? 'border-purple-500 bg-purple-50 font-medium'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -166,7 +166,8 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
           <Button 
             onClick={handleSubmit}
             disabled={!selectedAnswer || submitMutation.isPending}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 rounded-lg"
+            size="sm"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg"
             data-testid="play-card-predict-with-friends"
           >
             {submitMutation.isPending ? 'Submitting...' : 'Predict with Friends'}
