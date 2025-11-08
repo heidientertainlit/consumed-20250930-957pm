@@ -97,15 +97,8 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-xl p-0 gap-0 bg-white">
-        {/* Header */}
-        <div className="flex items-center justify-end px-4 py-3 border-b border-gray-200 bg-white">
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-900">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
         {/* Content */}
-        <div className="px-4 py-3 bg-white">
+        <div className="px-4 pt-6 pb-3 bg-white">
           {/* User Info */}
           <div className="flex gap-3">
             <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
@@ -121,7 +114,8 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 value={content}
                 onChange={setContent}
                 placeholder="Post an update..."
-                className="border-none p-0 min-h-[40px] text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
+                className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
+                minHeight="50px"
                 session={session}
               />
 
