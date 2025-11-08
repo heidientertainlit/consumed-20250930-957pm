@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Film, Star, Gamepad2, Users, BarChart3, Heart, Eye } from "lucide-react";
+import { X, ListPlus, Star, Gamepad2, Heart, Eye } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -23,10 +23,9 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   const [containsSpoilers, setContainsSpoilers] = useState(false);
 
   const actionIcons = [
-    { id: "media" as PostMode, icon: Film, label: "Add", color: "text-purple-600" },
+    { id: "media" as PostMode, icon: ListPlus, label: "Track", color: "text-purple-600" },
     { id: "review" as PostMode, icon: Star, label: "Rate/Review", color: "text-blue-600" },
     { id: "prediction" as PostMode, icon: Gamepad2, label: "Prediction", color: "text-red-600" },
-    { id: "tribe" as PostMode, icon: Users, label: "Tribe", color: "text-green-600" },
     { id: "mood" as PostMode, icon: Heart, label: "Mood", color: "text-pink-600" },
   ];
 
