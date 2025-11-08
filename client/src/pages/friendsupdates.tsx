@@ -209,16 +209,16 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
     }
   };
 
-  // Get platforms with fallbacks
+  // Get platforms with fallbacks - always return platforms even without API data
   const getPlatforms = () => {
+    const mediaType = media.mediaType?.toLowerCase();
+    
     // If API returned platforms, use them
     if (mediaDetails?.platforms && mediaDetails.platforms.length > 0) {
       return mediaDetails.platforms;
     }
     
-    // Fallback platforms based on media type
-    const mediaType = media.mediaType?.toLowerCase();
-    
+    // Always provide fallback platforms based on media type
     if (mediaType === 'podcast') {
       return [
         { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
@@ -249,6 +249,16 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
     
     return [];
   };
+
+  // Get platform label based on media type
+  const getPlatformLabel = () => {
+    const mediaType = media.mediaType?.toLowerCase();
+    if (mediaType === 'podcast') return 'Listen On';
+    if (mediaType === 'music') return 'Listen On';
+    if (mediaType === 'movie' || mediaType === 'tv') return 'Watch On';
+    if (mediaType === 'book') return 'Read On';
+    return 'Available On';
+  };
   
   const platforms = getPlatforms();
   const listsArray = Array.isArray(userLists) ? userLists : [];
@@ -257,28 +267,29 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
 
   return (
     <div className="pt-2 mt-2 border-t border-gray-200 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
-      {/* Left: Platform chips */}
-      <div className="flex items-center gap-1 flex-1 min-w-0">
-        {isLoadingDetails ? (
-          <div className="h-5 w-20 bg-gray-200 animate-pulse rounded" />
-        ) : platforms.length > 0 ? (
-          platforms.slice(0, 3).map((platform: any, idx: number) => (
-            <a
-              key={idx}
-              href={platform.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
-              onClick={(e) => e.stopPropagation()}
-              data-testid={`platform-chip-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
-            >
-              {platform.logo && (
-                <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
-              )}
-              <span className="text-xs text-gray-700">{platform.name}</span>
-            </a>
-          ))
-        ) : null}
+      {/* Left: Platform chips with label */}
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        {platforms.length > 0 && (
+          <>
+            <span className="text-xs text-gray-500 whitespace-nowrap">{getPlatformLabel()}:</span>
+            {platforms.slice(0, 3).map((platform: any, idx: number) => (
+              <a
+                key={idx}
+                href={platform.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+                data-testid={`platform-chip-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {platform.logo && (
+                  <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
+                )}
+                <span className="text-xs text-gray-700">{platform.name}</span>
+              </a>
+            ))}
+          </>
+        )}
       </div>
 
       {/* Center: Add to List */}
@@ -1703,10 +1714,8 @@ export default function FriendsUpdates() {
                               {isClickable && <ChevronRight className="text-gray-400 flex-shrink-0" size={16} />}
                             </div>
                             
-                            {/* Quick Actions */}
-                            {media.externalId && media.externalSource && (
-                              <MediaCardActions media={media} session={session} />
-                            )}
+                            {/* Quick Actions - Always show for platform links */}
+                            <MediaCardActions media={media} session={session} />
                           </div>
                         );
                       })}
