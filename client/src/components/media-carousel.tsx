@@ -43,19 +43,19 @@ export default function MediaCarousel({
   onRate,
 }: MediaCarouselProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-3xl p-6 shadow-lg border border-gray-800/50" data-testid={`carousel-${mediaType}`}>
+    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-4 shadow-lg border border-gray-800/50" data-testid={`carousel-${mediaType}`}>
       {/* Header */}
-      <div className="mb-4">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+      <div className="mb-3">
+        <h3 className="text-base font-bold text-white flex items-center gap-2">
           {title}
         </h3>
-        <p className="text-sm text-gray-400 mt-1">Swipe to explore</p>
+        <p className="text-xs text-gray-400 mt-0.5">Swipe to explore</p>
       </div>
 
       {/* Scrollable carousel */}
-      <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide px-2">
+      <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide">
         {items.map((item) => (
-          <div key={item.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
+          <div key={item.id} className="flex-shrink-0 w-24 sm:w-28">
             <MediaCard
               item={item}
               onItemClick={onItemClick}
