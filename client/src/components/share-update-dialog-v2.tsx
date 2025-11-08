@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Film, MessageSquare, Gamepad2, Users, BarChart3, Sparkles, Eye } from "lucide-react";
+import { X, Film, Star, Gamepad2, Users, BarChart3, Heart, Eye } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -23,12 +23,12 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   const [containsSpoilers, setContainsSpoilers] = useState(false);
 
   const actionIcons = [
-    { id: "media" as PostMode, icon: Film, label: "Add Media", color: "text-purple-600" },
-    { id: "review" as PostMode, icon: MessageSquare, label: "Review or React", color: "text-blue-600" },
-    { id: "prediction" as PostMode, icon: Gamepad2, label: "Prediction / Play", color: "text-red-600" },
-    { id: "tribe" as PostMode, icon: Users, label: "Tribe Talk", color: "text-green-600" },
-    { id: "ranking" as PostMode, icon: BarChart3, label: "Rate / Rank", color: "text-orange-600" },
-    { id: "mood" as PostMode, icon: Sparkles, label: "Mood / Emotion", color: "text-pink-600" },
+    { id: "media" as PostMode, icon: Film, label: "Add", color: "text-purple-600" },
+    { id: "review" as PostMode, icon: Star, label: "Review", color: "text-blue-600" },
+    { id: "prediction" as PostMode, icon: Gamepad2, label: "Prediction", color: "text-red-600" },
+    { id: "tribe" as PostMode, icon: Users, label: "Tribe", color: "text-green-600" },
+    { id: "ranking" as PostMode, icon: BarChart3, label: "Rate", color: "text-orange-600" },
+    { id: "mood" as PostMode, icon: Heart, label: "Mood", color: "text-pink-600" },
   ];
 
   const handlePost = async () => {
