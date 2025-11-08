@@ -1488,12 +1488,11 @@ export default function FriendsUpdates() {
                 const shouldShowMediaCarousel = (postIndex + 1) % 4 === 0;
                 const carouselIndex = Math.floor(postIndex / 4);
                 
-                // Rotation order: Books → Podcasts → Movies → Recommended → (repeat)
+                // Rotation order: Recommended → Podcasts → Movies → (repeat)
                 const carouselTypes = [
-                  { type: 'book', title: 'NY Times Bestsellers', items: bestsellerBooks },
+                  { type: 'mixed', title: 'Recommended based on your tastes', items: recommendedContent },
                   { type: 'podcast', title: 'Trending Podcasts', items: trendingPodcasts },
                   { type: 'movie', title: 'Trending Movies', items: trendingMovies },
-                  { type: 'mixed', title: 'Recommended For You', items: recommendedContent },
                 ];
                 const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length];
 
