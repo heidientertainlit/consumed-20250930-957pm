@@ -43,19 +43,18 @@ export default function MediaCarousel({
   onRate,
 }: MediaCarouselProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-4 shadow-lg border border-gray-800/50" data-testid={`carousel-${mediaType}`}>
+    <div className="w-full bg-white rounded-2xl p-3 shadow-sm border border-gray-200" data-testid={`carousel-${mediaType}`}>
       {/* Header */}
-      <div className="mb-3">
-        <h3 className="text-base font-bold text-white flex items-center gap-2">
+      <div className="mb-2">
+        <h3 className="text-sm font-semibold text-gray-900">
           {title}
         </h3>
-        <p className="text-xs text-gray-400 mt-0.5">Swipe to explore</p>
       </div>
 
       {/* Scrollable carousel */}
-      <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide">
+      <div className="flex overflow-x-auto gap-2 scrollbar-hide">
         {items.map((item) => (
-          <div key={item.id} className="flex-shrink-0 w-24 sm:w-28">
+          <div key={item.id} className="flex-shrink-0 w-20">
             <MediaCard
               item={item}
               onItemClick={onItemClick}
@@ -325,7 +324,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     <div className="group relative">
       {/* Poster */}
       <div
-        className="relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl group-hover:ring-2 group-hover:ring-purple-500"
+        className="relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onClick={handleClick}
@@ -363,28 +362,18 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           />
         )}
         
-        {/* Gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* Platform badge - top left */}
-        {platformBadge && (
-          <div className={`absolute top-2 left-2 ${platformBadge.bg} ${platformBadge.text} w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shadow-lg`}>
-            {platformBadge.letter}
-          </div>
-        )}
-        
-        {/* Mobile-friendly action buttons - bottom right */}
-        <div className="absolute bottom-2 right-2 flex gap-1.5 z-20 pointer-events-auto">
+        {/* Mobile-friendly action buttons - bottom right, only show on hover/tap */}
+        <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-20 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button
                 size="icon"
                 variant="secondary"
-                className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg pointer-events-auto"
+                className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md pointer-events-auto"
                 data-testid={`add-to-list-${item.id}`}
                 disabled={addToListMutation.isPending}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent 
@@ -456,14 +445,14 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           <Button
             size="icon"
             variant="secondary"
-            className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg pointer-events-auto"
+            className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md pointer-events-auto"
             onClick={(e) => {
               e.stopPropagation();
               setShowRatingStars(!showRatingStars);
             }}
             data-testid={`rate-${item.id}`}
           >
-            <Star className="h-4 w-4" />
+            <Star className="h-3 w-3" />
           </Button>
           
           {/* Inline vertical star rating */}
@@ -499,17 +488,16 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
 
       </div>
 
-      {/* Title & Year */}
-      <div className="mt-2 px-1">
+      {/* Title */}
+      <div className="mt-1.5">
         <h4
-          className="text-sm font-semibold text-white line-clamp-2 leading-tight cursor-pointer hover:text-purple-400 transition-colors"
-          onClick={() => onItemClick?.(item)}
+          className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight"
           title={item.title}
         >
           {item.title}
         </h4>
-        {item.year && (
-          <p className="text-xs text-gray-400 mt-0.5">{item.year}</p>
+        {item.author && (
+          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.author}</p>
         )}
       </div>
       
