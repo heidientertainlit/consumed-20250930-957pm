@@ -105,9 +105,9 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         </div>
 
         {/* Content */}
-        <div className="px-4 py-4 bg-white">
+        <div className="px-4 py-3 bg-white">
           {/* User Info */}
-          <div className="flex gap-3 mb-4">
+          <div className="flex gap-3">
             <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
               {user?.email?.substring(0, 2).toUpperCase() || 'ME'}
             </div>
@@ -121,12 +121,12 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 value={content}
                 onChange={setContent}
                 placeholder="Post an update..."
-                className="border-none p-0 min-h-[60px] text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
+                className="border-none p-0 min-h-[40px] text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
                 session={session}
               />
 
               {/* Action Icons */}
-              <div className="flex gap-4 mt-3 pt-3 border-t border-gray-200">
+              <div className="flex gap-4 mt-2 pt-2 border-t border-gray-200">
                 {actionIcons.map((action) => (
                   <button
                     key={action.id}
