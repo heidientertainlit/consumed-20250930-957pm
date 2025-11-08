@@ -6,7 +6,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
 import CommentsSection from "@/components/comments-section";
@@ -1251,15 +1251,7 @@ export default function FriendsUpdates() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32" style={{ fontFamily: 'Inter, sans-serif !important' }}>
-      <style>{`
-        #friendsupdates-page * {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        }
-        #friendsupdates-page h1 {
-          font-family: 'Poppins', sans-serif !important;
-        }
-      `}</style>
+    <div className="min-h-screen bg-gray-50 pb-32">
       <div id="friendsupdates-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
@@ -1278,31 +1270,25 @@ export default function FriendsUpdates() {
         {/* Activity Stream */}
         <div className="space-y-6">
 
-          {/* Threads-Style Composer */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                {user?.email?.substring(0, 2).toUpperCase() || 'ME'}
-              </div>
-              
+          {/* Search-Style Composer */}
+          <div className="bg-white rounded-full border border-gray-200 p-2 shadow-sm">
+            <div className="flex items-center gap-2">
               {/* Input */}
               <button
                 onClick={handleShareUpdate}
-                className="flex-1 text-left text-gray-400 text-base px-0"
+                className="flex-1 text-left text-gray-400 text-base px-4 py-1"
                 data-testid="composer-input"
               >
-                What's new?
+                Try 'uplifting movies' or 'sci-fi like Blade Runner'...
               </button>
               
-              {/* Post Button */}
+              {/* Purple Sparkle Button */}
               <Button
                 onClick={handleShareUpdate}
-                variant="outline"
-                className="text-sm font-semibold px-6 border-gray-300 hover:bg-gray-50"
+                className="bg-purple-500 hover:bg-purple-600 text-white rounded-full h-12 w-12 p-0 flex items-center justify-center"
                 data-testid="share-update-button"
               >
-                Post
+                <Sparkles className="h-5 w-5" />
               </Button>
             </div>
           </div>
