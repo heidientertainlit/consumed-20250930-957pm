@@ -1279,16 +1279,16 @@ export default function FriendsUpdates() {
                 className="flex-1 text-left text-gray-400 text-base px-4 py-1"
                 data-testid="composer-input"
               >
-                Try 'uplifting movies' or 'sci-fi like Blade Runner'...
+                What are you consuming?
               </button>
               
-              {/* Purple Sparkle Button */}
+              {/* Purple Send Button */}
               <Button
                 onClick={handleShareUpdate}
                 className="bg-purple-500 hover:bg-purple-600 text-white rounded-full h-12 w-12 p-0 flex items-center justify-center"
                 data-testid="share-update-button"
               >
-                <Sparkles className="h-5 w-5" />
+                <Send className="h-5 w-5" />
               </Button>
             </div>
           </div>
