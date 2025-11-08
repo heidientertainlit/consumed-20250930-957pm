@@ -120,7 +120,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
               <MentionTextarea
                 value={content}
                 onChange={setContent}
-                placeholder="What's new?"
+                placeholder="Post an update..."
                 className="border-none p-0 min-h-[60px] text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
                 session={session}
               />
