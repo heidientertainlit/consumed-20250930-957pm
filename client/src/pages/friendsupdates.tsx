@@ -1311,9 +1311,9 @@ export default function FriendsUpdates() {
                       setFeedFilter(filter.id);
                     }
                   }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border-2 ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
                     feedFilter === filter.id
-                      ? "bg-white text-purple-600 border-purple-600"
+                      ? "bg-white text-purple-600 border-gray-200"
                       : "bg-white text-gray-700 border-transparent hover:bg-gray-100"
                   }`}
                   data-testid={`filter-${filter.id}`}
