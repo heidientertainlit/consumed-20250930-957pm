@@ -1398,7 +1398,13 @@ export default function FriendsUpdates() {
                 if (friendActivities.length === 0) return null;
                 
                 return (
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-2.5 overflow-hidden">
+                  <div 
+                    className="rounded-lg p-3 overflow-hidden"
+                    style={{ 
+                      background: 'linear-gradient(135deg, hsl(268, 68%, 24%), hsl(270, 69%, 34%))',
+                      border: '1px solid hsl(270, 64%, 40%)'
+                    }}
+                  >
                     <style>{`
                       @keyframes tickerScroll {
                         0% { transform: translateY(0); }
@@ -1408,7 +1414,7 @@ export default function FriendsUpdates() {
                         animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
                       }
                     `}</style>
-                    <p className="text-sm text-gray-800 font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    <p className="text-sm font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif', color: 'hsl(0, 0%, 98%)' }}>
                       Quick Glimpse
                     </p>
                     <div className="h-6 overflow-hidden">
@@ -1417,10 +1423,11 @@ export default function FriendsUpdates() {
                         {[...friendActivities, ...friendActivities].map((activity, idx) => (
                           <div 
                             key={idx}
-                            className="h-6 flex items-center text-xs text-gray-700"
+                            className="h-6 flex items-center text-xs"
+                            style={{ color: 'hsl(0, 0%, 98%)' }}
                           >
-                            <span className="font-semibold text-purple-600">{activity.username}</span>
-                            <span className="mx-1 opacity-60">{activity.action}</span>
+                            <span className="font-semibold" style={{ color: 'hsl(292, 90%, 62%)' }}>{activity.username}</span>
+                            <span className="mx-1 opacity-70">{activity.action}</span>
                             <span className="font-medium">{activity.media}</span>
                           </div>
                         ))}
