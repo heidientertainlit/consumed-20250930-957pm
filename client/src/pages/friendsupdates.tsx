@@ -1500,12 +1500,14 @@ export default function FriendsUpdates() {
                   <div key={`post-wrapper-${postIndex}`}>
                     {/* Insert MediaCarousel every 4th post */}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
-                      <MediaCarousel
-                        title={currentCarousel.title}
-                        mediaType={currentCarousel.type}
-                        items={currentCarousel.items}
-                        onItemClick={handleMediaClick}
-                      />
+                      <div className="mb-4">
+                        <MediaCarousel
+                          title={currentCarousel.title}
+                          mediaType={currentCarousel.type}
+                          items={currentCarousel.items}
+                          onItemClick={handleMediaClick}
+                        />
+                      </div>
                     )}
 
                     {/* Insert Play Carousel every 3rd post */}
