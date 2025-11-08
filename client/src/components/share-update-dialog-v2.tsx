@@ -98,12 +98,10 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-xl p-0 gap-0 bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-900 text-sm">
-            Cancel
+        <div className="flex items-center justify-end px-4 py-3 border-b border-gray-200 bg-white">
+          <button onClick={onClose} className="text-gray-600 hover:text-gray-900">
+            <X className="h-5 w-5" />
           </button>
-          <h2 className="text-sm font-semibold text-gray-900">New thread</h2>
-          <div className="w-14" /> {/* Spacer for alignment */}
         </div>
 
         {/* Content */}

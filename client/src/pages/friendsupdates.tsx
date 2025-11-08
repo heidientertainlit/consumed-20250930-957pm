@@ -1271,12 +1271,12 @@ export default function FriendsUpdates() {
         <div className="space-y-6">
 
           {/* Search-Style Composer */}
-          <div className="bg-white rounded-full border border-gray-200 p-2 shadow-sm">
+          <div className="bg-white rounded-full border border-gray-200 px-3 py-2 shadow-sm">
             <div className="flex items-center gap-2">
               {/* Input */}
               <button
                 onClick={handleShareUpdate}
-                className="flex-1 text-left text-gray-400 text-base px-4 py-1"
+                className="flex-1 text-left text-gray-400 text-sm px-2"
                 data-testid="composer-input"
               >
                 What are you consuming?
@@ -1285,10 +1285,10 @@ export default function FriendsUpdates() {
               {/* Purple Send Button */}
               <Button
                 onClick={handleShareUpdate}
-                className="bg-purple-500 hover:bg-purple-600 text-white rounded-full h-12 w-12 p-0 flex items-center justify-center"
+                className="bg-purple-500 hover:bg-purple-600 text-white rounded-full h-9 w-9 p-0 flex items-center justify-center flex-shrink-0"
                 data-testid="share-update-button"
               >
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>
