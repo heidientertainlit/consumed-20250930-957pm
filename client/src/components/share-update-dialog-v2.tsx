@@ -96,7 +96,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   };
 
   const handleModeClick = (mode: PostMode) => {
-    if (mode === "text" || mode === "mood" || mode === "media") {
+    if (mode === "text" || mode === "mood" || mode === "media" || mode === "prediction") {
       setPostMode(mode);
       // Auto-open media search when entering consuming mode
       if (mode === "media") {
@@ -157,6 +157,9 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     if (postMode === "media") {
       return "What are you watching, reading, or listening to?";
     }
+    if (postMode === "prediction") {
+      return "Ask a prediction question (ex: Will Dune Part 3 get greenlit?)";
+    }
     return "Post an update...";
   };
 
@@ -166,6 +169,9 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     }
     if (postMode === "media") {
       return isPosting ? "Posting..." : "Share Update";
+    }
+    if (postMode === "prediction") {
+      return isPosting ? "Posting..." : "Create Prediction";
     }
     return isPosting ? "Posting..." : "Post";
   };
@@ -273,6 +279,128 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                       {searchQuery && !isSearching && searchResults.length === 0 && (
                         <p className="text-xs text-gray-500 mt-2">No results found. Try a different search.</p>
                       )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Prediction Mode */}
+              {postMode === "prediction" && (
+                <div className="space-y-3 mt-2">
+                  {/* Suggested Predictions */}
+                  {!content && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">
+                        💡 Suggested Predictions
+                      </p>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {[
+                          "Will Dune Part 3 get greenlit?",
+                          "Will Taylor Swift win Album of the Year at the Grammys?",
+                          "Will Stranger Things S5 be the final season?",
+                          "Will the Barbie sequel happen?",
+                          "Will Avatar 3 make $2 billion at the box office?"
+                        ].map((suggestion, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setContent(suggestion)}
+                            className="w-full text-left px-3 py-2 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg text-xs text-gray-900 transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Optional: Attach Related Media */}
+                  {content && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={handleAttachMedia}
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-3 text-xs text-red-600 border-red-300 hover:bg-red-50"
+                      >
+                        <Search className="w-3.5 h-3.5 mr-1" />
+                        {attachedMedia ? "Change Media" : "Add Related Media"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Attached Media Display */}
+                  {attachedMedia && (
+                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-2">
+                      {attachedMedia.poster_url && (
+                        <img 
+                          src={attachedMedia.poster_url} 
+                          alt={attachedMedia.title}
+                          className="w-10 h-14 object-cover rounded"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">{attachedMedia.title}</p>
+                        <p className="text-xs text-gray-500">{attachedMedia.type}</p>
+                      </div>
+                      <Button
+                        onClick={() => setAttachedMedia(null)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-gray-900"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Media Search for Predictions */}
+                  {showMediaSearch && (
+                    <div className="border border-red-200 rounded-lg p-2 bg-red-50">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          handleMediaSearch(e.target.value);
+                        }}
+                        placeholder="Search for related media..."
+                        className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
+                      />
+                      {searchResults.length > 0 && (
+                        <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+                          {searchResults.slice(0, 5).map((result, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleSelectMedia(result)}
+                              className="w-full flex items-center gap-2 p-1.5 hover:bg-white rounded text-left"
+                            >
+                              {result.poster_url && (
+                                <img 
+                                  src={result.poster_url} 
+                                  alt={result.title}
+                                  className="w-6 h-9 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-gray-900 truncate">{result.title}</p>
+                                <p className="text-xs text-gray-500">{result.type}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {isSearching && (
+                        <p className="text-xs text-red-600 mt-2">Searching...</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Friends to Invite (Placeholder) */}
+                  {content && (
+                    <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                      <p className="text-xs text-gray-600">
+                        💬 Your friends will be able to cast their predictions once you post!
+                      </p>
                     </div>
                   )}
                 </div>
@@ -387,6 +515,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   <div className="flex items-center gap-1.5">
                     {postMode === "mood" && <Flame className="w-4 h-4 text-orange-600" />}
                     {postMode === "media" && <Plus className="w-4 h-4 text-purple-600" />}
+                    {postMode === "prediction" && <Target className="w-4 h-4 text-red-600" />}
                     <span className="text-xs font-medium text-gray-900">
                       {actionIcons.find(a => a.id === postMode)?.label}
                     </span>
