@@ -1294,28 +1294,15 @@ export default function FriendsUpdates() {
         {/* Activity Stream */}
         <div className="space-y-6">
 
-          {/* Search-Style Composer */}
-          <div className="bg-white rounded-full border border-gray-200 px-3 py-2 shadow-sm">
-            <div className="flex items-center gap-2">
-              {/* Input */}
-              <button
-                onClick={handleShareUpdate}
-                className="flex-1 text-left text-gray-900 text-sm px-2 font-medium"
-                data-testid="composer-input"
-              >
-                What are you consuming?
-              </button>
-              
-              {/* Purple Send Button */}
-              <Button
-                onClick={handleShareUpdate}
-                className="bg-purple-500 hover:bg-purple-600 text-white rounded-full h-9 w-9 p-0 flex items-center justify-center flex-shrink-0"
-                data-testid="share-update-button"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          {/* Vibrant Share Composer */}
+          <button
+            onClick={handleShareUpdate}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-full px-6 py-4 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
+            data-testid="composer-input"
+          >
+            <MessageCircle className="h-5 w-5" />
+            <span className="text-base">Share Update</span>
+          </button>
 
           {/* Feed Filter Tabs */}
           <div className="bg-white rounded-2xl border border-gray-200 p-2 shadow-sm overflow-x-auto">
