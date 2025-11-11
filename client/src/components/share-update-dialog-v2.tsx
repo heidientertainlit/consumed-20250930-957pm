@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Star, Target, Flame, Vote } from "lucide-react";
+import { X, Plus, Star, Target, Flame, Vote, Smile, Search } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -82,16 +82,47 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   };
 
   const handleModeClick = (mode: PostMode) => {
-    if (mode === "text") {
-      setPostMode("text");
+    if (mode === "text" || mode === "mood") {
+      setPostMode(mode);
     } else {
-      // For now, show coming soon toast for non-text modes
+      // For now, show coming soon toast for other modes
       toast({
         title: `${actionIcons.find(a => a.id === mode)?.label}`,
         description: "This feature is coming soon!",
       });
     }
   };
+
+  const handleEmojiClick = () => {
+    toast({
+      title: "Emoji Picker",
+      description: "Coming soon! For now, you can type emojis directly.",
+    });
+  };
+
+  const handleAttachMedia = () => {
+    toast({
+      title: "Attach Media",
+      description: "Coming soon! You'll be able to tag movies, shows, books, etc.",
+    });
+  };
+
+  const getPlaceholder = () => {
+    if (postMode === "mood") {
+      return "What's your take? (ex: The Barbie movie is secretly a breakup film.)";
+    }
+    return "Post an update...";
+  };
+
+  const getButtonText = () => {
+    if (postMode === "mood") {
+      return isPosting ? "Posting..." : "Post Take 🔥";
+    }
+    return isPosting ? "Posting..." : "Post";
+  };
+
+  const maxChars = postMode === "mood" ? 280 : 1000;
+  const charsRemaining = maxChars - content.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -112,26 +143,76 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
               <MentionTextarea
                 value={content}
                 onChange={setContent}
-                placeholder="Post an update..."
+                placeholder={getPlaceholder()}
                 className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
-                minHeight="50px"
+                minHeight={postMode === "mood" ? "100px" : "50px"}
+                maxLength={maxChars}
                 session={session}
               />
 
-              {/* Action Icons */}
-              <div className="flex gap-4 mt-2 pt-2 border-t border-gray-200">
-                {actionIcons.map((action) => (
-                  <button
-                    key={action.id}
-                    onClick={() => handleModeClick(action.id)}
-                    className={`flex flex-col items-center gap-0.5 hover:opacity-70 transition-opacity ${action.color}`}
-                    title={action.label}
+              {/* Hot Take Tools */}
+              {postMode === "mood" && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Button
+                    onClick={handleAttachMedia}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs text-gray-600 hover:text-gray-900"
                   >
-                    <action.icon className="w-4 h-4" />
-                    <span className="text-[10px] leading-tight whitespace-nowrap">{action.label}</span>
-                  </button>
-                ))}
-              </div>
+                    <Search className="w-3.5 h-3.5 mr-1" />
+                    Attach Media
+                  </Button>
+                  <Button
+                    onClick={handleEmojiClick}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs text-gray-600 hover:text-gray-900"
+                  >
+                    <Smile className="w-3.5 h-3.5 mr-1" />
+                    Emoji
+                  </Button>
+                  <div className="ml-auto text-xs text-gray-500">
+                    {charsRemaining} / {maxChars}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Icons - Only show if not in a specific mode */}
+              {postMode === "text" && (
+                <div className="flex gap-4 mt-2 pt-2 border-t border-gray-200">
+                  {actionIcons.map((action) => (
+                    <button
+                      key={action.id}
+                      onClick={() => handleModeClick(action.id)}
+                      className={`flex flex-col items-center gap-0.5 hover:opacity-70 transition-opacity ${action.color}`}
+                      title={action.label}
+                    >
+                      <action.icon className="w-4 h-4" />
+                      <span className="text-[10px] leading-tight whitespace-nowrap">{action.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Mode Indicator - Show when in specific mode */}
+              {postMode !== "text" && (
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200">
+                  <div className="flex items-center gap-1.5">
+                    {postMode === "mood" && <Flame className="w-4 h-4 text-orange-600" />}
+                    <span className="text-xs font-medium text-gray-900">
+                      {actionIcons.find(a => a.id === postMode)?.label}
+                    </span>
+                  </div>
+                  <Button
+                    onClick={() => setPostMode("text")}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs ml-auto"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -154,10 +235,10 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
           </div>
           <Button
             onClick={handlePost}
-            disabled={isPosting || (!content.trim() && postMode === "text")}
+            disabled={isPosting || !content.trim() || content.length > maxChars}
             className="bg-black hover:bg-gray-800 text-white px-5 py-1.5 h-auto text-sm"
           >
-            {isPosting ? "Posting..." : "Post"}
+            {getButtonText()}
           </Button>
         </div>
       </DialogContent>
