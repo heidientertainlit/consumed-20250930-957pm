@@ -1148,36 +1148,36 @@ export default function FriendsUpdates() {
     });
   };
 
-  // Fetch trending TV shows from TMDB
-  const { data: trendingTVShows = [] } = useQuery({
-    queryKey: ['trending-tv-shows'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          console.error('Failed to fetch trending TV shows');
-          return [];
-        }
-        const data = await response.json();
-        // Add externalId and externalSource for MediaCarousel compatibility
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'tmdb'
-        }));
-      } catch (error) {
-        console.error('Error fetching trending TV shows:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
-  });
+  // Trending queries disabled - only showing Recommended for you
+  // const { data: trendingTVShows = [] } = useQuery({
+  //   queryKey: ['trending-tv-shows'],
+  //   queryFn: async () => {
+  //     try {
+  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
+  //         headers: {
+  //           'Authorization': `Bearer ${anonKey}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
+  //       if (!response.ok) {
+  //         console.error('Failed to fetch trending TV shows');
+  //         return [];
+  //       }
+  //       const data = await response.json();
+  //       // Add externalId and externalSource for MediaCarousel compatibility
+  //       return data.map((item: any) => ({
+  //         ...item,
+  //         externalId: item.id,
+  //         externalSource: 'tmdb'
+  //       }));
+  //     } catch (error) {
+  //       console.error('Error fetching trending TV shows:', error);
+  //       return [];
+  //     }
+  //   },
+  //   staleTime: 1000 * 60 * 60, // Cache for 1 hour
+  // });
 
   // Fetch NY Times bestseller books
   const { data: bestsellerBooks = [] } = useQuery({
@@ -1211,62 +1211,61 @@ export default function FriendsUpdates() {
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
-  // Fetch trending movies
-  const { data: trendingMovies = [] } = useQuery({
-    queryKey: ['trending-movies'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-movies`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        // Add externalId and externalSource for MediaCarousel compatibility
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'tmdb'
-        }));
-      } catch (error) {
-        console.error('Error fetching trending movies:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60,
-  });
+  // Trending queries disabled - only showing Recommended for you
+  // const { data: trendingMovies = [] } = useQuery({
+  //   queryKey: ['trending-movies'],
+  //   queryFn: async () => {
+  //     try {
+  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-movies`, {
+  //         headers: {
+  //           'Authorization': `Bearer ${anonKey}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
+  //       if (!response.ok) return [];
+  //       const data = await response.json();
+  //       // Add externalId and externalSource for MediaCarousel compatibility
+  //       return data.map((item: any) => ({
+  //         ...item,
+  //         externalId: item.id,
+  //         externalSource: 'tmdb'
+  //       }));
+  //     } catch (error) {
+  //       console.error('Error fetching trending movies:', error);
+  //       return [];
+  //     }
+  //   },
+  //   staleTime: 1000 * 60 * 60,
+  // });
 
-  // Fetch trending podcasts
-  const { data: trendingPodcasts = [] } = useQuery({
-    queryKey: ['trending-podcasts'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-podcasts`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        // Add externalId and externalSource for MediaCarousel compatibility
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'spotify',
-          mediaType: 'podcast'
-        }));
-      } catch (error) {
-        console.error('Error fetching trending podcasts:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60,
-  });
+  // const { data: trendingPodcasts = [] } = useQuery({
+  //   queryKey: ['trending-podcasts'],
+  //   queryFn: async () => {
+  //     try {
+  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-podcasts`, {
+  //         headers: {
+  //           'Authorization': `Bearer ${anonKey}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
+  //       if (!response.ok) return [];
+  //       const data = await response.json();
+  //       // Add externalId and externalSource for MediaCarousel compatibility
+  //       return data.map((item: any) => ({
+  //         ...item,
+  //         externalId: item.id,
+  //         externalSource: 'spotify',
+  //         mediaType: 'podcast'
+  //       }));
+  //     } catch (error) {
+  //       console.error('Error fetching trending podcasts:', error);
+  //       return [];
+  //     }
+  //   },
+  //   staleTime: 1000 * 60 * 60,
+  // });
 
   // Fetch DNA-based personalized recommendations (cached, instant <1s load!)
   const fetchRecommendations = async () => {
@@ -1560,13 +1559,8 @@ export default function FriendsUpdates() {
                 const shouldShowMediaCarousel = patternPosition === 7;
                 const carouselIndex = Math.floor(postIndex / 8);
                 
-                // Rotation order: Recommended → Podcasts → Movies → (repeat)
-                const carouselTypes = [
-                  { type: 'mixed', title: 'Recommended for you', items: recommendedContent },
-                  { type: 'podcast', title: 'Trending Podcasts', items: trendingPodcasts },
-                  { type: 'movie', title: 'Trending Movies', items: trendingMovies },
-                ];
-                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length];
+                // Only show Recommended for you carousel
+                const currentCarousel = { type: 'mixed', title: 'Recommended for you', items: recommendedContent };
                 
                 // Dummy predictions data
                 const predictions = [
