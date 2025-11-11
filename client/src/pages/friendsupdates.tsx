@@ -1359,11 +1359,11 @@ export default function FriendsUpdates() {
             <div className="flex items-center gap-3 mb-4">
               <MessageCircle className="h-6 w-6 text-white flex-shrink-0" />
               <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Share What You're Consuming
+                What Are You Consuming?
               </h2>
             </div>
             <p className="text-white/90 mb-6 text-sm">
-              Post reviews, hot takes, predictions, trivia & more
+              Share what you're watching, reading, playing & listening to. Add reviews, rate content, make predictions, post hot takes, create trivia & more
             </p>
             <div className="flex items-center gap-3">
               <button
