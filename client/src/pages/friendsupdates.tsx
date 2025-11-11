@@ -1397,15 +1397,15 @@ export default function FriendsUpdates() {
                   <button
                     key={filter.id}
                     onClick={() => setFeedFilter(filter.id)}
-                    className={`flex flex-col items-center gap-1 transition-all ${
+                    className={`flex flex-col items-center gap-0.5 transition-all ${
                       feedFilter === filter.id
                         ? filter.color
-                        : "text-gray-700 hover:text-gray-900"
+                        : "text-gray-400 hover:text-gray-600"
                     }`}
                     data-testid={`filter-${filter.id}`}
                   >
-                    <Icon className="h-6 w-6" />
-                    <span className="text-xs font-medium whitespace-nowrap">{filter.label}</span>
+                    <Icon className="h-5 w-5" />
+                    <span className="text-[10px] font-medium whitespace-nowrap">{filter.label}</span>
                   </button>
                 );
               })}
