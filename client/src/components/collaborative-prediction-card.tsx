@@ -50,6 +50,7 @@ export default function CollaborativePredictionCard({
   const [liked, setLiked] = useState(isLiked);
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   // Calculate vote percentages
   const yesPercentage = voteCounts && voteCounts.total > 0 
@@ -244,9 +245,14 @@ export default function CollaborativePredictionCard({
     },
   });
 
-  const handleVote = (vote: string) => {
-    if (voteMutation.isPending) return;
-    voteMutation.mutate(vote);
+  const handleSelectOption = (option: string) => {
+    if (userHasAnswered || voteMutation.isPending) return;
+    setSelectedOption(option);
+  };
+
+  const handleSubmitVote = () => {
+    if (!selectedOption || voteMutation.isPending) return;
+    voteMutation.mutate(selectedOption);
   };
 
   const handlePostComment = () => {
@@ -287,12 +293,18 @@ export default function CollaborativePredictionCard({
             <span className="font-semibold">{creator.username}</span>
           </p>
           <button
-            onClick={() => handleVote("Yes")}
+            onClick={() => handleSelectOption("Yes")}
             disabled={userHasAnswered || voteMutation.isPending}
-            className="w-full rounded-full px-4 py-2.5 transition-all bg-white border-2 border-purple-300 hover:border-purple-400 disabled:opacity-60 disabled:cursor-default flex items-center justify-between"
+            className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
+              userHasAnswered 
+                ? "bg-white border-purple-300 opacity-60 cursor-default"
+                : selectedOption === "Yes"
+                ? "bg-purple-100 border-purple-500"
+                : "bg-white border-purple-300 hover:border-purple-400"
+            }`}
             data-testid="button-vote-yes"
           >
-            <p className="text-sm font-medium text-black text-left">
+            <p className={`text-sm font-medium text-left ${selectedOption === "Yes" ? "text-purple-700" : "text-black"}`}>
               {creatorPrediction}
             </p>
             {userHasAnswered && voteCounts && (
@@ -310,12 +322,18 @@ export default function CollaborativePredictionCard({
               <span className="font-semibold">{invitedFriend.username}</span>
             </p>
             <button
-              onClick={() => handleVote("No")}
+              onClick={() => handleSelectOption("No")}
               disabled={userHasAnswered || voteMutation.isPending}
-              className="w-full rounded-full px-4 py-2.5 transition-all bg-white border-2 border-purple-300 hover:border-purple-400 disabled:opacity-60 disabled:cursor-default flex items-center justify-between"
+              className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
+                userHasAnswered 
+                  ? "bg-white border-purple-300 opacity-60 cursor-default"
+                  : selectedOption === "No"
+                  ? "bg-purple-100 border-purple-500"
+                  : "bg-white border-purple-300 hover:border-purple-400"
+              }`}
               data-testid="button-vote-no"
             >
-              <p className="text-sm font-medium text-black text-left">
+              <p className={`text-sm font-medium text-left ${selectedOption === "No" ? "text-purple-700" : "text-black"}`}>
                 {friendPrediction}
               </p>
               {userHasAnswered && voteCounts && (
@@ -336,6 +354,19 @@ export default function CollaborativePredictionCard({
           </div>
         )}
       </div>
+
+      {/* Submit Button */}
+      {!userHasAnswered && selectedOption && (
+        <div className="mb-3">
+          <Button
+            onClick={handleSubmitVote}
+            disabled={voteMutation.isPending}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full"
+          >
+            {voteMutation.isPending ? "Submitting..." : "Cast Prediction"}
+          </Button>
+        </div>
+      )}
 
       {/* Participant count */}
       {voteCounts && voteCounts.total > 0 && (
