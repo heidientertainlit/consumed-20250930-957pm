@@ -539,9 +539,6 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                       <Search className="w-3.5 h-3.5 mr-1" />
                       {attachedMedia ? "Change Media" : "Attach Media"}
                     </Button>
-                    <div className="ml-auto text-xs text-gray-500">
-                      {content.length} / {maxChars}
-                    </div>
                   </div>
 
                   {/* Attached Media Display */}
@@ -716,7 +713,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   setFriendSearchQuery(e.target.value);
                   handleFriendSearch(e.target.value);
                 }}
-                placeholder="Search friends to invite..."
+                placeholder="Invite friends to predict with you"
                 className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white mb-2"
                 autoFocus
               />
@@ -763,7 +760,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
               {invitedFriends.length === 0 && !friendSearchQuery && (
                 <p className="text-xs text-gray-500 italic">
-                  💬 Others can join after you post!
+                  💬 Others will chime in after you post
                 </p>
               )}
             </div>
