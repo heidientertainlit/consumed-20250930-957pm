@@ -500,6 +500,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                     <span className="text-white text-xl">✨</span>
                   </button>
                 </Link>
+                <Link href="/friendsupdates">
+                  <button
+                    className="hover:opacity-70 transition-opacity"
+                    data-testid="friendsupdates-button"
+                  >
+                    <Activity className="text-white" size={20} />
+                  </button>
+                </Link>
                 <NotificationBell />
                 <Link href={user?.id ? `/user/${user.id}` : "/login"}>
                   <button
