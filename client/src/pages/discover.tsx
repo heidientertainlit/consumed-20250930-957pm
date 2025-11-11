@@ -420,13 +420,13 @@ export default function Discover() {
         </div>
 
         {/* AI Recommendation Engine Section */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg">
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-black flex items-center gap-2">
-              <Sparkles className="text-purple-600" size={20} />
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Sparkles className="text-white" size={20} />
               AI Recommendation Engine
             </h2>
-            <p className="text-sm text-gray-700 mt-1">
+            <p className="text-sm text-white/90 mt-1">
               Describe what you're in the mood for and get personalized suggestions
             </p>
           </div>
@@ -441,14 +441,14 @@ export default function Discover() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !isSearching && handleSearch()}
                   disabled={isSearching}
-                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 border-purple-300 focus:border-purple-500 bg-white text-black placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 border-white/30 focus:border-white bg-white text-gray-800 placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
                   data-testid="search-input"
                 />
               </div>
               <Button
                 onClick={handleSearch}
                 disabled={isSearching || !searchQuery.trim()}
-                className="px-8 py-6 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold disabled:opacity-50"
+                className="px-8 py-6 rounded-xl bg-white hover:bg-white/90 text-purple-600 font-semibold disabled:opacity-50"
                 data-testid="search-submit"
               >
                 {isSearching ? (
@@ -461,12 +461,12 @@ export default function Discover() {
             
             {/* Loading State Message */}
             {isSearching && (
-              <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-4">
+              <div className="mt-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
                 <div className="flex items-center gap-3">
-                  <Loader2 className="animate-spin text-purple-600" size={20} />
+                  <Loader2 className="animate-spin text-white" size={20} />
                   <div>
-                    <p className="text-purple-900 font-semibold">AI is analyzing your request...</p>
-                    <p className="text-purple-700 text-sm">This may take 10-30 seconds</p>
+                    <p className="text-white font-semibold">AI is analyzing your request...</p>
+                    <p className="text-white/80 text-sm">This may take 10-30 seconds</p>
                   </div>
                 </div>
               </div>
@@ -475,7 +475,7 @@ export default function Discover() {
 
           {/* Search Results */}
           {searchResults && (
-            <div className="mt-6">
+            <div className="mt-6 bg-white rounded-xl p-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-black">Results</h3>
                 <Button
