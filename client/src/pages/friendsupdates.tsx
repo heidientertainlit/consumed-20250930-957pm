@@ -1300,7 +1300,7 @@ export default function FriendsUpdates() {
               {/* Input */}
               <button
                 onClick={handleShareUpdate}
-                className="flex-1 text-left text-gray-400 text-sm px-2"
+                className="flex-1 text-left text-gray-900 text-sm px-2 font-medium"
                 data-testid="composer-input"
               >
                 What are you consuming?
