@@ -325,30 +325,28 @@ export default function CommentsSection({
     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
       {/* Rating Controls (shown for posts with ratings) */}
       {showRatingControls && (
-        <div className="bg-white rounded-lg p-3 border border-gray-200">
-          <div className="flex items-center gap-3">
-            <Star size={20} className="text-gray-400" />
-            <span className="text-gray-600 font-medium">Rate</span>
-            <input
-              type="text"
-              value={commentRating || ''}
-              onChange={(e) => {
-                const value = e.target.value;
-                // Allow empty, numbers, and one decimal point
-                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                  const num = parseFloat(value);
-                  // Validate range 0-5
-                  if (value === '' || (num >= 0 && num <= 5)) {
-                    onRatingChange?.(value);
-                  }
+        <div className="bg-white rounded-lg px-3 py-2 border border-gray-200 flex items-center gap-3">
+          <Star size={20} className="text-gray-400" />
+          <span className="text-gray-600 font-medium">Rate</span>
+          <input
+            type="text"
+            value={commentRating || ''}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Allow empty, numbers, and one decimal point
+              if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                const num = parseFloat(value);
+                // Validate range 0-5
+                if (value === '' || (num >= 0 && num <= 5)) {
+                  onRatingChange?.(value);
                 }
-              }}
-              placeholder="0"
-              className="w-20 text-base text-gray-700 bg-white border border-gray-300 rounded px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              data-testid="rating-input"
-            />
-            <span className="text-base text-gray-700">/5</span>
-          </div>
+              }
+            }}
+            placeholder="0"
+            className="w-20 text-base text-gray-700 bg-white border border-gray-300 rounded px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            data-testid="rating-input"
+          />
+          <span className="text-base text-gray-700">/5</span>
         </div>
       )}
 
