@@ -289,12 +289,17 @@ export default function CollaborativePredictionCard({
           <button
             onClick={() => handleVote("Yes")}
             disabled={userHasAnswered || voteMutation.isPending}
-            className="flex-1 rounded-full px-4 py-2.5 transition-all bg-white border-2 border-purple-300 hover:border-purple-400 disabled:opacity-60 disabled:cursor-default"
+            className="w-full rounded-full px-4 py-2.5 transition-all bg-white border-2 border-purple-300 hover:border-purple-400 disabled:opacity-60 disabled:cursor-default flex items-center justify-between"
             data-testid="button-vote-yes"
           >
             <p className="text-sm font-medium text-black text-left">
               {creatorPrediction}
             </p>
+            {userHasAnswered && voteCounts && (
+              <span className="text-sm font-semibold text-gray-700">
+                {yesPercentage}%
+              </span>
+            )}
           </button>
         </div>
 
@@ -307,12 +312,17 @@ export default function CollaborativePredictionCard({
             <button
               onClick={() => handleVote("No")}
               disabled={userHasAnswered || voteMutation.isPending}
-              className="flex-1 rounded-full px-4 py-2.5 transition-all bg-white border-2 border-purple-300 hover:border-purple-400 disabled:opacity-60 disabled:cursor-default"
+              className="w-full rounded-full px-4 py-2.5 transition-all bg-white border-2 border-purple-300 hover:border-purple-400 disabled:opacity-60 disabled:cursor-default flex items-center justify-between"
               data-testid="button-vote-no"
             >
               <p className="text-sm font-medium text-black text-left">
                 {friendPrediction}
               </p>
+              {userHasAnswered && voteCounts && (
+                <span className="text-sm font-semibold text-gray-700">
+                  {noPercentage}%
+                </span>
+              )}
             </button>
           </div>
         ) : (
