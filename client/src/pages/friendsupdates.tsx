@@ -1440,7 +1440,7 @@ export default function FriendsUpdates() {
                 if (friendActivities.length === 0) return null;
                 
                 return (
-                  <div className="bg-white rounded-2xl border border-gray-200 p-3 overflow-hidden shadow-sm">
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 overflow-hidden shadow-lg">
                     <style>{`
                       @keyframes tickerScroll {
                         0% { transform: translateY(0); }
@@ -1450,8 +1450,8 @@ export default function FriendsUpdates() {
                         animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
                       }
                     `}</style>
-                    <p className="text-sm font-bold mb-2 text-gray-700" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                      Quick Glimpse
+                    <p className="text-sm font-bold mb-2 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      ✨ Quick Glimpse
                     </p>
                     <div className="h-6 overflow-hidden">
                       <div className="ticker-wrapper">
@@ -1459,11 +1459,11 @@ export default function FriendsUpdates() {
                         {[...friendActivities, ...friendActivities].map((activity, idx) => (
                           <div 
                             key={idx}
-                            className="h-6 flex items-center text-xs text-gray-600"
+                            className="h-6 flex items-center text-xs text-white"
                           >
-                            <span className="font-semibold text-purple-600">{activity.username}</span>
-                            <span className="mx-1 opacity-60">{activity.action}</span>
-                            <span className="font-medium">{activity.media}</span>
+                            <span className="font-semibold">{activity.username}</span>
+                            <span className="mx-1 opacity-80">{activity.action}</span>
+                            <span className="font-medium opacity-90">{activity.media}</span>
                           </div>
                         ))}
                       </div>
