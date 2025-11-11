@@ -1355,27 +1355,31 @@ export default function FriendsUpdates() {
         <div className="space-y-6">
 
           {/* Vibrant Share Composer */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-[3px] shadow-lg">
-            <div className="bg-white rounded-full px-5 py-3.5">
-              <div className="flex items-center gap-3">
-                <MessageCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
-                <button
-                  onClick={handleShareUpdate}
-                  className="flex-1 text-left"
-                  data-testid="composer-input"
-                >
-                  <div className="text-sm text-gray-400">
-                    Share what you're consuming, post reviews, hot takes, predictions, trivia & more
-                  </div>
-                </button>
-                <Button
-                  onClick={handleShareUpdate}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full h-9 w-9 p-0 flex items-center justify-center flex-shrink-0"
-                  data-testid="share-update-button"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <MessageCircle className="h-6 w-6 text-white flex-shrink-0" />
+              <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Share What You're Consuming
+              </h2>
+            </div>
+            <p className="text-white/90 mb-6 text-sm">
+              Post reviews, hot takes, predictions, trivia & more
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleShareUpdate}
+                className="flex-1 bg-white rounded-2xl px-6 py-4 text-left text-gray-400 text-sm hover:bg-gray-50 transition-colors"
+                data-testid="composer-input"
+              >
+                Share an update, review, prediction...
+              </button>
+              <Button
+                onClick={handleShareUpdate}
+                className="bg-purple-500/30 hover:bg-purple-500/40 text-white rounded-2xl h-14 w-14 p-0 flex items-center justify-center flex-shrink-0"
+                data-testid="share-update-button"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
             </div>
           </div>
 
