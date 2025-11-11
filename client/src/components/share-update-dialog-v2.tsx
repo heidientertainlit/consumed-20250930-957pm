@@ -30,7 +30,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   
   // Prediction-specific state
   const [predictionType, setPredictionType] = useState<PredictionType>("yes-no");
-  const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
+  const [predictionOptions, setPredictionOptions] = useState<string[]>(["Yes", "No"]);
   const [invitedFriends, setInvitedFriends] = useState<any[]>([]);
   const [friendSearchQuery, setFriendSearchQuery] = useState("");
   const [friendSearchResults, setFriendSearchResults] = useState<any[]>([]);
@@ -46,7 +46,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     setSearchResults([]);
     setAttachedMedia(null);
     setPredictionType("yes-no");
-    setPredictionOptions(["", ""]);
+    setPredictionOptions(["Yes", "No"]);
     setInvitedFriends([]);
     setFriendSearchQuery("");
     setFriendSearchResults([]);
