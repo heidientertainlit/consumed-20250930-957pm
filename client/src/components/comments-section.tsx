@@ -306,10 +306,11 @@ export default function CommentsSection({
     // Submit with formatted content
     onSubmitComment(undefined, finalComment);
     
-    // Clear rating after submit
+    // Clear both rating and comment input after submit
     if (onRatingChange) {
       onRatingChange('');
     }
+    onCommentInputChange('');
   };
 
   const handleStarClick = (value: number, isHalf: boolean) => {
