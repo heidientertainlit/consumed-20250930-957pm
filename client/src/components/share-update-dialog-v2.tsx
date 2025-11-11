@@ -96,8 +96,12 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   };
 
   const handleModeClick = (mode: PostMode) => {
-    if (mode === "text" || mode === "mood") {
+    if (mode === "text" || mode === "mood" || mode === "media") {
       setPostMode(mode);
+      // Auto-open media search when entering consuming mode
+      if (mode === "media") {
+        setShowMediaSearch(true);
+      }
     } else {
       // For now, show coming soon toast for other modes
       toast({
@@ -150,12 +154,18 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     if (postMode === "mood") {
       return "What's your take? (ex: The Barbie movie is secretly a breakup film.)";
     }
+    if (postMode === "media") {
+      return "What are you watching, reading, or listening to?";
+    }
     return "Post an update...";
   };
 
   const getButtonText = () => {
     if (postMode === "mood") {
       return isPosting ? "Posting..." : "Post Take 🔥";
+    }
+    if (postMode === "media") {
+      return isPosting ? "Posting..." : "Share Update";
     }
     return isPosting ? "Posting..." : "Post";
   };
@@ -188,6 +198,85 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 maxLength={postMode === "mood" ? undefined : maxChars}
                 session={session}
               />
+
+              {/* Consuming Mode - Track Media */}
+              {postMode === "media" && (
+                <div className="space-y-2 mt-2">
+                  {/* Attached Media Display */}
+                  {attachedMedia && (
+                    <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
+                      {attachedMedia.poster_url && (
+                        <img 
+                          src={attachedMedia.poster_url} 
+                          alt={attachedMedia.title}
+                          className="w-12 h-16 object-cover rounded"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{attachedMedia.title}</p>
+                        <p className="text-xs text-gray-500">{attachedMedia.type}</p>
+                      </div>
+                      <Button
+                        onClick={() => setAttachedMedia(null)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Media Search - Always visible in consuming mode */}
+                  {showMediaSearch && !attachedMedia && (
+                    <div className="border border-purple-200 rounded-lg p-3 bg-purple-50">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          handleMediaSearch(e.target.value);
+                        }}
+                        placeholder="Search movies, TV shows, books, music, podcasts..."
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                        autoFocus
+                      />
+                      {searchResults.length > 0 && (
+                        <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
+                          {searchResults.slice(0, 8).map((result, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleSelectMedia(result)}
+                              className="w-full flex items-center gap-3 p-2 hover:bg-white rounded text-left transition-colors"
+                            >
+                              {result.poster_url && (
+                                <img 
+                                  src={result.poster_url} 
+                                  alt={result.title}
+                                  className="w-10 h-14 object-cover rounded shadow-sm"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
+                                <p className="text-xs text-gray-600 capitalize">{result.type}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {isSearching && (
+                        <p className="text-xs text-purple-600 mt-2 flex items-center gap-2">
+                          <span className="inline-block w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></span>
+                          Searching across movies, TV, books, music...
+                        </p>
+                      )}
+                      {searchQuery && !isSearching && searchResults.length === 0 && (
+                        <p className="text-xs text-gray-500 mt-2">No results found. Try a different search.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Hot Take Tools */}
               {postMode === "mood" && (
@@ -297,12 +386,19 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200">
                   <div className="flex items-center gap-1.5">
                     {postMode === "mood" && <Flame className="w-4 h-4 text-orange-600" />}
+                    {postMode === "media" && <Plus className="w-4 h-4 text-purple-600" />}
                     <span className="text-xs font-medium text-gray-900">
                       {actionIcons.find(a => a.id === postMode)?.label}
                     </span>
                   </div>
                   <Button
-                    onClick={() => setPostMode("text")}
+                    onClick={() => {
+                      setPostMode("text");
+                      setShowMediaSearch(false);
+                      setSearchQuery("");
+                      setSearchResults([]);
+                      setAttachedMedia(null);
+                    }}
                     variant="ghost"
                     size="sm"
                     className="h-6 px-2 text-xs ml-auto"
