@@ -256,7 +256,7 @@ export default function CollaborativePredictionCard({
               className={`flex-1 rounded-full px-4 py-2.5 transition-all relative overflow-hidden ${
                 userHasAnswered
                   ? "bg-gray-100 cursor-default"
-                  : "bg-gray-100 hover:bg-gray-200 cursor-pointer"
+                  : "bg-white border-2 border-purple-300 hover:border-purple-500 hover:bg-purple-50 cursor-pointer"
               }`}
               data-testid="button-vote-yes"
             >
@@ -295,7 +295,7 @@ export default function CollaborativePredictionCard({
                 className={`flex-1 rounded-full px-4 py-2.5 transition-all relative overflow-hidden ${
                   userHasAnswered
                     ? "bg-gray-100 cursor-default"
-                    : "bg-gray-100 hover:bg-gray-200 cursor-pointer"
+                    : "bg-white border-2 border-purple-300 hover:border-purple-500 hover:bg-purple-50 cursor-pointer"
                 }`}
                 data-testid="button-vote-no"
               >
@@ -335,10 +335,10 @@ export default function CollaborativePredictionCard({
       </div>
 
       {/* Participant count */}
-      {participantCount && participantCount > 2 && (
+      {voteCounts && voteCounts.total > 0 && (
         <p className="text-xs text-center text-gray-500 mb-3">
           <Users size={12} className="inline mr-1" />
-          {participantCount} predictions
+          {voteCounts.total} predictions
         </p>
       )}
 
