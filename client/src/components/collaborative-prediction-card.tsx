@@ -263,7 +263,7 @@ export default function CollaborativePredictionCard({
               {/* Progress bar (shown after voting) */}
               {userHasAnswered && voteCounts && (
                 <div 
-                  className="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full transition-all duration-300"
+                  className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all duration-300"
                   style={{ width: `${yesPercentage}%` }}
                   data-testid="progress-yes"
                 />
@@ -302,7 +302,7 @@ export default function CollaborativePredictionCard({
                 {/* Progress bar (shown after voting) */}
                 {userHasAnswered && voteCounts && (
                   <div 
-                    className="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full transition-all duration-300"
+                    className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all duration-300"
                     style={{ width: `${noPercentage}%` }}
                     data-testid="progress-no"
                   />
