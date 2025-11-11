@@ -433,7 +433,8 @@ export default function FriendsUpdates() {
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("friends");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
-  const [commentRatings, setCommentRatings] = useState<{ [postId: string]: string }>({}); // Track ratings for comments
+  const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
+  const [activeInlineRating, setActiveInlineRating] = useState<string | null>(null); // Track which post has inline rating open
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -1020,8 +1021,40 @@ export default function FriendsUpdates() {
     return /^\s*(\d{1,2}(?:\.\d{1,2})?)\s*[.:]/.test(content);
   };
 
-  const handleCommentRatingChange = (postId: string, rating: string) => {
-    setCommentRatings(prev => ({ ...prev, [postId]: rating }));
+  const toggleInlineRating = (postId: string) => {
+    if (activeInlineRating === postId) {
+      setActiveInlineRating(null);
+    } else {
+      setActiveInlineRating(postId);
+    }
+  };
+
+  const handleInlineRatingChange = (postId: string, rating: string) => {
+    setInlineRatings(prev => ({ ...prev, [postId]: rating }));
+  };
+
+  const submitInlineRating = async (postId: string) => {
+    const rating = inlineRatings[postId];
+    if (!rating || parseFloat(rating) === 0) return;
+
+    // Format as rating-only comment: "4.5."
+    const formattedComment = `${rating}.`;
+    
+    try {
+      await commentMutation.mutateAsync({
+        postId,
+        content: formattedComment,
+      });
+      
+      // Clear rating and close inline rating
+      setInlineRatings(prev => ({ ...prev, [postId]: '' }));
+      setActiveInlineRating(null);
+      
+      // Optionally open comments to show the rating
+      setExpandedComments(prev => new Set(prev).add(postId));
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    }
   };
 
   const toggleComments = (postId: string) => {
@@ -1772,15 +1805,54 @@ export default function FriendsUpdates() {
                           <MessageCircle size={18} />
                           <span className="text-sm">{post.comments}</span>
                         </button>
-                        {hasRating(post.content) && (
+                        {hasRating(post.content) && !activeInlineRating && (
                           <button 
-                            onClick={() => toggleComments(post.id)}
+                            onClick={() => toggleInlineRating(post.id)}
                             className="flex items-center space-x-2 text-gray-500 hover:text-purple-600 transition-colors"
                             data-testid={`button-rate-review-${post.id}`}
                           >
                             <Star size={18} />
                             <span className="text-sm">Rate</span>
                           </button>
+                        )}
+                        {hasRating(post.content) && activeInlineRating === post.id && (
+                          <div className="flex items-center space-x-2">
+                            <Star size={18} className="text-gray-400" />
+                            <span className="text-sm text-gray-600">Rate</span>
+                            <input
+                              type="text"
+                              value={inlineRatings[post.id] || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                  const num = parseFloat(value);
+                                  if (value === '' || (num >= 0 && num <= 5)) {
+                                    handleInlineRatingChange(post.id, value);
+                                  }
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  submitInlineRating(post.id);
+                                } else if (e.key === 'Escape') {
+                                  setActiveInlineRating(null);
+                                }
+                              }}
+                              placeholder="0"
+                              autoFocus
+                              className="w-16 text-sm text-gray-700 bg-white border border-gray-300 rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              data-testid={`inline-rating-input-${post.id}`}
+                            />
+                            <span className="text-sm text-gray-700">/5</span>
+                            <Button
+                              onClick={() => submitInlineRating(post.id)}
+                              disabled={!inlineRatings[post.id] || parseFloat(inlineRatings[post.id]) === 0}
+                              size="sm"
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 h-7"
+                            >
+                              <Send size={14} />
+                            </Button>
+                          </div>
                         )}
                       </div>
                       <div className="text-sm text-gray-500">
@@ -1802,9 +1874,6 @@ export default function FriendsUpdates() {
                         onDeleteComment={handleDeleteComment}
                         onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
                         likedComments={likedComments}
-                        showRatingControls={hasRating(post.content)}
-                        commentRating={commentRatings[post.id] || ''}
-                        onRatingChange={(rating) => handleCommentRatingChange(post.id, rating)}
                       />
                     )}
                   </div>

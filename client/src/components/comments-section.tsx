@@ -33,9 +33,6 @@ interface CommentsSectionProps {
   onDeleteComment?: (commentId: string, postId: string) => void;
   onLikeComment?: (commentId: string) => void;
   likedComments?: Set<string>;
-  showRatingControls?: boolean; // Show rating controls for posts with ratings
-  commentRating?: string; // Current rating value
-  onRatingChange?: (rating: string) => void; // Callback for rating changes
 }
 
 interface CommentItemProps {
@@ -267,9 +264,6 @@ export default function CommentsSection({
   onDeleteComment,
   onLikeComment,
   likedComments = new Set(),
-  showRatingControls = false,
-  commentRating = '',
-  onRatingChange,
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
@@ -282,74 +276,15 @@ export default function CommentsSection({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const hasRatingValue = showRatingControls && commentRating && parseFloat(commentRating) > 0;
-    const hasCommentText = commentInput.trim().length > 0;
-    
-    // Must have either rating or comment to submit
-    if (!hasRatingValue && !hasCommentText) return;
-    
-    let finalComment = '';
-    
-    if (hasRatingValue && hasCommentText) {
-      // Both rating and comment
-      finalComment = `${commentRating}. ${commentInput.trim()}`;
-    } else if (hasRatingValue) {
-      // Rating only - just the rating with a period
-      finalComment = `${commentRating}.`;
-    } else {
-      // Comment only
-      finalComment = commentInput.trim();
-    }
-    
-    // Submit with formatted content
-    onSubmitComment(undefined, finalComment);
-    
-    // Clear both rating and comment input after submit
-    if (onRatingChange) {
-      onRatingChange('');
-    }
-    onCommentInputChange('');
+    onSubmitComment();
   };
 
   const handleSubmitReply = (parentCommentId: string, content: string) => {
     onSubmitComment(parentCommentId, content);
   };
 
-  const currentRating = parseFloat(commentRating || '0');
-  const hasRatingValue = showRatingControls && commentRating && parseFloat(commentRating) > 0;
-  const hasCommentText = commentInput.trim().length > 0;
-  const canSubmit = hasRatingValue || hasCommentText;
-
   return (
     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-      {/* Rating Controls (shown for posts with ratings) */}
-      {showRatingControls && (
-        <div className="bg-white rounded-lg px-3 py-2 border border-gray-200 flex items-center gap-3">
-          <Star size={20} className="text-gray-400" />
-          <span className="text-gray-600 font-medium">Rate</span>
-          <input
-            type="text"
-            value={commentRating || ''}
-            onChange={(e) => {
-              const value = e.target.value;
-              // Allow empty, numbers, and one decimal point
-              if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                const num = parseFloat(value);
-                // Validate range 0-5
-                if (value === '' || (num >= 0 && num <= 5)) {
-                  onRatingChange?.(value);
-                }
-              }
-            }}
-            placeholder="0"
-            className="w-20 text-base text-gray-700 bg-white border border-gray-300 rounded px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            data-testid="rating-input"
-          />
-          <span className="text-base text-gray-700">/5</span>
-        </div>
-      )}
-
       {/* Top-level Comment Input */}
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
@@ -367,7 +302,7 @@ export default function CommentsSection({
         <Button
           type="submit"
           size="sm"
-          disabled={!canSubmit || isSubmitting}
+          disabled={!commentInput.trim() || isSubmitting}
           className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
           data-testid="button-submit-comment"
         >
