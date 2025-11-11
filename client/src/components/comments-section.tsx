@@ -273,7 +273,6 @@ export default function CommentsSection({
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
-  const [starHover, setStarHover] = useState(0);
   
   const { data: comments, isLoading } = useQuery({
     queryKey: ["post-comments", postId],
@@ -313,12 +312,6 @@ export default function CommentsSection({
     onCommentInputChange('');
   };
 
-  const handleStarClick = (value: number, isHalf: boolean) => {
-    if (!onRatingChange) return;
-    const rating = isHalf ? value - 0.5 : value;
-    onRatingChange(rating.toString());
-  };
-
   const handleSubmitReply = (parentCommentId: string, content: string) => {
     onSubmitComment(parentCommentId, content);
   };
@@ -333,46 +326,9 @@ export default function CommentsSection({
       {/* Rating Controls (shown for posts with ratings) */}
       {showRatingControls && (
         <div className="bg-white rounded-lg p-3 border border-gray-200">
-          <p className="text-xs font-medium text-gray-600 mb-2">Add your rating (optional)</p>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => {
-                const fillLevel = Math.max(0, Math.min(1, currentRating - (star - 1)));
-                const isFullyFilled = fillLevel === 1;
-                const isHalfFilled = fillLevel === 0.5;
-                
-                return (
-                  <div key={star} className="relative inline-block">
-                    <button
-                      onClick={() => handleStarClick(star, false)}
-                      onMouseEnter={() => setStarHover(star)}
-                      onMouseLeave={() => setStarHover(0)}
-                      className="p-0.5 hover:scale-110 transition-transform"
-                      data-testid={`rating-star-${star}`}
-                      type="button"
-                    >
-                      <Star
-                        size={22}
-                        className={`${
-                          star <= (starHover || currentRating)
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'fill-gray-200 text-gray-200'
-                        } transition-colors`}
-                      />
-                    </button>
-                    {/* Half-star overlay button */}
-                    <button
-                      onClick={() => handleStarClick(star, true)}
-                      onMouseEnter={() => setStarHover(star - 0.5)}
-                      className="absolute inset-0 w-1/2 cursor-pointer"
-                      aria-label={`${star - 0.5} stars`}
-                      type="button"
-                      data-testid={`rating-star-half-${star}`}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            <Star size={20} className="text-gray-400" />
+            <span className="text-gray-600 font-medium">Rate</span>
             <input
               type="text"
               value={commentRating || ''}
@@ -388,19 +344,10 @@ export default function CommentsSection({
                 }
               }}
               placeholder="0"
-              className="w-16 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-20 text-base text-gray-700 bg-white border border-gray-300 rounded px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               data-testid="rating-input"
             />
-            <span className="text-sm font-semibold text-gray-700">/5</span>
-            {commentRating && parseFloat(commentRating) > 0 && (
-              <button
-                onClick={() => onRatingChange?.('')}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
-                type="button"
-              >
-                Clear
-              </button>
-            )}
+            <span className="text-base text-gray-700">/5</span>
           </div>
         </div>
       )}
