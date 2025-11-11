@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Star, Target, Flame, Vote, Search } from "lucide-react";
+import { X, Plus, Star, Target, Flame, Vote, Search, UserPlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,7 @@ interface ShareUpdateDialogV2Props {
 }
 
 type PostMode = "text" | "media" | "review" | "prediction" | "tribe" | "ranking" | "mood";
+type PredictionType = "yes-no" | "head-to-head" | "multi-choice";
 
 export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDialogV2Props) {
   const { session, user } = useAuth();
@@ -26,6 +27,14 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<any>(null);
+  
+  // Prediction-specific state
+  const [predictionType, setPredictionType] = useState<PredictionType>("yes-no");
+  const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
+  const [invitedFriends, setInvitedFriends] = useState<any[]>([]);
+  const [friendSearchQuery, setFriendSearchQuery] = useState("");
+  const [friendSearchResults, setFriendSearchResults] = useState<any[]>([]);
+  const [showFriendSearch, setShowFriendSearch] = useState(false);
 
   // Reset all state when dialog closes
   const handleClose = () => {
@@ -36,6 +45,12 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     setSearchQuery("");
     setSearchResults([]);
     setAttachedMedia(null);
+    setPredictionType("yes-no");
+    setPredictionOptions(["", ""]);
+    setInvitedFriends([]);
+    setFriendSearchQuery("");
+    setFriendSearchResults([]);
+    setShowFriendSearch(false);
     onClose();
   };
 
@@ -148,6 +163,63 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     setShowMediaSearch(false);
     setSearchQuery("");
     setSearchResults([]);
+  };
+
+  const handleFriendSearch = async (query: string) => {
+    if (!query.trim()) {
+      setFriendSearchResults([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-users?query=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        // Filter out already invited friends
+        const filteredResults = (data.results || []).filter(
+          (friend: any) => !invitedFriends.some(invited => invited.id === friend.id)
+        );
+        setFriendSearchResults(filteredResults);
+      }
+    } catch (error) {
+      console.error("Friend search error:", error);
+    }
+  };
+
+  const handleInviteFriend = (friend: any) => {
+    setInvitedFriends([...invitedFriends, friend]);
+    setFriendSearchQuery("");
+    setFriendSearchResults([]);
+    setShowFriendSearch(false);
+  };
+
+  const handleRemoveInvitedFriend = (friendId: string) => {
+    setInvitedFriends(invitedFriends.filter(f => f.id !== friendId));
+  };
+
+  const handlePredictionTypeChange = (type: PredictionType) => {
+    setPredictionType(type);
+    if (type === "yes-no") {
+      setPredictionOptions(["Yes", "No"]);
+    } else if (type === "head-to-head") {
+      setPredictionOptions(["", ""]);
+    } else {
+      setPredictionOptions(["", "", "", "", ""]);
+    }
+  };
+
+  const updatePredictionOption = (index: number, value: string) => {
+    const newOptions = [...predictionOptions];
+    newOptions[index] = value;
+    setPredictionOptions(newOptions);
   };
 
   const getPlaceholder = () => {
@@ -287,13 +359,13 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
               {/* Prediction Mode */}
               {postMode === "prediction" && (
                 <div className="space-y-3 mt-2">
-                  {/* Suggested Predictions */}
+                  {/* Suggested Predictions - Only show when no content */}
                   {!content && (
                     <div>
                       <p className="text-xs font-semibold text-gray-700 mb-2">
                         💡 Suggested Predictions
                       </p>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
                         {[
                           "Will Dune Part 3 get greenlit?",
                           "Will Taylor Swift win Album of the Year at the Grammys?",
@@ -313,95 +385,228 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                     </div>
                   )}
 
-                  {/* Optional: Attach Related Media */}
+                  {/* Prediction Configuration - Show when content exists */}
                   {content && (
-                    <div className="flex items-center gap-2">
+                    <>
+                      {/* Prediction Type Selector */}
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Prediction Type</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handlePredictionTypeChange("yes-no")}
+                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                              predictionType === "yes-no"
+                                ? "bg-red-600 text-white"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                          >
+                            Yes/No ✅❌
+                          </button>
+                          <button
+                            onClick={() => handlePredictionTypeChange("head-to-head")}
+                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                              predictionType === "head-to-head"
+                                ? "bg-red-600 text-white"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                          >
+                            Head-to-Head 🅰️🅱️
+                          </button>
+                          <button
+                            onClick={() => handlePredictionTypeChange("multi-choice")}
+                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                              predictionType === "multi-choice"
+                                ? "bg-red-600 text-white"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                          >
+                            Multi-Choice 🆎
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Prediction Options */}
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-2">
+                          {predictionType === "yes-no" ? "Options (Auto-set)" : "Add Options"}
+                        </p>
+                        <div className="space-y-2">
+                          {predictionOptions.map((option, idx) => (
+                            <input
+                              key={idx}
+                              type="text"
+                              value={option}
+                              onChange={(e) => updatePredictionOption(idx, e.target.value)}
+                              placeholder={
+                                predictionType === "yes-no"
+                                  ? option
+                                  : predictionType === "head-to-head"
+                                  ? `Option ${idx + 1}`
+                                  : `Option ${idx + 1}`
+                              }
+                              disabled={predictionType === "yes-no"}
+                              className={`w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                predictionType === "yes-no" ? "bg-gray-100 cursor-not-allowed" : "bg-white"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Invited Friends */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-semibold text-gray-700">Invite Friends</p>
+                          <Button
+                            onClick={() => setShowFriendSearch(!showFriendSearch)}
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                          >
+                            <UserPlus className="w-3 h-3 mr-1" />
+                            {showFriendSearch ? "Cancel" : "Add"}
+                          </Button>
+                        </div>
+
+                        {/* Invited Friends List */}
+                        {invitedFriends.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {invitedFriends.map((friend) => (
+                              <div
+                                key={friend.id}
+                                className="flex items-center gap-1 bg-red-50 border border-red-200 rounded-full px-2 py-1"
+                              >
+                                <span className="text-xs text-gray-900">@{friend.user_name}</span>
+                                <button
+                                  onClick={() => handleRemoveInvitedFriend(friend.id)}
+                                  className="text-gray-400 hover:text-gray-900"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Friend Search */}
+                        {showFriendSearch && (
+                          <div className="border border-red-200 rounded-lg p-2 bg-red-50">
+                            <input
+                              type="text"
+                              value={friendSearchQuery}
+                              onChange={(e) => {
+                                setFriendSearchQuery(e.target.value);
+                                handleFriendSearch(e.target.value);
+                              }}
+                              placeholder="Search friends..."
+                              className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
+                            />
+                            {friendSearchResults.length > 0 && (
+                              <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+                                {friendSearchResults.slice(0, 5).map((friend) => (
+                                  <button
+                                    key={friend.id}
+                                    onClick={() => handleInviteFriend(friend)}
+                                    className="w-full flex items-center gap-2 p-1.5 hover:bg-white rounded text-left"
+                                  >
+                                    <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-white text-xs font-semibold">
+                                      {friend.user_name?.substring(0, 2).toUpperCase() || 'U'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-medium text-gray-900 truncate">@{friend.user_name}</p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {!showFriendSearch && invitedFriends.length === 0 && (
+                          <p className="text-xs text-gray-500 italic">
+                            💬 Others can join after you post!
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Add Related Media */}
                       <Button
                         onClick={handleAttachMedia}
                         size="sm"
                         variant="outline"
-                        className="h-8 px-3 text-xs text-red-600 border-red-300 hover:bg-red-50"
+                        className="w-full h-10 text-xs text-red-600 border-red-300 hover:bg-red-50"
                       >
-                        <Search className="w-3.5 h-3.5 mr-1" />
-                        {attachedMedia ? "Change Media" : "Add Related Media"}
+                        <Search className="w-4 h-4 mr-2" />
+                        {attachedMedia ? "Change Related Media" : "Add Related Media"}
                       </Button>
-                    </div>
-                  )}
 
-                  {/* Attached Media Display */}
-                  {attachedMedia && (
-                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-2">
-                      {attachedMedia.poster_url && (
-                        <img 
-                          src={attachedMedia.poster_url} 
-                          alt={attachedMedia.title}
-                          className="w-10 h-14 object-cover rounded"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-900 truncate">{attachedMedia.title}</p>
-                        <p className="text-xs text-gray-500">{attachedMedia.type}</p>
-                      </div>
-                      <Button
-                        onClick={() => setAttachedMedia(null)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-gray-400 hover:text-gray-900"
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Media Search for Predictions */}
-                  {showMediaSearch && (
-                    <div className="border border-red-200 rounded-lg p-2 bg-red-50">
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
-                          handleMediaSearch(e.target.value);
-                        }}
-                        placeholder="Search for related media..."
-                        className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
-                      />
-                      {searchResults.length > 0 && (
-                        <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
-                          {searchResults.slice(0, 5).map((result, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => handleSelectMedia(result)}
-                              className="w-full flex items-center gap-2 p-1.5 hover:bg-white rounded text-left"
-                            >
-                              {result.poster_url && (
-                                <img 
-                                  src={result.poster_url} 
-                                  alt={result.title}
-                                  className="w-6 h-9 object-cover rounded"
-                                />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-gray-900 truncate">{result.title}</p>
-                                <p className="text-xs text-gray-500">{result.type}</p>
-                              </div>
-                            </button>
-                          ))}
+                      {/* Attached Media Display */}
+                      {attachedMedia && (
+                        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-2">
+                          {attachedMedia.poster_url && (
+                            <img 
+                              src={attachedMedia.poster_url} 
+                              alt={attachedMedia.title}
+                              className="w-10 h-14 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-900 truncate">{attachedMedia.title}</p>
+                            <p className="text-xs text-gray-500">{attachedMedia.type}</p>
+                          </div>
+                          <Button
+                            onClick={() => setAttachedMedia(null)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-gray-400 hover:text-gray-900"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
                         </div>
                       )}
-                      {isSearching && (
-                        <p className="text-xs text-red-600 mt-2">Searching...</p>
-                      )}
-                    </div>
-                  )}
 
-                  {/* Friends to Invite (Placeholder) */}
-                  {content && (
-                    <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-                      <p className="text-xs text-gray-600">
-                        💬 Your friends will be able to cast their predictions once you post!
-                      </p>
-                    </div>
+                      {/* Media Search */}
+                      {showMediaSearch && (
+                        <div className="border border-red-200 rounded-lg p-2 bg-red-50">
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => {
+                              setSearchQuery(e.target.value);
+                              handleMediaSearch(e.target.value);
+                            }}
+                            placeholder="Search for related media..."
+                            className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
+                          />
+                          {searchResults.length > 0 && (
+                            <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
+                              {searchResults.slice(0, 5).map((result, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => handleSelectMedia(result)}
+                                  className="w-full flex items-center gap-2 p-1.5 hover:bg-white rounded text-left"
+                                >
+                                  {result.poster_url && (
+                                    <img 
+                                      src={result.poster_url} 
+                                      alt={result.title}
+                                      className="w-6 h-9 object-cover rounded"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-900 truncate">{result.title}</p>
+                                    <p className="text-xs text-gray-500">{result.type}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {isSearching && (
+                            <p className="text-xs text-red-600 mt-2">Searching...</p>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -546,7 +751,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
             <Checkbox
               id="spoilers"
               checked={containsSpoilers}
-              onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+              onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
               className="h-4 w-4"
             />
             <label
@@ -558,7 +763,14 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
           </div>
           <Button
             onClick={handlePost}
-            disabled={isPosting || !content.trim() || content.length > maxChars}
+            disabled={
+              isPosting || 
+              !content.trim() || 
+              content.length > maxChars ||
+              (postMode === "prediction" && content && (
+                (predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()))
+              ))
+            }
             className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto text-sm"
           >
             {getButtonText()}
