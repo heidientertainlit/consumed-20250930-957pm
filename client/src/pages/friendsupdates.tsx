@@ -433,6 +433,9 @@ export default function FriendsUpdates() {
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("friends");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
+  const [ratingReplyOpen, setRatingReplyOpen] = useState<Set<string>>(new Set()); // Track rating reply forms
+  const [ratingReplyInputs, setRatingReplyInputs] = useState<{ [postId: string]: { rating: string; review: string } }>({}); // Rating reply inputs
+  const [starHover, setStarHover] = useState<{ [postId: string]: number }>({}); // Star hover state
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -1013,6 +1016,58 @@ export default function FriendsUpdates() {
     if (!commentLikesEnabled) return; // Safety check
     const wasLiked = likedComments.has(commentId);
     commentLikeMutation.mutate({ commentId, wasLiked });
+  };
+
+  const toggleRatingReply = (postId: string) => {
+    setRatingReplyOpen(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+        // Open comments section if not already open
+        setExpandedComments(prevComments => new Set(prevComments).add(postId));
+      }
+      return newSet;
+    });
+  };
+
+  const handleRatingInputChange = (postId: string, field: 'rating' | 'review', value: string) => {
+    setRatingReplyInputs(prev => ({
+      ...prev,
+      [postId]: {
+        ...prev[postId],
+        rating: field === 'rating' ? value : (prev[postId]?.rating || ''),
+        review: field === 'review' ? value : (prev[postId]?.review || '')
+      }
+    }));
+  };
+
+  const handleStarClick = (postId: string, star: number) => {
+    handleRatingInputChange(postId, 'rating', star.toString());
+  };
+
+  const submitRatingReply = (postId: string) => {
+    const ratingData = ratingReplyInputs[postId];
+    if (!ratingData?.rating || !ratingData?.review.trim()) return;
+
+    // Format as "X.X. Review text" to work with existing renderPostWithRating
+    const formattedComment = `${ratingData.rating}. ${ratingData.review.trim()}`;
+    
+    // Submit as a regular comment
+    commentMutation.mutate({ postId, content: formattedComment });
+
+    // Clear the form and close it
+    setRatingReplyInputs(prev => ({ ...prev, [postId]: { rating: '', review: '' } }));
+    setRatingReplyOpen(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(postId);
+      return newSet;
+    });
+  };
+
+  const hasRating = (content: string): boolean => {
+    return /^\s*(\d{1,2}(?:\.\d{1,2})?)\s*[.:]/.test(content);
   };
 
   const toggleComments = (postId: string) => {
@@ -1763,11 +1818,91 @@ export default function FriendsUpdates() {
                           <MessageCircle size={18} />
                           <span className="text-sm">{post.comments}</span>
                         </button>
+                        {hasRating(post.content) && (
+                          <button 
+                            onClick={() => toggleRatingReply(post.id)}
+                            className={`flex items-center space-x-2 transition-colors ${
+                              ratingReplyOpen.has(post.id)
+                                ? 'text-purple-600'
+                                : 'text-gray-500 hover:text-purple-600'
+                            }`}
+                            data-testid={`button-rate-review-${post.id}`}
+                          >
+                            <Star size={18} fill={ratingReplyOpen.has(post.id) ? 'currentColor' : 'none'} />
+                            <span className="text-sm">Rate & Review</span>
+                          </button>
+                        )}
                       </div>
                       <div className="text-sm text-gray-500">
                         {formatDate(post.timestamp)}
                       </div>
                     </div>
+
+                    {/* Rating Reply Form */}
+                    {ratingReplyOpen.has(post.id) && (
+                      <div className="bg-purple-50 rounded-lg p-4 space-y-3 border border-purple-200">
+                        <p className="text-sm font-medium text-purple-900">Your Rating & Review</p>
+                        
+                        {/* Star Rating */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                onClick={() => handleStarClick(post.id, star)}
+                                onMouseEnter={() => setStarHover(prev => ({ ...prev, [post.id]: star }))}
+                                onMouseLeave={() => setStarHover(prev => ({ ...prev, [post.id]: 0 }))}
+                                className="p-1 hover:scale-110 transition-transform"
+                                data-testid={`rating-star-${star}`}
+                              >
+                                <Star
+                                  size={20}
+                                  className={`${
+                                    star <= (starHover[post.id] || parseFloat(ratingReplyInputs[post.id]?.rating || '0'))
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'fill-gray-300 text-gray-300'
+                                  } transition-colors`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                          <span className="text-sm font-semibold text-gray-700">
+                            {ratingReplyInputs[post.id]?.rating || '0'}/5
+                          </span>
+                        </div>
+
+                        {/* Review Text */}
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Write your review..."
+                            value={ratingReplyInputs[post.id]?.review || ''}
+                            onChange={(e) => handleRatingInputChange(post.id, 'review', e.target.value)}
+                            className="bg-white text-black border-purple-300 focus:border-purple-500 focus:ring-purple-500"
+                            data-testid="rating-review-input"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              onClick={() => toggleRatingReply(post.id)}
+                              variant="outline"
+                              size="sm"
+                              className="text-gray-600 hover:text-gray-900"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => submitRatingReply(post.id)}
+                              disabled={!ratingReplyInputs[post.id]?.rating || !ratingReplyInputs[post.id]?.review.trim()}
+                              size="sm"
+                              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                              data-testid="submit-rating-review"
+                            >
+                              <Send size={14} className="mr-1" />
+                              Post Review
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Comments Section */}
                     {expandedComments.has(post.id) && (
