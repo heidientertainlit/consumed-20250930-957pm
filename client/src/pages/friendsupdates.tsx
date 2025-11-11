@@ -1477,85 +1477,104 @@ export default function FriendsUpdates() {
               })()}
               
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
-                // Inject PlayCard every 3rd post
-                const shouldShowPlayCard = (postIndex + 1) % 3 === 0;
-                const playCardIndex = Math.floor(postIndex / 3);
+                // Pattern: 2 posts → prediction → trivia → creator update → 2 posts → recommended → (repeat)
+                // Pattern repeats every 8 items
+                const patternPosition = postIndex % 8;
+                
+                // After 2nd post (position 2), show prediction
+                const shouldShowPrediction = patternPosition === 2;
+                
+                // After prediction (position 3), show trivia
+                const shouldShowTrivia = patternPosition === 3;
+                const triviaIndex = Math.floor(postIndex / 8);
                 const currentGame = playGames && playGames.length > 0 
-                  ? playGames[playCardIndex % playGames.length]
+                  ? playGames[triviaIndex % playGames.length]
                   : null;
-
-                // Only show quick games inline (no long-form trivia or multi-category predictions)
-                const canPlayInline = currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory;
-
-                // Inject Creator Update Card every 6th post
-                const shouldShowCreatorUpdate = (postIndex + 1) % 6 === 0;
-                const creatorUpdateIndex = Math.floor(postIndex / 6);
+                
+                // After trivia (position 4), show creator update
+                const shouldShowCreatorUpdate = patternPosition === 4;
+                const creatorUpdateIndex = Math.floor(postIndex / 8);
                 const currentCreatorUpdate = creatorUpdates && creatorUpdates.length > 0 
                   ? creatorUpdates[creatorUpdateIndex % creatorUpdates.length]
                   : null;
-
-                // Inject MediaCarousel every 4th post, rotating through types
-                const shouldShowMediaCarousel = (postIndex + 1) % 4 === 0;
-                const carouselIndex = Math.floor(postIndex / 4);
+                
+                // After 2 more posts (position 7), show recommended carousel
+                const shouldShowMediaCarousel = patternPosition === 7;
+                const carouselIndex = Math.floor(postIndex / 8);
                 
                 // Rotation order: Recommended → Podcasts → Movies → (repeat)
                 const carouselTypes = [
-                  { type: 'mixed', title: 'Recommended based on your tastes', items: recommendedContent },
+                  { type: 'mixed', title: 'Recommended for you', items: recommendedContent },
                   { type: 'podcast', title: 'Trending Podcasts', items: trendingPodcasts },
                   { type: 'movie', title: 'Trending Movies', items: trendingMovies },
                 ];
                 const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length];
+                
+                // Dummy predictions data
+                const predictions = [
+                  {
+                    id: "pred-1",
+                    question: "Will Dune Part 2 win Best Picture at the Oscars?",
+                    creator: { username: "heidi" },
+                    invitedFriend: { username: "trey" },
+                    creatorPrediction: "Yes",
+                    friendPrediction: "No",
+                    mediaTitle: "Dune Part 2",
+                    participantCount: 8,
+                    userHasAnswered: false
+                  },
+                  {
+                    id: "pred-2",
+                    question: "Will Taylor Swift release another album this year?",
+                    creator: { username: "sarah" },
+                    invitedFriend: { username: "maya" },
+                    creatorPrediction: "Yes - in November",
+                    friendPrediction: undefined,
+                    mediaTitle: "Taylor Swift",
+                    participantCount: 2,
+                    userHasAnswered: false
+                  },
+                  {
+                    id: "pred-3",
+                    question: "Will they finish watching Breaking Bad?",
+                    creator: { username: "alex" },
+                    invitedFriend: { username: "jordan" },
+                    creatorPrediction: "Yes - they're hooked!",
+                    friendPrediction: "Probably, but it'll take months",
+                    mediaTitle: "Breaking Bad",
+                    participantCount: 15,
+                    userHasAnswered: true
+                  }
+                ];
+                const predictionIndex = Math.floor(postIndex / 8);
+                const currentPrediction = predictions[predictionIndex % predictions.length];
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
-                    {/* Insert MediaCarousel every 4th post */}
-                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
+                    {/* After 2 posts: Show Prediction */}
+                    {shouldShowPrediction && (
                       <div className="mb-4">
-                        <MediaCarousel
-                          title={currentCarousel.title}
-                          mediaType={currentCarousel.type}
-                          items={currentCarousel.items}
-                          onItemClick={handleMediaClick}
+                        <CollaborativePredictionCard 
+                          prediction={currentPrediction}
+                          onCastPrediction={() => console.log("Cast prediction")}
                         />
                       </div>
                     )}
 
-                    {/* Insert Play Carousel every 3rd post */}
-                    {shouldShowPlayCard && playGames && playGames.length > 0 && (() => {
-                      // Filter to only quick games that can play inline
-                      const inlineGames = playGames.filter((g: any) => !g.isLongForm && !g.isMultiCategory);
-                      if (inlineGames.length === 0) return null;
-                      
-                      return (
-                        <div className="mb-4">
-                          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-                            {inlineGames.slice(0, 5).map((game: any, idx: number) => (
-                              <div key={game.id} className="snap-center flex-shrink-0 w-full">
-                                <PlayCard 
-                                  game={game}
-                                  compact={true}
-                                  onComplete={() => {
-                                    queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
-                                  }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                          {inlineGames.length > 1 && (
-                            <div className="flex justify-center gap-1.5 mt-1">
-                              {inlineGames.slice(0, 5).map((_: any, idx: number) => (
-                                <div 
-                                  key={idx}
-                                  className="w-1.5 h-1.5 rounded-full bg-purple-300"
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
+                    {/* After prediction: Show Trivia */}
+                    {shouldShowTrivia && currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory && (
+                      <div className="mb-4">
+                        <PlayCard 
+                          game={currentGame}
+                          compact={true}
+                          onComplete={() => {
+                            queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
+                          }}
+                        />
+                      </div>
+                    )}
 
-                    {/* Insert Creator Update Card every 6th post */}
+                    {/* After trivia: Show Pop Culture Update */}
                     {shouldShowCreatorUpdate && currentCreatorUpdate && (
                       <div className="mb-4">
                         <CreatorUpdateCard 
@@ -1567,6 +1586,18 @@ export default function FriendsUpdates() {
                                              currentCreatorUpdate.type === 'tv' ? 'tv' : 'mixed';
                             setLocation(`/media/${mediaType}/${currentCreatorUpdate.external_source}/${currentCreatorUpdate.external_id}`);
                           }}
+                        />
+                      </div>
+                    )}
+
+                    {/* After 2 more posts: Show Recommended Carousel */}
+                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
+                      <div className="mb-4">
+                        <MediaCarousel
+                          title={currentCarousel.title}
+                          mediaType={currentCarousel.type}
+                          items={currentCarousel.items}
+                          onItemClick={handleMediaClick}
                         />
                       </div>
                     )}
