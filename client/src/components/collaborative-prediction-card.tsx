@@ -49,6 +49,7 @@ export default function CollaborativePredictionCard({
   const [commentText, setCommentText] = useState("");
   const [liked, setLiked] = useState(isLiked);
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount);
+  const [showParticipants, setShowParticipants] = useState(false);
 
   // Calculate vote percentages
   const yesPercentage = voteCounts && voteCounts.total > 0 
@@ -163,6 +164,42 @@ export default function CollaborativePredictionCard({
       return response.json();
     },
     enabled: showComments && !!poolId,
+  });
+
+  // Fetch participants
+  const { data: participantsData } = useQuery({
+    queryKey: ['prediction-participants', poolId],
+    queryFn: async () => {
+      if (!session?.access_token || !poolId) return { participants: [] };
+
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: { Authorization: `Bearer ${session.access_token}` }
+        }
+      });
+
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .select(`
+          prediction,
+          users:user_id (
+            user_name,
+            display_name
+          )
+        `)
+        .eq('pool_id', poolId);
+
+      if (error) {
+        console.error('Error fetching participants:', error);
+        return { participants: [] };
+      }
+
+      return { participants: data || [] };
+    },
+    enabled: showParticipants && !!poolId,
   });
 
   // Post comment mutation
@@ -336,10 +373,58 @@ export default function CollaborativePredictionCard({
 
       {/* Participant count */}
       {voteCounts && voteCounts.total > 0 && (
-        <p className="text-xs text-center text-gray-500 mb-3">
-          <Users size={12} className="inline mr-1" />
-          {voteCounts.total} predictions
-        </p>
+        <div className="mb-3">
+          <button
+            onClick={() => setShowParticipants(!showParticipants)}
+            className="w-full text-xs text-center text-purple-600 hover:text-purple-700 font-medium"
+          >
+            <Users size={12} className="inline mr-1" />
+            {voteCounts.total} predictions {showParticipants ? '▲' : '▼'}
+          </button>
+          
+          {showParticipants && participantsData?.participants && (
+            <div className="mt-3 bg-gray-50 rounded-xl p-3 space-y-2">
+              {/* Group participants by their vote */}
+              {(() => {
+                const yesPredictions = participantsData.participants.filter((p: any) => p.prediction === 'Yes');
+                const noPredictions = participantsData.participants.filter((p: any) => p.prediction === 'No');
+                
+                return (
+                  <div className="space-y-3">
+                    {yesPredictions.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                          {creatorPrediction} ({yesPredictions.length})
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {yesPredictions.map((p: any, idx: number) => (
+                            <span key={idx} className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                              @{p.users?.user_name || p.users?.display_name || 'unknown'}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {noPredictions.length > 0 && friendPrediction && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                          {friendPrediction} ({noPredictions.length})
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {noPredictions.map((p: any, idx: number) => (
+                            <span key={idx} className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                              @{p.users?.user_name || p.users?.display_name || 'unknown'}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Like and Comment Actions */}
