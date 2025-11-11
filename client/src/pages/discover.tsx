@@ -601,7 +601,7 @@ export default function Discover() {
 
         {/* Trending Content Sections */}
         <div className="space-y-8">
-          {/* Personalized Recommendations */}
+          {/* Personalized Recommendations - First Row */}
           {recommendedContent.length > 0 && (selectedMediaFilter === "all") && (
             <MediaCarousel
               title="Recommended For You"
@@ -611,12 +611,12 @@ export default function Discover() {
             />
           )}
 
-          {/* Netflix Top TV Shows */}
-          {netflixTVShows.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "tv") && (
+          {/* Top Shows Across All Streaming Platforms - Second Row */}
+          {(netflixTVShows.length > 0 || hboTVShows.length > 0) && (selectedMediaFilter === "all" || selectedMediaFilter === "tv") && (
             <MediaCarousel
-              title="Top 10 TV Shows on Netflix"
+              title="Top Shows Across All Streaming Platforms"
               mediaType="tv"
-              items={netflixTVShows}
+              items={[...netflixTVShows.slice(0, 10), ...hboTVShows.slice(0, 10)]}
               onItemClick={handleMediaClick}
             />
           )}
@@ -627,16 +627,6 @@ export default function Discover() {
               title="Top 10 Movies on Netflix"
               mediaType="movie"
               items={netflixMovies}
-              onItemClick={handleMediaClick}
-            />
-          )}
-
-          {/* HBO Max Top TV Shows */}
-          {hboTVShows.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "tv") && (
-            <MediaCarousel
-              title="Top 10 TV Shows on HBO Max"
-              mediaType="tv"
-              items={hboTVShows}
               onItemClick={handleMediaClick}
             />
           )}
