@@ -438,7 +438,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                               }
                               disabled={predictionType === "yes-no"}
                               className={`w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                                predictionType === "yes-no" ? "bg-gray-100 cursor-not-allowed text-gray-900 font-medium" : "bg-white"
+                                predictionType === "yes-no" ? "bg-gray-100 cursor-not-allowed text-black font-medium" : "bg-white text-black"
                               }`}
                             />
                           ))}
