@@ -128,7 +128,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                     title={action.label}
                   >
                     <action.icon className="w-4 h-4" />
-                    <span className="text-[10px] leading-tight">{action.label.split(' ')[0]}</span>
+                    <span className="text-[10px] leading-tight whitespace-nowrap">{action.label}</span>
                   </button>
                 ))}
               </div>
