@@ -25,6 +25,11 @@ interface CollaborativePrediction {
   commentsCount?: number;
   isLiked?: boolean;
   poolId?: string;
+  voteCounts?: {
+    yes: number;
+    no: number;
+    total: number;
+  };
 }
 
 interface CollaborativePredictionCardProps {
@@ -36,7 +41,7 @@ export default function CollaborativePredictionCard({
   prediction, 
   onCastPrediction 
 }: CollaborativePredictionCardProps) {
-  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId } = prediction;
+  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts } = prediction;
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -44,6 +49,14 @@ export default function CollaborativePredictionCard({
   const [commentText, setCommentText] = useState("");
   const [liked, setLiked] = useState(isLiked);
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount);
+
+  // Calculate vote percentages
+  const yesPercentage = voteCounts && voteCounts.total > 0 
+    ? Math.round((voteCounts.yes / voteCounts.total) * 100)
+    : 0;
+  const noPercentage = voteCounts && voteCounts.total > 0
+    ? Math.round((voteCounts.no / voteCounts.total) * 100)
+    : 0;
 
   // Vote mutation
   const voteMutation = useMutation({
@@ -234,30 +247,64 @@ export default function CollaborativePredictionCard({
         <button
           onClick={() => handleVote("Yes")}
           disabled={userHasAnswered || voteMutation.isPending}
-          className={`flex-1 rounded-lg p-2 border transition-all ${
+          className={`flex-1 rounded-lg p-2 border transition-all relative overflow-hidden ${
             userHasAnswered
-              ? "bg-purple-50 border-purple-200 cursor-default"
+              ? "bg-white border-purple-200 cursor-default"
               : "bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 cursor-pointer"
           }`}
           data-testid="button-vote-yes"
         >
-          <p className="text-xs text-gray-600 mb-0.5">{creator.username}</p>
-          <p className="text-sm font-semibold text-gray-900">{creatorPrediction}</p>
+          {/* Progress bar (shown after voting) */}
+          {userHasAnswered && voteCounts && (
+            <div 
+              className="absolute inset-0 bg-purple-100 transition-all duration-300"
+              style={{ width: `${yesPercentage}%` }}
+              data-testid="progress-yes"
+            />
+          )}
+          <div className="relative z-10">
+            <p className="text-xs text-gray-600 mb-0.5">{creator.username}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-900">{creatorPrediction}</p>
+              {userHasAnswered && voteCounts && (
+                <span className="text-xs font-bold text-purple-600" data-testid="percentage-yes">
+                  {yesPercentage}%
+                </span>
+              )}
+            </div>
+          </div>
         </button>
         
         {friendPrediction ? (
           <button
             onClick={() => handleVote("No")}
             disabled={userHasAnswered || voteMutation.isPending}
-            className={`flex-1 rounded-lg p-2 border transition-all ${
+            className={`flex-1 rounded-lg p-2 border transition-all relative overflow-hidden ${
               userHasAnswered
-                ? "bg-purple-50 border-purple-200 cursor-default"
+                ? "bg-white border-purple-200 cursor-default"
                 : "bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 cursor-pointer"
             }`}
             data-testid="button-vote-no"
           >
-            <p className="text-xs text-gray-600 mb-0.5">{invitedFriend.username}</p>
-            <p className="text-sm font-semibold text-gray-900">{friendPrediction}</p>
+            {/* Progress bar (shown after voting) */}
+            {userHasAnswered && voteCounts && (
+              <div 
+                className="absolute inset-0 bg-purple-100 transition-all duration-300"
+                style={{ width: `${noPercentage}%` }}
+                data-testid="progress-no"
+              />
+            )}
+            <div className="relative z-10">
+              <p className="text-xs text-gray-600 mb-0.5">{invitedFriend.username}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-900">{friendPrediction}</p>
+                {userHasAnswered && voteCounts && (
+                  <span className="text-xs font-bold text-purple-600" data-testid="percentage-no">
+                    {noPercentage}%
+                  </span>
+                )}
+              </div>
+            </div>
           </button>
         ) : (
           <div className="flex-1 bg-gray-50 rounded-lg p-2 border border-gray-200">

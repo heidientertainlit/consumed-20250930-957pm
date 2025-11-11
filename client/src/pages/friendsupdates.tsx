@@ -1521,7 +1521,12 @@ export default function FriendsUpdates() {
                     friendPrediction: "No",
                     mediaTitle: "Dune Part 2",
                     participantCount: 8,
-                    userHasAnswered: false
+                    userHasAnswered: true,
+                    poolId: "pred-pool-1",
+                    voteCounts: { yes: 5, no: 3, total: 8 },
+                    likesCount: 12,
+                    commentsCount: 3,
+                    isLiked: false
                   },
                   {
                     id: "pred-2",
