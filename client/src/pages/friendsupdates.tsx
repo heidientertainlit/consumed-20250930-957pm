@@ -1033,28 +1033,33 @@ export default function FriendsUpdates() {
     setInlineRatings(prev => ({ ...prev, [postId]: rating }));
   };
 
-  const submitInlineRating = async (postId: string) => {
+  const submitInlineRating = (postId: string) => {
     const rating = inlineRatings[postId];
     if (!rating || parseFloat(rating) === 0) return;
 
     // Format as rating-only comment: "4.5."
     const formattedComment = `${rating}.`;
     
-    try {
-      await commentMutation.mutateAsync({
+    // Use the existing comment mutation
+    commentMutation.mutate(
+      {
         postId,
         content: formattedComment,
-      });
-      
-      // Clear rating and close inline rating
-      setInlineRatings(prev => ({ ...prev, [postId]: '' }));
-      setActiveInlineRating(null);
-      
-      // Optionally open comments to show the rating
-      setExpandedComments(prev => new Set(prev).add(postId));
-    } catch (error) {
-      console.error('Error submitting rating:', error);
-    }
+      },
+      {
+        onSuccess: () => {
+          // Clear rating and close inline rating
+          setInlineRatings(prev => ({ ...prev, [postId]: '' }));
+          setActiveInlineRating(null);
+          
+          // Optionally open comments to show the rating
+          setExpandedComments(prev => new Set(prev).add(postId));
+        },
+        onError: (error) => {
+          console.error('Error submitting rating:', error);
+        },
+      }
+    );
   };
 
   const toggleComments = (postId: string) => {
@@ -1846,7 +1851,7 @@ export default function FriendsUpdates() {
                             <span className="text-sm text-gray-700">/5</span>
                             <Button
                               onClick={() => submitInlineRating(post.id)}
-                              disabled={!inlineRatings[post.id] || parseFloat(inlineRatings[post.id]) === 0}
+                              disabled={!inlineRatings[post.id] || parseFloat(inlineRatings[post.id]) === 0 || commentMutation.isPending}
                               size="sm"
                               className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 h-7"
                             >
