@@ -365,7 +365,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                         onClick={() => handlePredictionTypeChange("yes-no")}
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                           predictionType === "yes-no"
-                            ? "bg-red-600 text-white"
+                            ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
@@ -375,7 +375,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                         onClick={() => handlePredictionTypeChange("multi-choice")}
                         className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                           predictionType === "multi-choice"
-                            ? "bg-red-600 text-white"
+                            ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
@@ -391,17 +391,23 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                         Or choose a pre-written prediction to post
                       </p>
                       <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {[
+                        {(predictionType === "yes-no" ? [
                           "Will Dune Part 3 get greenlit?",
                           "Will Taylor Swift win Album of the Year at the Grammys?",
                           "Will Stranger Things S5 be the final season?",
                           "Will the Barbie sequel happen?",
                           "Will Avatar 3 make $2 billion at the box office?"
-                        ].map((suggestion, idx) => (
+                        ] : [
+                          "Which Marvel movie will gross the most in 2025?",
+                          "Which streaming service will win the most Emmys?",
+                          "Which book will top the NYT Bestseller list in January?",
+                          "Which artist will headline the Super Bowl halftime show?",
+                          "Which Netflix show will get renewed first?"
+                        ]).map((suggestion, idx) => (
                           <button
                             key={idx}
                             onClick={() => setContent(suggestion)}
-                            className="w-full text-left px-3 py-2 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg text-xs text-gray-900 transition-colors"
+                            className="w-full text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg text-xs text-gray-900 transition-colors"
                           >
                             {suggestion}
                           </button>
@@ -444,7 +450,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                         onClick={handleAttachMedia}
                         size="sm"
                         variant="outline"
-                        className="w-full h-10 text-xs text-red-600 border-red-300 hover:bg-red-50"
+                        className="w-full h-10 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
                       >
                         <Search className="w-4 h-4 mr-2" />
                         {attachedMedia ? "Change Related Media" : "Add Related Media"}
@@ -452,7 +458,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
                       {/* Attached Media Display */}
                       {attachedMedia && (
-                        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-2">
+                        <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg p-2">
                           {attachedMedia.poster_url && (
                             <img 
                               src={attachedMedia.poster_url} 
@@ -477,7 +483,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
                       {/* Media Search */}
                       {showMediaSearch && (
-                        <div className="border border-red-200 rounded-lg p-2 bg-red-50">
+                        <div className="border border-purple-200 rounded-lg p-2 bg-purple-50">
                           <input
                             type="text"
                             value={searchQuery}
@@ -486,7 +492,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                               handleMediaSearch(e.target.value);
                             }}
                             placeholder="Search for related media..."
-                            className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
+                            className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
                           />
                           {searchResults.length > 0 && (
                             <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
@@ -512,7 +518,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                             </div>
                           )}
                           {isSearching && (
-                            <p className="text-xs text-red-600 mt-2">Searching...</p>
+                            <p className="text-xs text-purple-600 mt-2">Searching...</p>
                           )}
                         </div>
                       )}
@@ -662,7 +668,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
               <Checkbox
                 id="spoilers"
                 checked={containsSpoilers}
-                onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
+                onCheckedChange={(checked) => setContainsSpoilers(checked === true)}
                 className="h-4 w-4"
               />
               <label
@@ -691,9 +697,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   isPosting || 
                   !content.trim() || 
                   content.length > maxChars ||
-                  (postMode === "prediction" && content && (
-                    (predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()))
-                  ))
+                  (postMode === "prediction" && content && predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()))
                 }
                 className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto text-sm"
               >
