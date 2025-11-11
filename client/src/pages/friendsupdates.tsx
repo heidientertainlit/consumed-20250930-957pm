@@ -1556,17 +1556,6 @@ export default function FriendsUpdates() {
                     isLiked: false
                   },
                   {
-                    id: "pred-2",
-                    question: "Will Taylor Swift release another album this year?",
-                    creator: { username: "sarah" },
-                    invitedFriend: { username: "maya" },
-                    creatorPrediction: "Yes - in November",
-                    friendPrediction: undefined,
-                    mediaTitle: "Taylor Swift",
-                    participantCount: 2,
-                    userHasAnswered: false
-                  },
-                  {
                     id: "pred-3",
                     question: "Will they finish watching Breaking Bad?",
                     creator: { username: "alex" },
@@ -1575,7 +1564,12 @@ export default function FriendsUpdates() {
                     friendPrediction: "Probably, but it'll take months",
                     mediaTitle: "Breaking Bad",
                     participantCount: 15,
-                    userHasAnswered: true
+                    userHasAnswered: true,
+                    poolId: "pred-pool-3",
+                    voteCounts: { yes: 9, no: 6, total: 15 },
+                    likesCount: 8,
+                    commentsCount: 2,
+                    isLiked: false
                   }
                 ];
                 const predictionIndex = Math.floor(postIndex / 8);
