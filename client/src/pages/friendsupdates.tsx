@@ -1355,7 +1355,7 @@ export default function FriendsUpdates() {
         <div className="space-y-6">
 
           {/* Vibrant Share Composer */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-1 shadow-lg">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-[3px] shadow-lg">
             <div className="bg-white rounded-full px-5 py-3.5">
               <div className="flex items-center gap-3">
                 <MessageCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
