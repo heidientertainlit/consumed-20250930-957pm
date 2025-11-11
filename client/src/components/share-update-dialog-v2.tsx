@@ -209,8 +209,6 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     setPredictionType(type);
     if (type === "yes-no") {
       setPredictionOptions(["Yes", "No"]);
-    } else if (type === "head-to-head") {
-      setPredictionOptions(["", ""]);
     } else {
       setPredictionOptions(["", "", "", "", ""]);
     }
@@ -359,11 +357,38 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
               {/* Prediction Mode */}
               {postMode === "prediction" && (
                 <div className="space-y-3 mt-2">
+                  {/* Prediction Type Selector - Always visible */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Prediction Type</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handlePredictionTypeChange("yes-no")}
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          predictionType === "yes-no"
+                            ? "bg-red-600 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        Yes/No ✅
+                      </button>
+                      <button
+                        onClick={() => handlePredictionTypeChange("multi-choice")}
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          predictionType === "multi-choice"
+                            ? "bg-red-600 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        Multi-Choice 🆎
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Suggested Predictions - Only show when no content */}
                   {!content && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-700 mb-2">
-                        💡 Suggested Predictions
+                      <p className="text-xs text-gray-600 mb-2">
+                        Or choose a pre-written prediction to post
                       </p>
                       <div className="space-y-2 max-h-40 overflow-y-auto">
                         {[
@@ -388,43 +413,6 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   {/* Prediction Configuration - Show when content exists */}
                   {content && (
                     <>
-                      {/* Prediction Type Selector */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-2">Prediction Type</p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handlePredictionTypeChange("yes-no")}
-                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                              predictionType === "yes-no"
-                                ? "bg-red-600 text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
-                          >
-                            Yes/No ✅❌
-                          </button>
-                          <button
-                            onClick={() => handlePredictionTypeChange("head-to-head")}
-                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                              predictionType === "head-to-head"
-                                ? "bg-red-600 text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
-                          >
-                            Head-to-Head 🅰️🅱️
-                          </button>
-                          <button
-                            onClick={() => handlePredictionTypeChange("multi-choice")}
-                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                              predictionType === "multi-choice"
-                                ? "bg-red-600 text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
-                          >
-                            Multi-Choice 🆎
-                          </button>
-                        </div>
-                      </div>
-
                       {/* Prediction Options */}
                       <div>
                         <p className="text-xs font-semibold text-gray-700 mb-2">
@@ -440,8 +428,6 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                               placeholder={
                                 predictionType === "yes-no"
                                   ? option
-                                  : predictionType === "head-to-head"
-                                  ? `Option ${idx + 1}`
                                   : `Option ${idx + 1}`
                               }
                               disabled={predictionType === "yes-no"}
@@ -451,82 +437,6 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                             />
                           ))}
                         </div>
-                      </div>
-
-                      {/* Invited Friends */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-semibold text-gray-700">Invite Friends</p>
-                          <Button
-                            onClick={() => setShowFriendSearch(!showFriendSearch)}
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-xs"
-                          >
-                            <UserPlus className="w-3 h-3 mr-1" />
-                            {showFriendSearch ? "Cancel" : "Add"}
-                          </Button>
-                        </div>
-
-                        {/* Invited Friends List */}
-                        {invitedFriends.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {invitedFriends.map((friend) => (
-                              <div
-                                key={friend.id}
-                                className="flex items-center gap-1 bg-red-50 border border-red-200 rounded-full px-2 py-1"
-                              >
-                                <span className="text-xs text-gray-900">@{friend.user_name}</span>
-                                <button
-                                  onClick={() => handleRemoveInvitedFriend(friend.id)}
-                                  className="text-gray-400 hover:text-gray-900"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Friend Search */}
-                        {showFriendSearch && (
-                          <div className="border border-red-200 rounded-lg p-2 bg-red-50">
-                            <input
-                              type="text"
-                              value={friendSearchQuery}
-                              onChange={(e) => {
-                                setFriendSearchQuery(e.target.value);
-                                handleFriendSearch(e.target.value);
-                              }}
-                              placeholder="Search friends..."
-                              className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
-                            />
-                            {friendSearchResults.length > 0 && (
-                              <div className="mt-2 max-h-32 overflow-y-auto space-y-1">
-                                {friendSearchResults.slice(0, 5).map((friend) => (
-                                  <button
-                                    key={friend.id}
-                                    onClick={() => handleInviteFriend(friend)}
-                                    className="w-full flex items-center gap-2 p-1.5 hover:bg-white rounded text-left"
-                                  >
-                                    <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-white text-xs font-semibold">
-                                      {friend.user_name?.substring(0, 2).toUpperCase() || 'U'}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-medium text-gray-900 truncate">@{friend.user_name}</p>
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {!showFriendSearch && invitedFriends.length === 0 && (
-                          <p className="text-xs text-gray-500 italic">
-                            💬 Others can join after you post!
-                          </p>
-                        )}
                       </div>
 
                       {/* Add Related Media */}
@@ -746,35 +656,114 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-gray-200 flex items-center justify-between bg-white">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="spoilers"
-              checked={containsSpoilers}
-              onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
-              className="h-4 w-4"
-            />
-            <label
-              htmlFor="spoilers"
-              className="text-xs text-gray-600 cursor-pointer select-none"
-            >
-              Contains spoilers
-            </label>
+        <div className="px-4 py-2.5 border-t border-gray-200 bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="spoilers"
+                checked={containsSpoilers}
+                onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
+                className="h-4 w-4"
+              />
+              <label
+                htmlFor="spoilers"
+                className="text-xs text-gray-600 cursor-pointer select-none"
+              >
+                Contains spoilers
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Invite Friends Button - Only show in prediction mode with content */}
+              {postMode === "prediction" && content && (
+                <Button
+                  onClick={() => setShowFriendSearch(!showFriendSearch)}
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-3 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
+                >
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  Invite Friends
+                </Button>
+              )}
+              <Button
+                onClick={handlePost}
+                disabled={
+                  isPosting || 
+                  !content.trim() || 
+                  content.length > maxChars ||
+                  (postMode === "prediction" && content && (
+                    (predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()))
+                  ))
+                }
+                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto text-sm"
+              >
+                {getButtonText()}
+              </Button>
+            </div>
           </div>
-          <Button
-            onClick={handlePost}
-            disabled={
-              isPosting || 
-              !content.trim() || 
-              content.length > maxChars ||
-              (postMode === "prediction" && content && (
-                (predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()))
-              ))
-            }
-            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto text-sm"
-          >
-            {getButtonText()}
-          </Button>
+
+          {/* Friend Search Dropdown - Only show when active in prediction mode */}
+          {postMode === "prediction" && showFriendSearch && (
+            <div className="border border-purple-200 rounded-lg p-3 bg-purple-50 mb-2">
+              <input
+                type="text"
+                value={friendSearchQuery}
+                onChange={(e) => {
+                  setFriendSearchQuery(e.target.value);
+                  handleFriendSearch(e.target.value);
+                }}
+                placeholder="Search friends to invite..."
+                className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white mb-2"
+                autoFocus
+              />
+
+              {/* Invited Friends List */}
+              {invitedFriends.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {invitedFriends.map((friend) => (
+                    <div
+                      key={friend.id}
+                      className="flex items-center gap-1 bg-purple-100 border border-purple-300 rounded-full px-2 py-1"
+                    >
+                      <span className="text-xs text-gray-900">@{friend.user_name}</span>
+                      <button
+                        onClick={() => handleRemoveInvitedFriend(friend.id)}
+                        className="text-gray-400 hover:text-gray-900"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Friend Search Results */}
+              {friendSearchResults.length > 0 && (
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {friendSearchResults.slice(0, 5).map((friend) => (
+                    <button
+                      key={friend.id}
+                      onClick={() => handleInviteFriend(friend)}
+                      className="w-full flex items-center gap-2 p-2 hover:bg-white rounded text-left transition-colors"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-semibold">
+                        {friend.user_name?.substring(0, 2).toUpperCase() || 'U'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">@{friend.user_name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {invitedFriends.length === 0 && !friendSearchQuery && (
+                <p className="text-xs text-gray-500 italic">
+                  💬 Others can join after you post!
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
