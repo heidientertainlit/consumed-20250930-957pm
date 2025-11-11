@@ -440,9 +440,9 @@ export default function FriendsUpdates() {
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
   
-  // Rotating verbs for composer placeholder
+  // Rotating verbs for header subheadline
   useEffect(() => {
-    const verbs = ["watching", "reading", "listening to", "playing"];
+    const verbs = ["watching", "reading", "playing", "listening to", "consuming"];
     let index = 0;
     
     const interval = setInterval(() => {
@@ -1344,10 +1344,10 @@ export default function FriendsUpdates() {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Feed
+            What Are You Consuming?
           </h1>
           <p className="text-base text-gray-600">
-            See what your friends are watching, reading, and listening to. Ask questions, share reactions, or post what's on your mind.
+            See what your friends are <span className="text-purple-600 font-medium">{currentVerb}</span>
           </p>
         </div>
 
@@ -1366,7 +1366,7 @@ export default function FriendsUpdates() {
                   data-testid="composer-input"
                 >
                   <div className="text-sm font-semibold text-gray-900">
-                    What are you <span className="text-purple-600">{currentVerb}</span>?
+                    What are you consuming?
                   </div>
                   <div className="text-xs text-gray-400 mt-0.5">
                     Share what you're watching, post hot takes, predictions & more
