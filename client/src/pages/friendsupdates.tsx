@@ -1383,8 +1383,8 @@ export default function FriendsUpdates() {
           <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm overflow-x-auto">
             <div className="flex gap-6 justify-center">
               {[
-                { id: "friends", label: "Friends", icon: null },
-                { id: "everyone", label: "Everyone", icon: null },
+                { id: "friends", label: "Friends", icon: Users, color: "text-purple-600" },
+                { id: "everyone", label: "Everyone", icon: Users, color: "text-purple-600" },
                 { id: "consuming", label: "Consuming", icon: Plus, color: "text-purple-600" },
                 { id: "hot-take", label: "Hot Take", icon: Flame, color: "text-orange-600" },
                 { id: "prediction", label: "Prediction", icon: Target, color: "text-red-600" },
@@ -1399,12 +1399,12 @@ export default function FriendsUpdates() {
                     onClick={() => setFeedFilter(filter.id)}
                     className={`flex flex-col items-center gap-1 transition-all ${
                       feedFilter === filter.id
-                        ? filter.color || "text-purple-600"
+                        ? filter.color
                         : "text-gray-700 hover:text-gray-900"
                     }`}
                     data-testid={`filter-${filter.id}`}
                   >
-                    {Icon && <Icon className="h-6 w-6" />}
+                    <Icon className="h-6 w-6" />
                     <span className="text-xs font-medium whitespace-nowrap">{filter.label}</span>
                   </button>
                 );
