@@ -373,9 +373,25 @@ export default function CommentsSection({
                 );
               })}
             </div>
-            <span className="text-sm font-semibold text-gray-700">
-              {commentRating || '0'}/5
-            </span>
+            <input
+              type="text"
+              value={commentRating || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Allow empty, numbers, and one decimal point
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  const num = parseFloat(value);
+                  // Validate range 0-5
+                  if (value === '' || (num >= 0 && num <= 5)) {
+                    onRatingChange?.(value);
+                  }
+                }
+              }}
+              placeholder="0"
+              className="w-16 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              data-testid="rating-input"
+            />
+            <span className="text-sm font-semibold text-gray-700">/5</span>
             {commentRating && parseFloat(commentRating) > 0 && (
               <button
                 onClick={() => onRatingChange?.('')}
@@ -395,7 +411,7 @@ export default function CommentsSection({
           <User size={16} className="text-gray-600" />
         </div>
         <MentionInput
-          placeholder={showRatingControls ? "Write your review..." : "Write a comment..."}
+          placeholder="Add a comment"
           value={commentInput}
           onChange={onCommentInputChange}
           className="bg-white text-black placeholder:text-gray-500"
