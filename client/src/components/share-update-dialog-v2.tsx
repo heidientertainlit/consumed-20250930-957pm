@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Star, Target, Flame, Vote, Search, UserPlus } from "lucide-react";
+import { X, Plus, Star, Target, Flame, Vote, Search, UserPlus, HelpCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +12,7 @@ interface ShareUpdateDialogV2Props {
   onClose: () => void;
 }
 
-type PostMode = "text" | "media" | "review" | "prediction" | "tribe" | "ranking" | "mood";
+type PostMode = "text" | "media" | "review" | "prediction" | "tribe" | "ranking" | "mood" | "trivia";
 type PredictionType = "yes-no" | "head-to-head" | "multi-choice";
 
 export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDialogV2Props) {
@@ -60,6 +60,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     { id: "prediction" as PostMode, icon: Target, label: "Prediction", color: "text-red-600" },
     { id: "tribe" as PostMode, icon: Vote, label: "Poll", color: "text-blue-600" },
     { id: "review" as PostMode, icon: Star, label: "Rate/Review", color: "text-yellow-600" },
+    { id: "trivia" as PostMode, icon: HelpCircle, label: "Trivia", color: "text-green-600" },
   ];
 
   const handlePost = async () => {
