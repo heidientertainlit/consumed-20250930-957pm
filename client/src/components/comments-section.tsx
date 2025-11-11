@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Send, User, Trash2, Heart, MessageCircle } from "lucide-react";
+import { Send, User, Trash2, Heart, MessageCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
@@ -33,6 +33,9 @@ interface CommentsSectionProps {
   onDeleteComment?: (commentId: string, postId: string) => void;
   onLikeComment?: (commentId: string) => void;
   likedComments?: Set<string>;
+  showRatingControls?: boolean; // Show rating controls for posts with ratings
+  commentRating?: string; // Current rating value
+  onRatingChange?: (rating: string) => void; // Callback for rating changes
 }
 
 interface CommentItemProps {
@@ -264,9 +267,13 @@ export default function CommentsSection({
   onDeleteComment,
   onLikeComment,
   likedComments = new Set(),
+  showRatingControls = false,
+  commentRating = '',
+  onRatingChange,
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
+  const [starHover, setStarHover] = useState(0);
   
   const { data: comments, isLoading } = useQuery({
     queryKey: ["post-comments", postId],
@@ -276,22 +283,102 @@ export default function CommentsSection({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmitComment(); // Top-level comment
+    
+    // If there's a rating, prepend it to the comment
+    let finalComment = commentInput;
+    if (showRatingControls && commentRating && parseFloat(commentRating) > 0) {
+      finalComment = `${commentRating}. ${commentInput}`;
+    }
+    
+    // Submit with formatted content
+    onSubmitComment(undefined, finalComment);
+    
+    // Clear rating after submit
+    if (onRatingChange) {
+      onRatingChange('');
+    }
+  };
+
+  const handleStarClick = (value: number, isHalf: boolean) => {
+    if (!onRatingChange) return;
+    const rating = isHalf ? value - 0.5 : value;
+    onRatingChange(rating.toString());
   };
 
   const handleSubmitReply = (parentCommentId: string, content: string) => {
     onSubmitComment(parentCommentId, content);
   };
 
+  const currentRating = parseFloat(commentRating || '0');
+
   return (
     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+      {/* Rating Controls (shown for posts with ratings) */}
+      {showRatingControls && (
+        <div className="bg-white rounded-lg p-3 border border-gray-200">
+          <p className="text-xs font-medium text-gray-600 mb-2">Add your rating (optional)</p>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => {
+                const fillLevel = Math.max(0, Math.min(1, currentRating - (star - 1)));
+                const isFullyFilled = fillLevel === 1;
+                const isHalfFilled = fillLevel === 0.5;
+                
+                return (
+                  <div key={star} className="relative inline-block">
+                    <button
+                      onClick={() => handleStarClick(star, false)}
+                      onMouseEnter={() => setStarHover(star)}
+                      onMouseLeave={() => setStarHover(0)}
+                      className="p-0.5 hover:scale-110 transition-transform"
+                      data-testid={`rating-star-${star}`}
+                      type="button"
+                    >
+                      <Star
+                        size={22}
+                        className={`${
+                          star <= (starHover || currentRating)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'fill-gray-200 text-gray-200'
+                        } transition-colors`}
+                      />
+                    </button>
+                    {/* Half-star overlay button */}
+                    <button
+                      onClick={() => handleStarClick(star, true)}
+                      onMouseEnter={() => setStarHover(star - 0.5)}
+                      className="absolute inset-0 w-1/2 cursor-pointer"
+                      aria-label={`${star - 0.5} stars`}
+                      type="button"
+                      data-testid={`rating-star-half-${star}`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <span className="text-sm font-semibold text-gray-700">
+              {commentRating || '0'}/5
+            </span>
+            {commentRating && parseFloat(commentRating) > 0 && (
+              <button
+                onClick={() => onRatingChange?.('')}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+                type="button"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Top-level Comment Input */}
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
           <User size={16} className="text-gray-600" />
         </div>
         <MentionInput
-          placeholder="Write a comment..."
+          placeholder={showRatingControls ? "Write your review..." : "Write a comment..."}
           value={commentInput}
           onChange={onCommentInputChange}
           className="bg-white text-black placeholder:text-gray-500"
