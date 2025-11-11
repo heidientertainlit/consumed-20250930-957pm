@@ -1516,7 +1516,6 @@ export default function FriendsUpdates() {
                     topic: "Selling Sunset Finale",
                     emoji: "🔥",
                     postCount: 42,
-                    friendCount: 12,
                     status: "12 friends talking"
                   },
                   {
@@ -1524,7 +1523,6 @@ export default function FriendsUpdates() {
                     topic: "The Bear Season 3",
                     emoji: "🔥",
                     postCount: 23,
-                    friendCount: 6,
                     status: "6 new replies"
                   },
                   {
@@ -1532,51 +1530,47 @@ export default function FriendsUpdates() {
                     topic: "#RealityTVDrama",
                     emoji: "🔥",
                     postCount: 17,
-                    friendCount: 0,
                     status: "Active Now"
                   }
                 ];
                 
                 return (
-                  <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-base font-bold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                        Trending Conversations
+                  <div className="bg-white border border-gray-200 rounded-2xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-bold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        🔥 Trending Conversations
                       </h3>
                     </div>
                     
-                    <div className="space-y-3">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
                       {trendingConversations.map((conversation) => (
                         <button
                           key={conversation.id}
-                          className="w-full text-left p-3 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
+                          className="flex-shrink-0 text-left px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors border border-gray-200 min-w-[160px]"
                           data-testid={`conversation-${conversation.id}`}
                         >
-                          <div className="flex items-start gap-2">
-                            <span className="text-lg mt-0.5">{conversation.emoji}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 mb-1">
-                                {conversation.topic}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {conversation.postCount} posts • {conversation.status}
-                              </p>
-                            </div>
-                          </div>
+                          <p className="text-xs font-semibold text-gray-900 mb-0.5 truncate">
+                            {conversation.topic}
+                          </p>
+                          <p className="text-[10px] text-gray-500">
+                            {conversation.postCount} posts • {conversation.status}
+                          </p>
                         </button>
                       ))}
                     </div>
                     
-                    <div className="flex gap-2 mt-4 pt-3 border-t border-gray-100">
+                    <div className="flex gap-2 mt-2 pt-2 border-t border-gray-100">
                       <Button
-                        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-sm"
+                        size="sm"
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-xs h-7"
                         data-testid="button-start-conversation"
                       >
                         Start a Conversation
                       </Button>
                       <Button
+                        size="sm"
                         variant="outline"
-                        className="flex-1 border-purple-600 text-purple-600 hover:bg-purple-50 rounded-full text-sm"
+                        className="flex-1 border-purple-600 text-purple-600 hover:bg-purple-50 rounded-full text-xs h-7"
                         data-testid="button-join-conversation"
                       >
                         Join Conversation
