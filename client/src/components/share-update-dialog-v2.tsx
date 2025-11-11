@@ -176,7 +176,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 placeholder={getPlaceholder()}
                 className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400"
                 minHeight={postMode === "mood" ? "100px" : "50px"}
-                maxLength={maxChars}
+                maxLength={postMode === "mood" ? undefined : maxChars}
                 session={session}
               />
 
@@ -186,9 +186,8 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   <div className="flex items-center gap-2">
                     <Button
                       onClick={handleAttachMedia}
-                      variant="ghost"
                       size="sm"
-                      className="h-8 px-2 text-xs text-gray-600 hover:text-gray-900"
+                      className="h-8 px-3 text-xs bg-purple-600 hover:bg-purple-700 text-white"
                     >
                       <Search className="w-3.5 h-3.5 mr-1" />
                       {attachedMedia ? "Change Media" : "Attach Media"}
