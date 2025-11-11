@@ -328,7 +328,7 @@ export default function CollaborativePredictionCard({
             <p className={`text-sm font-medium text-left ${selectedOption === "Yes" ? "text-purple-700" : "text-black"}`}>
               {creatorPrediction}
             </p>
-            {userHasAnswered && voteCounts && (
+            {voteCounts && (
               <span className="text-sm font-semibold text-gray-700">
                 {yesPercentage}%
               </span>
@@ -357,7 +357,7 @@ export default function CollaborativePredictionCard({
               <p className={`text-sm font-medium text-left ${selectedOption === "No" ? "text-purple-700" : "text-black"}`}>
                 {friendPrediction}
               </p>
-              {userHasAnswered && voteCounts && (
+              {voteCounts && (
                 <span className="text-sm font-semibold text-gray-700">
                   {noPercentage}%
                 </span>
@@ -400,7 +400,7 @@ export default function CollaborativePredictionCard({
             {voteCounts.total} predictions {showParticipants ? '▲' : '▼'}
           </button>
           
-          {showParticipants && participantsData?.participants && (
+          {showParticipants && participantsData?.participants && participantsData.participants.length > 0 && (
             <div className="mt-3 bg-gray-50 rounded-xl p-3 space-y-2">
               {/* Group participants by their vote */}
               {(() => {
