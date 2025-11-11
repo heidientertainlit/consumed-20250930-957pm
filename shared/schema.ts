@@ -134,6 +134,8 @@ export const predictionPools = pgTable("prediction_pools", {
   sponsorName: text("sponsor_name"), // Sponsor branding
   sponsorLogoUrl: text("sponsor_logo_url"), // Sponsor logo URL
   sponsorCtaUrl: text("sponsor_cta_url"), // Sponsor call-to-action URL
+  likesCount: integer("likes_count").default(0),
+  commentsCount: integer("comments_count").default(0),
   createdAt: timestamp("created_at"),
 });
 
@@ -152,6 +154,33 @@ export const userPredictions = pgTable("user_predictions", {
   pointsEarned: integer("points_earned"),
   isWinner: boolean("is_winner"),
   createdAt: timestamp("created_at"),
+});
+
+// Prediction likes table
+export const predictionLikes = pgTable("prediction_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  poolId: text("pool_id").notNull().references(() => predictionPools.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Prediction comments table
+export const predictionComments = pgTable("prediction_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  poolId: text("pool_id").notNull().references(() => predictionPools.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  likesCount: integer("likes_count").notNull().default(0),
+  parentCommentId: varchar("parent_comment_id").references((): any => predictionComments.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Prediction comment likes table
+export const predictionCommentLikes = pgTable("prediction_comment_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  commentId: varchar("comment_id").notNull().references(() => predictionComments.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const userRecommendations = pgTable("user_recommendations", {
