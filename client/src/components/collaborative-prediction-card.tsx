@@ -242,74 +242,86 @@ export default function CollaborativePredictionCard({
         {question}
       </p>
 
-      {/* Side by Side Predictions - Clickable for voting */}
-      <div className="flex items-center gap-3 mb-3">
-        <button
-          onClick={() => handleVote("Yes")}
-          disabled={userHasAnswered || voteMutation.isPending}
-          className={`flex-1 rounded-lg p-2 border transition-all relative overflow-hidden ${
-            userHasAnswered
-              ? "bg-white border-purple-200 cursor-default"
-              : "bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 cursor-pointer"
-          }`}
-          data-testid="button-vote-yes"
-        >
-          {/* Progress bar (shown after voting) */}
-          {userHasAnswered && voteCounts && (
-            <div 
-              className="absolute inset-0 bg-purple-100 transition-all duration-300"
-              style={{ width: `${yesPercentage}%` }}
-              data-testid="progress-yes"
-            />
-          )}
-          <div className="relative z-10">
-            <p className="text-xs text-gray-600 mb-0.5">{creator.username}</p>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-900">{creatorPrediction}</p>
-              {userHasAnswered && voteCounts && (
-                <span className="text-xs font-bold text-purple-600" data-testid="percentage-yes">
-                  {yesPercentage}%
-                </span>
-              )}
-            </div>
-          </div>
-        </button>
-        
-        {friendPrediction ? (
+      {/* Participants */}
+      <p className="text-xs text-gray-500 mb-2">
+        <span className="font-semibold text-gray-700">{creator.username}</span>
+        {" vs. "}
+        <span className="font-semibold text-gray-700">{invitedFriend.username}</span>
+      </p>
+
+      {/* Voting Options - Stacked vertically */}
+      <div className="space-y-2 mb-3">
+        {/* Option 1 - Creator's prediction */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => handleVote("No")}
+            onClick={() => handleVote("Yes")}
             disabled={userHasAnswered || voteMutation.isPending}
-            className={`flex-1 rounded-lg p-2 border transition-all relative overflow-hidden ${
+            className={`flex-1 rounded-full px-4 py-2.5 transition-all relative overflow-hidden ${
               userHasAnswered
-                ? "bg-white border-purple-200 cursor-default"
-                : "bg-purple-50 border-purple-200 hover:bg-purple-100 hover:border-purple-300 cursor-pointer"
+                ? "bg-gray-100 cursor-default"
+                : "bg-gray-100 hover:bg-gray-200 cursor-pointer"
             }`}
-            data-testid="button-vote-no"
+            data-testid="button-vote-yes"
           >
             {/* Progress bar (shown after voting) */}
             {userHasAnswered && voteCounts && (
               <div 
-                className="absolute inset-0 bg-purple-100 transition-all duration-300"
-                style={{ width: `${noPercentage}%` }}
-                data-testid="progress-no"
+                className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-700 rounded-full transition-all duration-300"
+                style={{ width: `${yesPercentage}%` }}
+                data-testid="progress-yes"
               />
             )}
             <div className="relative z-10">
-              <p className="text-xs text-gray-600 mb-0.5">{invitedFriend.username}</p>
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-gray-900">{friendPrediction}</p>
-                {userHasAnswered && voteCounts && (
-                  <span className="text-xs font-bold text-purple-600" data-testid="percentage-no">
-                    {noPercentage}%
-                  </span>
-                )}
-              </div>
+              <p className={`text-sm font-medium ${userHasAnswered ? 'text-white' : 'text-gray-900'}`}>
+                {creatorPrediction}
+              </p>
             </div>
           </button>
+          {userHasAnswered && voteCounts && (
+            <span className="text-sm font-bold text-gray-900 w-12 text-right" data-testid="percentage-yes">
+              {yesPercentage}%
+            </span>
+          )}
+        </div>
+
+        {/* Option 2 - Friend's prediction */}
+        {friendPrediction ? (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleVote("No")}
+              disabled={userHasAnswered || voteMutation.isPending}
+              className={`flex-1 rounded-full px-4 py-2.5 transition-all relative overflow-hidden ${
+                userHasAnswered
+                  ? "bg-gray-100 cursor-default"
+                  : "bg-gray-100 hover:bg-gray-200 cursor-pointer"
+              }`}
+              data-testid="button-vote-no"
+            >
+              {/* Progress bar (shown after voting) */}
+              {userHasAnswered && voteCounts && (
+                <div 
+                  className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-700 rounded-full transition-all duration-300"
+                  style={{ width: `${noPercentage}%` }}
+                  data-testid="progress-no"
+                />
+              )}
+              <div className="relative z-10">
+                <p className={`text-sm font-medium ${userHasAnswered ? 'text-white' : 'text-gray-900'}`}>
+                  {friendPrediction}
+                </p>
+              </div>
+            </button>
+            {userHasAnswered && voteCounts && (
+              <span className="text-sm font-bold text-gray-900 w-12 text-right" data-testid="percentage-no">
+                {noPercentage}%
+              </span>
+            )}
+          </div>
         ) : (
-          <div className="flex-1 bg-gray-50 rounded-lg p-2 border border-gray-200">
-            <p className="text-xs text-gray-500 mb-0.5">{invitedFriend.username}</p>
-            <p className="text-sm text-gray-400 italic">Pending...</p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 bg-gray-50 rounded-full px-4 py-2.5 border border-gray-200">
+              <p className="text-sm text-gray-400 italic">Pending...</p>
+            </div>
           </div>
         )}
       </div>
