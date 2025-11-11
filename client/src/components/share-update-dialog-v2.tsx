@@ -27,6 +27,18 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   const [isSearching, setIsSearching] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<any>(null);
 
+  // Reset all state when dialog closes
+  const handleClose = () => {
+    setContent("");
+    setPostMode("text");
+    setContainsSpoilers(false);
+    setShowMediaSearch(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    setAttachedMedia(null);
+    onClose();
+  };
+
   const actionIcons = [
     { id: "media" as PostMode, icon: Plus, label: "Consuming", color: "text-purple-600" },
     { id: "mood" as PostMode, icon: Flame, label: "Hot Take", color: "text-orange-600" },
@@ -70,10 +82,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
       });
 
       // Reset and close
-      setContent("");
-      setPostMode("text");
-      setContainsSpoilers(false);
-      onClose();
+      handleClose();
     } catch (error) {
       console.error("Post error:", error);
       toast({
@@ -155,7 +164,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   const charsRemaining = maxChars - content.length;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-xl p-0 gap-0 bg-white">
         {/* Content */}
         <div className="px-4 pt-6 pb-3 bg-white">
