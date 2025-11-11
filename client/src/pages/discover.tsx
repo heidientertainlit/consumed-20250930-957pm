@@ -299,13 +299,13 @@ export default function Discover() {
     staleTime: 1000 * 60 * 60 * 12,
   });
 
-  // Fetch personalized recommendations
+  // Fetch personalized recommendations (same endpoint as Feed)
   const { data: recommendedContent = [] } = useQuery({
-    queryKey: ['user-recommendations'],
+    queryKey: ['recommendations'],
     enabled: !!session?.access_token,
     queryFn: async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-user-recommendations`, {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-recommendations`, {
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json',
@@ -313,7 +313,20 @@ export default function Discover() {
         });
         if (!response.ok) return [];
         const data = await response.json();
-        return data;
+        
+        // Transform to match MediaCarousel format
+        const recommendations = data.recommendations || [];
+        return recommendations.map((rec: any) => ({
+          id: `${rec.external_source}-${rec.external_id}`,
+          title: rec.title,
+          imageUrl: rec.image_url,
+          rating: rec.confidence,
+          year: rec.year,
+          mediaType: rec.media_type,
+          externalId: rec.external_id,
+          externalSource: rec.external_source,
+          type: rec.media_type
+        }));
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         return [];
