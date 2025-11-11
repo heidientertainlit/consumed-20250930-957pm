@@ -167,11 +167,32 @@ export default function CollaborativePredictionCard({
     enabled: showComments && !!poolId,
   });
 
-  // Fetch participants
+  // Fetch participants or use mock data
   const { data: participantsData } = useQuery({
     queryKey: ['prediction-participants', poolId],
     queryFn: async () => {
-      if (!session?.access_token || !poolId) return { participants: [] };
+      if (!session?.access_token || !poolId) {
+        // Return mock data for demo
+        const mockParticipants = [];
+        const yesCount = voteCounts?.yes || 5;
+        const noCount = voteCounts?.no || 3;
+        
+        for (let i = 0; i < yesCount; i++) {
+          mockParticipants.push({
+            prediction: 'Yes',
+            users: { user_name: `user${i + 1}`, display_name: `User ${i + 1}` }
+          });
+        }
+        
+        for (let i = 0; i < noCount; i++) {
+          mockParticipants.push({
+            prediction: 'No',
+            users: { user_name: `user${yesCount + i + 1}`, display_name: `User ${yesCount + i + 1}` }
+          });
+        }
+        
+        return { participants: mockParticipants };
+      }
 
       const { createClient } = await import('@supabase/supabase-js');
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -200,7 +221,7 @@ export default function CollaborativePredictionCard({
 
       return { participants: data || [] };
     },
-    enabled: showParticipants && !!poolId,
+    enabled: showParticipants,
   });
 
   // Post comment mutation
