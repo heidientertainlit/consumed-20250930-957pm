@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Star, Target, Flame, Vote, Smile, Search } from "lucide-react";
+import { X, Plus, Star, Target, Flame, Vote, Search } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,11 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [containsSpoilers, setContainsSpoilers] = useState(false);
+  const [showMediaSearch, setShowMediaSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [attachedMedia, setAttachedMedia] = useState<any>(null);
 
   const actionIcons = [
     { id: "media" as PostMode, icon: Plus, label: "Consuming", color: "text-purple-600" },
@@ -93,18 +98,43 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     }
   };
 
-  const handleEmojiClick = () => {
-    toast({
-      title: "Emoji Picker",
-      description: "Coming soon! For now, you can type emojis directly.",
-    });
+  const handleAttachMedia = async () => {
+    setShowMediaSearch(!showMediaSearch);
   };
 
-  const handleAttachMedia = () => {
-    toast({
-      title: "Attach Media",
-      description: "Coming soon! You'll be able to tag movies, shows, books, etc.",
-    });
+  const handleMediaSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-search?query=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data.results || []);
+      }
+    } catch (error) {
+      console.error("Media search error:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectMedia = (media: any) => {
+    setAttachedMedia(media);
+    setShowMediaSearch(false);
+    setSearchQuery("");
+    setSearchResults([]);
   };
 
   const getPlaceholder = () => {
@@ -152,28 +182,88 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
               {/* Hot Take Tools */}
               {postMode === "mood" && (
-                <div className="flex items-center gap-2 mt-2">
-                  <Button
-                    onClick={handleAttachMedia}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-xs text-gray-600 hover:text-gray-900"
-                  >
-                    <Search className="w-3.5 h-3.5 mr-1" />
-                    Attach Media
-                  </Button>
-                  <Button
-                    onClick={handleEmojiClick}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-xs text-gray-600 hover:text-gray-900"
-                  >
-                    <Smile className="w-3.5 h-3.5 mr-1" />
-                    Emoji
-                  </Button>
-                  <div className="ml-auto text-xs text-gray-500">
-                    {charsRemaining} / {maxChars}
+                <div className="space-y-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleAttachMedia}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs text-gray-600 hover:text-gray-900"
+                    >
+                      <Search className="w-3.5 h-3.5 mr-1" />
+                      {attachedMedia ? "Change Media" : "Attach Media"}
+                    </Button>
+                    <div className="ml-auto text-xs text-gray-500">
+                      {content.length} / {maxChars}
+                    </div>
                   </div>
+
+                  {/* Attached Media Display */}
+                  {attachedMedia && (
+                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
+                      {attachedMedia.poster_url && (
+                        <img 
+                          src={attachedMedia.poster_url} 
+                          alt={attachedMedia.title}
+                          className="w-10 h-14 object-cover rounded"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">{attachedMedia.title}</p>
+                        <p className="text-xs text-gray-500">{attachedMedia.type}</p>
+                      </div>
+                      <Button
+                        onClick={() => setAttachedMedia(null)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-gray-900"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Media Search */}
+                  {showMediaSearch && (
+                    <div className="border border-gray-200 rounded-lg p-2">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          handleMediaSearch(e.target.value);
+                        }}
+                        placeholder="Search movies, TV, books, music..."
+                        className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                      {searchResults.length > 0 && (
+                        <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
+                          {searchResults.slice(0, 5).map((result, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleSelectMedia(result)}
+                              className="w-full flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded text-left"
+                            >
+                              {result.poster_url && (
+                                <img 
+                                  src={result.poster_url} 
+                                  alt={result.title}
+                                  className="w-6 h-9 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-gray-900 truncate">{result.title}</p>
+                                <p className="text-xs text-gray-500">{result.type}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {isSearching && (
+                        <p className="text-xs text-gray-500 mt-2">Searching...</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -236,7 +326,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
           <Button
             onClick={handlePost}
             disabled={isPosting || !content.trim() || content.length > maxChars}
-            className="bg-black hover:bg-gray-800 text-white px-5 py-1.5 h-auto text-sm"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto text-sm"
           >
             {getButtonText()}
           </Button>
