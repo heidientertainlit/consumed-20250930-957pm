@@ -98,7 +98,11 @@ serve(async (req) => {
       }
 
       let transformedComments = comments?.map(comment => ({
-        ...comment,
+        id: comment.id,
+        content: comment.content,
+        created_at: comment.created_at,
+        user_id: comment.user_id,
+        parent_comment_id: comment.parent_comment_id,
         username: comment.users?.user_name || comment.users?.email?.split('@')[0]
       })) || [];
 
@@ -204,7 +208,11 @@ serve(async (req) => {
       }
 
       const transformedComment = {
-        ...comment,
+        id: comment.id,
+        content: comment.content,
+        created_at: comment.created_at,
+        user_id: comment.user_id,
+        parent_comment_id: comment.parent_comment_id,
         username: comment.users?.user_name || comment.users?.email?.split('@')[0],
         likesCount: 0,
         isLiked: false,
