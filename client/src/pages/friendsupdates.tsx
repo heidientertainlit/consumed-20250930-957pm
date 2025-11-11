@@ -1328,7 +1328,6 @@ export default function FriendsUpdates() {
               {[
                 { id: "friends", label: "Friends" },
                 { id: "everyone", label: "Everyone" },
-                { id: "predictions", label: "Predictions" },
                 { id: "discover", label: "Discover" }
               ].map((filter) => (
                 <button
@@ -1476,56 +1475,6 @@ export default function FriendsUpdates() {
                   </div>
                 );
               })()}
-              
-              {/* Collaborative Predictions - Only on "Predictions" tab */}
-              {feedFilter === "predictions" && (
-                <div className="space-y-4">
-                  <CollaborativePredictionCard 
-                    prediction={{
-                      id: "pred-1",
-                      question: "Will Dune Part 2 win Best Picture at the Oscars?",
-                      creator: { username: "heidi" },
-                      invitedFriend: { username: "trey" },
-                      creatorPrediction: "Yes",
-                      friendPrediction: "No",
-                      mediaTitle: "Dune Part 2",
-                      participantCount: 8,
-                      userHasAnswered: false
-                    }}
-                    onCastPrediction={() => console.log("Cast prediction")}
-                  />
-                  
-                  <CollaborativePredictionCard 
-                    prediction={{
-                      id: "pred-2",
-                      question: "Will Taylor Swift release another album this year?",
-                      creator: { username: "sarah" },
-                      invitedFriend: { username: "maya" },
-                      creatorPrediction: "Yes - in November",
-                      friendPrediction: undefined,
-                      mediaTitle: "Taylor Swift",
-                      participantCount: 2,
-                      userHasAnswered: false
-                    }}
-                    onCastPrediction={() => console.log("Cast prediction")}
-                  />
-                  
-                  <CollaborativePredictionCard 
-                    prediction={{
-                      id: "pred-3",
-                      question: "Will they finish watching Breaking Bad?",
-                      creator: { username: "alex" },
-                      invitedFriend: { username: "jordan" },
-                      creatorPrediction: "Yes - they're hooked!",
-                      friendPrediction: "Probably, but it'll take months",
-                      mediaTitle: "Breaking Bad",
-                      participantCount: 15,
-                      userHasAnswered: true
-                    }}
-                    onCastPrediction={() => console.log("Cast prediction")}
-                  />
-                </div>
-              )}
               
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
                 // Inject PlayCard every 3rd post
