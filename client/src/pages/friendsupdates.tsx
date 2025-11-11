@@ -1295,14 +1295,27 @@ export default function FriendsUpdates() {
         <div className="space-y-6">
 
           {/* Vibrant Share Composer */}
-          <button
-            onClick={handleShareUpdate}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-full px-6 py-4 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
-            data-testid="composer-input"
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-base">Share Update</span>
-          </button>
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-1 shadow-lg">
+            <div className="bg-white rounded-full px-4 py-3">
+              <div className="flex items-center gap-3">
+                <MessageCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                <button
+                  onClick={handleShareUpdate}
+                  className="flex-1 text-left text-gray-900 text-sm font-medium"
+                  data-testid="composer-input"
+                >
+                  What are you consuming?
+                </button>
+                <Button
+                  onClick={handleShareUpdate}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full h-9 w-9 p-0 flex items-center justify-center flex-shrink-0"
+                  data-testid="share-update-button"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
 
           {/* Feed Filter Tabs */}
           <div className="bg-white rounded-2xl border border-gray-200 p-2 shadow-sm overflow-x-auto">
