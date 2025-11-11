@@ -1508,6 +1508,84 @@ export default function FriendsUpdates() {
                 );
               })()}
               
+              {/* Trending Conversations - Only on "Friends" tab */}
+              {feedFilter === "friends" && (() => {
+                const trendingConversations = [
+                  {
+                    id: "1",
+                    topic: "Selling Sunset Finale",
+                    emoji: "🔥",
+                    postCount: 42,
+                    friendCount: 12,
+                    status: "12 friends talking"
+                  },
+                  {
+                    id: "2",
+                    topic: "The Bear Season 3",
+                    emoji: "🔥",
+                    postCount: 23,
+                    friendCount: 6,
+                    status: "6 new replies"
+                  },
+                  {
+                    id: "3",
+                    topic: "#RealityTVDrama",
+                    emoji: "🔥",
+                    postCount: 17,
+                    friendCount: 0,
+                    status: "Active Now"
+                  }
+                ];
+                
+                return (
+                  <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-base font-bold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        Trending Conversations
+                      </h3>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {trendingConversations.map((conversation) => (
+                        <button
+                          key={conversation.id}
+                          className="w-full text-left p-3 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
+                          data-testid={`conversation-${conversation.id}`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-lg mt-0.5">{conversation.emoji}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 mb-1">
+                                {conversation.topic}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {conversation.postCount} posts • {conversation.status}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <div className="flex gap-2 mt-4 pt-3 border-t border-gray-100">
+                      <Button
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-sm"
+                        data-testid="button-start-conversation"
+                      >
+                        Start a Conversation
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 border-purple-600 text-purple-600 hover:bg-purple-50 rounded-full text-sm"
+                        data-testid="button-join-conversation"
+                      >
+                        Join Conversation
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+              
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
                 // Pattern: 2 posts → prediction → trivia → creator update → 2 posts → recommended → (repeat)
                 // Pattern repeats every 8 items
