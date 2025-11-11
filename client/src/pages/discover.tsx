@@ -419,24 +419,6 @@ export default function Discover() {
           </p>
         </div>
 
-        {/* Media Type Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-6 justify-center">
-          {mediaFilters.map((filter) => (
-            <button
-              key={filter.id}
-              onClick={() => setSelectedMediaFilter(filter.id)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors border ${
-                selectedMediaFilter === filter.id
-                  ? 'bg-white text-purple-600 border-gray-200 shadow-sm'
-                  : 'bg-white text-gray-700 border-transparent hover:bg-gray-100'
-              }`}
-              data-testid={`filter-${filter.id}`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
-
         {/* AI Recommendation Engine Section */}
         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
           <div className="mb-4">
@@ -610,6 +592,24 @@ export default function Discover() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Media Type Filters */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center">
+          {mediaFilters.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => setSelectedMediaFilter(filter.id)}
+              className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors border ${
+                selectedMediaFilter === filter.id
+                  ? 'bg-white text-purple-600 border-gray-200 shadow-sm'
+                  : 'bg-white text-gray-700 border-transparent hover:bg-gray-100'
+              }`}
+              data-testid={`filter-${filter.id}`}
+            >
+              {filter.label}
+            </button>
+          ))}
         </div>
 
         {/* Trending Content Sections */}
