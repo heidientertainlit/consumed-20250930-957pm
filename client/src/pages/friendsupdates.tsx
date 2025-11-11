@@ -1366,7 +1366,7 @@ export default function FriendsUpdates() {
                   data-testid="composer-input"
                 >
                   <div className="text-sm text-gray-400">
-                    Share what you're watching, post hot takes, predictions & more
+                    Share what you're consuming, post reviews, hot takes, predictions, trivia & more
                   </div>
                 </button>
                 <Button
