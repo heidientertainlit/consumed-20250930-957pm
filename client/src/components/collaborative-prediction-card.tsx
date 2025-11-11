@@ -286,37 +286,16 @@ export default function CollaborativePredictionCard({
           <p className="text-xs text-gray-600 mb-1 ml-1">
             <span className="font-semibold">{creator.username}</span>
           </p>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleVote("Yes")}
-              disabled={userHasAnswered || voteMutation.isPending}
-              className={`flex-1 rounded-full px-4 py-2.5 transition-all relative overflow-hidden ${
-                userHasAnswered
-                  ? "bg-gray-100 cursor-default"
-                  : "bg-white border-2 border-purple-300 hover:border-purple-500 hover:bg-purple-50 cursor-pointer"
-              }`}
-              data-testid="button-vote-yes"
-            >
-              {/* Progress bar (shown after voting) */}
-              {userHasAnswered && voteCounts && (
-                <div 
-                  className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all duration-300"
-                  style={{ width: `${yesPercentage}%` }}
-                  data-testid="progress-yes"
-                />
-              )}
-              <div className="relative z-10 text-left">
-                <p className={`text-sm font-medium ${userHasAnswered && voteCounts && yesPercentage > 20 ? 'text-white' : 'text-black'}`}>
-                  {creatorPrediction}
-                </p>
-              </div>
-            </button>
-            {userHasAnswered && voteCounts && (
-              <span className="text-sm font-bold text-gray-900 w-12 text-right" data-testid="percentage-yes">
-                {yesPercentage}%
-              </span>
-            )}
-          </div>
+          <button
+            onClick={() => handleVote("Yes")}
+            disabled={userHasAnswered || voteMutation.isPending}
+            className="flex-1 rounded-full px-4 py-2.5 transition-all bg-white border-2 border-purple-300 hover:border-purple-400 disabled:opacity-60 disabled:cursor-default"
+            data-testid="button-vote-yes"
+          >
+            <p className="text-sm font-medium text-black text-left">
+              {creatorPrediction}
+            </p>
+          </button>
         </div>
 
         {/* Option 2 - Friend's prediction */}
@@ -325,47 +304,24 @@ export default function CollaborativePredictionCard({
             <p className="text-xs text-gray-600 mb-1 ml-1">
               <span className="font-semibold">{invitedFriend.username}</span>
             </p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleVote("No")}
-                disabled={userHasAnswered || voteMutation.isPending}
-                className={`flex-1 rounded-full px-4 py-2.5 transition-all relative overflow-hidden ${
-                  userHasAnswered
-                    ? "bg-gray-100 cursor-default"
-                    : "bg-white border-2 border-purple-300 hover:border-purple-500 hover:bg-purple-50 cursor-pointer"
-                }`}
-                data-testid="button-vote-no"
-              >
-                {/* Progress bar (shown after voting) */}
-                {userHasAnswered && voteCounts && (
-                  <div 
-                    className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all duration-300"
-                    style={{ width: `${noPercentage}%` }}
-                    data-testid="progress-no"
-                  />
-                )}
-                <div className="relative z-10 text-left">
-                  <p className={`text-sm font-medium ${userHasAnswered && voteCounts && noPercentage > 20 ? 'text-white' : 'text-black'}`}>
-                    {friendPrediction}
-                  </p>
-                </div>
-              </button>
-              {userHasAnswered && voteCounts && (
-                <span className="text-sm font-bold text-gray-900 w-12 text-right" data-testid="percentage-no">
-                  {noPercentage}%
-                </span>
-              )}
-            </div>
+            <button
+              onClick={() => handleVote("No")}
+              disabled={userHasAnswered || voteMutation.isPending}
+              className="flex-1 rounded-full px-4 py-2.5 transition-all bg-white border-2 border-purple-300 hover:border-purple-400 disabled:opacity-60 disabled:cursor-default"
+              data-testid="button-vote-no"
+            >
+              <p className="text-sm font-medium text-black text-left">
+                {friendPrediction}
+              </p>
+            </button>
           </div>
         ) : (
           <div>
             <p className="text-xs text-gray-600 mb-1 ml-1">
               <span className="font-semibold">{invitedFriend.username}</span>
             </p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 bg-gray-50 rounded-full px-4 py-2.5 border border-gray-200">
-                <p className="text-sm text-gray-400 italic">Pending...</p>
-              </div>
+            <div className="flex-1 bg-gray-50 rounded-full px-4 py-2.5 border-2 border-gray-200">
+              <p className="text-sm text-gray-400 italic text-left">Pending...</p>
             </div>
           </div>
         )}
