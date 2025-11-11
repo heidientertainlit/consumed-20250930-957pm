@@ -435,9 +435,23 @@ export default function FriendsUpdates() {
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
   const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
   const [activeInlineRating, setActiveInlineRating] = useState<string | null>(null); // Track which post has inline rating open
+  const [currentVerb, setCurrentVerb] = useState("watching");
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Rotating verbs for composer placeholder
+  useEffect(() => {
+    const verbs = ["watching", "reading", "listening to", "playing"];
+    let index = 0;
+    
+    const interval = setInterval(() => {
+      index = (index + 1) % verbs.length;
+      setCurrentVerb(verbs[index]);
+    }, 3000); // Change every 3 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
   
   // Check for URL parameters to scroll to specific post/comment
   const urlParams = new URLSearchParams(window.location.search);
@@ -1352,7 +1366,7 @@ export default function FriendsUpdates() {
                   data-testid="composer-input"
                 >
                   <div className="text-sm font-semibold text-gray-900">
-                    What's consuming you?
+                    What are you <span className="text-purple-600">{currentVerb}</span>?
                   </div>
                   <div className="text-xs text-gray-400 mt-0.5">
                     Share what you're watching, post hot takes, predictions & more

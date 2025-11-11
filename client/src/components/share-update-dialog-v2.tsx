@@ -665,7 +665,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
               <Checkbox
                 id="spoilers"
                 checked={containsSpoilers}
-                onCheckedChange={(checked) => setContainsSpoilers(checked === true)}
+                onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
                 className="h-4 w-4"
               />
               <label
