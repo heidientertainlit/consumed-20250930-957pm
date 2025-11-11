@@ -1347,7 +1347,7 @@ export default function FriendsUpdates() {
             What Are You Consuming?
           </h1>
           <p className="text-base text-gray-600">
-            See what your friends are <span className="text-purple-600 font-medium">{currentVerb}</span>
+            See what your friends are <span key={currentVerb} className="text-purple-600 font-medium inline-block transition-all duration-500 ease-in-out">{currentVerb}</span>
           </p>
         </div>
 
@@ -1365,10 +1365,7 @@ export default function FriendsUpdates() {
                   className="flex-1 text-left"
                   data-testid="composer-input"
                 >
-                  <div className="text-sm font-semibold text-gray-900">
-                    What are you consuming?
-                  </div>
-                  <div className="text-xs text-gray-400 mt-0.5">
+                  <div className="text-sm text-gray-400">
                     Share what you're watching, post hot takes, predictions & more
                   </div>
                 </button>
