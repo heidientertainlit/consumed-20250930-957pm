@@ -1416,38 +1416,6 @@ export default function FriendsUpdates() {
             </div>
           </div>
 
-          {/* Media Type Filter Pills */}
-          <div className="px-4 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2">
-              {[
-                { id: "all", label: "All", icon: null },
-                { id: "movie", label: "Movies", icon: Film },
-                { id: "tv", label: "TV", icon: Tv2 },
-                { id: "book", label: "Books", icon: Book },
-                { id: "music", label: "Music", icon: Music },
-                { id: "podcast", label: "Podcasts", icon: Headphones },
-                { id: "game", label: "Games", icon: Gamepad2 }
-              ].map((filter) => {
-                const Icon = filter.icon;
-                return (
-                  <button
-                    key={filter.id}
-                    onClick={() => setMediaTypeFilter(filter.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${
-                      mediaTypeFilter === filter.id
-                        ? "bg-purple-50 text-purple-600 border-purple-500"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                    data-testid={`media-filter-${filter.id}`}
-                  >
-                    {Icon && <Icon className="h-3 w-3" />}
-                    {filter.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4].map((n) => (
