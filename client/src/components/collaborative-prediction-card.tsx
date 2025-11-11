@@ -269,7 +269,7 @@ export default function CollaborativePredictionCard({
                 />
               )}
               <div className="relative z-10">
-                <p className={`text-sm font-medium ${userHasAnswered && voteCounts && yesPercentage > 20 ? 'text-white' : 'text-gray-900'}`}>
+                <p className={`text-sm font-medium ${userHasAnswered && voteCounts && yesPercentage > 20 ? 'text-white' : 'text-black'}`}>
                   {creatorPrediction}
                 </p>
               </div>
@@ -308,7 +308,7 @@ export default function CollaborativePredictionCard({
                   />
                 )}
                 <div className="relative z-10">
-                  <p className={`text-sm font-medium ${userHasAnswered && voteCounts && noPercentage > 20 ? 'text-white' : 'text-gray-900'}`}>
+                  <p className={`text-sm font-medium ${userHasAnswered && voteCounts && noPercentage > 20 ? 'text-white' : 'text-black'}`}>
                     {friendPrediction}
                   </p>
                 </div>
