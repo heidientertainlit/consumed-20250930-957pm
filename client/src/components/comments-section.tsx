@@ -284,10 +284,23 @@ export default function CommentsSection({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // If there's a rating, prepend it to the comment
-    let finalComment = commentInput;
-    if (showRatingControls && commentRating && parseFloat(commentRating) > 0) {
-      finalComment = `${commentRating}. ${commentInput}`;
+    const hasRatingValue = showRatingControls && commentRating && parseFloat(commentRating) > 0;
+    const hasCommentText = commentInput.trim().length > 0;
+    
+    // Must have either rating or comment to submit
+    if (!hasRatingValue && !hasCommentText) return;
+    
+    let finalComment = '';
+    
+    if (hasRatingValue && hasCommentText) {
+      // Both rating and comment
+      finalComment = `${commentRating}. ${commentInput.trim()}`;
+    } else if (hasRatingValue) {
+      // Rating only - just the rating with a period
+      finalComment = `${commentRating}.`;
+    } else {
+      // Comment only
+      finalComment = commentInput.trim();
     }
     
     // Submit with formatted content
@@ -310,6 +323,9 @@ export default function CommentsSection({
   };
 
   const currentRating = parseFloat(commentRating || '0');
+  const hasRatingValue = showRatingControls && commentRating && parseFloat(commentRating) > 0;
+  const hasCommentText = commentInput.trim().length > 0;
+  const canSubmit = hasRatingValue || hasCommentText;
 
   return (
     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -389,7 +405,7 @@ export default function CommentsSection({
         <Button
           type="submit"
           size="sm"
-          disabled={!commentInput.trim() || isSubmitting}
+          disabled={!canSubmit || isSubmitting}
           className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
           data-testid="button-submit-comment"
         >

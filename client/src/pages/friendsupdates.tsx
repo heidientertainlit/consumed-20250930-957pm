@@ -1772,6 +1772,16 @@ export default function FriendsUpdates() {
                           <MessageCircle size={18} />
                           <span className="text-sm">{post.comments}</span>
                         </button>
+                        {hasRating(post.content) && (
+                          <button 
+                            onClick={() => toggleComments(post.id)}
+                            className="flex items-center space-x-2 text-gray-500 hover:text-purple-600 transition-colors"
+                            data-testid={`button-rate-review-${post.id}`}
+                          >
+                            <Star size={18} />
+                            <span className="text-sm">Rate</span>
+                          </button>
+                        )}
                       </div>
                       <div className="text-sm text-gray-500">
                         {formatDate(post.timestamp)}
