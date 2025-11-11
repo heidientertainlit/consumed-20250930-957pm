@@ -6,7 +6,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle } from "lucide-react";
 import ShareUpdateDialog from "@/components/share-update-dialog";
 import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
 import CommentsSection from "@/components/comments-section";
@@ -1380,32 +1380,35 @@ export default function FriendsUpdates() {
           </div>
 
           {/* Feed Filter Tabs */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-2 shadow-sm overflow-x-auto">
-            <div className="flex gap-2">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm overflow-x-auto">
+            <div className="flex gap-6 justify-center">
               {[
-                { id: "friends", label: "Friends" },
-                { id: "everyone", label: "Everyone" },
-                { id: "discover", label: "Discover" }
-              ].map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => {
-                    if (filter.id === "discover") {
-                      setLocation("/discover");
-                    } else {
-                      setFeedFilter(filter.id);
-                    }
-                  }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
-                    feedFilter === filter.id
-                      ? "bg-white text-purple-600 border-gray-200"
-                      : "bg-white text-gray-700 border-transparent hover:bg-gray-100"
-                  }`}
-                  data-testid={`filter-${filter.id}`}
-                >
-                  {filter.label}
-                </button>
-              ))}
+                { id: "friends", label: "Friends", icon: null },
+                { id: "everyone", label: "Everyone", icon: null },
+                { id: "consuming", label: "Consuming", icon: Plus, color: "text-purple-600" },
+                { id: "hot-take", label: "Hot Take", icon: Flame, color: "text-orange-600" },
+                { id: "prediction", label: "Prediction", icon: Target, color: "text-red-600" },
+                { id: "poll", label: "Poll", icon: Vote, color: "text-blue-600" },
+                { id: "rate-review", label: "Rate/Review", icon: Star, color: "text-yellow-600" },
+                { id: "trivia", label: "Trivia", icon: HelpCircle, color: "text-green-600" }
+              ].map((filter) => {
+                const Icon = filter.icon;
+                return (
+                  <button
+                    key={filter.id}
+                    onClick={() => setFeedFilter(filter.id)}
+                    className={`flex flex-col items-center gap-1 transition-all ${
+                      feedFilter === filter.id
+                        ? filter.color || "text-purple-600"
+                        : "text-gray-700 hover:text-gray-900"
+                    }`}
+                    data-testid={`filter-${filter.id}`}
+                  >
+                    {Icon && <Icon className="h-6 w-6" />}
+                    <span className="text-xs font-medium whitespace-nowrap">{filter.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
