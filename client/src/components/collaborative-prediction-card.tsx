@@ -268,7 +268,7 @@ export default function CollaborativePredictionCard({
                   data-testid="progress-yes"
                 />
               )}
-              <div className="relative z-10">
+              <div className="relative z-10 text-left">
                 <p className={`text-sm font-medium ${userHasAnswered && voteCounts && yesPercentage > 20 ? 'text-white' : 'text-black'}`}>
                   {creatorPrediction}
                 </p>
@@ -307,7 +307,7 @@ export default function CollaborativePredictionCard({
                     data-testid="progress-no"
                   />
                 )}
-                <div className="relative z-10">
+                <div className="relative z-10 text-left">
                   <p className={`text-sm font-medium ${userHasAnswered && voteCounts && noPercentage > 20 ? 'text-white' : 'text-black'}`}>
                     {friendPrediction}
                   </p>
