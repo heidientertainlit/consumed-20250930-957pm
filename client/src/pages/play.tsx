@@ -413,159 +413,289 @@ export default function PlayPage() {
     );
   }
 
+  // Get user's active predictions for "Predictions in Progress"
+  const activePredictions = useMemo(() => {
+    return userPredictionsList
+      .filter((pred: any) => pred.prediction_pools?.type === 'prediction')
+      .slice(0, 3);
+  }, [userPredictionsList]);
+
+  // Get trivia games for "Trivia Challenges"
+  const triviaGames = useMemo(() => {
+    return allGames.filter((game: any) => game.type === 'trivia').slice(0, 3);
+  }, [allGames]);
+
+  const userRank = leaderboardData.findIndex((entry: any) => entry.user_id === currentUser?.id) + 1;
+  const userEntry = leaderboardData.find((entry: any) => entry.user_id === currentUser?.id);
+  const totalPoints = userEntry?.total_points || 0;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="text-center mb-4">
-          <h1 className="text-3xl font-semibold text-black mb-3">
+        <div className="mb-6">
+          <h1 className="text-3xl font-semibold text-black mb-2 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <Gamepad2 className="text-purple-600" size={32} />
             Play
           </h1>
-          <p className="text-gray-600">
-            Test your knowledge, make predictions, and compete with friends
+          <p className="text-base text-gray-600">
+            Compete, predict, and earn rewards
           </p>
         </div>
 
-        {/* Points Card with Rank - Compact */}
-        {(() => {
-          const userRank = leaderboardData.findIndex((entry: any) => entry.user_id === currentUser?.id) + 1;
-          const userEntry = leaderboardData.find((entry: any) => entry.user_id === currentUser?.id);
-          const totalPoints = userEntry?.total_points || 0;
-          
-          return (
-            <div className="flex justify-center mb-5">
-              <div className="bg-white rounded-lg border border-gray-200 px-6 py-3 text-center inline-block">
-                <Award className="w-5 h-5 text-purple-600 mx-auto mb-1" />
-                <div className="text-xl font-bold text-purple-700">{totalPoints}</div>
-                <div className="text-xs text-gray-500 mb-0.5">Points Earned</div>
-                {userRank > 0 && (
-                  <div className="text-xs text-gray-400">
-                    Ranked <span className="font-semibold text-purple-600">#{userRank}</span> of {leaderboardData.length}
-                    {userRank > 1 && leaderboardData[0] && leaderboardData[0].total_points && !isNaN(leaderboardData[0].total_points - totalPoints) && (
-                      <span className="block mt-0.5">
-                        {leaderboardData[0].total_points - totalPoints} pts behind #1
-                      </span>
-                    )}
+        {/* 🪙 Your Coins / Rewards Section */}
+        <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 mb-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <Award className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-medium opacity-90 mb-1">Your Coins</div>
+                <div className="text-3xl font-bold">{totalPoints}</div>
+              </div>
+            </div>
+            {userRank > 0 && (
+              <div className="text-right">
+                <div className="text-sm opacity-90">Global Rank</div>
+                <div className="text-2xl font-bold">#{userRank}</div>
+                {userRank > 1 && leaderboardData[0] && (
+                  <div className="text-xs opacity-75 mt-1">
+                    {leaderboardData[0].total_points - totalPoints} pts to #1
                   </div>
                 )}
               </div>
-            </div>
-          );
-        })()}
-
-        {/* Filter Icons */}
-        <div className="flex justify-center gap-8 mb-6">
-          <button
-            onClick={() => setGameTypeFilter('prediction')}
-            className={`flex flex-col items-center gap-2 transition-all ${
-              gameTypeFilter === 'prediction' ? 'opacity-100' : 'opacity-40'
-            }`}
-            data-testid="filter-predictions"
-          >
-            <div className={`p-3 rounded-full ${gameTypeFilter === 'prediction' ? 'bg-red-100' : 'bg-gray-100'}`}>
-              <Target className={gameTypeFilter === 'prediction' ? 'text-red-600' : 'text-gray-600'} size={24} />
-            </div>
-            <span className={`text-sm font-medium ${gameTypeFilter === 'prediction' ? 'text-red-600' : 'text-gray-600'}`}>
-              Predictions
-            </span>
-          </button>
-
-          <button
-            onClick={() => setGameTypeFilter('vote')}
-            className={`flex flex-col items-center gap-2 transition-all ${
-              gameTypeFilter === 'vote' ? 'opacity-100' : 'opacity-40'
-            }`}
-            data-testid="filter-polls"
-          >
-            <div className={`p-3 rounded-full ${gameTypeFilter === 'vote' ? 'bg-blue-100' : 'bg-gray-100'}`}>
-              <CheckSquare className={gameTypeFilter === 'vote' ? 'text-blue-600' : 'text-gray-600'} size={24} />
-            </div>
-            <span className={`text-sm font-medium ${gameTypeFilter === 'vote' ? 'text-blue-600' : 'text-gray-600'}`}>
-              Polls
-            </span>
-          </button>
-
-          <button
-            onClick={() => setGameTypeFilter('trivia')}
-            className={`flex flex-col items-center gap-2 transition-all ${
-              gameTypeFilter === 'trivia' ? 'opacity-100' : 'opacity-40'
-            }`}
-            data-testid="filter-trivia"
-          >
-            <div className={`p-3 rounded-full ${gameTypeFilter === 'trivia' ? 'bg-green-100' : 'bg-gray-100'}`}>
-              <HelpCircle className={gameTypeFilter === 'trivia' ? 'text-green-600' : 'text-gray-600'} size={24} />
-            </div>
-            <span className={`text-sm font-medium ${gameTypeFilter === 'trivia' ? 'text-green-600' : 'text-gray-600'}`}>
-              Trivia
-            </span>
-          </button>
+            )}
+          </div>
         </div>
 
-        {/* View Leaderboard Button */}
-        {leaderboardData.length > 0 && (
-          <div className="mb-4">
-            <Link href="/leaderboard">
-              <button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-full shadow-md transition-all duration-200">
-                <Trophy className="inline-block mr-2" size={18} />
-                View Full Leaderboard
+        {/* 🔮 Predictions in Progress */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <Target className="w-5 h-5 text-purple-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Predictions in Progress</h2>
+            </div>
+            <Link href="/play?filter=prediction">
+              <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                View All
               </button>
             </Link>
           </div>
-        )}
-
-        {/* Mini Leaderboard */}
-        {leaderboardData.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-500" />
-                <h3 className="text-lg font-semibold text-gray-900">Top Players</h3>
-              </div>
+          
+          {activePredictions.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="text-sm">No active predictions yet</p>
+              <p className="text-xs text-gray-400 mt-1">Make your first prediction below!</p>
             </div>
-            
+          ) : (
             <div className="space-y-3">
+              {activePredictions.map((pred: any) => (
+                <div key={pred.pool_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 text-sm mb-1">
+                      {pred.prediction_pools?.title}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">Your prediction:</span>
+                      <span className="text-xs font-semibold text-purple-600">{pred.prediction}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Clock className="w-4 h-4 text-gray-400 inline-block mr-1" />
+                    <span className="text-xs text-gray-500">Pending</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 🎯 Trivia Challenges */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Trivia Challenges</h2>
+            </div>
+            <button
+              onClick={() => setGameTypeFilter('trivia')}
+              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+            >
+              View All
+            </button>
+          </div>
+          
+          {triviaGames.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <HelpCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="text-sm">No trivia challenges available</p>
+              <p className="text-xs text-gray-400 mt-1">Check back soon!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {triviaGames.map((game: any) => {
+                const hasAnswered = !!allPredictions[game.id];
+                return (
+                  <div
+                    key={game.id}
+                    className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                      hasAnswered
+                        ? 'bg-gray-50 border-gray-200 opacity-60'
+                        : 'bg-white border-green-200 hover:border-green-400'
+                    }`}
+                    onClick={() => !hasAnswered && setSelectedTriviaGame(game)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900 text-sm mb-1">{game.title}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-medium">
+                            {game.points} pts
+                          </span>
+                          {hasAnswered && (
+                            <span className="text-xs text-gray-500">✓ Completed</span>
+                          )}
+                        </div>
+                      </div>
+                      {!hasAnswered && (
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Play
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 🏆 Leaderboard */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-yellow-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Leaderboard</h2>
+            </div>
+            <Link href="/leaderboard">
+              <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                View Full
+              </button>
+            </Link>
+          </div>
+          
+          {leaderboardData.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Trophy className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="text-sm">No leaderboard data yet</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
               {leaderboardData.slice(0, 5).map((entry: any, index: number) => (
                 <div
                   key={entry.user_id}
                   className={`flex items-center justify-between p-3 rounded-xl ${
-                    entry.user_id === currentUser?.id ? 'bg-purple-50 border border-purple-200' : 'bg-gray-50'
+                    entry.user_id === currentUser?.id
+                      ? 'bg-purple-50 border border-purple-200'
+                      : 'bg-gray-50'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                      index === 1 ? 'bg-gray-100 text-gray-700' :
-                      index === 2 ? 'bg-orange-100 text-orange-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                        index === 0
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : index === 1
+                          ? 'bg-gray-100 text-gray-700'
+                          : index === 2
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-gray-900 text-sm">
                         {entry.user_name || 'Anonymous'}
-                        {entry.user_id === currentUser?.id && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                        {entry.user_id === currentUser?.id && (
+                          <span className="ml-2 text-xs text-purple-600">(You)</span>
+                        )}
                       </div>
                     </div>
                   </div>
-                  <div className="font-semibold text-purple-600">{entry.total_points} pts</div>
+                  <div className="font-semibold text-purple-600 text-sm">{entry.total_points} pts</div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Games List */}
-        <div className="space-y-4 mb-8">
-          {filteredGames.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              No {gameTypeFilter === 'prediction' ? 'predictions' : gameTypeFilter === 'vote' ? 'polls' : 'trivia'} available right now. Check back soon!
+        {/* Quick Access to All Games */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">Browse All Games</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => setGameTypeFilter('prediction')}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-red-50 hover:bg-red-100 transition-colors"
+              data-testid="browse-predictions"
+            >
+              <Target className="text-red-600" size={24} />
+              <span className="text-xs font-medium text-red-600">Predictions</span>
+            </button>
+            <button
+              onClick={() => setGameTypeFilter('vote')}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors"
+              data-testid="browse-polls"
+            >
+              <CheckSquare className="text-blue-600" size={24} />
+              <span className="text-xs font-medium text-blue-600">Polls</span>
+            </button>
+            <button
+              onClick={() => setGameTypeFilter('trivia')}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors"
+              data-testid="browse-trivia"
+            >
+              <HelpCircle className="text-green-600" size={24} />
+              <span className="text-xs font-medium text-green-600">Trivia</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Games List (shown when filter is selected) */}
+        {gameTypeFilter !== 'all' && (
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {gameTypeFilter === 'prediction' ? 'All Predictions' : gameTypeFilter === 'vote' ? 'All Polls' : 'All Trivia'}
+              </h3>
+              <button
+                onClick={() => setGameTypeFilter('all')}
+                className="text-sm text-gray-600 hover:text-gray-700"
+              >
+                ← Back
+              </button>
             </div>
-          ) : (
-            filteredGames.map((game: any) => {
-              const userAnswer = allPredictions[game.id];
-              const hasAnswered = !!userAnswer;
+            {filteredGames.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-2xl border border-gray-200">
+                No {gameTypeFilter === 'prediction' ? 'predictions' : gameTypeFilter === 'vote' ? 'polls' : 'trivia'} available right now. Check back soon!
+              </div>
+            ) : (
+              filteredGames.map((game: any) => {
+                const userAnswer = allPredictions[game.id];
+                const hasAnswered = !!userAnswer;
 
               return (
                 <div
@@ -620,9 +750,10 @@ export default function PlayPage() {
                   )}
                 </div>
               );
-            })
-          )}
+            }))
+          }
         </div>
+        )}
 
       </div>
 
