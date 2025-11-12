@@ -1364,8 +1364,8 @@ export default function FriendsUpdates() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            What Are You Consuming?
+          <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
+            Consuming Feed
           </h1>
           <p className="text-base text-gray-600">
             See what your friends are <span key={currentVerb} className="text-purple-600 font-medium inline-block transition-all duration-500 ease-in-out">{currentVerb}</span>
@@ -1380,8 +1380,8 @@ export default function FriendsUpdates() {
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 shadow-lg">
             <div className="flex items-center gap-3 mb-4">
               <MessageCircle className="h-6 w-6 text-white flex-shrink-0" />
-              <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                What Are You Consuming?
+              <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
+                Consuming Feed
               </h2>
             </div>
             <p className="text-white/90 mb-6 text-sm">
