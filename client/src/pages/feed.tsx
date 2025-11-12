@@ -6,16 +6,23 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff } from "lucide-react";
-import ShareUpdateDialog from "@/components/share-update-dialog";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity } from "lucide-react";
+import InlineComposer from "@/components/inline-composer";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
+import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
+import ConversationsPanel from "@/components/conversations-panel";
+import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Badge as UIBadge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
 import { renderMentions } from "@/lib/mentions";
+import { copyLink } from "@/lib/share";
 
 interface SocialPost {
   id: string;
@@ -68,18 +75,384 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
   return response.json();
 };
 
+// Media Card Quick Actions Component
+function MediaCardActions({ media, session }: { media: any; session: any }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Fetch media details to get platform data
+  const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['media-details', media.externalSource, media.externalId],
+    queryFn: async () => {
+      if (!session?.access_token || !media.externalId || !media.externalSource) {
+        return null;
+      }
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-media-details?source=${media.externalSource}&id=${media.externalId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!session?.access_token && !!media.externalId && !!media.externalSource,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  // Fetch user lists for Add to List dropdown
+  const { data: userLists } = useQuery({
+    queryKey: ['user-lists-with-media'],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-user-lists-with-media`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+  });
+
+  // Add to list mutation
+  const addToListMutation = useMutation({
+    mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const mediaData = {
+        title: media.title,
+        mediaType: media.mediaType || 'movie',
+        creator: media.creator || '',
+        imageUrl: media.imageUrl,
+        externalId: media.externalId,
+        externalSource: media.externalSource
+      };
+
+      const url = isCustom 
+        ? `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/add-to-custom-list`
+        : `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/track-media`;
+
+      const body = isCustom
+        ? { media: mediaData, customListId: listType }
+        : { media: mediaData, listType };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || errorData.message || 'Failed to add to list');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (result) => {
+      const isDuplicate = result?.message?.toLowerCase().includes('already');
+      
+      toast({
+        title: isDuplicate ? "Already in list!" : "Added to list!",
+        description: isDuplicate 
+          ? `${media.title} is already in this list.`
+          : `${media.title} has been added to your list.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add item to list. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleShare = async () => {
+    try {
+      await copyLink({
+        kind: 'media',
+        obj: {
+          type: media.mediaType?.toLowerCase(),
+          source: media.externalSource,
+          id: media.externalId
+        }
+      });
+      toast({
+        title: "Link copied!",
+        description: "Media link has been copied to your clipboard.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Get platforms with fallbacks - always return platforms even without API data
+  const getPlatforms = () => {
+    const mediaType = media.mediaType?.toLowerCase();
+    
+    // If API returned platforms, use them
+    if (mediaDetails?.platforms && mediaDetails.platforms.length > 0) {
+      return mediaDetails.platforms;
+    }
+    
+    // Always provide fallback platforms based on media type
+    if (mediaType === 'podcast') {
+      return [
+        { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
+        { name: 'Apple', url: `https://podcasts.apple.com/search?term=${encodeURIComponent(media.title)}` },
+      ];
+    }
+    
+    if (mediaType === 'music') {
+      return [
+        { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
+        { name: 'Apple', url: `https://music.apple.com/search?term=${encodeURIComponent(media.title)}` },
+      ];
+    }
+    
+    if (mediaType === 'movie' || mediaType === 'tv') {
+      return [
+        { name: 'Netflix', url: `https://www.netflix.com/search?q=${encodeURIComponent(media.title)}` },
+        { name: 'Prime', url: `https://www.amazon.com/s?k=${encodeURIComponent(media.title)}` },
+      ];
+    }
+    
+    if (mediaType === 'book') {
+      return [
+        { name: 'Amazon', url: `https://www.amazon.com/s?k=${encodeURIComponent(media.title)}` },
+        { name: 'Goodreads', url: `https://www.goodreads.com/search?q=${encodeURIComponent(media.title)}` },
+      ];
+    }
+    
+    return [];
+  };
+
+  // Get platform label based on media type
+  const getPlatformLabel = () => {
+    const mediaType = media.mediaType?.toLowerCase();
+    if (mediaType === 'podcast') return 'Listen On';
+    if (mediaType === 'music') return 'Listen On';
+    if (mediaType === 'movie' || mediaType === 'tv') return 'Watch On';
+    if (mediaType === 'book') return 'Read On';
+    return 'Available On';
+  };
+  
+  const platforms = getPlatforms();
+  const listsArray = Array.isArray(userLists) ? userLists : [];
+  const defaultLists = listsArray.filter((list: any) => list.is_default);
+  const customLists = listsArray.filter((list: any) => !list.is_default);
+
+  return (
+    <div className="pt-2 mt-2 border-t border-gray-200 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+      {/* Left: Platform chips with label */}
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        {platforms.length > 0 && (
+          <>
+            <span className="text-xs text-gray-500 whitespace-nowrap">{getPlatformLabel()}:</span>
+            {platforms.slice(0, 3).map((platform: any, idx: number) => (
+              <a
+                key={idx}
+                href={platform.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+                data-testid={`platform-chip-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {platform.logo && (
+                  <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
+                )}
+                <span className="text-xs text-gray-700">{platform.name}</span>
+              </a>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* Center: Add to List */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+            disabled={addToListMutation.isPending}
+            data-testid="button-add-to-list"
+          >
+            <Plus size={14} className="mr-1" />
+            <span className="text-xs">Add</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center" className="w-48">
+          {defaultLists.map((list: any) => (
+            <DropdownMenuItem
+              key={list.id}
+              onClick={() => addToListMutation.mutate({ listType: list.list_type, isCustom: false })}
+              data-testid={`add-to-${list.name.toLowerCase().replace(/\s+/g, '-')}`}
+            >
+              {list.name}
+            </DropdownMenuItem>
+          ))}
+          {customLists.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              {customLists.map((list: any) => (
+                <DropdownMenuItem
+                  key={list.id}
+                  onClick={() => addToListMutation.mutate({ listType: list.id, isCustom: true })}
+                  data-testid={`add-to-custom-${list.id}`}
+                >
+                  {list.name}
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Right: Share */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0 text-gray-600 hover:text-purple-600 hover:bg-purple-50"
+        onClick={handleShare}
+        data-testid="button-share-media"
+      >
+        <Share size={14} />
+      </Button>
+    </div>
+  );
+}
+
+// Helper function to render post content with star ratings
+function renderPostWithRating(content: string) {
+  // Match rating pattern at start: "4.5." or "5." or "10." etc
+  const ratingMatch = content.match(/^\s*(\d{1,2}(?:\.\d{1,2})?)\s*[.:]\s*/);
+  
+  if (!ratingMatch) {
+    return renderMentions(content);
+  }
+  
+  const rawRating = parseFloat(ratingMatch[1]);
+  
+  // Only render stars for ratings between 0-5
+  if (rawRating < 0 || rawRating > 5) {
+    return renderMentions(content);
+  }
+  
+  // Round to nearest 0.5 for clean star display
+  const rating = Math.round(rawRating * 2) / 2;
+  const restOfText = content.slice(ratingMatch[0].length);
+  
+  return (
+    <>
+      <span className="inline-flex items-center gap-1 mr-2">
+        {Array.from({ length: 5 }, (_, i) => {
+          const fillLevel = Math.max(0, Math.min(1, rating - i));
+          
+          if (fillLevel === 1) {
+            // Full star
+            return (
+              <Star
+                key={i}
+                size={14}
+                className="text-yellow-400 fill-yellow-400"
+              />
+            );
+          } else if (fillLevel === 0.5) {
+            // Half star
+            return (
+              <span key={i} className="relative inline-block w-3.5 h-3.5">
+                <Star size={14} className="absolute text-gray-300 fill-gray-300" />
+                <span className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+                  <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                </span>
+              </span>
+            );
+          } else {
+            // Empty star
+            return (
+              <Star
+                key={i}
+                size={14}
+                className="text-gray-300 fill-gray-300"
+              />
+            );
+          }
+        })}
+        <span className="font-medium text-gray-700">{rawRating}</span>
+      </span>
+      {renderMentions(restOfText)}
+    </>
+  );
+}
+
 export default function Feed() {
+  // Load Inter font for this page only
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
+  const [feedFilter, setFeedFilter] = useState("");
+  const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
+  const [detailedFilters, setDetailedFilters] = useState<FeedFilters>({ audience: "everyone", mediaTypes: [], engagementTypes: [] });
+  const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
+  const [activeInlineRating, setActiveInlineRating] = useState<string | null>(null); // Track which post has inline rating open
+  const [currentVerb, setCurrentVerb] = useState("watching");
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Rotating verbs for header subheadline
+  useEffect(() => {
+    const verbs = ["watching", "reading", "playing", "listening to", "consuming"];
+    let index = 0;
+    
+    const interval = setInterval(() => {
+      index = (index + 1) % verbs.length;
+      setCurrentVerb(verbs[index]);
+    }, 3000); // Change every 3 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
   
   // Check for URL parameters to scroll to specific post/comment
   const urlParams = new URLSearchParams(window.location.search);
@@ -105,6 +478,31 @@ export default function Feed() {
     window.location.assign(path);
   };
 
+  // Fetch user's friends list for filtering
+  const { data: friendsData = [] } = useQuery({
+    queryKey: ['user-friends'],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'getFriends' })
+      });
+      
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.friends || [];
+    },
+    enabled: !!session?.access_token,
+  });
+
+  // Create a Set of friend user IDs for quick lookup
+  const friendIds = new Set(friendsData.map((friend: any) => friend.id));
+
   const { 
     data: infinitePosts, 
     isLoading, 
@@ -127,6 +525,73 @@ export default function Feed() {
 
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
+
+  // Filter posts by detailed filters and feed filter
+  const filteredPosts = socialPosts.filter(post => {
+    // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
+    if (feedFilter === 'friends') {
+      // Show only posts from friends (not own posts)
+      if (post.user.id === user?.id || !friendIds.has(post.user.id)) {
+        return false;
+      }
+    }
+    
+    if (feedFilter === 'hot-takes') {
+      // Show only posts without media items (text-only posts = hot takes)
+      if (post.mediaItems && post.mediaItems.length > 0) return false;
+    }
+    
+    if (feedFilter === 'predictions') {
+      const postType = post.type?.toLowerCase() || '';
+      if (postType !== 'prediction') return false;
+    }
+    
+    if (feedFilter === 'polls') {
+      const postType = post.type?.toLowerCase() || '';
+      if (postType !== 'poll' && postType !== 'vote') return false;
+    }
+    
+    if (feedFilter === 'trivia') {
+      const postType = post.type?.toLowerCase() || '';
+      if (postType !== 'trivia') return false;
+    }
+    
+    if (feedFilter === 'rate-review') {
+      // Show only posts with media items that have ratings/reviews
+      if (!post.mediaItems || post.mediaItems.length === 0) return false;
+      // At least one media item should have a rating
+      const hasRating = post.mediaItems.some(item => item.rating && item.rating > 0);
+      if (!hasRating) return false;
+    }
+    
+    // Apply media type filter
+    if (detailedFilters.mediaTypes.length > 0) {
+      if (!post.mediaItems || post.mediaItems.length === 0) return false;
+      const hasMatchingMedia = post.mediaItems.some(media => {
+        const mediaType = media.mediaType?.toLowerCase();
+        return detailedFilters.mediaTypes.includes(mediaType || '');
+      });
+      if (!hasMatchingMedia) return false;
+    }
+
+    // Apply engagement type filter
+    if (detailedFilters.engagementTypes.length > 0) {
+      const postType = post.type?.toLowerCase() || '';
+      // Map post types to engagement filter IDs
+      const engagementTypeMap: { [key: string]: string } = {
+        'consuming': 'consuming',
+        'prediction': 'prediction',
+        'poll': 'poll',
+        'rate': 'rate-review',
+        'review': 'rate-review',
+        'trivia': 'trivia'
+      };
+      const mappedType = engagementTypeMap[postType] || postType;
+      if (!detailedFilters.engagementTypes.includes(mappedType)) return false;
+    }
+
+    return true;
+  });
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -612,9 +1077,6 @@ export default function Feed() {
     setIsTrackModalOpen(true);
   };
 
-  const handleShareUpdate = () => {
-    setIsShareDialogOpen(true);
-  };
 
   const handleLike = (postId: string) => {
     const wasLiked = likedPosts.has(postId);
@@ -645,6 +1107,51 @@ export default function Feed() {
     if (!commentLikesEnabled) return; // Safety check
     const wasLiked = likedComments.has(commentId);
     commentLikeMutation.mutate({ commentId, wasLiked });
+  };
+
+  const hasRating = (content: string): boolean => {
+    return /^\s*(\d{1,2}(?:\.\d{1,2})?)\s*[.:]/.test(content);
+  };
+
+  const toggleInlineRating = (postId: string) => {
+    if (activeInlineRating === postId) {
+      setActiveInlineRating(null);
+    } else {
+      setActiveInlineRating(postId);
+    }
+  };
+
+  const handleInlineRatingChange = (postId: string, rating: string) => {
+    setInlineRatings(prev => ({ ...prev, [postId]: rating }));
+  };
+
+  const submitInlineRating = (postId: string) => {
+    const rating = inlineRatings[postId];
+    if (!rating || parseFloat(rating) === 0) return;
+
+    // Format as rating-only comment: "4.5."
+    const formattedComment = `${rating}.`;
+    
+    // Use the existing comment mutation
+    commentMutation.mutate(
+      {
+        postId,
+        content: formattedComment,
+      },
+      {
+        onSuccess: () => {
+          // Clear rating and close inline rating
+          setInlineRatings(prev => ({ ...prev, [postId]: '' }));
+          setActiveInlineRating(null);
+          
+          // Optionally open comments to show the rating
+          setExpandedComments(prev => new Set(prev).add(postId));
+        },
+        onError: (error) => {
+          console.error('Error submitting rating:', error);
+        },
+      }
+    );
   };
 
   const toggleComments = (postId: string) => {
@@ -719,36 +1226,36 @@ export default function Feed() {
     });
   };
 
-  // Fetch trending TV shows from TMDB
-  const { data: trendingTVShows = [] } = useQuery({
-    queryKey: ['trending-tv-shows'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          console.error('Failed to fetch trending TV shows');
-          return [];
-        }
-        const data = await response.json();
-        // Add externalId and externalSource for MediaCarousel compatibility
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'tmdb'
-        }));
-      } catch (error) {
-        console.error('Error fetching trending TV shows:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
-  });
+  // Trending queries disabled - only showing Recommended for you
+  // const { data: trendingTVShows = [] } = useQuery({
+  //   queryKey: ['trending-tv-shows'],
+  //   queryFn: async () => {
+  //     try {
+  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
+  //         headers: {
+  //           'Authorization': `Bearer ${anonKey}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
+  //       if (!response.ok) {
+  //         console.error('Failed to fetch trending TV shows');
+  //         return [];
+  //       }
+  //       const data = await response.json();
+  //       // Add externalId and externalSource for MediaCarousel compatibility
+  //       return data.map((item: any) => ({
+  //         ...item,
+  //         externalId: item.id,
+  //         externalSource: 'tmdb'
+  //       }));
+  //     } catch (error) {
+  //       console.error('Error fetching trending TV shows:', error);
+  //       return [];
+  //     }
+  //   },
+  //   staleTime: 1000 * 60 * 60, // Cache for 1 hour
+  // });
 
   // Fetch NY Times bestseller books
   const { data: bestsellerBooks = [] } = useQuery({
@@ -782,62 +1289,61 @@ export default function Feed() {
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
-  // Fetch trending movies
-  const { data: trendingMovies = [] } = useQuery({
-    queryKey: ['trending-movies'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-movies`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        // Add externalId and externalSource for MediaCarousel compatibility
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'tmdb'
-        }));
-      } catch (error) {
-        console.error('Error fetching trending movies:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60,
-  });
+  // Trending queries disabled - only showing Recommended for you
+  // const { data: trendingMovies = [] } = useQuery({
+  //   queryKey: ['trending-movies'],
+  //   queryFn: async () => {
+  //     try {
+  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-movies`, {
+  //         headers: {
+  //           'Authorization': `Bearer ${anonKey}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
+  //       if (!response.ok) return [];
+  //       const data = await response.json();
+  //       // Add externalId and externalSource for MediaCarousel compatibility
+  //       return data.map((item: any) => ({
+  //         ...item,
+  //         externalId: item.id,
+  //         externalSource: 'tmdb'
+  //       }));
+  //     } catch (error) {
+  //       console.error('Error fetching trending movies:', error);
+  //       return [];
+  //     }
+  //   },
+  //   staleTime: 1000 * 60 * 60,
+  // });
 
-  // Fetch trending podcasts
-  const { data: trendingPodcasts = [] } = useQuery({
-    queryKey: ['trending-podcasts'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-podcasts`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        // Add externalId and externalSource for MediaCarousel compatibility
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'spotify',
-          mediaType: 'podcast'
-        }));
-      } catch (error) {
-        console.error('Error fetching trending podcasts:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60,
-  });
+  // const { data: trendingPodcasts = [] } = useQuery({
+  //   queryKey: ['trending-podcasts'],
+  //   queryFn: async () => {
+  //     try {
+  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-podcasts`, {
+  //         headers: {
+  //           'Authorization': `Bearer ${anonKey}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
+  //       if (!response.ok) return [];
+  //       const data = await response.json();
+  //       // Add externalId and externalSource for MediaCarousel compatibility
+  //       return data.map((item: any) => ({
+  //         ...item,
+  //         externalId: item.id,
+  //         externalSource: 'spotify',
+  //         mediaType: 'podcast'
+  //       }));
+  //     } catch (error) {
+  //       console.error('Error fetching trending podcasts:', error);
+  //       return [];
+  //     }
+  //   },
+  //   staleTime: 1000 * 60 * 60,
+  // });
 
   // Fetch DNA-based personalized recommendations (cached, instant <1s load!)
   const fetchRecommendations = async () => {
@@ -908,16 +1414,19 @@ export default function Feed() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
+      <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-3">
+        <div className="mb-6">
+          <h1 className="text-3xl font-semibold text-black mb-2 flex items-center justify-center gap-2" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
+            <Activity className="text-purple-600" size={32} />
             Feed
           </h1>
-          <p className="text-base text-gray-600">
-            See what your friends are watching, reading, and listening to. Ask questions, share reactions, or post what's on your mind.
+          <p className="text-base text-gray-600 text-center">
+            See what your friends are consuming<br />
+            ... and then share your take.
           </p>
         </div>
 
@@ -925,26 +1434,8 @@ export default function Feed() {
         {/* Activity Stream */}
         <div className="space-y-6">
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-            <Button
-              onClick={handleShareUpdate}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all duration-200"
-              data-testid="share-update-button"
-            >
-              <MessageCircle size={24} className="mr-3" />
-              Share Update
-            </Button>
-          </div>
-
-          {/* Static Trending TV Shows Carousel */}
-          {trendingTVShows.length > 0 && (
-            <MediaCarousel
-              title="Top Trending TV Shows"
-              mediaType="tv"
-              items={trendingTVShows}
-              onItemClick={handleMediaClick}
-            />
-          )}
+          {/* Inline Composer - Always Visible */}
+          <InlineComposer />
 
           {isLoading ? (
             <div className="space-y-4">
@@ -989,62 +1480,180 @@ export default function Feed() {
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : socialPosts && socialPosts.length > 0 ? (
+          ) : filteredPosts && filteredPosts.length > 0 ? (
             <div className="space-y-4">
-              {socialPosts.map((post: SocialPost, postIndex: number) => {
-                // Inject PlayCard every 3rd post
-                const shouldShowPlayCard = (postIndex + 1) % 3 === 0;
-                const playCardIndex = Math.floor(postIndex / 3);
+              {/* Compact Friend Activity Ticker - Shows on both Friends and All tabs */}
+              {(() => {
+                // Extract friend activities from recent posts with media
+                const friendActivities = filteredPosts
+                  .filter((p: SocialPost) => p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
+                  .slice(0, 6)
+                  .map((p: SocialPost) => ({
+                    username: p.user.username,
+                    media: p.mediaItems[0].title,
+                    action: p.content ? 'is loving' : 'added'
+                  }));
+                
+                if (friendActivities.length === 0) return null;
+                
+                return (
+                  <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-4 overflow-hidden shadow-lg">
+                    <style>{`
+                      @keyframes tickerScroll {
+                        0% { transform: translateY(0); }
+                        100% { transform: translateY(-${friendActivities.length * 24}px); }
+                      }
+                      .ticker-wrapper {
+                        animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
+                      }
+                    `}</style>
+                    <p className="text-sm font-bold mb-2 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      ✨ Quick Glimpse
+                    </p>
+                    <div className="h-6 overflow-hidden">
+                      <div className="ticker-wrapper">
+                        {/* Duplicate for seamless loop */}
+                        {[...friendActivities, ...friendActivities].map((activity, idx) => (
+                          <div 
+                            key={idx}
+                            className="h-6 flex items-center text-xs text-white"
+                          >
+                            <span className="font-semibold">{activity.username}</span>
+                            <span className="mx-1 opacity-80">{activity.action}</span>
+                            <span className="font-medium opacity-90">{activity.media}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Feed Filter Pills */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm overflow-x-auto">
+                <div className="mb-2">
+                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Filter Feed</p>
+                </div>
+                <div className="flex gap-1.5 justify-start flex-wrap">
+                  <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
+                  {[
+                    { id: "predictions", label: "🎯 Prediction" },
+                    { id: "polls", label: "🗳️ Poll" },
+                    { id: "hot-takes", label: "🔥 Hot Take" },
+                    { id: "rate-review", label: "⭐ Rate/Review" }
+                  ].map((filter) => {
+                    const isActive = feedFilter === filter.id;
+                    return (
+                      <button
+                        key={filter.id}
+                        onClick={() => setFeedFilter(filter.id)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          isActive
+                            ? "bg-purple-600 text-white shadow-sm"
+                            : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
+                        }`}
+                        data-testid={`filter-${filter.id}`}
+                      >
+                        {filter.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {filteredPosts.map((post: SocialPost, postIndex: number) => {
+                // Pattern: 2 posts → prediction → trivia → creator update → 2 posts → recommended → (repeat)
+                // Pattern repeats every 8 items
+                const patternPosition = postIndex % 8;
+                
+                // After 2nd post (position 2), show prediction
+                const shouldShowPrediction = patternPosition === 2;
+                
+                // After prediction (position 3), show trivia
+                const shouldShowTrivia = patternPosition === 3;
+                const triviaIndex = Math.floor(postIndex / 8);
                 const currentGame = playGames && playGames.length > 0 
-                  ? playGames[playCardIndex % playGames.length]
+                  ? playGames[triviaIndex % playGames.length]
                   : null;
-
-                // Only show quick games inline (no long-form trivia or multi-category predictions)
-                const canPlayInline = currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory;
-
-                // Inject Creator Update Card every 6th post
-                const shouldShowCreatorUpdate = (postIndex + 1) % 6 === 0;
-                const creatorUpdateIndex = Math.floor(postIndex / 6);
+                
+                // After trivia (position 4), show creator update
+                const shouldShowCreatorUpdate = patternPosition === 4;
+                const creatorUpdateIndex = Math.floor(postIndex / 8);
                 const currentCreatorUpdate = creatorUpdates && creatorUpdates.length > 0 
                   ? creatorUpdates[creatorUpdateIndex % creatorUpdates.length]
                   : null;
-
-                // Inject MediaCarousel every 4th post, rotating through types
-                const shouldShowMediaCarousel = (postIndex + 1) % 4 === 0;
-                const carouselIndex = Math.floor(postIndex / 4);
                 
-                // Rotation order: Books → Podcasts → Movies → Recommended → (repeat)
-                const carouselTypes = [
-                  { type: 'book', title: 'NY Times Bestsellers', items: bestsellerBooks },
-                  { type: 'podcast', title: 'Trending Podcasts', items: trendingPodcasts },
-                  { type: 'movie', title: 'Trending Movies', items: trendingMovies },
-                  { type: 'mixed', title: 'Recommended For You', items: recommendedContent },
+                // After 2 more posts (position 7), show recommended carousel
+                const shouldShowMediaCarousel = patternPosition === 7;
+                const carouselIndex = Math.floor(postIndex / 8);
+                
+                // Only show Recommended for you carousel
+                const currentCarousel = { type: 'mixed', title: 'Recommended for you', items: recommendedContent };
+                
+                // Dummy predictions data
+                const predictions = [
+                  {
+                    id: "pred-1",
+                    question: "Will Dune Part 2 win Best Picture at the Oscars?",
+                    creator: { username: "heidi" },
+                    invitedFriend: { username: "trey" },
+                    creatorPrediction: "Yes",
+                    friendPrediction: "No",
+                    mediaTitle: "Dune Part 2",
+                    participantCount: 8,
+                    userHasAnswered: false,
+                    poolId: "pred-pool-1",
+                    voteCounts: { yes: 5, no: 3, total: 8 },
+                    likesCount: 12,
+                    commentsCount: 3,
+                    isLiked: false
+                  },
+                  {
+                    id: "pred-3",
+                    question: "Will they finish watching Breaking Bad?",
+                    creator: { username: "alex" },
+                    invitedFriend: { username: "jordan" },
+                    creatorPrediction: "Yes - they're hooked!",
+                    friendPrediction: "Probably, but it'll take months",
+                    mediaTitle: "Breaking Bad",
+                    participantCount: 15,
+                    userHasAnswered: false,
+                    poolId: "pred-pool-3",
+                    voteCounts: { yes: 9, no: 6, total: 15 },
+                    likesCount: 8,
+                    commentsCount: 2,
+                    isLiked: false
+                  }
                 ];
-                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length];
+                const predictionIndex = Math.floor(postIndex / 8);
+                const currentPrediction = predictions[predictionIndex % predictions.length];
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
-                    {/* Insert MediaCarousel every 4th post */}
-                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
-                      <MediaCarousel
-                        title={currentCarousel.title}
-                        mediaType={currentCarousel.type}
-                        items={currentCarousel.items}
-                        onItemClick={handleMediaClick}
-                      />
+                    {/* After 2 posts: Show Prediction */}
+                    {shouldShowPrediction && (
+                      <div className="mb-4">
+                        <CollaborativePredictionCard 
+                          prediction={currentPrediction}
+                          onCastPrediction={() => console.log("Cast prediction")}
+                        />
+                      </div>
                     )}
 
-                    {/* Insert PlayCard every 3rd post */}
-                    {shouldShowPlayCard && canPlayInline && (
-                      <PlayCard 
-                        game={currentGame}
-                        onComplete={() => {
-                          queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
-                        }}
-                      />
+                    {/* After prediction: Show Trivia */}
+                    {shouldShowTrivia && currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory && (
+                      <div className="mb-4">
+                        <PlayCard 
+                          game={currentGame}
+                          compact={true}
+                          onComplete={() => {
+                            queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
+                          }}
+                        />
+                      </div>
                     )}
 
-                    {/* Insert Creator Update Card every 6th post */}
+                    {/* After trivia: Show Pop Culture Update */}
                     {shouldShowCreatorUpdate && currentCreatorUpdate && (
                       <div className="mb-4">
                         <CreatorUpdateCard 
@@ -1060,24 +1669,36 @@ export default function Feed() {
                       </div>
                     )}
 
+                    {/* After 2 more posts: Show Recommended Carousel */}
+                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
+                      <div className="mb-4">
+                        <MediaCarousel
+                          title={currentCarousel.title}
+                          mediaType={currentCarousel.type}
+                          items={currentCarousel.items}
+                          onItemClick={handleMediaClick}
+                        />
+                      </div>
+                    )}
+
                   {/* Original Post */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm" id={`post-${post.id}`}>
+                  <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" id={`post-${post.id}`}>
                     {/* User Info and Date */}
-                    <div className="flex items-center space-x-3 mb-4">
+                    <div className="flex items-center space-x-2 mb-3">
                       <Link href={`/user/${post.user.id}`}>
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
-                          <User size={24} className="text-gray-600" />
+                        <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
+                          <User size={18} className="text-gray-600" />
                         </div>
                       </Link>
                       <div className="flex-1">
                         <Link 
                           href={`/user/${post.user.id}`}
-                          className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                          className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
                           data-testid={`link-user-${post.user.id}`}
                         >
                           {post.user.username}
                         </Link>
-                        <div className="text-sm text-gray-500">{formatFullDate(post.timestamp)}</div>
+                        <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                       </div>
                       {user?.id === post.user.id && (
                         <button
@@ -1086,20 +1707,17 @@ export default function Feed() {
                           data-testid={`button-delete-post-${post.id}`}
                           title="Delete post"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       )}
                     </div>
 
-                  {/* Post Content with Spoiler Blur */}
-                  {post.content && (
-                    <div className="mb-4 relative">
+                  {/* Post Content */}
+                  {post.content ? (
+                    <div className="mb-2 relative">
                       {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
                         <>
-                          {/* Blurred Text */}
-                          <p className="text-gray-800 blur-md select-none">{post.content}</p>
-                          
-                          {/* Spoiler Badge Overlay */}
+                          <p className="text-gray-800 text-sm blur-md select-none">{post.content}</p>
                           <div className="absolute inset-0 flex items-center justify-center">
                             <button
                               onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
@@ -1112,83 +1730,88 @@ export default function Feed() {
                           </div>
                         </>
                       ) : (
-                        <p className="text-gray-800">{renderMentions(post.content)}</p>
+                        <div className="text-gray-800 text-sm">
+                          {renderPostWithRating(post.content)}
+                        </div>
                       )}
                     </div>
-                  )}
+                  ) : null}
 
-                  {/* Media Cards - Always Visible */}
-                  {post.mediaItems && post.mediaItems.length > 0 && (
-                    <div className="space-y-3 mb-4">
+                  {/* Media Cards */}
+                  {post.content && post.mediaItems && post.mediaItems.length > 0 ? (
+                    <div className="space-y-2 mb-2">
                       {post.mediaItems.map((media, index) => {
                         const isClickable = media.externalId && media.externalSource;
                         return (
-                        <div 
-                          key={index} 
-                          className={`bg-gray-100 rounded-2xl p-4 transition-colors ${
-                            isClickable ? 'cursor-pointer hover:bg-gray-200' : 'cursor-default'
-                          }`}
-                          onClick={() => {
-                            if (isClickable) {
-                              setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                            }
-                          }}
-                        >
-                          <div className="flex items-center space-x-4">
-                            {/* Media Artwork */}
-                            <div className="w-16 h-24 rounded-lg overflow-hidden">
-                              <img 
-                                src={media.imageUrl || getMediaArtwork(media.title, media.mediaType)}
-                                alt={`${media.title} artwork`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-
-                            {/* Media Info */}
-                            <div className="flex-1">
-                              <h3 className={`font-semibold text-gray-900 text-lg mb-1 line-clamp-2 transition-colors ${
-                                isClickable ? 'hover:text-purple-600' : ''
-                              }`}>
-                                {media.title}
-                              </h3>
-
-                              {/* Creator Info */}
-                              {media.creator && (
-                                <div className="text-gray-600 text-sm mb-2">
-                                  by {media.creator}
-                                </div>
-                              )}
-
-                              <div className="text-gray-600 text-sm capitalize mb-2">
-                                {media.mediaType}
+                          <div 
+                            key={index} 
+                            className="bg-gray-50 rounded-lg p-3 transition-colors"
+                          >
+                            <div 
+                              className={`flex items-center space-x-3 ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
+                              onClick={() => {
+                                if (isClickable) {
+                                  setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                }
+                              }}
+                            >
+                              <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0">
+                                <img 
+                                  src={media.imageUrl || getMediaArtwork(media.title, media.mediaType)}
+                                  alt={`${media.title} artwork`}
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
-                              {media.rating && (
-                                <div className="flex items-center">
-                                  <div className="flex text-yellow-400">
-                                    {Array.from({ length: 5 }, (_, i) => (
-                                      <Star
-                                        key={i}
-                                        size={16}
-                                        fill={i < media.rating! ? "currentColor" : "none"}
-                                      />
-                                    ))}
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                                  {media.title}
+                                </h3>
+                                {media.creator && (
+                                  <div className="text-gray-600 text-xs mb-1">
+                                    by {media.creator}
                                   </div>
-                                  <span className="text-sm text-gray-600 ml-2">({media.rating}/5)</span>
+                                )}
+                                <div className="text-gray-500 text-xs capitalize">
+                                  {media.mediaType}
                                 </div>
-                              )}
+                              </div>
+                              {isClickable && <ChevronRight className="text-gray-400 flex-shrink-0" size={16} />}
                             </div>
-
-                            {/* Arrow - only show if clickable */}
-                            {isClickable && <ChevronRight className="text-gray-400" size={20} />}
+                            
+                            {/* Quick Actions - Always show for platform links */}
+                            <MediaCardActions media={media} session={session} />
                           </div>
-                        </div>
                         );
                       })}
                     </div>
+                  ) : (
+                    !post.content && post.mediaItems && post.mediaItems.length > 0 && (
+                      <div className="mb-2">
+                        {post.mediaItems.map((media, index) => {
+                          const isClickable = media.externalId && media.externalSource;
+                          return (
+                            <p key={index} className="text-gray-800 text-sm">
+                              Added{' '}
+                              {isClickable ? (
+                                <button
+                                  onClick={() => setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`)}
+                                  className="font-semibold text-purple-600 hover:underline"
+                                >
+                                  {media.title}
+                                </button>
+                              ) : (
+                                <span className="font-semibold">{media.title}</span>
+                              )}
+                              {' '}to their list
+                            </p>
+                          );
+                        })}
+                      </div>
+                    )
                   )}
 
                   {/* Interaction Bar */}
-                  <div className="pt-2 border-t border-gray-100 space-y-3">
+                  <div className="pt-2 border-t border-gray-100 mt-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-6">
                         <button 
@@ -1214,6 +1837,55 @@ export default function Feed() {
                           <MessageCircle size={18} />
                           <span className="text-sm">{post.comments}</span>
                         </button>
+                        {hasRating(post.content) && !activeInlineRating && (
+                          <button 
+                            onClick={() => toggleInlineRating(post.id)}
+                            className="flex items-center space-x-2 text-gray-500 hover:text-purple-600 transition-colors"
+                            data-testid={`button-rate-review-${post.id}`}
+                          >
+                            <Star size={18} />
+                            <span className="text-sm">Rate</span>
+                          </button>
+                        )}
+                        {hasRating(post.content) && activeInlineRating === post.id && (
+                          <div className="flex items-center space-x-2">
+                            <Star size={18} className="text-gray-400" />
+                            <span className="text-sm text-gray-600">Rate</span>
+                            <input
+                              type="text"
+                              value={inlineRatings[post.id] || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                  const num = parseFloat(value);
+                                  if (value === '' || (num >= 0 && num <= 5)) {
+                                    handleInlineRatingChange(post.id, value);
+                                  }
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  submitInlineRating(post.id);
+                                } else if (e.key === 'Escape') {
+                                  setActiveInlineRating(null);
+                                }
+                              }}
+                              placeholder="0"
+                              autoFocus
+                              className="w-16 text-sm text-gray-700 bg-white border border-gray-300 rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              data-testid={`inline-rating-input-${post.id}`}
+                            />
+                            <span className="text-sm text-gray-700">/5</span>
+                            <Button
+                              onClick={() => submitInlineRating(post.id)}
+                              disabled={!inlineRatings[post.id] || parseFloat(inlineRatings[post.id]) === 0 || commentMutation.isPending}
+                              size="sm"
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 h-7"
+                            >
+                              <Send size={14} />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       <div className="text-sm text-gray-500">
                         {formatDate(post.timestamp)}
@@ -1257,12 +1929,20 @@ export default function Feed() {
               )}
 
               {/* End of Feed Indicator */}
-              {!hasNextPage && socialPosts.length > 0 && (
+              {!hasNextPage && filteredPosts.length > 0 && (
                 <div className="text-center py-8">
                   <p className="text-gray-500">🎉 You've reached the end!</p>
                 </div>
               )}
 
+            </div>
+          ) : mediaTypeFilter !== "all" ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="text-5xl mb-4">🔍</div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">No {mediaTypeFilter === "movie" ? "Movies" : mediaTypeFilter === "tv" ? "TV Shows" : mediaTypeFilter === "book" ? "Books" : mediaTypeFilter === "music" ? "Music" : mediaTypeFilter === "podcast" ? "Podcasts" : "Games"} Found</h3>
+              <p className="text-gray-600 max-w-sm mx-auto">
+                Try selecting a different media type filter or check back later for updates.
+              </p>
             </div>
           ) : (
             <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -1283,15 +1963,7 @@ export default function Feed() {
         onClose={() => setIsTrackModalOpen(false)}
       />
 
-      <ShareUpdateDialog
-        isOpen={isShareDialogOpen}
-        onClose={() => {
-          setIsShareDialogOpen(false);
-          // Refresh the social feed when dialog closes
-          queryClient.invalidateQueries({ queryKey: ["social-feed"] });
-        }}
-      />
-
+      </div>
     </div>
   );
 }
