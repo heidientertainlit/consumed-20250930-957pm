@@ -7,8 +7,7 @@ import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle } from "lucide-react";
-import ShareUpdateDialog from "@/components/share-update-dialog";
-import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
+import InlineComposer from "@/components/inline-composer";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -426,7 +425,6 @@ export default function FriendsUpdates() {
   }, []);
 
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
@@ -1079,9 +1077,6 @@ export default function FriendsUpdates() {
     setIsTrackModalOpen(true);
   };
 
-  const handleShareUpdate = () => {
-    setIsShareDialogOpen(true);
-  };
 
   const handleLike = (postId: string) => {
     const wasLiked = likedPosts.has(postId);
@@ -1437,34 +1432,8 @@ export default function FriendsUpdates() {
         {/* Activity Stream */}
         <div className="space-y-6">
 
-          {/* Vibrant Share Composer */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 shadow-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <MessageCircle className="h-6 w-6 text-white flex-shrink-0" />
-              <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
-                What are you consuming?
-              </h2>
-            </div>
-            <p className="text-white/90 mb-6 text-sm">
-              Share what you're watching, reading, playing & listening to. Add reviews, rate content, make predictions, post hot takes, create trivia & more
-            </p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleShareUpdate}
-                className="flex-1 bg-white rounded-2xl px-6 py-4 text-left text-gray-400 text-sm hover:bg-gray-50 transition-colors"
-                data-testid="composer-input"
-              >
-                Share a hot take, ask for recommendations, post a review...
-              </button>
-              <Button
-                onClick={handleShareUpdate}
-                className="bg-purple-500/30 hover:bg-purple-500/40 text-white rounded-2xl h-14 w-14 p-0 flex items-center justify-center flex-shrink-0"
-                data-testid="share-update-button"
-              >
-                <Send className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
+          {/* Inline Composer - Always Visible */}
+          <InlineComposer />
 
           {isLoading ? (
             <div className="space-y-4">
@@ -1992,14 +1961,6 @@ export default function FriendsUpdates() {
         onClose={() => setIsTrackModalOpen(false)}
       />
 
-      <ShareUpdateDialogV2
-        isOpen={isShareDialogOpen}
-        onClose={() => {
-          setIsShareDialogOpen(false);
-          // Refresh the social feed when dialog closes
-          queryClient.invalidateQueries({ queryKey: ["social-feed"] });
-        }}
-      />
       </div>
     </div>
   );

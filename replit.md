@@ -24,7 +24,8 @@ Preferred communication style: Simple, everyday language.
 -   **Dual Search System**: 
     -   **Direct Search** (🔍 in top nav): Quick search for friends and entertainment to add to lists or send friend requests. Uses `DirectSearchDialog` component with real-time debounced search across `media-search` and `search-users` edge functions.
     -   **Discover Page** (✨ in top nav): AI-powered recommendation engine for conversational queries. Users describe what they're looking for (e.g., "uplifting movies" or "sci-fi like Blade Runner") and receive personalized suggestions via the `conversational-search` edge function. Accessible as backpage at `/discover`.
--   **Feed Content Filters**: Feed page includes filter pills for content types (All, Friends, Hot Takes, Predictions, Polls, Trivia) allowing users to quickly filter the feed by content type. This replaces the need for a dedicated Play page since users can filter for game content directly in the feed.
+-   **Feed Content Filters**: Feed page includes filter pills for content types (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review) allowing users to quickly filter the feed by content type.
+-   **Inline Composer**: Replaced modal dialog with always-visible inline composer showing action chips upfront (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review, ➕ Add Media). Follows "desire paths" philosophy - users see all options immediately without clicking. Defaults to Hot Take mode for instant typing. Currently supports Hot Take posting; other modes require backend development for creation endpoints.
 
 ### Technical Implementations
 -   **Frontend**: React 18 with TypeScript, Wouter for routing, TanStack Query for server state management, and Vite for building.
