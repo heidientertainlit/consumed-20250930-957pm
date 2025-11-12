@@ -361,11 +361,11 @@ export default function Library() {
                 title="Sarah's Currently Reading You Might Like"
                 mediaType="book"
                 items={[
-                  { id: '1', title: 'The Midnight Library', creator: 'Matt Haig', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1602190253i/52578297.jpg', mediaType: 'book', externalId: '52578297', externalSource: 'goodreads' },
-                  { id: '2', title: 'Project Hail Mary', creator: 'Andy Weir', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg', mediaType: 'book', externalId: '54493401', externalSource: 'goodreads' },
-                  { id: '3', title: 'Atomic Habits', creator: 'James Clear', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg', mediaType: 'book', externalId: '40121378', externalSource: 'goodreads' },
-                  { id: '4', title: 'The Silent Patient', creator: 'Alex Michaelides', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1582759969i/40097951.jpg', mediaType: 'book', externalId: '40097951', externalSource: 'goodreads' },
-                  { id: '5', title: 'The Seven Husbands of Evelyn Hugo', creator: 'Taylor Jenkins Reid', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1618329605i/32620332.jpg', mediaType: 'book', externalId: '32620332', externalSource: 'goodreads' }
+                  { id: '1', title: 'The Midnight Library', author: 'Matt Haig', imageUrl: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1602190253i/52578297.jpg', mediaType: 'book', externalId: '52578297', externalSource: 'goodreads' },
+                  { id: '2', title: 'Project Hail Mary', author: 'Andy Weir', imageUrl: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg', mediaType: 'book', externalId: '54493401', externalSource: 'goodreads' },
+                  { id: '3', title: 'Atomic Habits', author: 'James Clear', imageUrl: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg', mediaType: 'book', externalId: '40121378', externalSource: 'goodreads' },
+                  { id: '4', title: 'The Silent Patient', author: 'Alex Michaelides', imageUrl: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1582759969i/40097951.jpg', mediaType: 'book', externalId: '40097951', externalSource: 'goodreads' },
+                  { id: '5', title: 'The Seven Husbands of Evelyn Hugo', author: 'Taylor Jenkins Reid', imageUrl: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1618329605i/32620332.jpg', mediaType: 'book', externalId: '32620332', externalSource: 'goodreads' }
                 ]}
                 onItemClick={handleMediaClick}
               />
@@ -376,11 +376,11 @@ export default function Library() {
                 title="Mike's Queue You Might Like"
                 mediaType="movie"
                 items={[
-                  { id: '1', title: 'Oppenheimer', creator: 'Christopher Nolan', image_url: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', mediaType: 'movie', externalId: '872585', externalSource: 'tmdb' },
-                  { id: '2', title: 'The Killer', creator: 'David Fincher', image_url: 'https://image.tmdb.org/t/p/w500/e7Jvsry47JJQruuezjU2X1Z6J77.jpg', mediaType: 'movie', externalId: '359724', externalSource: 'tmdb' },
-                  { id: '3', title: 'Poor Things', creator: 'Yorgos Lanthimos', image_url: 'https://image.tmdb.org/t/p/w500/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg', mediaType: 'movie', externalId: '792307', externalSource: 'tmdb' },
-                  { id: '4', title: 'Killers of the Flower Moon', creator: 'Martin Scorsese', image_url: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg', mediaType: 'movie', externalId: '466420', externalSource: 'tmdb' },
-                  { id: '5', title: 'The Zone of Interest', creator: 'Jonathan Glazer', image_url: 'https://image.tmdb.org/t/p/w500/hUu9zyZmDd8VZegKi1iK1Vk0RYS.jpg', mediaType: 'movie', externalId: '762430', externalSource: 'tmdb' }
+                  { id: '1', title: 'Oppenheimer', imageUrl: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', mediaType: 'movie', externalId: '872585', externalSource: 'tmdb' },
+                  { id: '2', title: 'The Killer', imageUrl: 'https://image.tmdb.org/t/p/w500/e7Jvsry47JJQruuezjU2X1Z6J77.jpg', mediaType: 'movie', externalId: '359724', externalSource: 'tmdb' },
+                  { id: '3', title: 'Poor Things', imageUrl: 'https://image.tmdb.org/t/p/w500/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg', mediaType: 'movie', externalId: '792307', externalSource: 'tmdb' },
+                  { id: '4', title: 'Killers of the Flower Moon', imageUrl: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg', mediaType: 'movie', externalId: '466420', externalSource: 'tmdb' },
+                  { id: '5', title: 'The Zone of Interest', imageUrl: 'https://image.tmdb.org/t/p/w500/hUu9zyZmDd8VZegKi1iK1Vk0RYS.jpg', mediaType: 'movie', externalId: '762430', externalSource: 'tmdb' }
                 ]}
                 onItemClick={handleMediaClick}
               />
