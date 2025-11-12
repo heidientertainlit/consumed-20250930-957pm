@@ -1427,7 +1427,7 @@ export default function FriendsUpdates() {
             See What Your Friends Are Consuming
           </h1>
           <p className="text-base text-gray-600">
-            See what your friends are watching, reading, listening to, and playing — and then share your take.
+            ...and then share your take.
           </p>
         </div>
 
