@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
 import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import UserSearch from "@/components/user-search";
 import { ProgressTracker } from "@/components/progress-tracker";
@@ -526,197 +527,166 @@ export default function ListDetail() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={() => {}} />
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="flex items-center mb-6">
-          <button
-            onClick={() => setLocation("/track")}
-            className="mr-4 p-2 text-gray-700 hover:text-black transition-colors"
-            data-testid="button-back"
-            aria-label="Back to track"
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">{listData?.name}</h1>
-            <p className="text-gray-600">{listData?.description}</p>
-          </div>
-        </div>
-
-        {/* List Stats & Actions */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{listData?.totalItems}</div>
-                <div className="text-sm text-gray-600">Items</div>
+      {/* Compact Sticky Header */}
+      <div className="sticky top-16 z-40 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <button
+                onClick={() => setLocation("/library")}
+                className="p-1.5 text-gray-700 hover:text-black transition-colors"
+                data-testid="button-back"
+                aria-label="Back"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg font-bold text-gray-900 truncate">{listData?.name}</h1>
+                <p className="text-xs text-gray-500">{listData?.totalItems} items</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Show privacy toggle for all user-owned lists (both system and custom) */}
+            <div className="flex items-center gap-2">
+              {/* Privacy badge/toggle - compact */}
               {!sharedUserId && session ? (
-                <button
+                <Badge 
                   onClick={() => {
                     if (!privacyMutation.isPending && listData) {
                       privacyMutation.mutate(!listData.isPublic);
                     }
                   }}
-                  disabled={privacyMutation.isPending}
-                  className="flex items-center gap-3 px-4 py-2 bg-white border border-gray-200 rounded-full hover:border-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-gray-200 text-xs px-2 py-1"
                   data-testid="toggle-list-privacy"
                 >
                   {listData?.isPublic ? (
-                    <>
-                      <Globe size={16} className="text-purple-600" />
-                      <span className="text-sm font-medium text-gray-700">Public</span>
-                    </>
+                    <><Globe size={12} className="mr-1 text-purple-600" /> Public</>
                   ) : (
-                    <>
-                      <Lock size={16} className="text-gray-600" />
-                      <span className="text-sm font-medium text-gray-700">Private</span>
-                    </>
+                    <><Lock size={12} className="mr-1" /> Private</>
                   )}
-                  <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${listData?.isPublic ? 'bg-gray-400' : 'bg-gray-300'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${listData?.isPublic ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </div>
-                </button>
-              ) : (
-                <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-sm">
-                  <Globe size={14} className="mr-1" />
-                  Public List
                 </Badge>
-              )}
+              ) : null}
 
               <Button
+                size="sm"
                 onClick={() => setIsTrackModalOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-purple-600 hover:bg-purple-700 text-xs px-3 py-1.5"
                 data-testid="button-add-item"
               >
-                <Plus size={16} className="mr-2" />
-                Add Item
+                <Plus size={14} className="mr-1" />
+                Add
               </Button>
 
-              <Button
-                onClick={handleShare}
-                data-testid="button-share-list"
-                className={copied ? "bg-green-500 hover:bg-green-600 text-white" : "bg-purple-500 hover:bg-purple-600 text-white"}
-              >
-                {copied ? (
-                  <>
-                    <Check size={16} className="mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Share2 size={16} className="mr-2" />
-                    Share
-                  </>
-                )}
-              </Button>
-
-              {/* Manage Collaborators - Only show for custom lists (not system lists) */}
-              {!sharedUserId && session && !sharedListData?.is_default && (
-                <Button
-                  onClick={() => setIsCollaboratorsDialogOpen(true)}
-                  variant="outline"
-                  data-testid="button-manage-collaborators"
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                >
-                  <Users size={16} className="mr-2" />
-                  Collaborators
-                  {collaborators.length > 0 && (
-                    <Badge className="ml-2 bg-purple-600 text-white">{collaborators.length}</Badge>
-                  )}
-                </Button>
-              )}
-
-              {/* Delete List - Only show for custom lists (not system lists) */}
-              {!sharedUserId && session && !sharedListData?.is_default && (
-                <Button
-                  onClick={handleDeleteList}
-                  variant="outline"
-                  disabled={deleteListMutation.isPending}
-                  data-testid="button-delete-list"
-                  className="border-red-300 text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 size={16} className="mr-2" />
-                  {deleteListMutation.isPending ? 'Deleting...' : 'Delete List'}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Show "Shared with you" indicator if viewing someone else's list or if you're a collaborator */}
-          {(sharedUserId || (collaborators.length > 0 && !sharedUserId)) && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-              <Users size={14} />
-              <span>
-                {sharedUserId ? "Shared by another user" : `Shared with ${collaborators.length} ${collaborators.length === 1 ? 'person' : 'people'}`}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* List Items */}
-        <div className="bg-white rounded-2xl shadow-sm mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Items</h2>
-          </div>
-
-          <div className="divide-y divide-gray-100">
-            {(listData?.items || []).map((item: any) => {
-              const isClickable = item.external_id && item.external_source;
-              const mediaUrl = isClickable ? `/media/${item.type.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
-              
-              return (
-                <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start gap-4">
-                    {isClickable ? (
-                      <Link href={mediaUrl!}>
-                        <img
-                          src={item.artwork}
-                          alt={item.title}
-                          className="w-16 h-16 rounded-lg object-cover flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-                        />
-                      </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="px-2">
+                    <MoreVertical size={16} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleShare}>
+                    {copied ? (
+                      <><Check size={14} className="mr-2" /> Copied!</>
                     ) : (
+                      <><Share2 size={14} className="mr-2" /> Share List</>
+                    )}
+                  </DropdownMenuItem>
+                  {!sharedUserId && session && !sharedListData?.is_default && (
+                    <>
+                      <DropdownMenuItem onClick={() => setIsCollaboratorsDialogOpen(true)}>
+                        <Users size={14} className="mr-2" />
+                        Manage Collaborators {collaborators.length > 0 && `(${collaborators.length})`}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={handleDeleteList}
+                        disabled={deleteListMutation.isPending}
+                        className="text-red-600"
+                      >
+                        <Trash2 size={14} className="mr-2" />
+                        {deleteListMutation.isPending ? 'Deleting...' : 'Delete List'}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+
+        {/* List Items - Compact Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {(listData?.items || []).map((item: any) => {
+            const isClickable = item.external_id && item.external_source;
+            const mediaUrl = isClickable ? `/media/${item.type.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
+            
+            return (
+              <div 
+                key={item.id} 
+                className="bg-white rounded-xl border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all relative group overflow-hidden"
+              >
+                {/* Remove Button - Top Right */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveItem(item.id)}
+                  className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white text-gray-400 hover:text-red-600 p-1.5 h-auto opacity-0 group-hover:opacity-100 transition-opacity"
+                  data-testid={`button-remove-${item.id}`}
+                >
+                  <X size={14} />
+                </Button>
+
+                {/* Artwork */}
+                {isClickable ? (
+                  <Link href={mediaUrl!}>
+                    <div className="aspect-[2/3] relative">
                       <img
                         src={item.artwork}
                         alt={item.title}
-                        className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                       />
-                    )}
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          {isClickable ? (
-                            <Link href={mediaUrl!}>
-                              <h3 className="font-semibold text-gray-900 mb-1 hover:text-purple-600 cursor-pointer transition-colors">{item.title}</h3>
-                            </Link>
-                          ) : (
-                            <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
-                          )}
-                          <p className="text-sm text-gray-600">by {item.creator}</p>
-                          <Badge variant="secondary" className="mt-1 text-xs">
-                            {item.type}
-                          </Badge>
-                        </div>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="text-gray-400 hover:text-red-600"
-                          data-testid={`button-remove-${item.id}`}
-                        >
-                          <X size={16} />
-                        </Button>
+                      {/* Type badge overlay */}
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-black/70 text-white border-0">
+                          {item.type}
+                        </Badge>
                       </div>
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="aspect-[2/3] relative">
+                    <img
+                      src={item.artwork}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-black/70 text-white border-0">
+                        {item.type}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
 
-                    {/* Progress tracker - show for Currently list (only for list owners) */}
-                    {listData?.name === "Currently" && !sharedUserId && session?.access_token && (
+                {/* Info */}
+                <div className="p-3">
+                  {isClickable ? (
+                    <Link href={mediaUrl!}>
+                      <h3 className="font-semibold text-sm text-gray-900 mb-1 hover:text-purple-600 cursor-pointer transition-colors line-clamp-2">
+                        {item.title}
+                      </h3>
+                    </Link>
+                  ) : (
+                    <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">{item.title}</h3>
+                  )}
+                  <p className="text-xs text-gray-500 truncate">{item.creator}</p>
+                  
+                  {/* Progress tracker - show for Currently list */}
+                  {listData?.name === "Currently" && !sharedUserId && session?.access_token && (
+                    <div className="mt-2">
                       <ProgressTracker
                         itemId={item.id}
                         mediaType={item.media_type || ''}
@@ -724,25 +694,12 @@ export default function ListDetail() {
                         currentTotal={item.total ?? 0}
                         currentMode={(item.progress_mode || 'percent') as 'percent' | 'page' | 'episode' | 'track'}
                       />
-                    )}
-
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <Calendar size={12} />
-                          <span>Added {item.addedDate}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span>by {item.addedBy}</span>
-                        </div>
-                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
-              );
-            })}
-          </div>
+            );
+          })}
         </div>
 
       </div>
