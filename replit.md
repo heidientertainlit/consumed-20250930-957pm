@@ -10,7 +10,8 @@ Preferred communication style: Simple, everyday language.
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
 - **Navigation**: Bottom navigation includes 4 items: Feed, Play, Library, and Me. Friends functionality moved to profile page. Discover, Track, and Leaderboard pages exist as backpages (accessible at `/discover`, `/track`, and `/leaderboard`) but are not shown in navigation.
-- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Lists, Friends) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), My Lists (media lists), and Friends (friend management - only visible on own profile). Section pills highlight active section and enable smooth scrolling navigation.
+- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), and Friends (friend management - only visible on own profile). Lists and Media History functionality moved to Library page. Section pills highlight active section and enable smooth scrolling navigation.
+- **Library Page Structure**: Library consolidates media management with 3 responsive tabs: Discover (trending content carousels), Lists (expandable lists with inline progress tracking - pages for books, episodes for TV, tracks for music, percentage for others), and Media History (chronological feed with search bar and Year/Month/Type filters, plus Overview stats showing media type counts).
 
 ## System Architecture
 
@@ -18,7 +19,8 @@ Preferred communication style: Simple, everyday language.
 - **Mobile-first design** with a **dark gradient theme**.
 - **Bottom Navigation**: Feed, Play, Library, Me. Friends moved to profile. Discover, Track, Leaderboard are backpages.
 - **Top Navigation**: Search (🔍), Notifications, Profile. Discover via ✨ icon.
-- **Profile Section Navigation**: Sticky pills (Stats, DNA, Lists, Friends) for quick navigation.
+- **Profile Section Navigation**: Sticky pills (Stats, DNA, Friends) for quick navigation. Lists and Media History moved to Library page.
+- **Library Page Tabs**: 3 tabs (Discover, Lists, Media History) for consolidated media management. Lists tab shows expandable lists with visual progress bars and inline update controls. Media History tab includes search functionality and Year/Month/Type filters with Overview stats.
 - **Component Library**: shadcn/ui (Radix UI, Tailwind CSS).
 - **Button Theme**: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
 - **Dual Search System**:
@@ -45,12 +47,17 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Media Tracking**: Simplified list-based system with privacy controls.
+- **Library Page**: Consolidated media management with 3 tabs:
+  - **Discover Tab**: Trending content carousels
+  - **Lists Tab**: All user lists with expandable views showing items and visual progress bars. Smart progress modes (pages for books, episodes for TV, tracks for music, percentage for others) with inline update controls.
+  - **Media History Tab**: Chronological feed with search bar, Year/Month/Type filters, and Overview stats showing media type counts.
 - **Personal System Lists**: 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) auto-created with privacy control.
 - **Custom Lists**: User-created lists with dedicated edge functions.
 - **Collaborative Lists**: Managed by `list_collaborators` table and associated edge functions.
+- **Progress Tracking**: Uses `update-item-progress` edge function with modes: percent (0-100%), page (books), episode (TV shows), track (music).
 - **Social Features**: Leaderboards, activity feeds, friend discovery, "Inner Circle".
 - **Play Section**: Category-based navigation for Trivia, Polls, Predictions.
-- **Profile Management**: Editable display name; usernames are permanent. Supports viewing other users' profiles.
+- **Profile Management**: Editable display name; usernames are permanent. Supports viewing other users' profiles. Profile focuses on Stats, DNA (Entertainment DNA profile), and Friends (friend management on own profile only).
 - **@ Mention System**: Tagging friends in posts/comments, real-time autocomplete, mention notifications, and precise navigation.
 - **Creator Recognition**: "Favorite Creators" based on media consumption.
 - **Media Item Pages**: Dynamic platform availability links ("Watch On", "Listen On", "Read On").
