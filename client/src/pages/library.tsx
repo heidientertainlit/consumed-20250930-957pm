@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, Lock, Users } from "lucide-react";
+import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, Lock, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import MediaCarousel from "@/components/media-carousel";
 import Navigation from "@/components/navigation";
+import CreateListDialog from "@/components/create-list-dialog";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 
@@ -35,6 +36,7 @@ export default function Library() {
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [activeView, setActiveView] = useState<'discover' | 'my-media'>('discover');
+  const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
 
   // Fetch trending content
   const { data: netflixTVShows = [] } = useQuery({
@@ -418,15 +420,25 @@ export default function Library() {
               </div>
             ) : (
               <>
-                {/* Stats Card */}
-                {userLists.length > 0 && (
-                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-                    <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      {userLists.reduce((total: number, list: any) => total + (list.item_count || 0), 0)}
+                {/* Stats Card & Create Button */}
+                <div className="flex gap-4">
+                  {userLists.length > 0 && (
+                    <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
+                      <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {userLists.reduce((total: number, list: any) => total + (list.item_count || 0), 0)}
+                      </div>
+                      <div className="text-sm text-gray-600">Media Items</div>
                     </div>
-                    <div className="text-sm text-gray-600">Media Items</div>
-                  </div>
-                )}
+                  )}
+                  <Button
+                    onClick={() => setIsCreateListDialogOpen(true)}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
+                    data-testid="button-create-custom-list"
+                  >
+                    <Plus size={18} className="mr-2" />
+                    Create Custom List
+                  </Button>
+                </div>
 
                 {/* All Lists - Compact Single Column */}
                 {(systemLists.length > 0 || customLists.length > 0) && (
@@ -523,6 +535,12 @@ export default function Library() {
           )}
         </div>
       </div>
+
+      {/* Create Custom List Dialog */}
+      <CreateListDialog
+        open={isCreateListDialogOpen}
+        onOpenChange={setIsCreateListDialogOpen}
+      />
     </div>
   );
 }
