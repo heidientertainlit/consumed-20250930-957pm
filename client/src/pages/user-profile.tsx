@@ -1957,10 +1957,10 @@ export default function UserProfile() {
           )}
         </div>
 
-        {/* Your Library */}
+        {/* Your Stats */}
         <div className="px-4 mb-8">
           <div className="mt-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Library</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Stats</h3>
             {isLoadingStats ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
                 <div className="flex items-center justify-center">
