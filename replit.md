@@ -9,19 +9,21 @@ Preferred communication style: Simple, everyday language.
 ### Design Preferences
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
+- **Simplified Navigation**: Bottom navigation reduced to 3 core items: Feed, Friends, Me. Play and Discover pages exist as backpages (accessible at `/play` and `/discover`) but removed from navigation to simplify the core experience.
 
 ## System Architecture
 
 ### UI/UX Decisions
 -   **Mobile-first design**: Optimized for mobile devices.
 -   **Dark gradient theme**: Sophisticated dark theme throughout the application.
--   **Bottom navigation**: Primary navigation uses a persistent bottom bar (Feed, Play, Friends). Track page and Leaderboard exist as backpages (accessible at `/track` and `/leaderboard`) but are not shown in navigation.
--   **Top navigation**: Search (🔍) for direct friend/media lookup, Discover (✨) for AI recommendations, Notifications, and Profile.
+-   **Bottom navigation**: Simplified to 3 core items - Feed, Friends, Me. Play, Discover, Track, and Leaderboard exist as backpages (accessible at `/play`, `/discover`, `/track`, and `/leaderboard`) but are not shown in navigation for clarity and simplification.
+-   **Top navigation**: Search (🔍) for direct friend/media lookup, Notifications, and Profile. Discover functionality integrated via ✨ icon in top nav.
 -   **Component Library**: shadcn/ui, built with Radix UI primitives and styled with Tailwind CSS.
 -   **Button Theme**: All buttons default to purple (`bg-purple-600`) with white text; outline buttons use a purple border with a white background. No black buttons are used.
 -   **Dual Search System**: 
     -   **Direct Search** (🔍 in top nav): Quick search for friends and entertainment to add to lists or send friend requests. Uses `DirectSearchDialog` component with real-time debounced search across `media-search` and `search-users` edge functions.
-    -   **Discover Page** (✨ in top nav): AI-powered recommendation engine for conversational queries. Users describe what they're looking for (e.g., "uplifting movies" or "sci-fi like Blade Runner") and receive personalized suggestions via the `conversational-search` edge function.
+    -   **Discover Page** (✨ in top nav): AI-powered recommendation engine for conversational queries. Users describe what they're looking for (e.g., "uplifting movies" or "sci-fi like Blade Runner") and receive personalized suggestions via the `conversational-search` edge function. Accessible as backpage at `/discover`.
+-   **Feed Content Filters**: Feed page includes filter pills for content types (All, Friends, Hot Takes, Predictions, Polls, Trivia) allowing users to quickly filter the feed by content type. This replaces the need for a dedicated Play page since users can filter for game content directly in the feed.
 
 ### Technical Implementations
 -   **Frontend**: React 18 with TypeScript, Wouter for routing, TanStack Query for server state management, and Vite for building.
