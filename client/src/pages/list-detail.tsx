@@ -618,7 +618,7 @@ export default function ListDetail() {
       <div className="max-w-4xl mx-auto px-4 py-4">
 
         {/* List Items - Ultra Compact Grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-1.5">
           {(listData?.items || []).map((item: any) => {
             const isClickable = item.external_id && item.external_source;
             const mediaUrl = isClickable ? `/media/${item.type.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
