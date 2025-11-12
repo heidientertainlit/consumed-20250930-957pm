@@ -1,7 +1,7 @@
 # consumed - Entertainment Consumption Tracking MVP
 
 ## Overview
-consumed is a mobile-first MVP designed for tracking entertainment consumption. It enables users to log media, participate in social features like leaderboards and activity feeds, discover friends, and engage in trivia and prediction games. The project aims to create an immersive platform for managing and sharing entertainment experiences, characterized by a dark gradient theme, intuitive navigation, and an "Entertainment DNA" onboarding process.
+consumed is a mobile-first MVP for tracking entertainment consumption, enabling users to log media, engage in social features like leaderboards and activity feeds, discover friends, and participate in trivia and prediction games. The platform aims to provide an immersive experience for managing and sharing entertainment, featuring a dark gradient theme, intuitive navigation, and an "Entertainment DNA" onboarding process.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -9,74 +9,71 @@ Preferred communication style: Simple, everyday language.
 ### Design Preferences
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
-- **Navigation**: Bottom navigation includes 5 items: Feed, Friends, Play, Library, and Me. Discover, Track, and Leaderboard pages exist as backpages (accessible at `/discover`, `/track`, and `/leaderboard`) but are not shown in navigation.
-- **Profile Page Organization**: Profile page simplified to two main sections: (1) "Your Library" for media consumption stats, and (2) "My Entertainment DNA" for DNA profile/survey/recommendations. Highlights and Follow Creators features removed for cleaner, more focused profile experience.
+- **Navigation**: Bottom navigation includes 4 items: Feed, Play, Library, and Me. Friends functionality moved to profile page. Discover, Track, and Leaderboard pages exist as backpages (accessible at `/discover`, `/track`, and `/leaderboard`) but are not shown in navigation.
+- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Lists, Friends) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), My Lists (media lists), and Friends (friend management - only visible on own profile). Section pills highlight active section and enable smooth scrolling navigation.
 
 ## System Architecture
 
 ### UI/UX Decisions
--   **Mobile-first design**: Optimized for mobile devices.
--   **Dark gradient theme**: Sophisticated dark theme throughout the application.
--   **Bottom navigation**: Five items - Feed, Friends, Play, Library, and Me. Discover, Track, and Leaderboard exist as backpages (accessible at `/discover`, `/track`, and `/leaderboard`) but are not shown in navigation.
--   **Top navigation**: Search (🔍) for direct friend/media lookup, Notifications, and Profile. Discover functionality integrated via ✨ icon in top nav.
--   **Component Library**: shadcn/ui, built with Radix UI primitives and styled with Tailwind CSS.
--   **Button Theme**: All buttons default to purple (`bg-purple-600`) with white text; outline buttons use a purple border with a white background. No black buttons are used.
--   **Dual Search System**: 
-    -   **Direct Search** (🔍 in top nav): Quick search for friends and entertainment to add to lists or send friend requests. Uses `DirectSearchDialog` component with real-time debounced search across `media-search` and `search-users` edge functions.
-    -   **Discover Page** (✨ in top nav): AI-powered recommendation engine for conversational queries. Users describe what they're looking for (e.g., "uplifting movies" or "sci-fi like Blade Runner") and receive personalized suggestions via the `conversational-search` edge function. Accessible as backpage at `/discover`.
--   **Feed Content Filters**: Feed page includes filter pills for content types (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review) allowing users to quickly filter the feed by content type.
--   **Inline Composer**: Replaced modal dialog with always-visible inline composer showing action chips upfront (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review, ➕ Add Media). Follows "desire paths" philosophy - users see all options immediately without clicking. Defaults to Hot Take mode for instant typing. Currently supports Hot Take posting; other modes require backend development for creation endpoints.
+- **Mobile-first design** with a **dark gradient theme**.
+- **Bottom Navigation**: Feed, Play, Library, Me. Friends moved to profile. Discover, Track, Leaderboard are backpages.
+- **Top Navigation**: Search (🔍), Notifications, Profile. Discover via ✨ icon.
+- **Profile Section Navigation**: Sticky pills (Stats, DNA, Lists, Friends) for quick navigation.
+- **Component Library**: shadcn/ui (Radix UI, Tailwind CSS).
+- **Button Theme**: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
+- **Dual Search System**:
+    - **Direct Search** (🔍): For friends and media, using `media-search` and `search-users` edge functions.
+    - **Discover Page** (✨): AI-powered conversational recommendations via `conversational-search` edge function.
+- **Feed Content Filters**: Filter pills for content types (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review).
+- **Inline Composer**: Always-visible composer with action chips (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review, ➕ Add Media). Defaults to Hot Take mode.
 
 ### Technical Implementations
--   **Frontend**: React 18 with TypeScript, Wouter for routing, TanStack Query for server state management, and Vite for building.
--   **Backend**: Supabase Edge Functions (Deno runtime) for all server-side logic including notifications, comments, social features, analytics, recommendations, and API integrations. **NO Express.js - use Supabase Edge Functions exclusively.**
--   **Database**: Supabase PostgreSQL for ALL data storage including users, posts, lists, notifications, analytics, sessions, and all application data. **NO Neon Database - use Supabase PostgreSQL exclusively.**
--   **API Integration**: Unified API search using Spotify, TMDB, YouTube, and Open Library for media data, called from Supabase Edge Functions.
--   **Authentication & Signup**: Supabase Auth for login/signup/password reset, with user creation handled automatically by a Supabase database trigger or edge function. Signup is simplified, directing users directly to the `/feed` after completion.
--   **User Management**: Users are automatically created in a custom `users` table upon first authentication.
--   **Notification System**: A unified real-time notification system with a `notifications` database table, managed by a centralized `send-notification` edge function. Supports various notification types (comment, like, friend request, etc.) and features a `NotificationBell` component with real-time updates and navigation logic.
--   **Sharing System**: Unified sharing functionality (`/src/lib/share.ts`) for various content types, configurable for deep linking or text blurbs.
--   **Leaderboard System**: All leaderboard categories are handled by a single `get-leaderboards` edge function, which uses `SERVICE_ROLE_KEY` to ensure accurate point counting by bypassing RLS.
--   **Unified Voting System**: All voting (polls, predictions, trivia) is consolidated into a single system using the `prediction_pools` table (for game types) and `user_predictions` table (for responses). This system supports sponsors for all game types.
--   **User Points System**: The `calculate-user-points` edge function aggregates points from all user activities.
--   **Trivia Scoring**: Points are awarded only for correct answers, with specific logic for different trivia formats.
--   **Smart Recommendations Caching System**: Provides instant loading of personalized recommendations (<1 second) via a `user_recommendations` cache table. Background AI generation (GPT-4o) analyzes diverse user data, and `rebuild-recommendations` edge function enriches these with real poster images from TMDB/Google Books. The system ensures recommendations are never empty during regeneration and features auto-polling for updates.
--   **Creator Follow System**: Manages following creators using a `followed_creators` table. Includes multi-source creator search, follow/unfollow functionality via edge functions, and a `get-creator-updates` edge function to fetch recent and popular content from followed creators, integrated into the main feed.
--   **Spoiler Protection System**: Posts can be marked as containing spoilers via a checkbox in the share dialog. Spoiler posts show a blurred preview with a reveal overlay in the feed, protecting users from unwanted spoilers until they choose to view the content.
--   **Session Tracking & Analytics**: Automatic session tracking via `user_sessions` table that monitors user engagement through heartbeat pings every 30 seconds. Session duration is calculated using visibility change API to capture tab closes. Supports churn analysis (`get_churn_metrics`) showing users who stopped using the app at 7/30/60 day intervals, and time-spent metrics (`get_session_engagement`) showing average session duration, total time spent, and per-user daily averages. Admin dashboard displays churn rate and average time spent with detailed breakdowns. Note: Very short sessions (<30s) may not be fully captured; this is acceptable as they represent bounces or minimal engagement.
+- **Frontend**: React 18, TypeScript, Wouter, TanStack Query, Vite.
+- **Backend**: Supabase Edge Functions (Deno runtime) for all server-side logic.
+- **Database**: Supabase PostgreSQL for all data storage.
+- **API Integration**: Unified API search (Spotify, TMDB, YouTube, Open Library) via Supabase Edge Functions.
+- **Authentication**: Supabase Auth for login/signup/password reset, with automatic user creation in a custom `users` table.
+- **Notification System**: Real-time unified system (`notifications` table, `send-notification` edge function).
+- **Sharing System**: Unified functionality (`/src/lib/share.ts`) for content sharing.
+- **Leaderboard System**: `get-leaderboards` edge function handles all categories.
+- **Unified Voting System**: Uses `prediction_pools` and `user_predictions` tables for polls, predictions, and trivia, supporting sponsors.
+- **User Points System**: `calculate-user-points` edge function aggregates points.
+- **Smart Recommendations Caching**: `user_recommendations` cache table for instant loading, background GPT-4o generation, and `rebuild-recommendations` edge function.
+- **Creator Follow System**: `followed_creators` table, edge functions for follow/unfollow, and `get-creator-updates` for feed integration.
+- **Spoiler Protection**: Posts can be marked as spoilers, showing a blurred preview with a reveal overlay.
+- **Session Tracking & Analytics**: `user_sessions` table for engagement monitoring, churn analysis, and time-spent metrics via `get_churn_metrics` and `get_session_engagement` functions.
 
 ### Feature Specifications
--   **Media Tracking**: Simplified list-based system for tracking entertainment items with privacy controls.
--   **Personal System Lists**: Users receive personal copies of 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites), auto-created with privacy control.
--   **Custom Lists**: User-created lists with dedicated edge functions for creation and management.
--   **Collaborative Lists**: Restricted to custom lists, managed by `list_collaborators` table and `add-list-collaborator`, `remove-list-collaborator`, `get-list-collaborators` edge functions, with notification integration.
--   **Social Features**: Leaderboards, activity feeds, friend discovery, and "Inner Circle" for Super Fan identification.
--   **Play Section**: Category-based navigation for Trivia, Polls, and Predictions, with inline play cards in the Feed.
--   **Profile Management**: Editable display name with validation. **Usernames are permanent and cannot be changed** to prevent broken @ mentions (like Twitter/Instagram). Supports viewing other users' profiles by passing `user_id` query parameters to edge functions.
--   **@ Mention System**: Fully implemented social mention system allowing users to tag friends in posts and comments using @username syntax. Features real-time autocomplete dropdown showing friend suggestions, mention notifications with dedicated '@' icon in notification bell, and precise navigation to mentioned posts/comments. Uses unified regex pattern `/(^|[\s,;:!?(){}\[\]"'<>\-])@([\w.-]+)/g` across client rendering and edge functions. Supports deduplication to prevent duplicate notifications. Deployed via `share-update` and `social-feed-comments` edge functions.
--   **Creator Recognition**: "Favorite Creators" are computed based on user media consumption.
--   **Media Item Pages**: Displays dynamic platform availability (e.g., Netflix, Spotify) via "Watch On", "Listen On", or "Read On" links.
--   **Polls/Surveys System**: Uses the unified voting system (`prediction_pools` + `user_predictions` tables) to support polls, predictions, and trivia. All game types support sponsors, real-time voting, duplicate vote prevention, and points rewards. The `PlayCard` component handles rendering and submission for all game types.
--   **Spoiler Tags**: Users can mark posts as containing spoilers when sharing updates, with content hidden behind a reveal button in the feed to protect other users from spoilers.
--   **Discover Page**: Dedicated page (`/discover`) featuring AI-powered recommendation engine at the top and trending content carousels below. Includes sections for personalized recommendations, trending TV shows, movies, NY Times bestsellers, and podcasts. Users can ask conversational questions to get tailored suggestions.
--   **Analytics Dashboard**: VC-ready admin dashboard at `/admin` showing comprehensive engagement metrics including DAU/WAU/MAU, retention rates, stickiness ratio, activation funnel, churn rate, time spent on app, and the North Star Metric (OMTM: % of users taking 2+ actions per week). Built with 10+ SQL analytics functions and a dedicated `get-analytics` edge function. Features interactive charts for retention cohorts, engagement trends, social graph health, onboarding completion rates, churn analysis (30-day), and session engagement metrics (7-day). New endpoints: `?metric=churn&period=30` and `?metric=sessions&period=7 days`.
--   **Partnership Insights**: Dedicated analytics tab showcasing platform data valuable for partnerships with Netflix, Goodreads, Barnes & Noble, etc. Includes 9 partnership SQL functions tracking cross-platform engagement, cross-platform affinity insights, trending content (7-day), completion rates by media type, viral content, DNA personality clusters, creator influence, and engagement timelines. The `get_platform_affinity_insights()` function now analyzes four affinity sources: (1) Creator-based (e.g., "Taylor Swift fans also watch X movies"), (2) Platform-based (e.g., "Netflix viewers also read Y books"), (3) DNA-based (e.g., "Users with 'Adventurous Explorer' DNA who love sci-fi also enjoy Z"), and (4) Recommendation-based (e.g., "Users who received recommendations for Blade Runner also watch W"). This multi-source approach provides richer insights even with limited user data, leveraging Entertainment DNA profiles and AI recommendations alongside traditional consumption patterns. Accessible via `get-analytics?type=partnerships` endpoint with comprehensive error handling.
+- **Media Tracking**: Simplified list-based system with privacy controls.
+- **Personal System Lists**: 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) auto-created with privacy control.
+- **Custom Lists**: User-created lists with dedicated edge functions.
+- **Collaborative Lists**: Managed by `list_collaborators` table and associated edge functions.
+- **Social Features**: Leaderboards, activity feeds, friend discovery, "Inner Circle".
+- **Play Section**: Category-based navigation for Trivia, Polls, Predictions.
+- **Profile Management**: Editable display name; usernames are permanent. Supports viewing other users' profiles.
+- **@ Mention System**: Tagging friends in posts/comments, real-time autocomplete, mention notifications, and precise navigation.
+- **Creator Recognition**: "Favorite Creators" based on media consumption.
+- **Media Item Pages**: Dynamic platform availability links ("Watch On", "Listen On", "Read On").
+- **Polls/Surveys System**: Uses unified voting system with sponsors, real-time voting, duplicate vote prevention, and points rewards.
+- **Discover Page**: AI-powered recommendations and trending content carousels.
+- **Analytics Dashboard**: Admin dashboard at `/admin` with comprehensive engagement metrics (DAU/WAU/MAU, retention, churn, time spent) using SQL analytics functions and `get-analytics` edge function.
+- **Partnership Insights**: Analytics for partnerships (Netflix, Goodreads) including cross-platform affinity, trending content, and DNA personality clusters via `get-analytics?type=partnerships`.
 
 ### System Design Choices
--   **Database Schema**: Synced development and production schemas with strict naming conventions (e.g., `user_name`). Critical tables like `lists` and `list_items` are designed to ensure data integrity and avoid non-existent columns in production.
--   **Row Level Security (RLS)**: Strict RLS policies are implemented for data privacy (`auth.uid() = user_id OR visibility = 'public'`).
--   **Edge Functions**: Adhere to the database schema, handle auto-creation logic for new users, and explicitly select existing columns for list operations. Profile viewing edge functions accept a `user_id` query parameter for displaying other users' data.
--   **Privacy Toggle System**: UI toggle updates `is_private` via an `update-list-visibility` edge function.
+- **Database Schema**: Strict naming conventions, synced dev/prod schemas.
+- **Row Level Security (RLS)**: Strict RLS for data privacy.
+- **Edge Functions**: Adhere to schema, handle user auto-creation, accept `user_id` for profile viewing.
+- **Privacy Toggle System**: `update-list-visibility` edge function.
 
 ## External Dependencies
 
--   **Database & Backend**: Supabase (PostgreSQL + Edge Functions) - **ALL application data and server logic**
+-   **Database & Backend**: Supabase (PostgreSQL + Edge Functions)
 -   **External APIs** (called from Supabase Edge Functions):
-    -   Spotify (OAuth2 client credentials)
-    -   TMDB (API key)
-    -   YouTube (API key)
-    -   Open Library (no authentication)
-    -   OpenAI (GPT-4o for recommendations)
+    -   Spotify
+    -   TMDB
+    -   YouTube
+    -   Open Library
+    -   OpenAI (GPT-4o)
 -   **Frontend Libraries**:
     -   `@supabase/supabase-js`
     -   `@tanstack/react-query`
