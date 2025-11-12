@@ -1365,7 +1365,7 @@ export default function FriendsUpdates() {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
-            Consuming Feed
+            Consumed Feed
           </h1>
           <p className="text-base text-gray-600">
             See what your friends are <span key={currentVerb} className="text-purple-600 font-medium inline-block transition-all duration-500 ease-in-out">{currentVerb}</span>
@@ -1381,7 +1381,7 @@ export default function FriendsUpdates() {
             <div className="flex items-center gap-3 mb-4">
               <MessageCircle className="h-6 w-6 text-white flex-shrink-0" />
               <h2 className="text-xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
-                Consuming Feed
+                What are you consuming?
               </h2>
             </div>
             <p className="text-white/90 mb-6 text-sm">
