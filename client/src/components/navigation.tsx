@@ -548,7 +548,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <div className="relative">
               <User className="text-white" size={24} />
-              <Dna className="text-white absolute -left-2 -top-1" size={12} />
+              <Dna className="text-white absolute -left-3 -top-1" size={16} />
             </div>
             <span className="text-xs font-medium text-white">Me</span>
           </Link>
