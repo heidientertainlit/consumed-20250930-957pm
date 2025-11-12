@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, Lock } from "lucide-react";
+import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import MediaCarousel from "@/components/media-carousel";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -34,6 +34,7 @@ export default function Library() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [activeView, setActiveView] = useState<'discover' | 'my-media'>('discover');
 
   // Fetch trending content
   const { data: netflixTVShows = [] } = useQuery({
@@ -192,31 +193,122 @@ export default function Library() {
             Library
           </h1>
           <p className="text-base text-gray-600">
-            Discover new content or browse your collection
+            Discover new content by browsing your friends lists, personalized recommendations or trending content
           </p>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="discover" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1">
-            <TabsTrigger 
-              value="discover" 
-              className="text-sm text-gray-700 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-medium"
-            >
-              <Sparkles size={16} className="mr-2" />
-              Discover
-            </TabsTrigger>
-            <TabsTrigger 
-              value="my-media" 
-              className="text-sm text-gray-700 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-medium"
-            >
-              <ListIcon size={16} className="mr-2" />
-              My Media
-            </TabsTrigger>
-          </TabsList>
+        {/* Button Toggle Navigation */}
+        <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-xl w-full">
+          <button
+            onClick={() => setActiveView('discover')}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+              activeView === 'discover'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            data-testid="button-discover"
+          >
+            <Sparkles size={16} />
+            Discover
+          </button>
+          <button
+            onClick={() => setActiveView('my-media')}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+              activeView === 'my-media'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            data-testid="button-my-media"
+          >
+            <ListIcon size={16} />
+            My Media
+          </button>
+        </div>
 
-          {/* Discovery Tab */}
-          <TabsContent value="discover" className="space-y-8">
+        {/* Content Views */}
+        <div className="w-full">
+          {/* Discovery View */}
+          {activeView === 'discover' && (
+            <div className="space-y-8">
+            
+            {/* Friends Lists Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-black flex items-center gap-2">
+                  <Users className="text-purple-600" size={24} />
+                  Friends' Lists
+                </h2>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Browse what your friends are watching, reading, and listening to
+              </p>
+              
+              {/* Friends Lists Carousel */}
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                {/* Placeholder Friend Lists */}
+                {[
+                  { name: 'Sarah', username: 'sarah_reads', lists: ['Currently Reading', 'Want to Read'], items: 47 },
+                  { name: 'Mike', username: 'mike_watches', lists: ['Currently Watching', 'Finished'], items: 124 },
+                  { name: 'Emma', username: 'emma_listens', lists: ['Currently Listening', 'Favorites'], items: 89 },
+                  { name: 'Alex', username: 'alex_binges', lists: ['Queue', 'All Time Favorites'], items: 203 }
+                ].map((friend, idx) => (
+                  <div
+                    key={idx}
+                    className="flex-shrink-0 w-64 bg-white rounded-xl border border-gray-200 p-4 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer"
+                    onClick={() => setLocation(`/profile?user=${friend.username}`)}
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold">
+                          {friend.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-black truncate">{friend.name}</h3>
+                        <p className="text-xs text-gray-500 truncate">@{friend.username}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">{friend.items} items</span>
+                        <span className="text-purple-600 font-medium">{friend.lists.length} lists</span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {friend.lists.join(', ')}
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Open list browser modal
+                      }}
+                    >
+                      Browse Lists
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Empty state if no friends */}
+              {false && (
+                <div className="bg-gray-50 rounded-xl p-8 text-center">
+                  <Users className="mx-auto text-gray-300 mb-3" size={48} />
+                  <h3 className="font-semibold text-gray-900 mb-2">No friends yet</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Add friends to discover what they're watching and reading
+                  </p>
+                  <Button
+                    onClick={() => setLocation('/friends')}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    Find Friends
+                  </Button>
+                </div>
+              )}
+            </div>
+
             {/* AI Recommendation Engine */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg">
               <div className="mb-4">
@@ -361,10 +453,12 @@ export default function Library() {
                 />
               </div>
             )}
-          </TabsContent>
+            </div>
+          )}
 
-          {/* My Media Tab */}
-          <TabsContent value="my-media" className="space-y-6">
+          {/* My Media View */}
+          {activeView === 'my-media' && (
+            <div className="space-y-6">
             {isLoadingLists ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="animate-spin text-purple-600" size={32} />
@@ -472,8 +566,9 @@ export default function Library() {
                 )}
               </>
             )}
-          </TabsContent>
-        </Tabs>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
