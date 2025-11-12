@@ -336,15 +336,23 @@ export default function Library() {
             {/* Trending Content Carousels */}
             {netflixTVShows.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold text-black mb-4 px-2">Trending on Netflix</h2>
-                <MediaCarousel items={netflixTVShows} onItemClick={handleMediaClick} />
+                <MediaCarousel 
+                  title="Trending on Netflix" 
+                  mediaType="tv" 
+                  items={netflixTVShows} 
+                  onItemClick={handleMediaClick} 
+                />
               </div>
             )}
 
             {netflixMovies.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold text-black mb-4 px-2">Trending Movies</h2>
-                <MediaCarousel items={netflixMovies} onItemClick={handleMediaClick} />
+                <MediaCarousel 
+                  title="Trending Movies" 
+                  mediaType="movie" 
+                  items={netflixMovies} 
+                  onItemClick={handleMediaClick} 
+                />
               </div>
             )}
           </TabsContent>
