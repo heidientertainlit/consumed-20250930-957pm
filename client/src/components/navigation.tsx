@@ -512,39 +512,23 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         <div className="flex justify-evenly items-center h-20 pb-2">
           <Link
             href="/feed"
-            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-4 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
           >
             <Activity className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Feed</span>
           </Link>
 
           <Link
-            href="/play"
-            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/play" ? "bg-white/20" : ""}`}
-          >
-            <Gamepad2 className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Play</span>
-          </Link>
-
-          <Link
             href="/friends"
-            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/friends" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-4 rounded-lg transition-colors ${location === "/friends" ? "bg-white/20" : ""}`}
           >
             <Users className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Friends</span>
           </Link>
 
           <Link
-            href="/discover"
-            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/discover" ? "bg-white/20" : ""}`}
-          >
-            <span className="text-white text-2xl">✨</span>
-            <span className="text-xs font-medium text-white">Discover</span>
-          </Link>
-
-          <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
-            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-4 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
           >
             <div className="relative">
               <User className="text-white" size={24} />

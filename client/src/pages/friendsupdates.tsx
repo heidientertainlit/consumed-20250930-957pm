@@ -480,6 +480,31 @@ export default function FriendsUpdates() {
     window.location.assign(path);
   };
 
+  // Fetch user's friends list for filtering
+  const { data: friendsData = [] } = useQuery({
+    queryKey: ['user-friends'],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'getFriends' })
+      });
+      
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.friends || [];
+    },
+    enabled: !!session?.access_token,
+  });
+
+  // Create a Set of friend user IDs for quick lookup
+  const friendIds = new Set(friendsData.map((friend: any) => friend.id));
+
   const { 
     data: infinitePosts, 
     isLoading, 
@@ -503,8 +528,36 @@ export default function FriendsUpdates() {
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
 
-  // Filter posts by detailed filters
+  // Filter posts by detailed filters and feed filter
   const filteredPosts = socialPosts.filter(post => {
+    // Apply main feed filter (All, Friends, Hot Takes, Predictions, Polls, Trivia)
+    if (feedFilter === 'friends') {
+      // Show only posts from friends (not own posts)
+      if (post.user.id === user?.id || !friendIds.has(post.user.id)) {
+        return false;
+      }
+    }
+    
+    if (feedFilter === 'hot-takes') {
+      // Show only posts without media items (text-only posts = hot takes)
+      if (post.mediaItems && post.mediaItems.length > 0) return false;
+    }
+    
+    if (feedFilter === 'predictions') {
+      const postType = post.type?.toLowerCase() || '';
+      if (postType !== 'prediction') return false;
+    }
+    
+    if (feedFilter === 'polls') {
+      const postType = post.type?.toLowerCase() || '';
+      if (postType !== 'poll' && postType !== 'vote') return false;
+    }
+    
+    if (feedFilter === 'trivia') {
+      const postType = post.type?.toLowerCase() || '';
+      if (postType !== 'trivia') return false;
+    }
+    
     // Apply media type filter
     if (detailedFilters.mediaTypes.length > 0) {
       if (!post.mediaItems || post.mediaItems.length === 0) return false;
@@ -1506,7 +1559,11 @@ export default function FriendsUpdates() {
                   <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
                   {[
                     { id: "everyone", label: "All" },
-                    { id: "friends", label: "Friends" }
+                    { id: "friends", label: "Friends" },
+                    { id: "hot-takes", label: "Hot Takes" },
+                    { id: "predictions", label: "Predictions" },
+                    { id: "polls", label: "Polls" },
+                    { id: "trivia", label: "Trivia" }
                   ].map((filter) => {
                     const isActive = feedFilter === filter.id;
                     return (
