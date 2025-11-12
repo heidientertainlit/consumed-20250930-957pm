@@ -231,48 +231,6 @@ export default function Library() {
           {activeView === 'discover' && (
             <div className="space-y-8">
             
-            {/* Friends Lists - Scrollable Content Carousels */}
-            <div className="space-y-6">
-              {/* Placeholder: Sarah's List */}
-              <MediaCarousel
-                title="Sarah's Currently Reading"
-                mediaType="book"
-                items={[
-                  { id: '1', title: 'The Midnight Library', creator: 'Matt Haig', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1602190253i/52578297.jpg', mediaType: 'book', externalId: '52578297', externalSource: 'goodreads' },
-                  { id: '2', title: 'Project Hail Mary', creator: 'Andy Weir', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg', mediaType: 'book', externalId: '54493401', externalSource: 'goodreads' },
-                  { id: '3', title: 'Atomic Habits', creator: 'James Clear', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg', mediaType: 'book', externalId: '40121378', externalSource: 'goodreads' },
-                  { id: '4', title: 'The Silent Patient', creator: 'Alex Michaelides', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1582759969i/40097951.jpg', mediaType: 'book', externalId: '40097951', externalSource: 'goodreads' }
-                ]}
-                onItemClick={handleMediaClick}
-              />
-
-              {/* Placeholder: Mike's List */}
-              <MediaCarousel
-                title="Mike's Queue You Might Like"
-                mediaType="movie"
-                items={[
-                  { id: '1', title: 'Oppenheimer', creator: 'Christopher Nolan', image_url: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', mediaType: 'movie', externalId: '872585', externalSource: 'tmdb' },
-                  { id: '2', title: 'The Killer', creator: 'David Fincher', image_url: 'https://image.tmdb.org/t/p/w500/e7Jvsry47JJQruuezjU2X1Z6J77.jpg', mediaType: 'movie', externalId: '359724', externalSource: 'tmdb' },
-                  { id: '3', title: 'Poor Things', creator: 'Yorgos Lanthimos', image_url: 'https://image.tmdb.org/t/p/w500/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg', mediaType: 'movie', externalId: '792307', externalSource: 'tmdb' },
-                  { id: '4', title: 'Killers of the Flower Moon', creator: 'Martin Scorsese', image_url: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg', mediaType: 'movie', externalId: '466420', externalSource: 'tmdb' }
-                ]}
-                onItemClick={handleMediaClick}
-              />
-
-              {/* Placeholder: Emma's List */}
-              <MediaCarousel
-                title="Emma's Favorites"
-                mediaType="tv"
-                items={[
-                  { id: '1', title: 'The Bear', creator: '', image_url: 'https://image.tmdb.org/t/p/w500/zCSkDS9ExpgjPTXOGqFuruKN5f9.jpg', mediaType: 'tv', externalId: '136315', externalSource: 'tmdb' },
-                  { id: '2', title: 'Succession', creator: '', image_url: 'https://image.tmdb.org/t/p/w500/7HW47XbkNQ5fiwQFYGWdw9gs144.jpg', mediaType: 'tv', externalId: '76331', externalSource: 'tmdb' },
-                  { id: '3', title: 'The Last of Us', creator: '', image_url: 'https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg', mediaType: 'tv', externalId: '100088', externalSource: 'tmdb' },
-                  { id: '4', title: 'Severance', creator: '', image_url: 'https://image.tmdb.org/t/p/w500/lFsPNAF71hfjKOY42nxkawqWkN8.jpg', mediaType: 'tv', externalId: '95396', externalSource: 'tmdb' }
-                ]}
-                onItemClick={handleMediaClick}
-              />
-            </div>
-
             {/* AI Recommendation Engine */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg">
               <div className="mb-4">
@@ -393,6 +351,37 @@ export default function Library() {
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Friends Lists */}
+            <div>
+              <MediaCarousel
+                title="Sarah's Currently Reading You Might Like"
+                mediaType="book"
+                items={[
+                  { id: '1', title: 'The Midnight Library', creator: 'Matt Haig', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1602190253i/52578297.jpg', mediaType: 'book', externalId: '52578297', externalSource: 'goodreads' },
+                  { id: '2', title: 'Project Hail Mary', creator: 'Andy Weir', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg', mediaType: 'book', externalId: '54493401', externalSource: 'goodreads' },
+                  { id: '3', title: 'Atomic Habits', creator: 'James Clear', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg', mediaType: 'book', externalId: '40121378', externalSource: 'goodreads' },
+                  { id: '4', title: 'The Silent Patient', creator: 'Alex Michaelides', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1582759969i/40097951.jpg', mediaType: 'book', externalId: '40097951', externalSource: 'goodreads' },
+                  { id: '5', title: 'The Seven Husbands of Evelyn Hugo', creator: 'Taylor Jenkins Reid', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1618329605i/32620332.jpg', mediaType: 'book', externalId: '32620332', externalSource: 'goodreads' }
+                ]}
+                onItemClick={handleMediaClick}
+              />
+            </div>
+
+            <div>
+              <MediaCarousel
+                title="Mike's Queue You Might Like"
+                mediaType="movie"
+                items={[
+                  { id: '1', title: 'Oppenheimer', creator: 'Christopher Nolan', image_url: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', mediaType: 'movie', externalId: '872585', externalSource: 'tmdb' },
+                  { id: '2', title: 'The Killer', creator: 'David Fincher', image_url: 'https://image.tmdb.org/t/p/w500/e7Jvsry47JJQruuezjU2X1Z6J77.jpg', mediaType: 'movie', externalId: '359724', externalSource: 'tmdb' },
+                  { id: '3', title: 'Poor Things', creator: 'Yorgos Lanthimos', image_url: 'https://image.tmdb.org/t/p/w500/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg', mediaType: 'movie', externalId: '792307', externalSource: 'tmdb' },
+                  { id: '4', title: 'Killers of the Flower Moon', creator: 'Martin Scorsese', image_url: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg', mediaType: 'movie', externalId: '466420', externalSource: 'tmdb' },
+                  { id: '5', title: 'The Zone of Interest', creator: 'Jonathan Glazer', image_url: 'https://image.tmdb.org/t/p/w500/hUu9zyZmDd8VZegKi1iK1Vk0RYS.jpg', mediaType: 'movie', externalId: '762430', externalSource: 'tmdb' }
+                ]}
+                onItemClick={handleMediaClick}
+              />
             </div>
 
             {/* Trending Content Carousels */}
