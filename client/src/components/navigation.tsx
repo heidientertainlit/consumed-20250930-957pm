@@ -492,14 +492,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             
             {!isSearchExpanded && (
               <>
-                <Link href="/discover">
-                  <button
-                    className="hover:opacity-70 transition-opacity"
-                    data-testid="discover-button"
-                  >
-                    <span className="text-white text-xl">✨</span>
-                  </button>
-                </Link>
                 <Link href="/friendsupdates">
                   <button
                     className="hover:opacity-70 transition-opacity"
@@ -540,6 +532,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <Users className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Friends</span>
+          </Link>
+
+          <Link
+            href="/discover"
+            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/discover" ? "bg-white/20" : ""}`}
+          >
+            <span className="text-white text-2xl">✨</span>
+            <span className="text-xs font-medium text-white">Discover</span>
           </Link>
 
           <Link
