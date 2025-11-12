@@ -625,7 +625,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   {/* Topic pill if selected */}
                   {conversationTopic && (
                     <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                      {conversationTopic.type === "media" && conversationTopic.poster_url && (
+                      {conversationTopic.poster_url && (
                         <img 
                           src={conversationTopic.poster_url} 
                           alt={conversationTopic.title}
@@ -635,7 +635,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-gray-500 mb-0.5">Conversation about</p>
                         <p className="text-sm font-semibold text-gray-900 truncate">
-                          {conversationTopic.type === "hashtag" ? `#${conversationTopic.title}` : conversationTopic.title}
+                          {conversationTopic.type === "theme" ? `${conversationTopic.icon} ${conversationTopic.title}` : conversationTopic.title}
                         </p>
                       </div>
                       <Button
@@ -652,113 +652,84 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   {/* Topic Selector - Show when no topic selected */}
                   {!conversationTopic && (
                     <div className="border border-orange-200 rounded-lg p-3 bg-orange-50">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">Choose a topic for this conversation</p>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">What's this conversation about?</p>
                       
-                      {/* Tab Selector */}
-                      <div className="flex gap-2 mb-3">
-                        <button
-                          onClick={() => setTopicSelectorTab("media")}
-                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                            topicSelectorTab === "media"
-                              ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
-                              : "bg-white text-gray-700 hover:bg-gray-50"
-                          }`}
-                        >
-                          🎬 Find Title
-                        </button>
-                        <button
-                          onClick={() => setTopicSelectorTab("hashtag")}
-                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                            topicSelectorTab === "hashtag"
-                              ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
-                              : "bg-white text-gray-700 hover:bg-gray-50"
-                          }`}
-                        >
-                          # Topic Hashtag
-                        </button>
-                      </div>
+                      {/* Single Search Box */}
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          handleMediaSearch(e.target.value);
+                        }}
+                        placeholder="Search for a show, movie, book, podcast..."
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white mb-3"
+                        autoFocus
+                      />
 
-                      {/* Media Search Tab */}
-                      {topicSelectorTab === "media" && (
-                        <div>
-                          <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => {
-                              setSearchQuery(e.target.value);
-                              handleMediaSearch(e.target.value);
-                            }}
-                            placeholder="Search for a show, movie, book, podcast..."
-                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-                            autoFocus
-                          />
-                          {searchResults.length > 0 && (
-                            <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
-                              {searchResults.slice(0, 8).map((result, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => {
-                                    setConversationTopic({ ...result, type: "media" });
-                                    setSearchQuery("");
-                                    setSearchResults([]);
-                                  }}
-                                  className="w-full flex items-center gap-3 p-2 hover:bg-white rounded text-left transition-colors"
-                                >
-                                  {result.poster_url && (
-                                    <img 
-                                      src={result.poster_url} 
-                                      alt={result.title}
-                                      className="w-10 h-14 object-cover rounded shadow-sm"
-                                    />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
-                                    <p className="text-xs text-gray-600 capitalize">{result.type}</p>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          {isSearching && (
-                            <p className="text-xs text-orange-600 mt-2 flex items-center gap-2">
-                              <span className="inline-block w-3 h-3 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></span>
-                              Searching...
-                            </p>
-                          )}
+                      {/* Search Results */}
+                      {searchResults.length > 0 && (
+                        <div className="mb-3 max-h-48 overflow-y-auto space-y-1">
+                          {searchResults.slice(0, 8).map((result, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setConversationTopic({ ...result, type: "media" });
+                                setSearchQuery("");
+                                setSearchResults([]);
+                              }}
+                              className="w-full flex items-center gap-3 p-2 hover:bg-white rounded text-left transition-colors"
+                            >
+                              {result.poster_url && (
+                                <img 
+                                  src={result.poster_url} 
+                                  alt={result.title}
+                                  className="w-10 h-14 object-cover rounded shadow-sm"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
+                                <p className="text-xs text-gray-600 capitalize">{result.type}</p>
+                              </div>
+                            </button>
+                          ))}
                         </div>
                       )}
+                      
+                      {isSearching && (
+                        <p className="text-xs text-orange-600 mb-3 flex items-center gap-2">
+                          <span className="inline-block w-3 h-3 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></span>
+                          Searching...
+                        </p>
+                      )}
 
-                      {/* Hashtag Tab */}
-                      {topicSelectorTab === "hashtag" && (
+                      {/* Curated Theme Chips */}
+                      {!searchQuery && searchResults.length === 0 && (
                         <div>
-                          <input
-                            type="text"
-                            value={hashtagInput}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
-                              setHashtagInput(value);
-                            }}
-                            placeholder="Enter topic (e.g., RealityTVDrama, TheBear)"
-                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-                            autoFocus
-                          />
-                          {hashtagInput && (
-                            <div className="mt-2">
-                              <Button
+                          <p className="text-xs text-gray-600 mb-2">Or pick a general topic:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { icon: "🏆", title: "Awards Season", slug: "awards-season" },
+                              { icon: "🎭", title: "Reality TV Drama", slug: "reality-tv-drama" },
+                              { icon: "📺", title: "Streaming Wars", slug: "streaming-wars" },
+                              { icon: "🎬", title: "2025 Predictions", slug: "2025-predictions" },
+                            ].map((theme) => (
+                              <button
+                                key={theme.slug}
                                 onClick={() => {
                                   setConversationTopic({ 
-                                    title: hashtagInput, 
-                                    type: "hashtag" 
+                                    title: theme.title,
+                                    slug: theme.slug,
+                                    icon: theme.icon,
+                                    type: "theme" 
                                   });
-                                  setHashtagInput("");
                                 }}
-                                size="sm"
-                                className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xs"
+                                className="px-3 py-1.5 bg-white hover:bg-gradient-to-r hover:from-orange-500 hover:to-orange-600 border border-orange-200 hover:border-orange-600 rounded-full text-xs font-medium text-gray-700 hover:text-white transition-all"
                               >
-                                Use #{hashtagInput}
-                              </Button>
-                            </div>
-                          )}
+                                {theme.icon} {theme.title}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -850,7 +821,8 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                   isPosting || 
                   !content.trim() || 
                   content.length > maxChars ||
-                  (postMode === "prediction" && content && predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()))
+                  (postMode === "mood" && !conversationTopic) ||
+                  (postMode === "prediction" && content && predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()) === true)
                 }
                 className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto text-sm"
               >

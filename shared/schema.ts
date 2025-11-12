@@ -301,6 +301,47 @@ export const insertFollowedCreatorSchema = createInsertSchema(followedCreators).
   createdAt: true,
 });
 
+// Conversation topics (media or curated themes)
+export const conversationTopics = pgTable("conversation_topics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: varchar("type").notNull(), // 'media' or 'theme'
+  slug: text("slug").notNull().unique(), // 'selling-sunset', 'reality-tv-drama'
+  displayName: text("display_name").notNull(), // 'Selling Sunset', 'Reality TV Drama'
+  posterUrl: text("poster_url"), // For media topics
+  icon: text("icon"), // For theme topics (emoji)
+  metadata: jsonb("metadata"), // Media type, external IDs, etc.
+  isCurated: boolean("is_curated").notNull().default(false), // Pre-seeded themes vs auto-created
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Conversations (threads about topics)
+export const conversations = pgTable("conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  topicId: varchar("topic_id").notNull().references(() => conversationTopics.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  containsSpoilers: boolean("contains_spoilers").notNull().default(false),
+  // Activity metrics for trending/hot/active filters
+  replyCount: integer("reply_count").notNull().default(0),
+  participantsCount: integer("participants_count").notNull().default(1),
+  lastActivityAt: timestamp("last_activity_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertConversationTopicSchema = createInsertSchema(conversationTopics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertConversationSchema = createInsertSchema(conversations).omit({
+  id: true,
+  replyCount: true,
+  participantsCount: true,
+  lastActivityAt: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -329,3 +370,7 @@ export type MediaRating = typeof mediaRatings.$inferSelect;
 export type InsertMediaRating = z.infer<typeof insertMediaRatingSchema>;
 export type FollowedCreator = typeof followedCreators.$inferSelect;
 export type InsertFollowedCreator = z.infer<typeof insertFollowedCreatorSchema>;
+export type ConversationTopic = typeof conversationTopics.$inferSelect;
+export type InsertConversationTopic = z.infer<typeof insertConversationTopicSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
