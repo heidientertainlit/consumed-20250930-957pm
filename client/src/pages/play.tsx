@@ -400,19 +400,6 @@ export default function PlayPage() {
     });
   }, [allGames, gameTypeFilter, mediaTypeFilter, allPredictions]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-        <Navigation onTrackConsumption={handleTrackConsumption} />
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="text-center py-20">
-            <div className="text-xl">Loading games...</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Get user's active predictions for "Predictions in Progress"
   const activePredictions = useMemo(() => {
     return userPredictionsList
@@ -428,6 +415,19 @@ export default function PlayPage() {
   const userRank = leaderboardData.findIndex((entry: any) => entry.user_id === currentUser?.id) + 1;
   const userEntry = leaderboardData.find((entry: any) => entry.user_id === currentUser?.id);
   const totalPoints = userEntry?.total_points || 0;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={handleTrackConsumption} />
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="text-center py-20">
+            <div className="text-xl">Loading games...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
