@@ -3107,8 +3107,8 @@ export default function UserProfile() {
 
         {/* My Lists */}
         <div ref={listsRef} className="px-4 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">My Lists</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">My Lists</h2>
           </div>
 
           {isLoadingLists ? (
@@ -3117,54 +3117,36 @@ export default function UserProfile() {
               <p className="text-gray-600">Loading your lists...</p>
             </div>
           ) : userLists.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm">
+            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-sm">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <List className="text-gray-400" size={32} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Custom Lists Yet</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Lists Yet</h3>
               <p className="text-gray-600 max-w-md mx-auto">
-                You haven't created any custom lists yet. Your system lists (Currently, Queue, Finished, Did Not Finish) are always available.
+                Start tracking media to populate your lists.
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {userLists.filter(list => list.id !== 'all').map((list) => (
-                <div 
-                  key={list.id} 
-                  className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              {userLists.filter(list => list.id !== 'all').map((list, idx) => (
+                <div
+                  key={list.id}
                   onClick={() => handleListClick(list.title)}
-                  data-testid={`list-card-${list.title.toLowerCase().replace(/\s+/g, '-')}`}
+                  className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                    idx < userLists.filter(l => l.id !== 'all').length - 1 ? 'border-b border-gray-100' : ''
+                  }`}
+                  data-testid={`list-${list.id}`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      <List className="text-purple-700 mr-3" size={24} />
-                      <h3 className="text-xl font-semibold text-gray-900">{list.title}</h3>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <List className="text-purple-600" size={18} />
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Badge 
-                        variant="secondary" 
-                        className="bg-purple-100 text-purple-800 hover:bg-purple-200"
-                      >
-                        Public
-                      </Badge>
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShareListDirect(list.id, list.title);
-                        }}
-                        className="bg-purple-600 text-white hover:bg-purple-700 rounded-lg px-3 py-2 flex items-center gap-2"
-                        data-testid={`share-${list.title.toLowerCase().replace(/\s+/g, '-')}-list`}
-                      >
-                        <Share2 size={16} />
-                      </Button>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-black truncate">{list.title}</h3>
+                      <span className="text-xs text-gray-500">{list.items?.length || 0} items</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-6 text-sm text-gray-600">
-                      <span>{list.items?.length || 0} items</span>
-                    </div>
-                  </div>
+                  <ChevronRight className="text-gray-400 flex-shrink-0" size={20} />
                 </div>
               ))}
             </div>
