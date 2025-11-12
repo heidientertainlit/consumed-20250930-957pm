@@ -12,6 +12,7 @@ import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
+import ConversationsPanel from "@/components/conversations-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -1389,6 +1390,7 @@ export default function FriendsUpdates() {
               {[
                 { id: "friends", label: "Friends", icon: Users, color: "text-purple-600" },
                 { id: "everyone", label: "Everyone", icon: Users, color: "text-purple-600" },
+                { id: "conversations", label: "Conversations", icon: MessageCircle, color: "text-orange-600" },
                 { id: "consuming", label: "Consuming", icon: Plus, color: "text-purple-600" },
                 { id: "hot-take", label: "Hot Take", icon: Flame, color: "text-orange-600" },
                 { id: "prediction", label: "Prediction", icon: Target, color: "text-red-600" },
@@ -1416,7 +1418,9 @@ export default function FriendsUpdates() {
             </div>
           </div>
 
-          {isLoading ? (
+          {feedFilter === "conversations" ? (
+            <ConversationsPanel onStartConversation={handleShareUpdate} />
+          ) : isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4].map((n) => (
                 <div key={n} className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse shadow-sm">

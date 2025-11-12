@@ -85,13 +85,13 @@ export default function ConversationsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 pb-20">
+    <div className="min-h-screen bg-white pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <MessageCircle className="w-6 h-6 text-orange-500" />
-            <h1 className="text-2xl font-bold text-white">Conversations</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Conversations</h1>
           </div>
 
           {/* Search Bar */}
@@ -103,7 +103,7 @@ export default function ConversationsPage() {
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 focus:ring-orange-500"
+              className="pl-10 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:ring-orange-500"
             />
           </div>
 
@@ -121,7 +121,7 @@ export default function ConversationsPage() {
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   activeFilter === filter.id
                     ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {filter.label}
@@ -133,11 +133,11 @@ export default function ConversationsPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Start Conversation CTA */}
-        <div className="bg-gradient-to-r from-orange-500/10 to-purple-500/10 border border-orange-500/20 rounded-xl p-4">
+        <div className="bg-gradient-to-r from-orange-50 to-purple-50 border border-orange-200 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-white font-semibold mb-1">Start a Conversation</h3>
-              <p className="text-sm text-gray-300">Share your thoughts on your favorite entertainment</p>
+              <h3 className="text-gray-900 font-semibold mb-1">Start a Conversation</h3>
+              <p className="text-sm text-gray-600">Share your thoughts on your favorite entertainment</p>
             </div>
             <Button
               data-testid="button-start-conversation"
@@ -153,7 +153,7 @@ export default function ConversationsPage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5 text-orange-500" />
-            <h2 className="text-xl font-bold text-white">Trending Conversations</h2>
+            <h2 className="text-xl font-bold text-gray-900">Trending Conversations</h2>
           </div>
 
           <div className="space-y-3">
@@ -161,7 +161,7 @@ export default function ConversationsPage() {
               <div
                 key={topic.id}
                 data-testid={`card-topic-${topic.id}`}
-                className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700 hover:border-orange-500/50 transition-all"
+                className="bg-white rounded-xl p-4 border border-gray-200 hover:border-orange-300 hover:shadow-sm transition-all"
               >
                 {/* Topic Header */}
                 <div className="flex items-center gap-3 mb-3">
@@ -169,7 +169,7 @@ export default function ConversationsPage() {
                     <img
                       src={topic.posterUrl}
                       alt={topic.title}
-                      className="w-12 h-16 object-cover rounded shadow-md"
+                      className="w-12 h-16 object-cover rounded shadow-sm"
                       data-testid={`img-topic-poster-${topic.id}`}
                     />
                   ) : (
@@ -178,8 +178,8 @@ export default function ConversationsPage() {
                     </div>
                   )}
                   <div className="flex-1">
-                    <h3 className="text-white font-semibold" data-testid={`text-topic-title-${topic.id}`}>{topic.title}</h3>
-                    <p className="text-sm text-gray-400" data-testid={`text-topic-stats-${topic.id}`}>
+                    <h3 className="text-gray-900 font-semibold" data-testid={`text-topic-title-${topic.id}`}>{topic.title}</h3>
+                    <p className="text-sm text-gray-500" data-testid={`text-topic-stats-${topic.id}`}>
                       {topic.postCount} posts • {topic.participantCount} talking
                     </p>
                   </div>
@@ -191,12 +191,12 @@ export default function ConversationsPage() {
                     <button
                       key={thread.id}
                       data-testid={`button-thread-${thread.id}`}
-                      className="w-full text-left bg-gray-900/50 hover:bg-gray-900 rounded-lg p-3 transition-colors border border-gray-700/50"
+                      className="w-full text-left bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-colors border border-gray-200"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                          <p className="text-sm text-white font-medium mb-1" data-testid={`text-thread-title-${thread.id}`}>{thread.title}</p>
-                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <p className="text-sm text-gray-900 font-medium mb-1" data-testid={`text-thread-title-${thread.id}`}>{thread.title}</p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
                             <span data-testid={`text-thread-replies-${thread.id}`}>{thread.replyCount} replies</span>
                             {thread.isActive && (
                               <span className="flex items-center gap-1 text-orange-500" data-testid={`text-thread-active-${thread.id}`}>
@@ -215,7 +215,7 @@ export default function ConversationsPage() {
                 <Button
                   data-testid={`button-view-all-topic-${topic.id}`}
                   variant="ghost"
-                  className="w-full text-orange-500 hover:text-orange-400 hover:bg-orange-500/10"
+                  className="w-full text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                 >
                   View All {topic.title} Conversations →
                 </Button>
@@ -228,7 +228,7 @@ export default function ConversationsPage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Flame className="w-5 h-5 text-red-500" />
-            <h2 className="text-xl font-bold text-white">Hot Right Now</h2>
+            <h2 className="text-xl font-bold text-gray-900">Hot Right Now</h2>
           </div>
 
           <div className="space-y-3">
@@ -236,14 +236,14 @@ export default function ConversationsPage() {
               <button
                 key={thread.id}
                 data-testid={`button-hot-thread-${thread.id}`}
-                className="w-full text-left bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700 hover:border-orange-500/50 transition-all"
+                className="w-full text-left bg-white rounded-xl p-4 border border-gray-200 hover:border-orange-300 hover:shadow-sm transition-all"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">{thread.topicIcon}</span>
-                  <span className="text-xs text-gray-400" data-testid={`text-hot-thread-topic-${thread.id}`}>{thread.topicTitle}</span>
+                  <span className="text-xs text-gray-500" data-testid={`text-hot-thread-topic-${thread.id}`}>{thread.topicTitle}</span>
                 </div>
-                <h3 className="text-white font-semibold mb-2" data-testid={`text-hot-thread-title-${thread.id}`}>{thread.title}</h3>
-                <div className="flex items-center gap-4 text-xs text-gray-400">
+                <h3 className="text-gray-900 font-semibold mb-2" data-testid={`text-hot-thread-title-${thread.id}`}>{thread.title}</h3>
+                <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span data-testid={`text-hot-thread-author-${thread.id}`}>by @{thread.author}</span>
                   <span className="flex items-center gap-1" data-testid={`text-hot-thread-replies-${thread.id}`}>
                     <MessageCircle className="w-3 h-3" />
