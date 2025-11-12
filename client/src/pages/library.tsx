@@ -440,7 +440,7 @@ export default function Library() {
             ) : (
               <>
                 {/* Create Button */}
-                <div className="flex justify-end">
+                <div className="flex justify-center">
                   <Button
                     onClick={() => setIsCreateListDialogOpen(true)}
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-md"
