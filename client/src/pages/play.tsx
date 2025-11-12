@@ -443,7 +443,7 @@ export default function PlayPage() {
                 {userRank > 0 && (
                   <div className="text-xs text-gray-400">
                     Ranked <span className="font-semibold text-purple-600">#{userRank}</span> of {leaderboardData.length}
-                    {userRank > 1 && leaderboardData[0] && (
+                    {userRank > 1 && leaderboardData[0] && leaderboardData[0].total_points && !isNaN(leaderboardData[0].total_points - totalPoints) && (
                       <span className="block mt-0.5">
                         {leaderboardData[0].total_points - totalPoints} pts behind #1
                       </span>
