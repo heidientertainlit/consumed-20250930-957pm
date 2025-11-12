@@ -202,10 +202,10 @@ export default function InlineComposer() {
 
   return (
     <div className="rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 p-6">
-      {/* White Input Area */}
-      <div className="bg-white rounded-xl p-4 mb-4">
+      {/* Blue-Purple Gradient Input Area */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 mb-4">
         <div className="flex gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
             {user?.email?.substring(0, 2).toUpperCase() || 'HE'}
           </div>
           <div className="flex-1">
@@ -214,7 +214,7 @@ export default function InlineComposer() {
               value={content}
               onChange={setContent}
               placeholder={getPlaceholder()}
-              className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400 w-full"
+              className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-white bg-transparent placeholder:text-white/70 w-full"
               minHeight="60px"
               maxLength={maxChars}
               session={session}
