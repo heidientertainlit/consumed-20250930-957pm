@@ -231,82 +231,46 @@ export default function Library() {
           {activeView === 'discover' && (
             <div className="space-y-8">
             
-            {/* Friends Lists Section */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-black flex items-center gap-2">
-                  <Users className="text-purple-600" size={24} />
-                  Friends' Lists
-                </h2>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Browse what your friends are watching, reading, and listening to
-              </p>
-              
-              {/* Friends Lists Carousel */}
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                {/* Placeholder Friend Lists */}
-                {[
-                  { name: 'Sarah', username: 'sarah_reads', lists: ['Currently Reading', 'Want to Read'], items: 47 },
-                  { name: 'Mike', username: 'mike_watches', lists: ['Currently Watching', 'Finished'], items: 124 },
-                  { name: 'Emma', username: 'emma_listens', lists: ['Currently Listening', 'Favorites'], items: 89 },
-                  { name: 'Alex', username: 'alex_binges', lists: ['Queue', 'All Time Favorites'], items: 203 }
-                ].map((friend, idx) => (
-                  <div
-                    key={idx}
-                    className="flex-shrink-0 w-64 bg-white rounded-xl border border-gray-200 p-4 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer"
-                    onClick={() => setLocation(`/profile?user=${friend.username}`)}
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold">
-                          {friend.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-black truncate">{friend.name}</h3>
-                        <p className="text-xs text-gray-500 truncate">@{friend.username}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">{friend.items} items</span>
-                        <span className="text-purple-600 font-medium">{friend.lists.length} lists</span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {friend.lists.join(', ')}
-                      </div>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // TODO: Open list browser modal
-                      }}
-                    >
-                      Browse Lists
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Empty state if no friends */}
-              {false && (
-                <div className="bg-gray-50 rounded-xl p-8 text-center">
-                  <Users className="mx-auto text-gray-300 mb-3" size={48} />
-                  <h3 className="font-semibold text-gray-900 mb-2">No friends yet</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Add friends to discover what they're watching and reading
-                  </p>
-                  <Button
-                    onClick={() => setLocation('/friends')}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    Find Friends
-                  </Button>
-                </div>
-              )}
+            {/* Friends Lists - Scrollable Content Carousels */}
+            <div className="space-y-6">
+              {/* Placeholder: Sarah's List */}
+              <MediaCarousel
+                title="Sarah's Currently Reading"
+                mediaType="book"
+                items={[
+                  { id: '1', title: 'The Midnight Library', creator: 'Matt Haig', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1602190253i/52578297.jpg', mediaType: 'book', externalId: '52578297', externalSource: 'goodreads' },
+                  { id: '2', title: 'Project Hail Mary', creator: 'Andy Weir', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg', mediaType: 'book', externalId: '54493401', externalSource: 'goodreads' },
+                  { id: '3', title: 'Atomic Habits', creator: 'James Clear', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg', mediaType: 'book', externalId: '40121378', externalSource: 'goodreads' },
+                  { id: '4', title: 'The Silent Patient', creator: 'Alex Michaelides', image_url: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1582759969i/40097951.jpg', mediaType: 'book', externalId: '40097951', externalSource: 'goodreads' }
+                ]}
+                onItemClick={handleMediaClick}
+              />
+
+              {/* Placeholder: Mike's List */}
+              <MediaCarousel
+                title="Mike's Queue You Might Like"
+                mediaType="movie"
+                items={[
+                  { id: '1', title: 'Oppenheimer', creator: 'Christopher Nolan', image_url: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', mediaType: 'movie', externalId: '872585', externalSource: 'tmdb' },
+                  { id: '2', title: 'The Killer', creator: 'David Fincher', image_url: 'https://image.tmdb.org/t/p/w500/e7Jvsry47JJQruuezjU2X1Z6J77.jpg', mediaType: 'movie', externalId: '359724', externalSource: 'tmdb' },
+                  { id: '3', title: 'Poor Things', creator: 'Yorgos Lanthimos', image_url: 'https://image.tmdb.org/t/p/w500/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg', mediaType: 'movie', externalId: '792307', externalSource: 'tmdb' },
+                  { id: '4', title: 'Killers of the Flower Moon', creator: 'Martin Scorsese', image_url: 'https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg', mediaType: 'movie', externalId: '466420', externalSource: 'tmdb' }
+                ]}
+                onItemClick={handleMediaClick}
+              />
+
+              {/* Placeholder: Emma's List */}
+              <MediaCarousel
+                title="Emma's Favorites"
+                mediaType="tv"
+                items={[
+                  { id: '1', title: 'The Bear', creator: '', image_url: 'https://image.tmdb.org/t/p/w500/zCSkDS9ExpgjPTXOGqFuruKN5f9.jpg', mediaType: 'tv', externalId: '136315', externalSource: 'tmdb' },
+                  { id: '2', title: 'Succession', creator: '', image_url: 'https://image.tmdb.org/t/p/w500/7HW47XbkNQ5fiwQFYGWdw9gs144.jpg', mediaType: 'tv', externalId: '76331', externalSource: 'tmdb' },
+                  { id: '3', title: 'The Last of Us', creator: '', image_url: 'https://image.tmdb.org/t/p/w500/uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg', mediaType: 'tv', externalId: '100088', externalSource: 'tmdb' },
+                  { id: '4', title: 'Severance', creator: '', image_url: 'https://image.tmdb.org/t/p/w500/lFsPNAF71hfjKOY42nxkawqWkN8.jpg', mediaType: 'tv', externalId: '95396', externalSource: 'tmdb' }
+                ]}
+                onItemClick={handleMediaClick}
+              />
             </div>
 
             {/* AI Recommendation Engine */}
