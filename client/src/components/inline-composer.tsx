@@ -8,7 +8,6 @@ import MentionTextarea from "@/components/mention-textarea";
 import { queryClient } from "@/lib/queryClient";
 
 type ComposerMode = "" | "prediction" | "poll" | "thought" | "rate-review" | "add-media";
-type PredictionType = "yes-no" | "head-to-head" | "multi-choice";
 
 export default function InlineComposer() {
   const { session, user } = useAuth();
@@ -23,9 +22,8 @@ export default function InlineComposer() {
   const [isSearching, setIsSearching] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<any>(null);
   
-  // Prediction-specific state
-  const [predictionType, setPredictionType] = useState<PredictionType>("yes-no");
-  const [predictionOptions, setPredictionOptions] = useState<string[]>(["Yes", "No"]);
+  // Prediction-specific state (now uses same format as polls)
+  const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
 
   // Poll-specific state
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
@@ -47,8 +45,7 @@ export default function InlineComposer() {
     setSearchQuery("");
     setSearchResults([]);
     setAttachedMedia(null);
-    setPredictionType("yes-no");
-    setPredictionOptions(["Yes", "No"]);
+    setPredictionOptions(["", ""]);
     setPollOptions(["", ""]);
   };
 
@@ -148,19 +145,22 @@ export default function InlineComposer() {
     setSearchResults([]);
   };
 
-  const handlePredictionTypeChange = (type: PredictionType) => {
-    setPredictionType(type);
-    if (type === "yes-no") {
-      setPredictionOptions(["Yes", "No"]);
-    } else {
-      setPredictionOptions(["", "", "", "", ""]);
-    }
-  };
-
   const updatePredictionOption = (index: number, value: string) => {
     const newOptions = [...predictionOptions];
     newOptions[index] = value;
     setPredictionOptions(newOptions);
+  };
+
+  const addPredictionOption = () => {
+    if (predictionOptions.length < 4) {
+      setPredictionOptions([...predictionOptions, ""]);
+    }
+  };
+
+  const removePredictionOption = (index: number) => {
+    if (predictionOptions.length > 2) {
+      setPredictionOptions(predictionOptions.filter((_, i) => i !== index));
+    }
   };
 
   const updatePollOption = (index: number, value: string) => {
@@ -244,45 +244,42 @@ export default function InlineComposer() {
 
       {/* Contextual UI - Expands based on selected chip */}
       {composerMode === "prediction" && (
-        <div className="px-4 pb-3 border-t border-gray-100 pt-3 space-y-3">
-          <p className="text-xs text-gray-600 font-medium">Prediction Type</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handlePredictionTypeChange("yes-no")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                predictionType === "yes-no"
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              Yes/No
-            </button>
-            <button
-              onClick={() => handlePredictionTypeChange("multi-choice")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                predictionType === "multi-choice"
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              Multi-Choice
-            </button>
-          </div>
-          
-          {predictionType === "multi-choice" && (
-            <div className="space-y-2">
-              <p className="text-xs text-gray-600 font-medium">Options</p>
-              {predictionOptions.map((option, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  value={option}
-                  onChange={(e) => updatePredictionOption(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              ))}
+        <div className="px-4 pb-3 border-t border-gray-100 pt-3 space-y-2">
+          <p className="text-xs text-gray-600 font-medium">Prediction Options</p>
+          {predictionOptions.map((option, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="text"
+                value={option}
+                onChange={(e) => updatePredictionOption(index, e.target.value)}
+                placeholder={`Option ${index + 1}`}
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                data-testid={`input-prediction-option-${index}`}
+              />
+              {predictionOptions.length > 2 && (
+                <Button
+                  onClick={() => removePredictionOption(index)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 text-gray-400 hover:text-gray-900"
+                  data-testid={`button-remove-prediction-option-${index}`}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
             </div>
+          ))}
+          {predictionOptions.length < 4 && (
+            <Button
+              onClick={addPredictionOption}
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              data-testid="button-add-prediction-option"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Add Option
+            </Button>
           )}
         </div>
       )}
