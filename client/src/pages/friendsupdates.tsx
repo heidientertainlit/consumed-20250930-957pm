@@ -1518,7 +1518,7 @@ export default function FriendsUpdates() {
                 if (friendActivities.length === 0) return null;
                 
                 return (
-                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 overflow-hidden shadow-lg">
+                  <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-4 overflow-hidden shadow-lg">
                     <style>{`
                       @keyframes tickerScroll {
                         0% { transform: translateY(0); }
