@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { SlidersHorizontal, Check } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 
 export interface FeedFilters {
+  audience: string;
   mediaTypes: string[];
   engagementTypes: string[];
 }
@@ -17,50 +18,48 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
   const [open, setOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState<FeedFilters>(filters);
 
+  const audiences = [
+    { id: "everyone", label: "Everyone" },
+    { id: "friends", label: "Friends" },
+  ];
+
   const mediaTypes = [
-    { id: "all", label: "All Media", icon: "🎬" },
-    { id: "movie", label: "Movies", icon: "🎥" },
-    { id: "tv", label: "TV Shows", icon: "📺" },
-    { id: "book", label: "Books", icon: "📚" },
-    { id: "music", label: "Music", icon: "🎵" },
-    { id: "game", label: "Games", icon: "🎮" },
-    { id: "podcast", label: "Podcasts", icon: "🎙️" },
+    { id: "any", label: "Any" },
+    { id: "movie", label: "Movies" },
+    { id: "tv", label: "TV" },
+    { id: "book", label: "Books" },
+    { id: "music", label: "Music" },
+    { id: "game", label: "Games" },
+    { id: "podcast", label: "Podcasts" },
   ];
 
   const engagementTypes = [
-    { id: "all", label: "All Types", icon: "✨" },
-    { id: "consuming", label: "Consuming", icon: "➕" },
-    { id: "prediction", label: "Predictions", icon: "🎯" },
-    { id: "poll", label: "Polls", icon: "📊" },
-    { id: "rate-review", label: "Rate/Review", icon: "⭐" },
-    { id: "trivia", label: "Trivia", icon: "❓" },
+    { id: "any", label: "Any" },
+    { id: "conversations", label: "Conversations" },
+    { id: "consuming", label: "Consuming" },
+    { id: "prediction", label: "Predictions" },
+    { id: "poll", label: "Polls" },
+    { id: "rate-review", label: "Rate/Review" },
+    { id: "trivia", label: "Trivia" },
   ];
 
+  const handleAudienceSelect = (audienceId: string) => {
+    setLocalFilters({ ...localFilters, audience: audienceId });
+  };
+
   const handleMediaTypeToggle = (typeId: string) => {
-    if (typeId === "all") {
+    if (typeId === "any") {
       setLocalFilters({ ...localFilters, mediaTypes: [] });
     } else {
-      const isSelected = localFilters.mediaTypes.includes(typeId);
-      setLocalFilters({
-        ...localFilters,
-        mediaTypes: isSelected
-          ? localFilters.mediaTypes.filter((t) => t !== typeId)
-          : [...localFilters.mediaTypes, typeId],
-      });
+      setLocalFilters({ ...localFilters, mediaTypes: [typeId] });
     }
   };
 
   const handleEngagementTypeToggle = (typeId: string) => {
-    if (typeId === "all") {
+    if (typeId === "any") {
       setLocalFilters({ ...localFilters, engagementTypes: [] });
     } else {
-      const isSelected = localFilters.engagementTypes.includes(typeId);
-      setLocalFilters({
-        ...localFilters,
-        engagementTypes: isSelected
-          ? localFilters.engagementTypes.filter((t) => t !== typeId)
-          : [...localFilters.engagementTypes, typeId],
-      });
+      setLocalFilters({ ...localFilters, engagementTypes: [typeId] });
     }
   };
 
@@ -70,12 +69,15 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
   };
 
   const handleClear = () => {
-    const clearedFilters = { mediaTypes: [], engagementTypes: [] };
+    const clearedFilters = { audience: "everyone", mediaTypes: [], engagementTypes: [] };
     setLocalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
   };
 
-  const activeFilterCount = localFilters.mediaTypes.length + localFilters.engagementTypes.length;
+  const activeFilterCount = 
+    (localFilters.audience !== "everyone" ? 1 : 0) +
+    localFilters.mediaTypes.length + 
+    localFilters.engagementTypes.length;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -95,19 +97,43 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
           </div>
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg bg-white">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Filter Feed</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">Filters</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Media Type Filter */}
+        <div className="space-y-6 py-2">
+          {/* Audience */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Media Type</h3>
-            <div className="grid grid-cols-2 gap-2">
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Audience</h3>
+            <div className="flex gap-2 flex-wrap">
+              {audiences.map((audience) => {
+                const isSelected = localFilters.audience === audience.id;
+                return (
+                  <button
+                    key={audience.id}
+                    data-testid={`filter-audience-${audience.id}`}
+                    onClick={() => handleAudienceSelect(audience.id)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      isSelected
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {audience.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Media Type */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Media Type</h3>
+            <div className="flex gap-2 flex-wrap">
               {mediaTypes.map((type) => {
                 const isSelected =
-                  type.id === "all"
+                  type.id === "any"
                     ? localFilters.mediaTypes.length === 0
                     : localFilters.mediaTypes.includes(type.id);
                 return (
@@ -115,28 +141,26 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
                     key={type.id}
                     data-testid={`filter-media-${type.id}`}
                     onClick={() => handleMediaTypeToggle(type.id)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       isSelected
-                        ? "bg-purple-600 text-white shadow-sm"
+                        ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
-                    <span>{type.icon}</span>
-                    <span className="flex-1 text-left">{type.label}</span>
-                    {isSelected && <Check className="w-4 h-4" />}
+                    {type.label}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Engagement Type Filter */}
+          {/* Engagement Type */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Engagement Type</h3>
-            <div className="grid grid-cols-2 gap-2">
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Engagement Type</h3>
+            <div className="flex gap-2 flex-wrap">
               {engagementTypes.map((type) => {
                 const isSelected =
-                  type.id === "all"
+                  type.id === "any"
                     ? localFilters.engagementTypes.length === 0
                     : localFilters.engagementTypes.includes(type.id);
                 return (
@@ -144,15 +168,13 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
                     key={type.id}
                     data-testid={`filter-engagement-${type.id}`}
                     onClick={() => handleEngagementTypeToggle(type.id)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       isSelected
-                        ? "bg-purple-600 text-white shadow-sm"
+                        ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
-                    <span>{type.icon}</span>
-                    <span className="flex-1 text-left">{type.label}</span>
-                    {isSelected && <Check className="w-4 h-4" />}
+                    {type.label}
                   </button>
                 );
               })}
@@ -161,11 +183,11 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-4 border-t">
+        <div className="flex gap-2 pt-4 border-t border-gray-200">
           <Button
             variant="outline"
             onClick={handleClear}
-            className="flex-1"
+            className="flex-1 border-gray-300"
             data-testid="button-clear-filters"
           >
             Clear All
@@ -175,7 +197,7 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
             className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
             data-testid="button-apply-filters"
           >
-            Apply Filters
+            Show Results
           </Button>
         </div>
       </DialogContent>

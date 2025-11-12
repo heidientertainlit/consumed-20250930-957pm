@@ -435,7 +435,7 @@ export default function FriendsUpdates() {
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("friends");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
-  const [detailedFilters, setDetailedFilters] = useState<FeedFilters>({ mediaTypes: [], engagementTypes: [] });
+  const [detailedFilters, setDetailedFilters] = useState<FeedFilters>({ audience: "everyone", mediaTypes: [], engagementTypes: [] });
   const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
   const [activeInlineRating, setActiveInlineRating] = useState<string | null>(null); // Track which post has inline rating open
   const [currentVerb, setCurrentVerb] = useState("watching");
@@ -1410,7 +1410,8 @@ export default function FriendsUpdates() {
             <div className="mb-2">
               <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Filter Feed</p>
             </div>
-            <div className="flex gap-1.5 justify-center flex-wrap">
+            <div className="flex gap-1.5 justify-start flex-wrap">
+              <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
               {[
                 { id: "friends", label: "Friends" },
                 { id: "everyone", label: "Everyone" },
@@ -1432,7 +1433,6 @@ export default function FriendsUpdates() {
                   </button>
                 );
               })}
-              <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
             </div>
           </div>
 
