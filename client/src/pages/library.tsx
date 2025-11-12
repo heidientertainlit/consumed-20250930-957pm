@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, Lock, Users, Plus } from "lucide-react";
+import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, Lock, Users, Plus, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -424,10 +424,11 @@ export default function Library() {
                 <div className="flex gap-4">
                   {userLists.length > 0 && (
                     <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-                      <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      <TrendingUp className="text-purple-800 mx-auto mb-2" size={20} />
+                      <div className="text-xl font-bold text-purple-800">
                         {userLists.reduce((total: number, list: any) => total + (list.item_count || 0), 0)}
                       </div>
-                      <div className="text-sm text-gray-600">Media Items</div>
+                      <div className="text-xs text-gray-500">Media Items</div>
                     </div>
                   )}
                   <Button
