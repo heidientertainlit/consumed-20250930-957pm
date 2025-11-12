@@ -10,6 +10,7 @@ Preferred communication style: Simple, everyday language.
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
 - **Simplified Navigation**: Bottom navigation reduced to 3 core items: Feed, Friends, Me. Play and Discover pages exist as backpages (accessible at `/play` and `/discover`) but removed from navigation to simplify the core experience.
+- **Profile Page Organization**: Profile "Your Stats" section reorganized into three clear categories: (1) "Your Library" for media consumption stats, (2) "My Entertainment DNA" for DNA profile/survey/recommendations, and (3) "My Highlights" containing both current favorites and the Follow Creators feature. This provides better visual hierarchy and organization.
 
 ## System Architecture
 

@@ -1956,9 +1956,9 @@ export default function UserProfile() {
             </div>
           )}
 
-          {/* Your Stats */}
+          {/* Your Library */}
           <div className="mt-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Your Stats</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Library</h3>
             {isLoadingStats ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
                 <div className="flex items-center justify-center">
@@ -2020,12 +2020,15 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Highlights Section */}
+        {/* My Highlights Section */}
         <div className="px-4 mb-8">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>My Highlights</h3>
+          
+          {/* Highlights Subsection */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Highlights</h2>
+                <h4 className="text-base font-bold text-gray-900">Current Favorites</h4>
                 <p className="text-xs text-gray-600">Share what you're loving or have loved recently</p>
               </div>
               <Button
@@ -2085,10 +2088,156 @@ export default function UserProfile() {
               </div>
             )}
           </div>
+
+          {/* Follow Creators Subsection */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm mt-6">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <Users className="text-white" size={20} />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-gray-900">Follow Creators</h4>
+                <p className="text-xs text-gray-600">Track your favorite artists, directors, and authors</p>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            {isOwnProfile && (
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  value={creatorSearchQuery}
+                  onChange={(e) => setCreatorSearchQuery(e.target.value)}
+                  placeholder="Search for creators (e.g., Martin Scorsese, Taylor Swift...)"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                  data-testid="input-search-creators"
+                />
+                {isSearchingCreators && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="animate-spin text-purple-600" size={18} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Horizontal Scrollable Creator Cards */}
+            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
+              {/* Show search results if available, otherwise show message to search */}
+              {creatorSearchResults.length > 0 ? creatorSearchResults.map((creator, i) => (
+                <div key={`${creator.name}-${i}`} className="flex-shrink-0 w-28 text-center">
+                  {creator.image ? (
+                    <img 
+                      src={creator.image} 
+                      alt={creator.name}
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2 ${creator.image ? 'hidden' : ''}`}>
+                    <Users className="text-purple-600" size={32} />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900 truncate px-1" title={creator.name}>
+                    {creator.name}
+                  </p>
+                  <p className="text-xs text-gray-600 truncate px-1">{creator.role}</p>
+                  {isOwnProfile && (
+                    <Button 
+                      size="sm"
+                      variant={isCreatorFollowed(creator) ? "default" : "outline"}
+                      className={`w-full mt-2 text-xs h-7 ${
+                        isCreatorFollowed(creator)
+                          ? 'bg-purple-600 text-white hover:bg-purple-700'
+                          : 'border-purple-300 text-purple-600 hover:bg-purple-50'
+                      }`}
+                      onClick={() => handleFollowCreator(creator, isCreatorFollowed(creator) ? 'unfollow' : 'follow')}
+                      disabled={isFollowingCreator === `${creator.external_source}-${creator.external_id}`}
+                      data-testid={`button-follow-${creator.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      {isFollowingCreator === `${creator.external_source}-${creator.external_id}` ? (
+                        <Loader2 className="animate-spin" size={14} />
+                      ) : isCreatorFollowed(creator) ? (
+                        'Following'
+                      ) : (
+                        '+ Follow'
+                      )}
+                    </Button>
+                  )}
+                </div>
+              )) : (
+                <div className="w-full text-center py-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Users className="text-purple-600" size={24} />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">Search for Creators</h3>
+                  <p className="text-sm text-gray-600 max-w-md mx-auto">
+                    Try searching for: Martin Scorsese, Taylor Swift, Brandon Sanderson, Reese Witherspoon, or your favorite artists and authors
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Creators I'm Following Section */}
+            {followedCreators.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Creators I'm Following</h3>
+                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
+                  {followedCreators.map((creator) => (
+                    <div key={creator.id} className="flex-shrink-0 w-28 text-center">
+                      {creator.creator_image ? (
+                        <img 
+                          src={creator.creator_image} 
+                          alt={creator.creator_name}
+                          className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2 ${creator.creator_image ? 'hidden' : ''}`}>
+                        <Users className="text-purple-600" size={32} />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 truncate px-1" title={creator.creator_name}>
+                        {creator.creator_name}
+                      </p>
+                      <p className="text-xs text-gray-600 truncate px-1">{creator.creator_role}</p>
+                      {isOwnProfile && (
+                        <Button 
+                          size="sm"
+                          variant="default"
+                          className="w-full mt-2 text-xs h-7 bg-purple-600 text-white hover:bg-purple-700"
+                          onClick={() => handleFollowCreator({
+                            name: creator.creator_name,
+                            role: creator.creator_role,
+                            image: creator.creator_image,
+                            external_id: creator.external_id,
+                            external_source: creator.external_source
+                          }, 'unfollow')}
+                          disabled={isFollowingCreator === `${creator.external_source}-${creator.external_id}`}
+                          data-testid={`button-unfollow-${creator.creator_name.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          {isFollowingCreator === `${creator.external_source}-${creator.external_id}` ? (
+                            <Loader2 className="animate-spin" size={14} />
+                          ) : (
+                            'Following'
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Entertainment DNA */}
+        {/* My Entertainment DNA */}
         <div className="px-4 mb-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>My Entertainment DNA</h3>
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
             {/* Responsive Header: Stack on mobile, horizontal on larger screens */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -2593,153 +2742,6 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
-
-        {/* Follow Creators Section */}
-        <div className="px-4 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <Users className="text-white" size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Follow Creators</h2>
-                <p className="text-xs text-gray-600">Track your favorite artists, directors, and authors</p>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            {isOwnProfile && (
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  value={creatorSearchQuery}
-                  onChange={(e) => setCreatorSearchQuery(e.target.value)}
-                  placeholder="Search for creators (e.g., Martin Scorsese, Taylor Swift...)"
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-                  data-testid="input-search-creators"
-                />
-                {isSearchingCreators && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <Loader2 className="animate-spin text-purple-600" size={18} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Horizontal Scrollable Creator Cards */}
-            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
-              {/* Show search results if available, otherwise show message to search */}
-              {creatorSearchResults.length > 0 ? creatorSearchResults.map((creator, i) => (
-                <div key={`${creator.name}-${i}`} className="flex-shrink-0 w-28 text-center">
-                  {creator.image ? (
-                    <img 
-                      src={creator.image} 
-                      alt={creator.name}
-                      className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2 ${creator.image ? 'hidden' : ''}`}>
-                    <Users className="text-purple-600" size={32} />
-                  </div>
-                  <p className="text-sm font-semibold text-gray-900 truncate px-1" title={creator.name}>
-                    {creator.name}
-                  </p>
-                  <p className="text-xs text-gray-600 truncate px-1">{creator.role}</p>
-                  {isOwnProfile && (
-                    <Button 
-                      size="sm"
-                      variant={isCreatorFollowed(creator) ? "default" : "outline"}
-                      className={`w-full mt-2 text-xs h-7 ${
-                        isCreatorFollowed(creator)
-                          ? 'bg-purple-600 text-white hover:bg-purple-700'
-                          : 'border-purple-300 text-purple-600 hover:bg-purple-50'
-                      }`}
-                      onClick={() => handleFollowCreator(creator, isCreatorFollowed(creator) ? 'unfollow' : 'follow')}
-                      disabled={isFollowingCreator === `${creator.external_source}-${creator.external_id}`}
-                      data-testid={`button-follow-${creator.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      {isFollowingCreator === `${creator.external_source}-${creator.external_id}` ? (
-                        <Loader2 className="animate-spin" size={14} />
-                      ) : isCreatorFollowed(creator) ? (
-                        'Following'
-                      ) : (
-                        '+ Follow'
-                      )}
-                    </Button>
-                  )}
-                </div>
-              )) : (
-                <div className="w-full text-center py-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Users className="text-purple-600" size={24} />
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">Search for Creators</h3>
-                  <p className="text-sm text-gray-600 max-w-md mx-auto">
-                    Try searching for: Martin Scorsese, Taylor Swift, Brandon Sanderson, Reese Witherspoon, or your favorite artists and authors
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Creators I'm Following Section */}
-            {followedCreators.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Creators I'm Following</h3>
-                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
-                  {followedCreators.map((creator) => (
-                    <div key={creator.id} className="flex-shrink-0 w-28 text-center">
-                      {creator.creator_image ? (
-                        <img 
-                          src={creator.creator_image} 
-                          alt={creator.creator_name}
-                          className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null}
-                      <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2 ${creator.creator_image ? 'hidden' : ''}`}>
-                        <Users className="text-purple-600" size={32} />
-                      </div>
-                      <p className="text-sm font-semibold text-gray-900 truncate px-1" title={creator.creator_name}>
-                        {creator.creator_name}
-                      </p>
-                      <p className="text-xs text-gray-600 truncate px-1">{creator.creator_role}</p>
-                      {isOwnProfile && (
-                        <Button 
-                          size="sm"
-                          variant="default"
-                          className="w-full mt-2 text-xs h-7 bg-purple-600 text-white hover:bg-purple-700"
-                          onClick={() => handleFollowCreator({
-                            name: creator.creator_name,
-                            role: creator.creator_role,
-                            image: creator.creator_image,
-                            external_id: creator.external_id,
-                            external_source: creator.external_source
-                          }, 'unfollow')}
-                          disabled={isFollowingCreator === `${creator.external_source}-${creator.external_id}`}
-                          data-testid={`button-unfollow-${creator.creator_name.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                          {isFollowingCreator === `${creator.external_source}-${creator.external_id}` ? (
-                            <Loader2 className="animate-spin" size={14} />
-                          ) : (
-                            'Following'
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Currently Consuming */}
         <div className="px-4 mb-8">
