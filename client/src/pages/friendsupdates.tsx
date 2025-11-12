@@ -1425,8 +1425,8 @@ export default function FriendsUpdates() {
             Feed
           </h1>
           <p className="text-base text-gray-600 text-center">
-            See What Your Friends Are Consuming<br />
-            ...and then share your take.
+            See what your friends are consuming<br />
+            ... and then share your take.
           </p>
         </div>
 
