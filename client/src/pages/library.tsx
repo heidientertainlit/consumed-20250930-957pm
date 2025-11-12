@@ -198,12 +198,18 @@ export default function Library() {
 
         {/* Tabs */}
         <Tabs defaultValue="discover" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="discover" className="text-sm">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1">
+            <TabsTrigger 
+              value="discover" 
+              className="text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <Sparkles size={16} className="mr-2" />
               Discover
             </TabsTrigger>
-            <TabsTrigger value="my-media" className="text-sm">
+            <TabsTrigger 
+              value="my-media" 
+              className="text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+            >
               <ListIcon size={16} className="mr-2" />
               My Media
             </TabsTrigger>
