@@ -530,7 +530,7 @@ export default function FriendsUpdates() {
 
   // Filter posts by detailed filters and feed filter
   const filteredPosts = socialPosts.filter(post => {
-    // Apply main feed filter (All, Friends, Hot Takes, Predictions, Polls, Trivia)
+    // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
     if (feedFilter === 'friends') {
       // Show only posts from friends (not own posts)
       if (post.user.id === user?.id || !friendIds.has(post.user.id)) {
@@ -556,6 +556,14 @@ export default function FriendsUpdates() {
     if (feedFilter === 'trivia') {
       const postType = post.type?.toLowerCase() || '';
       if (postType !== 'trivia') return false;
+    }
+    
+    if (feedFilter === 'rate-review') {
+      // Show only posts with media items that have ratings/reviews
+      if (!post.mediaItems || post.mediaItems.length === 0) return false;
+      // At least one media item should have a rating
+      const hasRating = post.mediaItems.some(item => item.rating && item.rating > 0);
+      if (!hasRating) return false;
     }
     
     // Apply media type filter
@@ -1560,9 +1568,10 @@ export default function FriendsUpdates() {
                   {[
                     { id: "everyone", label: "All" },
                     { id: "friends", label: "Friends" },
-                    { id: "hot-takes", label: "Hot Takes" },
+                    { id: "hot-takes", label: "Hot Take" },
                     { id: "predictions", label: "Predictions" },
                     { id: "polls", label: "Polls" },
+                    { id: "rate-review", label: "Rate/Review" },
                     { id: "trivia", label: "Trivia" }
                   ].map((filter) => {
                     const isActive = feedFilter === filter.id;
