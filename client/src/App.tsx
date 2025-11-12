@@ -9,6 +9,7 @@ import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import FriendsUpdates from "@/pages/friendsupdates";
 import Discover from "@/pages/discover";
+import Conversations from "@/pages/conversations";
 import Leaderboard from "@/pages/leaderboard";
 import Play from "@/pages/play";
 import PlayTrivia from "@/pages/play-trivia";
@@ -67,6 +68,11 @@ function Router() {
         <Route path="/discover">
           <ProtectedRoute>
             <Discover />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/conversations">
+          <ProtectedRoute>
+            <Conversations />
           </ProtectedRoute>
         </Route>
         <Route path="/friends">
