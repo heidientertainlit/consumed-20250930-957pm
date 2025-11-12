@@ -4,6 +4,7 @@ import { useLocation, useRoute } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
+import FriendsManager from "@/components/friends-manager";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -3072,6 +3073,13 @@ export default function UserProfile() {
             </div>
           )}
         </div>
+
+        {/* Friends Manager - Only show on own profile */}
+        {isOwnProfile && user?.id && (
+          <div className="px-4 mb-8">
+            <FriendsManager userId={user.id} />
+          </div>
+        )}
 
         {/* Your Game Stats */}
         <div className="px-4 mb-8">

@@ -110,6 +110,8 @@ export function useFriendsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-search'] });
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
       toast({
         title: "Friend Request Sent",
         description: "Your friend request has been sent!",
@@ -177,6 +179,7 @@ export function useFriendsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
       toast({
         title: "Request Rejected",
         description: "Friend request has been declined.",
