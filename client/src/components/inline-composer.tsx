@@ -201,7 +201,8 @@ export default function InlineComposer() {
   const charsRemaining = maxChars - content.length;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+    <div className="bg-white rounded-2xl shadow-lg relative p-[2px] bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600">
+      <div className="bg-white rounded-2xl">
       {/* Composer Header */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex gap-3">
@@ -219,13 +220,6 @@ export default function InlineComposer() {
               maxLength={maxChars}
               session={session}
             />
-            
-            {/* Character Count */}
-            <div className="flex justify-end mt-1">
-              <span className={`text-xs ${charsRemaining < 50 ? 'text-red-500' : 'text-gray-400'}`}>
-                {charsRemaining}/{maxChars}
-              </span>
-            </div>
           </div>
         </div>
       </div>
@@ -437,6 +431,7 @@ export default function InlineComposer() {
             'Post'
           )}
         </Button>
+      </div>
       </div>
     </div>
   );
