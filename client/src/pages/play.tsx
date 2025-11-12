@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell } from "lucide-react";
+import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -185,7 +185,7 @@ export default function PlayPage() {
   }, 0);
   
   // Filter states
-  const [gameTypeFilter, setGameTypeFilter] = useState<string>('all');
+  const [gameTypeFilter, setGameTypeFilter] = useState<string>('prediction');
   const [mediaTypeFilter, setMediaTypeFilter] = useState<string>('all');
 
   const handleTrackConsumption = () => {
@@ -382,13 +382,61 @@ export default function PlayPage() {
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-black mb-3">
             Play
           </h1>
           <p className="text-gray-600">
-            Test your knowledge, make predictions, and compete with friends — free or high stakes.
+            Test your knowledge, make predictions, and compete with friends
           </p>
+        </div>
+
+        {/* Filter Icons */}
+        <div className="flex justify-center gap-8 mb-6">
+          <button
+            onClick={() => setGameTypeFilter('prediction')}
+            className={`flex flex-col items-center gap-2 transition-all ${
+              gameTypeFilter === 'prediction' ? 'opacity-100' : 'opacity-40'
+            }`}
+            data-testid="filter-predictions"
+          >
+            <div className={`p-3 rounded-full ${gameTypeFilter === 'prediction' ? 'bg-red-100' : 'bg-gray-100'}`}>
+              <Target className={gameTypeFilter === 'prediction' ? 'text-red-600' : 'text-gray-600'} size={24} />
+            </div>
+            <span className={`text-sm font-medium ${gameTypeFilter === 'prediction' ? 'text-red-600' : 'text-gray-600'}`}>
+              Predictions
+            </span>
+          </button>
+
+          <button
+            onClick={() => setGameTypeFilter('vote')}
+            className={`flex flex-col items-center gap-2 transition-all ${
+              gameTypeFilter === 'vote' ? 'opacity-100' : 'opacity-40'
+            }`}
+            data-testid="filter-polls"
+          >
+            <div className={`p-3 rounded-full ${gameTypeFilter === 'vote' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+              <CheckSquare className={gameTypeFilter === 'vote' ? 'text-blue-600' : 'text-gray-600'} size={24} />
+            </div>
+            <span className={`text-sm font-medium ${gameTypeFilter === 'vote' ? 'text-blue-600' : 'text-gray-600'}`}>
+              Polls
+            </span>
+          </button>
+
+          <button
+            onClick={() => setGameTypeFilter('trivia')}
+            className={`flex flex-col items-center gap-2 transition-all ${
+              gameTypeFilter === 'trivia' ? 'opacity-100' : 'opacity-40'
+            }`}
+            data-testid="filter-trivia"
+          >
+            <div className={`p-3 rounded-full ${gameTypeFilter === 'trivia' ? 'bg-green-100' : 'bg-gray-100'}`}>
+              <HelpCircle className={gameTypeFilter === 'trivia' ? 'text-green-600' : 'text-gray-600'} size={24} />
+            </div>
+            <span className={`text-sm font-medium ${gameTypeFilter === 'trivia' ? 'text-green-600' : 'text-gray-600'}`}>
+              Trivia
+            </span>
+          </button>
         </div>
 
         {/* Game Points Callout */}
@@ -400,61 +448,72 @@ export default function PlayPage() {
           </div>
         )}
 
-        {/* LOW STAKES - Pastel Cards */}
+        {/* Games List */}
         <div className="space-y-4 mb-8">
-          {/* Trivia Challenges Card */}
-          <div className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-2xl p-6 border border-purple-200">
-            <div className="flex items-center space-x-2 mb-3">
-              <Brain className="text-purple-700" size={24} />
-              <h3 className="text-xl font-semibold text-purple-900">Trivia Challenges</h3>
+          {filteredGames.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              No {gameTypeFilter === 'prediction' ? 'predictions' : gameTypeFilter === 'vote' ? 'polls' : 'trivia'} available right now. Check back soon!
             </div>
-            <p className="text-purple-700 text-sm mb-4">
-              Test your knowledge against friends on different entertainment topics
-            </p>
-            <button
-              onClick={() => setLocation('/play/trivia')}
-              className="bg-white text-purple-700 font-medium px-6 py-3 rounded-full hover:bg-purple-50 transition-colors shadow-sm w-full"
-              data-testid="explore-trivia"
-            >
-              Explore Trivia Challenges
-            </button>
-          </div>
+          ) : (
+            filteredGames.map((game: any) => {
+              const userAnswer = allPredictions[game.id];
+              const hasAnswered = !!userAnswer;
 
-          {/* Polls Card */}
-          <div className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl p-6 border border-blue-200">
-            <div className="flex items-center space-x-2 mb-3">
-              <Vote className="text-blue-700" size={24} />
-              <h3 className="text-xl font-semibold text-blue-900">Polls</h3>
-            </div>
-            <p className="text-blue-700 text-sm mb-4">
-              Vote on trending topics and see how your opinions compare to others
-            </p>
-            <button
-              onClick={() => setLocation('/play/polls')}
-              className="bg-white text-blue-700 font-medium px-6 py-3 rounded-full hover:bg-blue-50 transition-colors shadow-sm w-full"
-              data-testid="explore-polls"
-            >
-              Explore Polls
-            </button>
-          </div>
+              return (
+                <div
+                  key={game.id}
+                  className={`bg-white rounded-2xl p-6 border-2 transition-all ${
+                    hasAnswered ? 'border-gray-200 opacity-60' : 'border-gray-200 hover:border-purple-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{game.title}</h3>
+                      {game.description && (
+                        <p className="text-sm text-gray-600">{game.description}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-purple-600">{game.points} pts</div>
+                    </div>
+                  </div>
 
-          {/* Predictions Card */}
-          <div className="bg-gradient-to-br from-green-100 to-green-50 rounded-2xl p-6 border border-green-200">
-            <div className="flex items-center space-x-2 mb-3">
-              <Trophy className="text-green-700" size={24} />
-              <h3 className="text-xl font-semibold text-green-900">Predictions</h3>
-            </div>
-            <p className="text-green-700 text-sm mb-4">
-              Make predictions about upcoming releases and entertainment events
-            </p>
-            <button
-              onClick={() => setLocation('/play/predictions')}
-              className="bg-white text-green-700 font-medium px-6 py-3 rounded-full hover:bg-green-50 transition-colors shadow-sm w-full"
-              data-testid="explore-predictions"
-            >
-              Explore Predictions
-            </button>
-          </div>
+                  {hasAnswered ? (
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                      <div className="text-sm font-medium text-green-700">
+                        ✓ You answered: {userAnswer}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {game.options.map((option: string) => (
+                        <button
+                          key={option}
+                          onClick={() => handleOptionSelect(game.id, option)}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                            selectedAnswers[game.id] === option
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                          data-testid={`option-${game.id}-${option}`}
+                        >
+                          <span className="text-sm font-medium">{option}</span>
+                        </button>
+                      ))}
+                      <Button
+                        onClick={() => handleSubmitAnswer(game)}
+                        disabled={!selectedAnswers[game.id]}
+                        className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+                        data-testid={`submit-${game.id}`}
+                      >
+                        Submit Answer
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
 
       </div>
