@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle } from "lucide-react";
+import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle, Medal, Award } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -163,14 +163,51 @@ function useSubmitPrediction() {
   });
 }
 
+// Fetch leaderboard data
+function useLeaderboardData() {
+  return useQuery({
+    queryKey: ['leaderboard', 'all_time'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return null;
+
+      const params = new URLSearchParams({ category: 'all_time' });
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-leaderboards?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch leaderboard');
+      }
+
+      return await response.json();
+    },
+    enabled: true
+  });
+}
+
 export default function PlayPage() {
   const [, setLocation] = useLocation();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { data: predictionPools = [], isLoading } = usePredictionPools();
   const { data: userPredictionsData = { predictions: {}, fullData: [] } } = useUserPredictions();
+  const { data: leaderboardData = [] } = useLeaderboardData();
   const submitPrediction = useSubmitPrediction();
   const { toast } = useToast();
+  
+  // Get current user
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      return user;
+    }
+  });
   
   // Extract predictions map and full data
   const userPredictions = userPredictionsData?.predictions || {};
@@ -439,11 +476,73 @@ export default function PlayPage() {
           </button>
         </div>
 
-        {/* Game Points Callout */}
-        {totalGamePoints > 0 && (
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4 mb-6 text-center">
-            <div className="text-sm text-gray-700">
-              🎮 You've earned <span className="font-bold text-purple-700">{totalGamePoints} points</span> from games
+        {/* Points Card with Rank */}
+        {(() => {
+          const userRank = leaderboardData.findIndex((entry: any) => entry.user_id === currentUser?.id) + 1;
+          const userEntry = leaderboardData.find((entry: any) => entry.user_id === currentUser?.id);
+          const totalPoints = userEntry?.total_points || 0;
+          
+          return (
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 text-center shadow-sm">
+              <Award className="w-10 h-10 text-purple-600 mx-auto mb-3" />
+              <div className="text-4xl font-bold text-purple-700 mb-2">{totalPoints}</div>
+              <div className="text-gray-600 mb-3">Points Earned</div>
+              {userRank > 0 && (
+                <div className="text-sm text-gray-500">
+                  You're ranked <span className="font-semibold text-purple-600">#{userRank}</span> out of {leaderboardData.length} players
+                  {userRank > 1 && leaderboardData[0] && (
+                    <div className="mt-1">
+                      {leaderboardData[0].total_points - totalPoints} points behind #1
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Mini Leaderboard */}
+        {leaderboardData.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                <h3 className="text-lg font-semibold text-gray-900">Top Players</h3>
+              </div>
+              <Link href="/leaderboard">
+                <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                  See Full Leaderboard →
+                </button>
+              </Link>
+            </div>
+            
+            <div className="space-y-3">
+              {leaderboardData.slice(0, 5).map((entry: any, index: number) => (
+                <div
+                  key={entry.user_id}
+                  className={`flex items-center justify-between p-3 rounded-xl ${
+                    entry.user_id === currentUser?.id ? 'bg-purple-50 border border-purple-200' : 'bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                      index === 1 ? 'bg-gray-100 text-gray-700' :
+                      index === 2 ? 'bg-orange-100 text-orange-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {entry.user_name || 'Anonymous'}
+                        {entry.user_id === currentUser?.id && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="font-semibold text-purple-600">{entry.total_points} pts</div>
+                </div>
+              ))}
             </div>
           </div>
         )}
