@@ -371,6 +371,16 @@ export default function Library() {
               </div>
             ) : (
               <>
+                {/* Stats Card */}
+                {userLists.length > 0 && (
+                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+                    <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                      {userLists.reduce((total: number, list: any) => total + (list.item_count || 0), 0)}
+                    </div>
+                    <div className="text-base text-gray-600">Media Items</div>
+                  </div>
+                )}
+
                 {/* All Lists - Compact Single Column */}
                 {(systemLists.length > 0 || customLists.length > 0) && (
                   <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

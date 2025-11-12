@@ -617,8 +617,8 @@ export default function ListDetail() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-4">
 
-        {/* List Items - Compact Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {/* List Items - Ultra Compact Grid */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
           {(listData?.items || []).map((item: any) => {
             const isClickable = item.external_id && item.external_source;
             const mediaUrl = isClickable ? `/media/${item.type.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
@@ -626,17 +626,17 @@ export default function ListDetail() {
             return (
               <div 
                 key={item.id} 
-                className="bg-white rounded-xl border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all relative group overflow-hidden"
+                className="bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all relative group overflow-hidden"
               >
                 {/* Remove Button - Top Right */}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveItem(item.id)}
-                  className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white text-gray-400 hover:text-red-600 p-1.5 h-auto opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-0.5 right-0.5 z-10 bg-black/60 hover:bg-red-600 text-white p-1 h-auto opacity-0 group-hover:opacity-100 transition-opacity rounded"
                   data-testid={`button-remove-${item.id}`}
                 >
-                  <X size={14} />
+                  <X size={12} />
                 </Button>
 
                 {/* Artwork */}
@@ -648,12 +648,6 @@ export default function ListDetail() {
                         alt={item.title}
                         className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                       />
-                      {/* Type badge overlay */}
-                      <div className="absolute top-2 left-2">
-                        <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-black/70 text-white border-0">
-                          {item.type}
-                        </Badge>
-                      </div>
                     </div>
                   </Link>
                 ) : (
@@ -663,39 +657,14 @@ export default function ListDetail() {
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute top-2 left-2">
-                      <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-black/70 text-white border-0">
-                        {item.type}
-                      </Badge>
-                    </div>
                   </div>
                 )}
 
-                {/* Info */}
-                <div className="p-3">
-                  {isClickable ? (
-                    <Link href={mediaUrl!}>
-                      <h3 className="font-semibold text-sm text-gray-900 mb-1 hover:text-purple-600 cursor-pointer transition-colors line-clamp-2">
-                        {item.title}
-                      </h3>
-                    </Link>
-                  ) : (
-                    <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">{item.title}</h3>
-                  )}
-                  <p className="text-xs text-gray-500 truncate">{item.creator}</p>
-                  
-                  {/* Progress tracker - show for Currently list */}
-                  {listData?.name === "Currently" && !sharedUserId && session?.access_token && (
-                    <div className="mt-2">
-                      <ProgressTracker
-                        itemId={item.id}
-                        mediaType={item.media_type || ''}
-                        currentProgress={item.progress ?? 0}
-                        currentTotal={item.total ?? 0}
-                        currentMode={(item.progress_mode || 'percent') as 'percent' | 'page' | 'episode' | 'track'}
-                      />
-                    </div>
-                  )}
+                {/* Info - Only on hover */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="font-semibold text-xs text-white line-clamp-2 leading-tight">
+                    {item.title}
+                  </h3>
                 </div>
               </div>
             );
