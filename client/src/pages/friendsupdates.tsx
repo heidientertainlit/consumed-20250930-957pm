@@ -1384,38 +1384,36 @@ export default function FriendsUpdates() {
             </div>
           </div>
 
-          {/* Feed Filter Tabs */}
+          {/* Feed Filter Pills */}
           <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm overflow-x-auto">
             <div className="mb-3">
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Filter Feed</p>
             </div>
-            <div className="flex gap-6 justify-center">
+            <div className="flex gap-2 justify-center flex-wrap">
               {[
-                { id: "friends", label: "Friends", icon: Users, color: "text-purple-600", bgColor: "bg-purple-100" },
-                { id: "everyone", label: "Everyone", icon: Users, color: "text-purple-600", bgColor: "bg-purple-100" },
-                { id: "conversations", label: "Conversations", icon: MessageCircle, color: "text-orange-600", bgColor: "bg-orange-100" },
-                { id: "consuming", label: "Consuming", icon: Plus, color: "text-purple-600", bgColor: "bg-purple-100" },
-                { id: "hot-take", label: "Hot Take", icon: Flame, color: "text-orange-600", bgColor: "bg-orange-100" },
-                { id: "prediction", label: "Prediction", icon: Target, color: "text-red-600", bgColor: "bg-red-100" },
-                { id: "poll", label: "Poll", icon: Vote, color: "text-blue-600", bgColor: "bg-blue-100" },
-                { id: "rate-review", label: "Rate/Review", icon: Star, color: "text-yellow-600", bgColor: "bg-yellow-100" },
-                { id: "trivia", label: "Trivia", icon: HelpCircle, color: "text-green-600", bgColor: "bg-green-100" }
+                { id: "friends", label: "Friends" },
+                { id: "everyone", label: "Everyone" },
+                { id: "conversations", label: "Conversations" },
+                { id: "consuming", label: "Consuming" },
+                { id: "hot-take", label: "Hot Take" },
+                { id: "prediction", label: "Prediction" },
+                { id: "poll", label: "Poll" },
+                { id: "rate-review", label: "Rate/Review" },
+                { id: "trivia", label: "Trivia" }
               ].map((filter) => {
-                const Icon = filter.icon;
                 const isActive = feedFilter === filter.id;
                 return (
                   <button
                     key={filter.id}
                     onClick={() => setFeedFilter(filter.id)}
-                    className={`flex flex-col items-center gap-1 transition-all px-3 py-2 rounded-xl ${
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       isActive
-                        ? `${filter.color} ${filter.bgColor}`
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                        ? "bg-purple-600 text-white shadow-sm"
+                        : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
                     }`}
                     data-testid={`filter-${filter.id}`}
                   >
-                    <Icon className="h-5 w-5" />
-                    <span className="text-[10px] font-medium whitespace-nowrap">{filter.label}</span>
+                    {filter.label}
                   </button>
                 );
               })}
