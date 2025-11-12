@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, ChevronDown, Lock, Users, Plus, TrendingUp, Edit3, Check } from "lucide-react";
+import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, ChevronDown, Lock, Users, Plus, TrendingUp, Edit3, Check, Upload, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +11,13 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Slider } from "@/components/ui/slider";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Recommendation {
   title: string;
@@ -48,6 +55,12 @@ export default function Library() {
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
   const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
+  
+  // Import history state
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Progress tracking state
   const [editingProgress, setEditingProgress] = useState<Record<string, boolean>>({});
@@ -229,6 +242,77 @@ export default function Library() {
   const handleUpdateProgress = (itemId: string, progress: number, total?: number, progressMode?: string) => {
     updateProgressMutation.mutate({ itemId, progress, total, progressMode });
     setEditingProgress(prev => ({ ...prev, [itemId]: false }));
+  };
+
+  // Handle file upload for media import
+  const handleFileUpload = async () => {
+    if (!uploadFile || !session?.access_token) {
+      toast({
+        title: "Error",
+        description: "Please select a file and ensure you're logged in",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/import-media", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to import media");
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "Import successful!",
+        description: `Imported ${result.imported} items${result.failed > 0 ? ` (${result.failed} failed)` : ''}`,
+      });
+
+      // Refresh lists
+      queryClient.invalidateQueries({ queryKey: ['user-lists'] });
+
+      // Close modal and reset
+      setIsUploadModalOpen(false);
+      setUploadFile(null);
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import failed",
+        description: error.message || "Failed to import media",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.name.endsWith('.csv') && !file.name.endsWith('.zip')) {
+        toast({
+          title: "Invalid file",
+          description: "Please select a CSV or ZIP file",
+          variant: "destructive",
+        });
+        return;
+      }
+      setUploadFile(file);
+    }
   };
 
   const getMediaIcon = (type: string) => {
@@ -972,6 +1056,18 @@ export default function Library() {
 
                 return (
                   <>
+                    {/* Import History Button */}
+                    <div className="flex justify-center mb-4">
+                      <Button
+                        onClick={() => setIsUploadModalOpen(true)}
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold px-6 py-3 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
+                        data-testid="button-import-history"
+                      >
+                        <Upload className="mr-2" size={20} />
+                        Import History
+                      </Button>
+                    </div>
+
                     {/* Search Bar */}
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -1294,6 +1390,181 @@ export default function Library() {
         open={isCreateListDialogOpen}
         onOpenChange={setIsCreateListDialogOpen}
       />
+
+      {/* Import History Dialog */}
+      <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+        <DialogContent className="sm:max-w-md bg-white text-black">
+          <DialogHeader>
+            <DialogTitle className="text-black">Import History</DialogTitle>
+            <DialogDescription className="text-gray-600 space-y-3">
+              <div>
+                Import your entertainment history from Netflix or Goodreads. Upload a CSV or ZIP file to get started.
+                <button
+                  onClick={() => setIsHelpModalOpen(true)}
+                  className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-700 underline"
+                >
+                  <HelpCircle className="h-3 w-3 mr-1" />
+                  How to download
+                </button>
+              </div>
+              <div className="pt-3 border-t border-gray-200 text-sm">
+                Have history from other sources? Email it to{' '}
+                <a 
+                  href="mailto:heidi@consumedapp.com" 
+                  className="text-blue-600 hover:text-blue-700 underline font-medium"
+                >
+                  heidi@consumedapp.com
+                </a>
+                {' '}and we'll add it for you.
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col gap-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <span className="text-sm font-medium text-gray-700">
+                    {uploadFile ? uploadFile.name : 'Click to select file'}
+                  </span>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept=".csv,.zip"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    data-testid="input-upload-file"
+                  />
+                </label>
+                <p className="text-xs text-gray-500 mt-2">
+                  Supported: Netflix, Goodreads (CSV or ZIP)
+                </p>
+              </div>
+
+              {uploadFile && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Film className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-900">
+                        {uploadFile.name}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUploadFile(null)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Ready to import
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={handleFileUpload}
+              disabled={!uploadFile || isUploading}
+              className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white"
+              data-testid="button-import"
+            >
+              {isUploading ? (
+                <>
+                  <span className="mr-2">Importing...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Help Dialog - How to Download */}
+      <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
+        <DialogContent className="sm:max-w-lg bg-white text-black">
+          <DialogHeader>
+            <DialogTitle className="text-black">How to Import Your History</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              To bring your viewing and reading history into Consumed, you'll need to download your data from each service first. This process is easiest on desktop.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Where to download:</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <span className="font-medium text-gray-700 min-w-[100px]">Netflix:</span>
+                  <div className="text-sm text-gray-600">
+                    Go to your Account → Security → Personal Info Access → Request.{' '}
+                    <a
+                      href="https://www.netflix.com/account/getmyinfo"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 underline"
+                    >
+                      Request here
+                    </a>
+                    {' '}(This requests your personal info and it will be sent to you once it's approved)
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium text-gray-700 min-w-[100px]">Goodreads:</span>
+                  <div className="text-sm text-gray-600">
+                    Visit your Import/Export page and click "Export Library".{' '}
+                    <a
+                      href="https://www.goodreads.com/review/import"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 underline"
+                    >
+                      Export here
+                    </a>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium text-gray-700 min-w-[100px]">Other:</span>
+                  <div className="text-sm text-gray-600">
+                    If you have other media history data you want to enter from any other media platform not listed above, please feel free to email it to us and we can import it for you.
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-900">
+                Once you've downloaded your files, come back here and click "Import History" to upload them.
+              </p>
+            </div>
+
+            <div className="text-sm text-gray-600 text-center">
+              Need help? We're here for you at{' '}
+              <a
+                href="mailto:import@consumedapp.com"
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                import@consumedapp.com
+              </a>
+            </div>
+
+            <Button
+              onClick={() => setIsHelpModalOpen(false)}
+              className="w-full"
+            >
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
