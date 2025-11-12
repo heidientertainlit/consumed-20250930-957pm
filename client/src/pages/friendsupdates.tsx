@@ -13,6 +13,7 @@ import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import ConversationsPanel from "@/components/conversations-panel";
+import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -434,6 +435,7 @@ export default function FriendsUpdates() {
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("friends");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
+  const [detailedFilters, setDetailedFilters] = useState<FeedFilters>({ mediaTypes: [], engagementTypes: [] });
   const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
   const [activeInlineRating, setActiveInlineRating] = useState<string | null>(null); // Track which post has inline rating open
   const [currentVerb, setCurrentVerb] = useState("watching");
@@ -501,17 +503,36 @@ export default function FriendsUpdates() {
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
 
-  // Filter posts by media type
-  const filteredPosts = mediaTypeFilter === "all" 
-    ? socialPosts 
-    : socialPosts.filter(post => {
-        // Check if any media items match the selected type
-        if (!post.mediaItems || post.mediaItems.length === 0) return false;
-        return post.mediaItems.some(media => {
-          const mediaType = media.mediaType?.toLowerCase();
-          return mediaType === mediaTypeFilter;
-        });
+  // Filter posts by detailed filters
+  const filteredPosts = socialPosts.filter(post => {
+    // Apply media type filter
+    if (detailedFilters.mediaTypes.length > 0) {
+      if (!post.mediaItems || post.mediaItems.length === 0) return false;
+      const hasMatchingMedia = post.mediaItems.some(media => {
+        const mediaType = media.mediaType?.toLowerCase();
+        return detailedFilters.mediaTypes.includes(mediaType || '');
       });
+      if (!hasMatchingMedia) return false;
+    }
+
+    // Apply engagement type filter
+    if (detailedFilters.engagementTypes.length > 0) {
+      const postType = post.postType?.toLowerCase() || '';
+      // Map post types to engagement filter IDs
+      const engagementTypeMap: { [key: string]: string } = {
+        'consuming': 'consuming',
+        'prediction': 'prediction',
+        'poll': 'poll',
+        'rate': 'rate-review',
+        'review': 'rate-review',
+        'trivia': 'trivia'
+      };
+      const mappedType = engagementTypeMap[postType] || postType;
+      if (!detailedFilters.engagementTypes.includes(mappedType)) return false;
+    }
+
+    return true;
+  });
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -1393,13 +1414,7 @@ export default function FriendsUpdates() {
               {[
                 { id: "friends", label: "Friends" },
                 { id: "everyone", label: "Everyone" },
-                { id: "conversations", label: "Conversations" },
-                { id: "consuming", label: "Consuming" },
-                { id: "hot-take", label: "Hot Take" },
-                { id: "prediction", label: "Prediction" },
-                { id: "poll", label: "Poll" },
-                { id: "rate-review", label: "Rate/Review" },
-                { id: "trivia", label: "Trivia" }
+                { id: "conversations", label: "Conversations" }
               ].map((filter) => {
                 const isActive = feedFilter === filter.id;
                 return (
@@ -1417,6 +1432,7 @@ export default function FriendsUpdates() {
                   </button>
                 );
               })}
+              <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
             </div>
           </div>
 
