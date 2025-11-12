@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Star, Target, Flame, Vote, Search, UserPlus, HelpCircle } from "lucide-react";
+import { X, Plus, Star, Target, MessageCircle, Vote, Search, UserPlus, HelpCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -56,7 +56,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
   const actionIcons = [
     { id: "media" as PostMode, icon: Plus, label: "Consuming", color: "text-purple-600" },
-    { id: "mood" as PostMode, icon: Flame, label: "Hot Take", color: "text-orange-600" },
+    { id: "mood" as PostMode, icon: MessageCircle, label: "Conversation", color: "text-orange-600" },
     { id: "prediction" as PostMode, icon: Target, label: "Prediction", color: "text-red-600" },
     { id: "tribe" as PostMode, icon: Vote, label: "Poll", color: "text-blue-600" },
     { id: "review" as PostMode, icon: Star, label: "Rate/Review", color: "text-yellow-600" },
@@ -223,7 +223,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
   const getPlaceholder = () => {
     if (postMode === "mood") {
-      return "What's your take? (ex: The Barbie movie is secretly a breakup film.)";
+      return "Start a conversation... (ex: Let's discuss the Selling Sunset finale!)";
     }
     if (postMode === "media") {
       return "What are you watching, reading, or listening to?";
@@ -231,12 +231,12 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     if (postMode === "prediction") {
       return "Ask a prediction question (ex: Will Dune Part 3 get greenlit?)";
     }
-    return "Post an update...";
+    return "Share your thoughts or pick a specific way to engage about your entertainment";
   };
 
   const getButtonText = () => {
     if (postMode === "mood") {
-      return isPosting ? "Posting..." : "Post Take 🔥";
+      return isPosting ? "Posting..." : "Start Conversation";
     }
     if (postMode === "media") {
       return isPosting ? "Posting..." : "Share Update";
