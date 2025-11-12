@@ -1791,7 +1791,7 @@ export default function UserProfile() {
       <div className="min-h-screen bg-gray-50 pb-20">
         <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto">
         {/* Profile Header */}
         <div className="relative px-4 pb-6 pt-6">
           <div className="flex flex-col md:flex-row md:items-end md:space-x-6">
@@ -1955,8 +1955,10 @@ export default function UserProfile() {
               )}
             </div>
           )}
+        </div>
 
-          {/* Your Library */}
+        {/* Your Library */}
+        <div className="px-4 mb-8">
           <div className="mt-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Library</h3>
             {isLoadingStats ? (
@@ -2014,221 +2016,6 @@ export default function UserProfile() {
               <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
                 <div className="text-center text-gray-600">
                   <p>No stats available yet. Start tracking media to see your stats!</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* My Highlights Section */}
-        <div className="px-4 mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>My Highlights</h3>
-          
-          {/* Highlights Subsection */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="text-base font-bold text-gray-900">Current Favorites</h4>
-                <p className="text-xs text-gray-600">Share what you're loving or have loved recently</p>
-              </div>
-              <Button
-                onClick={() => setIsHighlightModalOpen(true)}
-                size="sm"
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Add
-              </Button>
-            </div>
-
-            {isLoadingHighlights ? (
-              <div className="text-center py-6">
-                <Loader2 className="w-6 h-6 animate-spin mx-auto text-purple-600 mb-2" />
-                <p className="text-xs text-gray-600">Loading highlights...</p>
-              </div>
-            ) : highlights.length === 0 ? (
-              <div className="text-center py-6 bg-gray-50 rounded-lg">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Star className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Add Your First Highlight</h3>
-                <p className="text-xs text-gray-600 mb-4 max-w-xs mx-auto">
-                  Share what you're loving - a show, book, song, or anything!
-                </p>
-                <Button
-                  onClick={() => setIsHighlightModalOpen(true)}
-                  size="sm"
-                  className="bg-purple-600 text-white hover:bg-purple-700"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add Highlight
-                </Button>
-              </div>
-            ) : (
-              // Render highlights in a compact 3-column grid
-              <div className="grid grid-cols-3 gap-3">
-                {highlights.slice(0, 3).map((highlight) => (
-                  <div key={highlight.id} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100 text-center relative">
-                    {isOwnProfile && (
-                      <button
-                        onClick={() => deleteHighlight(highlight.id)}
-                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                        aria-label="Remove highlight"
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <Star className="text-purple-600" size={16} />
-                    </div>
-                    <h4 className="font-medium text-gray-900 text-xs truncate">{highlight.title}</h4>
-                    <p className="text-xs text-gray-600 mt-1 truncate">{highlight.creator || highlight.media_type}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Follow Creators Subsection */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm mt-6">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <Users className="text-white" size={20} />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-gray-900">Follow Creators</h4>
-                <p className="text-xs text-gray-600">Track your favorite artists, directors, and authors</p>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            {isOwnProfile && (
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  value={creatorSearchQuery}
-                  onChange={(e) => setCreatorSearchQuery(e.target.value)}
-                  placeholder="Search for creators (e.g., Martin Scorsese, Taylor Swift...)"
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-                  data-testid="input-search-creators"
-                />
-                {isSearchingCreators && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <Loader2 className="animate-spin text-purple-600" size={18} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Horizontal Scrollable Creator Cards */}
-            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
-              {/* Show search results if available, otherwise show message to search */}
-              {creatorSearchResults.length > 0 ? creatorSearchResults.map((creator, i) => (
-                <div key={`${creator.name}-${i}`} className="flex-shrink-0 w-28 text-center">
-                  {creator.image ? (
-                    <img 
-                      src={creator.image} 
-                      alt={creator.name}
-                      className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2 ${creator.image ? 'hidden' : ''}`}>
-                    <Users className="text-purple-600" size={32} />
-                  </div>
-                  <p className="text-sm font-semibold text-gray-900 truncate px-1" title={creator.name}>
-                    {creator.name}
-                  </p>
-                  <p className="text-xs text-gray-600 truncate px-1">{creator.role}</p>
-                  {isOwnProfile && (
-                    <Button 
-                      size="sm"
-                      variant={isCreatorFollowed(creator) ? "default" : "outline"}
-                      className={`w-full mt-2 text-xs h-7 ${
-                        isCreatorFollowed(creator)
-                          ? 'bg-purple-600 text-white hover:bg-purple-700'
-                          : 'border-purple-300 text-purple-600 hover:bg-purple-50'
-                      }`}
-                      onClick={() => handleFollowCreator(creator, isCreatorFollowed(creator) ? 'unfollow' : 'follow')}
-                      disabled={isFollowingCreator === `${creator.external_source}-${creator.external_id}`}
-                      data-testid={`button-follow-${creator.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      {isFollowingCreator === `${creator.external_source}-${creator.external_id}` ? (
-                        <Loader2 className="animate-spin" size={14} />
-                      ) : isCreatorFollowed(creator) ? (
-                        'Following'
-                      ) : (
-                        '+ Follow'
-                      )}
-                    </Button>
-                  )}
-                </div>
-              )) : (
-                <div className="w-full text-center py-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Users className="text-purple-600" size={24} />
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">Search for Creators</h3>
-                  <p className="text-sm text-gray-600 max-w-md mx-auto">
-                    Try searching for: Martin Scorsese, Taylor Swift, Brandon Sanderson, Reese Witherspoon, or your favorite artists and authors
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Creators I'm Following Section */}
-            {followedCreators.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Creators I'm Following</h3>
-                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
-                  {followedCreators.map((creator) => (
-                    <div key={creator.id} className="flex-shrink-0 w-28 text-center">
-                      {creator.creator_image ? (
-                        <img 
-                          src={creator.creator_image} 
-                          alt={creator.creator_name}
-                          className="w-20 h-20 rounded-full object-cover mx-auto mb-2"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null}
-                      <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-2 ${creator.creator_image ? 'hidden' : ''}`}>
-                        <Users className="text-purple-600" size={32} />
-                      </div>
-                      <p className="text-sm font-semibold text-gray-900 truncate px-1" title={creator.creator_name}>
-                        {creator.creator_name}
-                      </p>
-                      <p className="text-xs text-gray-600 truncate px-1">{creator.creator_role}</p>
-                      {isOwnProfile && (
-                        <Button 
-                          size="sm"
-                          variant="default"
-                          className="w-full mt-2 text-xs h-7 bg-purple-600 text-white hover:bg-purple-700"
-                          onClick={() => handleFollowCreator({
-                            name: creator.creator_name,
-                            role: creator.creator_role,
-                            image: creator.creator_image,
-                            external_id: creator.external_id,
-                            external_source: creator.external_source
-                          }, 'unfollow')}
-                          disabled={isFollowingCreator === `${creator.external_source}-${creator.external_id}`}
-                          data-testid={`button-unfollow-${creator.creator_name.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                          {isFollowingCreator === `${creator.external_source}-${creator.external_id}` ? (
-                            <Loader2 className="animate-spin" size={14} />
-                          ) : (
-                            'Following'
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
@@ -2741,7 +2528,6 @@ export default function UserProfile() {
             )}
           </div>
         </div>
-      </div>
 
         {/* Currently Consuming */}
         <div className="px-4 mb-8">
@@ -3399,6 +3185,7 @@ export default function UserProfile() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       <ConsumptionTracker 
