@@ -197,9 +197,6 @@ export default function InlineComposer() {
     return "Share your thoughts...";
   };
 
-  const maxChars = 1000;
-  const charsRemaining = maxChars - content.length;
-
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200">
       {/* Composer Header */}
@@ -216,7 +213,6 @@ export default function InlineComposer() {
               placeholder={getPlaceholder()}
               className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400 w-full"
               minHeight="60px"
-              maxLength={maxChars}
               session={session}
             />
           </div>
