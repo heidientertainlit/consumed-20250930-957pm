@@ -14,7 +14,7 @@ Preferred communication style: Simple, everyday language.
 ### UI/UX Decisions
 -   **Mobile-first design**: Optimized for mobile devices.
 -   **Dark gradient theme**: Sophisticated dark theme throughout the application.
--   **Bottom navigation**: Primary navigation uses a persistent bottom bar (Feed, Play, Leaderboard, Friends). Track page exists as a backpage (accessible at `/track`) but is not shown in navigation.
+-   **Bottom navigation**: Primary navigation uses a persistent bottom bar (Feed, Play, Friends). Track page and Leaderboard exist as backpages (accessible at `/track` and `/leaderboard`) but are not shown in navigation.
 -   **Top navigation**: Search (🔍) for direct friend/media lookup, Discover (✨) for AI recommendations, Notifications, and Profile.
 -   **Component Library**: shadcn/ui, built with Radix UI primitives and styled with Tailwind CSS.
 -   **Button Theme**: All buttons default to purple (`bg-purple-600`) with white text; outline buttons use a purple border with a white background. No black buttons are used.
