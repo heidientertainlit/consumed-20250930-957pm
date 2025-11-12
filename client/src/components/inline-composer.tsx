@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Star, Target, Vote, Flame, Loader2 } from "lucide-react";
+import { X, Plus, Star, Target, Vote, MessageCircle, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import MentionTextarea from "@/components/mention-textarea";
 import { queryClient } from "@/lib/queryClient";
 
-type ComposerMode = "" | "prediction" | "poll" | "hot-take" | "rate-review" | "add-media";
+type ComposerMode = "" | "prediction" | "poll" | "thought" | "rate-review" | "add-media";
 type PredictionType = "yes-no" | "head-to-head" | "multi-choice";
 
 export default function InlineComposer() {
   const { session, user } = useAuth();
   const { toast } = useToast();
-  const [composerMode, setComposerMode] = useState<ComposerMode>("hot-take");
+  const [composerMode, setComposerMode] = useState<ComposerMode>("thought");
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [containsSpoilers, setContainsSpoilers] = useState(false);
@@ -32,16 +32,16 @@ export default function InlineComposer() {
 
   // Action chips configuration
   const actionChips = [
+    { id: "thought" as ComposerMode, icon: MessageCircle, label: "💭 Thought", color: "text-gray-600" },
     { id: "prediction" as ComposerMode, icon: Target, label: "🎯 Prediction", color: "text-red-600" },
     { id: "poll" as ComposerMode, icon: Vote, label: "🗳️ Poll", color: "text-blue-600" },
-    { id: "hot-take" as ComposerMode, icon: Flame, label: "🔥 Hot Take", color: "text-orange-600" },
     { id: "rate-review" as ComposerMode, icon: Star, label: "⭐ Rate/Review", color: "text-yellow-600" },
     { id: "add-media" as ComposerMode, icon: Plus, label: "➕ Add Media", color: "text-purple-600" },
   ];
 
   const resetComposer = () => {
     setContent("");
-    setComposerMode("hot-take");
+    setComposerMode("thought");
     setContainsSpoilers(false);
     setShowMediaSearch(false);
     setSearchQuery("");
@@ -53,7 +53,7 @@ export default function InlineComposer() {
   };
 
   const handlePost = async () => {
-    if (!content.trim() && composerMode === "hot-take") {
+    if (!content.trim() && composerMode === "thought") {
       toast({
         title: "Empty Post",
         description: "Please write something before posting.",
@@ -182,8 +182,8 @@ export default function InlineComposer() {
   };
 
   const getPlaceholder = () => {
-    if (composerMode === "hot-take") {
-      return "What's your take?";
+    if (composerMode === "thought") {
+      return "Share your thoughts...";
     }
     if (composerMode === "rate-review" || composerMode === "add-media") {
       return "What are you watching, reading, or listening to?";
