@@ -446,23 +446,23 @@ export default function PlayPage() {
         </div>
 
         {/* 🪙 Your Coins / Rewards Section */}
-        <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-6 mb-6 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl p-4 mb-6 text-white shadow-md">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <Award className="w-8 h-8 text-white" />
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <Award className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-sm font-medium opacity-90 mb-1">Your Coins</div>
-                <div className="text-3xl font-bold">{totalPoints}</div>
+                <div className="text-xs font-medium opacity-90">Your Coins</div>
+                <div className="text-xl font-bold">{totalPoints}</div>
               </div>
             </div>
             {userRank > 0 && (
               <div className="text-right">
-                <div className="text-sm opacity-90">Global Rank</div>
-                <div className="text-2xl font-bold">#{userRank}</div>
+                <div className="text-xs opacity-90">Global Rank</div>
+                <div className="text-lg font-bold">#{userRank}</div>
                 {userRank > 1 && leaderboardData[0] && (
-                  <div className="text-xs opacity-75 mt-1">
+                  <div className="text-[10px] opacity-75 mt-0.5">
                     {leaderboardData[0].total_points - totalPoints} pts to #1
                   </div>
                 )}
