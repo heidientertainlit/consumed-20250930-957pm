@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Library } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -512,27 +512,43 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         <div className="flex justify-evenly items-center h-20 pb-2">
           <Link
             href="/feed"
-            className={`flex flex-col items-center space-y-1 py-2 px-4 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
           >
-            <Activity className="text-white" size={24} />
+            <Activity className="text-white" size={22} />
             <span className="text-xs font-medium text-white">Feed</span>
           </Link>
 
           <Link
             href="/friends"
-            className={`flex flex-col items-center space-y-1 py-2 px-4 rounded-lg transition-colors ${location === "/friends" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/friends" ? "bg-white/20" : ""}`}
           >
-            <Users className="text-white" size={24} />
+            <Users className="text-white" size={22} />
             <span className="text-xs font-medium text-white">Friends</span>
           </Link>
 
           <Link
+            href="/library"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/library" ? "bg-white/20" : ""}`}
+          >
+            <Library className="text-white" size={22} />
+            <span className="text-xs font-medium text-white">Library</span>
+          </Link>
+
+          <Link
+            href="/leaderboard"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
+          >
+            <Trophy className="text-white" size={22} />
+            <span className="text-xs font-medium text-white">Board</span>
+          </Link>
+
+          <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
-            className={`flex flex-col items-center space-y-1 py-2 px-4 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
           >
             <div className="relative">
-              <User className="text-white" size={24} />
-              <Dna className="text-white absolute -left-3 -top-1" size={16} />
+              <User className="text-white" size={22} />
+              <Dna className="text-white absolute -left-3 -top-1" size={14} />
             </div>
             <span className="text-xs font-medium text-white">Me</span>
           </Link>
