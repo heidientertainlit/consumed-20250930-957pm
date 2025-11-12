@@ -1420,11 +1420,14 @@ export default function FriendsUpdates() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="text-center mb-6">
+          <div className="text-sm font-medium text-purple-600 mb-2" style={{ letterSpacing: '0.05em' }}>
+            ENTERTAINMENT FEED
+          </div>
           <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
             See What Your Friends Are Consuming
           </h1>
           <p className="text-base text-gray-600">
-            See what your friends are watching, reading, and listening to. Ask questions, share reactions, or post what's on your mind.
+            See what your friends are watching, reading, listening to, and playing — and then share your take.
           </p>
         </div>
 
