@@ -503,6 +503,18 @@ export default function PlayPage() {
           </button>
         </div>
 
+        {/* View Leaderboard Button */}
+        {leaderboardData.length > 0 && (
+          <div className="mb-4">
+            <Link href="/leaderboard">
+              <button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-full shadow-md transition-all duration-200">
+                <Trophy className="inline-block mr-2" size={18} />
+                View Full Leaderboard
+              </button>
+            </Link>
+          </div>
+        )}
+
         {/* Mini Leaderboard */}
         {leaderboardData.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
@@ -511,11 +523,6 @@ export default function PlayPage() {
                 <Trophy className="w-5 h-5 text-yellow-500" />
                 <h3 className="text-lg font-semibold text-gray-900">Top Players</h3>
               </div>
-              <Link href="/leaderboard">
-                <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
-                  See Full Leaderboard →
-                </button>
-              </Link>
             </div>
             
             <div className="space-y-3">
