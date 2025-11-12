@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, ChevronDown, Lock, Users, Plus, TrendingUp } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, ChevronDown, Lock, Users, Plus, TrendingUp, Edit3, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,6 +9,8 @@ import Navigation from "@/components/navigation";
 import CreateListDialog from "@/components/create-list-dialog";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { Slider } from "@/components/ui/slider";
 
 interface Recommendation {
   title: string;
@@ -32,6 +34,8 @@ interface SearchResult {
 export default function Library() {
   const { user, session } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -44,6 +48,12 @@ export default function Library() {
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
   const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
+  
+  // Progress tracking state
+  const [editingProgress, setEditingProgress] = useState<Record<string, boolean>>({});
+  const [progressValues, setProgressValues] = useState<Record<string, number>>({});
+  const [totalValues, setTotalValues] = useState<Record<string, number>>({});
+  const [expandedLists, setExpandedLists] = useState<Record<string, boolean>>({});
 
   // Fetch trending content
   const { data: netflixTVShows = [] } = useQuery({
@@ -173,6 +183,52 @@ export default function Library() {
     if (type && source && id) {
       setLocation(`/media/${type}/${source}/${id}`);
     }
+  };
+
+  // Progress update mutation
+  const updateProgressMutation = useMutation({
+    mutationFn: async ({ itemId, progress, total, progressMode }: { itemId: string; progress: number; total?: number; progressMode?: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          item_id: itemId,
+          progress,
+          total,
+          progress_mode: progressMode,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update progress');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Progress updated!",
+        description: "Your progress has been saved.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['user-lists'] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update progress. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUpdateProgress = (itemId: string, progress: number, total?: number, progressMode?: string) => {
+    updateProgressMutation.mutate({ itemId, progress, total, progressMode });
+    setEditingProgress(prev => ({ ...prev, [itemId]: false }));
   };
 
   const getMediaIcon = (type: string) => {
@@ -451,86 +507,398 @@ export default function Library() {
                   </Button>
                 </div>
 
-                {/* All Lists - Compact Single Column */}
+                {/* All Lists - Expandable with Items */}
                 {(systemLists.length > 0 || customLists.length > 0) && (
-                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="space-y-4">
                     {/* System Lists */}
                     {systemLists.length > 0 && (
-                      <>
+                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                         <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                           <h3 className="text-xs font-semibold text-gray-500 uppercase">Your Lists</h3>
                           <span className="text-xs text-gray-600">
                             {userLists.reduce((total: number, list: any) => total + (list.item_count || 0), 0)} items total
                           </span>
                         </div>
-                        {systemLists.map((list: any, idx: number) => (
-                          <div
-                            key={list.id}
-                            onClick={() => setLocation(`/list/${list.id}`)}
-                            className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                              idx < systemLists.length - 1 || customLists.length > 0 ? 'border-b border-gray-100' : ''
-                            }`}
-                            data-testid={`list-${list.id}`}
-                          >
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                                <ListIcon className="text-purple-600" size={18} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-semibold text-black truncate">{list.title}</h3>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs text-gray-500">{list.item_count || 0} items</span>
-                                  {list.is_private && (
-                                    <div className="flex items-center gap-1">
-                                      <Lock size={10} className="text-purple-600" />
-                                      <span className="text-xs text-purple-600">Private</span>
-                                    </div>
-                                  )}
+                        {systemLists.map((list: any) => (
+                          <div key={list.id}>
+                            {/* List Header */}
+                            <div
+                              onClick={() => setExpandedLists(prev => ({ ...prev, [list.id]: !prev[list.id] }))}
+                              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100"
+                              data-testid={`list-${list.id}`}
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                  <ListIcon className="text-purple-600" size={18} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm font-semibold text-black truncate">{list.title}</h3>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-xs text-gray-500">{list.item_count || 0} items</span>
+                                  </div>
                                 </div>
                               </div>
+                              <ChevronDown className={`text-gray-400 flex-shrink-0 transition-transform ${expandedLists[list.id] ? 'rotate-180' : ''}`} size={18} />
                             </div>
-                            <ChevronRight className="text-gray-400 flex-shrink-0" size={18} />
+
+                            {/* List Items */}
+                            {expandedLists[list.id] && list.items && list.items.length > 0 && (
+                              <div className="bg-gray-50">
+                                {list.items.map((item: any, itemIdx: number) => {
+                                  const progressMode = item.progress_mode || (
+                                    item.media_type === 'book' ? 'page' :
+                                    item.media_type === 'tv' ? 'episode' :
+                                    item.media_type === 'music' ? 'track' : 'percent'
+                                  );
+                                  const currentProgress = item.progress || 0;
+                                  const currentTotal = item.total || 100;
+                                  const isEditing = editingProgress[item.id];
+
+                                  return (
+                                    <div
+                                      key={`${item.id}-${itemIdx}`}
+                                      className={`px-4 py-3 ${itemIdx < list.items.length - 1 ? 'border-b border-gray-200' : ''}`}
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        {/* Poster */}
+                                        {item.image_url ? (
+                                          <img
+                                            src={item.image_url}
+                                            alt={item.title}
+                                            className="w-12 h-16 object-cover rounded cursor-pointer"
+                                            onClick={() => {
+                                              const mediaType = item.media_type || 'movie';
+                                              const source = item.external_source || 'tmdb';
+                                              const id = item.external_id;
+                                              if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
+                                            }}
+                                          />
+                                        ) : (
+                                          <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center">
+                                            <Film className="text-gray-400" size={20} />
+                                          </div>
+                                        )}
+
+                                        {/* Item Info & Progress */}
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-semibold text-black text-sm truncate">{item.title}</h4>
+                                          <p className="text-xs text-gray-500 truncate">
+                                            {item.media_type === 'tv' ? 'TV Show' : 
+                                             item.media_type === 'movie' ? 'Movie' : 
+                                             item.media_type === 'book' ? 'Book' : 
+                                             item.media_type === 'music' ? 'Music' : 
+                                             item.media_type === 'podcast' ? 'Podcast' : 
+                                             item.media_type === 'game' ? 'Game' : 'Media'}
+                                          </p>
+
+                                          {/* Progress Display */}
+                                          {currentProgress > 0 && !isEditing && (
+                                            <div className="mt-2">
+                                              <div className="flex items-center justify-between mb-1">
+                                                <span className="text-xs text-gray-600">
+                                                  {progressMode === 'percent' && `${currentProgress}%`}
+                                                  {progressMode === 'page' && `Page ${currentProgress}${currentTotal > 0 ? ` of ${currentTotal}` : ''}`}
+                                                  {progressMode === 'episode' && `Episode ${currentProgress}${currentTotal > 0 ? ` of ${currentTotal}` : ''}`}
+                                                  {progressMode === 'track' && `Track ${currentProgress}${currentTotal > 0 ? ` of ${currentTotal}` : ''}`}
+                                                </span>
+                                              </div>
+                                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div
+                                                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all"
+                                                  style={{ width: `${progressMode === 'percent' ? currentProgress : Math.min((currentProgress / currentTotal) * 100, 100)}%` }}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Progress Edit Controls */}
+                                          {isEditing && (
+                                            <div className="mt-2 space-y-2 bg-white rounded-lg p-3 border border-purple-200">
+                                              {progressMode === 'percent' ? (
+                                                <div>
+                                                  <label className="text-xs font-medium text-gray-700 mb-1 block">Progress: {progressValues[item.id] || currentProgress}%</label>
+                                                  <Slider
+                                                    value={[progressValues[item.id] ?? currentProgress]}
+                                                    onValueChange={(value) => setProgressValues(prev => ({ ...prev, [item.id]: value[0] }))}
+                                                    max={100}
+                                                    step={1}
+                                                    className="my-2"
+                                                  />
+                                                </div>
+                                              ) : (
+                                                <div className="flex gap-2">
+                                                  <div className="flex-1">
+                                                    <label className="text-xs font-medium text-gray-700 mb-1 block">
+                                                      {progressMode === 'page' ? 'Current Page' :
+                                                       progressMode === 'episode' ? 'Current Episode' :
+                                                       'Current Track'}
+                                                    </label>
+                                                    <input
+                                                      type="number"
+                                                      value={progressValues[item.id] ?? currentProgress}
+                                                      onChange={(e) => setProgressValues(prev => ({ ...prev, [item.id]: parseInt(e.target.value) || 0 }))}
+                                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                      min="0"
+                                                    />
+                                                  </div>
+                                                  <div className="flex-1">
+                                                    <label className="text-xs font-medium text-gray-700 mb-1 block">Total</label>
+                                                    <input
+                                                      type="number"
+                                                      value={totalValues[item.id] ?? currentTotal}
+                                                      onChange={(e) => setTotalValues(prev => ({ ...prev, [item.id]: parseInt(e.target.value) || 0 }))}
+                                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                      min="0"
+                                                      placeholder="Optional"
+                                                    />
+                                                  </div>
+                                                </div>
+                                              )}
+                                              <div className="flex gap-2">
+                                                <Button
+                                                  onClick={() => handleUpdateProgress(
+                                                    item.id,
+                                                    progressValues[item.id] ?? currentProgress,
+                                                    totalValues[item.id] ?? currentTotal,
+                                                    progressMode
+                                                  )}
+                                                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                                                  size="sm"
+                                                >
+                                                  <Check size={14} className="mr-1" />
+                                                  Save
+                                                </Button>
+                                                <Button
+                                                  onClick={() => setEditingProgress(prev => ({ ...prev, [item.id]: false }))}
+                                                  variant="outline"
+                                                  size="sm"
+                                                >
+                                                  Cancel
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Update Progress Button */}
+                                          {!isEditing && (
+                                            <Button
+                                              onClick={() => {
+                                                setEditingProgress(prev => ({ ...prev, [item.id]: true }));
+                                                setProgressValues(prev => ({ ...prev, [item.id]: currentProgress }));
+                                                setTotalValues(prev => ({ ...prev, [item.id]: currentTotal }));
+                                              }}
+                                              variant="outline"
+                                              size="sm"
+                                              className="mt-2 text-xs"
+                                            >
+                                              <Edit3 size={12} className="mr-1" />
+                                              Update Progress
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         ))}
-                      </>
+                      </div>
                     )}
 
                     {/* Custom Lists */}
                     {customLists.length > 0 && (
-                      <>
+                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                         <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
                           <h3 className="text-xs font-semibold text-gray-500 uppercase">Custom Lists</h3>
                         </div>
-                        {customLists.map((list: any, idx: number) => (
-                          <div
-                            key={list.id}
-                            onClick={() => setLocation(`/list/${list.id}`)}
-                            className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                              idx < customLists.length - 1 ? 'border-b border-gray-100' : ''
-                            }`}
-                            data-testid={`custom-list-${list.id}`}
-                          >
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                <ListIcon className="text-blue-600" size={18} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-semibold text-black truncate">{list.title}</h3>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs text-gray-500">{list.item_count || 0} items</span>
-                                  {list.is_private && (
-                                    <div className="flex items-center gap-1">
-                                      <Lock size={10} className="text-purple-600" />
-                                      <span className="text-xs text-purple-600">Private</span>
-                                    </div>
-                                  )}
+                        {customLists.map((list: any) => (
+                          <div key={list.id}>
+                            {/* List Header */}
+                            <div
+                              onClick={() => setExpandedLists(prev => ({ ...prev, [list.id]: !prev[list.id] }))}
+                              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100"
+                              data-testid={`custom-list-${list.id}`}
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                  <ListIcon className="text-blue-600" size={18} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm font-semibold text-black truncate">{list.title}</h3>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-xs text-gray-500">{list.item_count || 0} items</span>
+                                  </div>
                                 </div>
                               </div>
+                              <ChevronDown className={`text-gray-400 flex-shrink-0 transition-transform ${expandedLists[list.id] ? 'rotate-180' : ''}`} size={18} />
                             </div>
-                            <ChevronRight className="text-gray-400 flex-shrink-0" size={18} />
+
+                            {/* List Items */}
+                            {expandedLists[list.id] && list.items && list.items.length > 0 && (
+                              <div className="bg-gray-50">
+                                {list.items.map((item: any, itemIdx: number) => {
+                                  const progressMode = item.progress_mode || (
+                                    item.media_type === 'book' ? 'page' :
+                                    item.media_type === 'tv' ? 'episode' :
+                                    item.media_type === 'music' ? 'track' : 'percent'
+                                  );
+                                  const currentProgress = item.progress || 0;
+                                  const currentTotal = item.total || 100;
+                                  const isEditing = editingProgress[item.id];
+
+                                  return (
+                                    <div
+                                      key={`${item.id}-${itemIdx}`}
+                                      className={`px-4 py-3 ${itemIdx < list.items.length - 1 ? 'border-b border-gray-200' : ''}`}
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        {/* Poster */}
+                                        {item.image_url ? (
+                                          <img
+                                            src={item.image_url}
+                                            alt={item.title}
+                                            className="w-12 h-16 object-cover rounded cursor-pointer"
+                                            onClick={() => {
+                                              const mediaType = item.media_type || 'movie';
+                                              const source = item.external_source || 'tmdb';
+                                              const id = item.external_id;
+                                              if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
+                                            }}
+                                          />
+                                        ) : (
+                                          <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center">
+                                            <Film className="text-gray-400" size={20} />
+                                          </div>
+                                        )}
+
+                                        {/* Item Info & Progress */}
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-semibold text-black text-sm truncate">{item.title}</h4>
+                                          <p className="text-xs text-gray-500 truncate">
+                                            {item.media_type === 'tv' ? 'TV Show' : 
+                                             item.media_type === 'movie' ? 'Movie' : 
+                                             item.media_type === 'book' ? 'Book' : 
+                                             item.media_type === 'music' ? 'Music' : 
+                                             item.media_type === 'podcast' ? 'Podcast' : 
+                                             item.media_type === 'game' ? 'Game' : 'Media'}
+                                          </p>
+
+                                          {/* Progress Display */}
+                                          {currentProgress > 0 && !isEditing && (
+                                            <div className="mt-2">
+                                              <div className="flex items-center justify-between mb-1">
+                                                <span className="text-xs text-gray-600">
+                                                  {progressMode === 'percent' && `${currentProgress}%`}
+                                                  {progressMode === 'page' && `Page ${currentProgress}${currentTotal > 0 ? ` of ${currentTotal}` : ''}`}
+                                                  {progressMode === 'episode' && `Episode ${currentProgress}${currentTotal > 0 ? ` of ${currentTotal}` : ''}`}
+                                                  {progressMode === 'track' && `Track ${currentProgress}${currentTotal > 0 ? ` of ${currentTotal}` : ''}`}
+                                                </span>
+                                              </div>
+                                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div
+                                                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all"
+                                                  style={{ width: `${progressMode === 'percent' ? currentProgress : Math.min((currentProgress / currentTotal) * 100, 100)}%` }}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Progress Edit Controls */}
+                                          {isEditing && (
+                                            <div className="mt-2 space-y-2 bg-white rounded-lg p-3 border border-purple-200">
+                                              {progressMode === 'percent' ? (
+                                                <div>
+                                                  <label className="text-xs font-medium text-gray-700 mb-1 block">Progress: {progressValues[item.id] || currentProgress}%</label>
+                                                  <Slider
+                                                    value={[progressValues[item.id] ?? currentProgress]}
+                                                    onValueChange={(value) => setProgressValues(prev => ({ ...prev, [item.id]: value[0] }))}
+                                                    max={100}
+                                                    step={1}
+                                                    className="my-2"
+                                                  />
+                                                </div>
+                                              ) : (
+                                                <div className="flex gap-2">
+                                                  <div className="flex-1">
+                                                    <label className="text-xs font-medium text-gray-700 mb-1 block">
+                                                      {progressMode === 'page' ? 'Current Page' :
+                                                       progressMode === 'episode' ? 'Current Episode' :
+                                                       'Current Track'}
+                                                    </label>
+                                                    <input
+                                                      type="number"
+                                                      value={progressValues[item.id] ?? currentProgress}
+                                                      onChange={(e) => setProgressValues(prev => ({ ...prev, [item.id]: parseInt(e.target.value) || 0 }))}
+                                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                      min="0"
+                                                    />
+                                                  </div>
+                                                  <div className="flex-1">
+                                                    <label className="text-xs font-medium text-gray-700 mb-1 block">Total</label>
+                                                    <input
+                                                      type="number"
+                                                      value={totalValues[item.id] ?? currentTotal}
+                                                      onChange={(e) => setTotalValues(prev => ({ ...prev, [item.id]: parseInt(e.target.value) || 0 }))}
+                                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                      min="0"
+                                                      placeholder="Optional"
+                                                    />
+                                                  </div>
+                                                </div>
+                                              )}
+                                              <div className="flex gap-2">
+                                                <Button
+                                                  onClick={() => handleUpdateProgress(
+                                                    item.id,
+                                                    progressValues[item.id] ?? currentProgress,
+                                                    totalValues[item.id] ?? currentTotal,
+                                                    progressMode
+                                                  )}
+                                                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                                                  size="sm"
+                                                >
+                                                  <Check size={14} className="mr-1" />
+                                                  Save
+                                                </Button>
+                                                <Button
+                                                  onClick={() => setEditingProgress(prev => ({ ...prev, [item.id]: false }))}
+                                                  variant="outline"
+                                                  size="sm"
+                                                >
+                                                  Cancel
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Update Progress Button */}
+                                          {!isEditing && (
+                                            <Button
+                                              onClick={() => {
+                                                setEditingProgress(prev => ({ ...prev, [item.id]: true }));
+                                                setProgressValues(prev => ({ ...prev, [item.id]: currentProgress }));
+                                                setTotalValues(prev => ({ ...prev, [item.id]: currentTotal }));
+                                              }}
+                                              variant="outline"
+                                              size="sm"
+                                              className="mt-2 text-xs"
+                                            >
+                                              <Edit3 size={12} className="mr-1" />
+                                              Update Progress
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         ))}
-                      </>
+                      </div>
                     )}
                   </div>
                 )}
