@@ -35,7 +35,7 @@ export default function Library() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [activeView, setActiveView] = useState<'discover' | 'my-media'>('discover');
+  const [activeView, setActiveView] = useState<'discover' | 'lists' | 'media-history'>('discover');
   const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
 
   // Fetch trending content
@@ -203,7 +203,7 @@ export default function Library() {
         <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-xl w-full">
           <button
             onClick={() => setActiveView('discover')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
               activeView === 'discover'
                 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-200'
@@ -211,19 +211,31 @@ export default function Library() {
             data-testid="button-discover"
           >
             <Sparkles size={16} />
-            Discover
+            <span className="hidden sm:inline">Discover</span>
           </button>
           <button
-            onClick={() => setActiveView('my-media')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-              activeView === 'my-media'
+            onClick={() => setActiveView('lists')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
+              activeView === 'lists'
                 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-200'
             }`}
-            data-testid="button-my-media"
+            data-testid="button-lists"
           >
             <ListIcon size={16} />
-            My Media
+            <span className="hidden sm:inline">Lists</span>
+          </button>
+          <button
+            onClick={() => setActiveView('media-history')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
+              activeView === 'media-history'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-200'
+            }`}
+            data-testid="button-media-history"
+          >
+            <TrendingUp size={16} />
+            <span className="hidden sm:inline">Media History</span>
           </button>
         </div>
 
@@ -411,8 +423,8 @@ export default function Library() {
             </div>
           )}
 
-          {/* My Media View */}
-          {activeView === 'my-media' && (
+          {/* Lists View */}
+          {activeView === 'lists' && (
             <div className="space-y-6">
             {isLoadingLists ? (
               <div className="flex items-center justify-center py-12">
@@ -532,6 +544,98 @@ export default function Library() {
                 )}
               </>
             )}
+            </div>
+          )}
+
+          {/* Media History View */}
+          {activeView === 'media-history' && (
+            <div className="space-y-4">
+              {isLoadingLists ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="animate-spin text-purple-600" size={32} />
+                </div>
+              ) : (() => {
+                // Flatten all items from all lists and sort by date
+                const allItems = userLists
+                  .filter((list: any) => list.id !== 'all')
+                  .flatMap((list: any) => 
+                    (list.items || []).map((item: any) => ({
+                      ...item,
+                      listName: list.title
+                    }))
+                  )
+                  .sort((a: any, b: any) => 
+                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                  );
+
+                return allItems.length > 0 ? (
+                  <>
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <TrendingUp className="text-purple-600" size={20} />
+                        <span className="text-xl font-bold text-purple-800">{allItems.length}</span>
+                        <span className="text-sm text-gray-600">items tracked</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                      {allItems.map((item: any, idx: number) => (
+                        <div
+                          key={`${item.id}-${idx}`}
+                          onClick={() => {
+                            const mediaType = item.media_type || 'movie';
+                            const source = item.external_source || 'tmdb';
+                            const id = item.external_id;
+                            if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
+                          }}
+                          className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                            idx < allItems.length - 1 ? 'border-b border-gray-100' : ''
+                          }`}
+                        >
+                          {item.image_url ? (
+                            <img
+                              src={item.image_url}
+                              alt={item.title}
+                              className="w-12 h-16 object-cover rounded flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                              <Film className="text-gray-400" size={20} />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-black truncate text-sm">{item.title}</h4>
+                            <p className="text-xs text-gray-500 truncate">
+                              {item.media_type === 'tv' ? 'TV Show' : 
+                               item.media_type === 'movie' ? 'Movie' : 
+                               item.media_type === 'book' ? 'Book' : 
+                               item.media_type === 'music' ? 'Music' : 
+                               item.media_type === 'podcast' ? 'Podcast' : 
+                               item.media_type === 'game' ? 'Game' : item.type}
+                              {item.creator && ` • ${item.creator}`}
+                            </p>
+                            <p className="text-xs text-purple-600">{item.listName}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-xs text-gray-400">
+                              {new Date(item.created_at).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+                    <TrendingUp className="mx-auto text-gray-300 mb-4" size={48} />
+                    <p className="text-gray-500 text-lg">No media tracked yet</p>
+                    <p className="text-gray-400 text-sm mt-2">Start adding media to your lists to see your history</p>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
