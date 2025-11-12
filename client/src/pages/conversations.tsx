@@ -98,6 +98,7 @@ export default function ConversationsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
+              data-testid="input-search-conversations"
               type="text"
               placeholder="Search conversations..."
               value={searchQuery}
@@ -115,6 +116,7 @@ export default function ConversationsPage() {
             ].map((filter) => (
               <button
                 key={filter.id}
+                data-testid={`button-filter-${filter.id}`}
                 onClick={() => setActiveFilter(filter.id)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   activeFilter === filter.id
@@ -138,6 +140,7 @@ export default function ConversationsPage() {
               <p className="text-sm text-gray-300">Share your thoughts on your favorite entertainment</p>
             </div>
             <Button
+              data-testid="button-start-conversation"
               onClick={() => setIsComposerOpen(true)}
               className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
             >
@@ -157,6 +160,7 @@ export default function ConversationsPage() {
             {trendingTopics.map((topic) => (
               <div
                 key={topic.id}
+                data-testid={`card-topic-${topic.id}`}
                 className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700 hover:border-orange-500/50 transition-all"
               >
                 {/* Topic Header */}
@@ -166,6 +170,7 @@ export default function ConversationsPage() {
                       src={topic.posterUrl}
                       alt={topic.title}
                       className="w-12 h-16 object-cover rounded shadow-md"
+                      data-testid={`img-topic-poster-${topic.id}`}
                     />
                   ) : (
                     <div className="w-12 h-16 bg-gradient-to-br from-orange-500 to-purple-500 rounded flex items-center justify-center text-2xl">
@@ -173,8 +178,8 @@ export default function ConversationsPage() {
                     </div>
                   )}
                   <div className="flex-1">
-                    <h3 className="text-white font-semibold">{topic.title}</h3>
-                    <p className="text-sm text-gray-400">
+                    <h3 className="text-white font-semibold" data-testid={`text-topic-title-${topic.id}`}>{topic.title}</h3>
+                    <p className="text-sm text-gray-400" data-testid={`text-topic-stats-${topic.id}`}>
                       {topic.postCount} posts • {topic.participantCount} talking
                     </p>
                   </div>
@@ -185,15 +190,16 @@ export default function ConversationsPage() {
                   {topic.topThreads.map((thread) => (
                     <button
                       key={thread.id}
+                      data-testid={`button-thread-${thread.id}`}
                       className="w-full text-left bg-gray-900/50 hover:bg-gray-900 rounded-lg p-3 transition-colors border border-gray-700/50"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                          <p className="text-sm text-white font-medium mb-1">{thread.title}</p>
+                          <p className="text-sm text-white font-medium mb-1" data-testid={`text-thread-title-${thread.id}`}>{thread.title}</p>
                           <div className="flex items-center gap-2 text-xs text-gray-400">
-                            <span>{thread.replyCount} replies</span>
+                            <span data-testid={`text-thread-replies-${thread.id}`}>{thread.replyCount} replies</span>
                             {thread.isActive && (
-                              <span className="flex items-center gap-1 text-orange-500">
+                              <span className="flex items-center gap-1 text-orange-500" data-testid={`text-thread-active-${thread.id}`}>
                                 <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                                 Active Now
                               </span>
@@ -207,6 +213,7 @@ export default function ConversationsPage() {
 
                 {/* View All Button */}
                 <Button
+                  data-testid={`button-view-all-topic-${topic.id}`}
                   variant="ghost"
                   className="w-full text-orange-500 hover:text-orange-400 hover:bg-orange-500/10"
                 >
@@ -228,30 +235,31 @@ export default function ConversationsPage() {
             {hotThreads.map((thread) => (
               <button
                 key={thread.id}
+                data-testid={`button-hot-thread-${thread.id}`}
                 className="w-full text-left bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700 hover:border-orange-500/50 transition-all"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">{thread.topicIcon}</span>
-                  <span className="text-xs text-gray-400">{thread.topicTitle}</span>
+                  <span className="text-xs text-gray-400" data-testid={`text-hot-thread-topic-${thread.id}`}>{thread.topicTitle}</span>
                 </div>
-                <h3 className="text-white font-semibold mb-2">{thread.title}</h3>
+                <h3 className="text-white font-semibold mb-2" data-testid={`text-hot-thread-title-${thread.id}`}>{thread.title}</h3>
                 <div className="flex items-center gap-4 text-xs text-gray-400">
-                  <span>by @{thread.author}</span>
-                  <span className="flex items-center gap-1">
+                  <span data-testid={`text-hot-thread-author-${thread.id}`}>by @{thread.author}</span>
+                  <span className="flex items-center gap-1" data-testid={`text-hot-thread-replies-${thread.id}`}>
                     <MessageCircle className="w-3 h-3" />
                     {thread.replyCount}
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1" data-testid={`text-hot-thread-participants-${thread.id}`}>
                     <Users className="w-3 h-3" />
                     {thread.participantCount}
                   </span>
                   {thread.isActive && (
-                    <span className="flex items-center gap-1 text-orange-500">
+                    <span className="flex items-center gap-1 text-orange-500" data-testid={`text-hot-thread-active-${thread.id}`}>
                       <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                       Active
                     </span>
                   )}
-                  <span className="ml-auto">{thread.timeAgo}</span>
+                  <span className="ml-auto" data-testid={`text-hot-thread-time-${thread.id}`}>{thread.timeAgo}</span>
                 </div>
               </button>
             ))}

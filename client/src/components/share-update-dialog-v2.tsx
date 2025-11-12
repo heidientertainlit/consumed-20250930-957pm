@@ -817,13 +817,13 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
               )}
               <Button
                 onClick={handlePost}
-                disabled={
+                disabled={Boolean(
                   isPosting || 
                   !content.trim() || 
                   content.length > maxChars ||
                   (postMode === "mood" && !conversationTopic) ||
-                  (postMode === "prediction" && content && predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()) === true)
-                }
+                  (postMode === "prediction" && content && predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()))
+                )}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto text-sm"
               >
                 {getButtonText()}
