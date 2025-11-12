@@ -1405,36 +1405,6 @@ export default function FriendsUpdates() {
             </div>
           </div>
 
-          {/* Feed Filter Pills */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm overflow-x-auto">
-            <div className="mb-2">
-              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Filter Feed</p>
-            </div>
-            <div className="flex gap-1.5 justify-start flex-wrap">
-              <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
-              {[
-                { id: "friends", label: "Friends" },
-                { id: "everyone", label: "All" }
-              ].map((filter) => {
-                const isActive = feedFilter === filter.id;
-                return (
-                  <button
-                    key={filter.id}
-                    onClick={() => setFeedFilter(filter.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      isActive
-                        ? "bg-purple-600 text-white shadow-sm"
-                        : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
-                    }`}
-                    data-testid={`filter-${filter.id}`}
-                  >
-                    {filter.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4].map((n) => (
@@ -1480,8 +1450,8 @@ export default function FriendsUpdates() {
             </div>
           ) : filteredPosts && filteredPosts.length > 0 ? (
             <div className="space-y-4">
-              {/* Compact Friend Activity Ticker - Only on "Friends" tab */}
-              {feedFilter === "friends" && (() => {
+              {/* Compact Friend Activity Ticker - Shows on both Friends and All tabs */}
+              {(() => {
                 // Extract friend activities from recent posts with media
                 const friendActivities = filteredPosts
                   .filter((p: SocialPost) => p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
@@ -1526,6 +1496,36 @@ export default function FriendsUpdates() {
                   </div>
                 );
               })()}
+
+              {/* Feed Filter Pills */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm overflow-x-auto">
+                <div className="mb-2">
+                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Filter Feed</p>
+                </div>
+                <div className="flex gap-1.5 justify-start flex-wrap">
+                  <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
+                  {[
+                    { id: "everyone", label: "All" },
+                    { id: "friends", label: "Friends" }
+                  ].map((filter) => {
+                    const isActive = feedFilter === filter.id;
+                    return (
+                      <button
+                        key={filter.id}
+                        onClick={() => setFeedFilter(filter.id)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          isActive
+                            ? "bg-purple-600 text-white shadow-sm"
+                            : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
+                        }`}
+                        data-testid={`filter-${filter.id}`}
+                      >
+                        {filter.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
                 // Pattern: 2 posts → prediction → trivia → creator update → 2 posts → recommended → (repeat)
