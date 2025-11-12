@@ -419,7 +419,7 @@ export default function PlayPage() {
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-4">
           <h1 className="text-3xl font-semibold text-black mb-3">
             Play
           </h1>
@@ -427,6 +427,31 @@ export default function PlayPage() {
             Test your knowledge, make predictions, and compete with friends
           </p>
         </div>
+
+        {/* Points Card with Rank - Compact */}
+        {(() => {
+          const userRank = leaderboardData.findIndex((entry: any) => entry.user_id === currentUser?.id) + 1;
+          const userEntry = leaderboardData.find((entry: any) => entry.user_id === currentUser?.id);
+          const totalPoints = userEntry?.total_points || 0;
+          
+          return (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5 text-center">
+              <Award className="w-6 h-6 text-purple-600 mx-auto mb-1" />
+              <div className="text-2xl font-bold text-purple-700 mb-0.5">{totalPoints}</div>
+              <div className="text-xs text-gray-500 mb-1">Points Earned</div>
+              {userRank > 0 && (
+                <div className="text-xs text-gray-400">
+                  You're ranked <span className="font-semibold text-purple-600">#{userRank}</span> out of {leaderboardData.length} players
+                  {userRank > 1 && leaderboardData[0] && (
+                    <span className="ml-1">
+                      • {leaderboardData[0].total_points - totalPoints} pts behind #1
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Filter Icons */}
         <div className="flex justify-center gap-8 mb-6">
@@ -475,31 +500,6 @@ export default function PlayPage() {
             </span>
           </button>
         </div>
-
-        {/* Points Card with Rank */}
-        {(() => {
-          const userRank = leaderboardData.findIndex((entry: any) => entry.user_id === currentUser?.id) + 1;
-          const userEntry = leaderboardData.find((entry: any) => entry.user_id === currentUser?.id);
-          const totalPoints = userEntry?.total_points || 0;
-          
-          return (
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 text-center shadow-sm">
-              <Award className="w-10 h-10 text-purple-600 mx-auto mb-3" />
-              <div className="text-4xl font-bold text-purple-700 mb-2">{totalPoints}</div>
-              <div className="text-gray-600 mb-3">Points Earned</div>
-              {userRank > 0 && (
-                <div className="text-sm text-gray-500">
-                  You're ranked <span className="font-semibold text-purple-600">#{userRank}</span> out of {leaderboardData.length} players
-                  {userRank > 1 && leaderboardData[0] && (
-                    <div className="mt-1">
-                      {leaderboardData[0].total_points - totalPoints} points behind #1
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })()}
 
         {/* Mini Leaderboard */}
         {leaderboardData.length > 0 && (
