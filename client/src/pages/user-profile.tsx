@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation, useRoute } from "wouter";
 import Navigation from "@/components/navigation";
@@ -128,6 +128,13 @@ export default function UserProfile() {
   const [followedCreators, setFollowedCreators] = useState<any[]>([]);
   const [isLoadingFollowedCreators, setIsLoadingFollowedCreators] = useState(false);
   const [isFollowingCreator, setIsFollowingCreator] = useState<string | null>(null);
+
+  // Section navigation refs and state
+  const statsRef = useRef<HTMLDivElement>(null);
+  const dnaRef = useRef<HTMLDivElement>(null);
+  const listsRef = useRef<HTMLDivElement>(null);
+  const friendsRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState<string>('stats');
 
   // Fetch highlights from Supabase
   const fetchHighlights = async () => {
@@ -854,6 +861,44 @@ export default function UserProfile() {
       fetchDNARecommendations();
     }
   }, [session?.access_token, dnaProfileStatus, isOwnProfile]);
+
+  // Track active section based on scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = [
+        { ref: statsRef, id: 'stats' },
+        { ref: dnaRef, id: 'dna' },
+        { ref: listsRef, id: 'lists' },
+        { ref: friendsRef, id: 'friends' }
+      ];
+
+      const scrollPosition = window.scrollY + 200; // Offset for sticky nav
+
+      for (const section of sections) {
+        if (section.ref.current) {
+          const { offsetTop, offsetHeight } = section.ref.current;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section.id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Scroll to section function
+  const scrollToSection = (sectionRef: React.RefObject<HTMLDivElement>) => {
+    if (sectionRef.current) {
+      const offsetTop = sectionRef.current.offsetTop - 120; // Offset for sticky elements
+      window.scrollTo({
+        top: offsetTop,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Handle save profile
   const handleSaveProfile = async () => {
@@ -1958,8 +2003,60 @@ export default function UserProfile() {
           )}
         </div>
 
+        {/* Section Navigation Pills - Sticky */}
+        <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 mb-6 -mx-0">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => scrollToSection(statsRef)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'stats'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-stats"
+            >
+              Stats
+            </button>
+            <button
+              onClick={() => scrollToSection(dnaRef)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'dna'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-dna"
+            >
+              DNA
+            </button>
+            <button
+              onClick={() => scrollToSection(listsRef)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'lists'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-lists"
+            >
+              Lists
+            </button>
+            {isOwnProfile && (
+              <button
+                onClick={() => scrollToSection(friendsRef)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  activeSection === 'friends'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+                data-testid="nav-friends"
+              >
+                Friends
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Your Stats */}
-        <div className="px-4 mb-8">
+        <div ref={statsRef} className="px-4 mb-8">
           <div className="mt-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Stats</h3>
             {isLoadingStats ? (
@@ -2024,7 +2121,7 @@ export default function UserProfile() {
         </div>
 
         {/* My Entertainment DNA */}
-        <div className="px-4 mb-8">
+        <div ref={dnaRef} className="px-4 mb-8">
           <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>My Entertainment DNA</h3>
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
             {/* Responsive Header: Stack on mobile, horizontal on larger screens */}
@@ -3009,7 +3106,7 @@ export default function UserProfile() {
         </div>
 
         {/* My Lists */}
-        <div className="px-4 mb-8">
+        <div ref={listsRef} className="px-4 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">My Lists</h2>
           </div>
@@ -3076,7 +3173,7 @@ export default function UserProfile() {
 
         {/* Friends Manager - Only show on own profile */}
         {isOwnProfile && user?.id && (
-          <div className="px-4 mb-8">
+          <div ref={friendsRef} className="px-4 mb-8">
             <FriendsManager userId={user.id} />
           </div>
         )}
