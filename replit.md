@@ -6,12 +6,15 @@ consumed is a mobile-first MVP designed for tracking entertainment consumption. 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+### Design Preferences
+- **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
+
 ## System Architecture
 
 ### UI/UX Decisions
 -   **Mobile-first design**: Optimized for mobile devices.
 -   **Dark gradient theme**: Sophisticated dark theme throughout the application.
--   **Bottom navigation**: Primary navigation uses a persistent bottom bar (Feed, Track, Play, Leaderboard, Friends).
+-   **Bottom navigation**: Primary navigation uses a persistent bottom bar (Feed, Play, Leaderboard, Friends). Track page exists as a backpage (accessible at `/track`) but is not shown in navigation.
 -   **Top navigation**: Search (🔍) for direct friend/media lookup, Discover (✨) for AI recommendations, Notifications, and Profile.
 -   **Component Library**: shadcn/ui, built with Radix UI primitives and styled with Tailwind CSS.
 -   **Button Theme**: All buttons default to purple (`bg-purple-600`) with white text; outline buttons use a purple border with a white background. No black buttons are used.

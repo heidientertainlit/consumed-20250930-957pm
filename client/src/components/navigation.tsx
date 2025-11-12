@@ -543,14 +543,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
 
           <Link
-            href="/track"
-            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/track" || location === "/" ? "bg-white/20" : ""}`}
-          >
-            <Plus className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Track</span>
-          </Link>
-
-          <Link
             href="/play"
             className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location === "/play" ? "bg-white/20" : ""}`}
           >
