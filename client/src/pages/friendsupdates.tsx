@@ -433,7 +433,7 @@ export default function FriendsUpdates() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
-  const [feedFilter, setFeedFilter] = useState("friends");
+  const [feedFilter, setFeedFilter] = useState("everyone");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
   const [detailedFilters, setDetailedFilters] = useState<FeedFilters>({ audience: "everyone", mediaTypes: [], engagementTypes: [] });
   const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
@@ -1414,8 +1414,7 @@ export default function FriendsUpdates() {
               <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
               {[
                 { id: "friends", label: "Friends" },
-                { id: "everyone", label: "Everyone" },
-                { id: "conversations", label: "Conversations" }
+                { id: "everyone", label: "All" }
               ].map((filter) => {
                 const isActive = feedFilter === filter.id;
                 return (
@@ -1436,9 +1435,7 @@ export default function FriendsUpdates() {
             </div>
           </div>
 
-          {feedFilter === "conversations" ? (
-            <ConversationsPanel onStartConversation={handleShareUpdate} />
-          ) : isLoading ? (
+          {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4].map((n) => (
                 <div key={n} className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse shadow-sm">

@@ -3,6 +3,7 @@ import { Search, TrendingUp, MessageCircle, Users, Clock, Flame } from "lucide-r
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ShareUpdateDialogV2 from "@/components/share-update-dialog-v2";
+import Navigation from "@/components/navigation";
 
 export default function ConversationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,34 +86,28 @@ export default function ConversationsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <MessageCircle className="w-6 h-6 text-orange-500" />
-            <h1 className="text-2xl font-bold text-gray-900">Conversations</h1>
-          </div>
+    <div className="min-h-screen bg-gray-50 pb-32">
+      <Navigation />
+      
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Conversations
+          </h1>
+          <p className="text-base text-gray-600">
+            Join discussions about the entertainment you love
+          </p>
+        </div>
 
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              data-testid="input-search-conversations"
-              type="text"
-              placeholder="Search conversations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:ring-orange-500"
-            />
-          </div>
+        <div className="space-y-6">
 
           {/* Filter Pills */}
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2 justify-center mb-6">
             {[
-              { id: "hot" as const, label: "🔥 Hot", icon: Flame },
-              { id: "new" as const, label: "⏱️ New", icon: Clock },
-              { id: "top" as const, label: "📈 Top", icon: TrendingUp },
+              { id: "hot" as const, label: "🔥 Hot" },
+              { id: "new" as const, label: "⏱️ New" },
+              { id: "top" as const, label: "📈 Top" },
             ].map((filter) => (
               <button
                 key={filter.id}
@@ -120,7 +115,7 @@ export default function ConversationsPage() {
                 onClick={() => setActiveFilter(filter.id)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   activeFilter === filter.id
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
+                    ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -128,141 +123,63 @@ export default function ConversationsPage() {
               </button>
             ))}
           </div>
-        </div>
-      </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Start Conversation CTA */}
-        <div className="bg-gradient-to-r from-orange-50 to-purple-50 border border-orange-200 rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-gray-900 font-semibold mb-1">Start a Conversation</h3>
-              <p className="text-sm text-gray-600">Share your thoughts on your favorite entertainment</p>
-            </div>
-            <Button
-              data-testid="button-start-conversation"
-              onClick={() => setIsComposerOpen(true)}
-              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
-            >
-              Create
-            </Button>
-          </div>
-        </div>
-
-        {/* Trending Topics */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-orange-500" />
-            <h2 className="text-xl font-bold text-gray-900">Trending Conversations</h2>
-          </div>
-
-          <div className="space-y-3">
-            {trendingTopics.map((topic) => (
-              <div
-                key={topic.id}
-                data-testid={`card-topic-${topic.id}`}
-                className="bg-white rounded-xl p-4 border border-gray-200 hover:border-orange-300 hover:shadow-sm transition-all"
-              >
-                {/* Topic Header */}
-                <div className="flex items-center gap-3 mb-3">
-                  {topic.posterUrl ? (
-                    <img
-                      src={topic.posterUrl}
-                      alt={topic.title}
-                      className="w-12 h-16 object-cover rounded shadow-sm"
-                      data-testid={`img-topic-poster-${topic.id}`}
-                    />
-                  ) : (
-                    <div className="w-12 h-16 bg-gradient-to-br from-orange-500 to-purple-500 rounded flex items-center justify-center text-2xl">
-                      {topic.icon}
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <h3 className="text-gray-900 font-semibold" data-testid={`text-topic-title-${topic.id}`}>{topic.title}</h3>
-                    <p className="text-sm text-gray-500" data-testid={`text-topic-stats-${topic.id}`}>
-                      {topic.postCount} posts • {topic.participantCount} talking
-                    </p>
-                  </div>
-                </div>
-
-                {/* Top Threads */}
-                <div className="space-y-2 mb-3">
-                  {topic.topThreads.map((thread) => (
-                    <button
-                      key={thread.id}
-                      data-testid={`button-thread-${thread.id}`}
-                      className="w-full text-left bg-gray-50 hover:bg-gray-100 rounded-lg p-3 transition-colors border border-gray-200"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-900 font-medium mb-1" data-testid={`text-thread-title-${thread.id}`}>{thread.title}</p>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span data-testid={`text-thread-replies-${thread.id}`}>{thread.replyCount} replies</span>
-                            {thread.isActive && (
-                              <span className="flex items-center gap-1 text-orange-500" data-testid={`text-thread-active-${thread.id}`}>
-                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                                Active Now
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* View All Button */}
-                <Button
-                  data-testid={`button-view-all-topic-${topic.id}`}
-                  variant="ghost"
-                  className="w-full text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                >
-                  View All {topic.title} Conversations →
-                </Button>
+          {/* Start Conversation CTA */}
+          <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-gray-900 font-semibold mb-1">Start a Conversation</h3>
+                <p className="text-sm text-gray-600">Share your thoughts on your favorite entertainment</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Hot Threads */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Flame className="w-5 h-5 text-red-500" />
-            <h2 className="text-xl font-bold text-gray-900">Hot Right Now</h2>
-          </div>
-
-          <div className="space-y-3">
-            {hotThreads.map((thread) => (
-              <button
-                key={thread.id}
-                data-testid={`button-hot-thread-${thread.id}`}
-                className="w-full text-left bg-white rounded-xl p-4 border border-gray-200 hover:border-orange-300 hover:shadow-sm transition-all"
+              <Button
+                data-testid="button-start-conversation"
+                onClick={() => setIsComposerOpen(true)}
+                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">{thread.topicIcon}</span>
-                  <span className="text-xs text-gray-500" data-testid={`text-hot-thread-topic-${thread.id}`}>{thread.topicTitle}</span>
-                </div>
-                <h3 className="text-gray-900 font-semibold mb-2" data-testid={`text-hot-thread-title-${thread.id}`}>{thread.title}</h3>
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span data-testid={`text-hot-thread-author-${thread.id}`}>by @{thread.author}</span>
-                  <span className="flex items-center gap-1" data-testid={`text-hot-thread-replies-${thread.id}`}>
-                    <MessageCircle className="w-3 h-3" />
-                    {thread.replyCount}
-                  </span>
-                  <span className="flex items-center gap-1" data-testid={`text-hot-thread-participants-${thread.id}`}>
-                    <Users className="w-3 h-3" />
-                    {thread.participantCount}
-                  </span>
-                  {thread.isActive && (
-                    <span className="flex items-center gap-1 text-orange-500" data-testid={`text-hot-thread-active-${thread.id}`}>
-                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                      Active
+                Create
+              </Button>
+            </div>
+          </div>
+
+          {/* All Threads */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Flame className="w-5 h-5 text-purple-500" />
+              <h2 className="text-xl font-bold text-gray-900">All Conversations</h2>
+            </div>
+
+            <div className="space-y-3">
+              {hotThreads.map((thread) => (
+                <button
+                  key={thread.id}
+                  data-testid={`button-thread-${thread.id}`}
+                  className="w-full text-left bg-white rounded-xl p-4 border border-gray-200 hover:border-purple-300 hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">{thread.topicIcon}</span>
+                    <span className="text-xs text-gray-500" data-testid={`text-thread-topic-${thread.id}`}>{thread.topicTitle}</span>
+                  </div>
+                  <h3 className="text-gray-900 font-semibold mb-2" data-testid={`text-thread-title-${thread.id}`}>{thread.title}</h3>
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <span data-testid={`text-thread-author-${thread.id}`}>by @{thread.author}</span>
+                    <span className="flex items-center gap-1" data-testid={`text-thread-replies-${thread.id}`}>
+                      <MessageCircle className="w-3 h-3" />
+                      {thread.replyCount}
                     </span>
-                  )}
-                  <span className="ml-auto" data-testid={`text-hot-thread-time-${thread.id}`}>{thread.timeAgo}</span>
-                </div>
-              </button>
-            ))}
+                    <span className="flex items-center gap-1" data-testid={`text-thread-participants-${thread.id}`}>
+                      <Users className="w-3 h-3" />
+                      {thread.participantCount}
+                    </span>
+                    {thread.isActive && (
+                      <span className="flex items-center gap-1 text-purple-500" data-testid={`text-thread-active-${thread.id}`}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                        Active
+                      </span>
+                    )}
+                    <span className="ml-auto" data-testid={`text-thread-time-${thread.id}`}>{thread.timeAgo}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

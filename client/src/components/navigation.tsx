@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -498,6 +498,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                     data-testid="discover-button"
                   >
                     <span className="text-white text-xl">✨</span>
+                  </button>
+                </Link>
+                <Link href="/conversations">
+                  <button
+                    className="hover:opacity-70 transition-opacity"
+                    data-testid="conversations-button"
+                  >
+                    <MessageCircle className="text-white" size={20} />
                   </button>
                 </Link>
                 <Link href="/friendsupdates">
