@@ -1421,10 +1421,10 @@ export default function FriendsUpdates() {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
-            The Conversation
+            See What Your Friends Are Consuming
           </h1>
           <p className="text-base text-gray-600">
-            See what your friends are <span key={currentVerb} className="text-purple-600 font-medium inline-block transition-all duration-500 ease-in-out">{currentVerb}</span>
+            See what your friends are watching, reading, and listening to. Ask questions, share reactions, or post what's on your mind.
           </p>
         </div>
 
