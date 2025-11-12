@@ -2003,6 +2003,49 @@ export default function UserProfile() {
           )}
         </div>
 
+        {/* Currently Consuming - Compact */}
+        {(() => {
+          const currentlyList = userLists.find(list => list.title === 'Currently');
+          const currentlyItems = currentlyList?.items?.slice(0, 5) || [];
+          const firstName = userProfileData?.first_name || user?.user_metadata?.first_name || 'User';
+          
+          return currentlyItems.length > 0 ? (
+            <div className="px-4 mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                {firstName} is currently consuming...
+              </p>
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+                {currentlyItems.map((item: any) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      const mediaType = item.media_type || 'movie';
+                      const source = item.external_source || 'tmdb';
+                      const id = item.external_id;
+                      if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
+                    }}
+                    className="flex-shrink-0 cursor-pointer group"
+                  >
+                    <div className="w-16 h-24 rounded-lg overflow-hidden bg-gray-200 border border-gray-300 group-hover:border-purple-400 transition-colors">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <Film size={24} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null;
+        })()}
+
         {/* Section Navigation Pills - Sticky */}
         <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 mb-6 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
