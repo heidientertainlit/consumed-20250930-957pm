@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -500,14 +500,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                     <span className="text-white text-xl">✨</span>
                   </button>
                 </Link>
-                <Link href="/conversations">
-                  <button
-                    className="hover:opacity-70 transition-opacity"
-                    data-testid="hot-takes-button"
-                  >
-                    <Flame className="text-white" size={20} />
-                  </button>
-                </Link>
                 <Link href="/friendsupdates">
                   <button
                     className="hover:opacity-70 transition-opacity"
@@ -517,14 +509,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                   </button>
                 </Link>
                 <NotificationBell />
-                <Link href={user?.id ? `/user/${user.id}` : "/login"}>
-                  <button
-                    className="hover:opacity-70 transition-opacity"
-                    data-testid="profile-button"
-                  >
-                    <User className="text-white" size={20} />
-                  </button>
-                </Link>
               </>
             )}
           </div>
@@ -556,6 +540,17 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <Users className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Friends</span>
+          </Link>
+
+          <Link
+            href={user?.id ? `/user/${user.id}` : "/login"}
+            className={`flex flex-col items-center space-y-1 py-2 px-2 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
+          >
+            <div className="relative">
+              <User className="text-white" size={24} />
+              <Dna className="text-white absolute -left-2 -top-1" size={12} />
+            </div>
+            <span className="text-xs font-medium text-white">Me</span>
           </Link>
 
         </div>
