@@ -471,6 +471,37 @@ export default function PlayPage() {
           </div>
         </div>
 
+        {/* Quick Access to All Games */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">Browse All Games</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => setGameTypeFilter('prediction')}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-red-50 hover:bg-red-100 transition-colors"
+              data-testid="browse-predictions"
+            >
+              <Target className="text-red-600" size={24} />
+              <span className="text-xs font-medium text-red-600">Predictions</span>
+            </button>
+            <button
+              onClick={() => setGameTypeFilter('vote')}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors"
+              data-testid="browse-polls"
+            >
+              <CheckSquare className="text-blue-600" size={24} />
+              <span className="text-xs font-medium text-blue-600">Polls</span>
+            </button>
+            <button
+              onClick={() => setGameTypeFilter('trivia')}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors"
+              data-testid="browse-trivia"
+            >
+              <HelpCircle className="text-green-600" size={24} />
+              <span className="text-xs font-medium text-green-600">Trivia</span>
+            </button>
+          </div>
+        </div>
+
         {/* 🔮 Predictions in Progress */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -641,37 +672,6 @@ export default function PlayPage() {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Quick Access to All Games */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
-          <h3 className="text-base font-semibold text-gray-900 mb-4">Browse All Games</h3>
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              onClick={() => setGameTypeFilter('prediction')}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-red-50 hover:bg-red-100 transition-colors"
-              data-testid="browse-predictions"
-            >
-              <Target className="text-red-600" size={24} />
-              <span className="text-xs font-medium text-red-600">Predictions</span>
-            </button>
-            <button
-              onClick={() => setGameTypeFilter('vote')}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors"
-              data-testid="browse-polls"
-            >
-              <CheckSquare className="text-blue-600" size={24} />
-              <span className="text-xs font-medium text-blue-600">Polls</span>
-            </button>
-            <button
-              onClick={() => setGameTypeFilter('trivia')}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors"
-              data-testid="browse-trivia"
-            >
-              <HelpCircle className="text-green-600" size={24} />
-              <span className="text-xs font-medium text-green-600">Trivia</span>
-            </button>
-          </div>
         </div>
 
         {/* Games List (shown when filter is selected) */}
