@@ -49,38 +49,38 @@ export default function ConversationsPage() {
     },
   ];
 
-  const hotThreads = [
+  const hotTakes = [
     {
       id: "1",
       topicTitle: "Selling Sunset Finale",
       topicIcon: "📺",
-      title: "Chelsea vs Mary - who's right?",
+      title: "Chelsea is 100% right and Mary needs to apologize",
       author: "sarah_tv",
-      replyCount: 89,
-      participantCount: 24,
-      isActive: true,
+      votes: 89,
+      replyCount: 24,
+      isHot: true,
       timeAgo: "2h ago",
     },
     {
       id: "2",
       topicTitle: "The Bear Season 3",
       topicIcon: "🍴",
-      title: "Will Taylor Swift win Album of the Year?",
-      author: "musicfan",
-      replyCount: 67,
-      participantCount: 18,
-      isActive: true,
+      title: "Carmy is the worst character and ruins every scene",
+      author: "foodie_critic",
+      votes: 67,
+      replyCount: 18,
+      isHot: true,
       timeAgo: "4h ago",
     },
     {
       id: "3",
       topicTitle: "Awards Season",
       topicIcon: "🏆",
-      title: "Best Picture predictions discussion",
+      title: "The Oscars are completely irrelevant in 2025",
       author: "film_buff",
-      replyCount: 45,
-      participantCount: 15,
-      isActive: false,
+      votes: 45,
+      replyCount: 15,
+      isHot: false,
       timeAgo: "6h ago",
     },
   ];
@@ -93,10 +93,10 @@ export default function ConversationsPage() {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Conversations
+            🔥 Hot Takes
           </h1>
           <p className="text-base text-gray-600">
-            Join discussions about the entertainment you love
+            Share your boldest opinions. Vote on the spiciest takes.
           </p>
         </div>
 
@@ -123,59 +123,59 @@ export default function ConversationsPage() {
               </button>
             ))}
           </div>
-          {/* Start Conversation CTA */}
-          <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-4">
+          {/* Post Hot Take CTA */}
+          <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-gray-900 font-semibold mb-1">Start a Conversation</h3>
-                <p className="text-sm text-gray-600">Share your thoughts on your favorite entertainment</p>
+                <h3 className="text-gray-900 font-semibold mb-1">🔥 Drop a Hot Take</h3>
+                <p className="text-sm text-gray-600">Say something bold. Get upvotes. Win points.</p>
               </div>
               <Button
-                data-testid="button-start-conversation"
+                data-testid="button-post-hot-take"
                 onClick={() => setIsComposerOpen(true)}
-                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
               >
-                Create
+                Post
               </Button>
             </div>
           </div>
 
-          {/* All Threads */}
+          {/* All Hot Takes */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <Flame className="w-5 h-5 text-purple-500" />
-              <h2 className="text-xl font-bold text-gray-900">All Conversations</h2>
+              <Flame className="w-5 h-5 text-orange-500" />
+              <h2 className="text-xl font-bold text-gray-900">Hottest Takes</h2>
             </div>
 
             <div className="space-y-3">
-              {hotThreads.map((thread) => (
+              {hotTakes.map((take) => (
                 <button
-                  key={thread.id}
-                  data-testid={`button-thread-${thread.id}`}
-                  className="w-full text-left bg-white rounded-xl p-4 border border-gray-200 hover:border-purple-300 hover:shadow-sm transition-all"
+                  key={take.id}
+                  data-testid={`button-hot-take-${take.id}`}
+                  className="w-full text-left bg-white rounded-xl p-4 border border-gray-200 hover:border-orange-300 hover:shadow-sm transition-all"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">{thread.topicIcon}</span>
-                    <span className="text-xs text-gray-500" data-testid={`text-thread-topic-${thread.id}`}>{thread.topicTitle}</span>
+                    <span className="text-lg">{take.topicIcon}</span>
+                    <span className="text-xs text-gray-500" data-testid={`text-take-topic-${take.id}`}>{take.topicTitle}</span>
                   </div>
-                  <h3 className="text-gray-900 font-semibold mb-2" data-testid={`text-thread-title-${thread.id}`}>{thread.title}</h3>
+                  <h3 className="text-gray-900 font-semibold mb-2" data-testid={`text-take-title-${take.id}`}>{take.title}</h3>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span data-testid={`text-thread-author-${thread.id}`}>by @{thread.author}</span>
-                    <span className="flex items-center gap-1" data-testid={`text-thread-replies-${thread.id}`}>
+                    <span data-testid={`text-take-author-${take.id}`}>by @{take.author}</span>
+                    <span className="flex items-center gap-1 text-orange-500 font-semibold" data-testid={`text-take-votes-${take.id}`}>
+                      <Flame className="w-3 h-3" />
+                      {take.votes} upvotes
+                    </span>
+                    <span className="flex items-center gap-1" data-testid={`text-take-replies-${take.id}`}>
                       <MessageCircle className="w-3 h-3" />
-                      {thread.replyCount}
+                      {take.replyCount}
                     </span>
-                    <span className="flex items-center gap-1" data-testid={`text-thread-participants-${thread.id}`}>
-                      <Users className="w-3 h-3" />
-                      {thread.participantCount}
-                    </span>
-                    {thread.isActive && (
-                      <span className="flex items-center gap-1 text-purple-500" data-testid={`text-thread-active-${thread.id}`}>
-                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-                        Active
+                    {take.isHot && (
+                      <span className="flex items-center gap-1 text-red-500" data-testid={`text-take-hot-${take.id}`}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                        On Fire
                       </span>
                     )}
-                    <span className="ml-auto" data-testid={`text-thread-time-${thread.id}`}>{thread.timeAgo}</span>
+                    <span className="ml-auto" data-testid={`text-take-time-${take.id}`}>{take.timeAgo}</span>
                   </div>
                 </button>
               ))}

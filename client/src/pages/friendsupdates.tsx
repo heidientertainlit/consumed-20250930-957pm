@@ -1393,7 +1393,7 @@ export default function FriendsUpdates() {
                 className="flex-1 bg-white rounded-2xl px-6 py-4 text-left text-gray-400 text-sm hover:bg-gray-50 transition-colors"
                 data-testid="composer-input"
               >
-                Share an update, review, prediction...
+                Share a hot take, ask for recommendations, post a review...
               </button>
               <Button
                 onClick={handleShareUpdate}

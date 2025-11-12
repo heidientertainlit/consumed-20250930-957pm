@@ -503,9 +503,9 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 <Link href="/conversations">
                   <button
                     className="hover:opacity-70 transition-opacity"
-                    data-testid="conversations-button"
+                    data-testid="hot-takes-button"
                   >
-                    <MessageCircle className="text-white" size={20} />
+                    <Flame className="text-white" size={20} />
                   </button>
                 </Link>
                 <Link href="/friendsupdates">
