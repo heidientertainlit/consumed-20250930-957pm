@@ -525,73 +525,17 @@ export default function FriendsUpdates() {
 
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
-
-  // Filter posts by detailed filters and feed filter
-  const filteredPosts = socialPosts.filter(post => {
-    // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
-    if (feedFilter === 'friends') {
-      // Show only posts from friends (not own posts)
-      if (post.user.id === user?.id || !friendIds.has(post.user.id)) {
-        return false;
-      }
-    }
-    
-    if (feedFilter === 'hot-takes') {
-      // Show only posts without media items (text-only posts = hot takes)
-      if (post.mediaItems && post.mediaItems.length > 0) return false;
-    }
-    
-    if (feedFilter === 'predictions') {
-      const postType = post.type?.toLowerCase() || '';
-      if (postType !== 'prediction') return false;
-    }
-    
-    if (feedFilter === 'polls') {
-      const postType = post.type?.toLowerCase() || '';
-      if (postType !== 'poll' && postType !== 'vote') return false;
-    }
-    
-    if (feedFilter === 'trivia') {
-      const postType = post.type?.toLowerCase() || '';
-      if (postType !== 'trivia') return false;
-    }
-    
-    if (feedFilter === 'rate-review') {
-      // Show only posts with media items that have ratings/reviews
-      if (!post.mediaItems || post.mediaItems.length === 0) return false;
-      // At least one media item should have a rating
-      const hasRating = post.mediaItems.some(item => item.rating && item.rating > 0);
-      if (!hasRating) return false;
-    }
-    
-    // Apply media type filter
-    if (detailedFilters.mediaTypes.length > 0) {
-      if (!post.mediaItems || post.mediaItems.length === 0) return false;
-      const hasMatchingMedia = post.mediaItems.some(media => {
-        const mediaType = media.mediaType?.toLowerCase();
-        return detailedFilters.mediaTypes.includes(mediaType || '');
-      });
-      if (!hasMatchingMedia) return false;
-    }
-
-    // Apply engagement type filter
-    if (detailedFilters.engagementTypes.length > 0) {
-      const postType = post.type?.toLowerCase() || '';
-      // Map post types to engagement filter IDs
-      const engagementTypeMap: { [key: string]: string } = {
-        'consuming': 'consuming',
-        'prediction': 'prediction',
-        'poll': 'poll',
-        'rate': 'rate-review',
-        'review': 'rate-review',
-        'trivia': 'trivia'
-      };
-      const mappedType = engagementTypeMap[postType] || postType;
-      if (!detailedFilters.engagementTypes.includes(mappedType)) return false;
-    }
-
-    return true;
+  
+  console.log('🔍 DEBUG - Feed State:', {
+    isLoading,
+    hasSession: !!session,
+    rawPostsCount: socialPosts.length,
+    feedFilter,
+    infinitePosts: infinitePosts?.pages.length || 0
   });
+
+  // TEMPORARY: Show all posts to debug
+  const filteredPosts = socialPosts;
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
