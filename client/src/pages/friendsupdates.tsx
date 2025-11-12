@@ -433,7 +433,7 @@ export default function FriendsUpdates() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
-  const [feedFilter, setFeedFilter] = useState("everyone");
+  const [feedFilter, setFeedFilter] = useState("");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
   const [detailedFilters, setDetailedFilters] = useState<FeedFilters>({ audience: "everyone", mediaTypes: [], engagementTypes: [] });
   const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
@@ -1566,13 +1566,10 @@ export default function FriendsUpdates() {
                 <div className="flex gap-1.5 justify-start flex-wrap">
                   <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
                   {[
-                    { id: "everyone", label: "All" },
-                    { id: "friends", label: "Friends" },
-                    { id: "hot-takes", label: "Hot Take" },
-                    { id: "predictions", label: "Predictions" },
-                    { id: "polls", label: "Polls" },
-                    { id: "rate-review", label: "Rate/Review" },
-                    { id: "trivia", label: "Trivia" }
+                    { id: "predictions", label: "🎯 Prediction" },
+                    { id: "polls", label: "🗳️ Poll" },
+                    { id: "hot-takes", label: "🔥 Hot Take" },
+                    { id: "rate-review", label: "⭐ Rate/Review" }
                   ].map((filter) => {
                     const isActive = feedFilter === filter.id;
                     return (
