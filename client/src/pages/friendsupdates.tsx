@@ -517,7 +517,7 @@ export default function FriendsUpdates() {
 
     // Apply engagement type filter
     if (detailedFilters.engagementTypes.length > 0) {
-      const postType = post.postType?.toLowerCase() || '';
+      const postType = post.type?.toLowerCase() || '';
       // Map post types to engagement filter IDs
       const engagementTypeMap: { [key: string]: string } = {
         'consuming': 'consuming',
