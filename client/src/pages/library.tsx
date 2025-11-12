@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon } from "lucide-react";
+import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -365,57 +365,84 @@ export default function Library() {
               </div>
             ) : (
               <>
-                {/* System Lists */}
-                {systemLists.length > 0 && (
-                  <div>
-                    <h2 className="text-xl font-semibold text-black mb-4">Your Lists</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {systemLists.map((list: any) => (
-                        <div
-                          key={list.id}
-                          onClick={() => setLocation(`/list/${list.id}`)}
-                          className="bg-white rounded-xl p-6 border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer"
-                          data-testid={`list-${list.id}`}
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <h3 className="text-lg font-semibold text-black">{list.title}</h3>
-                            <ListIcon className="text-purple-600" size={20} />
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">{list.description || 'No description'}</p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>{list.item_count || 0} items</span>
-                            {list.is_private && <span className="text-purple-600">Private</span>}
-                          </div>
+                {/* All Lists - Compact Single Column */}
+                {(systemLists.length > 0 || customLists.length > 0) && (
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    {/* System Lists */}
+                    {systemLists.length > 0 && (
+                      <>
+                        <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase">Your Lists</h3>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                        {systemLists.map((list: any, idx: number) => (
+                          <div
+                            key={list.id}
+                            onClick={() => setLocation(`/list/${list.id}`)}
+                            className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                              idx < systemLists.length - 1 || customLists.length > 0 ? 'border-b border-gray-100' : ''
+                            }`}
+                            data-testid={`list-${list.id}`}
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                <ListIcon className="text-purple-600" size={18} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-semibold text-black truncate">{list.title}</h3>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs text-gray-500">{list.item_count || 0} items</span>
+                                  {list.is_private && (
+                                    <div className="flex items-center gap-1">
+                                      <Lock size={10} className="text-purple-600" />
+                                      <span className="text-xs text-purple-600">Private</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight className="text-gray-400 flex-shrink-0" size={18} />
+                          </div>
+                        ))}
+                      </>
+                    )}
 
-                {/* Custom Lists */}
-                {customLists.length > 0 && (
-                  <div>
-                    <h2 className="text-xl font-semibold text-black mb-4">Custom Lists</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {customLists.map((list: any) => (
-                        <div
-                          key={list.id}
-                          onClick={() => setLocation(`/list/${list.id}`)}
-                          className="bg-white rounded-xl p-6 border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer"
-                          data-testid={`custom-list-${list.id}`}
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <h3 className="text-lg font-semibold text-black">{list.title}</h3>
-                            <ListIcon className="text-purple-600" size={20} />
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">{list.description || 'No description'}</p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>{list.item_count || 0} items</span>
-                            {list.is_private && <span className="text-purple-600">Private</span>}
-                          </div>
+                    {/* Custom Lists */}
+                    {customLists.length > 0 && (
+                      <>
+                        <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase">Custom Lists</h3>
                         </div>
-                      ))}
-                    </div>
+                        {customLists.map((list: any, idx: number) => (
+                          <div
+                            key={list.id}
+                            onClick={() => setLocation(`/list/${list.id}`)}
+                            className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                              idx < customLists.length - 1 ? 'border-b border-gray-100' : ''
+                            }`}
+                            data-testid={`custom-list-${list.id}`}
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                <ListIcon className="text-blue-600" size={18} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-semibold text-black truncate">{list.title}</h3>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs text-gray-500">{list.item_count || 0} items</span>
+                                  {list.is_private && (
+                                    <div className="flex items-center gap-1">
+                                      <Lock size={10} className="text-purple-600" />
+                                      <span className="text-xs text-purple-600">Private</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight className="text-gray-400 flex-shrink-0" size={18} />
+                          </div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 )}
 
