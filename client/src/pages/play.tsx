@@ -435,20 +435,22 @@ export default function PlayPage() {
           const totalPoints = userEntry?.total_points || 0;
           
           return (
-            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5 text-center">
-              <Award className="w-6 h-6 text-purple-600 mx-auto mb-1" />
-              <div className="text-2xl font-bold text-purple-700 mb-0.5">{totalPoints}</div>
-              <div className="text-xs text-gray-500 mb-1">Points Earned</div>
-              {userRank > 0 && (
-                <div className="text-xs text-gray-400">
-                  You're ranked <span className="font-semibold text-purple-600">#{userRank}</span> out of {leaderboardData.length} players
-                  {userRank > 1 && leaderboardData[0] && (
-                    <span className="ml-1">
-                      • {leaderboardData[0].total_points - totalPoints} pts behind #1
-                    </span>
-                  )}
-                </div>
-              )}
+            <div className="flex justify-center mb-5">
+              <div className="bg-white rounded-lg border border-gray-200 px-6 py-3 text-center inline-block">
+                <Award className="w-5 h-5 text-purple-600 mx-auto mb-1" />
+                <div className="text-xl font-bold text-purple-700">{totalPoints}</div>
+                <div className="text-xs text-gray-500 mb-0.5">Points Earned</div>
+                {userRank > 0 && (
+                  <div className="text-xs text-gray-400">
+                    Ranked <span className="font-semibold text-purple-600">#{userRank}</span> of {leaderboardData.length}
+                    {userRank > 1 && leaderboardData[0] && (
+                      <span className="block mt-0.5">
+                        {leaderboardData[0].total_points - totalPoints} pts behind #1
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })()}
