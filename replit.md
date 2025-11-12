@@ -9,7 +9,7 @@ Preferred communication style: Simple, everyday language.
 ### Design Preferences
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
-- **Simplified Navigation**: Bottom navigation reduced to 3 core items: Feed, Friends, Me. Play and Discover pages exist as backpages (accessible at `/play` and `/discover`) but removed from navigation to simplify the core experience.
+- **Navigation**: Bottom navigation includes 6 items: Feed, Friends, Play, Library, Leaderboard (Board), and Me. Discover and Track pages exist as backpages (accessible at `/discover` and `/track`) but are not shown in navigation.
 - **Profile Page Organization**: Profile page simplified to two main sections: (1) "Your Library" for media consumption stats, and (2) "My Entertainment DNA" for DNA profile/survey/recommendations. Highlights and Follow Creators features removed for cleaner, more focused profile experience.
 
 ## System Architecture
@@ -17,7 +17,7 @@ Preferred communication style: Simple, everyday language.
 ### UI/UX Decisions
 -   **Mobile-first design**: Optimized for mobile devices.
 -   **Dark gradient theme**: Sophisticated dark theme throughout the application.
--   **Bottom navigation**: Simplified to 3 core items - Feed, Friends, Me. Play, Discover, Track, and Leaderboard exist as backpages (accessible at `/play`, `/discover`, `/track`, and `/leaderboard`) but are not shown in navigation for clarity and simplification.
+-   **Bottom navigation**: Six items - Feed, Friends, Play, Library, Leaderboard (Board), and Me. Discover and Track exist as backpages (accessible at `/discover` and `/track`) but are not shown in navigation.
 -   **Top navigation**: Search (🔍) for direct friend/media lookup, Notifications, and Profile. Discover functionality integrated via ✨ icon in top nav.
 -   **Component Library**: shadcn/ui, built with Radix UI primitives and styled with Tailwind CSS.
 -   **Button Theme**: All buttons default to purple (`bg-purple-600`) with white text; outline buttons use a purple border with a white background. No black buttons are used.
