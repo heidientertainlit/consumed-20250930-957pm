@@ -37,6 +37,13 @@ export default function Library() {
   const [isSearching, setIsSearching] = useState(false);
   const [activeView, setActiveView] = useState<'discover' | 'lists' | 'media-history'>('discover');
   const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
+  
+  // Media History filters
+  const [mediaHistorySearch, setMediaHistorySearch] = useState("");
+  const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
+  const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
+  const [mediaHistoryType, setMediaHistoryType] = useState("all");
+  const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
 
   // Fetch trending content
   const { data: netflixTVShows = [] } = useQuery({
@@ -568,72 +575,351 @@ export default function Library() {
                     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
                   );
 
-                return allItems.length > 0 ? (
+                // Apply filters
+                const filteredItems = allItems.filter((item: any) => {
+                  const itemDate = new Date(item.created_at);
+                  const yearMatch = mediaHistoryYear === "all" || itemDate.getFullYear().toString() === mediaHistoryYear;
+                  const monthMatch = mediaHistoryMonth === "all" || (itemDate.getMonth() + 1).toString() === mediaHistoryMonth;
+                  
+                  let typeMatch = true;
+                  if (mediaHistoryType !== "all") {
+                    if (mediaHistoryType === "movies") typeMatch = item.media_type === "movie";
+                    else if (mediaHistoryType === "tv") typeMatch = item.media_type === "tv";
+                    else if (mediaHistoryType === "books") typeMatch = item.media_type === "book";
+                    else if (mediaHistoryType === "music") typeMatch = item.media_type === "music";
+                    else if (mediaHistoryType === "podcasts") typeMatch = item.media_type === "podcast";
+                    else if (mediaHistoryType === "games") typeMatch = item.media_type === "game";
+                  }
+                  
+                  const searchMatch = !mediaHistorySearch.trim() || 
+                    item.title?.toLowerCase().includes(mediaHistorySearch.toLowerCase()) ||
+                    item.creator?.toLowerCase().includes(mediaHistorySearch.toLowerCase());
+                  
+                  return yearMatch && monthMatch && typeMatch && searchMatch;
+                });
+
+                // Calculate media type counts
+                const mediaTypeCounts = allItems.reduce((acc: any, item: any) => {
+                  const type = item.media_type;
+                  acc[type] = (acc[type] || 0) + 1;
+                  return acc;
+                }, {});
+
+                // Get unique years
+                const years = [...new Set(allItems.map((item: any) => new Date(item.created_at).getFullYear()))].sort((a, b) => b - a);
+
+                return (
                   <>
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <TrendingUp className="text-purple-600" size={20} />
-                        <span className="text-xl font-bold text-purple-800">{allItems.length}</span>
-                        <span className="text-sm text-gray-600">items tracked</span>
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="text"
+                        value={mediaHistorySearch}
+                        onChange={(e) => setMediaHistorySearch(e.target.value)}
+                        placeholder="Search your media history..."
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        data-testid="input-media-history-search"
+                      />
+                    </div>
+
+                    {/* Filter Buttons */}
+                    <div className="flex gap-2 flex-wrap items-center">
+                      {/* Year Filter */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenFilterDropdown(openFilterDropdown === 'year' ? null : 'year')}
+                          className={`px-4 py-2 rounded-full border ${
+                            mediaHistoryYear !== "all" 
+                              ? 'border-purple-600 bg-purple-50 text-purple-700' 
+                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          } text-sm font-medium flex items-center gap-2`}
+                          data-testid="button-filter-year"
+                        >
+                          Year
+                          <ChevronDown size={14} />
+                        </button>
+                        {openFilterDropdown === 'year' && (
+                          <div className="absolute top-full mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]">
+                            <button
+                              onClick={() => {
+                                setMediaHistoryYear("all");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              All Years
+                            </button>
+                            {years.map((year) => (
+                              <button
+                                key={year}
+                                onClick={() => {
+                                  setMediaHistoryYear(year.toString());
+                                  setOpenFilterDropdown(null);
+                                }}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                              >
+                                {year}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Month Filter */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenFilterDropdown(openFilterDropdown === 'month' ? null : 'month')}
+                          className={`px-4 py-2 rounded-full border ${
+                            mediaHistoryMonth !== "all" 
+                              ? 'border-purple-600 bg-purple-50 text-purple-700' 
+                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          } text-sm font-medium flex items-center gap-2`}
+                          data-testid="button-filter-month"
+                        >
+                          Month
+                          <ChevronDown size={14} />
+                        </button>
+                        {openFilterDropdown === 'month' && (
+                          <div className="absolute top-full mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px] max-h-64 overflow-y-auto">
+                            <button
+                              onClick={() => {
+                                setMediaHistoryMonth("all");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              All Months
+                            </button>
+                            {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((month, idx) => (
+                              <button
+                                key={month}
+                                onClick={() => {
+                                  setMediaHistoryMonth((idx + 1).toString());
+                                  setOpenFilterDropdown(null);
+                                }}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                              >
+                                {month}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Type Filter */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenFilterDropdown(openFilterDropdown === 'type' ? null : 'type')}
+                          className={`px-4 py-2 rounded-full border ${
+                            mediaHistoryType !== "all" 
+                              ? 'border-purple-600 bg-purple-50 text-purple-700' 
+                              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          } text-sm font-medium flex items-center gap-2`}
+                          data-testid="button-filter-type"
+                        >
+                          Type
+                          <ChevronDown size={14} />
+                        </button>
+                        {openFilterDropdown === 'type' && (
+                          <div className="absolute top-full mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]">
+                            <button
+                              onClick={() => {
+                                setMediaHistoryType("all");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              All Types
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMediaHistoryType("movies");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              Movies
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMediaHistoryType("tv");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              TV Shows
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMediaHistoryType("books");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              Books
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMediaHistoryType("music");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              Music
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMediaHistoryType("podcasts");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              Podcasts
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMediaHistoryType("games");
+                                setOpenFilterDropdown(null);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700"
+                            >
+                              Games
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Clear All Filters */}
+                      {(mediaHistoryYear !== "all" || mediaHistoryMonth !== "all" || mediaHistoryType !== "all") && (
+                        <button
+                          onClick={() => {
+                            setMediaHistoryYear("all");
+                            setMediaHistoryMonth("all");
+                            setMediaHistoryType("all");
+                          }}
+                          className="px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                          data-testid="button-clear-filters"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Overview Stats */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">Overview</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {mediaTypeCounts.music > 0 && (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 rounded-full border border-purple-100">
+                            <span className="text-sm">🎵</span>
+                            <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.music}</span>
+                            <span className="text-xs text-gray-600">songs</span>
+                          </div>
+                        )}
+                        {mediaTypeCounts.movie > 0 && (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 rounded-full border border-teal-100">
+                            <span className="text-sm">🎬</span>
+                            <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.movie}</span>
+                            <span className="text-xs text-gray-600">watched</span>
+                          </div>
+                        )}
+                        {mediaTypeCounts.tv > 0 && (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-full border border-indigo-100">
+                            <span className="text-sm">📺</span>
+                            <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.tv}</span>
+                            <span className="text-xs text-gray-600">series</span>
+                          </div>
+                        )}
+                        {mediaTypeCounts.book > 0 && (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-full border border-amber-100">
+                            <span className="text-sm">📚</span>
+                            <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.book}</span>
+                            <span className="text-xs text-gray-600">completed</span>
+                          </div>
+                        )}
+                        {mediaTypeCounts.podcast > 0 && (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 rounded-full border border-rose-100">
+                            <span className="text-sm">🎙️</span>
+                            <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.podcast}</span>
+                            <span className="text-xs text-gray-600">podcasts</span>
+                          </div>
+                        )}
+                        {mediaTypeCounts.game > 0 && (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-full border border-green-100">
+                            <span className="text-sm">🎮</span>
+                            <span className="text-sm font-medium text-gray-900">{mediaTypeCounts.game}</span>
+                            <span className="text-xs text-gray-600">games</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                      {allItems.map((item: any, idx: number) => (
-                        <div
-                          key={`${item.id}-${idx}`}
-                          onClick={() => {
-                            const mediaType = item.media_type || 'movie';
-                            const source = item.external_source || 'tmdb';
-                            const id = item.external_id;
-                            if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
-                          }}
-                          className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                            idx < allItems.length - 1 ? 'border-b border-gray-100' : ''
-                          }`}
-                        >
-                          {item.image_url ? (
-                            <img
-                              src={item.image_url}
-                              alt={item.title}
-                              className="w-12 h-16 object-cover rounded flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                              <Film className="text-gray-400" size={20} />
+                    {/* Media History List */}
+                    {filteredItems.length > 0 ? (
+                      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        {filteredItems.map((item: any, idx: number) => (
+                          <div
+                            key={`${item.id}-${idx}`}
+                            onClick={() => {
+                              const mediaType = item.media_type || 'movie';
+                              const source = item.external_source || 'tmdb';
+                              const id = item.external_id;
+                              if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
+                            }}
+                            className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                              idx < filteredItems.length - 1 ? 'border-b border-gray-100' : ''
+                            }`}
+                          >
+                            {item.image_url ? (
+                              <img
+                                src={item.image_url}
+                                alt={item.title}
+                                className="w-12 h-16 object-cover rounded flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                                <Film className="text-gray-400" size={20} />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-black truncate text-sm">{item.title}</h4>
+                              <p className="text-xs text-gray-500 truncate">
+                                {item.media_type === 'tv' ? 'TV Show' : 
+                                 item.media_type === 'movie' ? 'Movie' : 
+                                 item.media_type === 'book' ? 'Book' : 
+                                 item.media_type === 'music' ? 'Music' : 
+                                 item.media_type === 'podcast' ? 'Podcast' : 
+                                 item.media_type === 'game' ? 'Game' : item.type}
+                                {item.creator && ` • ${item.creator}`}
+                              </p>
+                              <p className="text-xs text-purple-600">{item.listName}</p>
                             </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-black truncate text-sm">{item.title}</h4>
-                            <p className="text-xs text-gray-500 truncate">
-                              {item.media_type === 'tv' ? 'TV Show' : 
-                               item.media_type === 'movie' ? 'Movie' : 
-                               item.media_type === 'book' ? 'Book' : 
-                               item.media_type === 'music' ? 'Music' : 
-                               item.media_type === 'podcast' ? 'Podcast' : 
-                               item.media_type === 'game' ? 'Game' : item.type}
-                              {item.creator && ` • ${item.creator}`}
-                            </p>
-                            <p className="text-xs text-purple-600">{item.listName}</p>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-xs text-gray-400">
+                                {new Date(item.created_at).toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric'
+                                })}
+                              </p>
+                            </div>
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-xs text-gray-400">
-                              {new Date(item.created_at).toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric'
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+                        <TrendingUp className="mx-auto text-gray-300 mb-4" size={48} />
+                        <p className="text-gray-500 text-lg">
+                          {allItems.length === 0 ? "No media tracked yet" : "No results found"}
+                        </p>
+                        <p className="text-gray-400 text-sm mt-2">
+                          {allItems.length === 0 
+                            ? "Start adding media to your lists to see your history"
+                            : "Try adjusting your filters or search"}
+                        </p>
+                      </div>
+                    )}
                   </>
-                ) : (
-                  <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-                    <TrendingUp className="mx-auto text-gray-300 mb-4" size={48} />
-                    <p className="text-gray-500 text-lg">No media tracked yet</p>
-                    <p className="text-gray-400 text-sm mt-2">Start adding media to your lists to see your history</p>
-                  </div>
                 );
               })()}
             </div>
