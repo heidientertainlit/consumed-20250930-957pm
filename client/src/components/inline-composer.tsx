@@ -201,8 +201,8 @@ export default function InlineComposer() {
   const charsRemaining = maxChars - content.length;
 
   return (
-    <div className="rounded-2xl shadow-lg relative p-[2px] bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600">
-      <div className="bg-white rounded-[14px]">
+    <div className="rounded-2xl shadow-lg relative p-[4px] bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600">
+      <div className="bg-white rounded-[12px]">
       {/* Composer Header */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex gap-3">
