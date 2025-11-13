@@ -225,10 +225,7 @@ export default function InlineComposer() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-      {/* Decorative Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-t-2xl"></div>
-      
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200">
       {/* Composer Header */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex gap-3">
