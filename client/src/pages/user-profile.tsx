@@ -1891,17 +1891,13 @@ export default function UserProfile() {
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 mt-2">
                       <div className="flex items-center space-x-1">
                         <span>🔥</span>
-                        <span className="font-medium">5 Win Streak</span>
-                        <span className="text-gray-500">• Best: 12</span>
+                        <span className="font-medium">5</span>
+                        <span>win streak</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <span>📊</span>
-                        <span className="font-medium">Best in TV Shows</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <span>⚡</span>
-                        <span className="font-medium">2.5 days</span>
-                        <span>avg resolution</span>
+                        <span>Best in</span>
+                        <span className="font-medium">TV Shows</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <span>🏅</span>
