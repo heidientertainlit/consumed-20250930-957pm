@@ -30,11 +30,46 @@ export default function InlineComposer() {
 
   // Action chips configuration
   const actionChips = [
-    { id: "thought" as ComposerMode, icon: MessageCircle, label: "💭 Thought", color: "text-gray-600" },
-    { id: "prediction" as ComposerMode, icon: Target, label: "🎯 Prediction", color: "text-red-600" },
-    { id: "poll" as ComposerMode, icon: Vote, label: "🗳️ Poll", color: "text-blue-600" },
-    { id: "rate-review" as ComposerMode, icon: Star, label: "⭐ Rate/Review", color: "text-yellow-600" },
-    { id: "add-media" as ComposerMode, icon: Plus, label: "➕ Add Media", color: "text-purple-600" },
+    { 
+      id: "thought" as ComposerMode, 
+      icon: MessageCircle, 
+      label: "💭 Thought", 
+      color: "text-gray-600",
+      description: "Share a quick take, reaction, or opinion about anything you're watching, reading, or listening to.",
+      example: "The last 10 minutes of The Night Agent?? I'm not okay."
+    },
+    { 
+      id: "prediction" as ComposerMode, 
+      icon: Target, 
+      label: "🎯 Prediction", 
+      color: "text-red-600",
+      description: "Make a guess about what you think will happen next—storylines, renewals, awards, plot twists, finales.",
+      example: "Who will get eliminated next on Dancing With the Stars?"
+    },
+    { 
+      id: "poll" as ComposerMode, 
+      icon: Vote, 
+      label: "📦 Poll", 
+      color: "text-blue-600",
+      description: "Ask your friends or followers to choose between options. It's for taste, favorites, preferences—fun debates.",
+      example: "Which is the best Marvel movie of all time?\nOptions: Endgame, Winter Soldier, Iron Man, Civil War"
+    },
+    { 
+      id: "rate-review" as ComposerMode, 
+      icon: Star, 
+      label: "⭐️ Rate/Review", 
+      color: "text-yellow-600",
+      description: "Give your rating, share thoughts, or recommend something you just finished.",
+      example: "Just finished Lessons in Chemistry — 4.5/5. Brie Larson was PERFECT."
+    },
+    { 
+      id: "add-media" as ComposerMode, 
+      icon: Plus, 
+      label: "➕ Add Media", 
+      color: "text-purple-600",
+      description: "Log something you're watching, reading, listening to, or playing—past or present.",
+      example: 'Added: The Bear (Season 3)\nStatus: Currently Watching'
+    },
   ];
 
   const resetComposer = () => {
@@ -240,6 +275,20 @@ export default function InlineComposer() {
             );
           })}
         </div>
+        
+        {/* Helper Text for Selected Mode */}
+        {composerMode && (
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+            <p className="text-xs font-semibold text-gray-700 mb-1">What it is:</p>
+            <p className="text-xs text-gray-600 mb-2">
+              {actionChips.find(chip => chip.id === composerMode)?.description}
+            </p>
+            <p className="text-xs font-semibold text-gray-700 mb-1">Example:</p>
+            <p className="text-xs text-gray-500 italic">
+              "{actionChips.find(chip => chip.id === composerMode)?.example}"
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Contextual UI - Expands based on selected chip */}
