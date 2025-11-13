@@ -1886,26 +1886,31 @@ export default function UserProfile() {
                     </div>
                   </div>
                   
-                  {/* Prediction Stats */}
-                  {userPredictionsList && userPredictionsList.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 mt-2">
-                      <div className="flex items-center space-x-1">
-                        <span>🔥</span>
-                        <span className="font-medium">5</span>
-                        <span>win streak</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <span>📊</span>
-                        <span>Best in</span>
-                        <span className="font-medium">TV Shows</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <span>🏅</span>
-                        <span className="font-medium">#127</span>
-                        <span>global rank</span>
-                      </div>
+                  {/* Play & Prediction Stats */}
+                  <div className="flex flex-col gap-y-1 text-sm text-gray-600 mt-2">
+                    <div className="flex items-center space-x-1">
+                      <span>🔥</span>
+                      <span className="font-medium">5</span>
+                      <span>win streak</span>
                     </div>
-                  )}
+                    {userPredictionsList && userPredictionsList.length > 0 && (
+                      <div className="flex items-center space-x-1">
+                        <span>🎯</span>
+                        <span className="font-medium">12</span>
+                        <span>predictions</span>
+                      </div>
+                    )}
+                    <div className="flex items-center space-x-1">
+                      <span>📊</span>
+                      <span>Media Types:</span>
+                      <span className="font-medium">TV, Podcasts</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <span>🏅</span>
+                      <span className="font-medium">#127</span>
+                      <span>global rank</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
