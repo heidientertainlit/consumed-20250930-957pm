@@ -511,11 +511,11 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
 
           <Link
-            href="/play"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/play" ? "bg-white/20" : ""}`}
+            href="/leaderboard"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
           >
-            <Gamepad2 className="text-white" size={22} />
-            <span className="text-xs font-medium text-white">Play</span>
+            <Trophy className="text-white" size={22} />
+            <span className="text-xs font-medium text-white">Leaderboard</span>
           </Link>
 
           <Link
