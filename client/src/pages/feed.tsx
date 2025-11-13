@@ -1608,7 +1608,11 @@ export default function Feed() {
                     commentsCount: 18,
                     isLiked: false,
                     origin_type: 'consumed' as const,
-                    origin_user_id: null
+                    origin_user_id: null,
+                    deadline: new Date(Date.now() - 86400000).toISOString(),
+                    status: 'open' as const,
+                    resolved_at: null,
+                    winning_option: null
                   },
                   {
                     id: "pred-1",
@@ -1625,7 +1629,11 @@ export default function Feed() {
                     likesCount: 12,
                     commentsCount: 3,
                     isLiked: false,
-                    origin_type: 'user' as const
+                    origin_type: 'user' as const,
+                    deadline: null,
+                    status: 'completed' as const,
+                    resolved_at: new Date(Date.now() - 3600000).toISOString(),
+                    winning_option: "Yes"
                   },
                   {
                     id: "pred-3",
@@ -1642,7 +1650,11 @@ export default function Feed() {
                     likesCount: 8,
                     commentsCount: 2,
                     isLiked: false,
-                    origin_type: 'user' as const
+                    origin_type: 'user' as const,
+                    deadline: new Date(Date.now() + 86400000).toISOString(),
+                    status: 'open' as const,
+                    resolved_at: null,
+                    winning_option: null
                   }
                 ];
                 const predictionIndex = Math.floor(postIndex / 8);

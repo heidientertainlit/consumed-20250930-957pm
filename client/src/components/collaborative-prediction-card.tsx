@@ -32,6 +32,10 @@ interface CollaborativePrediction {
   };
   origin_type?: 'consumed' | 'user';
   origin_user_id?: string;
+  deadline?: string | null;
+  status?: 'open' | 'locked' | 'completed';
+  resolved_at?: string | null;
+  winning_option?: string;
 }
 
 interface CollaborativePredictionCardProps {
@@ -43,7 +47,7 @@ export default function CollaborativePredictionCard({
   prediction, 
   onCastPrediction 
 }: CollaborativePredictionCardProps) {
-  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id } = prediction;
+  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id, deadline, status = 'open', resolved_at, winning_option } = prediction;
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -53,6 +57,14 @@ export default function CollaborativePredictionCard({
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount);
   const [showParticipants, setShowParticipants] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [resolutionVote, setResolutionVote] = useState<string | null>(null);
+
+  // Check if prediction is completed
+  const isCompleted = status === 'completed';
+  
+  // Check if deadline has passed (for timed predictions)
+  const deadlinePassed = deadline ? new Date(deadline) < new Date() : false;
+  const needsResolution = deadlinePassed && status === 'open';
 
   // Calculate vote percentages
   const yesPercentage = voteCounts && voteCounts.total > 0 
@@ -242,6 +254,49 @@ export default function CollaborativePredictionCard({
     enabled: showParticipants,
   });
 
+  // Resolve prediction mutation
+  const resolveMutation = useMutation({
+    mutationFn: async (winningOption: string) => {
+      if (!session?.access_token || !poolId) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/resolve-prediction`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            pool_id: poolId,
+            winning_option: winningOption,
+            resolved_by: 'crowd'
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to resolve prediction');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Prediction Resolved!",
+        description: "Points have been awarded to winners.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to resolve",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Post comment mutation
   const commentMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -331,6 +386,51 @@ export default function CollaborativePredictionCard({
       <p className="text-sm font-medium text-gray-900 mb-3">
         {question}
       </p>
+
+      {/* Resolution Banner - Show when deadline passed */}
+      {needsResolution && (
+        <div className="mb-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 rounded-2xl">
+          <p className="text-sm font-bold text-orange-700 mb-2">⏰ Time's Up! What Actually Happened?</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                setResolutionVote("Yes");
+                resolveMutation.mutate("Yes");
+              }}
+              disabled={resolveMutation.isPending}
+              className="w-full bg-white hover:bg-orange-50 border-2 border-orange-300 rounded-full px-4 py-2 text-sm font-medium text-gray-900 transition-all"
+              data-testid="button-resolve-yes"
+            >
+              {creatorPrediction} ✓
+            </button>
+            {friendPrediction && (
+              <button
+                onClick={() => {
+                  setResolutionVote("No");
+                  resolveMutation.mutate("No");
+                }}
+                disabled={resolveMutation.isPending}
+                className="w-full bg-white hover:bg-orange-50 border-2 border-orange-300 rounded-full px-4 py-2 text-sm font-medium text-gray-900 transition-all"
+                data-testid="button-resolve-no"
+              >
+                {friendPrediction} ✓
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Results Banner - Show when resolved */}
+      {isCompleted && winning_option && (
+        <div className="mb-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl">
+          <p className="text-sm font-bold text-green-700">
+            🎉 {winning_option === "Yes" ? creatorPrediction : friendPrediction} won this prediction!
+          </p>
+          <p className="text-xs text-green-600 mt-1">
+            Winners got +20 points
+          </p>
+        </div>
+      )}
 
       {/* Voting Options - Stacked vertically */}
       <div className="space-y-2 mb-3">
