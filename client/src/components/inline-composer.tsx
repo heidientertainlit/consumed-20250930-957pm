@@ -27,6 +27,7 @@ export default function InlineComposer() {
   
   // Prediction-specific state (now uses same format as polls)
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
+  const [challengedFriends, setChallengedFriends] = useState<string>("");
 
   // Poll-specific state
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
@@ -107,6 +108,7 @@ export default function InlineComposer() {
     setAttachedMedia(null);
     setSelectedList("");
     setPredictionOptions(["", ""]);
+    setChallengedFriends("");
     setPollOptions(["", ""]);
   };
 
@@ -327,13 +329,26 @@ export default function InlineComposer() {
               onClick={addPredictionOption}
               variant="outline"
               size="sm"
-              className="w-full text-xs"
+              className="w-full text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
               data-testid="button-add-prediction-option"
             >
               <Plus className="w-3 h-3 mr-1" />
               Add Option
             </Button>
           )}
+          
+          {/* Challenge Friends */}
+          <div className="pt-2 border-t border-gray-100 mt-3">
+            <p className="text-xs text-gray-600 font-medium mb-2">Challenge Friends to Predict</p>
+            <MentionTextarea
+              value={challengedFriends}
+              onChange={setChallengedFriends}
+              placeholder="@mention friends to challenge..."
+              className="border border-gray-200 rounded-lg p-2 text-sm resize-none focus-visible:ring-2 focus-visible:ring-purple-500 text-gray-900 bg-white placeholder:text-gray-400 w-full"
+              minHeight="40px"
+              session={session}
+            />
+          </div>
         </div>
       )}
 
