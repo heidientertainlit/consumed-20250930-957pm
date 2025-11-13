@@ -50,25 +50,31 @@ serve(async (req) => {
 
     // Call Anthropic API
     const systemPrompt = context === 'library'
-      ? `You are a library customization assistant for "consumed", an entertainment tracking app.
-         Users can customize which sections appear in their Library and how they're displayed.
+      ? `You are a list organization assistant for "consumed", an entertainment tracking app.
+         Users can configure how ALL their lists work system-wide (not per-list customization).
          
-         Available sections: currently (Currently Consuming), queue (Queue), finished (Finished), 
-         favorites (Favorites), dnf (Did Not Finish)
+         Configuration structure:
+         - listLayout: { defaultLayout: 'grid' | 'list' | 'compact' }
+         - listFeatures: array of features with id, label, description, enabled
          
-         Display modes: grid, list, compact, timeline
+         Available features:
+         - progress: Progress Tracker (show progress bars)
+         - notes: Notes & Reviews (enable adding notes)
+         - collaborators: Invite Collaborators (allow others to contribute)
+         - privacy: Privacy Controls (set lists as public/private)
+         - covers: Cover Images (display cover art)
+         - tags: Custom Tags (organize with tags)
          
-         Based on the user's request, modify the sections array. You can:
-         - Enable/disable sections by setting "enabled": true/false
-         - Reorder sections
-         - Change display modes
-         - Suggest new custom sections
+         Based on the user's request, modify the configuration. You can:
+         - Change the default layout (grid/list/compact)
+         - Enable/disable features globally across all lists
          
          Return JSON in this exact format:
          {
            "message": "A friendly response to the user explaining what you did",
            "config": {
-             "sections": [array of section objects with id, title, enabled, displayMode]
+             "listLayout": { "defaultLayout": "grid" | "list" | "compact" },
+             "listFeatures": [array of feature objects with id, label, description, enabled]
            }
          }`
       : `You are a tracking customization assistant for "consumed", an entertainment tracking app.
@@ -147,52 +153,86 @@ function generateMockResponse(prompt: string, context: string, currentConfig: an
   const lowerPrompt = prompt.toLowerCase();
   
   if (context === 'library') {
-    // Analyze prompt for library customization
+    const { listLayout, listFeatures } = currentConfig;
+    
+    // Analyze prompt for list organization
+    if (lowerPrompt.includes('compact') || lowerPrompt.includes('dense') || lowerPrompt.includes('text')) {
+      return {
+        message: "I've switched all your lists to compact view for a dense, text-only display.",
+        config: {
+          listLayout: { defaultLayout: 'compact' },
+          listFeatures: listFeatures
+        }
+      };
+    }
+    
+    if (lowerPrompt.includes('grid') || lowerPrompt.includes('visual') || lowerPrompt.includes('cards')) {
+      return {
+        message: "I've switched all your lists to grid view for a more visual, card-based experience.",
+        config: {
+          listLayout: { defaultLayout: 'grid' },
+          listFeatures: listFeatures
+        }
+      };
+    }
+    
+    if (lowerPrompt.includes('list view') || lowerPrompt.includes('detailed rows')) {
+      return {
+        message: "I've switched all your lists to list view for detailed rows with metadata.",
+        config: {
+          listLayout: { defaultLayout: 'list' },
+          listFeatures: listFeatures
+        }
+      };
+    }
+    
+    if (lowerPrompt.includes('progress') && (lowerPrompt.includes('off') || lowerPrompt.includes('disable') || lowerPrompt.includes('hide'))) {
+      return {
+        message: "I've turned off progress trackers across all your lists.",
+        config: {
+          listLayout: listLayout,
+          listFeatures: listFeatures.map((f: any) => ({
+            ...f,
+            enabled: f.id === 'progress' ? false : f.enabled
+          }))
+        }
+      };
+    }
+    
+    if (lowerPrompt.includes('cover') && (lowerPrompt.includes('off') || lowerPrompt.includes('hide') || lowerPrompt.includes('no'))) {
+      return {
+        message: "I've turned off cover images across all your lists for a cleaner look.",
+        config: {
+          listLayout: listLayout,
+          listFeatures: listFeatures.map((f: any) => ({
+            ...f,
+            enabled: f.id === 'covers' ? false : f.enabled
+          }))
+        }
+      };
+    }
+    
+    if (lowerPrompt.includes('collaborat') || lowerPrompt.includes('invite') || lowerPrompt.includes('share')) {
+      return {
+        message: "I've enabled collaboration features so you can invite others to contribute to your lists!",
+        config: {
+          listLayout: listLayout,
+          listFeatures: listFeatures.map((f: any) => ({
+            ...f,
+            enabled: f.id === 'collaborators' ? true : f.enabled
+          }))
+        }
+      };
+    }
+    
     if (lowerPrompt.includes('simple') || lowerPrompt.includes('minimal')) {
       return {
-        message: "I've simplified your library to show only Currently, Queue, and Finished sections in list view for easy browsing.",
+        message: "I've simplified your lists - just the essentials with minimal features enabled.",
         config: {
-          sections: currentConfig.map((s: any) => ({
-            ...s,
-            enabled: ['currently', 'queue', 'finished'].includes(s.id),
-            displayMode: 'list'
-          }))
-        }
-      };
-    }
-    
-    if (lowerPrompt.includes('grid') || lowerPrompt.includes('visual')) {
-      return {
-        message: "I've switched all your enabled sections to grid view for a more visual experience.",
-        config: {
-          sections: currentConfig.map((s: any) => ({
-            ...s,
-            displayMode: s.enabled ? 'grid' : s.displayMode
-          }))
-        }
-      };
-    }
-    
-    if (lowerPrompt.includes('timeline') || lowerPrompt.includes('chronological')) {
-      return {
-        message: "I've enabled timeline view for your sections to see your content chronologically.",
-        config: {
-          sections: currentConfig.map((s: any) => ({
-            ...s,
-            displayMode: 'timeline'
-          }))
-        }
-      };
-    }
-    
-    if (lowerPrompt.includes('binge') || lowerPrompt.includes('tv') || lowerPrompt.includes('show')) {
-      return {
-        message: "I've prioritized your Currently section and set it to grid view - perfect for tracking shows!",
-        config: {
-          sections: currentConfig.map((s: any, idx: number) => ({
-            ...s,
-            enabled: s.id === 'currently' || s.enabled,
-            displayMode: s.id === 'currently' ? 'grid' : s.displayMode
+          listLayout: { defaultLayout: 'compact' },
+          listFeatures: listFeatures.map((f: any) => ({
+            ...f,
+            enabled: ['privacy', 'covers'].includes(f.id)
           }))
         }
       };
@@ -249,8 +289,15 @@ function generateMockResponse(prompt: string, context: string, currentConfig: an
   }
   
   // Default response
-  return {
-    message: `I understand you want to ${prompt}. Could you be more specific? For example, which sections do you want to show/hide, or what display mode you prefer?`,
-    config: null
-  };
+  if (context === 'library') {
+    return {
+      message: `I understand you want to ${prompt}. Could you be more specific? For example, do you want to change the default layout (grid/list/compact), or enable/disable specific features like progress trackers or cover images?`,
+      config: null
+    };
+  } else {
+    return {
+      message: `I understand you want to ${prompt}. Could you be more specific? For example, which tracking options do you want to enable or disable?`,
+      config: null
+    };
+  }
 }

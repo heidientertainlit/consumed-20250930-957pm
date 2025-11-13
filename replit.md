@@ -65,6 +65,11 @@ Preferred communication style: Simple, everyday language.
 - **Discover Page**: AI-powered recommendations and trending content carousels.
 - **Analytics Dashboard**: Admin dashboard at `/admin` with comprehensive engagement metrics (DAU/WAU/MAU, retention, churn, time spent) using SQL analytics functions and `get-analytics` edge function.
 - **Partnership Insights**: Analytics for partnerships (Netflix, Goodreads) including cross-platform affinity, trending content, and DNA personality clusters via `get-analytics?type=partnerships`.
+- **AI Builder** (`/library-ai`): Two-tab customization interface for personalizing the app:
+  - **List Organization**: System-wide configuration for how ALL lists work (default layout: grid/list/compact, global features: progress tracker, notes, collaborators, privacy, covers, tags)
+  - **Tracking Preferences**: Granular controls for media types, tracking options, and list display preferences
+  - **AI Chat Integration**: `builder-chat` edge function with Claude 4.1 Sonnet for natural language customization (fallback mock responses when API key unavailable)
+  - **Visual Builder**: White background, dark text, purple gradients for CTAs, matching Threads aesthetic
 
 ### System Design Choices
 - **Database Schema**: Strict naming conventions, synced dev/prod schemas.

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,17 +7,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GripVertical, Send, Sparkles, Eye, Settings, BookOpen, LayoutGrid, List, Calendar } from "lucide-react";
+import { Send, Sparkles, Eye, Settings, BookOpen, LayoutGrid, List } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 // Mock customization state
-interface LibrarySection {
+interface ListOrganizationFeature {
   id: string;
-  title: string;
+  label: string;
+  description: string;
   enabled: boolean;
-  displayMode: 'grid' | 'list' | 'compact' | 'timeline';
-  filters?: string[];
+  icon?: any;
+}
+
+interface ListLayoutPreferences {
+  defaultLayout: 'grid' | 'list' | 'compact';
 }
 
 interface MediaTypePreference {
@@ -48,13 +51,18 @@ export default function LibraryAI() {
   // Tab state
   const [activeTab, setActiveTab] = useState("library");
   
-  // Library customization state
-  const [librarySections, setLibrarySections] = useState<LibrarySection[]>([
-    { id: 'currently', title: 'Currently Consuming', enabled: true, displayMode: 'grid' },
-    { id: 'queue', title: 'Queue', enabled: true, displayMode: 'list' },
-    { id: 'finished', title: 'Finished', enabled: true, displayMode: 'grid' },
-    { id: 'favorites', title: 'Favorites', enabled: true, displayMode: 'grid' },
-    { id: 'dnf', title: 'Did Not Finish', enabled: false, displayMode: 'list' },
+  // List organization features
+  const [listLayout, setListLayout] = useState<ListLayoutPreferences>({
+    defaultLayout: 'grid',
+  });
+  
+  const [listFeatures, setListFeatures] = useState<ListOrganizationFeature[]>([
+    { id: 'progress', label: 'Progress Tracker', description: 'Show progress bars and completion percentage', enabled: true },
+    { id: 'notes', label: 'Notes & Reviews', description: 'Enable adding notes to list items', enabled: true },
+    { id: 'collaborators', label: 'Invite Collaborators', description: 'Allow others to contribute to your lists', enabled: false },
+    { id: 'privacy', label: 'Privacy Controls', description: 'Set lists as public or private', enabled: true },
+    { id: 'covers', label: 'Cover Images', description: 'Display cover art for media items', enabled: true },
+    { id: 'tags', label: 'Custom Tags', description: 'Organize items with custom tags', enabled: false },
   ]);
   
   // Media types tracking
@@ -83,40 +91,26 @@ export default function LibraryAI() {
     showProgress: true,
   });
   
-  // AI Chat state
+  // AI Chat state - initial message based on active tab
+  const getInitialMessage = () => {
+    return activeTab === 'library' 
+      ? "Hi! I can help you configure how ALL your lists work. Want to change the layout, enable features, or adjust settings across the board?" 
+      : "Hi! I can help you customize your tracking workflow. What would make logging media easier for you?";
+  };
+  
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     { 
       role: 'assistant', 
-      content: activeTab === 'library' 
-        ? "Hi! I can help you customize your Library view. Tell me how you'd like to see your content organized!" 
-        : "Hi! I can help you customize your tracking workflow. What would make logging media easier for you?"
+      content: getInitialMessage()
     }
   ]);
   const [userInput, setUserInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // Handle drag and drop for library sections
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
-    
-    const items = Array.from(librarySections);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    
-    setLibrarySections(items);
-  };
-  
-  // Toggle section enabled/disabled
-  const toggleSection = (id: string) => {
-    setLibrarySections(sections => 
-      sections.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s)
-    );
-  };
-  
-  // Update display mode for a section
-  const updateDisplayMode = (id: string, mode: 'grid' | 'list' | 'compact' | 'timeline') => {
-    setLibrarySections(sections => 
-      sections.map(s => s.id === id ? { ...s, displayMode: mode } : s)
+  // Toggle list feature
+  const toggleListFeature = (id: string) => {
+    setListFeatures(features => 
+      features.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f)
     );
   };
   
@@ -160,7 +154,7 @@ export default function LibraryAI() {
           prompt: userInput,
           context: activeTab,
           currentConfig: activeTab === 'library' 
-            ? librarySections 
+            ? { listLayout, listFeatures }
             : { mediaTypes, trackingOptions, listDisplay }
         }),
       });
@@ -173,8 +167,9 @@ export default function LibraryAI() {
       
       // Apply the generated config
       if (config) {
-        if (activeTab === 'library' && config.sections) {
-          setLibrarySections(config.sections);
+        if (activeTab === 'library') {
+          if (config.listLayout) setListLayout(config.listLayout);
+          if (config.listFeatures) setListFeatures(config.listFeatures);
         } else if (activeTab === 'tracking') {
           if (config.mediaTypes) setMediaTypes(config.mediaTypes);
           if (config.trackingOptions) setTrackingOptions(config.trackingOptions);
@@ -200,7 +195,7 @@ export default function LibraryAI() {
   // Preview current config
   const previewConfig = () => {
     const config = activeTab === 'library' 
-      ? { library: librarySections }
+      ? { library: { listLayout, listFeatures } }
       : { tracking: { mediaTypes, trackingOptions, listDisplay } };
     
     toast({
@@ -242,15 +237,15 @@ export default function LibraryAI() {
                   Customization Builder
                 </CardTitle>
                 <CardDescription className="text-gray-600">
-                  Drag to reorder, toggle sections, and customize display modes
+                  Configure system-wide settings for lists and tracking preferences
                 </CardDescription>
               </CardHeader>
               <CardContent className="bg-white">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-2 bg-gray-100">
-                    <TabsTrigger value="library" data-testid="tab-library-layout" className="text-gray-700 data-[state=active]:bg-white data-[state=active]:text-black">
+                    <TabsTrigger value="library" data-testid="tab-list-organization" className="text-gray-700 data-[state=active]:bg-white data-[state=active]:text-black">
                       <BookOpen size={16} className="mr-2" />
-                      Library Layout
+                      List Organization
                     </TabsTrigger>
                     <TabsTrigger value="tracking" data-testid="tab-tracking-prefs" className="text-gray-700 data-[state=active]:bg-white data-[state=active]:text-black">
                       <Settings size={16} className="mr-2" />
@@ -258,96 +253,77 @@ export default function LibraryAI() {
                     </TabsTrigger>
                   </TabsList>
                   
-                  {/* Library Layout Tab */}
-                  <TabsContent value="library" className="space-y-4 mt-4">
+                  {/* List Organization Tab */}
+                  <TabsContent value="library" className="space-y-6 mt-4">
                     <div className="text-sm text-gray-700 mb-4">
-                      Configure which sections appear in your Library and how they're displayed
+                      Configure how ALL your lists work - these settings apply system-wide
                     </div>
                     
-                    <DragDropContext onDragEnd={handleDragEnd}>
-                      <Droppable droppableId="sections">
-                        {(provided) => (
-                          <div 
-                            {...provided.droppableProps} 
-                            ref={provided.innerRef}
-                            className="space-y-2"
-                          >
-                            {librarySections.map((section, index) => (
-                              <Draggable key={section.id} draggableId={section.id} index={index}>
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    className={`bg-white border rounded-lg p-4 ${
-                                      snapshot.isDragging ? 'shadow-lg' : ''
-                                    } ${!section.enabled ? 'opacity-50' : ''}`}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      {/* Drag Handle */}
-                                      <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
-                                        <GripVertical className="text-gray-400" size={20} />
-                                      </div>
-                                      
-                                      {/* Section Info */}
-                                      <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-3">
-                                            <Switch
-                                              checked={section.enabled}
-                                              onCheckedChange={() => toggleSection(section.id)}
-                                              data-testid={`toggle-${section.id}`}
-                                            />
-                                            <Label className="font-medium text-black">{section.title}</Label>
-                                          </div>
-                                          
-                                          {section.enabled && (
-                                            <Select
-                                              value={section.displayMode}
-                                              onValueChange={(value: any) => updateDisplayMode(section.id, value)}
-                                            >
-                                              <SelectTrigger className="w-40" data-testid={`display-mode-${section.id}`}>
-                                                <SelectValue />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                <SelectItem value="grid">
-                                                  <div className="flex items-center gap-2">
-                                                    <LayoutGrid size={14} />
-                                                    Grid
-                                                  </div>
-                                                </SelectItem>
-                                                <SelectItem value="list">
-                                                  <div className="flex items-center gap-2">
-                                                    <List size={14} />
-                                                    List
-                                                  </div>
-                                                </SelectItem>
-                                                <SelectItem value="compact">
-                                                  <div className="flex items-center gap-2">
-                                                    <List size={14} />
-                                                    Compact
-                                                  </div>
-                                                </SelectItem>
-                                                <SelectItem value="timeline">
-                                                  <div className="flex items-center gap-2">
-                                                    <Calendar size={14} />
-                                                    Timeline
-                                                  </div>
-                                                </SelectItem>
-                                              </SelectContent>
-                                            </Select>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
+                    {/* Default Layout Section */}
+                    <div>
+                      <h3 className="font-semibold text-black mb-2">Default Layout</h3>
+                      <div className="text-sm text-gray-700 mb-3">
+                        Choose how your lists are displayed by default
+                      </div>
+                      <Select
+                        value={listLayout.defaultLayout}
+                        onValueChange={(value: any) => setListLayout({ defaultLayout: value })}
+                      >
+                        <SelectTrigger className="w-full bg-white" data-testid="select-default-layout">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="grid">
+                            <div className="flex items-center gap-2">
+                              <LayoutGrid size={14} />
+                              Grid - Visual cards with covers
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="list">
+                            <div className="flex items-center gap-2">
+                              <List size={14} />
+                              List - Detailed rows with metadata
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="compact">
+                            <div className="flex items-center gap-2">
+                              <List size={14} />
+                              Compact - Dense text-only view
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* List Features Section */}
+                    <div>
+                      <h3 className="font-semibold text-black mb-2">List Features</h3>
+                      <div className="text-sm text-gray-700 mb-3">
+                        Enable or disable features across all your lists
+                      </div>
+                      <div className="space-y-2">
+                        {listFeatures.map((feature) => (
+                          <div key={feature.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <Switch
+                                checked={feature.enabled}
+                                onCheckedChange={() => toggleListFeature(feature.id)}
+                                className="mt-0.5"
+                                data-testid={`toggle-feature-${feature.id}`}
+                              />
+                              <div className="flex-1">
+                                <Label className="font-medium text-black cursor-pointer">
+                                  {feature.label}
+                                </Label>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {feature.description}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                        )}
-                      </Droppable>
-                    </DragDropContext>
+                        ))}
+                      </div>
+                    </div>
                   </TabsContent>
                   
                   {/* Tracking Preferences Tab */}
@@ -525,7 +501,7 @@ export default function LibraryAI() {
                   <Input
                     placeholder={
                       activeTab === 'library'
-                        ? "e.g., Show only books I'm currently reading"
+                        ? "e.g., Turn off cover images on all lists"
                         : "e.g., I only want to track movies and TV shows"
                     }
                     value={userInput}
@@ -551,16 +527,22 @@ export default function LibraryAI() {
                     {activeTab === 'library' ? (
                       <>
                         <button
-                          onClick={() => setUserInput("Show books I haven't touched in over a week")}
+                          onClick={() => setUserInput("Turn off progress trackers on all my lists")}
                           className="text-xs text-purple-600 hover:underline block"
                         >
-                          "Show books I haven't touched in over a week"
+                          "Turn off progress trackers on all my lists"
                         </button>
                         <button
-                          onClick={() => setUserInput("Create a binge-worthy section for TV shows")}
+                          onClick={() => setUserInput("Switch to compact view for all lists")}
                           className="text-xs text-purple-600 hover:underline block"
                         >
-                          "Create a binge-worthy section for TV shows"
+                          "Switch to compact view for all lists"
+                        </button>
+                        <button
+                          onClick={() => setUserInput("Enable collaboration features")}
+                          className="text-xs text-purple-600 hover:underline block"
+                        >
+                          "Enable collaboration features"
                         </button>
                       </>
                     ) : (
