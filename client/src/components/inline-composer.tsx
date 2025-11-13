@@ -225,7 +225,14 @@ export default function InlineComposer() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+      {/* Info Header */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3 rounded-t-2xl">
+        <p className="text-white text-sm">
+          Choose what you want to share: a thought, a prediction, a poll, a review, or something you're consuming.
+        </p>
+      </div>
+      
       {/* Composer Header */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex gap-3">
