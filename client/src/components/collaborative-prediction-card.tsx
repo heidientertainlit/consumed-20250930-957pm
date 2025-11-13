@@ -421,86 +421,87 @@ export default function CollaborativePredictionCard({
         </div>
       )}
 
-      {/* Participant count */}
-      {voteCounts && voteCounts.total > 0 && (
-        <div className="mb-3">
+      {/* Like, Comment, and Participant Count Actions */}
+      <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => likeMutation.mutate()}
+            disabled={likeMutation.isPending}
+            className="flex items-center gap-1.5 text-gray-600 hover:text-purple-600 transition-colors"
+            data-testid="button-like-prediction"
+          >
+            <Heart
+              size={18}
+              className={liked ? "fill-purple-600 text-purple-600" : ""}
+            />
+            <span className="text-sm">{currentLikesCount}</span>
+          </button>
+
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-1.5 text-gray-600 hover:text-purple-600 transition-colors"
+            data-testid="button-comment-prediction"
+          >
+            <MessageCircle size={18} />
+            <span className="text-sm">{commentsData?.comments?.length || commentsCount}</span>
+          </button>
+        </div>
+        
+        {voteCounts && voteCounts.total > 0 && (
           <button
             onClick={() => setShowParticipants(!showParticipants)}
-            className="w-full text-xs text-center text-purple-600 hover:text-purple-700 font-medium"
+            className="flex items-center gap-1 text-purple-600 hover:text-purple-700 text-xs font-medium"
           >
-            <Users size={12} className="inline mr-1" />
-            {voteCounts.total} predictions {showParticipants ? '▲' : '▼'}
+            <Users size={12} />
+            <span>{voteCounts.total} predictions</span>
+            <span className="text-[10px]">{showParticipants ? '▲' : '▼'}</span>
           </button>
-          
-          {showParticipants && participantsData?.participants && participantsData.participants.length > 0 && (
-            <div className="mt-3 bg-gray-50 rounded-xl p-3 space-y-2">
-              {/* Group participants by their vote */}
-              {(() => {
-                const yesPredictions = participantsData.participants.filter((p: any) => p.prediction === 'Yes');
-                const noPredictions = participantsData.participants.filter((p: any) => p.prediction === 'No');
-                
-                return (
-                  <div className="space-y-3">
-                    {yesPredictions.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-1.5">
-                          {creatorPrediction} ({yesPredictions.length})
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {yesPredictions.map((p: any, idx: number) => (
-                            <span key={idx} className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
-                              @{p.users?.user_name || p.users?.display_name || 'unknown'}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {noPredictions.length > 0 && friendPrediction && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-1.5">
-                          {friendPrediction} ({noPredictions.length})
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {noPredictions.map((p: any, idx: number) => (
-                            <span key={idx} className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                              @{p.users?.user_name || p.users?.display_name || 'unknown'}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+        )}
+      </div>
+      
+      {/* Participants Dropdown */}
+      {showParticipants && voteCounts && voteCounts.total > 0 && participantsData?.participants && participantsData.participants.length > 0 && (
+        <div className="mt-3 bg-gray-50 rounded-xl p-3 space-y-2">
+          {/* Group participants by their vote */}
+          {(() => {
+            const yesPredictions = participantsData.participants.filter((p: any) => p.prediction === 'Yes');
+            const noPredictions = participantsData.participants.filter((p: any) => p.prediction === 'No');
+            
+            return (
+              <div className="space-y-3">
+                {yesPredictions.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                      {creatorPrediction} ({yesPredictions.length})
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {yesPredictions.map((p: any, idx: number) => (
+                        <span key={idx} className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                          @{p.users?.user_name || p.users?.display_name || 'unknown'}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                );
-              })()}
-            </div>
-          )}
+                )}
+                {noPredictions.length > 0 && friendPrediction && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                      {friendPrediction} ({noPredictions.length})
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {noPredictions.map((p: any, idx: number) => (
+                        <span key={idx} className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                          @{p.users?.user_name || p.users?.display_name || 'unknown'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
-
-      {/* Like and Comment Actions */}
-      <div className="flex items-center gap-4 border-t border-gray-100 pt-3">
-        <button
-          onClick={() => likeMutation.mutate()}
-          disabled={likeMutation.isPending}
-          className="flex items-center gap-1.5 text-gray-600 hover:text-purple-600 transition-colors"
-          data-testid="button-like-prediction"
-        >
-          <Heart
-            size={18}
-            className={liked ? "fill-purple-600 text-purple-600" : ""}
-          />
-          <span className="text-sm">{currentLikesCount}</span>
-        </button>
-
-        <button
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1.5 text-gray-600 hover:text-purple-600 transition-colors"
-          data-testid="button-comment-prediction"
-        >
-          <MessageCircle size={18} />
-          <span className="text-sm">{commentsData?.comments?.length || commentsCount}</span>
-        </button>
-      </div>
 
       {/* Comments Section */}
       {showComments && (
@@ -519,7 +520,7 @@ export default function CollaborativePredictionCard({
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-1 text-sm"
+              className="flex-1 text-sm bg-white text-black border-gray-300"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
