@@ -1877,6 +1877,13 @@ export default function UserProfile() {
                     ) : null}
                   </div>
 
+                  {/* Global Rank */}
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="text-lg">🏅</span>
+                    <span className="text-lg font-bold text-purple-600">#127</span>
+                    <span className="text-gray-600">global rank</span>
+                  </div>
+
                   {/* Quick Stats Matching Track Page */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
@@ -1901,10 +1908,6 @@ export default function UserProfile() {
                     <div className="flex items-center space-x-1">
                       <span>📊</span>
                       <span>Mostly Into: TV, Podcasts</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span>🏅</span>
-                      <span>#127 global rank</span>
                     </div>
                   </div>
                 </div>
