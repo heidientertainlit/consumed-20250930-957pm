@@ -82,6 +82,9 @@ export default function LibraryAI() {
     { id: 'tags', label: 'Custom Tags', description: 'Organize with your own tags (mood, genre, etc.)', enabled: false },
     { id: 'dates', label: 'Start/Finish Dates', description: 'Track when you started and finished', enabled: false },
     { id: 'privacy', label: 'Privacy Controls', description: 'Set items as public or private', enabled: true },
+    { id: 'share-activity', label: 'Share Tracking Activity', description: 'Show your tracking activity in your friends feed', enabled: true },
+    { id: 'friend-visibility', label: 'Friend Visibility', description: 'Allow friends to see your progress and ratings', enabled: true },
+    { id: 'collaborators', label: 'Invite Collaborators', description: 'Let friends contribute to your tracking and lists', enabled: false },
   ]);
   
   // List display preferences
