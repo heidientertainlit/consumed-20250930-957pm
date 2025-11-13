@@ -219,7 +219,7 @@ export default function InlineComposer() {
   const getPlaceholder = () => {
     const chip = actionChips.find(c => c.id === composerMode);
     if (chip) {
-      return `${chip.description} Example: "${chip.example}"`;
+      return `ex: ${chip.example}`;
     }
     return "Share your thoughts...";
   };
