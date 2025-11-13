@@ -1593,6 +1593,24 @@ export default function Feed() {
                 // Dummy predictions data
                 const predictions = [
                   {
+                    id: "pred-consumed",
+                    question: "Will The Bear win Outstanding Comedy Series at the 2025 Emmys?",
+                    creator: { username: "consumed" },
+                    invitedFriend: { username: "team" },
+                    creatorPrediction: "Yes",
+                    friendPrediction: "No",
+                    mediaTitle: "The Bear",
+                    participantCount: 142,
+                    userHasAnswered: false,
+                    poolId: "pred-pool-consumed",
+                    voteCounts: { yes: 89, no: 53, total: 142 },
+                    likesCount: 45,
+                    commentsCount: 18,
+                    isLiked: false,
+                    origin_type: 'consumed' as const,
+                    origin_user_id: null
+                  },
+                  {
                     id: "pred-1",
                     question: "Will Dune Part 2 win Best Picture at the Oscars?",
                     creator: { username: "heidi" },
@@ -1606,7 +1624,8 @@ export default function Feed() {
                     voteCounts: { yes: 5, no: 3, total: 8 },
                     likesCount: 12,
                     commentsCount: 3,
-                    isLiked: false
+                    isLiked: false,
+                    origin_type: 'user' as const
                   },
                   {
                     id: "pred-3",
@@ -1622,7 +1641,8 @@ export default function Feed() {
                     voteCounts: { yes: 9, no: 6, total: 15 },
                     likesCount: 8,
                     commentsCount: 2,
-                    isLiked: false
+                    isLiked: false,
+                    origin_type: 'user' as const
                   }
                 ];
                 const predictionIndex = Math.floor(postIndex / 8);
