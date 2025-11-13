@@ -121,21 +121,25 @@ export const predictionPools = pgTable("prediction_pools", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
-  type: text("type").notNull(), // "vote", "weekly", "awards", "bracket", "trivia"
+  type: text("type").notNull(), // "vote", "weekly", "awards", "bracket", "trivia", "predict"
   pointsReward: integer("points_reward").notNull(),
-  deadline: text("deadline").notNull(),
-  status: text("status").notNull(), // "open", "locked", "completed"
+  deadline: text("deadline"), // Optional - null for open-ended predictions
+  status: text("status").notNull().default('open'), // "open", "locked", "completed"
   category: text("category").notNull(),
   icon: text("icon").notNull(),
   options: jsonb("options"), // Array of options
   correctAnswer: text("correct_answer"), // For trivia: stores the correct answer
   inline: boolean("inline"),
-  participants: integer("participants"),
+  participants: integer("participants").default(0),
   sponsorName: text("sponsor_name"), // Sponsor branding
   sponsorLogoUrl: text("sponsor_logo_url"), // Sponsor logo URL
   sponsorCtaUrl: text("sponsor_cta_url"), // Sponsor call-to-action URL
   likesCount: integer("likes_count").default(0),
   commentsCount: integer("comments_count").default(0),
+  originType: text("origin_type"), // 'consumed' or 'user' - who created it
+  originUserId: varchar("origin_user_id"), // user ID if user-created
+  resolvedAt: timestamp("resolved_at"), // when prediction was resolved
+  resolvedBy: text("resolved_by"), // 'creator', 'crowd', or 'system'
   createdAt: timestamp("created_at"),
 });
 

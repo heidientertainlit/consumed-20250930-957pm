@@ -48,6 +48,14 @@ Preferred communication style: Simple, everyday language.
   - **Consumed Content**: Platform-curated predictions/polls/trivia added via SQL by consumed team, displayed with "🏆 Featured" badge and purple gradient border (from-purple-50 to-blue-50, border-purple-300), icon with purple-to-blue gradient background.
   - **User-Generated Content**: Created by users through inline composer, displayed with "@username asked:" format, simple white card with standard gray border, standard purple icon background.
   - Both types use the same `prediction_pools` table and edge functions but are visually distinguished in the feed for different user experiences.
+- **Prediction Resolution System**: Predictions support optional end dates and scoring system:
+  - **Scoring**: +20 points for correct predictions, -5 points for incorrect predictions (via `resolve-prediction` edge function)
+  - **Timed Predictions**: Optional `deadline` field - when end date passes, prediction resurfaces in feed for resolution
+  - **Open-Ended Predictions**: No deadline - active until manual resolution or "It happened!" notification
+  - **Creator Resolution**: Prediction creator resolves by selecting winning option within 48 hours of deadline
+  - **Crowd-Resolve Fallback**: If creator doesn't resolve, crowd voting determines outcome (planned feature)
+  - **Stats Tracking**: `user_prediction_stats` table tracks total predictions, wins, current/best streaks, win percentage
+  - **Profile Display**: Compact stats in profile header (win streak, predictions count, mostly into, global rank)
 
 ### Feature Specifications
 - **Media Tracking**: Simplified list-based system with privacy controls.
