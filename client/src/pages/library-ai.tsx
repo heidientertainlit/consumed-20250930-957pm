@@ -269,24 +269,24 @@ export default function LibraryAI() {
                         value={listLayout.defaultLayout}
                         onValueChange={(value: any) => setListLayout({ defaultLayout: value })}
                       >
-                        <SelectTrigger className="w-full bg-white" data-testid="select-default-layout">
-                          <SelectValue />
+                        <SelectTrigger className="w-full bg-white text-black border-gray-300" data-testid="select-default-layout">
+                          <SelectValue className="text-black" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="grid">
-                            <div className="flex items-center gap-2">
+                        <SelectContent className="bg-white border-gray-300">
+                          <SelectItem value="grid" className="text-black">
+                            <div className="flex items-center gap-2 text-black">
                               <LayoutGrid size={14} />
                               Grid - Visual cards with covers
                             </div>
                           </SelectItem>
-                          <SelectItem value="list">
-                            <div className="flex items-center gap-2">
+                          <SelectItem value="list" className="text-black">
+                            <div className="flex items-center gap-2 text-black">
                               <List size={14} />
                               List - Detailed rows with metadata
                             </div>
                           </SelectItem>
-                          <SelectItem value="compact">
-                            <div className="flex items-center gap-2">
+                          <SelectItem value="compact" className="text-black">
+                            <div className="flex items-center gap-2 text-black">
                               <List size={14} />
                               Compact - Dense text-only view
                             </div>
