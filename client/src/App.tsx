@@ -44,7 +44,7 @@ function Router() {
         </Route>
         <Route path="/">
           <ProtectedRoute>
-            <Track />
+            <Feed />
           </ProtectedRoute>
         </Route>
         <Route path="/track">
