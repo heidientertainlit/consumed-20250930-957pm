@@ -1890,25 +1890,21 @@ export default function UserProfile() {
                   <div className="flex flex-col gap-y-1 text-sm text-gray-600 mt-2">
                     <div className="flex items-center space-x-1">
                       <span>🔥</span>
-                      <span className="font-medium">5</span>
-                      <span>win streak</span>
+                      <span>5 win streak</span>
                     </div>
                     {userPredictionsList && userPredictionsList.length > 0 && (
                       <div className="flex items-center space-x-1">
                         <span>🎯</span>
-                        <span className="font-medium">12</span>
-                        <span>predictions</span>
+                        <span>12 predictions</span>
                       </div>
                     )}
                     <div className="flex items-center space-x-1">
                       <span>📊</span>
-                      <span>Media Types:</span>
-                      <span className="font-medium">TV, Podcasts</span>
+                      <span>Mostly Into: TV, Podcasts</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <span>🏅</span>
-                      <span className="font-medium">#127</span>
-                      <span>global rank</span>
+                      <span>#127 global rank</span>
                     </div>
                   </div>
                 </div>
