@@ -228,8 +228,8 @@ export default function InlineComposer() {
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
       {/* Info Header */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3 rounded-t-2xl">
-        <p className="text-white text-sm">
-          Choose what you want to share: a thought, a prediction, a poll, a review, or something you're consuming.
+        <p className="text-white text-sm font-medium">
+          Share your hot take
         </p>
       </div>
       
