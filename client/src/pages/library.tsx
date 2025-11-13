@@ -337,13 +337,25 @@ export default function Library() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-2 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            <LibraryIcon className="text-purple-600" size={32} />
-            Library
-          </h1>
-          <p className="text-base text-gray-600">
-            Discover new content by browsing your friends lists, personalized recommendations or trending content
-          </p>
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <div className="flex-1">
+              <h1 className="text-3xl font-semibold text-black mb-2 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                <LibraryIcon className="text-purple-600" size={32} />
+                Library
+              </h1>
+              <p className="text-base text-gray-600">
+                Discover new content by browsing your friends lists, personalized recommendations or trending content
+              </p>
+            </div>
+            <Button
+              onClick={() => setLocation('/library-ai')}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-md"
+              data-testid="button-personalize-library"
+            >
+              <Sparkles size={16} className="mr-2" />
+              Personalize with AI
+            </Button>
+          </div>
         </div>
 
         {/* Button Toggle Navigation */}
