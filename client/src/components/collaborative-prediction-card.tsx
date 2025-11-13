@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Users, Heart, MessageCircle } from "lucide-react";
+import { TrendingUp, Users, Heart, MessageCircle, ArrowUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -387,39 +387,6 @@ export default function CollaborativePredictionCard({
         {question}
       </p>
 
-      {/* Resolution Banner - Show when deadline passed */}
-      {needsResolution && (
-        <div className="mb-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 rounded-2xl">
-          <p className="text-sm font-bold text-orange-700 mb-2">⏰ Time's Up! What Actually Happened?</p>
-          <div className="space-y-2">
-            <button
-              onClick={() => {
-                setResolutionVote("Yes");
-                resolveMutation.mutate("Yes");
-              }}
-              disabled={resolveMutation.isPending}
-              className="w-full bg-white hover:bg-orange-50 border-2 border-orange-300 rounded-full px-4 py-2 text-sm font-medium text-gray-900 transition-all"
-              data-testid="button-resolve-yes"
-            >
-              {creatorPrediction} ✓
-            </button>
-            {friendPrediction && (
-              <button
-                onClick={() => {
-                  setResolutionVote("No");
-                  resolveMutation.mutate("No");
-                }}
-                disabled={resolveMutation.isPending}
-                className="w-full bg-white hover:bg-orange-50 border-2 border-orange-300 rounded-full px-4 py-2 text-sm font-medium text-gray-900 transition-all"
-                data-testid="button-resolve-no"
-              >
-                {friendPrediction} ✓
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Results Banner - Show when resolved */}
       {isCompleted && winning_option && (
         <div className="mb-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl">
@@ -441,27 +408,41 @@ export default function CollaborativePredictionCard({
               <span className="font-semibold">{creator.username}</span>
             </p>
           )}
-          <button
-            onClick={() => handleSelectOption("Yes")}
-            disabled={userHasAnswered || voteMutation.isPending}
-            className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
-              userHasAnswered 
-                ? "bg-white border-purple-300 opacity-60 cursor-default"
-                : selectedOption === "Yes"
-                ? "bg-purple-100 border-purple-500"
-                : "bg-white border-purple-300 hover:border-purple-400"
-            }`}
-            data-testid="button-vote-yes"
-          >
-            <p className={`text-sm font-medium text-left ${selectedOption === "Yes" ? "text-purple-700" : "text-black"}`}>
-              {creatorPrediction}
-            </p>
-            {voteCounts && (
-              <span className="text-sm font-semibold text-gray-700">
-                {yesPercentage}%
-              </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => needsResolution ? null : handleSelectOption("Yes")}
+              disabled={needsResolution || userHasAnswered || voteMutation.isPending}
+              className={`flex-1 rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
+                needsResolution
+                  ? "bg-white border-purple-300 cursor-default"
+                  : userHasAnswered 
+                  ? "bg-white border-purple-300 opacity-60 cursor-default"
+                  : selectedOption === "Yes"
+                  ? "bg-purple-100 border-purple-500"
+                  : "bg-white border-purple-300 hover:border-purple-400"
+              }`}
+              data-testid="button-vote-yes"
+            >
+              <p className={`text-sm font-medium text-left ${selectedOption === "Yes" ? "text-purple-700" : "text-black"}`}>
+                {creatorPrediction}
+              </p>
+              {voteCounts && (
+                <span className="text-sm font-semibold text-gray-700">
+                  {yesPercentage}%
+                </span>
+              )}
+            </button>
+            {needsResolution && (
+              <button
+                onClick={() => resolveMutation.mutate("Yes")}
+                disabled={resolveMutation.isPending}
+                className="p-2.5 rounded-full bg-orange-500 hover:bg-orange-600 text-white transition-all shadow-sm"
+                data-testid="button-resolve-yes"
+              >
+                <ArrowUp size={18} />
+              </button>
             )}
-          </button>
+          </div>
         </div>
 
         {/* Option 2 - Friend's prediction */}
@@ -472,27 +453,41 @@ export default function CollaborativePredictionCard({
                 <span className="font-semibold">{invitedFriend.username}</span>
               </p>
             )}
-            <button
-              onClick={() => handleSelectOption("No")}
-              disabled={userHasAnswered || voteMutation.isPending}
-              className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
-                userHasAnswered 
-                  ? "bg-white border-purple-300 opacity-60 cursor-default"
-                  : selectedOption === "No"
-                  ? "bg-purple-100 border-purple-500"
-                  : "bg-white border-purple-300 hover:border-purple-400"
-              }`}
-              data-testid="button-vote-no"
-            >
-              <p className={`text-sm font-medium text-left ${selectedOption === "No" ? "text-purple-700" : "text-black"}`}>
-                {friendPrediction}
-              </p>
-              {voteCounts && (
-                <span className="text-sm font-semibold text-gray-700">
-                  {noPercentage}%
-                </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => needsResolution ? null : handleSelectOption("No")}
+                disabled={needsResolution || userHasAnswered || voteMutation.isPending}
+                className={`flex-1 rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
+                  needsResolution
+                    ? "bg-white border-purple-300 cursor-default"
+                    : userHasAnswered 
+                    ? "bg-white border-purple-300 opacity-60 cursor-default"
+                    : selectedOption === "No"
+                    ? "bg-purple-100 border-purple-500"
+                    : "bg-white border-purple-300 hover:border-purple-400"
+                }`}
+                data-testid="button-vote-no"
+              >
+                <p className={`text-sm font-medium text-left ${selectedOption === "No" ? "text-purple-700" : "text-black"}`}>
+                  {friendPrediction}
+                </p>
+                {voteCounts && (
+                  <span className="text-sm font-semibold text-gray-700">
+                    {noPercentage}%
+                  </span>
+                )}
+              </button>
+              {needsResolution && (
+                <button
+                  onClick={() => resolveMutation.mutate("No")}
+                  disabled={resolveMutation.isPending}
+                  className="p-2.5 rounded-full bg-orange-500 hover:bg-orange-600 text-white transition-all shadow-sm"
+                  data-testid="button-resolve-no"
+                >
+                  <ArrowUp size={18} />
+                </button>
               )}
-            </button>
+            </div>
           </div>
         ) : (
           <div>
