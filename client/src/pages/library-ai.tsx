@@ -21,11 +21,24 @@ interface LibrarySection {
   filters?: string[];
 }
 
-interface TrackingPreference {
+interface MediaTypePreference {
   id: string;
   label: string;
   enabled: boolean;
-  required?: boolean;
+  icon: string;
+}
+
+interface TrackingOption {
+  id: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+}
+
+interface ListDisplayPreference {
+  defaultView: 'grid' | 'list' | 'compact';
+  showCovers: boolean;
+  showProgress: boolean;
 }
 
 export default function LibraryAI() {
@@ -44,15 +57,31 @@ export default function LibraryAI() {
     { id: 'dnf', title: 'Did Not Finish', enabled: false, displayMode: 'list' },
   ]);
   
-  // Tracking customization state
-  const [trackingFields, setTrackingFields] = useState<TrackingPreference[]>([
-    { id: 'rating', label: 'Rating', enabled: true },
-    { id: 'notes', label: 'Notes/Review', enabled: true },
-    { id: 'progress', label: 'Progress Tracking', enabled: true, required: true },
-    { id: 'startDate', label: 'Start Date', enabled: false },
-    { id: 'finishDate', label: 'Finish Date', enabled: false },
-    { id: 'tags', label: 'Custom Tags', enabled: false },
+  // Media types tracking
+  const [mediaTypes, setMediaTypes] = useState<MediaTypePreference[]>([
+    { id: 'movies', label: 'Movies', enabled: true, icon: '🎬' },
+    { id: 'tv', label: 'TV Shows', enabled: true, icon: '📺' },
+    { id: 'books', label: 'Books', enabled: true, icon: '📚' },
+    { id: 'music', label: 'Music', enabled: true, icon: '🎵' },
+    { id: 'podcasts', label: 'Podcasts', enabled: false, icon: '🎙️' },
+    { id: 'games', label: 'Games', enabled: false, icon: '🎮' },
   ]);
+  
+  // Tracking options
+  const [trackingOptions, setTrackingOptions] = useState<TrackingOption[]>([
+    { id: 'rating', label: 'Ratings', description: 'Rate items on a 5-star scale', enabled: true },
+    { id: 'notes', label: 'Notes & Reviews', description: 'Write detailed reviews and thoughts', enabled: true },
+    { id: 'tags', label: 'Custom Tags', description: 'Organize with your own tags (mood, genre, etc.)', enabled: false },
+    { id: 'dates', label: 'Start/Finish Dates', description: 'Track when you started and finished', enabled: false },
+    { id: 'privacy', label: 'Privacy Controls', description: 'Set items as public or private', enabled: true },
+  ]);
+  
+  // List display preferences
+  const [listDisplay, setListDisplay] = useState<ListDisplayPreference>({
+    defaultView: 'grid',
+    showCovers: true,
+    showProgress: true,
+  });
   
   // AI Chat state
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
@@ -91,11 +120,23 @@ export default function LibraryAI() {
     );
   };
   
-  // Toggle tracking field
-  const toggleTrackingField = (id: string) => {
-    setTrackingFields(fields => 
-      fields.map(f => f.id === id && !f.required ? { ...f, enabled: !f.enabled } : f)
+  // Toggle media type
+  const toggleMediaType = (id: string) => {
+    setMediaTypes(types => 
+      types.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t)
     );
+  };
+  
+  // Toggle tracking option
+  const toggleTrackingOption = (id: string) => {
+    setTrackingOptions(options => 
+      options.map(o => o.id === id ? { ...o, enabled: !o.enabled } : o)
+    );
+  };
+  
+  // Update list display preference
+  const updateListDisplay = (key: keyof ListDisplayPreference, value: any) => {
+    setListDisplay(prev => ({ ...prev, [key]: value }));
   };
   
   // Send message to AI
@@ -118,7 +159,9 @@ export default function LibraryAI() {
         body: JSON.stringify({
           prompt: userInput,
           context: activeTab,
-          currentConfig: activeTab === 'library' ? librarySections : trackingFields
+          currentConfig: activeTab === 'library' 
+            ? librarySections 
+            : { mediaTypes, trackingOptions, listDisplay }
         }),
       });
       
@@ -132,8 +175,10 @@ export default function LibraryAI() {
       if (config) {
         if (activeTab === 'library' && config.sections) {
           setLibrarySections(config.sections);
-        } else if (activeTab === 'tracking' && config.fields) {
-          setTrackingFields(config.fields);
+        } else if (activeTab === 'tracking') {
+          if (config.mediaTypes) setMediaTypes(config.mediaTypes);
+          if (config.trackingOptions) setTrackingOptions(config.trackingOptions);
+          if (config.listDisplay) setListDisplay(config.listDisplay);
         }
         
         toast({
@@ -156,7 +201,7 @@ export default function LibraryAI() {
   const previewConfig = () => {
     const config = activeTab === 'library' 
       ? { library: librarySections }
-      : { tracking: trackingFields };
+      : { tracking: { mediaTypes, trackingOptions, listDisplay } };
     
     toast({
       title: "Current Configuration",
@@ -306,30 +351,117 @@ export default function LibraryAI() {
                   </TabsContent>
                   
                   {/* Tracking Preferences Tab */}
-                  <TabsContent value="tracking" className="space-y-4 mt-4">
-                    <div className="text-sm text-gray-700 mb-4">
-                      Choose which fields appear when you track media
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {trackingFields.map((field) => (
-                        <div key={field.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between">
+                  <TabsContent value="tracking" className="space-y-6 mt-4">
+                    {/* Media Types Section */}
+                    <div>
+                      <h3 className="font-semibold text-black mb-2">Media Types</h3>
+                      <div className="text-sm text-gray-700 mb-3">
+                        Choose which types of content you want to track
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {mediaTypes.map((type) => (
+                          <div key={type.id} className="bg-white border border-gray-200 rounded-lg p-3">
                             <div className="flex items-center gap-3">
                               <Switch
-                                checked={field.enabled}
-                                onCheckedChange={() => toggleTrackingField(field.id)}
-                                disabled={field.required}
-                                data-testid={`toggle-field-${field.id}`}
+                                checked={type.enabled}
+                                onCheckedChange={() => toggleMediaType(type.id)}
+                                data-testid={`toggle-media-${type.id}`}
                               />
-                              <Label className={field.required ? 'font-medium text-purple-600' : 'font-medium text-black'}>
-                                {field.label}
-                                {field.required && <span className="text-xs text-gray-600 ml-2">(Required)</span>}
+                              <Label className="font-medium text-black flex items-center gap-2">
+                                <span>{type.icon}</span>
+                                {type.label}
                               </Label>
                             </div>
                           </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Tracking Options Section */}
+                    <div>
+                      <h3 className="font-semibold text-black mb-2">Tracking Options</h3>
+                      <div className="text-sm text-gray-700 mb-3">
+                        Customize what information you capture when logging media
+                      </div>
+                      <div className="space-y-2">
+                        {trackingOptions.map((option) => (
+                          <div key={option.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <Switch
+                                checked={option.enabled}
+                                onCheckedChange={() => toggleTrackingOption(option.id)}
+                                data-testid={`toggle-option-${option.id}`}
+                                className="mt-1"
+                              />
+                              <div className="flex-1">
+                                <Label className="font-medium text-black block mb-1">
+                                  {option.label}
+                                </Label>
+                                <p className="text-xs text-gray-600">{option.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* List Display Preferences Section */}
+                    <div>
+                      <h3 className="font-semibold text-black mb-2">List Display</h3>
+                      <div className="text-sm text-gray-700 mb-3">
+                        Control how your lists are displayed
+                      </div>
+                      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+                        <div>
+                          <Label className="text-sm font-medium text-black mb-2 block">Default View</Label>
+                          <Select
+                            value={listDisplay.defaultView}
+                            onValueChange={(value: any) => updateListDisplay('defaultView', value)}
+                          >
+                            <SelectTrigger className="w-full" data-testid="select-default-view">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="grid">
+                                <div className="flex items-center gap-2">
+                                  <LayoutGrid size={14} />
+                                  Grid (visual covers)
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="list">
+                                <div className="flex items-center gap-2">
+                                  <List size={14} />
+                                  List (compact rows)
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="compact">
+                                <div className="flex items-center gap-2">
+                                  <List size={14} />
+                                  Compact (text only)
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                      ))}
+                        
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-black">Show Cover Images</Label>
+                          <Switch
+                            checked={listDisplay.showCovers}
+                            onCheckedChange={(checked) => updateListDisplay('showCovers', checked)}
+                            data-testid="toggle-show-covers"
+                          />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-black">Show Progress Bars</Label>
+                          <Switch
+                            checked={listDisplay.showProgress}
+                            onCheckedChange={(checked) => updateListDisplay('showProgress', checked)}
+                            data-testid="toggle-show-progress"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -394,7 +526,7 @@ export default function LibraryAI() {
                     placeholder={
                       activeTab === 'library'
                         ? "e.g., Show only books I'm currently reading"
-                        : "e.g., I only want to track ratings, nothing else"
+                        : "e.g., I only want to track movies and TV shows"
                     }
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
@@ -434,16 +566,22 @@ export default function LibraryAI() {
                     ) : (
                       <>
                         <button
-                          onClick={() => setUserInput("Simplify tracking - I only want to mark things as watched")}
+                          onClick={() => setUserInput("I only want to track movies and books, nothing else")}
                           className="text-xs text-purple-600 hover:underline block"
                         >
-                          "Simplify tracking - I only want to mark as watched"
+                          "I only want to track movies and books, nothing else"
                         </button>
                         <button
-                          onClick={() => setUserInput("Add a mood field to track how content made me feel")}
+                          onClick={() => setUserInput("Turn off notes and tags, I just want ratings")}
                           className="text-xs text-purple-600 hover:underline block"
                         >
-                          "Add a mood field for tracking emotions"
+                          "Turn off notes and tags, I just want ratings"
+                        </button>
+                        <button
+                          onClick={() => setUserInput("Show my lists as compact text, no covers")}
+                          className="text-xs text-purple-600 hover:underline block"
+                        >
+                          "Show my lists as compact text, no covers"
                         </button>
                       </>
                     )}
