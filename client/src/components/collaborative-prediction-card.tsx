@@ -336,9 +336,11 @@ export default function CollaborativePredictionCard({
       <div className="space-y-2 mb-3">
         {/* Option 1 - Creator's prediction */}
         <div>
-          <p className="text-xs text-gray-600 mb-1 ml-1">
-            <span className="font-semibold">{creator.username}</span>
-          </p>
+          {!isConsumedPrediction && (
+            <p className="text-xs text-gray-600 mb-1 ml-1">
+              <span className="font-semibold">{creator.username}</span>
+            </p>
+          )}
           <button
             onClick={() => handleSelectOption("Yes")}
             disabled={userHasAnswered || voteMutation.isPending}
@@ -365,9 +367,11 @@ export default function CollaborativePredictionCard({
         {/* Option 2 - Friend's prediction */}
         {friendPrediction ? (
           <div>
-            <p className="text-xs text-gray-600 mb-1 ml-1">
-              <span className="font-semibold">{invitedFriend.username}</span>
-            </p>
+            {!isConsumedPrediction && (
+              <p className="text-xs text-gray-600 mb-1 ml-1">
+                <span className="font-semibold">{invitedFriend.username}</span>
+              </p>
+            )}
             <button
               onClick={() => handleSelectOption("No")}
               disabled={userHasAnswered || voteMutation.isPending}
@@ -392,9 +396,11 @@ export default function CollaborativePredictionCard({
           </div>
         ) : (
           <div>
-            <p className="text-xs text-gray-600 mb-1 ml-1">
-              <span className="font-semibold">{invitedFriend.username}</span>
-            </p>
+            {!isConsumedPrediction && (
+              <p className="text-xs text-gray-600 mb-1 ml-1">
+                <span className="font-semibold">{invitedFriend.username}</span>
+              </p>
+            )}
             <div className="flex-1 bg-gray-50 rounded-full px-4 py-2.5 border-2 border-gray-200">
               <p className="text-sm text-gray-400 italic text-left">Pending...</p>
             </div>
