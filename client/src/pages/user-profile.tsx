@@ -2088,6 +2088,16 @@ export default function UserProfile() {
         {/* Your Stats */}
         <div ref={statsRef} className="px-4 mb-8">
           <div className="mt-6">
+            {/* Prediction Stats - One Liners */}
+            {userPredictionsList && userPredictionsList.length > 0 && (
+              <div className="mb-4 space-y-1.5">
+                <p className="text-sm text-gray-700">🔥 <span className="font-semibold">5 Win Streak</span> • Best: 12</p>
+                <p className="text-sm text-gray-700">📊 <span className="font-semibold">Best in TV Shows</span></p>
+                <p className="text-sm text-gray-700">⚡ <span className="font-semibold">2.5 days</span> avg resolution</p>
+                <p className="text-sm text-gray-700">🏅 <span className="font-semibold">#127</span> global rank</p>
+              </div>
+            )}
+            
             <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Stats</h3>
             {isLoadingStats ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
@@ -2147,67 +2157,6 @@ export default function UserProfile() {
                 </div>
               </div>
             )}
-
-            {/* Prediction Pulse - Compact Stats */}
-            <div className="mt-4 bg-white rounded-xl border border-purple-200 p-4 shadow-sm">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Win Streak */}
-                {userPredictionsList && userPredictionsList.length > 0 ? (
-                  <div className="flex flex-col items-center justify-center p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
-                    <div className="text-2xl mb-1">🔥</div>
-                    <div className="text-sm font-bold text-gray-900">5 Wins</div>
-                    <div className="text-xs text-gray-600">Current • Best: 12</div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-200 rounded-lg">
-                    <div className="text-2xl mb-1 opacity-40">🔥</div>
-                    <div className="text-xs text-gray-500 text-center">Make your first<br />prediction</div>
-                  </div>
-                )}
-
-                {/* Category Expertise */}
-                {userPredictionsList && userPredictionsList.length > 0 ? (
-                  <div className="flex flex-col items-center justify-center p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
-                    <div className="text-2xl mb-1">📊</div>
-                    <div className="text-sm font-bold text-gray-900">TV Shows</div>
-                    <div className="text-xs text-gray-600">Best Category</div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-200 rounded-lg">
-                    <div className="text-2xl mb-1 opacity-40">📊</div>
-                    <div className="text-xs text-gray-500 text-center">Category stats<br />coming soon</div>
-                  </div>
-                )}
-
-                {/* Average Resolution Time */}
-                {userPredictionsList && userPredictionsList.length > 0 ? (
-                  <div className="flex flex-col items-center justify-center p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg">
-                    <div className="text-2xl mb-1">⚡</div>
-                    <div className="text-sm font-bold text-gray-900">2.5 days</div>
-                    <div className="text-xs text-gray-600">Avg Resolve Time</div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-200 rounded-lg">
-                    <div className="text-2xl mb-1 opacity-40">⚡</div>
-                    <div className="text-xs text-gray-500 text-center">Create predictions<br />to track</div>
-                  </div>
-                )}
-
-                {/* Leaderboard Rank */}
-                {userPredictionsList && userPredictionsList.length > 0 ? (
-                  <div className="flex flex-col items-center justify-center p-3 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-lg">
-                    <div className="text-2xl mb-1">🏅</div>
-                    <div className="text-sm font-bold text-gray-900">#127</div>
-                    <div className="text-xs text-gray-600">Global Rank</div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-200 rounded-lg">
-                    <div className="text-2xl mb-1 opacity-40">🏅</div>
-                    <div className="text-xs text-gray-500 text-center">Rank after<br />predictions</div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
