@@ -492,14 +492,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             
             {!isSearchExpanded && (
               <>
-                <Link href="/friendsupdates">
-                  <button
-                    className="hover:opacity-70 transition-opacity"
-                    data-testid="friendsupdates-button"
-                  >
-                    <Activity className="text-white" size={20} />
-                  </button>
-                </Link>
                 <NotificationBell />
               </>
             )}
