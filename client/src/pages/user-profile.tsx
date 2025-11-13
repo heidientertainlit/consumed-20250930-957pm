@@ -1878,13 +1878,38 @@ export default function UserProfile() {
                   </div>
 
                   {/* Quick Stats Matching Track Page */}
-                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <TrendingUp size={16} className="text-purple-600" />
                       <span className="font-medium">{totalItemsLogged}</span>
                       <span>items logged</span>
                     </div>
                   </div>
+                  
+                  {/* Prediction Stats */}
+                  {userPredictionsList && userPredictionsList.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 mt-2">
+                      <div className="flex items-center space-x-1">
+                        <span>🔥</span>
+                        <span className="font-medium">5 Win Streak</span>
+                        <span className="text-gray-500">• Best: 12</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <span>📊</span>
+                        <span className="font-medium">Best in TV Shows</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <span>⚡</span>
+                        <span className="font-medium">2.5 days</span>
+                        <span>avg resolution</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <span>🏅</span>
+                        <span className="font-medium">#127</span>
+                        <span>global rank</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
@@ -2088,16 +2113,6 @@ export default function UserProfile() {
         {/* Your Stats */}
         <div ref={statsRef} className="px-4 mb-8">
           <div className="mt-6">
-            {/* Prediction Stats - One Liners */}
-            {userPredictionsList && userPredictionsList.length > 0 && (
-              <div className="mb-4 space-y-1.5">
-                <p className="text-sm text-gray-700">🔥 <span className="font-semibold">5 Win Streak</span> • Best: 12</p>
-                <p className="text-sm text-gray-700">📊 <span className="font-semibold">Best in TV Shows</span></p>
-                <p className="text-sm text-gray-700">⚡ <span className="font-semibold">2.5 days</span> avg resolution</p>
-                <p className="text-sm text-gray-700">🏅 <span className="font-semibold">#127</span> global rank</p>
-              </div>
-            )}
-            
             <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Stats</h3>
             {isLoadingStats ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
