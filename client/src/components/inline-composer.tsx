@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Plus, Star, Target, Vote, MessageCircle, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import MentionTextarea from "@/components/mention-textarea";
 import { queryClient } from "@/lib/queryClient";
 
@@ -21,12 +23,35 @@ export default function InlineComposer() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<any>(null);
+  const [selectedList, setSelectedList] = useState<string>("");
   
   // Prediction-specific state (now uses same format as polls)
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
 
   // Poll-specific state
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  
+  // Fetch user lists for add-media mode
+  const { data: userLists = [] } = useQuery({
+    queryKey: ['user-lists'],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-user-lists`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+  });
 
   // Action chips configuration
   const actionChips = [
@@ -52,7 +77,7 @@ export default function InlineComposer() {
       label: "📦 Poll", 
       color: "text-blue-600",
       description: "Ask your friends or followers to choose between options. It's for taste, favorites, preferences—fun debates.",
-      example: "Which is the best Marvel movie of all time?\nOptions: Endgame, Winter Soldier, Iron Man, Civil War"
+      example: "Which is the best Marvel movie of all time?"
     },
     { 
       id: "rate-review" as ComposerMode, 
@@ -68,7 +93,7 @@ export default function InlineComposer() {
       label: "➕ Add Media", 
       color: "text-purple-600",
       description: "Log something you're watching, reading, listening to, or playing—past or present.",
-      example: 'Added: The Bear (Season 3)\nStatus: Currently Watching'
+      example: 'Added: The Bear (Season 3)'
     },
   ];
 
@@ -80,6 +105,7 @@ export default function InlineComposer() {
     setSearchQuery("");
     setSearchResults([]);
     setAttachedMedia(null);
+    setSelectedList("");
     setPredictionOptions(["", ""]);
     setPollOptions(["", ""]);
   };
@@ -353,27 +379,62 @@ export default function InlineComposer() {
         <div className="px-4 pb-3 border-t border-gray-100 pt-3 space-y-2">
           {/* Attached Media Display */}
           {attachedMedia && (
-            <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
-              {attachedMedia.poster_url && (
-                <img 
-                  src={attachedMedia.poster_url} 
-                  alt={attachedMedia.title}
-                  className="w-12 h-16 object-cover rounded"
-                />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{attachedMedia.title}</p>
-                <p className="text-xs text-gray-500">{attachedMedia.type}</p>
+            <>
+              <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
+                {attachedMedia.poster_url && (
+                  <img 
+                    src={attachedMedia.poster_url} 
+                    alt={attachedMedia.title}
+                    className="w-12 h-16 object-cover rounded"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{attachedMedia.title}</p>
+                  <p className="text-xs text-gray-500">{attachedMedia.type}</p>
+                </div>
+                <Button
+                  onClick={() => setAttachedMedia(null)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                onClick={() => setAttachedMedia(null)}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
+              
+              {/* List Selection for Add Media Mode */}
+              {composerMode === "add-media" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-gray-700">Add to list:</label>
+                  <Select value={selectedList} onValueChange={setSelectedList}>
+                    <SelectTrigger className="w-full bg-white text-black border-gray-300">
+                      <SelectValue placeholder="Select a list" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-gray-300">
+                      {userLists
+                        .filter((list: any) => list.is_default)
+                        .map((list: any) => (
+                          <SelectItem key={list.id} value={list.id.toString()} className="text-black">
+                            {list.title}
+                          </SelectItem>
+                        ))}
+                      {userLists.filter((list: any) => !list.is_default).length > 0 && (
+                        <>
+                          <div className="h-px bg-gray-200 my-1" />
+                          {userLists
+                            .filter((list: any) => !list.is_default)
+                            .map((list: any) => (
+                              <SelectItem key={list.id} value={list.id.toString()} className="text-black">
+                                {list.title}
+                              </SelectItem>
+                            ))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
           )}
 
           {/* Media Search */}
