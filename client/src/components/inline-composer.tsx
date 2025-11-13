@@ -217,17 +217,9 @@ export default function InlineComposer() {
   };
 
   const getPlaceholder = () => {
-    if (composerMode === "thought") {
-      return "Share your thoughts...";
-    }
-    if (composerMode === "rate-review" || composerMode === "add-media") {
-      return "What are you watching, reading, or listening to?";
-    }
-    if (composerMode === "prediction") {
-      return "Ask a prediction question (ex: Will Dune Part 3 get greenlit?)";
-    }
-    if (composerMode === "poll") {
-      return "Ask a poll question...";
+    const chip = actionChips.find(c => c.id === composerMode);
+    if (chip) {
+      return `${chip.description}\n\nExample: "${chip.example}"`;
     }
     return "Share your thoughts...";
   };
@@ -275,20 +267,6 @@ export default function InlineComposer() {
             );
           })}
         </div>
-        
-        {/* Helper Text for Selected Mode */}
-        {composerMode && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-            <p className="text-xs font-semibold text-gray-700 mb-1">What it is:</p>
-            <p className="text-xs text-gray-600 mb-2">
-              {actionChips.find(chip => chip.id === composerMode)?.description}
-            </p>
-            <p className="text-xs font-semibold text-gray-700 mb-1">Example:</p>
-            <p className="text-xs text-gray-500 italic">
-              "{actionChips.find(chip => chip.id === composerMode)?.example}"
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Contextual UI - Expands based on selected chip */}
