@@ -190,24 +190,24 @@ export default function LibraryAI() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Visual Builder (2/3 width) */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings size={20} />
+            <Card className="bg-white border border-gray-200">
+              <CardHeader className="bg-white">
+                <CardTitle className="flex items-center gap-2 text-black">
+                  <Settings size={20} className="text-gray-700" />
                   Customization Builder
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-600">
                   Drag to reorder, toggle sections, and customize display modes
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="bg-white">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="library" data-testid="tab-library-layout">
+                  <TabsList className="grid w-full grid-cols-2 bg-gray-100">
+                    <TabsTrigger value="library" data-testid="tab-library-layout" className="text-gray-700 data-[state=active]:bg-white data-[state=active]:text-black">
                       <BookOpen size={16} className="mr-2" />
                       Library Layout
                     </TabsTrigger>
-                    <TabsTrigger value="tracking" data-testid="tab-tracking-prefs">
+                    <TabsTrigger value="tracking" data-testid="tab-tracking-prefs" className="text-gray-700 data-[state=active]:bg-white data-[state=active]:text-black">
                       <Settings size={16} className="mr-2" />
                       Tracking Preferences
                     </TabsTrigger>
@@ -215,7 +215,7 @@ export default function LibraryAI() {
                   
                   {/* Library Layout Tab */}
                   <TabsContent value="library" className="space-y-4 mt-4">
-                    <div className="text-sm text-gray-600 mb-4">
+                    <div className="text-sm text-gray-700 mb-4">
                       Configure which sections appear in your Library and how they're displayed
                     </div>
                     
@@ -252,7 +252,7 @@ export default function LibraryAI() {
                                               onCheckedChange={() => toggleSection(section.id)}
                                               data-testid={`toggle-${section.id}`}
                                             />
-                                            <Label className="font-medium">{section.title}</Label>
+                                            <Label className="font-medium text-black">{section.title}</Label>
                                           </div>
                                           
                                           {section.enabled && (
@@ -307,13 +307,13 @@ export default function LibraryAI() {
                   
                   {/* Tracking Preferences Tab */}
                   <TabsContent value="tracking" className="space-y-4 mt-4">
-                    <div className="text-sm text-gray-600 mb-4">
+                    <div className="text-sm text-gray-700 mb-4">
                       Choose which fields appear when you track media
                     </div>
                     
                     <div className="space-y-2">
                       {trackingFields.map((field) => (
-                        <div key={field.id} className="bg-white border rounded-lg p-4">
+                        <div key={field.id} className="bg-white border border-gray-200 rounded-lg p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <Switch
@@ -322,9 +322,9 @@ export default function LibraryAI() {
                                 disabled={field.required}
                                 data-testid={`toggle-field-${field.id}`}
                               />
-                              <Label className={field.required ? 'font-medium text-purple-600' : 'font-medium'}>
+                              <Label className={field.required ? 'font-medium text-purple-600' : 'font-medium text-black'}>
                                 {field.label}
-                                {field.required && <span className="text-xs text-gray-500 ml-2">(Required)</span>}
+                                {field.required && <span className="text-xs text-gray-600 ml-2">(Required)</span>}
                               </Label>
                             </div>
                           </div>
@@ -335,12 +335,12 @@ export default function LibraryAI() {
                 </Tabs>
                 
                 {/* Action Buttons */}
-                <div className="flex gap-2 mt-6 pt-4 border-t">
-                  <Button onClick={previewConfig} variant="outline" data-testid="button-preview-config">
+                <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200">
+                  <Button onClick={previewConfig} variant="outline" className="text-black border-gray-300" data-testid="button-preview-config">
                     <Eye size={16} className="mr-2" />
                     Preview Config
                   </Button>
-                  <Button className="bg-purple-600 hover:bg-purple-700" data-testid="button-apply-config">
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white" data-testid="button-apply-config">
                     Apply Changes
                   </Button>
                 </div>
@@ -350,17 +350,17 @@ export default function LibraryAI() {
           
           {/* Right: AI Chat (1/3 width) */}
           <div className="lg:col-span-1">
-            <Card className="h-full flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="h-full flex flex-col bg-white border border-gray-200">
+              <CardHeader className="bg-white">
+                <CardTitle className="flex items-center gap-2 text-black">
                   <Sparkles className="text-purple-600" size={20} />
                   AI Assistant
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-600">
                   Tell me what you want, I'll configure it for you
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
+              <CardContent className="flex-1 flex flex-col bg-white">
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-96">
                   {messages.map((msg, idx) => (
@@ -372,16 +372,16 @@ export default function LibraryAI() {
                           : 'bg-gray-100 mr-8'
                       }`}
                     >
-                      <div className="text-xs font-medium text-gray-600 mb-1">
+                      <div className="text-xs font-medium text-gray-700 mb-1">
                         {msg.role === 'user' ? 'You' : 'AI'}
                       </div>
-                      <div className="text-sm">{msg.content}</div>
+                      <div className="text-sm text-black">{msg.content}</div>
                     </div>
                   ))}
                   {isGenerating && (
                     <div className="bg-gray-100 mr-8 p-3 rounded-lg">
-                      <div className="text-xs font-medium text-gray-600 mb-1">AI</div>
-                      <div className="flex items-center gap-2 text-sm">
+                      <div className="text-xs font-medium text-gray-700 mb-1">AI</div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
                         <div className="animate-pulse">Thinking...</div>
                       </div>
                     </div>
@@ -405,7 +405,7 @@ export default function LibraryAI() {
                   <Button
                     onClick={sendMessage}
                     disabled={isGenerating || !userInput.trim()}
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
                     data-testid="button-send-message"
                   >
                     <Send size={16} />
@@ -413,8 +413,8 @@ export default function LibraryAI() {
                 </div>
                 
                 {/* Example Prompts */}
-                <div className="mt-4 pt-4 border-t">
-                  <div className="text-xs font-medium text-gray-600 mb-2">Try asking:</div>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="text-xs font-medium text-gray-700 mb-2">Try asking:</div>
                   <div className="space-y-1">
                     {activeTab === 'library' ? (
                       <>
