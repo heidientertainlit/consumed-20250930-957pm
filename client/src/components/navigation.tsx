@@ -507,7 +507,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
           >
             <Activity className="text-white" size={22} />
-            <span className="text-xs font-medium text-white">Feed</span>
+            <span className="text-xs font-medium text-white whitespace-nowrap">Feed</span>
           </Link>
 
           <Link
@@ -515,7 +515,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
           >
             <Trophy className="text-white" size={22} />
-            <span className="text-xs font-medium text-white">Leaderboard</span>
+            <span className="text-xs font-medium text-white whitespace-nowrap">Leaderboard</span>
           </Link>
 
           <Link
@@ -523,7 +523,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/library" ? "bg-white/20" : ""}`}
           >
             <Library className="text-white" size={22} />
-            <span className="text-xs font-medium text-white">Library</span>
+            <span className="text-xs font-medium text-white whitespace-nowrap">Library</span>
           </Link>
 
           <Link
@@ -534,7 +534,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               <User className="text-white" size={22} />
               <Dna className="text-white absolute -left-3 -top-1" size={14} />
             </div>
-            <span className="text-xs font-medium text-white">Me</span>
+            <span className="text-xs font-medium text-white whitespace-nowrap">Me</span>
           </Link>
 
         </div>
