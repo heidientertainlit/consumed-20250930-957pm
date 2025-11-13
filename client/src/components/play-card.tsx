@@ -12,6 +12,17 @@ interface PlayCardProps {
   compact?: boolean;
 }
 
+interface Game {
+  id: string;
+  question?: string;
+  title?: string;
+  options: any[];
+  type: string;
+  points_reward?: number;
+  origin_type?: 'consumed' | 'user';
+  origin_user_id?: string;
+}
+
 export default function PlayCard({ game, onComplete, compact = false }: PlayCardProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -105,6 +116,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
   };
 
   const options = getOptions();
+  const isConsumedContent = game.origin_type === 'consumed';
 
   // Compact version for friendsupdate page
   if (compact) {
@@ -126,16 +138,22 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
     }
 
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl mb-4">
+      <Card className={`${isConsumedContent ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl mb-4`}>
         <CardContent className="p-3">
           {/* Header */}
           <div className="flex items-center space-x-2 mb-2">
-            <div className="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center">
-              {getGameIcon()}
+            <div className={`w-7 h-7 ${isConsumedContent ? 'bg-gradient-to-br from-purple-500 to-blue-500' : 'bg-purple-100'} rounded-full flex items-center justify-center`}>
+              {isConsumedContent ? <Trophy size={14} className="text-white" /> : getGameIcon()}
             </div>
-            <div>
-              <span className="text-xs font-semibold text-purple-600">{getGameType()}</span>
-              {game.title && <span className="text-xs text-gray-500 ml-2">{game.title}</span>}
+            <div className="flex-1">
+              {isConsumedContent ? (
+                <span className="text-xs font-bold text-purple-700">🏆 Featured {getGameType()}</span>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-semibold text-gray-900">@{game.creator_username || 'user'}</span>
+                  <span className="text-xs text-gray-500">asked:</span>
+                </div>
+              )}
             </div>
           </div>
 

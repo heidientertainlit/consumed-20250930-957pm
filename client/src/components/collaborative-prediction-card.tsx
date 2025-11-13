@@ -30,6 +30,8 @@ interface CollaborativePrediction {
     no: number;
     total: number;
   };
+  origin_type?: 'consumed' | 'user';
+  origin_user_id?: string;
 }
 
 interface CollaborativePredictionCardProps {
@@ -41,7 +43,7 @@ export default function CollaborativePredictionCard({
   prediction, 
   onCastPrediction 
 }: CollaborativePredictionCardProps) {
-  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts } = prediction;
+  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id } = prediction;
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -297,23 +299,31 @@ export default function CollaborativePredictionCard({
     commentMutation.mutate(commentText);
   };
 
+  const isConsumedPrediction = origin_type === 'consumed';
+  
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-4 mb-4">
+    <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4 mb-4`}>
       {/* Header */}
-      <div className="flex items-center space-x-2 mb-3">
-        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-          <TrendingUp size={16} className="text-purple-600" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold text-purple-600">{creator.username}</span>
-            {" & "}
-            <span className="font-semibold text-purple-600">{invitedFriend.username}</span>
-            {" predict"}
-          </p>
-          {mediaTitle && (
-            <p className="text-xs text-gray-500">about {mediaTitle}</p>
-          )}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-2">
+          <div className={`w-8 h-8 ${isConsumedPrediction ? 'bg-gradient-to-br from-purple-500 to-blue-500' : 'bg-purple-100'} rounded-full flex items-center justify-center`}>
+            <TrendingUp size={16} className={isConsumedPrediction ? 'text-white' : 'text-purple-600'} />
+          </div>
+          <div className="flex-1">
+            {isConsumedPrediction ? (
+              <p className="text-sm">
+                <span className="font-bold text-purple-700">🏆 Featured Prediction</span>
+              </p>
+            ) : (
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold text-gray-900">@{creator.username}</span>
+                <span className="text-gray-500"> asked:</span>
+              </p>
+            )}
+            {mediaTitle && (
+              <p className="text-xs text-gray-500">about {mediaTitle}</p>
+            )}
+          </div>
         </div>
       </div>
 
