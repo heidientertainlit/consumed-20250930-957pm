@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Star, Target, Vote, MessageCircle, Loader2 } from "lucide-react";
+import { X, Plus, Star, Target, Vote, MessageCircle, Loader2, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
@@ -8,12 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import MentionTextarea from "@/components/mention-textarea";
 import { queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 type ComposerMode = "" | "prediction" | "poll" | "thought" | "rate-review" | "add-media";
 
 export default function InlineComposer() {
   const { session, user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [composerMode, setComposerMode] = useState<ComposerMode>("thought");
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
@@ -276,7 +278,7 @@ export default function InlineComposer() {
 
       {/* Action Chips - Always Visible */}
       <div className="px-4 pb-3 border-t border-gray-100 pt-3">
-        <div className="flex gap-1.5 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap items-center">
           {actionChips.map((chip) => {
             const isActive = composerMode === chip.id;
             return (
@@ -294,6 +296,14 @@ export default function InlineComposer() {
               </button>
             );
           })}
+          <button
+            onClick={() => setLocation('/discover')}
+            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 hover:from-purple-200 hover:to-blue-200 flex items-center gap-1.5"
+            data-testid="button-recommend"
+          >
+            <Sparkles size={14} />
+            Recommend me something
+          </button>
         </div>
       </div>
 
