@@ -404,12 +404,12 @@ export default function Library() {
           {activeView === 'discover' && (
             <div className="space-y-8">
             
-            {/* AI Recommendation Engine */}
+            {/* Recommendation Section */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg">
               <div className="mb-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <Sparkles className="text-white" size={20} />
-                  AI Recommendation Engine
+                  Recommend me something
                 </h2>
                 <p className="text-sm text-white/90 mt-1">
                   Describe what you're in the mood for and get personalized suggestions
