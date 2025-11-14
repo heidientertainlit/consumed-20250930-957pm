@@ -408,8 +408,7 @@ export default function Library() {
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg">
               <div className="mb-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Sparkles className="text-white" size={20} />
-                  Recommend me something
+                  💫 Ask for Recs
                 </h2>
                 <p className="text-sm text-white/90 mt-1">
                   Describe what you're in the mood for and get personalized suggestions

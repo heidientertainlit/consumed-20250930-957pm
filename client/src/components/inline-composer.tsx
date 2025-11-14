@@ -336,8 +336,7 @@ export default function InlineComposer() {
             className="px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 hover:from-purple-200 hover:to-blue-200 flex items-center gap-1.5"
             data-testid="button-recommend"
           >
-            <Sparkles size={14} />
-            Recommend me something
+            💫 Ask for Recs
           </button>
         </div>
       </div>
