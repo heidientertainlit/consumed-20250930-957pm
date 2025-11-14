@@ -243,7 +243,7 @@ export default function InlineComposer() {
     if (chip) {
       return `Ex: ${chip.example}`;
     }
-    return "What did you finish?";
+    return "Share a thought, ask for a rec, or log what you just watched…";
   };
 
   return (
