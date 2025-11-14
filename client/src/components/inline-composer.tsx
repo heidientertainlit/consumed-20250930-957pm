@@ -268,6 +268,30 @@ export default function InlineComposer() {
         </div>
       </div>
 
+      {/* Quick Prompts - Only when empty */}
+      {content === "" && composerMode === "" && (
+        <div className="px-4 pb-3">
+          <p className="text-xs text-gray-500 mb-2">Tap a quick prompt:</p>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              "Recommend a movie to watch tonight",
+              "What should I read next?",
+              "Anyone else watching ...?",
+              "I can't believe ..."
+            ].map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => setContent(prompt)}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
+                data-testid={`quick-prompt-${prompt.substring(0, 10)}`}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Action Chips - Always Visible */}
       <div className="px-4 pb-3 border-t border-gray-100 pt-3">
         <div className="flex gap-1.5 flex-wrap items-center">
