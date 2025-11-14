@@ -333,7 +333,7 @@ export default function InlineComposer() {
                 });
               }
             }}
-            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 hover:from-purple-200 hover:to-blue-200 flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
             data-testid="button-recommend"
           >
             💫 Ask for Recs
