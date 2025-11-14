@@ -59,14 +59,6 @@ export default function InlineComposer() {
   // Action chips configuration
   const actionChips = [
     { 
-      id: "thought" as ComposerMode, 
-      icon: MessageCircle, 
-      label: "💭 Thought", 
-      color: "text-gray-600",
-      description: "Share a quick take, reaction, or opinion about anything you're watching, reading, or listening to.",
-      example: "The last 10 minutes of The Night Agent?? I'm not okay."
-    },
-    { 
       id: "prediction" as ComposerMode, 
       icon: Target, 
       label: "🎯 Prediction", 
