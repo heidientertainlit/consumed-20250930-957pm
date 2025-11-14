@@ -85,7 +85,7 @@ export default function InlineComposer() {
     { 
       id: "add-media" as ComposerMode, 
       icon: Plus, 
-      label: "➕ Quick Add", 
+      label: "➕ Add Media", 
       color: "text-purple-600",
       description: "Log something you're watching, reading, listening to, or playing—past or present.",
       example: 'Added: The Bear (Season 3)'
