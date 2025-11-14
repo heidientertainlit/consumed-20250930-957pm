@@ -16,7 +16,7 @@ export default function InlineComposer() {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [composerMode, setComposerMode] = useState<ComposerMode>("thought");
+  const [composerMode, setComposerMode] = useState<ComposerMode>("");
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [containsSpoilers, setContainsSpoilers] = useState(false);
@@ -93,7 +93,7 @@ export default function InlineComposer() {
     { 
       id: "add-media" as ComposerMode, 
       icon: Plus, 
-      label: "➕ Add Media", 
+      label: "➕ Quick Add", 
       color: "text-purple-600",
       description: "Log something you're watching, reading, listening to, or playing—past or present.",
       example: 'Added: The Bear (Season 3)'
@@ -102,7 +102,7 @@ export default function InlineComposer() {
 
   const resetComposer = () => {
     setContent("");
-    setComposerMode("thought");
+    setComposerMode("");
     setContainsSpoilers(false);
     setShowMediaSearch(false);
     setSearchQuery("");
@@ -115,7 +115,7 @@ export default function InlineComposer() {
   };
 
   const handlePost = async () => {
-    if (!content.trim() && composerMode === "thought") {
+    if (!content.trim() && (composerMode === "thought" || composerMode === "")) {
       toast({
         title: "Empty Post",
         description: "Please write something before posting.",
@@ -251,7 +251,7 @@ export default function InlineComposer() {
     if (chip) {
       return `Ex: ${chip.example}`;
     }
-    return "Share your thoughts...";
+    return "What did you finish?";
   };
 
   return (
@@ -297,7 +297,50 @@ export default function InlineComposer() {
             );
           })}
           <button
-            onClick={() => setLocation('/discover')}
+            onClick={async () => {
+              if (!session?.access_token || !user?.id) {
+                toast({
+                  title: "Authentication Required",
+                  description: "Please log in to request recommendations.",
+                  variant: "destructive",
+                });
+                return;
+              }
+
+              try {
+                const response = await fetch(
+                  `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/create-post`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${session.access_token}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      user_id: user.id,
+                      content: "Looking for recommendations! What should I watch/read/listen to next? 🎬📚🎵",
+                      content_type: "thought",
+                      contains_spoilers: false,
+                    }),
+                  }
+                );
+
+                if (!response.ok) throw new Error('Failed to post');
+
+                toast({
+                  title: "Posted!",
+                  description: "Your friends will see your request for recommendations.",
+                });
+
+                queryClient.invalidateQueries({ queryKey: ['/api/feed'] });
+              } catch (error) {
+                toast({
+                  title: "Error",
+                  description: "Failed to post. Please try again.",
+                  variant: "destructive",
+                });
+              }
+            }}
             className="px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 hover:from-purple-200 hover:to-blue-200 flex items-center gap-1.5"
             data-testid="button-recommend"
           >
