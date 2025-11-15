@@ -1599,14 +1599,15 @@ export default function Feed() {
                           </div>
                           <p className="text-sm text-gray-800 mt-1">Have you watched Slow Horses on Apple TV+? Season 4 just came out and it's incredible!</p>
                           <div className="flex items-center gap-4 mt-2">
-                            <div className="flex items-center gap-2">
-                              <button className="flex items-center gap-0.5 text-gray-400 hover:text-green-600 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <button className="flex items-center gap-1 text-gray-400 hover:text-green-600 transition-colors">
                                 <ArrowUp size={14} />
+                                <span className="text-xs font-medium">85%</span>
                               </button>
-                              <button className="flex items-center gap-0.5 text-gray-400 hover:text-red-600 transition-colors">
+                              <button className="flex items-center gap-1 text-gray-400 hover:text-red-600 transition-colors">
                                 <ArrowDown size={14} />
+                                <span className="text-xs font-medium">15%</span>
                               </button>
-                              <span className="text-xs text-gray-600 font-medium">85% helpful</span>
                             </div>
                             <button className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors">
                               <Heart size={12} />
@@ -1626,14 +1627,15 @@ export default function Feed() {
                           </div>
                           <p className="text-sm text-gray-800 mt-1">For reading: "Tomorrow, and Tomorrow, and Tomorrow" - it's about friendship and game design. So good!</p>
                           <div className="flex items-center gap-4 mt-2">
-                            <div className="flex items-center gap-2">
-                              <button className="flex items-center gap-0.5 text-gray-400 hover:text-green-600 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <button className="flex items-center gap-1 text-gray-400 hover:text-green-600 transition-colors">
                                 <ArrowUp size={14} />
+                                <span className="text-xs font-medium">92%</span>
                               </button>
-                              <button className="flex items-center gap-0.5 text-gray-400 hover:text-red-600 transition-colors">
+                              <button className="flex items-center gap-1 text-gray-400 hover:text-red-600 transition-colors">
                                 <ArrowDown size={14} />
+                                <span className="text-xs font-medium">8%</span>
                               </button>
-                              <span className="text-xs text-gray-600 font-medium">92% helpful</span>
                             </div>
                             <button className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors">
                               <Heart size={12} />
