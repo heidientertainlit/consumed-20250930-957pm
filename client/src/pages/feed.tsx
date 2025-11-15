@@ -1539,7 +1539,6 @@ export default function Feed() {
                   {[
                     { id: "predictions", label: "🎯 Prediction" },
                     { id: "polls", label: "🗳️ Poll" },
-                    { id: "hot-takes", label: "🔥 Hot Take" },
                     { id: "rate-review", label: "⭐ Rate/Review" }
                   ].map((filter) => {
                     const isActive = feedFilter === filter.id;
@@ -1568,6 +1567,11 @@ export default function Feed() {
                     SR
                   </div>
                   <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                        💫 Recommendation Request
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-sm text-gray-900">Sarah Rodriguez</p>
                       <span className="text-xs text-gray-500">• 2h ago</span>
@@ -1803,6 +1807,35 @@ export default function Feed() {
 
                   {/* Original Post */}
                   <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" id={`post-${post.id}`}>
+                    {/* Post Type Label */}
+                    {(() => {
+                      const postType = post.type?.toLowerCase() || '';
+                      let typeLabel = '';
+                      let typeColor = '';
+                      
+                      if (postType === 'prediction') {
+                        typeLabel = '🎯 Prediction';
+                        typeColor = 'bg-blue-100 text-blue-700';
+                      } else if (postType === 'poll') {
+                        typeLabel = '🗳️ Poll';
+                        typeColor = 'bg-green-100 text-green-700';
+                      } else if (post.rating || (post.content && /⭐/.test(post.content))) {
+                        typeLabel = '⭐ Rate/Review';
+                        typeColor = 'bg-yellow-100 text-yellow-700';
+                      } else if (post.mediaItems && post.mediaItems.length > 0) {
+                        typeLabel = '➕ Media Activity';
+                        typeColor = 'bg-indigo-100 text-indigo-700';
+                      }
+                      
+                      return typeLabel ? (
+                        <div className="mb-2">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColor}`}>
+                            {typeLabel}
+                          </span>
+                        </div>
+                      ) : null;
+                    })()}
+                    
                     {/* User Info and Date */}
                     <div className="flex items-center space-x-2 mb-3">
                       <Link href={`/user/${post.user.id}`}>
