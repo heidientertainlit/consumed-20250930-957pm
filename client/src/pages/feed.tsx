@@ -6,7 +6,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import MediaCarousel from "@/components/media-carousel";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -1598,9 +1598,18 @@ export default function Feed() {
                             <span className="text-xs text-gray-500">1h</span>
                           </div>
                           <p className="text-sm text-gray-800 mt-1">Have you watched Slow Horses on Apple TV+? Season 4 just came out and it's incredible!</p>
-                          <div className="flex items-center gap-3 mt-2">
-                            <button className="flex items-center gap-1 text-red-500">
-                              <Heart size={12} className="fill-current" />
+                          <div className="flex items-center gap-4 mt-2">
+                            <div className="flex items-center gap-2">
+                              <button className="flex items-center gap-0.5 text-gray-400 hover:text-green-600 transition-colors">
+                                <ArrowUp size={14} />
+                              </button>
+                              <button className="flex items-center gap-0.5 text-gray-400 hover:text-red-600 transition-colors">
+                                <ArrowDown size={14} />
+                              </button>
+                              <span className="text-xs text-gray-600 font-medium">85% helpful</span>
+                            </div>
+                            <button className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors">
+                              <Heart size={12} />
                               <span className="text-xs">5</span>
                             </button>
                           </div>
@@ -1616,9 +1625,18 @@ export default function Feed() {
                             <span className="text-xs text-gray-500">45m</span>
                           </div>
                           <p className="text-sm text-gray-800 mt-1">For reading: "Tomorrow, and Tomorrow, and Tomorrow" - it's about friendship and game design. So good!</p>
-                          <div className="flex items-center gap-3 mt-2">
-                            <button className="flex items-center gap-1 text-red-500">
-                              <Heart size={12} className="fill-current" />
+                          <div className="flex items-center gap-4 mt-2">
+                            <div className="flex items-center gap-2">
+                              <button className="flex items-center gap-0.5 text-gray-400 hover:text-green-600 transition-colors">
+                                <ArrowUp size={14} />
+                              </button>
+                              <button className="flex items-center gap-0.5 text-gray-400 hover:text-red-600 transition-colors">
+                                <ArrowDown size={14} />
+                              </button>
+                              <span className="text-xs text-gray-600 font-medium">92% helpful</span>
+                            </div>
+                            <button className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors">
+                              <Heart size={12} />
                               <span className="text-xs">8</span>
                             </button>
                           </div>
