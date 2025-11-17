@@ -9,6 +9,7 @@ import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import FriendsUpdates from "@/pages/friendsupdates";
 import Discover from "@/pages/discover";
+import AISearch from "@/pages/ai-search";
 import Library from "@/pages/library";
 import LibraryAI from "@/pages/library-ai";
 import Conversations from "@/pages/conversations";
@@ -70,6 +71,11 @@ function Router() {
         <Route path="/discover">
           <ProtectedRoute>
             <Discover />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/ai-search">
+          <ProtectedRoute>
+            <AISearch />
           </ProtectedRoute>
         </Route>
         <Route path="/library">

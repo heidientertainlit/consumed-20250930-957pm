@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Library } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Library, Sparkles } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -492,6 +492,9 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             
             {!isSearchExpanded && (
               <>
+                <Link href="/ai-search" className="hover:opacity-70 transition-opacity" data-testid="ai-search-button">
+                  <Sparkles className="text-white" size={20} />
+                </Link>
                 <NotificationBell />
               </>
             )}
