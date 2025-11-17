@@ -1818,14 +1818,14 @@ export default function Feed() {
                       } else if (postType === 'poll') {
                         typeLabel = '🗳️ Poll';
                         typeColor = 'bg-green-100 text-green-700';
-                      } else if (post.mediaItems && post.mediaItems.length > 0 && !post.rating) {
-                        // Media added to list without rating
-                        typeLabel = '➕ Media Activity';
-                        typeColor = 'bg-indigo-100 text-indigo-700';
-                      } else if (post.rating || (post.content && /⭐/.test(post.content))) {
-                        // Has rating or star rating in content
+                      } else if (post.rating || (post.content && /⭐|\/5/.test(post.content))) {
+                        // Has rating or star/score rating in content
                         typeLabel = '⭐ Rate/Review';
                         typeColor = 'bg-yellow-100 text-yellow-700';
+                      } else if (post.mediaItems && post.mediaItems.length > 0) {
+                        // Media added to list (checked after rating check)
+                        typeLabel = '➕ Media Activity';
+                        typeColor = 'bg-indigo-100 text-indigo-700';
                       }
                       
                       return typeLabel ? (
@@ -1941,41 +1941,76 @@ export default function Feed() {
                   ) : (
                     !post.content && post.mediaItems && post.mediaItems.length > 0 && (
                       <div className="mb-2">
-                        {post.mediaItems.map((media, index) => {
-                          const isClickable = media.externalId && media.externalSource;
-                          return (
-                            <div key={index} className="mb-2">
-                              <p className="text-gray-800 text-sm mb-1">
-                                Added{' '}
-                                {isClickable ? (
-                                  <button
-                                    onClick={() => setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`)}
-                                    className="font-semibold text-purple-600 hover:underline"
-                                  >
-                                    {media.title}
-                                  </button>
-                                ) : (
-                                  <span className="font-semibold">{media.title}</span>
-                                )}
-                                {' '}to{' '}
+                        <div className="flex items-start gap-3">
+                          {/* Left side - text */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-gray-800 text-sm mb-1">
+                              Added{' '}
+                              {post.mediaItems[0].externalId && post.mediaItems[0].externalSource ? (
                                 <button
-                                  onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
-                                  className="font-medium text-purple-600 hover:underline"
+                                  onClick={() => setLocation(`/media/${post.mediaItems[0].mediaType?.toLowerCase()}/${post.mediaItems[0].externalSource}/${post.mediaItems[0].externalId}`)}
+                                  className="font-semibold text-purple-600 hover:underline"
                                 >
-                                  their list
+                                  {post.mediaItems[0].title}
                                 </button>
-                              </p>
-                              {index === post.mediaItems.length - 1 && (
-                                <button
-                                  onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
-                                  className="text-xs text-gray-500 hover:text-purple-600 transition-colors"
-                                >
-                                  See more of @{post.user.username}'s lists →
-                                </button>
+                              ) : (
+                                <span className="font-semibold">{post.mediaItems[0].title}</span>
                               )}
+                              {post.mediaItems.length > 1 && (
+                                <span className="text-gray-600"> and {post.mediaItems.length - 1} more</span>
+                              )}
+                              {' '}to{' '}
+                              <button
+                                onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                                className="font-medium text-purple-600 hover:underline"
+                              >
+                                their list
+                              </button>
+                            </p>
+                            <button
+                              onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                              className="text-xs text-gray-500 hover:text-purple-600 transition-colors"
+                            >
+                              See more of @{post.user.username}'s lists →
+                            </button>
+                          </div>
+                          
+                          {/* Right side - horizontal scrollable preview */}
+                          {post.mediaItems.length > 0 && (
+                            <div className="flex-shrink-0 w-40">
+                              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                                {post.mediaItems.slice(0, 3).map((media, idx) => (
+                                  <button
+                                    key={idx}
+                                    onClick={() => {
+                                      if (media.externalId && media.externalSource) {
+                                        setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                      }
+                                    }}
+                                    className="flex-shrink-0 w-16 hover:opacity-80 transition-opacity"
+                                  >
+                                    <img 
+                                      src={media.imageUrl || '/placeholder-media.png'}
+                                      alt={media.title}
+                                      className="w-16 h-20 object-cover rounded shadow-sm"
+                                    />
+                                  </button>
+                                ))}
+                                {post.mediaItems.length > 3 && (
+                                  <button
+                                    onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                                    className="flex-shrink-0 w-16 h-20 bg-gray-100 rounded flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                                  >
+                                    <div className="text-center">
+                                      <ChevronRight size={20} />
+                                      <span className="text-xs">+{post.mediaItems.length - 3}</span>
+                                    </div>
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          );
-                        })}
+                          )}
+                        </div>
                       </div>
                     )
                   )}
