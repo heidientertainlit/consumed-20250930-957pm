@@ -195,11 +195,14 @@ export default function InlineComposer() {
     setIsSearching(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-search?query=${encodeURIComponent(query)}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-search`,
         {
+          method: "POST",
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({ query }),
         }
       );
 
@@ -538,9 +541,9 @@ export default function InlineComposer() {
           {attachedMedia && (
             <>
               <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
-                {attachedMedia.poster_url && (
+                {(attachedMedia.poster_url || attachedMedia.image_url || attachedMedia.image) && (
                   <img 
-                    src={attachedMedia.poster_url} 
+                    src={attachedMedia.poster_url || attachedMedia.image_url || attachedMedia.image} 
                     alt={attachedMedia.title}
                     className="w-12 h-16 object-cover rounded"
                   />
@@ -621,9 +624,9 @@ export default function InlineComposer() {
                       onClick={() => handleSelectMedia(result)}
                       className="w-full flex items-center gap-3 p-2 hover:bg-white rounded text-left transition-colors"
                     >
-                      {result.poster_url && (
+                      {(result.poster_url || result.image_url || result.image) && (
                         <img 
-                          src={result.poster_url} 
+                          src={result.poster_url || result.image_url || result.image} 
                           alt={result.title}
                           className="w-10 h-14 object-cover rounded shadow-sm"
                         />
