@@ -1812,10 +1812,13 @@ export default function Feed() {
                       let typeLabel = '';
                       let typeColor = '';
                       
-                      // Check if it's a media-only post (no rating involved)
-                      const hasRating = post.rating || (post.content && /⭐|\/5|rated/i.test(post.content));
-                      const hasMedia = post.mediaItems && post.mediaItems.length > 0;
-                      const isAddedToList = post.content && /added.*to.*list/i.test(post.content);
+                      // Check if it's a simple "added to list" post (no content, just media)
+                      const isSimpleAddToList = !post.content && post.mediaItems && post.mediaItems.length > 0;
+                      
+                      // Skip label for simple add-to-list posts
+                      if (isSimpleAddToList) {
+                        return null;
+                      }
                       
                       if (postType === 'prediction') {
                         typeLabel = '🎯 Prediction';
@@ -1823,14 +1826,12 @@ export default function Feed() {
                       } else if (postType === 'poll') {
                         typeLabel = '🗳️ Poll';
                         typeColor = 'bg-green-100 text-green-700';
-                      } else if (isAddedToList || (hasMedia && !hasRating)) {
-                        // Media added to list without rating
-                        typeLabel = '➕ Media Activity';
-                        typeColor = 'bg-indigo-100 text-indigo-700';
-                      } else if (hasRating) {
-                        // Has rating or star/score rating in content
+                      } else if (post.rating || (post.content && /⭐|\/5|rated/i.test(post.content))) {
                         typeLabel = '⭐ Rate/Review';
                         typeColor = 'bg-yellow-100 text-yellow-700';
+                      } else if (post.mediaItems && post.mediaItems.length > 0) {
+                        typeLabel = '➕ Media Activity';
+                        typeColor = 'bg-indigo-100 text-indigo-700';
                       }
                       
                       return typeLabel ? (
