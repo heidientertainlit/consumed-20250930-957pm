@@ -133,6 +133,7 @@ export default function UserProfile() {
   const statsRef = useRef<HTMLDivElement>(null);
   const dnaRef = useRef<HTMLDivElement>(null);
   const friendsRef = useRef<HTMLDivElement>(null);
+  const listsRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('stats');
 
   // Fetch highlights from Supabase
@@ -867,7 +868,8 @@ export default function UserProfile() {
       const sections = [
         { ref: statsRef, id: 'stats' },
         { ref: dnaRef, id: 'dna' },
-        { ref: friendsRef, id: 'friends' }
+        { ref: friendsRef, id: 'friends' },
+        { ref: listsRef, id: 'lists' }
       ];
 
       const scrollPosition = window.scrollY + 200; // Offset for sticky nav
@@ -2107,6 +2109,19 @@ export default function UserProfile() {
                 Friends
               </button>
             )}
+            {isOwnProfile && (
+              <button
+                onClick={() => scrollToSection(listsRef)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  activeSection === 'lists'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+                data-testid="nav-lists"
+              >
+                Lists
+              </button>
+            )}
           </div>
         </div>
 
@@ -2686,6 +2701,105 @@ export default function UserProfile() {
         {isOwnProfile && user?.id && (
           <div ref={friendsRef} className="px-4 mb-8">
             <FriendsManager userId={user.id} />
+          </div>
+        )}
+
+        {/* Lists Section - Only show on own profile */}
+        {isOwnProfile && (
+          <div ref={listsRef} className="px-4 mb-8">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <List className="text-purple-800" size={24} />
+                  <h2 className="text-xl font-bold text-gray-800">Lists</h2>
+                </div>
+                <Button
+                  onClick={() => setLocation('/library')}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  data-testid="button-create-list"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Create List
+                </Button>
+              </div>
+
+              {isLoadingLists ? (
+                <div className="text-center py-8">
+                  <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
+                  <p className="text-gray-500 mt-2">Loading your lists...</p>
+                </div>
+              ) : userLists && userLists.length > 0 ? (
+                <div className="space-y-2">
+                  {userLists.map((list: any) => (
+                    <div
+                      key={list.id}
+                      className="border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
+                      onClick={() => {
+                        const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                        setLocation(`/list/${listSlug}`);
+                      }}
+                    >
+                      <div className="px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                            {list.is_default ? (
+                              list.title === 'Want to Watch' ? <Play className="text-purple-600" size={18} /> :
+                              list.title === 'Currently' ? <Clock className="text-blue-600" size={18} /> :
+                              list.title === 'Completed' ? <Trophy className="text-green-600" size={18} /> :
+                              <List className="text-gray-600" size={18} />
+                            ) : (
+                              <List className="text-purple-600" size={18} />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-gray-900">{list.title}</h3>
+                              {!list.is_default && list.visibility && (
+                                <Badge variant="outline" className="text-xs">
+                                  {list.visibility === 'private' ? <Lock size={10} className="mr-1" /> : <Users size={10} className="mr-1" />}
+                                  {list.visibility}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500">
+                              {list.items?.length || 0} {list.items?.length === 1 ? 'item' : 'items'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                              handleShareListDirect(list.id, list.title);
+                            }}
+                            data-testid={`button-share-list-${list.id}`}
+                          >
+                            <Share2 size={16} />
+                          </Button>
+                          <ChevronRight className="text-gray-400" size={18} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <List className="text-gray-300 mx-auto mb-3" size={48} />
+                  <p className="text-gray-500 mb-4">No lists yet</p>
+                  <Button
+                    onClick={() => setLocation('/library')}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                    data-testid="button-get-started-lists"
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Create Your First List
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

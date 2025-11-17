@@ -519,14 +519,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
 
           <Link
-            href="/library"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/library" ? "bg-white/20" : ""}`}
-          >
-            <Library className="text-white" size={22} />
-            <span className="text-xs font-medium text-white whitespace-nowrap">Library</span>
-          </Link>
-
-          <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
           >
