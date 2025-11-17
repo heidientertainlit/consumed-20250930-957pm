@@ -106,6 +106,7 @@ serve(async (req) => {
         .select(`
           id, 
           user_id, 
+          list_id,
           content, 
           post_type, 
           rating, 
@@ -157,10 +158,46 @@ serve(async (req) => {
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
+      // Fetch list items for posts that have list_id (for list preview)
+      const listIds = [...new Set(posts?.map(post => post.list_id).filter(Boolean) || [])];
+      let listItemsMap = new Map();
+      
+      if (listIds.length > 0) {
+        const { data: listItems } = await supabase
+          .from('list_items')
+          .select('list_id, media_title, media_type, media_creator, media_image_url, media_external_id, media_external_source')
+          .in('list_id', listIds)
+          .order('created_at', { ascending: false })
+          .limit(200); // Fetch up to 200 items total
+        
+        // Group list items by list_id
+        listItems?.forEach(item => {
+          if (!listItemsMap.has(item.list_id)) {
+            listItemsMap.set(item.list_id, []);
+          }
+          listItemsMap.get(item.list_id).push(item);
+        });
+      }
+
       const transformedPosts = posts?.map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
         const hasMedia = post.media_title && post.media_title.trim() !== '';
+        
+        // Get list items for preview (up to 4 items)
+        let listPreview = [];
+        if (post.list_id && listItemsMap.has(post.list_id)) {
+          const items = listItemsMap.get(post.list_id);
+          listPreview = items.slice(0, 4).map(item => ({
+            id: item.id || '',
+            title: item.media_title || '',
+            creator: item.media_creator || '',
+            mediaType: item.media_type || '',
+            imageUrl: item.media_image_url || '',
+            externalId: item.media_external_id || '',
+            externalSource: item.media_external_source || ''
+          }));
+        }
         
         return {
           id: post.id,
@@ -180,6 +217,7 @@ serve(async (req) => {
           containsSpoilers: post.contains_spoilers || false,
           rating: post.rating,
           progress: post.progress,
+          listPreview: listPreview.length > 0 ? listPreview : undefined,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,

@@ -79,6 +79,7 @@ export const dnaProfiles = pgTable("dna_profiles", {
 export const socialPosts = pgTable("social_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
+  listId: varchar("list_id"),
   content: text("content"),
   postType: text("post_type").default("update"),
   rating: real("rating"),

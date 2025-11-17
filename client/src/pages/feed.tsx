@@ -40,6 +40,15 @@ interface SocialPost {
   shares: number;
   likedByCurrentUser?: boolean;
   containsSpoilers?: boolean;
+  listPreview?: Array<{
+    id: string;
+    title: string;
+    creator: string;
+    mediaType: string;
+    imageUrl: string;
+    externalId: string;
+    externalSource: string;
+  }>;
   mediaItems: Array<{
     id: string;
     title: string;
@@ -1969,10 +1978,10 @@ export default function Feed() {
                           </button>
                         </p>
                         
-                        {/* Horizontal scrollable media preview */}
+                        {/* Horizontal scrollable media preview - use listPreview if available */}
                         <div className="mb-3 overflow-x-auto">
                           <div className="flex gap-3 pb-2">
-                            {post.mediaItems.slice(0, 4).map((media, idx) => (
+                            {(post.listPreview || post.mediaItems).slice(0, 4).map((media, idx) => (
                               <button
                                 key={idx}
                                 onClick={() => {
