@@ -272,23 +272,26 @@ export default function InlineComposer() {
       {/* Simple Action Buttons */}
       <div className="px-4 pb-3 border-t border-gray-100 pt-3">
         <div className="flex gap-2">
-          <Button
+          <button
             onClick={() => handleChipClick("add-media")}
-            variant={composerMode === "add-media" ? "default" : "outline"}
-            className={composerMode === "add-media" ? "bg-purple-600 hover:bg-purple-700 text-white" : ""}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              composerMode === "add-media"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
+            }`}
             data-testid="button-add-media"
           >
-            <Plus className="w-4 h-4 mr-1" />
+            <Plus className="w-3.5 h-3.5 inline mr-1" />
             Add Media
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={() => setShowMoreOptions(!showMoreOptions)}
-            variant="outline"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
             data-testid="button-more-options"
           >
-            <Sparkles className="w-4 h-4 mr-1" />
+            <Sparkles className="w-3.5 h-3.5 inline mr-1" />
             More options
-          </Button>
+          </button>
         </div>
 
         {/* Expanded Options - Show when More Options is clicked */}
