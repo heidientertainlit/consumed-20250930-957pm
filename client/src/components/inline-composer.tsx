@@ -26,6 +26,7 @@ export default function InlineComposer() {
   const [isSearching, setIsSearching] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<any>(null);
   const [selectedList, setSelectedList] = useState<string>("");
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   
   // Prediction-specific state (now uses same format as polls)
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
@@ -243,7 +244,7 @@ export default function InlineComposer() {
     if (chip) {
       return `Ex: ${chip.example}`;
     }
-    return "Share a thought, ask for a rec, or log what you just consumed…";
+    return "Share the entertainment you are consuming… or start a conversation.";
   };
 
   return (
@@ -268,77 +269,128 @@ export default function InlineComposer() {
         </div>
       </div>
 
-      {/* Action Chips - Always Visible */}
+      {/* Simple Action Buttons */}
       <div className="px-4 pb-3 border-t border-gray-100 pt-3">
-        <div className="flex gap-1.5 flex-wrap items-center">
-          {actionChips.map((chip) => {
-            const isActive = composerMode === chip.id;
-            return (
+        <div className="flex gap-2">
+          <Button
+            onClick={() => handleChipClick("add-media")}
+            variant={composerMode === "add-media" ? "default" : "outline"}
+            className={composerMode === "add-media" ? "bg-purple-600 hover:bg-purple-700 text-white" : ""}
+            data-testid="button-add-media"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Add Media
+          </Button>
+          <Button
+            onClick={() => setShowMoreOptions(!showMoreOptions)}
+            variant="outline"
+            data-testid="button-more-options"
+          >
+            <Sparkles className="w-4 h-4 mr-1" />
+            More options
+          </Button>
+        </div>
+
+        {/* Expanded Options - Show when More Options is clicked */}
+        {showMoreOptions && (
+          <div className="mt-3">
+            <div className="flex gap-1.5 flex-wrap items-center">
               <button
-                key={chip.id}
-                onClick={() => handleChipClick(chip.id)}
+                onClick={() => {
+                  handleChipClick("prediction");
+                  setShowMoreOptions(false);
+                }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  isActive
+                  composerMode === "prediction"
                     ? "bg-purple-600 text-white shadow-sm"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
-                data-testid={`chip-${chip.id}`}
+                data-testid="chip-prediction"
               >
-                {chip.label}
+                🎯 Prediction
               </button>
-            );
-          })}
-          <button
-            onClick={async () => {
-              if (!session?.access_token || !user?.id) {
-                toast({
-                  title: "Authentication Required",
-                  description: "Please log in to request recommendations.",
-                  variant: "destructive",
-                });
-                return;
-              }
-
-              try {
-                const response = await fetch(
-                  `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/create-post`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${session.access_token}`,
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      user_id: user.id,
-                      content: "Looking for recommendations! What should I watch/read/listen to next? 🎬📚🎵",
-                      content_type: "thought",
-                      contains_spoilers: false,
-                    }),
+              <button
+                onClick={() => {
+                  handleChipClick("poll");
+                  setShowMoreOptions(false);
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  composerMode === "poll"
+                    ? "bg-purple-600 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                data-testid="chip-poll"
+              >
+                📦 Poll
+              </button>
+              <button
+                onClick={() => {
+                  handleChipClick("rate-review");
+                  setShowMoreOptions(false);
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  composerMode === "rate-review"
+                    ? "bg-purple-600 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                data-testid="chip-rate-review"
+              >
+                ⭐ Rate/Review
+              </button>
+              <button
+                onClick={async () => {
+                  if (!session?.access_token || !user?.id) {
+                    toast({
+                      title: "Authentication Required",
+                      description: "Please log in to request recommendations.",
+                      variant: "destructive",
+                    });
+                    return;
                   }
-                );
 
-                if (!response.ok) throw new Error('Failed to post');
+                  try {
+                    const response = await fetch(
+                      `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/create-post`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${session.access_token}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          user_id: user.id,
+                          content: "Looking for recommendations! What should I watch/read/listen to next? 🎬📚🎵",
+                          content_type: "thought",
+                          contains_spoilers: false,
+                        }),
+                      }
+                    );
 
-                toast({
-                  title: "Posted!",
-                  description: "Your friends will see your request for recommendations.",
-                });
+                    if (!response.ok) throw new Error('Failed to post');
 
-                queryClient.invalidateQueries({ queryKey: ['/api/feed'] });
-              } catch (error) {
-                toast({
-                  title: "Error",
-                  description: "Failed to post. Please try again.",
-                  variant: "destructive",
-                });
-              }
-            }}
-            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
-            data-testid="button-recommend"
-          >
-            💫 Ask for Recs
-          </button>
-        </div>
+                    toast({
+                      title: "Posted!",
+                      description: "Your friends will see your request for recommendations.",
+                    });
+
+                    queryClient.invalidateQueries({ queryKey: ['/api/feed'] });
+                    setShowMoreOptions(false);
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to post. Please try again.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-gray-100 text-gray-600 hover:bg-gray-200"
+                data-testid="button-recommend"
+              >
+                💬 Ask for Recs
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Quick Prompts - Only when empty */}
         {content === "" && composerMode === "" && (
@@ -349,7 +401,8 @@ export default function InlineComposer() {
                 "Recommend a movie to watch tonight",
                 "What should I read next?",
                 "Anyone else watching ...?",
-                "I can't believe ..."
+                "I can't believe ...",
+                "I just finished..."
               ].map((prompt) => (
                 <button
                   key={prompt}
