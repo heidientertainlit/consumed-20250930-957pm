@@ -185,16 +185,13 @@ export default function Leaderboard() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-1">
+          <div className="flex items-center justify-center gap-2 mb-2">
             <Trophy className="text-purple-600" size={28} />
             <h1 className="text-3xl font-bold text-black" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Leaderboard
+              Leaderboard: Trendsetters & Tastemakers
             </h1>
           </div>
-          <p className="text-lg text-gray-600 mb-2">
-            Trendsetters & Tastemakers
-          </p>
-          <p className="text-lg text-gray-900 font-medium">
+          <p className="text-sm text-gray-600">
             Who's Leading the Entertainment Conversation This Week?
           </p>
         </div>
