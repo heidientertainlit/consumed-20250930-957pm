@@ -87,7 +87,7 @@ serve(async (req) => {
         });
       }
 
-      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers } = body;
+      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers, list_id } = body;
 
       console.log('Creating post for user:', appUser.id);
       console.log('Request body:', body);
@@ -97,6 +97,7 @@ serve(async (req) => {
         .insert({
           user_id: appUser.id,
           content,
+          list_id: list_id || null,
           media_title,
           media_type,
           media_creator,
