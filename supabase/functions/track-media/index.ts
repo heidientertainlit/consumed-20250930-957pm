@@ -222,6 +222,34 @@ serve(async (req) => {
 
     console.log('Successfully added media item:', mediaItem);
 
+    // Create a social post for this addition
+    if (targetList && mediaItem) {
+      try {
+        const { error: postError } = await supabase
+          .from('social_posts')
+          .insert({
+            user_id: appUser.id,
+            list_id: targetList.id,
+            media_title: title,
+            media_type: mediaType,
+            media_creator: creator,
+            image_url: imageUrl,
+            media_external_id: externalId,
+            media_external_source: externalSource,
+            rating: rating || null
+          });
+        
+        if (postError) {
+          console.error('Failed to create social post:', postError);
+          // Don't fail the whole request if post creation fails
+        } else {
+          console.log('Created social post for list addition');
+        }
+      } catch (postCreateError) {
+        console.error('Error creating social post:', postCreateError);
+      }
+    }
+
     // Also save rating to unified media_ratings table for Entertainment DNA
     if (rating && externalId && externalSource && title && mediaType) {
       console.log('Saving rating to media_ratings table...');

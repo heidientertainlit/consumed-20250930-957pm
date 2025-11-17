@@ -134,6 +134,34 @@ serve(async (req) => {
 
     console.log('Successfully added media to custom list:', customList.title);
 
+    // Create a social post for this addition
+    if (mediaItem) {
+      try {
+        const { error: postError } = await supabase
+          .from('social_posts')
+          .insert({
+            user_id: appUser.id,
+            list_id: customList.id,
+            media_title: title,
+            media_type: mediaType,
+            media_creator: creator,
+            image_url: imageUrl,
+            media_external_id: externalId,
+            media_external_source: externalSource,
+            rating: rating || null
+          });
+        
+        if (postError) {
+          console.error('Failed to create social post:', postError);
+          // Don't fail the whole request if post creation fails
+        } else {
+          console.log('Created social post for custom list addition');
+        }
+      } catch (postCreateError) {
+        console.error('Error creating social post:', postCreateError);
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       data: mediaItem,
