@@ -492,9 +492,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             
             {!isSearchExpanded && (
               <>
-                <Link href="/ai-search" className="hover:opacity-70 transition-opacity" data-testid="ai-search-button">
-                  <Sparkles className="text-white" size={20} />
-                </Link>
                 <NotificationBell />
               </>
             )}
@@ -519,6 +516,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <Trophy className="text-white" size={22} />
             <span className="text-xs font-medium text-white whitespace-nowrap">Leaderboard</span>
+          </Link>
+
+          <Link
+            href="/ai-search"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/ai-search" ? "bg-white/20" : ""}`}
+          >
+            <Sparkles className="text-white" size={22} />
+            <span className="text-xs font-medium text-white whitespace-nowrap">Search</span>
           </Link>
 
           <Link

@@ -1,8 +1,10 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Flame, Target, Lightbulb, Heart, TrendingUp, Award } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Trophy, Star, Flame, Target, Lightbulb, Heart, TrendingUp, Award, Tv, BookOpen, Film, Podcast, Share2 } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -19,6 +21,7 @@ interface LeaderboardEntry {
 export default function Leaderboard() {
   const { session, user } = useAuth();
   const [activeTab, setActiveTab] = useState<'circle' | 'global'>('circle');
+  const { toast } = useToast();
 
   // Fetch leaderboard data
   const { data: leaderboardData, isLoading } = useQuery({
@@ -42,12 +45,52 @@ export default function Leaderboard() {
     enabled: !!session?.access_token,
   });
 
+  // Share rank mutation
+  const shareRankMutation = useMutation({
+    mutationFn: async ({ rank, categoryName }: { rank: number; categoryName: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const shareText = `🔥 I'm #${rank} in ${categoryName} this month on Consumed.`;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: shareText,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to share rank');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rank shared!",
+        description: "Your leaderboard rank has been posted to your feed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to share",
+        description: "Could not share your rank. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const renderLeaderboardSection = (
     title: string,
     icon: any,
     entries: LeaderboardEntry[],
     subtitle: string,
-    scoreLabel: string
+    scoreLabel: string,
+    categoryName: string
   ) => {
     const Icon = icon;
     
@@ -94,10 +137,26 @@ export default function Leaderboard() {
                     <p className="text-xs text-gray-500">@{entry.username}</p>
                   </div>
 
-                  {/* Score */}
-                  <div className="flex-shrink-0 text-right">
-                    <p className="font-bold text-lg text-purple-600">{entry.score}</p>
-                    <p className="text-xs text-gray-500">{scoreLabel}</p>
+                  {/* Score and Share Button */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="text-right">
+                      <p className="font-bold text-lg text-purple-600">{entry.score}</p>
+                      <p className="text-xs text-gray-500">{scoreLabel}</p>
+                    </div>
+                    
+                    {isCurrentUser && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
+                        disabled={shareRankMutation.isPending}
+                        className="flex items-center gap-1.5"
+                        data-testid={`button-share-rank-${categoryName}`}
+                      >
+                        <Share2 size={14} />
+                        <span className="hidden sm:inline">Share</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
@@ -128,7 +187,7 @@ export default function Leaderboard() {
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold text-black mb-2 flex items-center justify-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             <Trophy className="text-purple-600" size={32} />
-            Leaderboard
+            Leaderboard: Trendsetters & Tastemakers
           </h1>
           <p className="text-lg text-gray-900 font-medium mb-1">
             Who's Leading the Entertainment Conversation This Week?
@@ -183,7 +242,8 @@ export default function Leaderboard() {
               Star,
               mockFanLeaders,
               'Most active overall',
-              'points'
+              'points',
+              'Fan Leaders'
             )}
 
             {/* Conversation Starters */}
@@ -192,7 +252,8 @@ export default function Leaderboard() {
               Flame,
               mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.6) })),
               'Posts people engaged with most',
-              'engagements'
+              'engagements',
+              'Conversation Starters'
             )}
 
             {/* Top Predictors */}
@@ -201,7 +262,8 @@ export default function Leaderboard() {
               Target,
               mockFanLeaders.map(e => ({ ...e, score: Math.floor(Math.random() * 100) })),
               'Most accurate predictions',
-              '% accuracy'
+              '% accuracy',
+              'Top Predictors'
             )}
 
             {/* Trivia Champs */}
@@ -210,7 +272,8 @@ export default function Leaderboard() {
               Lightbulb,
               mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.4) })),
               'Correct answers and streaks',
-              'points'
+              'points',
+              'Trivia Champs'
             )}
 
             {/* Most Helpful */}
@@ -219,7 +282,78 @@ export default function Leaderboard() {
               Heart,
               mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.5) })),
               'Recommendations people saved',
-              'saves'
+              'saves',
+              'Most Helpful'
+            )}
+
+            {/* Top in TV This Week */}
+            {renderLeaderboardSection(
+              '📺 Top in TV This Week',
+              Tv,
+              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.7) })),
+              'Most consumed + engagement in TV',
+              'points',
+              'Top in TV This Week'
+            )}
+
+            {/* Top in Books This Month */}
+            {renderLeaderboardSection(
+              '📚 Top in Books This Month',
+              BookOpen,
+              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.55) })),
+              'Most consumed + engagement in Books',
+              'points',
+              'Top in Books This Month'
+            )}
+
+            {/* Top in Reality TV */}
+            {renderLeaderboardSection(
+              '⭐ Top in Reality TV',
+              Star,
+              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.65) })),
+              'Most consumed + engagement in Reality TV',
+              'points',
+              'Top in Reality TV'
+            )}
+
+            {/* Top in Sports This Week */}
+            {renderLeaderboardSection(
+              '🏆 Top in Sports This Week',
+              Trophy,
+              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.8) })),
+              'Most consumed + engagement in Sports',
+              'points',
+              'Top in Sports This Week'
+            )}
+
+            {/* Top in Podcasts This Week */}
+            {renderLeaderboardSection(
+              '🎙️ Top in Podcasts This Week',
+              Podcast,
+              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.6) })),
+              'Most consumed + engagement in Podcasts',
+              'points',
+              'Top in Podcasts This Week'
+            )}
+
+            {/* Top in Movies This Week */}
+            {renderLeaderboardSection(
+              '🎬 Top in Movies This Week',
+              Film,
+              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.75) })),
+              'Most consumed + engagement in Movies',
+              'points',
+              'Top in Movies This Week'
+            )}
+
+            {/* Fastest Rising Fans */}
+            {renderLeaderboardSection(
+              '📈 Fastest Rising Fans',
+              TrendingUp,
+              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.45) })),
+              'New users gaining points quickly',
+              'points',
+              'Fastest Rising Fans'
             )}
           </div>
         )}
