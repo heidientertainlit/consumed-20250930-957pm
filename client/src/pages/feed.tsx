@@ -1818,12 +1818,14 @@ export default function Feed() {
                       } else if (postType === 'poll') {
                         typeLabel = '🗳️ Poll';
                         typeColor = 'bg-green-100 text-green-700';
-                      } else if (post.rating || (post.content && /⭐/.test(post.content))) {
-                        typeLabel = '⭐ Rate/Review';
-                        typeColor = 'bg-yellow-100 text-yellow-700';
-                      } else if (post.mediaItems && post.mediaItems.length > 0) {
+                      } else if (post.mediaItems && post.mediaItems.length > 0 && !post.rating) {
+                        // Media added to list without rating
                         typeLabel = '➕ Media Activity';
                         typeColor = 'bg-indigo-100 text-indigo-700';
+                      } else if (post.rating || (post.content && /⭐/.test(post.content))) {
+                        // Has rating or star rating in content
+                        typeLabel = '⭐ Rate/Review';
+                        typeColor = 'bg-yellow-100 text-yellow-700';
                       }
                       
                       return typeLabel ? (
@@ -1942,20 +1944,36 @@ export default function Feed() {
                         {post.mediaItems.map((media, index) => {
                           const isClickable = media.externalId && media.externalSource;
                           return (
-                            <p key={index} className="text-gray-800 text-sm">
-                              Added{' '}
-                              {isClickable ? (
+                            <div key={index} className="mb-2">
+                              <p className="text-gray-800 text-sm mb-1">
+                                Added{' '}
+                                {isClickable ? (
+                                  <button
+                                    onClick={() => setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`)}
+                                    className="font-semibold text-purple-600 hover:underline"
+                                  >
+                                    {media.title}
+                                  </button>
+                                ) : (
+                                  <span className="font-semibold">{media.title}</span>
+                                )}
+                                {' '}to{' '}
                                 <button
-                                  onClick={() => setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`)}
-                                  className="font-semibold text-purple-600 hover:underline"
+                                  onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                                  className="font-medium text-purple-600 hover:underline"
                                 >
-                                  {media.title}
+                                  their list
                                 </button>
-                              ) : (
-                                <span className="font-semibold">{media.title}</span>
+                              </p>
+                              {index === post.mediaItems.length - 1 && (
+                                <button
+                                  onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                                  className="text-xs text-gray-500 hover:text-purple-600 transition-colors"
+                                >
+                                  See more of @{post.user.username}'s lists →
+                                </button>
                               )}
-                              {' '}to their list
-                            </p>
+                            </div>
                           );
                         })}
                       </div>
