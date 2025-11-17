@@ -9,7 +9,7 @@ Preferred communication style: Simple, everyday language.
 ### Design Preferences
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
-- **Navigation**: Bottom navigation includes 4 items: Feed, Play, Library, and Me. Friends functionality moved to profile page. Discover, Track, and Leaderboard pages exist as backpages (accessible at `/discover`, `/track`, and `/leaderboard`) but are not shown in navigation.
+- **Navigation**: Bottom navigation includes 4 items: Feed, Leaderboard, Library, and Me. Friends functionality moved to profile page. Discover, Track, and Play pages exist as backpages (accessible at `/discover`, `/track`, and `/play`) but are not shown in navigation.
 - **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), and Friends (friend management - only visible on own profile). Lists and Media History functionality moved to Library page. Section pills highlight active section and enable smooth scrolling navigation.
 - **Library Page Structure**: Library consolidates media management with 3 responsive tabs: Discover (trending content carousels), Lists (expandable lists with inline progress tracking - pages for books, episodes for TV, tracks for music, percentage for others), and Media History (chronological feed with search bar and Year/Month/Type filters, plus Overview stats showing media type counts).
 
@@ -17,7 +17,7 @@ Preferred communication style: Simple, everyday language.
 
 ### UI/UX Decisions
 - **Mobile-first design** with a **dark gradient theme**.
-- **Bottom Navigation**: Feed, Play, Library, Me. Friends moved to profile. Discover, Track, Leaderboard are backpages.
+- **Bottom Navigation**: Feed, Leaderboard, Library, Me. Friends moved to profile. Discover, Track, Play are backpages.
 - **Top Navigation**: Search (🔍), Notifications, Profile. Discover via ✨ icon.
 - **Profile Section Navigation**: Sticky pills (Stats, DNA, Friends) for quick navigation. Lists and Media History moved to Library page.
 - **Library Page Tabs**: 3 tabs (Discover, Lists, Media History) for consolidated media management. Lists tab shows expandable lists with visual progress bars and inline update controls. Media History tab includes search functionality and Year/Month/Type filters with Overview stats.
@@ -27,7 +27,7 @@ Preferred communication style: Simple, everyday language.
     - **Direct Search** (🔍): For friends and media, using `media-search` and `search-users` edge functions.
     - **Discover Page** (✨): AI-powered conversational recommendations via `conversational-search` edge function.
 - **Feed Content Filters**: Filter pills for content types (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review).
-- **Inline Composer**: Always-visible composer with action chips (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review, ➕ Add Media). Defaults to Hot Take mode.
+- **Inline Composer**: Simplified composer with clean text box and two buttons (➕ Add Media, ✨ More options). More options expands to show: 🎯 Prediction, 📦 Poll, ⭐ Rate/Review, 💬 Ask for Recs. Quick prompts include "I just finished..." Placeholder: "Share the entertainment you are consuming… or start a conversation."
 
 ### Technical Implementations
 - **Frontend**: React 18, TypeScript, Wouter, TanStack Query, Vite.
@@ -37,7 +37,17 @@ Preferred communication style: Simple, everyday language.
 - **Authentication**: Supabase Auth for login/signup/password reset, with automatic user creation in a custom `users` table.
 - **Notification System**: Real-time unified system (`notifications` table, `send-notification` edge function).
 - **Sharing System**: Unified functionality (`/src/lib/share.ts`) for content sharing.
-- **Leaderboard System**: `get-leaderboards` edge function handles all categories.
+- **Leaderboard System**: Engagement-focused leaderboard with 5 categories:
+  - **🌟 Fan Leaders**: Overall combined score (posts + replies + predictions + polls + reactions)
+  - **🔥 Conversation Starters**: Posts people engaged with most
+  - **🎯 Top Predictors**: Most accurate predictions
+  - **🧩 Trivia Champs**: Correct answers and streaks
+  - **❤️ Most Helpful**: Recommendations people saved
+  - Headline: "Who's Leading the Entertainment Conversation This Week?"
+  - Tracks conversation activity, social interaction, and play activity
+  - Does NOT track hours watched, books read, or consumption quantity
+  - Uses `get-leaderboards` edge function with Your Circle (friends) and Global tabs
+  - Old leaderboard preserved at `leaderboard-old.tsx` for reference
 - **Unified Voting System**: Uses `prediction_pools` and `user_predictions` tables for polls, predictions, and trivia, supporting sponsors.
 - **User Points System**: `calculate-user-points` edge function aggregates points.
 - **Smart Recommendations Caching**: `user_recommendations` cache table for instant loading, background GPT-4o generation, and `rebuild-recommendations` edge function.
@@ -67,7 +77,7 @@ Preferred communication style: Simple, everyday language.
 - **Custom Lists**: User-created lists with dedicated edge functions.
 - **Collaborative Lists**: Managed by `list_collaborators` table and associated edge functions.
 - **Progress Tracking**: Uses `update-item-progress` edge function with modes: percent (0-100%), page (books), episode (TV shows), track (music).
-- **Social Features**: Leaderboards, activity feeds, friend discovery, "Inner Circle".
+- **Social Features**: Engagement-focused leaderboards (conversation activity, social interaction, play activity), activity feeds, friend discovery, "Inner Circle".
 - **Play Section**: Category-based navigation for Trivia, Polls, Predictions.
 - **Profile Management**: Editable display name; usernames are permanent. Supports viewing other users' profiles. Profile focuses on Stats, DNA (Entertainment DNA profile), and Friends (friend management on own profile only).
 - **@ Mention System**: Tagging friends in posts/comments, real-time autocomplete, mention notifications, and precise navigation.
