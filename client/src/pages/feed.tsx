@@ -1947,76 +1947,58 @@ export default function Feed() {
                   ) : (
                     !post.content && post.mediaItems && post.mediaItems.length > 0 && (
                       <div className="mb-2">
-                        <div className="flex items-start gap-3">
-                          {/* Left side - text */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-gray-800 text-sm mb-1">
-                              Added{' '}
-                              {post.mediaItems[0].externalId && post.mediaItems[0].externalSource ? (
-                                <button
-                                  onClick={() => setLocation(`/media/${post.mediaItems[0].mediaType?.toLowerCase()}/${post.mediaItems[0].externalSource}/${post.mediaItems[0].externalId}`)}
-                                  className="font-semibold text-purple-600 hover:underline"
-                                >
-                                  {post.mediaItems[0].title}
-                                </button>
-                              ) : (
-                                <span className="font-semibold">{post.mediaItems[0].title}</span>
-                              )}
-                              {post.mediaItems.length > 1 && (
-                                <span className="text-gray-600"> and {post.mediaItems.length - 1} more</span>
-                              )}
-                              {' '}to{' '}
-                              <button
-                                onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
-                                className="font-medium text-purple-600 hover:underline"
-                              >
-                                their list
-                              </button>
-                            </p>
+                        {/* Text at top */}
+                        <p className="text-gray-800 text-sm mb-3">
+                          Added{' '}
+                          {post.mediaItems[0].externalId && post.mediaItems[0].externalSource ? (
                             <button
-                              onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
-                              className="text-xs text-gray-500 hover:text-purple-600 transition-colors"
+                              onClick={() => setLocation(`/media/${post.mediaItems[0].mediaType?.toLowerCase()}/${post.mediaItems[0].externalSource}/${post.mediaItems[0].externalId}`)}
+                              className="font-semibold text-purple-600 hover:underline"
                             >
-                              See more of @{post.user.username}'s lists →
+                              {post.mediaItems[0].title}
                             </button>
-                          </div>
-                          
-                          {/* Right side - horizontal scrollable preview */}
-                          {post.mediaItems.length > 0 && (
-                            <div className="flex-shrink-0 w-40">
-                              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                                {post.mediaItems.slice(0, 3).map((media, idx) => (
-                                  <button
-                                    key={idx}
-                                    onClick={() => {
-                                      if (media.externalId && media.externalSource) {
-                                        setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                                      }
-                                    }}
-                                    className="flex-shrink-0 w-16 hover:opacity-80 transition-opacity"
-                                  >
-                                    <img 
-                                      src={media.imageUrl || '/placeholder-media.png'}
-                                      alt={media.title}
-                                      className="w-16 h-20 object-cover rounded shadow-sm"
-                                    />
-                                  </button>
-                                ))}
-                                {post.mediaItems.length > 3 && (
-                                  <button
-                                    onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
-                                    className="flex-shrink-0 w-16 h-20 bg-gray-100 rounded flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
-                                  >
-                                    <div className="text-center">
-                                      <ChevronRight size={20} />
-                                      <span className="text-xs">+{post.mediaItems.length - 3}</span>
-                                    </div>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
+                          ) : (
+                            <span className="font-semibold">{post.mediaItems[0].title}</span>
                           )}
+                          {' '}to{' '}
+                          <button
+                            onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                            className="font-medium text-purple-600 hover:underline"
+                          >
+                            their list
+                          </button>
+                        </p>
+                        
+                        {/* Horizontal scrollable media preview */}
+                        <div className="mb-3 overflow-x-auto">
+                          <div className="flex gap-3 pb-2">
+                            {post.mediaItems.slice(0, 4).map((media, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  if (media.externalId && media.externalSource) {
+                                    setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                  }
+                                }}
+                                className="flex-shrink-0 w-20 hover:opacity-80 transition-opacity"
+                              >
+                                <img 
+                                  src={media.imageUrl || '/placeholder-media.png'}
+                                  alt={media.title}
+                                  className="w-20 h-28 object-cover rounded-lg shadow-md"
+                                />
+                              </button>
+                            ))}
+                          </div>
                         </div>
+                        
+                        {/* See more link */}
+                        <button
+                          onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                          className="text-sm text-gray-500 hover:text-purple-600 transition-colors"
+                        >
+                          See more of @{post.user.username}'s lists →
+                        </button>
                       </div>
                     )
                   )}
