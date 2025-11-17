@@ -1812,20 +1812,25 @@ export default function Feed() {
                       let typeLabel = '';
                       let typeColor = '';
                       
+                      // Check if it's a media-only post (no rating involved)
+                      const hasRating = post.rating || (post.content && /⭐|\/5|rated/i.test(post.content));
+                      const hasMedia = post.mediaItems && post.mediaItems.length > 0;
+                      const isAddedToList = post.content && /added.*to.*list/i.test(post.content);
+                      
                       if (postType === 'prediction') {
                         typeLabel = '🎯 Prediction';
                         typeColor = 'bg-blue-100 text-blue-700';
                       } else if (postType === 'poll') {
                         typeLabel = '🗳️ Poll';
                         typeColor = 'bg-green-100 text-green-700';
-                      } else if (post.rating || (post.content && /⭐|\/5/.test(post.content))) {
+                      } else if (isAddedToList || (hasMedia && !hasRating)) {
+                        // Media added to list without rating
+                        typeLabel = '➕ Media Activity';
+                        typeColor = 'bg-indigo-100 text-indigo-700';
+                      } else if (hasRating) {
                         // Has rating or star/score rating in content
                         typeLabel = '⭐ Rate/Review';
                         typeColor = 'bg-yellow-100 text-yellow-700';
-                      } else if (post.mediaItems && post.mediaItems.length > 0) {
-                        // Media added to list (checked after rating check)
-                        typeLabel = '➕ Media Activity';
-                        typeColor = 'bg-indigo-100 text-indigo-700';
                       }
                       
                       return typeLabel ? (
