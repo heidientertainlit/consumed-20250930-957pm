@@ -108,7 +108,26 @@ export default function InlineComposer() {
   };
 
   const handlePost = async () => {
-    if (!content.trim() && !attachedMedia && (composerMode === "thought" || composerMode === "")) {
+    // Validation for predictions
+    if (composerMode === "prediction") {
+      if (!content.trim()) {
+        toast({
+          title: "Missing Question",
+          description: "Please enter a prediction question.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const filledOptions = predictionOptions.filter(opt => opt.trim());
+      if (filledOptions.length < 2) {
+        toast({
+          title: "Missing Options",
+          description: "Please provide at least 2 prediction options.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else if (!content.trim() && !attachedMedia && (composerMode === "thought" || composerMode === "")) {
       toast({
         title: "Empty Post",
         description: "Please write something or add media before posting.",
@@ -119,44 +138,72 @@ export default function InlineComposer() {
 
     setIsPosting(true);
     try {
-      // Build the request payload in the format share-update expects
-      const payload: any = {
-        content: content.trim() || (attachedMedia ? `Added ${attachedMedia.title}` : ""),
-        type: composerMode || "thought",
-        visibility: "public",
-        contains_spoilers: containsSpoilers,
-      };
+      // Handle predictions separately
+      if (composerMode === "prediction") {
+        const filledOptions = predictionOptions.filter(opt => opt.trim());
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: content.trim(),
+            type: "prediction",
+            visibility: "public",
+            contains_spoilers: containsSpoilers,
+            prediction_question: content.trim(),
+            prediction_options: filledOptions,
+            challenged_friends: challengedFriends.trim(),
+          }),
+        });
 
-      // Add media data if available (in the format expected by share-update)
-      if (attachedMedia) {
-        payload.media_title = attachedMedia.title || "";
-        payload.media_type = attachedMedia.type || "movie";
-        payload.media_creator = attachedMedia.creator || attachedMedia.author || attachedMedia.artist || "";
-        payload.media_image_url = attachedMedia.poster_url || attachedMedia.image_url || attachedMedia.image || attachedMedia.thumbnail || "";
-        payload.media_external_id = attachedMedia.external_id || attachedMedia.id || "";
-        payload.media_external_source = attachedMedia.external_source || attachedMedia.source || 'tmdb';
-        
-        // Add list_id if a list was selected in add-media mode
-        if (composerMode === "add-media" && selectedList) {
-          payload.list_id = selectedList;
+        if (!response.ok) throw new Error("Failed to create prediction");
+
+        toast({
+          title: "Prediction Posted!",
+          description: "Your prediction has been shared with your friends.",
+        });
+      } else {
+        // Regular posts (thoughts, media, etc.)
+        const payload: any = {
+          content: content.trim() || (attachedMedia ? `Added ${attachedMedia.title}` : ""),
+          type: composerMode || "thought",
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+        };
+
+        // Add media data if available (in the format expected by share-update)
+        if (attachedMedia) {
+          payload.media_title = attachedMedia.title || "";
+          payload.media_type = attachedMedia.type || "movie";
+          payload.media_creator = attachedMedia.creator || attachedMedia.author || attachedMedia.artist || "";
+          payload.media_image_url = attachedMedia.poster_url || attachedMedia.image_url || attachedMedia.image || attachedMedia.thumbnail || "";
+          payload.media_external_id = attachedMedia.external_id || attachedMedia.id || "";
+          payload.media_external_source = attachedMedia.external_source || attachedMedia.source || 'tmdb';
+          
+          // Add list_id if a list was selected in add-media mode
+          if (composerMode === "add-media" && selectedList) {
+            payload.list_id = selectedList;
+          }
         }
+
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) throw new Error("Failed to post");
+
+        toast({
+          title: "Posted!",
+          description: attachedMedia ? "Your media has been shared." : "Your update has been shared.",
+        });
       }
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session?.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error("Failed to post");
-
-      toast({
-        title: "Posted!",
-        description: attachedMedia ? "Your media has been shared." : "Your update has been shared.",
-      });
 
       // Invalidate feed cache
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });

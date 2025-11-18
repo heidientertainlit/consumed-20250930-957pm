@@ -75,7 +75,7 @@ serve(async (req) => {
     }
 
     if (req.method === 'POST') {
-      // Create a new social feed post
+      // Create a new social feed post or prediction
       let body;
       try {
         body = await req.json();
@@ -87,11 +87,49 @@ serve(async (req) => {
         });
       }
 
-      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers, list_id } = body;
+      const { type, content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers, list_id, prediction_question, prediction_options } = body;
 
       console.log('Creating post for user:', appUser.id);
       console.log('Request body:', body);
 
+      // Handle predictions separately
+      if (type === 'prediction' && prediction_question && prediction_options) {
+        // Create prediction pool
+        const { data: pool, error: poolError } = await supabase
+          .from('prediction_pools')
+          .insert({
+            question: prediction_question,
+            options: prediction_options,
+            type: 'predict',
+            origin_type: 'user',
+            origin_user_id: appUser.id,
+            status: 'open',
+            points_reward: 20,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (poolError) {
+          console.error('Prediction pool creation error:', poolError);
+          return new Response(JSON.stringify({ error: poolError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        console.log('Prediction pool created successfully:', pool.id);
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          pool_id: pool.id,
+          message: 'Prediction created successfully' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Regular social post
       const { data: post, error } = await supabase
         .from('social_posts')
         .insert({
