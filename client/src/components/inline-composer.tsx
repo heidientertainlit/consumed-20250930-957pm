@@ -358,7 +358,7 @@ export default function InlineComposer() {
             data-testid="button-more-options"
           >
             <Sparkles className="w-3.5 h-3.5 inline mr-1" />
-            More options
+            More Ways To Share
           </button>
         </div>
 
