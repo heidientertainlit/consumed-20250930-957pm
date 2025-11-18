@@ -332,6 +332,18 @@ export default function InlineComposer() {
               className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400 w-full"
               minHeight="60px"
               session={session}
+              onMediaSelect={(media) => {
+                setAttachedMedia({
+                  title: media.title,
+                  creator: media.creator,
+                  type: media.type,
+                  image: media.image,
+                  poster_url: media.image,
+                  image_url: media.image,
+                  external_id: media.external_id,
+                  external_source: media.external_source,
+                });
+              }}
             />
           </div>
         </div>
@@ -340,18 +352,6 @@ export default function InlineComposer() {
       {/* Simple Action Buttons */}
       <div className="px-4 pb-3 border-t border-gray-100 pt-3">
         <div className="flex gap-2">
-          <button
-            onClick={() => handleChipClick("add-media")}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              composerMode === "add-media"
-                ? "bg-purple-600 text-white"
-                : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
-            }`}
-            data-testid="button-add-media"
-          >
-            <Plus className="w-3.5 h-3.5 inline mr-1" />
-            Add Media
-          </button>
           <button
             onClick={() => setShowMoreOptions(!showMoreOptions)}
             className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
