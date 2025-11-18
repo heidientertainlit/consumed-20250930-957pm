@@ -1465,8 +1465,11 @@ export default function Feed() {
             <Activity className="text-purple-600" size={32} />
             Feed
           </h1>
-          <p className="text-base text-gray-600 text-center">
-            See what your friends are consuming — and share what you're watching, reading, or listening to.
+          <p className="text-base text-gray-900 text-center font-medium mb-1">
+            Here's what your friends are watching, reading, and listening to.
+          </p>
+          <p className="text-sm text-gray-600 text-center">
+            Jump in — add what you're consuming or join the conversation.
           </p>
         </div>
 
