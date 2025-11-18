@@ -179,6 +179,70 @@ serve(async (req) => {
         });
       }
 
+      // Fetch prediction data for posts with type 'prediction'
+      const predictionPostIds = posts?.filter(p => p.post_type === 'prediction').map(p => p.user_id) || [];
+      let predictionDataMap = new Map();
+      
+      if (predictionPostIds.length > 0) {
+        const { data: predictionPools } = await supabase
+          .from('prediction_pools')
+          .select('*')
+          .in('origin_user_id', predictionPostIds)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false });
+        
+        // Get vote counts for predictions
+        const poolIds = predictionPools?.map(p => p.id) || [];
+        const { data: votes } = await supabase
+          .from('user_predictions')
+          .select('pool_id, prediction')
+          .in('pool_id', poolIds);
+        
+        const voteCountsMap = new Map();
+        votes?.forEach(v => {
+          if (!voteCountsMap.has(v.pool_id)) {
+            voteCountsMap.set(v.pool_id, {});
+          }
+          const counts = voteCountsMap.get(v.pool_id);
+          counts[v.prediction] = (counts[v.prediction] || 0) + 1;
+        });
+        
+        // Check user's votes
+        const { data: userVotes } = await supabase
+          .from('user_predictions')
+          .select('pool_id')
+          .eq('user_id', appUser.id)
+          .in('pool_id', poolIds);
+        
+        const votedPoolIds = new Set(userVotes?.map(v => v.pool_id) || []);
+        
+        // Map predictions by user_id for easy lookup
+        predictionPools?.forEach(pred => {
+          const voteCounts = voteCountsMap.get(pred.id) || {};
+          const totalVotes = Object.values(voteCounts).reduce((sum: number, count: any) => sum + (count as number), 0) as number;
+          
+          predictionDataMap.set(pred.origin_user_id, {
+            poolId: pred.id,
+            question: pred.question,
+            options: pred.options || [],
+            optionVotes: (pred.options || []).map((option: string) => ({
+              option,
+              count: voteCounts[option] || 0,
+              percentage: totalVotes > 0 ? Math.round(((voteCounts[option] || 0) / totalVotes) * 100) : 0
+            })),
+            userHasAnswered: votedPoolIds.has(pred.id),
+            voteCounts: {
+              yes: voteCounts[pred.options?.[0]] || 0,
+              no: voteCounts[pred.options?.[1]] || 0,
+              total: totalVotes
+            },
+            origin_type: pred.origin_type,
+            creatorPrediction: pred.options?.[0] || '',
+            friendPrediction: pred.options?.[1]
+          });
+        });
+      }
+
       const transformedPosts = posts?.map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
@@ -199,7 +263,10 @@ serve(async (req) => {
           }));
         }
         
-        return {
+        // Enrich prediction posts with prediction_pools data
+        const predictionData = post.post_type === 'prediction' ? predictionDataMap.get(post.user_id) : null;
+        
+        const basePost = {
           id: post.id,
           type: post.post_type || 'update',
           user: {
@@ -230,6 +297,22 @@ serve(async (req) => {
             description: post.media_description || ''
           }] : []
         };
+        
+        // Add prediction fields if this is a prediction post
+        if (predictionData) {
+          return {
+            ...basePost,
+            ...predictionData,
+            creator: {
+              username: postUser.user_name || 'Unknown'
+            },
+            invitedFriend: {
+              username: 'everyone'
+            }
+          };
+        }
+        
+        return basePost;
       }) || [];
 
       console.log('Returning posts:', transformedPosts.length);

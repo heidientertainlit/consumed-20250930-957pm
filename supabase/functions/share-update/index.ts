@@ -120,9 +120,29 @@ serve(async (req) => {
 
         console.log('Prediction pool created successfully:', pool.id);
 
+        // ALSO create a social_post linking to this prediction so it appears in feed
+        const { data: post, error: postError } = await supabase
+          .from('social_posts')
+          .insert({
+            user_id: appUser.id,
+            content: prediction_question,
+            post_type: 'prediction',
+            contains_spoilers: contains_spoilers || false
+          })
+          .select()
+          .single();
+
+        if (postError) {
+          console.error('Post creation error for prediction:', postError);
+          // Don't fail completely, prediction was created
+        } else {
+          console.log('Social post created for prediction:', post.id);
+        }
+
         return new Response(JSON.stringify({ 
           success: true, 
           pool_id: pool.id,
+          post_id: post?.id,
           message: 'Prediction created successfully' 
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
