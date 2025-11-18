@@ -312,7 +312,7 @@ export default function InlineComposer() {
     if (chip) {
       return `Ex: ${chip.example}`;
     }
-    return "Share the entertainment you are consuming… or start a conversation.";
+    return "Share about some entertainment you are consuming";
   };
 
   return (
