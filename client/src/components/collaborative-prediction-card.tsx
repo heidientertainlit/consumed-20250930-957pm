@@ -36,6 +36,12 @@ interface CollaborativePrediction {
   status?: 'open' | 'locked' | 'completed';
   resolved_at?: string | null;
   winning_option?: string;
+  options?: string[];
+  optionVotes?: Array<{
+    option: string;
+    count: number;
+    percentage: number;
+  }>;
 }
 
 interface CollaborativePredictionCardProps {
@@ -431,77 +437,112 @@ export default function CollaborativePredictionCard({
       {/* Voting Options - Stacked vertically */}
       {!needsResolution && (
         <div className="space-y-2 mb-3">
-          {/* Option 1 - Creator's prediction */}
-          <div>
-            {!isConsumedPrediction && (
-              <p className="text-xs text-gray-600 mb-1 ml-1">
-                <span className="font-semibold">{creator.username}</span>
-              </p>
-            )}
-            <button
-              onClick={() => handleSelectOption("Yes")}
-              disabled={userHasAnswered || voteMutation.isPending}
-              className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
-                userHasAnswered 
-                  ? "bg-white border-purple-300 opacity-60 cursor-default"
-                  : selectedOption === "Yes"
-                  ? "bg-purple-100 border-purple-500"
-                  : "bg-white border-purple-300 hover:border-purple-400"
-              }`}
-              data-testid="button-vote-yes"
-            >
-              <p className={`text-sm font-medium text-left ${selectedOption === "Yes" ? "text-purple-700" : "text-black"}`}>
-                {creatorPrediction}
-              </p>
-              {voteCounts && (
-                <span className="text-sm font-semibold text-gray-700">
-                  {yesPercentage}%
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Option 2 - Friend's prediction */}
-          {friendPrediction ? (
-            <div>
-              {!isConsumedPrediction && (
-                <p className="text-xs text-gray-600 mb-1 ml-1">
-                  <span className="font-semibold">{invitedFriend.username}</span>
-                </p>
-              )}
-              <button
-                onClick={() => handleSelectOption("No")}
-                disabled={userHasAnswered || voteMutation.isPending}
-                className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
-                  userHasAnswered 
-                    ? "bg-white border-purple-300 opacity-60 cursor-default"
-                    : selectedOption === "No"
-                    ? "bg-purple-100 border-purple-500"
-                    : "bg-white border-purple-300 hover:border-purple-400"
-                }`}
-                data-testid="button-vote-no"
-              >
-                <p className={`text-sm font-medium text-left ${selectedOption === "No" ? "text-purple-700" : "text-black"}`}>
-                  {friendPrediction}
-                </p>
-                {voteCounts && (
-                  <span className="text-sm font-semibold text-gray-700">
-                    {noPercentage}%
-                  </span>
-                )}
-              </button>
-            </div>
+          {/* Multi-option predictions (new format) */}
+          {prediction.options && prediction.options.length > 0 ? (
+            prediction.options.map((option, index) => {
+              const optionData = prediction.optionVotes?.find(ov => ov.option === option);
+              const percentage = optionData?.percentage || 0;
+              
+              return (
+                <div key={index}>
+                  <button
+                    onClick={() => handleSelectOption(option)}
+                    disabled={userHasAnswered || voteMutation.isPending}
+                    className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
+                      userHasAnswered 
+                        ? "bg-white border-purple-300 opacity-60 cursor-default"
+                        : selectedOption === option
+                        ? "bg-purple-100 border-purple-500"
+                        : "bg-white border-purple-300 hover:border-purple-400"
+                    }`}
+                    data-testid={`button-vote-option-${index}`}
+                  >
+                    <p className={`text-sm font-medium text-left ${selectedOption === option ? "text-purple-700" : "text-black"}`}>
+                      {option}
+                    </p>
+                    {userHasAnswered && (
+                      <span className="text-sm font-semibold text-gray-700">
+                        {percentage}%
+                      </span>
+                    )}
+                  </button>
+                </div>
+              );
+            })
           ) : (
-            <div>
-              {!isConsumedPrediction && (
-                <p className="text-xs text-gray-600 mb-1 ml-1">
-                  <span className="font-semibold">{invitedFriend.username}</span>
-                </p>
-              )}
-              <div className="flex-1 bg-gray-50 rounded-full px-4 py-2.5 border-2 border-gray-200">
-                <p className="text-sm text-gray-400 italic text-left">Pending...</p>
+            <>
+              {/* Legacy 2-option format */}
+              <div>
+                {!isConsumedPrediction && (
+                  <p className="text-xs text-gray-600 mb-1 ml-1">
+                    <span className="font-semibold">{creator.username}</span>
+                  </p>
+                )}
+                <button
+                  onClick={() => handleSelectOption("Yes")}
+                  disabled={userHasAnswered || voteMutation.isPending}
+                  className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
+                    userHasAnswered 
+                      ? "bg-white border-purple-300 opacity-60 cursor-default"
+                      : selectedOption === "Yes"
+                      ? "bg-purple-100 border-purple-500"
+                      : "bg-white border-purple-300 hover:border-purple-400"
+                  }`}
+                  data-testid="button-vote-yes"
+                >
+                  <p className={`text-sm font-medium text-left ${selectedOption === "Yes" ? "text-purple-700" : "text-black"}`}>
+                    {creatorPrediction}
+                  </p>
+                  {voteCounts && (
+                    <span className="text-sm font-semibold text-gray-700">
+                      {yesPercentage}%
+                    </span>
+                  )}
+                </button>
               </div>
-            </div>
+
+              {friendPrediction ? (
+                <div>
+                  {!isConsumedPrediction && (
+                    <p className="text-xs text-gray-600 mb-1 ml-1">
+                      <span className="font-semibold">{invitedFriend.username}</span>
+                    </p>
+                  )}
+                  <button
+                    onClick={() => handleSelectOption("No")}
+                    disabled={userHasAnswered || voteMutation.isPending}
+                    className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
+                      userHasAnswered 
+                        ? "bg-white border-purple-300 opacity-60 cursor-default"
+                        : selectedOption === "No"
+                        ? "bg-purple-100 border-purple-500"
+                        : "bg-white border-purple-300 hover:border-purple-400"
+                    }`}
+                    data-testid="button-vote-no"
+                  >
+                    <p className={`text-sm font-medium text-left ${selectedOption === "No" ? "text-purple-700" : "text-black"}`}>
+                      {friendPrediction}
+                    </p>
+                    {voteCounts && (
+                      <span className="text-sm font-semibold text-gray-700">
+                        {noPercentage}%
+                      </span>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  {!isConsumedPrediction && (
+                    <p className="text-xs text-gray-600 mb-1 ml-1">
+                      <span className="font-semibold">{invitedFriend.username}</span>
+                    </p>
+                  )}
+                  <div className="flex-1 bg-gray-50 rounded-full px-4 py-2.5 border-2 border-gray-200">
+                    <p className="text-sm text-gray-400 italic text-left">Pending...</p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

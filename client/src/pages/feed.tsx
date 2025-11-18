@@ -1569,6 +1569,18 @@ export default function Feed() {
               </div>
               
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
+                // Check if this item is a prediction from the API
+                if (post.type === 'prediction') {
+                  return (
+                    <div key={`prediction-${post.id}`} className="mb-4">
+                      <CollaborativePredictionCard 
+                        prediction={post as any}
+                        onCastPrediction={() => console.log("Cast prediction")}
+                      />
+                    </div>
+                  );
+                }
+
                 // Pattern: 2 posts → prediction → trivia → creator update → 2 posts → recommended → (repeat)
                 // Pattern repeats every 8 items
                 const patternPosition = postIndex % 8;

@@ -235,7 +235,103 @@ serve(async (req) => {
       console.log('Returning posts:', transformedPosts.length);
       console.log('Posts with media:', transformedPosts.filter(p => p.mediaItems.length > 0).length);
 
-      return new Response(JSON.stringify(transformedPosts), {
+      // Fetch predictions from prediction_pools
+      const { data: predictions, error: predictionsError } = await supabase
+        .from('prediction_pools')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .range(0, limit + offset - 1); // Fetch extra to mix with posts
+
+      console.log('Found predictions:', predictions?.length || 0);
+
+      // Get vote counts for each prediction
+      const predictionIds = predictions?.map(p => p.id) || [];
+      const { data: userPredictions } = await supabase
+        .from('user_predictions')
+        .select('pool_id, prediction')
+        .in('pool_id', predictionIds);
+
+      // Calculate vote counts
+      const voteCountsMap = new Map();
+      userPredictions?.forEach(up => {
+        if (!voteCountsMap.has(up.pool_id)) {
+          voteCountsMap.set(up.pool_id, {});
+        }
+        const counts = voteCountsMap.get(up.pool_id);
+        counts[up.prediction] = (counts[up.prediction] || 0) + 1;
+      });
+
+      // Check which predictions the current user has voted on
+      const { data: currentUserPredictions } = await supabase
+        .from('user_predictions')
+        .select('pool_id')
+        .eq('user_id', appUser.id)
+        .in('pool_id', predictionIds);
+
+      const votedPoolIds = new Set(currentUserPredictions?.map(up => up.pool_id) || []);
+
+      // Get user info for prediction creators
+      const creatorIds = [...new Set(predictions?.map(p => p.origin_user_id).filter(Boolean) || [])];
+      const { data: creators } = await supabase
+        .from('users')
+        .select('id, user_name, display_name')
+        .in('id', creatorIds);
+
+      const creatorMap = new Map(creators?.map(c => [c.id, c]) || []);
+
+      // Transform predictions into feed items
+      const transformedPredictions = predictions?.map(pred => {
+        const creator = creatorMap.get(pred.origin_user_id) || { user_name: 'consumed', display_name: 'consumed' };
+        const voteCounts = voteCountsMap.get(pred.id) || {};
+        const totalVotes = Object.values(voteCounts).reduce((sum: number, count: any) => sum + (count as number), 0) as number;
+        
+        // Calculate percentages for each option
+        const optionVotes = (pred.options || []).map((option: string) => ({
+          option,
+          count: voteCounts[option] || 0,
+          percentage: totalVotes > 0 ? Math.round(((voteCounts[option] || 0) / totalVotes) * 100) : 0
+        }));
+
+        return {
+          id: pred.id,
+          type: 'prediction',
+          poolId: pred.id,
+          question: pred.question,
+          options: pred.options || [],
+          optionVotes,
+          creator: {
+            username: creator.user_name
+          },
+          invitedFriend: {
+            username: 'everyone'
+          },
+          creatorPrediction: pred.options?.[0] || '',
+          friendPrediction: pred.options?.[1],
+          userHasAnswered: votedPoolIds.has(pred.id),
+          participantCount: totalVotes,
+          voteCounts: {
+            yes: voteCounts[pred.options?.[0]] || 0,
+            no: voteCounts[pred.options?.[1]] || 0,
+            total: totalVotes
+          },
+          origin_type: pred.origin_type,
+          origin_user_id: pred.origin_user_id,
+          timestamp: pred.created_at,
+          likes: 0,
+          comments: 0,
+          likedByCurrentUser: false
+        };
+      }) || [];
+
+      // Merge posts and predictions, sort by timestamp
+      const allItems = [...transformedPosts, ...transformedPredictions]
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(offset, offset + limit);
+
+      console.log('Returning items:', allItems.length, '(posts + predictions)');
+
+      return new Response(JSON.stringify(allItems), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
