@@ -231,7 +231,7 @@ export default function InlineComposer() {
   };
 
   const addPredictionOption = () => {
-    if (predictionOptions.length < 4) {
+    if (predictionOptions.length < 10) {
       setPredictionOptions([...predictionOptions, ""]);
     }
   };
@@ -469,7 +469,7 @@ export default function InlineComposer() {
               )}
             </div>
           ))}
-          {predictionOptions.length < 4 && (
+          {predictionOptions.length < 10 && (
             <Button
               onClick={addPredictionOption}
               variant="outline"
@@ -478,7 +478,7 @@ export default function InlineComposer() {
               data-testid="button-add-prediction-option"
             >
               <Plus className="w-3 h-3 mr-1" />
-              Add Option
+              Add Option ({predictionOptions.length}/10)
             </Button>
           )}
           
