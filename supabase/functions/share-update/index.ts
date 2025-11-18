@@ -127,6 +127,7 @@ serve(async (req) => {
             user_id: appUser.id,
             content: prediction_question,
             post_type: 'prediction',
+            prediction_pool_id: pool.id,
             contains_spoilers: contains_spoilers || false
           })
           .select()
