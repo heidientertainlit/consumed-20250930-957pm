@@ -40,6 +40,8 @@ interface SocialPost {
   shares: number;
   likedByCurrentUser?: boolean;
   containsSpoilers?: boolean;
+  rating?: number;
+  progress?: string;
   listPreview?: Array<{
     id: string;
     title: string;
@@ -59,6 +61,36 @@ interface SocialPost {
     externalId: string;
     externalSource: string;
   }>;
+  // Prediction-specific fields
+  poolId?: string;
+  question?: string;
+  options?: string[];
+  optionVotes?: Array<{
+    option: string;
+    count: number;
+    percentage: number;
+  }>;
+  creator?: {
+    username: string;
+  };
+  invitedFriend?: {
+    username: string;
+  };
+  creatorPrediction?: string;
+  friendPrediction?: string;
+  userHasAnswered?: boolean;
+  participantCount?: number;
+  voteCounts?: {
+    yes: number;
+    no: number;
+    total: number;
+  };
+  origin_type?: 'consumed' | 'user';
+  origin_user_id?: string;
+  deadline?: string | null;
+  status?: 'open' | 'locked' | 'completed';
+  resolved_at?: string | null;
+  winning_option?: string;
 }
 
 const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number; session: any }): Promise<SocialPost[]> => {
@@ -1570,7 +1602,7 @@ export default function Feed() {
               
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
                 // Check if this item is a prediction from the API
-                if (post.type === 'prediction') {
+                if (post.type === 'prediction' && post.question) {
                   return (
                     <div key={`prediction-${post.id}`} className="mb-4">
                       <CollaborativePredictionCard 

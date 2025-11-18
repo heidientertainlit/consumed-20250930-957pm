@@ -282,7 +282,7 @@ serve(async (req) => {
 
       // Transform predictions into feed items
       const transformedPredictions = predictions?.map(pred => {
-        const creator = creatorMap.get(pred.origin_user_id) || { user_name: 'consumed', display_name: 'consumed' };
+        const creator = creatorMap.get(pred.origin_user_id) || { id: 'consumed', user_name: 'consumed', display_name: 'consumed' };
         const voteCounts = voteCountsMap.get(pred.id) || {};
         const totalVotes = Object.values(voteCounts).reduce((sum: number, count: any) => sum + (count as number), 0) as number;
         
@@ -296,10 +296,18 @@ serve(async (req) => {
         return {
           id: pred.id,
           type: 'prediction',
+          user: {
+            id: creator.id || pred.origin_user_id || '',
+            username: creator.user_name || 'consumed',
+            displayName: creator.display_name || creator.user_name || 'consumed',
+            avatar: ''
+          },
+          content: pred.question || '',
           poolId: pred.id,
           question: pred.question,
           options: pred.options || [],
           optionVotes,
+          mediaItems: [],
           creator: {
             username: creator.user_name
           },
