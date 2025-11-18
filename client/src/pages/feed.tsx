@@ -1602,27 +1602,15 @@ export default function Feed() {
               
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
                 // Check if this item is a prediction from the API
-                if (post.type === 'prediction') {
-                  console.log('🎯 PREDICTION POST DETECTED:', {
-                    id: post.id,
-                    type: post.type,
-                    hasQuestion: !!post.question,
-                    question: post.question,
-                    hasOptions: !!(post as any).options,
-                    options: (post as any).options,
-                    fullPost: post
-                  });
-                  
-                  if (post.question) {
-                    return (
-                      <div key={`prediction-${post.id}`} className="mb-4">
-                        <CollaborativePredictionCard 
-                          prediction={post as any}
-                          onCastPrediction={() => console.log("Cast prediction")}
-                        />
-                      </div>
-                    );
-                  }
+                if (post.type === 'prediction' && post.question) {
+                  return (
+                    <div key={`prediction-${post.id}`} className="mb-4">
+                      <CollaborativePredictionCard 
+                        prediction={post as any}
+                        onCastPrediction={() => console.log("Cast prediction")}
+                      />
+                    </div>
+                  );
                 }
 
                 // Pattern: 2 posts → prediction → trivia → creator update → 2 posts → recommended → (repeat)
