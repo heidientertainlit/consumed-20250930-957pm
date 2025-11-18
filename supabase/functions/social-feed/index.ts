@@ -299,6 +299,13 @@ serve(async (req) => {
         
         // Add prediction fields if this is a prediction post
         if (predictionData) {
+          console.log('🎯 ENRICHING PREDICTION POST:', {
+            postId: post.id,
+            poolId: post.prediction_pool_id,
+            question: predictionData.question,
+            options: predictionData.options
+          });
+          
           return {
             ...basePost,
             ...predictionData,
@@ -316,6 +323,8 @@ serve(async (req) => {
 
       console.log('Returning posts:', transformedPosts.length);
       console.log('Posts with media:', transformedPosts.filter(p => p.mediaItems.length > 0).length);
+      console.log('Posts with type=prediction:', transformedPosts.filter(p => p.type === 'prediction').length);
+      console.log('Posts with question field:', transformedPosts.filter(p => (p as any).question).length);
 
       // Fetch predictions from prediction_pools
       const { data: predictions, error: predictionsError } = await supabase
