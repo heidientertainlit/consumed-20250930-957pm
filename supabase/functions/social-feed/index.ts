@@ -122,7 +122,8 @@ serve(async (req) => {
           media_external_id, 
           media_external_source, 
           media_description,
-          contains_spoilers
+          contains_spoilers,
+          prediction_pool_id
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -180,16 +181,14 @@ serve(async (req) => {
       }
 
       // Fetch prediction data for posts with type 'prediction'
-      const predictionPostIds = posts?.filter(p => p.post_type === 'prediction').map(p => p.user_id) || [];
+      const predictionPoolIds = posts?.filter(p => p.prediction_pool_id).map(p => p.prediction_pool_id) || [];
       let predictionDataMap = new Map();
       
-      if (predictionPostIds.length > 0) {
+      if (predictionPoolIds.length > 0) {
         const { data: predictionPools } = await supabase
           .from('prediction_pools')
           .select('*')
-          .in('origin_user_id', predictionPostIds)
-          .eq('status', 'open')
-          .order('created_at', { ascending: false });
+          .in('id', predictionPoolIds);
         
         // Get vote counts for predictions
         const poolIds = predictionPools?.map(p => p.id) || [];
@@ -216,12 +215,12 @@ serve(async (req) => {
         
         const votedPoolIds = new Set(userVotes?.map(v => v.pool_id) || []);
         
-        // Map predictions by user_id for easy lookup
+        // Map predictions by pool_id for easy lookup
         predictionPools?.forEach(pred => {
           const voteCounts = voteCountsMap.get(pred.id) || {};
           const totalVotes = Object.values(voteCounts).reduce((sum: number, count: any) => sum + (count as number), 0) as number;
           
-          predictionDataMap.set(pred.origin_user_id, {
+          predictionDataMap.set(pred.id, {
             poolId: pred.id,
             question: pred.question,
             options: pred.options || [],
@@ -264,7 +263,7 @@ serve(async (req) => {
         }
         
         // Enrich prediction posts with prediction_pools data
-        const predictionData = post.post_type === 'prediction' ? predictionDataMap.get(post.user_id) : null;
+        const predictionData = post.prediction_pool_id ? predictionDataMap.get(post.prediction_pool_id) : null;
         
         const basePost = {
           id: post.id,
