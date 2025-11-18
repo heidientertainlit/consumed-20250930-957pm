@@ -466,14 +466,13 @@ export default function InlineComposer() {
         {/* Quick Prompts - Only when empty */}
         {content === "" && composerMode === "" && (
           <div className="mt-3">
-            <p className="text-xs text-gray-500 mb-2">Or tap a quick prompt:</p>
+            <p className="text-xs text-gray-500 mb-2">Or start a conversation</p>
             <div className="flex gap-2 flex-wrap">
               {[
-                "Recommend a movie to watch tonight",
-                "What should I read next?",
                 "Anyone else watching ...?",
                 "I can't believe ...",
-                "I just finished..."
+                "I just finished...",
+                "What did you think about??"
               ].map((prompt) => (
                 <button
                   key={prompt}
