@@ -469,10 +469,9 @@ export default function InlineComposer() {
             <p className="text-xs text-gray-500 mb-2">Or start a conversation</p>
             <div className="flex gap-2 flex-wrap">
               {[
-                "Anyone else watching ...?",
                 "I can't believe ...",
                 "I just finished...",
-                "What did you think about??"
+                "what did you think about ...."
               ].map((prompt) => (
                 <button
                   key={prompt}
