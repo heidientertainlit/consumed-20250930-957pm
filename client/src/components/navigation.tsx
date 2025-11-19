@@ -504,39 +504,45 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         <div className="flex justify-evenly items-center h-20 pb-2">
           <Link
             href="/feed"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
           >
-            <Activity className="text-white" size={22} />
+            <div className="h-6 w-6 flex items-center justify-center">
+              <Activity className="text-white" size={24} />
+            </div>
             <span className="text-xs font-medium text-white whitespace-nowrap">Feed</span>
           </Link>
 
           <Link
             href="/search"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/search" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/search" ? "bg-white/20" : ""}`}
           >
-            <img 
-              src={new URL('@assets/ai-technology_1763529186482.png', import.meta.url).href}
-              alt="AI Search"
-              className="w-5 h-5 brightness-0 invert"
-            />
+            <div className="h-6 w-6 flex items-center justify-center">
+              <img 
+                src={new URL('@assets/ai-technology_1763529186482.png', import.meta.url).href}
+                alt="AI Search"
+                className="w-6 h-6 brightness-0 invert"
+              />
+            </div>
             <span className="text-xs font-medium text-white whitespace-nowrap">Search</span>
           </Link>
 
           <Link
             href="/leaderboard"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
           >
-            <Trophy className="text-white" size={22} />
+            <div className="h-6 w-6 flex items-center justify-center">
+              <Trophy className="text-white" size={24} />
+            </div>
             <span className="text-xs font-medium text-white whitespace-nowrap">Leaders</span>
           </Link>
 
           <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
           >
-            <div className="relative">
-              <User className="text-white" size={22} />
-              <Dna className="text-white absolute -left-3 -top-1" size={14} />
+            <div className="h-6 w-6 flex items-center justify-center relative">
+              <User className="text-white" size={24} />
+              <Dna className="text-white absolute -right-2 -bottom-1" size={12} />
             </div>
             <span className="text-xs font-medium text-white whitespace-nowrap">Me</span>
           </Link>
