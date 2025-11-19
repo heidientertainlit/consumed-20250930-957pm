@@ -1466,7 +1466,7 @@ export default function Feed() {
             Feed
           </h1>
           <p className="text-base text-gray-900 text-center font-medium mb-1">
-            Here's what your friends are watching, reading, and listening to. Add Yours.
+            Add yours:
           </p>
         </div>
 
