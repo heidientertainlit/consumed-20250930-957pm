@@ -356,7 +356,7 @@ export default function InlineComposer() {
           <>
             {content === "" && (
               <div className="mb-3">
-                <p className="text-xs text-gray-400 mb-2">Ideas to start a conversation</p>
+                <p className="text-xs text-gray-400 mb-2">Ideas to Start a Conversation</p>
                 <div className="flex gap-2 flex-wrap">
                   {[
                     "I can't believe…",
@@ -377,7 +377,7 @@ export default function InlineComposer() {
             )}
 
             {/* Divider */}
-            <div className="h-px bg-gray-200 my-3" />
+            <div className="h-px bg-gray-100 my-3" />
 
             {/* More Ways to Share - Collapsible */}
             <div>
