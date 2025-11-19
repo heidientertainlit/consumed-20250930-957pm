@@ -54,7 +54,7 @@ Preferred communication style: Simple, everyday language.
 - **Spoiler Protection**: Posts can be marked as spoilers, showing a blurred preview with a reveal overlay.
 - **Session Tracking & Analytics**: `user_sessions` table for engagement monitoring, churn analysis, and time-spent metrics via `get_churn_metrics` and `get_session_engagement` functions.
 - **Consumed vs User-Generated Content**: Predictions, polls, and trivia can be created either by the consumed team (platform-curated) or by users. Content origin is distinguished via `origin_type` ('consumed' or 'user') and `origin_user_id` fields:
-  - **Consumed Content**: Platform-curated predictions/polls/trivia added via SQL by consumed team, displayed with "🏆 Featured" badge and purple gradient border (from-purple-50 to-blue-50, border-purple-300), icon with purple-to-blue gradient background.
+  - **Consumed Content**: Platform-curated predictions/polls/trivia added via SQL by consumed team, displayed with "🏆 Consumed" badge and purple gradient border (from-purple-50 to-blue-50, border-purple-300), icon with purple-to-blue gradient background.
   - **User-Generated Content**: Created by users through inline composer, displayed with "@username asked:" format, simple white card with standard gray border, standard purple icon background.
   - Both types use the same `prediction_pools` table and edge functions but are visually distinguished in the feed for different user experiences.
 - **Prediction Resolution System**: Predictions support optional end dates and scoring system:

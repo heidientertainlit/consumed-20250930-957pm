@@ -157,7 +157,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
             </div>
             <div className="flex-1">
               {isConsumedContent ? (
-                <span className="text-xs font-bold text-purple-700">🏆 Featured {getGameType()}</span>
+                <span className="text-xs font-bold text-purple-700">🏆 Consumed {getGameType()}</span>
               ) : (
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-semibold text-gray-900">@{game.creator_username || 'user'}</span>
