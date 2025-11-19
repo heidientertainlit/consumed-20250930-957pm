@@ -330,7 +330,7 @@ export default function InlineComposer() {
               value={content}
               onChange={setContent}
               placeholder={getPlaceholder()}
-              className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-sm placeholder:text-gray-400 placeholder:italic w-full"
+              className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-sm placeholder:text-gray-400 w-full"
               minHeight="60px"
               session={session}
               onMediaSelect={(media) => {
