@@ -123,7 +123,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
   };
 
   const options = getOptions();
-  const isConsumedContent = game.origin_type === 'consumed';
+  const isConsumedContent = game.originType === 'consumed' || game.origin_type === 'consumed';
 
   // Compact version for friendsupdate page
   if (compact) {

@@ -728,6 +728,7 @@ export default function Feed() {
       }
 
       console.log('✅ Loaded games for Feed:', data);
+      console.log('🔍 First game origin_type:', data?.[0]?.origin_type);
 
       // Filter out games user has already played and process
       const availableGames = (data || [])
