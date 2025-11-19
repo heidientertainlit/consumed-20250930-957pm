@@ -27,6 +27,7 @@ export default function InlineComposer() {
   const [attachedMedia, setAttachedMedia] = useState<any>(null);
   const [selectedList, setSelectedList] = useState<string>("");
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [showConversationStarters, setShowConversationStarters] = useState(false);
   
   // Prediction-specific state (now uses same format as polls)
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
@@ -312,7 +313,7 @@ export default function InlineComposer() {
     if (chip) {
       return `Ex: ${chip.example}`;
     }
-    return "Jump in here — add what you're consuming or join the conversation";
+    return "Jump in here! Add what you're consuming or join the conversation";
   };
 
   return (
@@ -329,7 +330,7 @@ export default function InlineComposer() {
               value={content}
               onChange={setContent}
               placeholder={getPlaceholder()}
-              className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-xs placeholder:text-gray-500 placeholder:italic w-full"
+              className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-xs placeholder:text-gray-400 placeholder:italic w-full"
               minHeight="60px"
               session={session}
               onMediaSelect={(media) => {
@@ -352,11 +353,23 @@ export default function InlineComposer() {
       {/* Action Buttons Section */}
       <div className="px-4 pb-3 border-t border-gray-100 pt-3">
         {/* Quick Prompts - Conversation Starters - Hide only when mode selected or media attached */}
-        {composerMode === "" && !attachedMedia && (
+        {composerMode === "" && !attachedMedia && content === "" && (
           <>
-            {content === "" && (
-              <div className="mb-3">
-                <p className="text-xs text-gray-400 mb-2">Ideas to Start a Conversation</p>
+            <div className="mb-3">
+              <button
+                onClick={() => setShowConversationStarters(!showConversationStarters)}
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-2"
+                data-testid="button-toggle-conversation-starters"
+              >
+                <span>Ideas to Start a Conversation</span>
+                {showConversationStarters ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
+              </button>
+
+              {showConversationStarters && (
                 <div className="flex gap-2 flex-wrap">
                   {[
                     "I can't believe…",
@@ -365,7 +378,10 @@ export default function InlineComposer() {
                   ].map((prompt) => (
                     <button
                       key={prompt}
-                      onClick={() => setContent(prompt + " ")}
+                      onClick={() => {
+                        setContent(prompt + " ");
+                        setShowConversationStarters(false);
+                      }}
                       className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
                       data-testid={`quick-prompt-${prompt.substring(0, 10)}`}
                     >
@@ -373,8 +389,8 @@ export default function InlineComposer() {
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Divider */}
             <div className="h-px bg-gray-100 my-3" />
