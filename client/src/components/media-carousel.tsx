@@ -53,8 +53,8 @@ export default function MediaCarousel({
 
       {/* Scrollable carousel */}
       <div className="flex overflow-x-auto gap-2 scrollbar-hide">
-        {items.map((item) => (
-          <div key={item.id} className="flex-shrink-0 w-20">
+        {items.map((item, index) => (
+          <div key={`${item.externalSource || 'unknown'}-${item.id}-${index}`} className="flex-shrink-0 w-20">
             <MediaCard
               item={item}
               onItemClick={onItemClick}
