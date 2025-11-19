@@ -17,28 +17,28 @@ INSERT INTO prediction_pools (id, title, description, type, category, points_rew
 ('vote-billie-eilish-songs', 'Billie Eilish', 'Which song is bigger?', 'vote', 'music', 10, 'open', '🎵', '["Bad Guy", "Ocean Eyes"]', true, 1987, NOW()),
 ('vote-mandalorian-beloved', 'The Mandalorian', 'Who is more beloved?', 'vote', 'tv-show', 10, 'open', '📺', '["Grogu", "Mando"]', true, 2341, NOW());
 
--- Insert Trivia Games with better IDs and NO deadlines
-INSERT INTO prediction_pools (id, title, description, type, category, points_reward, status, icon, options, inline, participants, created_at) VALUES
-('trivia-friends-monkey', 'Friends', 'What was the name of Ross''s pet monkey?', 'trivia', 'movie', 15, 'open', '🎬', '["Marcel", "Marshal"]', true, 1456, NOW()),
-('trivia-harry-potter-cedric', 'Harry Potter', 'What house was Cedric Diggory in?', 'trivia', 'book', 15, 'open', '📚', '["Ravenclaw", "Hufflepuff"]', true, 2134, NOW()),
-('trivia-office-jim-friend', 'The Office', 'Who was Jim''s best friend before Pam?', 'trivia', 'tv-show', 15, 'open', '📺', '["Pam", "Dwight"]', true, 1789, NOW()),
-('trivia-hunger-games-75th', 'The Hunger Games', 'Who won the 75th Hunger Games?', 'trivia', 'book', 15, 'open', '📚', '["Katniss", "Peeta"]', true, 1623, NOW()),
-('trivia-avengers-soul-stone', 'Avengers: Endgame', 'Who sacrificed themselves for the Soul Stone?', 'trivia', 'movie', 15, 'open', '🎬', '["Natasha", "Clint"]', true, 2567, NOW()),
-('trivia-percy-jackson-father', 'Percy Jackson', 'Who is Percy''s father?', 'trivia', 'book', 15, 'open', '📚', '["Poseidon", "Zeus"]', true, 1345, NOW()),
-('trivia-titanic-rose-painter', 'Titanic', 'Who painted Rose?', 'trivia', 'movie', 15, 'open', '🎬', '["Jack", "Cal"]', true, 1876, NOW()),
-('trivia-twilight-team', 'Twilight', 'Team Edward or Team Jacob?', 'trivia', 'book', 15, 'open', '📚', '["Edward", "Jacob"]', true, 2098, NOW()),
-('trivia-jurassic-park-founder', 'Jurassic Park', 'Who dino the founder?', 'trivia', 'movie', 15, 'open', '🎬', '["John Hammond", "Alan Grant"]', true, 1432, NOW()),
-('trivia-lotr-ring-destroyer', 'Lord of the Rings', 'Who destroys the One Ring?', 'trivia', 'book', 15, 'open', '📚', '["Frodo", "Sam"]', true, 1967, NOW()),
-('trivia-star-wars-father', 'Star Wars', 'Who is Luke''s father?', 'trivia', 'movie', 15, 'open', '🎬', '["Darth Vader", "Obi-Wan"]', true, 2234, NOW()),
-('trivia-mockingbird-narrator', 'To Kill a Mockingbird', 'Who is the narrator?', 'trivia', 'book', 15, 'open', '📚', '["Scout", "Jem"]', true, 1543, NOW()),
-('trivia-last-of-us-lead', 'The Last of Us', 'Who the bad lead?', 'trivia', 'tv-show', 15, 'open', '📺', '["Joel", "Ellie"]', true, 1876, NOW()),
-('trivia-olivia-rodrigo-debut', 'Olivia Rodrigo', 'Better debut?', 'trivia', 'music', 15, 'open', '🎵', '["Sour", "folklore"]', true, 1987, NOW()),
-('trivia-gatsby-narrator', 'The Great Gatsby', 'Who narrates the story?', 'trivia', 'book', 15, 'open', '📚', '["Nick", "Gatsby"]', true, 1432, NOW()),
-('trivia-breaking-bad-smarter', 'Breaking Bad', 'Who was the smarter character?', 'trivia', 'tv-show', 15, 'open', '📺', '["Walter", "Jesse"]', true, 2156, NOW()),
-('trivia-divergent-faction', 'Divergent', 'What faction did Tris choose?', 'trivia', 'book', 15, 'open', '📚', '["Erudite", "Dauntless"]', true, 1234, NOW()),
-('trivia-dark-knight-joker', 'The Dark Knight', 'Who played the Joker?', 'trivia', 'movie', 15, 'open', '🎬', '["Heath Ledger", "Jared Leto"]', true, 2567, NOW()),
-('trivia-matilda-teacher', 'Matilda', 'Who was Matilda''s teacher?', 'trivia', 'book', 15, 'open', '📚', '["Miss Honey", "Miss Trunchbull"]', true, 1345, NOW()),
-('trivia-lion-king-mufasa', 'The Lion King', 'Who killed Mufasa?', 'trivia', 'movie', 15, 'open', '🎬', '["Scar", "Hyenas"]', true, 1876, NOW());
+-- Insert Trivia Games with better IDs, NO deadlines, and correct answers
+INSERT INTO prediction_pools (id, title, description, type, category, points_reward, status, icon, options, inline, participants, correct_answer, created_at) VALUES
+('trivia-friends-monkey', 'Friends', 'What was the name of Ross''s pet monkey?', 'trivia', 'movie', 15, 'open', '🎬', '["Marcel", "Marshal"]', true, 1456, 'Marcel', NOW()),
+('trivia-harry-potter-cedric', 'Harry Potter', 'What house was Cedric Diggory in?', 'trivia', 'book', 15, 'open', '📚', '["Ravenclaw", "Hufflepuff"]', true, 2134, 'Hufflepuff', NOW()),
+('trivia-office-jim-friend', 'The Office', 'Who was Jim''s best friend before Pam?', 'trivia', 'tv-show', 15, 'open', '📺', '["Pam", "Dwight"]', true, 1789, 'Pam', NOW()),
+('trivia-hunger-games-75th', 'The Hunger Games', 'Who won the 75th Hunger Games?', 'trivia', 'book', 15, 'open', '📚', '["Katniss", "Peeta"]', true, 1623, 'Katniss', NOW()),
+('trivia-avengers-soul-stone', 'Avengers: Endgame', 'Who sacrificed themselves for the Soul Stone?', 'trivia', 'movie', 15, 'open', '🎬', '["Natasha", "Clint"]', true, 2567, 'Natasha', NOW()),
+('trivia-percy-jackson-father', 'Percy Jackson', 'Who is Percy''s father?', 'trivia', 'book', 15, 'open', '📚', '["Poseidon", "Zeus"]', true, 1345, 'Poseidon', NOW()),
+('trivia-titanic-rose-painter', 'Titanic', 'Who painted Rose?', 'trivia', 'movie', 15, 'open', '🎬', '["Jack", "Cal"]', true, 1876, 'Jack', NOW()),
+('trivia-twilight-team', 'Twilight', 'Team Edward or Team Jacob?', 'trivia', 'book', 15, 'open', '📚', '["Edward", "Jacob"]', true, 2098, 'Edward', NOW()),
+('trivia-jurassic-park-founder', 'Jurassic Park', 'Who dino the founder?', 'trivia', 'movie', 15, 'open', '🎬', '["John Hammond", "Alan Grant"]', true, 1432, 'John Hammond', NOW()),
+('trivia-lotr-ring-destroyer', 'Lord of the Rings', 'Who destroys the One Ring?', 'trivia', 'book', 15, 'open', '📚', '["Frodo", "Sam"]', true, 1967, 'Frodo', NOW()),
+('trivia-star-wars-father', 'Star Wars', 'Who is Luke''s father?', 'trivia', 'movie', 15, 'open', '🎬', '["Darth Vader", "Obi-Wan"]', true, 2234, 'Darth Vader', NOW()),
+('trivia-mockingbird-narrator', 'To Kill a Mockingbird', 'Who is the narrator?', 'trivia', 'book', 15, 'open', '📚', '["Scout", "Jem"]', true, 1543, 'Scout', NOW()),
+('trivia-last-of-us-lead', 'The Last of Us', 'Who the bad lead?', 'trivia', 'tv-show', 15, 'open', '📺', '["Joel", "Ellie"]', true, 1876, 'Joel', NOW()),
+('trivia-olivia-rodrigo-debut', 'Olivia Rodrigo', 'Better debut?', 'trivia', 'music', 15, 'open', '🎵', '["Sour", "folklore"]', true, 1987, 'Sour', NOW()),
+('trivia-gatsby-narrator', 'The Great Gatsby', 'Who narrates the story?', 'trivia', 'book', 15, 'open', '📚', '["Nick", "Gatsby"]', true, 1432, 'Nick', NOW()),
+('trivia-breaking-bad-smarter', 'Breaking Bad', 'Who was the smarter character?', 'trivia', 'tv-show', 15, 'open', '📺', '["Walter", "Jesse"]', true, 2156, 'Walter', NOW()),
+('trivia-divergent-faction', 'Divergent', 'What faction did Tris choose?', 'trivia', 'book', 15, 'open', '📚', '["Erudite", "Dauntless"]', true, 1234, 'Dauntless', NOW()),
+('trivia-dark-knight-joker', 'The Dark Knight', 'Who played the Joker?', 'trivia', 'movie', 15, 'open', '🎬', '["Heath Ledger", "Jared Leto"]', true, 2567, 'Heath Ledger', NOW()),
+('trivia-matilda-teacher', 'Matilda', 'Who was Matilda''s teacher?', 'trivia', 'book', 15, 'open', '📚', '["Miss Honey", "Miss Trunchbull"]', true, 1345, 'Miss Honey', NOW()),
+('trivia-lion-king-mufasa', 'The Lion King', 'Who killed Mufasa?', 'trivia', 'movie', 15, 'open', '🎬', '["Scar", "Hyenas"]', true, 1876, 'Scar', NOW());
 
 -- Insert Prediction Games with better IDs and NO deadlines
 INSERT INTO prediction_pools (id, title, description, type, category, points_reward, status, icon, options, inline, participants, created_at) VALUES

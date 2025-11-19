@@ -280,7 +280,37 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
         }
       }
       
-      // For trivia/predictions, show generic success
+      // For trivia, show correct answer
+      if (game.type === 'trivia') {
+        const correctAnswer = game.correct_answer || (game.options?.[0]?.correct);
+        const isCorrect = selectedAnswer === correctAnswer;
+        
+        return (
+          <Card className={`${isCorrect ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300' : 'bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-300'} shadow-sm rounded-2xl mb-4`}>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className={`w-8 h-8 ${isCorrect ? 'bg-green-500' : 'bg-orange-500'} rounded-full flex items-center justify-center`}>
+                  {isCorrect ? <Trophy size={16} className="text-white" /> : <Brain size={16} className="text-white" />}
+                </div>
+                <div className="text-sm font-semibold">
+                  {isCorrect ? (
+                    <span className="text-green-700">✓ Correct! +{earnedPoints} points</span>
+                  ) : (
+                    <span className="text-orange-700">Not quite!</span>
+                  )}
+                </div>
+              </div>
+              {!isCorrect && correctAnswer && (
+                <div className="text-xs text-gray-700 ml-10">
+                  The correct answer is: <span className="font-semibold text-gray-900">{correctAnswer}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      }
+      
+      // For predictions, show generic success
       return (
         <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl mb-4">
           <CardContent className="p-4">
@@ -289,9 +319,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
                 <Trophy size={16} className="text-white" />
               </div>
               <div className="text-sm font-medium text-gray-700">
-                {game.type === 'trivia' 
-                  ? 'Submitted! Check back for results.' 
-                  : 'Submitted! You\'ll see results when it ends.'}
+                Submitted! You'll see results when it ends.
               </div>
             </div>
           </CardContent>
@@ -453,7 +481,42 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
       }
     }
     
-    // For trivia/predictions, show points earned
+    // For trivia, show correct answer
+    if (game.type === 'trivia') {
+      const correctAnswer = game.correct_answer || (game.options?.[0]?.correct);
+      const isCorrect = selectedAnswer === correctAnswer;
+      
+      return (
+        <Card className={`${isCorrect ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300' : 'bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-300'} shadow-sm rounded-lg mb-3`}>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className={`w-10 h-10 ${isCorrect ? 'bg-green-500' : 'bg-orange-500'} rounded-full flex items-center justify-center`}>
+                {isCorrect ? <Trophy size={20} className="text-white" /> : <Brain size={20} className="text-white" />}
+              </div>
+              <div>
+                <div className="text-base font-bold">
+                  {isCorrect ? (
+                    <span className="text-green-700">✓ Correct!</span>
+                  ) : (
+                    <span className="text-orange-700">Not quite!</span>
+                  )}
+                </div>
+                {isCorrect && (
+                  <div className="text-xs text-green-600">+{earnedPoints} points earned</div>
+                )}
+              </div>
+            </div>
+            {!isCorrect && correctAnswer && (
+              <div className="text-sm text-gray-700 ml-12">
+                The correct answer is: <span className="font-bold text-gray-900">{correctAnswer}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    // For predictions, show points earned
     return (
       <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-300 shadow-sm rounded-lg mb-3">
         <CardContent className="p-3 text-center">
