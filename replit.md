@@ -9,18 +9,17 @@ Preferred communication style: Simple, everyday language.
 ### Design Preferences
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
-- **Navigation**: Bottom navigation includes 4 items: Feed, Leaderboard, Library, and Me. Friends functionality moved to profile page. Discover, Track, and Play pages exist as backpages (accessible at `/discover`, `/track`, and `/play`) but are not shown in navigation.
-- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), and Friends (friend management - only visible on own profile). Lists and Media History functionality moved to Library page. Section pills highlight active section and enable smooth scrolling navigation.
-- **Library Page Structure**: Library consolidates media management with 3 responsive tabs: Discover (trending content carousels), Lists (expandable lists with inline progress tracking - pages for books, episodes for TV, tracks for music, percentage for others), and Media History (chronological feed with search bar and Year/Month/Type filters, plus Overview stats showing media type counts).
+- **Navigation**: Bottom navigation includes 4 items: Feed, Search (AI-powered), Leaderboard, and Me. Friends functionality moved to profile page. Discover, Track, and Play pages exist as backpages (accessible at `/discover`, `/track`, and `/play`) but are not shown in navigation.
+- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), and Friends (friend management - only visible on own profile). Section pills highlight active section and enable smooth scrolling navigation.
+- **Search Page**: AI-powered search at `/search` with unified results showing Conversations (posts/predictions/polls/reviews), AI Recommendations, and Media Results. Uses custom AI icon in navigation.
 
 ## System Architecture
 
 ### UI/UX Decisions
 - **Mobile-first design** with a **dark gradient theme**.
-- **Bottom Navigation**: Feed, Leaderboard, Library, Me. Friends moved to profile. Discover, Track, Play are backpages.
-- **Top Navigation**: Search (🔍), Notifications, Profile. Discover via ✨ icon.
-- **Profile Section Navigation**: Sticky pills (Stats, DNA, Friends) for quick navigation. Lists and Media History moved to Library page.
-- **Library Page Tabs**: 3 tabs (Discover, Lists, Media History) for consolidated media management. Lists tab shows expandable lists with visual progress bars and inline update controls. Media History tab includes search functionality and Year/Month/Type filters with Overview stats.
+- **Bottom Navigation**: Feed, Search (AI-powered), Leaderboard, Me. Friends moved to profile. Discover, Track, Play are backpages.
+- **Top Navigation**: Search (🔍), Notifications, Profile.
+- **Profile Section Navigation**: Sticky pills (Stats, DNA, Friends) for quick navigation. Section pills highlight active section and enable smooth scrolling navigation.
 - **Component Library**: shadcn/ui (Radix UI, Tailwind CSS).
 - **Button Theme**: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
 - **Dual Search System**:
@@ -69,10 +68,10 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Media Tracking**: Simplified list-based system with privacy controls.
-- **Library Page**: Consolidated media management with 3 tabs:
-  - **Discover Tab**: Trending content carousels
-  - **Lists Tab**: All user lists with expandable views showing items and visual progress bars. Smart progress modes (pages for books, episodes for TV, tracks for music, percentage for others) with inline update controls.
-  - **Media History Tab**: Chronological feed with search bar, Year/Month/Type filters, and Overview stats showing media type counts.
+- **AI-Powered Search**: Unified search experience at `/search` returning three result types:
+  - **Conversations**: Posts, predictions, polls, and reviews matching the query
+  - **AI Recommendations**: GPT-4o powered personalized content suggestions
+  - **Media Results**: Direct search results from Spotify, TMDB, YouTube, Open Library
 - **Personal System Lists**: 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) auto-created with privacy control.
 - **Custom Lists**: User-created lists with dedicated edge functions.
 - **Collaborative Lists**: Managed by `list_collaborators` table and associated edge functions.

@@ -9,8 +9,6 @@ import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import FriendsUpdates from "@/pages/friendsupdates";
 import Search from "@/pages/search";
-import Library from "@/pages/library";
-import LibraryAI from "@/pages/library-ai";
 import Conversations from "@/pages/conversations";
 import Leaderboard from "@/pages/leaderboard";
 import Play from "@/pages/play";
@@ -76,16 +74,6 @@ function Router() {
         <Route path="/discover">
           <ProtectedRoute>
             <Search />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/library">
-          <ProtectedRoute>
-            <Library />
-          </ProtectedRoute>
-        </Route>
-        <Route path="/library-ai">
-          <ProtectedRoute>
-            <LibraryAI />
           </ProtectedRoute>
         </Route>
         <Route path="/conversations">

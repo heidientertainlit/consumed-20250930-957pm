@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Library, Sparkles } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -520,14 +520,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               className="w-5 h-5 brightness-0 invert"
             />
             <span className="text-xs font-medium text-white whitespace-nowrap">Search</span>
-          </Link>
-
-          <Link
-            href="/library"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/library" ? "bg-white/20" : ""}`}
-          >
-            <Library className="text-white" size={22} />
-            <span className="text-xs font-medium text-white whitespace-nowrap">Library</span>
           </Link>
 
           <Link
