@@ -425,8 +425,8 @@ export default function Search() {
           <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Ask Anything
           </h1>
-          <p className="text-base text-gray-600">
-            Ask for recommendations — or see what people are saying about anything you're consuming.
+          <p className="text-base text-gray-300">
+            Ask for recommendations or see what people are saying about what you're consuming.
           </p>
         </div>
 
@@ -439,7 +439,7 @@ export default function Search() {
               </div>
               <div className="flex-1">
                 <Textarea
-                  placeholder='Try: "What are people saying about The Bear?" or "Recommend me more shows like Nobody Wants This"'
+                  placeholder="Ask anything… from recs to what people are saying."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {

@@ -1461,8 +1461,7 @@ export default function Feed() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-2 flex items-center justify-center gap-2" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
-            <Activity className="text-purple-600" size={32} />
+          <h1 className="text-3xl font-semibold text-black mb-2 text-center" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
             Feed
           </h1>
           <p className="text-base text-gray-900 text-center font-medium mb-1">
