@@ -356,7 +356,7 @@ export default function InlineComposer() {
           <>
             {content === "" && (
               <div className="mb-3">
-                <p className="text-xs text-gray-400 mb-2">Start a Conversation</p>
+                <p className="text-xs text-gray-400 mb-2">Ideas to start a conversation</p>
                 <div className="flex gap-2 flex-wrap">
                   {[
                     "I can't believe…",
@@ -383,7 +383,7 @@ export default function InlineComposer() {
             <div>
               <button
                 onClick={() => setShowMoreOptions(!showMoreOptions)}
-                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors mb-2"
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-2"
                 data-testid="button-toggle-more-options"
               >
                 <span>More Ways to Share</span>
