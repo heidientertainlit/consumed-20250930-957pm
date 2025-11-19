@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import MediaCarousel from "@/components/media-carousel";
@@ -588,6 +588,139 @@ export default function Search() {
                   >
                     See all Talk →
                   </Button>
+                </div>
+              )}
+
+              {/* TOP TAKES SECTION - appears when searching for specific shows/movies */}
+              {searchResults.conversations && searchResults.conversations.length > 0 && (
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border-2 border-purple-200 overflow-hidden">
+                  {/* Header */}
+                  <div className="bg-white border-b border-purple-200 p-6">
+                    <h4 className="text-2xl font-bold text-black mb-2 flex items-center gap-2">
+                      🔥 Top Takes
+                    </h4>
+                    <p className="text-sm text-gray-600">What people are saying about "{searchQuery}"</p>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+                    {/* Sentiment Summary */}
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Overall Sentiment</h5>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="text-center">
+                          <div className="text-3xl mb-1">🔥</div>
+                          <p className="text-2xl font-bold text-purple-600">67%</p>
+                          <p className="text-xs text-gray-600">Loved it</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-3xl mb-1">😐</div>
+                          <p className="text-2xl font-bold text-gray-600">23%</p>
+                          <p className="text-xs text-gray-600">Mixed</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-3xl mb-1">👎</div>
+                          <p className="text-2xl font-bold text-gray-400">10%</p>
+                          <p className="text-xs text-gray-600">Disappointed</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Trending Opinions */}
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide flex items-center gap-2">
+                        <TrendingUp size={16} className="text-purple-600" />
+                        Trending Opinions
+                      </h5>
+                      <div className="space-y-3">
+                        {[
+                          { opinion: "Best finale in reality TV history", percentage: 82, trend: "up" },
+                          { opinion: "Choreography was on another level", percentage: 74, trend: "up" },
+                          { opinion: "Results were predictable", percentage: 45, trend: "down" }
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            <div className={`text-lg ${item.trend === 'up' ? 'text-green-500' : 'text-gray-400'}`}>
+                              {item.trend === 'up' ? '↗' : '→'}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-900 font-medium">{item.opinion}</p>
+                              <div className="mt-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div 
+                                  className="bg-purple-600 h-full rounded-full transition-all"
+                                  style={{ width: `${item.percentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                            <span className="text-sm font-semibold text-purple-600">{item.percentage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Most-Liked Comments */}
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide flex items-center gap-2">
+                        <Heart size={16} className="text-purple-600" />
+                        Most-Liked Comments
+                      </h5>
+                      <div className="space-y-3">
+                        {[
+                          { user: "alexchen", content: "That final dance brought me to TEARS. Absolute perfection! 😭✨", likes: 234 },
+                          { user: "sarahkim", content: "The judges' scoring was wild tonight... how did that only get an 8?!", likes: 189 },
+                          { user: "miapatel", content: "Already rewatched the finale 3 times. This season was EVERYTHING.", likes: 156 }
+                        ].map((comment, idx) => (
+                          <div key={idx} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                            <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                                {comment.user.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-black">@{comment.user}</p>
+                                <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                                    ❤️ {comment.likes}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Related Predictions */}
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide flex items-center gap-2">
+                        <Target size={16} className="text-purple-600" />
+                        Active Predictions
+                      </h5>
+                      <div className="space-y-3">
+                        {[
+                          { question: "Will they bring this format back next season?", yesVotes: 78, totalVotes: 234 },
+                          { question: "Best performance of the season?", options: ["Finale Dance", "Semi-Finals", "Week 5"], votes: [145, 89, 56] }
+                        ].map((pred, idx) => (
+                          <div key={idx} className="p-3 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-purple-200 hover:border-purple-400 transition-colors cursor-pointer">
+                            <p className="text-sm font-semibold text-gray-900 mb-2">{pred.question}</p>
+                            {pred.yesVotes !== undefined ? (
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                  <div 
+                                    className="bg-purple-600 h-full rounded-full"
+                                    style={{ width: `${(pred.yesVotes / pred.totalVotes) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-xs font-semibold text-purple-600">{Math.round((pred.yesVotes / pred.totalVotes) * 100)}% Yes</span>
+                              </div>
+                            ) : (
+                              <div className="text-xs text-gray-600">
+                                {pred.totalVotes} people playing →
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
