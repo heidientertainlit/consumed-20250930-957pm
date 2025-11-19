@@ -189,7 +189,7 @@ export default function Leaderboard() {
             Leaders
           </h1>
           <p className="text-base text-gray-600 max-w-xs mx-auto">
-            Who's winning the conversation this week?
+            Most active fans and trending voices.
           </p>
         </div>
 
