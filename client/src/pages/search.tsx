@@ -439,7 +439,7 @@ export default function Search() {
               </div>
               <div className="flex-1">
                 <Textarea
-                  placeholder="Ask about anything you're consuming… what to watch next, what friends are saying, recommendations, or search for specific shows, movies, books, music"
+                  placeholder='Try: "What are people saying about The Bear?" or "Recommend me more shows like Nobody Wants This"'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
