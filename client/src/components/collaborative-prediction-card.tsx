@@ -373,7 +373,7 @@ export default function CollaborativePredictionCard({
           <div className="flex-1">
             {isConsumedPrediction ? (
               <p className="text-sm">
-                <span className="font-bold text-purple-700">🏆 Featured Prediction</span>
+                <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
               </p>
             ) : (
               <p className="text-sm text-gray-700">
