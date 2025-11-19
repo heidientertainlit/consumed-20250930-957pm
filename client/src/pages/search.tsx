@@ -591,6 +591,34 @@ export default function Search() {
                 </div>
               )}
 
+              {/* No Conversation Results Message - when query is conversation-focused but no results */}
+              {(() => {
+                const conversationKeywords = ['hot take', 'what are people saying', 'opinion', 'thoughts on', 'discussion', 'talk about', 'saying about', 'reviews on', 'reactions to'];
+                const isConversationQuery = conversationKeywords.some(keyword => searchQuery.toLowerCase().includes(keyword));
+                const hasNoConversations = !searchResults.conversations || searchResults.conversations.length === 0;
+                
+                return isConversationQuery && hasNoConversations && searchResults.type !== 'error' ? (
+                  <div className="bg-white rounded-xl p-6 border border-gray-200">
+                    <div className="text-center py-6">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <TrendingUp className="text-gray-400" size={28} />
+                      </div>
+                      <h4 className="text-lg font-semibold text-black mb-2">No Conversations Yet</h4>
+                      <p className="text-sm text-gray-600 mb-4 max-w-md mx-auto">
+                        No one has posted about "{searchQuery}" yet. Be the first to start the conversation!
+                      </p>
+                      <Button
+                        onClick={() => setLocation('/feed')}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        data-testid="start-conversation"
+                      >
+                        Start a Conversation →
+                      </Button>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
               {/* TOP TAKES SECTION - appears when searching for specific shows/movies */}
               {searchResults.conversations && searchResults.conversations.length > 0 && (
                 <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border-2 border-purple-200 overflow-hidden">
