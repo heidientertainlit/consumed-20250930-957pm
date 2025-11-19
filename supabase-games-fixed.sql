@@ -32,7 +32,6 @@ INSERT INTO prediction_pools (id, title, description, type, category, points_rew
 ('trivia-star-wars-father', 'Star Wars', 'Who is Luke''s father?', 'trivia', 'movie', 15, 'open', '🎬', '["Darth Vader", "Obi-Wan"]', true, 2234, NOW()),
 ('trivia-mockingbird-narrator', 'To Kill a Mockingbird', 'Who is the narrator?', 'trivia', 'book', 15, 'open', '📚', '["Scout", "Jem"]', true, 1543, NOW()),
 ('trivia-last-of-us-lead', 'The Last of Us', 'Who the bad lead?', 'trivia', 'tv-show', 15, 'open', '📺', '["Joel", "Ellie"]', true, 1876, NOW()),
-('trivia-mean-girls-quote', 'Mean Girls', 'Who said "You can''t sit with us"?', 'trivia', 'movie', 15, 'open', '🎬', '["Gretchen", "Karen"]', true, 1654, NOW()),
 ('trivia-olivia-rodrigo-debut', 'Olivia Rodrigo', 'Better debut?', 'trivia', 'music', 15, 'open', '🎵', '["Sour", "folklore"]', true, 1987, NOW()),
 ('trivia-gatsby-narrator', 'The Great Gatsby', 'Who narrates the story?', 'trivia', 'book', 15, 'open', '📚', '["Nick", "Gatsby"]', true, 1432, NOW()),
 ('trivia-breaking-bad-smarter', 'Breaking Bad', 'Who was the smarter character?', 'trivia', 'tv-show', 15, 'open', '📺', '["Walter", "Jesse"]', true, 2156, NOW()),

@@ -32,7 +32,6 @@ INSERT INTO prediction_pools (id, title, description, type, category, points_rew
 ('game-21', 'Star Wars', 'Who is Luke''s father?', 'trivia', 'movie', 15, '2025-10-29 23:59:59+00', 'open', '🎬', '["Darth Vader", "Obi-Wan"]', true, 2234, NOW()),
 ('game-22', 'To Kill a Mockingbird', 'Who is the narrator?', 'trivia', 'book', 15, '2025-10-29 23:59:59+00', 'open', '📚', '["Scout", "Jem"]', true, 1543, NOW()),
 ('game-23', 'The Last of Us', 'Who the bad lead?', 'trivia', 'tv-show', 15, '2025-10-29 23:59:59+00', 'open', '📺', '["Joel", "Ellie"]', true, 1876, NOW()),
-('game-24', 'Mean Girls', 'Who said "You can''t sit with us"?', 'trivia', 'movie', 15, '2025-10-29 23:59:59+00', 'open', '🎬', '["Gretchen", "Karen"]', true, 1654, NOW()),
 ('game-25', 'Olivia Rodrigo', 'Better debut?', 'trivia', 'music', 15, '2025-10-29 23:59:59+00', 'open', '🎵', '["Sour", "folklore"]', true, 1987, NOW()),
 ('game-26', 'The Great Gatsby', 'Who narrates the story?', 'trivia', 'book', 15, '2025-10-29 23:59:59+00', 'open', '📚', '["Nick", "Gatsby"]', true, 1432, NOW()),
 ('game-27', 'Breaking Bad', 'Who was the smarter character?', 'trivia', 'tv-show', 15, '2025-10-29 23:59:59+00', 'open', '📺', '["Walter", "Jesse"]', true, 2156, NOW()),
