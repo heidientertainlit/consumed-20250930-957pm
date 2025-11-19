@@ -288,12 +288,93 @@ Focus on content that directly answers their question and matches their demonstr
         });
       }
 
-      // Return the AI-generated conversational response
+      // Search for conversations about this media
+      let conversations = [];
+      try {
+        // Search for posts containing the query terms
+        const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 3);
+        
+        if (searchTerms.length > 0) {
+          const { data: posts, error: postsError } = await supabase
+            .from('posts')
+            .select(`
+              id,
+              content,
+              content_type,
+              created_at,
+              users!inner (
+                user_name
+              ),
+              reactions (count)
+            `)
+            .or(searchTerms.map(term => `content.ilike.%${term}%`).join(','))
+            .order('created_at', { ascending: false })
+            .limit(10);
+          
+          if (posts && !postsError) {
+            conversations = posts.map((post: any) => ({
+              id: post.id,
+              user_name: post.users?.user_name || 'Unknown',
+              content: post.content,
+              content_type: post.content_type || 'thought',
+              created_at: post.created_at,
+              engagement_count: post.reactions?.length || 0
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      }
+
+      // Also try to get direct media results
+      let mediaResults = [];
+      if (isDirectSearch) {
+        try {
+          const searchResponse = await fetch(
+            'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': req.headers.get('Authorization') || ''
+              },
+              body: JSON.stringify({ query })
+            }
+          );
+          
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            
+            if (searchData.results && searchData.results.length > 0) {
+              mediaResults = searchData.results.slice(0, 5).map((item: any) => ({
+                id: item.external_id || Math.random().toString(),
+                title: item.title,
+                type: item.type,
+                description: item.description || '',
+                year: item.year || null,
+                rating: item.rating || null,
+                poster_url: item.image || '',
+                detailUrl: item.external_id && item.external_source 
+                  ? `/media/${item.type}/${item.external_source}/${item.external_id}`
+                  : null,
+                external_id: item.external_id,
+                external_source: item.external_source
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching media results:', error);
+        }
+      }
+
+      // Return the AI-generated conversational response with all three sections
       return new Response(JSON.stringify({
         type: 'conversational',
         explanation: parsedResponse.explanation || `Based on your query "${query}", here are some personalized recommendations:`,
         recommendations: parsedResponse.recommendations || [],
-        searchSuggestions: parsedResponse.searchSuggestions || []
+        searchSuggestions: parsedResponse.searchSuggestions || [],
+        conversations: conversations,
+        mediaResults: mediaResults
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
