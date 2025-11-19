@@ -519,8 +519,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
 
           <Link
-            href="/ai-search"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/ai-search" ? "bg-white/20" : ""}`}
+            href="/search"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/search" ? "bg-white/20" : ""}`}
           >
             <Sparkles className="text-white" size={22} />
             <span className="text-xs font-medium text-white whitespace-nowrap">Search</span>

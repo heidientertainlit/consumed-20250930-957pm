@@ -8,8 +8,7 @@ import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import FriendsUpdates from "@/pages/friendsupdates";
-import Discover from "@/pages/discover";
-import AISearch from "@/pages/ai-search";
+import Search from "@/pages/search";
 import Library from "@/pages/library";
 import LibraryAI from "@/pages/library-ai";
 import Conversations from "@/pages/conversations";
@@ -69,14 +68,14 @@ function Router() {
             <FriendsUpdates />
           </ProtectedRoute>
         </Route>
-        <Route path="/discover">
+        <Route path="/search">
           <ProtectedRoute>
-            <Discover />
+            <Search />
           </ProtectedRoute>
         </Route>
-        <Route path="/ai-search">
+        <Route path="/discover">
           <ProtectedRoute>
-            <AISearch />
+            <Search />
           </ProtectedRoute>
         </Route>
         <Route path="/library">

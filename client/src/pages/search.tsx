@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MediaCarousel from "@/components/media-carousel";
@@ -52,7 +52,7 @@ interface SearchResult {
   mediaResults?: DirectResult[];
 }
 
-export default function Discover() {
+export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -435,7 +435,7 @@ export default function Discover() {
           <div className="relative">
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <Input
                   type="text"
                   placeholder="🔍 Ask about anything you're consuming…"
