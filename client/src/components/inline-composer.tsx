@@ -312,7 +312,7 @@ export default function InlineComposer() {
     if (chip) {
       return `Ex: ${chip.example}`;
     }
-    return "Jump in — add what you're consuming or join the conversation";
+    return "Jump in here — add what you're consuming or join the conversation";
   };
 
   return (
@@ -329,7 +329,7 @@ export default function InlineComposer() {
               value={content}
               onChange={setContent}
               placeholder={getPlaceholder()}
-              className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-400 w-full"
+              className="border-none p-0 text-sm resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-gray-500 placeholder:italic w-full"
               minHeight="60px"
               session={session}
               onMediaSelect={(media) => {
