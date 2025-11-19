@@ -96,11 +96,11 @@ export default function MentionTextarea({
     const cursorPos = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = value.substring(0, cursorPos);
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
-    const lastHashIndex = textBeforeCursor.lastIndexOf("#");
+    const lastPlusIndex = textBeforeCursor.lastIndexOf("+");
 
-    // Prioritize the most recent trigger (@ or #)
-    if (lastHashIndex > lastAtIndex) {
-      // # is more recent, hide mentions
+    // Prioritize the most recent trigger (@ or +)
+    if (lastPlusIndex > lastAtIndex) {
+      // + is more recent, hide mentions
       setShowMentions(false);
       return;
     }
@@ -145,37 +145,37 @@ export default function MentionTextarea({
     }
   }, [value, friends]);
 
-  // Detect # hashtag for media search
+  // Detect + for media search
   useEffect(() => {
     const cursorPos = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = value.substring(0, cursorPos);
-    const lastHashIndex = textBeforeCursor.lastIndexOf("#");
+    const lastPlusIndex = textBeforeCursor.lastIndexOf("+");
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
 
     // Prioritize the most recent trigger
-    if (lastAtIndex > lastHashIndex) {
+    if (lastAtIndex > lastPlusIndex) {
       // @ is more recent, hide media
       setShowMedia(false);
       return;
     }
 
-    if (lastHashIndex !== -1) {
-      // Check if # is at start or after whitespace
-      const textUpToAndIncludingHash = textBeforeCursor.substring(0, lastHashIndex + 1);
-      const isValidTrigger = /^(.*[\s\n]|^)#$/.test(textUpToAndIncludingHash);
+    if (lastPlusIndex !== -1) {
+      // Check if + is at start or after whitespace (word boundary)
+      const textUpToAndIncludingPlus = textBeforeCursor.substring(0, lastPlusIndex + 1);
+      const isValidTrigger = /^(.*[\s\n]|^)\+$/.test(textUpToAndIncludingPlus);
       
       if (!isValidTrigger) {
         setShowMedia(false);
         return;
       }
       
-      const textAfterHash = textBeforeCursor.substring(lastHashIndex + 1);
+      const textAfterPlus = textBeforeCursor.substring(lastPlusIndex + 1);
       
-      // Check if there's a space after # (which means search is complete)
-      if (!textAfterHash.includes(" ") && !textAfterHash.includes("\n")) {
-        const query = textAfterHash.trim();
+      // Check if there's a space after + (which means search is complete)
+      if (!textAfterPlus.includes(" ") && !textAfterPlus.includes("\n")) {
+        const query = textAfterPlus.trim();
         setMediaQuery(query);
-        setCursorPosition(lastHashIndex);
+        setCursorPosition(lastPlusIndex);
         
         // Only search if query has at least 2 characters
         if (query.length >= 2) {
@@ -272,11 +272,11 @@ export default function MentionTextarea({
   const selectMedia = (media: MediaItem) => {
     if (!media || !onMediaSelect) return;
     
-    // Remove the # and search query from the text
+    // Remove the + and search query from the text
     const textBefore = value.substring(0, cursorPosition);
     const textAfter = value.substring(textareaRef.current?.selectionStart || 0);
     
-    // Just remove the hashtag and query, leaving a space
+    // Just remove the + trigger and query, leaving a space
     const newValue = `${textBefore} ${textAfter}`;
     onChange(newValue);
     setShowMedia(false);
