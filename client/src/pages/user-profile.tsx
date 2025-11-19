@@ -889,6 +889,42 @@ export default function UserProfile() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Handle URL tab parameter to scroll to specific section
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    
+    if (tab && userLists.length > 0) {
+      // Wait for DOM to be ready
+      setTimeout(() => {
+        let targetRef = null;
+        switch(tab) {
+          case 'lists':
+            targetRef = listsRef;
+            break;
+          case 'friends':
+            targetRef = friendsRef;
+            break;
+          case 'dna':
+            targetRef = dnaRef;
+            break;
+          case 'stats':
+            targetRef = statsRef;
+            break;
+        }
+        
+        if (targetRef?.current) {
+          setActiveSection(tab);
+          const offsetTop = targetRef.current.offsetTop - 120;
+          window.scrollTo({
+            top: offsetTop,
+            behavior: 'smooth'
+          });
+        }
+      }, 300);
+    }
+  }, [userLists.length]);
+
   // Scroll to section function
   const scrollToSection = (sectionRef: React.RefObject<HTMLDivElement>) => {
     if (sectionRef.current) {
