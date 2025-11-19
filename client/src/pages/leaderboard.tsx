@@ -185,12 +185,9 @@ export default function Leaderboard() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Leaders
           </h1>
-          <p className="text-xl font-semibold text-black mb-2">
-            Trending Tastemakers
-          </p>
           <p className="text-base text-gray-600">
             Top voices, hottest takes, biggest wins.
           </p>
