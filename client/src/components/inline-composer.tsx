@@ -351,28 +351,30 @@ export default function InlineComposer() {
 
       {/* Action Buttons Section */}
       <div className="px-4 pb-3 border-t border-gray-100 pt-3">
-        {/* Quick Prompts - Conversation Starters - Only when empty */}
-        {content === "" && composerMode === "" && (
+        {/* Quick Prompts - Conversation Starters - Hide only when mode selected or media attached */}
+        {composerMode === "" && !attachedMedia && (
           <>
-            <div className="mb-3">
-              <p className="text-xs text-gray-400 mb-2">Start a Conversation</p>
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  "I can't believe…",
-                  "I just finished…",
-                  "What did you think about…"
-                ].map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => setContent(prompt + " ")}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
-                    data-testid={`quick-prompt-${prompt.substring(0, 10)}`}
-                  >
-                    {prompt}
-                  </button>
-                ))}
+            {content === "" && (
+              <div className="mb-3">
+                <p className="text-xs text-gray-400 mb-2">Start a Conversation</p>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    "I can't believe…",
+                    "I just finished…",
+                    "What did you think about…"
+                  ].map((prompt) => (
+                    <button
+                      key={prompt}
+                      onClick={() => setContent(prompt + " ")}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
+                      data-testid={`quick-prompt-${prompt.substring(0, 10)}`}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Divider */}
             <div className="h-px bg-gray-200 my-3" />
