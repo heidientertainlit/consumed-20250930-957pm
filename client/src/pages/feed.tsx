@@ -480,6 +480,7 @@ export default function Feed() {
   const [currentVerb, setCurrentVerb] = useState("watching");
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Rotating verbs for header subheadline
@@ -1908,46 +1909,130 @@ export default function Feed() {
                       <div className="mb-2">
                         {/* Text at top */}
                         <p className="text-gray-800 text-sm mb-3">
-                          Added{' '}
-                          {post.mediaItems[0].externalId && post.mediaItems[0].externalSource ? (
-                            <button
-                              onClick={() => setLocation(`/media/${post.mediaItems[0].mediaType?.toLowerCase()}/${post.mediaItems[0].externalSource}/${post.mediaItems[0].externalId}`)}
-                              className="font-semibold text-purple-600 hover:underline"
-                            >
-                              {post.mediaItems[0].title}
-                            </button>
-                          ) : (
-                            <span className="font-semibold">{post.mediaItems[0].title}</span>
-                          )}
-                          {' '}to{' '}
-                          <button
-                            onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
-                            className="font-medium text-purple-600 hover:underline"
-                          >
-                            their list
-                          </button>
+                          Added <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
                         </p>
                         
-                        {/* Horizontal scrollable media preview - use listPreview if available */}
-                        <div className="mb-3 overflow-x-auto">
-                          <div className="flex gap-3 pb-2">
-                            {(post.listPreview || post.mediaItems).slice(0, 4).map((media, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => {
-                                  if (media.externalId && media.externalSource) {
-                                    setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                                  }
-                                }}
-                                className="flex-shrink-0 w-20 hover:opacity-80 transition-opacity"
-                              >
-                                <img 
-                                  src={media.imageUrl || '/placeholder-media.png'}
-                                  alt={media.title}
-                                  className="w-20 h-28 object-cover rounded-lg shadow-md"
-                                />
-                              </button>
-                            ))}
+                        {/* Media Card */}
+                        <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                          <div 
+                            className="flex items-center space-x-3 cursor-pointer mb-2"
+                            onClick={() => {
+                              const media = post.mediaItems[0];
+                              if (media.externalId && media.externalSource) {
+                                setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                              }
+                            }}
+                          >
+                            <div className="w-16 h-20 rounded overflow-hidden flex-shrink-0">
+                              <img 
+                                src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
+                                alt={`${post.mediaItems[0].title} artwork`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                                {post.mediaItems[0].title}
+                              </h3>
+                              {post.mediaItems[0].creator && (
+                                <div className="text-gray-600 text-xs mb-0.5">
+                                  by {post.mediaItems[0].creator}
+                                </div>
+                              )}
+                              <div className="text-gray-500 text-xs capitalize">
+                                {post.mediaItems[0].mediaType}
+                              </div>
+                            </div>
+                            <ChevronRight className="text-gray-400 flex-shrink-0" size={20} />
+                          </div>
+                          
+                          {/* Platform badges and share button */}
+                          <div className="pt-2 border-t border-gray-200 flex items-center justify-between gap-2">
+                            {/* Left: Platform chips */}
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              {(() => {
+                                const media = post.mediaItems[0];
+                                const mediaType = media.mediaType?.toLowerCase();
+                                let platforms: Array<{ name: string; url: string }> = [];
+                                let platformLabel = 'Available On';
+                                
+                                if (mediaType === 'podcast') {
+                                  platformLabel = 'Listen On';
+                                  platforms = [
+                                    { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
+                                    { name: 'Apple', url: `https://podcasts.apple.com/search?term=${encodeURIComponent(media.title)}` },
+                                  ];
+                                } else if (mediaType === 'music') {
+                                  platformLabel = 'Listen On';
+                                  platforms = [
+                                    { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
+                                    { name: 'Apple', url: `https://music.apple.com/search?term=${encodeURIComponent(media.title)}` },
+                                  ];
+                                } else if (mediaType === 'movie' || mediaType === 'tv') {
+                                  platformLabel = 'Watch On';
+                                  platforms = [
+                                    { name: 'Netflix', url: `https://www.netflix.com/search?q=${encodeURIComponent(media.title)}` },
+                                    { name: 'Prime', url: `https://www.amazon.com/s?k=${encodeURIComponent(media.title)}` },
+                                  ];
+                                } else if (mediaType === 'book') {
+                                  platformLabel = 'Read On';
+                                  platforms = [
+                                    { name: 'Amazon', url: `https://www.amazon.com/s?k=${encodeURIComponent(media.title)}` },
+                                    { name: 'Goodreads', url: `https://www.goodreads.com/search?q=${encodeURIComponent(media.title)}` },
+                                  ];
+                                }
+                                
+                                return platforms.length > 0 ? (
+                                  <>
+                                    <span className="text-xs text-gray-500 whitespace-nowrap">{platformLabel}:</span>
+                                    {platforms.slice(0, 2).map((platform, idx) => (
+                                      <a
+                                        key={idx}
+                                        href={platform.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors text-xs text-gray-700"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {platform.name}
+                                      </a>
+                                    ))}
+                                  </>
+                                ) : null;
+                              })()}
+                            </div>
+                            
+                            {/* Right: Share button */}
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const media = post.mediaItems[0];
+                                try {
+                                  await copyLink({
+                                    kind: 'media',
+                                    obj: {
+                                      type: media.mediaType?.toLowerCase(),
+                                      source: media.externalSource,
+                                      id: media.externalId
+                                    }
+                                  });
+                                  toast({
+                                    title: "Link copied!",
+                                    description: "Media link has been copied to your clipboard.",
+                                  });
+                                } catch (error) {
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to copy link.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 text-gray-600 hover:text-purple-600 transition-colors"
+                              data-testid="button-share-media"
+                            >
+                              <Share size={16} />
+                            </button>
                           </div>
                         </div>
                         
