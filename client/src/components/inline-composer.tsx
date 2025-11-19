@@ -373,7 +373,7 @@ export default function InlineComposer() {
                 {/* Start a Conversation - Only show when no content */}
                 {content === "" && (
                   <div>
-                    <p className="text-xs text-gray-400 mb-2">Start a conversation</p>
+                    <p className="text-xs text-gray-400 mb-2">Quick ideas</p>
                     <div className="flex gap-2 flex-wrap">
                       {[
                         "I can't believe…",
