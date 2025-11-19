@@ -511,19 +511,31 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
 
           <Link
+            href="/search"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/search" ? "bg-white/20" : ""}`}
+          >
+            <img 
+              src={new URL('@assets/ai-technology_1763529186482.png', import.meta.url).href}
+              alt="AI Search"
+              className="w-5 h-5 brightness-0 invert"
+            />
+            <span className="text-xs font-medium text-white whitespace-nowrap">Search</span>
+          </Link>
+
+          <Link
+            href="/library"
+            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/library" ? "bg-white/20" : ""}`}
+          >
+            <Library className="text-white" size={22} />
+            <span className="text-xs font-medium text-white whitespace-nowrap">Library</span>
+          </Link>
+
+          <Link
             href="/leaderboard"
             className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
           >
             <Trophy className="text-white" size={22} />
             <span className="text-xs font-medium text-white whitespace-nowrap">Leaderboard</span>
-          </Link>
-
-          <Link
-            href="/search"
-            className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${location === "/search" ? "bg-white/20" : ""}`}
-          >
-            <Sparkles className="text-white" size={22} />
-            <span className="text-xs font-medium text-white whitespace-nowrap">Search</span>
           </Link>
 
           <Link
