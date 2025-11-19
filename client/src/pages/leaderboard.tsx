@@ -189,214 +189,93 @@ export default function Leaderboard() {
             Leaders
           </h1>
           <p className="text-base text-gray-600 max-w-xs mx-auto">
-            Fans driving the entertainment conversation.
+            Who's winning the conversation this week?
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-white rounded-2xl border border-gray-200 p-1.5">
+        <div className="flex gap-3 mb-6 justify-center">
           <button
             onClick={() => setActiveTab('circle')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all border ${
               activeTab === 'circle'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-purple-600 text-white border-purple-600'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
             }`}
           >
             Your Circle
           </button>
           <button
             onClick={() => setActiveTab('global')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all border ${
               activeTab === 'global'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-purple-600 text-white border-purple-600'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
             }`}
           >
-            Global Leaders
+            Global
           </button>
         </div>
 
         {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-                <div className="space-y-3">
-                  <div className="h-12 bg-gray-100 rounded"></div>
-                  <div className="h-12 bg-gray-100 rounded"></div>
-                  <div className="h-12 bg-gray-100 rounded"></div>
+          <div className="bg-white rounded-lg p-6">
+            <div className="space-y-4">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="animate-pulse flex items-start gap-3">
+                  <div className="w-6 h-4 bg-gray-200 rounded"></div>
+                  <div className="flex-1">
+                    <div className="h-5 bg-gray-200 rounded w-1/3 mb-1"></div>
+                    <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Fan Leaders */}
-            {renderLeaderboardSection(
-              '🌟 Fan Leaders',
-              Star,
-              mockFanLeaders,
-              'Most active overall',
-              'points',
-              'Fan Leaders'
-            )}
+          <div className="bg-white rounded-lg p-6">
+            <div className="space-y-4">
+              {mockFanLeaders.map((entry, index) => {
+                const isCurrentUser = entry.user_id === user?.id;
+                
+                return (
+                  <div
+                    key={entry.user_id}
+                    className="flex items-start gap-3 py-2"
+                  >
+                    {/* Rank Number */}
+                    <div className="text-gray-400 text-sm font-medium pt-0.5 w-6">
+                      {index + 1}.
+                    </div>
 
-            {/* Conversation Starters */}
-            {renderLeaderboardSection(
-              '🔥 Conversation Starters',
-              Flame,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.6) })),
-              'Posts people engaged with most',
-              'engagements',
-              'Conversation Starters'
-            )}
+                    {/* User Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold text-base ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                        {entry.display_name || entry.username}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        @{entry.username} • <span className="text-purple-400">{entry.score} pts</span>
+                      </p>
+                    </div>
 
-            {/* Top Predictors */}
-            {renderLeaderboardSection(
-              '🎯 Top Predictors',
-              Target,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(Math.random() * 100) })),
-              'Most accurate predictions',
-              '% accuracy',
-              'Top Predictors'
-            )}
-
-            {/* Trivia Champs */}
-            {renderLeaderboardSection(
-              '🧩 Trivia Champs',
-              Lightbulb,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.4) })),
-              'Correct answers and streaks',
-              'points',
-              'Trivia Champs'
-            )}
-
-            {/* Most Helpful */}
-            {renderLeaderboardSection(
-              '❤️ Most Helpful',
-              Heart,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.5) })),
-              'Recommendations people saved',
-              'saves',
-              'Most Helpful'
-            )}
-
-            {/* Top in TV This Week */}
-            {renderLeaderboardSection(
-              '📺 Top in TV This Week',
-              Tv,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.7) })),
-              'Most consumed + engagement in TV',
-              'points',
-              'Top in TV This Week'
-            )}
-
-            {/* Top in Books This Month */}
-            {renderLeaderboardSection(
-              '📚 Top in Books This Month',
-              BookOpen,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.55) })),
-              'Most consumed + engagement in Books',
-              'points',
-              'Top in Books This Month'
-            )}
-
-            {/* Top in Reality TV */}
-            {renderLeaderboardSection(
-              '⭐ Top in Reality TV',
-              Star,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.65) })),
-              'Most consumed + engagement in Reality TV',
-              'points',
-              'Top in Reality TV'
-            )}
-
-            {/* Top in Sports This Week */}
-            {renderLeaderboardSection(
-              '🏆 Top in Sports This Week',
-              Trophy,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.8) })),
-              'Most consumed + engagement in Sports',
-              'points',
-              'Top in Sports This Week'
-            )}
-
-            {/* Top in Podcasts This Week */}
-            {renderLeaderboardSection(
-              '🎙️ Top in Podcasts This Week',
-              Podcast,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.6) })),
-              'Most consumed + engagement in Podcasts',
-              'points',
-              'Top in Podcasts This Week'
-            )}
-
-            {/* Top in Movies This Week */}
-            {renderLeaderboardSection(
-              '🎬 Top in Movies This Week',
-              Film,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.75) })),
-              'Most consumed + engagement in Movies',
-              'points',
-              'Top in Movies This Week'
-            )}
-
-            {/* Fastest Rising Fans */}
-            {renderLeaderboardSection(
-              '📈 Fastest Rising Fans',
-              TrendingUp,
-              mockFanLeaders.map(e => ({ ...e, score: Math.floor(e.score * 0.45) })),
-              'New users gaining points quickly',
-              'points',
-              'Fastest Rising Fans'
-            )}
+                    {/* Share Button (only for current user) */}
+                    {isCurrentUser && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName: 'Leaders' })}
+                        disabled={shareRankMutation.isPending}
+                        className="text-gray-400 hover:text-purple-600"
+                        data-testid="button-share-rank"
+                      >
+                        <Share2 size={16} />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
-
-        {/* What's Tracked Section */}
-        <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl border border-purple-200 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="text-purple-600" size={20} />
-            What We Track
-          </h3>
-          
-          <div className="grid md:grid-cols-3 gap-4">
-            <div>
-              <h4 className="font-semibold text-sm text-purple-900 mb-2">💬 Conversation Activity</h4>
-              <ul className="text-xs text-gray-700 space-y-1">
-                <li>• Posts & thoughts</li>
-                <li>• Reactions & reviews</li>
-                <li>• Polls & recommendations</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-sm text-purple-900 mb-2">👥 Social Interaction</h4>
-              <ul className="text-xs text-gray-700 space-y-1">
-                <li>• Replying to friends</li>
-                <li>• Commenting</li>
-                <li>• Mentioning @friends</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-sm text-purple-900 mb-2">🎮 Play Activity</h4>
-              <ul className="text-xs text-gray-700 space-y-1">
-                <li>• Predictions & accuracy</li>
-                <li>• Trivia rounds</li>
-                <li>• Wins & streaks</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-purple-200">
-            <p className="text-xs text-gray-600 italic">
-              ✨ We don't track hours watched, books read, or consumption quantity. 
-              It's all about the conversation and engagement with your circle.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
