@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, Brain, Vote, TrendingUp, Users, Trophy } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 interface PlayCardProps {
@@ -28,6 +28,50 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const queryClient = useQueryClient();
+
+  // Fetch vote results after submission for polls
+  const { data: pollResults, isLoading: isPollResultsLoading, error: pollResultsError } = useQuery({
+    queryKey: ['poll-results', game.id],
+    queryFn: async () => {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      // Get vote counts
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .select('prediction')
+        .eq('pool_id', game.id);
+      
+      if (error) throw error;
+      
+      // Calculate percentages - ensure all options are included even with 0 votes
+      const total = data?.length || 0;
+      const counts: Record<string, number> = {};
+      
+      // Initialize all options with 0
+      options.forEach((opt: string) => {
+        counts[opt] = 0;
+      });
+      
+      // Count actual votes
+      data?.forEach((vote: any) => {
+        if (counts.hasOwnProperty(vote.prediction)) {
+          counts[vote.prediction]++;
+        }
+      });
+      
+      const results = Object.entries(counts).map(([option, count]) => ({
+        option,
+        count,
+        percentage: total > 0 ? Math.round((count / total) * 100) : 0
+      }));
+      
+      return { results, total };
+    },
+    enabled: isSubmitted && game.type === 'vote',
+  });
 
   const submitMutation = useMutation({
     mutationFn: async (answer: string) => {
@@ -67,6 +111,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
       queryClient.invalidateQueries({ queryKey: ['/api/play-games'] });
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
       queryClient.invalidateQueries({ queryKey: ['user-points'] });
+      queryClient.invalidateQueries({ queryKey: ['poll-results', game.id] });
       onComplete?.();
     },
   });
@@ -131,6 +176,111 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
   // Compact version for friendsupdate page
   if (compact) {
     if (isSubmitted) {
+      // For polls, show loading or results
+      if (game.type === 'vote') {
+        // Error state
+        if (pollResultsError) {
+          return (
+            <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl mb-4">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                    <Vote size={16} className="text-white" />
+                  </div>
+                  <div className="text-sm font-medium text-gray-700">
+                    Failed to load results
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+        
+        // Loading state while fetching results
+        if (isPollResultsLoading || !pollResults) {
+          return (
+            <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl mb-4">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center animate-pulse">
+                    <Vote size={16} className="text-white" />
+                  </div>
+                  <div className="text-sm font-medium text-gray-700">
+                    Loading results...
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+        
+        // Show poll results
+        if (pollResults?.results) {
+        return (
+          <Card className={`${isConsumedContent ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl mb-4`}>
+            <CardContent className="p-3">
+              {/* Header */}
+              <div className="flex items-center space-x-2 mb-2">
+                <div className={`w-7 h-7 ${isConsumedContent ? 'bg-gradient-to-br from-purple-500 to-blue-500' : 'bg-purple-100'} rounded-full flex items-center justify-center`}>
+                  {isConsumedContent ? <Trophy size={14} className="text-white" /> : getGameIcon()}
+                </div>
+                <div className="flex-1">
+                  {isConsumedContent ? (
+                    <span className="text-xs font-bold text-purple-700">🏆 Consumed Poll</span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-semibold text-gray-900">@{game.creator_username || 'user'}</span>
+                      <span className="text-xs text-gray-500">asked:</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Question */}
+              <p className="text-sm font-medium text-gray-900 mb-2">
+                {game.prediction || game.question || game.title}
+              </p>
+
+              {/* Poll Results */}
+              <div className="space-y-1.5">
+                {options.map((option: string, index: number) => {
+                  const result = pollResults.results.find((r: any) => r.option === option);
+                  const percentage = result?.percentage || 0;
+                  const isSelected = selectedAnswer === option;
+                  
+                  return (
+                    <div
+                      key={`${game.id}-result-${index}`}
+                      className={`w-full py-2 px-3 rounded-lg border-2 flex items-center justify-between ${
+                        isSelected
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 bg-white opacity-60'
+                      }`}
+                    >
+                      <p className={`text-sm ${isSelected ? 'font-medium text-purple-700' : 'text-gray-900'}`}>
+                        {option}
+                      </p>
+                      <span className="text-sm font-semibold text-gray-700">
+                        {percentage}%
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Total votes */}
+              <div className="mt-2 text-center">
+                <span className="text-xs text-gray-500">
+                  {pollResults.total} {pollResults.total === 1 ? 'vote' : 'votes'}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        );
+        }
+      }
+      
+      // For trivia/predictions, show generic success
       return (
         <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl mb-4">
           <CardContent className="p-4">
@@ -139,7 +289,9 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
                 <Trophy size={16} className="text-white" />
               </div>
               <div className="text-sm font-medium text-gray-700">
-                Submitted! You'll see results when it ends.
+                {game.type === 'trivia' 
+                  ? 'Submitted! Check back for results.' 
+                  : 'Submitted! You\'ll see results when it ends.'}
               </div>
             </div>
           </CardContent>
@@ -207,6 +359,101 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
 
   // Regular version
   if (isSubmitted) {
+    // For polls, show loading or results
+    if (game.type === 'vote') {
+      // Error state
+      if (pollResultsError) {
+        return (
+          <Card className="bg-white border border-gray-200 shadow-sm rounded-lg mb-3">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                  <Vote size={16} className="text-white" />
+                </div>
+                <div className="text-sm font-medium text-gray-700">
+                  Failed to load results
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      }
+      
+      // Loading state while fetching results
+      if (isPollResultsLoading || !pollResults) {
+        return (
+          <Card className="bg-white border border-gray-200 shadow-sm rounded-lg mb-3">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center animate-pulse">
+                  <Vote size={16} className="text-white" />
+                </div>
+                <div className="text-sm font-medium text-gray-700">
+                  Loading results...
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      }
+      
+      // Show poll results
+      if (pollResults?.results) {
+        return (
+        <Card className={`${isConsumedContent ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-lg mb-3`}>
+          <CardHeader className="pb-2 pt-3 px-3">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center space-x-1.5">
+                {getGameIcon()}
+                <Badge className={`${getGameBadgeColor()} hover:${getGameBadgeColor()} text-xs font-medium`}>
+                  Poll Results
+                </Badge>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Users size={12} className="text-gray-600" />
+                <span className="text-xs font-semibold text-gray-600">
+                  {pollResults.total} {pollResults.total === 1 ? 'vote' : 'votes'}
+                </span>
+              </div>
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 leading-snug">
+              {game.prediction || game.question || game.title}
+            </h3>
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            {/* Poll Results */}
+            <div className="space-y-2">
+              {options.map((option: string, index: number) => {
+                const result = pollResults.results.find((r: any) => r.option === option);
+                const percentage = result?.percentage || 0;
+                const isSelected = selectedAnswer === option;
+                
+                return (
+                  <div
+                    key={`${game.id}-result-${index}`}
+                    className={`w-full py-2.5 px-3 rounded-lg border-2 flex items-center justify-between ${
+                      isSelected
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 bg-white opacity-60'
+                    }`}
+                  >
+                    <p className={`text-sm ${isSelected ? 'font-semibold text-purple-700' : 'text-gray-900'}`}>
+                      {option}
+                    </p>
+                    <span className="text-sm font-bold text-gray-700">
+                      {percentage}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+        );
+      }
+    }
+    
+    // For trivia/predictions, show points earned
     return (
       <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-300 shadow-sm rounded-lg mb-3">
         <CardContent className="p-3 text-center">
