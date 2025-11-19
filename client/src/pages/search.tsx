@@ -422,11 +422,11 @@ export default function Search() {
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-semibold text-black mb-3 flex items-center justify-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            <span>✨</span> AI-Powered Search
+          <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Ask Anything
           </h1>
           <p className="text-base text-gray-600">
-            Ask anything — get recommendations, conversations, reviews, or predictions.
+            Ask for recommendations — or see what people are saying about anything you're consuming.
           </p>
         </div>
 
