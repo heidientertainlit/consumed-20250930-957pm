@@ -369,35 +369,7 @@ export default function InlineComposer() {
             </button>
 
             {showMoreOptions && (
-              <div className="space-y-3">
-                {/* Start a Conversation - Only show when no content */}
-                {content === "" && (
-                  <div>
-                    <p className="text-xs text-gray-400 mb-2">Quick ideas</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {[
-                        "I can't believe…",
-                        "I just finished…",
-                        "What did you think about…"
-                      ].map((prompt) => (
-                        <button
-                          key={prompt}
-                          onClick={() => {
-                            setContent(prompt + " ");
-                            setShowMoreOptions(false);
-                          }}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
-                          data-testid={`quick-prompt-${prompt.substring(0, 10)}`}
-                        >
-                          {prompt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Other Ways to Share */}
-                <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => {
                       handleChipClick("prediction");
@@ -491,7 +463,6 @@ export default function InlineComposer() {
                   >
                     💬 Ask for Recs
                   </button>
-                </div>
               </div>
             )}
           </div>
