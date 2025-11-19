@@ -1789,9 +1789,6 @@ export default function Feed() {
                       } else if (post.rating || (post.content && /⭐|\/5|rated/i.test(post.content))) {
                         typeLabel = '⭐ Rate/Review';
                         typeColor = 'bg-yellow-100 text-yellow-700';
-                      } else if (post.mediaItems && post.mediaItems.length > 0) {
-                        typeLabel = '➕ Media Activity';
-                        typeColor = 'bg-indigo-100 text-indigo-700';
                       }
                       
                       return typeLabel ? (
