@@ -88,7 +88,8 @@ serve(async (req) => {
       const isDirectSearch = detectDirectSearch(query);
       console.log('Search type:', isDirectSearch ? 'DIRECT' : 'CONVERSATIONAL');
       
-      // If it's a direct search, use media-search API for actual results
+      // Collect media results for direct searches (don't return early)
+      let initialMediaResults = [];
       if (isDirectSearch) {
         try {
           const searchResponse = await fetch(
@@ -107,12 +108,13 @@ serve(async (req) => {
             const searchData = await searchResponse.json();
             
             if (searchData.results && searchData.results.length > 0) {
-              // Return direct search results with links to detail pages
-              const formattedResults = searchData.results.slice(0, 10).map((item: any) => ({
+              initialMediaResults = searchData.results.slice(0, 5).map((item: any) => ({
                 id: item.external_id || Math.random().toString(),
                 title: item.title,
                 type: item.type,
                 description: item.description || '',
+                year: item.year || null,
+                rating: item.rating || null,
                 poster_url: item.image || '',
                 detailUrl: item.external_id && item.external_source 
                   ? `/media/${item.type}/${item.external_source}/${item.external_id}`
@@ -120,18 +122,10 @@ serve(async (req) => {
                 external_id: item.external_id,
                 external_source: item.external_source
               }));
-              
-              return new Response(JSON.stringify({
-                type: 'direct',
-                results: formattedResults
-              }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-              });
             }
           }
         } catch (error) {
-          console.error('Direct search failed, falling back to AI:', error);
-          // Fall through to AI recommendations
+          console.error('Direct search failed:', error);
         }
       }
 
@@ -326,46 +320,8 @@ Focus on content that directly answers their question and matches their demonstr
         console.error('Error fetching conversations:', error);
       }
 
-      // Also try to get direct media results
-      let mediaResults = [];
-      if (isDirectSearch) {
-        try {
-          const searchResponse = await fetch(
-            'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': req.headers.get('Authorization') || ''
-              },
-              body: JSON.stringify({ query })
-            }
-          );
-          
-          if (searchResponse.ok) {
-            const searchData = await searchResponse.json();
-            
-            if (searchData.results && searchData.results.length > 0) {
-              mediaResults = searchData.results.slice(0, 5).map((item: any) => ({
-                id: item.external_id || Math.random().toString(),
-                title: item.title,
-                type: item.type,
-                description: item.description || '',
-                year: item.year || null,
-                rating: item.rating || null,
-                poster_url: item.image || '',
-                detailUrl: item.external_id && item.external_source 
-                  ? `/media/${item.type}/${item.external_source}/${item.external_id}`
-                  : null,
-                external_id: item.external_id,
-                external_source: item.external_source
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching media results:', error);
-        }
-      }
+      // Use media results collected earlier (initialMediaResults)
+      const mediaResults = initialMediaResults;
 
       // Return the AI-generated conversational response with all three sections
       return new Response(JSON.stringify({
