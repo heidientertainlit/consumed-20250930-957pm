@@ -18,9 +18,12 @@ interface LeaderboardEntry {
   helpful_count?: number;
 }
 
+type CategoryType = 'consumption' | 'conversation' | 'call-it';
+
 export default function Leaderboard() {
   const { session, user } = useAuth();
   const [activeTab, setActiveTab] = useState<'circle' | 'global'>('circle');
+  const [activeCategory, setActiveCategory] = useState<CategoryType>('consumption');
   const { toast } = useToast();
 
   // Fetch leaderboard data
@@ -172,11 +175,57 @@ export default function Leaderboard() {
   };
 
   // Mock data for now - will be replaced with actual API data
-  const mockFanLeaders: LeaderboardEntry[] = [
-    { user_id: '1', username: 'alexchen', display_name: 'Alex Chen', score: 1250, rank: 1 },
-    { user_id: '2', username: 'miapatel', display_name: 'Mia Patel', score: 980, rank: 2 },
-    { user_id: '3', username: 'jordantaylor', display_name: 'Jordan Taylor', score: 875, rank: 3 },
+  const mockConsumptionLeaders: LeaderboardEntry[] = [
+    { user_id: '1', username: 'alexchen', display_name: 'Alex Chen', score: 247, rank: 1 },
+    { user_id: '2', username: 'miapatel', display_name: 'Mia Patel', score: 198, rank: 2 },
+    { user_id: '3', username: 'jordantaylor', display_name: 'Jordan Taylor', score: 156, rank: 3 },
+    { user_id: '4', username: 'sarahkim', display_name: 'Sarah Kim', score: 134, rank: 4 },
+    { user_id: '5', username: 'marcusjones', display_name: 'Marcus Jones', score: 112, rank: 5 },
   ];
+
+  const mockConversationLeaders: LeaderboardEntry[] = [
+    { user_id: '2', username: 'miapatel', display_name: 'Mia Patel', score: 342, rank: 1 },
+    { user_id: '1', username: 'alexchen', display_name: 'Alex Chen', score: 289, rank: 2 },
+    { user_id: '4', username: 'sarahkim', display_name: 'Sarah Kim', score: 267, rank: 3 },
+    { user_id: '3', username: 'jordantaylor', display_name: 'Jordan Taylor', score: 203, rank: 4 },
+    { user_id: '6', username: 'emilyrodriguez', display_name: 'Emily Rodriguez', score: 178, rank: 5 },
+  ];
+
+  const mockCallItLeaders: LeaderboardEntry[] = [
+    { user_id: '3', username: 'jordantaylor', display_name: 'Jordan Taylor', score: 89, rank: 1 },
+    { user_id: '1', username: 'alexchen', display_name: 'Alex Chen', score: 76, rank: 2 },
+    { user_id: '5', username: 'marcusjones', display_name: 'Marcus Jones', score: 64, rank: 3 },
+    { user_id: '2', username: 'miapatel', display_name: 'Mia Patel', score: 58, rank: 4 },
+    { user_id: '7', username: 'davidlee', display_name: 'David Lee', score: 45, rank: 5 },
+  ];
+
+  // Get current category data
+  const getCurrentCategoryData = () => {
+    switch (activeCategory) {
+      case 'consumption':
+        return mockConsumptionLeaders;
+      case 'conversation':
+        return mockConversationLeaders;
+      case 'call-it':
+        return mockCallItLeaders;
+      default:
+        return mockConsumptionLeaders;
+    }
+  };
+
+  // Get category name for sharing
+  const getCategoryName = () => {
+    switch (activeCategory) {
+      case 'consumption':
+        return 'Consumption Leaders';
+      case 'conversation':
+        return 'Conversation Leaders';
+      case 'call-it':
+        return 'Call-It Leaders';
+      default:
+        return 'Leaders';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
@@ -193,8 +242,8 @@ export default function Leaderboard() {
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-3 mb-6 justify-center">
+        {/* Circle/Global Tabs */}
+        <div className="flex gap-3 mb-4 justify-center">
           <button
             onClick={() => setActiveTab('circle')}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all border ${
@@ -217,6 +266,54 @@ export default function Leaderboard() {
           </button>
         </div>
 
+        {/* Category Tabs */}
+        <div className="flex gap-2 mb-6 justify-center flex-wrap">
+          <button
+            onClick={() => setActiveCategory('consumption')}
+            className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
+              activeCategory === 'consumption'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Consumption
+          </button>
+          <button
+            onClick={() => setActiveCategory('conversation')}
+            className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
+              activeCategory === 'conversation'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Conversation
+          </button>
+          <button
+            onClick={() => setActiveCategory('call-it')}
+            className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
+              activeCategory === 'call-it'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Call-It
+          </button>
+        </div>
+
+        {/* Category Description */}
+        <div className="mb-6 text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-1">
+            {activeCategory === 'consumption' && 'Consumption Leaders'}
+            {activeCategory === 'conversation' && 'Conversation Leaders'}
+            {activeCategory === 'call-it' && 'Call-It Leaders'}
+          </h2>
+          <p className="text-sm text-gray-600 max-w-md mx-auto">
+            {activeCategory === 'consumption' && "Who's adding the most shows, books, movies, podcasts, and more."}
+            {activeCategory === 'conversation' && "Friends whose posts and comments are fueling the conversation."}
+            {activeCategory === 'call-it' && "Friends making the boldest calls—and getting them right."}
+          </p>
+        </div>
+
         {isLoading ? (
           <div className="bg-white rounded-lg p-6">
             <div className="space-y-4">
@@ -234,7 +331,7 @@ export default function Leaderboard() {
         ) : (
           <div className="bg-white rounded-lg p-6">
             <div className="space-y-4">
-              {mockFanLeaders.map((entry, index) => {
+              {getCurrentCategoryData().map((entry, index) => {
                 const isCurrentUser = entry.user_id === user?.id;
                 
                 return (
@@ -262,7 +359,7 @@ export default function Leaderboard() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName: 'Leaders' })}
+                        onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName: getCategoryName() })}
                         disabled={shareRankMutation.isPending}
                         className="text-gray-400 hover:text-purple-600"
                         data-testid="button-share-rank"
