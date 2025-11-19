@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import MediaCarousel from "@/components/media-carousel";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -431,81 +431,96 @@ export default function Search() {
         </div>
 
         {/* Search Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg">
-          <div className="relative">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <Input
-                  type="text"
-                  placeholder="🔍 Ask about anything you're consuming…"
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200">
+          <div className="p-6">
+            <div className="flex gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white flex-shrink-0">
+                <Sparkles size={20} />
+              </div>
+              <div className="flex-1">
+                <Textarea
+                  placeholder="Ask about anything you're consuming… what to watch next, what friends are saying, recommendations, or search for specific shows, movies, books, music"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !isSearching && handleSearch()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && !isSearching) {
+                      e.preventDefault();
+                      handleSearch();
+                    }
+                  }}
                   disabled={isSearching}
-                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 border-white/30 focus:border-white bg-white text-gray-800 placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="border-none p-0 text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-base placeholder:text-gray-400 min-h-[100px]"
                   data-testid="search-input"
                 />
               </div>
-              <Button
-                onClick={handleSearch}
-                disabled={isSearching || !searchQuery.trim()}
-                className="px-8 py-6 rounded-xl bg-white hover:bg-white/90 text-purple-600 font-semibold disabled:opacity-50"
-                data-testid="search-submit"
-              >
-                {isSearching ? (
-                  <Loader2 className="animate-spin" size={20} />
-                ) : (
-                  <Sparkles size={20} />
-                )}
-              </Button>
             </div>
-            
-            {/* Try Asking Examples */}
-            {!searchResults && !isSearching && (
-              <div className="mt-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
-                <p className="text-white/90 text-sm font-medium mb-3">Try asking:</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {[
-                    "Shows like The Bear",
-                    "What are people saying about Bridgerton?",
-                    "Movies for a rainy Sunday",
-                    "Did my friends like Project Hail Mary?",
-                    "Hot takes on DWTS finale"
-                  ].map((example) => (
-                    <button
-                      key={example}
-                      onClick={() => {
-                        setSearchQuery(example);
-                        setTimeout(() => handleSearch(), 100);
-                      }}
-                      className="text-left px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-colors"
-                      data-testid={`example-query-${example.substring(0, 10)}`}
-                    >
-                      "{example}"
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Loading State Message */}
-            {isSearching && (
-              <div className="mt-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="animate-spin text-white" size={20} />
-                  <div>
-                    <p className="text-white font-semibold">AI is analyzing your request...</p>
-                    <p className="text-white/80 text-sm">This may take 10-30 seconds</p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
+          
+          <div className="px-6 pb-4 border-t border-gray-100 pt-4 flex justify-end">
+            <Button
+              onClick={handleSearch}
+              disabled={isSearching || !searchQuery.trim()}
+              className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium disabled:opacity-50"
+              data-testid="search-submit"
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} className="mr-2" />
+                  Search
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {/* Try Asking Examples */}
+          {!searchResults && !isSearching && (
+            <div className="px-6 pb-4">
+              <p className="text-gray-600 text-sm font-medium mb-3">Try asking:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  "Shows like The Bear",
+                  "What are people saying about Bridgerton?",
+                  "Movies for a rainy Sunday",
+                  "Did my friends like Project Hail Mary?",
+                  "Hot takes on DWTS finale"
+                ].map((example) => (
+                  <button
+                    key={example}
+                    onClick={() => {
+                      setSearchQuery(example);
+                      setTimeout(() => handleSearch(), 100);
+                    }}
+                    className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 text-sm transition-colors"
+                    data-testid={`example-query-${example.substring(0, 10)}`}
+                  >
+                    "{example}"
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Loading State Message */}
+          {isSearching && (
+            <div className="px-6 pb-4">
+              <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <Loader2 className="animate-spin text-purple-600" size={20} />
+                <div>
+                  <p className="text-purple-900 font-semibold">AI is analyzing your request...</p>
+                  <p className="text-purple-700 text-sm">This may take 10-30 seconds</p>
+                </div>
+              </div>
+            </div>
+          )}
 
-          {/* Search Results - Three Section Layout */}
-          {searchResults && (
-            <div className="mt-6 space-y-6">
+        {/* Search Results - Three Section Layout */}
+        {searchResults && (
+          <div className="mt-6 space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-white">Results</h3>
                 <Button
