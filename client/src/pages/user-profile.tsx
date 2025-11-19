@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Gamepad2, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -2802,85 +2802,6 @@ export default function UserProfile() {
             </div>
           </div>
         )}
-
-        {/* Your Game Stats */}
-        <div className="px-4 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center space-x-3 mb-6">
-              <Gamepad2 className="text-purple-800" size={24} />
-              <h2 className="text-xl font-bold text-gray-800">Your Game Stats</h2>
-            </div>
-
-            {isLoadingPredictions ? (
-              <div className="text-center py-8">
-                <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
-                <p className="text-gray-600 mt-2">Loading game stats...</p>
-              </div>
-            ) : userPredictionsList.length > 0 ? (
-              <>
-                <div className="text-center mb-6">
-                  <div className="text-3xl font-bold text-purple-600 mb-1">
-                    {userPredictionsList.reduce((sum, pred) => sum + (pred.points_earned || 0), 0)}
-                  </div>
-                  <div className="text-sm text-gray-500">Total Points Earned</div>
-                </div>
-
-                <div className="space-y-3 mb-4">
-                  <h3 className="text-sm font-semibold text-gray-700">
-                    {showAllGameHistory ? 'All Games' : 'Recent Games (Last 5)'}
-                  </h3>
-                  {(showAllGameHistory ? userPredictionsList : userPredictionsList.slice(0, 5)).map((pred: any) => (
-                    <div 
-                      key={pred.pool_id} 
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      data-testid={`completed-game-${pred.pool_id}`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        {pred.prediction_pools?.type === 'trivia' && <Brain size={18} className="text-blue-600" />}
-                        {pred.prediction_pools?.type === 'vote' && <Trophy size={18} className="text-green-600" />}
-                        {pred.prediction_pools?.type === 'prediction' && <Trophy size={18} className="text-purple-600" />}
-                        <div>
-                          <div className="font-medium text-sm text-gray-900">{pred.prediction_pools?.title || 'Unknown Game'}</div>
-                          <div className="text-xs text-gray-500 capitalize">{pred.prediction_pools?.type || 'game'}</div>
-                        </div>
-                      </div>
-                      <div className="text-sm font-semibold text-purple-600">+{pred.points_earned || 0} pts</div>
-                    </div>
-                  ))}
-                </div>
-
-                {userPredictionsList.length > 5 && (
-                  <Button
-                    onClick={() => setShowAllGameHistory(!showAllGameHistory)}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                    data-testid="button-view-all-game-history"
-                  >
-                    {showAllGameHistory 
-                      ? 'Show Less' 
-                      : `View All Game History (${userPredictionsList.length} total)`
-                    }
-                  </Button>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Gamepad2 size={32} className="text-purple-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Games Played Yet</h3>
-                <p className="text-gray-600 mb-4">Start playing games to earn points and climb the leaderboard!</p>
-                <Button 
-                  onClick={() => setLocation('/play')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                  data-testid="button-start-playing"
-                >
-                  <Play size={16} className="mr-2" />
-                  Go to Games
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Logout Button - Only shown on own profile, at bottom */}
         {isOwnProfile && (
