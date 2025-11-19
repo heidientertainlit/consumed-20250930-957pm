@@ -53,16 +53,25 @@ export default function MediaCarousel({
 
       {/* Scrollable carousel */}
       <div className="flex overflow-x-auto gap-2 scrollbar-hide">
-        {items.map((item, index) => (
-          <div key={`${item.externalSource || 'unknown'}-${item.id}-${index}`} className="flex-shrink-0 w-20">
-            <MediaCard
-              item={item}
-              onItemClick={onItemClick}
-              onAddToList={onAddToList}
-              onRate={onRate}
-            />
-          </div>
-        ))}
+        {items.map((item) => {
+          // Create a guaranteed unique key scoped to this carousel
+          // Include the carousel title to ensure uniqueness across multiple carousels
+          const itemKey = item.externalId && item.externalSource
+            ? `${item.externalSource}-${item.externalId}`
+            : `${item.mediaType || 'media'}-${item.platform || 'noplatform'}-${item.id}`;
+          const uniqueKey = `${title}-${itemKey}`;
+          
+          return (
+            <div key={uniqueKey} className="flex-shrink-0 w-20">
+              <MediaCard
+                item={item}
+                onItemClick={onItemClick}
+                onAddToList={onAddToList}
+                onRate={onRate}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

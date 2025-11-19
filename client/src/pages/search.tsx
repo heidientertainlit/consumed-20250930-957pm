@@ -52,6 +52,21 @@ interface SearchResult {
   mediaResults?: DirectResult[];
 }
 
+// Helper function to deduplicate media items based on their unique identifier
+function deduplicateMediaItems<T extends { id: string; externalId?: string; externalSource?: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter(item => {
+    const key = item.externalId && item.externalSource
+      ? `${item.externalSource}-${item.externalId}`
+      : item.id;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
@@ -691,7 +706,7 @@ export default function Search() {
             <MediaCarousel
               title="Top Shows Across All Streaming Platforms"
               mediaType="tv"
-              items={[...netflixTVShows.slice(0, 10), ...hboTVShows.slice(0, 10)]}
+              items={deduplicateMediaItems([...netflixTVShows.slice(0, 10), ...hboTVShows.slice(0, 10)])}
               onItemClick={handleMediaClick}
             />
           )}
