@@ -24,6 +24,7 @@ import ListDetail from "@/pages/list-detail";
 import EdnaSharePage from "@/pages/edna-share";
 import AdminDashboard from "@/pages/admin";
 import CTVDemo from "@/pages/ctv";
+import CTVRoku from "@/pages/ctv-roku";
 import EngagePage from "@/pages/engage";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
@@ -141,6 +142,9 @@ function Router() {
         </Route>
         <Route path="/ctv">
           <CTVDemo />
+        </Route>
+        <Route path="/ctv-roku">
+          <CTVRoku />
         </Route>
         <Route path="/engage">
           <ProtectedRoute>
