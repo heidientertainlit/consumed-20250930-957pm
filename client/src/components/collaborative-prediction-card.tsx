@@ -393,35 +393,6 @@ export default function CollaborativePredictionCard({
         {question}
       </p>
 
-      {/* Resolution Banner - Show when needs resolution */}
-      {needsResolution && (
-        <div className="mb-3 p-3 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-300 rounded-2xl">
-          <p className="text-sm font-bold text-orange-700 mb-3">⏰ Resolve this - who got it right?</p>
-          <div className="space-y-2">
-            <button
-              onClick={() => resolveMutation.mutate("Yes")}
-              disabled={resolveMutation.isPending}
-              className="w-full bg-white hover:bg-orange-50 border-2 border-orange-400 rounded-full px-4 py-2.5 text-sm font-medium text-gray-900 transition-all flex items-center justify-between"
-              data-testid="button-resolve-yes"
-            >
-              <span>{creatorPrediction}</span>
-              <span className="text-orange-600">{yesPercentage}%</span>
-            </button>
-            {friendPrediction && (
-              <button
-                onClick={() => resolveMutation.mutate("No")}
-                disabled={resolveMutation.isPending}
-                className="w-full bg-white hover:bg-orange-50 border-2 border-orange-400 rounded-full px-4 py-2.5 text-sm font-medium text-gray-900 transition-all flex items-center justify-between"
-                data-testid="button-resolve-no"
-              >
-                <span>{friendPrediction}</span>
-                <span className="text-orange-600">{noPercentage}%</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Results Banner - Show when resolved */}
       {isCompleted && winning_option && (
         <div className="mb-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl">
@@ -435,7 +406,7 @@ export default function CollaborativePredictionCard({
       )}
 
       {/* Voting Options - Stacked vertically */}
-      {!needsResolution && (
+      {!isCompleted && (
         <div className="space-y-2 mb-3">
           {/* Multi-option predictions (new format) */}
           {prediction.options && prediction.options.length > 0 ? (
