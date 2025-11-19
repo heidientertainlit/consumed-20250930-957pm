@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 interface CollaborativePrediction {
   id: string;
   question: string;
+  type?: 'vote' | 'predict' | 'trivia';
   creator: {
     username: string;
   };
@@ -53,7 +54,7 @@ export default function CollaborativePredictionCard({
   prediction, 
   onCastPrediction 
 }: CollaborativePredictionCardProps) {
-  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id, deadline, status = 'open', resolved_at, winning_option } = prediction;
+  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id, deadline, status = 'open', resolved_at, winning_option, type } = prediction;
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -67,6 +68,9 @@ export default function CollaborativePredictionCard({
 
   // Check if prediction is completed
   const isCompleted = status === 'completed';
+  
+  // Check if this is a poll (not a prediction) - polls don't show usernames
+  const isPoll = type === 'vote';
   
   // Check if deadline has passed (for timed predictions)
   const deadlinePassed = deadline ? new Date(deadline) < new Date() : false;
@@ -444,7 +448,7 @@ export default function CollaborativePredictionCard({
             <>
               {/* Legacy 2-option format */}
               <div>
-                {!isConsumedPrediction && (
+                {!isConsumedPrediction && !isPoll && (
                   <p className="text-xs text-gray-600 mb-1 ml-1">
                     <span className="font-semibold">{creator.username}</span>
                   </p>
@@ -474,7 +478,7 @@ export default function CollaborativePredictionCard({
 
               {friendPrediction ? (
                 <div>
-                  {!isConsumedPrediction && (
+                  {!isConsumedPrediction && !isPoll && (
                     <p className="text-xs text-gray-600 mb-1 ml-1">
                       <span className="font-semibold">{invitedFriend.username}</span>
                     </p>
@@ -503,7 +507,7 @@ export default function CollaborativePredictionCard({
                 </div>
               ) : (
                 <div>
-                  {!isConsumedPrediction && (
+                  {!isConsumedPrediction && !isPoll && (
                     <p className="text-xs text-gray-600 mb-1 ml-1">
                       <span className="font-semibold">{invitedFriend.username}</span>
                     </p>
