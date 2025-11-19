@@ -313,7 +313,7 @@ export default function InlineComposer() {
     if (chip) {
       return `Ex: ${chip.example}`;
     }
-    return "Jump in here! Add what you're consuming or join the conversation";
+    return "Jump in! Add what you're consuming or start a convo";
   };
 
   return (
@@ -352,65 +352,51 @@ export default function InlineComposer() {
 
       {/* Action Buttons Section */}
       <div className="px-4 pb-3 border-t border-gray-100 pt-3">
-        {/* Quick Prompts - Conversation Starters - Hide only when mode selected or media attached */}
-        {composerMode === "" && !attachedMedia && content === "" && (
-          <>
-            <div className="mb-3">
-              <button
-                onClick={() => setShowConversationStarters(!showConversationStarters)}
-                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-2"
-                data-testid="button-toggle-conversation-starters"
-              >
-                <span>Ideas to Start a Conversation</span>
-                {showConversationStarters ? (
-                  <ChevronUp className="w-3.5 h-3.5" />
-                ) : (
-                  <ChevronDown className="w-3.5 h-3.5" />
-                )}
-              </button>
-
-              {showConversationStarters && (
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    "I can't believe…",
-                    "I just finished…",
-                    "What did you think about…"
-                  ].map((prompt) => (
-                    <button
-                      key={prompt}
-                      onClick={() => {
-                        setContent(prompt + " ");
-                        setShowConversationStarters(false);
-                      }}
-                      className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
-                      data-testid={`quick-prompt-${prompt.substring(0, 10)}`}
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
+        {/* Ways to Share - Single Collapsible Accordion */}
+        {composerMode === "" && !attachedMedia && (
+          <div>
+            <button
+              onClick={() => setShowMoreOptions(!showMoreOptions)}
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-2"
+              data-testid="button-toggle-ways-to-share"
+            >
+              <span>Ways to Share</span>
+              {showMoreOptions ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
               )}
-            </div>
+            </button>
 
-            {/* Divider */}
-            <div className="h-px bg-gray-100 my-3" />
-
-            {/* More Ways to Share - Collapsible */}
-            <div>
-              <button
-                onClick={() => setShowMoreOptions(!showMoreOptions)}
-                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors mb-2"
-                data-testid="button-toggle-more-options"
-              >
-                <span>More Ways to Share</span>
-                {showMoreOptions ? (
-                  <ChevronUp className="w-3.5 h-3.5" />
-                ) : (
-                  <ChevronDown className="w-3.5 h-3.5" />
+            {showMoreOptions && (
+              <div className="space-y-3">
+                {/* Start a Conversation - Only show when no content */}
+                {content === "" && (
+                  <div>
+                    <p className="text-xs text-gray-400 mb-2">Start a conversation</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {[
+                        "I can't believe…",
+                        "I just finished…",
+                        "What did you think about…"
+                      ].map((prompt) => (
+                        <button
+                          key={prompt}
+                          onClick={() => {
+                            setContent(prompt + " ");
+                            setShowMoreOptions(false);
+                          }}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
+                          data-testid={`quick-prompt-${prompt.substring(0, 10)}`}
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </button>
 
-              {showMoreOptions && (
+                {/* Other Ways to Share */}
                 <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => {
@@ -506,9 +492,9 @@ export default function InlineComposer() {
                     💬 Ask for Recs
                   </button>
                 </div>
-              )}
-            </div>
-          </>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
