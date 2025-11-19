@@ -124,6 +124,16 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
 
   const options = getOptions();
   const isConsumedContent = game.originType === 'consumed' || game.origin_type === 'consumed';
+  
+  // Debug logging
+  if (game.title === 'Mean Girls') {
+    console.log('🎮 Mean Girls Game Debug:', {
+      originType: game.originType,
+      origin_type: game.origin_type,
+      isConsumedContent,
+      allKeys: Object.keys(game)
+    });
+  }
 
   // Compact version for friendsupdate page
   if (compact) {
