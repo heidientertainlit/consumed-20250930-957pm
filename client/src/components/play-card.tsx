@@ -97,6 +97,13 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
     return 'bg-amber-100 text-amber-700';
   };
 
+  const getSubmitButtonText = () => {
+    if (game.type === 'trivia') return 'Submit Answer';
+    if (game.type === 'vote') return 'Submit Poll';
+    if (game.type === 'predict') return 'Predict with Friends';
+    return 'Submit';
+  };
+
   // Extract options based on game type
   const getOptions = () => {
     if (!game.options || !Array.isArray(game.options)) return [];
@@ -180,15 +187,15 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
             ))}
           </div>
 
-          {/* Predict with Friends Button */}
+          {/* Submit Button */}
           <Button 
             onClick={handleSubmit}
             disabled={!selectedAnswer || submitMutation.isPending}
             size="sm"
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg"
-            data-testid="play-card-predict-with-friends"
+            data-testid="play-card-submit-button"
           >
-            {submitMutation.isPending ? 'Submitting...' : 'Predict with Friends'}
+            {submitMutation.isPending ? 'Submitting...' : getSubmitButtonText()}
           </Button>
         </CardContent>
       </Card>
@@ -268,7 +275,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
           className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white disabled:opacity-50 rounded-lg py-2 text-xs font-semibold"
           data-testid="play-card-submit"
         >
-          {submitMutation.isPending ? 'Submitting...' : `Submit for ${game.points_reward || game.points || 10} pts`}
+          {submitMutation.isPending ? 'Submitting...' : `${getSubmitButtonText()} (${game.points_reward || game.points || 10} pts)`}
         </Button>
       </CardContent>
     </Card>
