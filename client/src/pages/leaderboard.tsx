@@ -22,7 +22,6 @@ type CategoryType = 'consumption' | 'conversation' | 'call-it';
 
 export default function Leaderboard() {
   const { session, user } = useAuth();
-  const [activeCategory, setActiveCategory] = useState<CategoryType>('consumption');
   const { toast } = useToast();
 
   // Fetch leaderboard data (global, weekly)
@@ -198,32 +197,69 @@ export default function Leaderboard() {
     { user_id: '7', username: 'davidlee', display_name: 'David Lee', score: 45, rank: 5 },
   ];
 
-  // Get current category data
-  const getCurrentCategoryData = () => {
-    switch (activeCategory) {
-      case 'consumption':
-        return mockConsumptionLeaders;
-      case 'conversation':
-        return mockConversationLeaders;
-      case 'call-it':
-        return mockCallItLeaders;
-      default:
-        return mockConsumptionLeaders;
-    }
-  };
+  // Render a leaderboard section
+  const renderLeaderboardCategory = (
+    title: string,
+    subtitle: string,
+    data: LeaderboardEntry[],
+    categoryName: string
+  ) => {
+    return (
+      <div className="mb-8">
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-1">
+            {title}
+          </h2>
+          <p className="text-sm text-gray-600">
+            {subtitle}
+          </p>
+        </div>
+        
+        <div className="bg-white rounded-lg p-6">
+          <div className="space-y-4">
+            {data.map((entry, index) => {
+              const isCurrentUser = entry.user_id === user?.id;
+              
+              return (
+                <div
+                  key={entry.user_id}
+                  className="flex items-start gap-3 py-2"
+                >
+                  {/* Rank Number */}
+                  <div className="text-gray-400 text-sm font-medium pt-0.5 w-6">
+                    {index + 1}.
+                  </div>
 
-  // Get category name for sharing
-  const getCategoryName = () => {
-    switch (activeCategory) {
-      case 'consumption':
-        return 'Consumption Leaders';
-      case 'conversation':
-        return 'Conversation Leaders';
-      case 'call-it':
-        return 'Call-It Leaders';
-      default:
-        return 'Leaders';
-    }
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-semibold text-base ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                      {entry.display_name || entry.username}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      @{entry.username} • <span className="text-purple-400">{entry.score} pts</span>
+                    </p>
+                  </div>
+
+                  {/* Share Button (only for current user) */}
+                  {isCurrentUser && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
+                      disabled={shareRankMutation.isPending}
+                      className="text-gray-400 hover:text-purple-600"
+                      data-testid="button-share-rank"
+                    >
+                      <Share2 size={16} />
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -232,60 +268,12 @@ export default function Leaderboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="mb-6 text-center">
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Leaders
           </h1>
           <p className="text-base text-gray-600 max-w-xs mx-auto">
             Most active fans and trending voices.
-          </p>
-        </div>
-
-        {/* Category Tabs */}
-        <div className="flex gap-2 mb-6 justify-center flex-wrap">
-          <button
-            onClick={() => setActiveCategory('consumption')}
-            className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
-              activeCategory === 'consumption'
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Consumption
-          </button>
-          <button
-            onClick={() => setActiveCategory('conversation')}
-            className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
-              activeCategory === 'conversation'
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Conversation
-          </button>
-          <button
-            onClick={() => setActiveCategory('call-it')}
-            className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${
-              activeCategory === 'call-it'
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Call-It
-          </button>
-        </div>
-
-        {/* Category Description */}
-        <div className="mb-6 text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-1">
-            {activeCategory === 'consumption' && 'Consumption Leaders'}
-            {activeCategory === 'conversation' && 'Conversation Leaders'}
-            {activeCategory === 'call-it' && 'Call-It Leaders'}
-          </h2>
-          <p className="text-sm text-gray-600 max-w-md mx-auto">
-            {activeCategory === 'consumption' && "Who's adding the most shows, books, movies, podcasts, and more."}
-            {activeCategory === 'conversation' && "Friends whose posts and comments are fueling the conversation."}
-            {activeCategory === 'call-it' && "Friends making the boldest calls—and getting them right."}
           </p>
         </div>
 
@@ -304,49 +292,31 @@ export default function Leaderboard() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg p-6">
-            <div className="space-y-4">
-              {getCurrentCategoryData().map((entry, index) => {
-                const isCurrentUser = entry.user_id === user?.id;
-                
-                return (
-                  <div
-                    key={entry.user_id}
-                    className="flex items-start gap-3 py-2"
-                  >
-                    {/* Rank Number */}
-                    <div className="text-gray-400 text-sm font-medium pt-0.5 w-6">
-                      {index + 1}.
-                    </div>
+          <>
+            {/* Consumption Leaders */}
+            {renderLeaderboardCategory(
+              'Consumption Leaders',
+              "Who's adding the most shows, books, movies, podcasts, and more.",
+              mockConsumptionLeaders,
+              'Consumption Leaders'
+            )}
 
-                    {/* User Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-semibold text-base ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
-                        {entry.display_name || entry.username}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        @{entry.username} • <span className="text-purple-400">{entry.score} pts</span>
-                      </p>
-                    </div>
+            {/* Conversation Leaders */}
+            {renderLeaderboardCategory(
+              'Conversation Leaders',
+              "Friends whose posts and comments are fueling the conversation.",
+              mockConversationLeaders,
+              'Conversation Leaders'
+            )}
 
-                    {/* Share Button (only for current user) */}
-                    {isCurrentUser && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName: getCategoryName() })}
-                        disabled={shareRankMutation.isPending}
-                        className="text-gray-400 hover:text-purple-600"
-                        data-testid="button-share-rank"
-                      >
-                        <Share2 size={16} />
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+            {/* Call-It Leaders */}
+            {renderLeaderboardCategory(
+              'Call-It Leaders',
+              "Friends making the boldest calls—and getting them right.",
+              mockCallItLeaders,
+              'Call-It Leaders'
+            )}
+          </>
         )}
       </div>
     </div>
