@@ -365,7 +365,7 @@ export default function InlineComposer() {
                   <button
                     key={prompt}
                     onClick={() => setContent(prompt + " ")}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all"
+                    className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all"
                     data-testid={`quick-prompt-${prompt.substring(0, 10)}`}
                   >
                     {prompt}
