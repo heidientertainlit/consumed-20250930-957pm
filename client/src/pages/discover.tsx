@@ -32,6 +32,15 @@ interface DirectResult {
   external_source?: string;
 }
 
+interface ConversationResult {
+  id: string;
+  user_name: string;
+  content: string;
+  content_type: string;
+  created_at: string;
+  engagement_count?: number;
+}
+
 interface SearchResult {
   type: 'conversational' | 'direct' | 'error';
   explanation?: string;
@@ -39,6 +48,8 @@ interface SearchResult {
   searchSuggestions?: string[];
   results?: DirectResult[];
   message?: string;
+  conversations?: ConversationResult[];
+  mediaResults?: DirectResult[];
 }
 
 export default function Discover() {
@@ -412,30 +423,22 @@ export default function Discover() {
         {/* Header */}
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-semibold text-black mb-3 flex items-center justify-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            <span>✨</span> Discover
+            <span>✨</span> AI-Powered Search
           </h1>
           <p className="text-base text-gray-600">
-            Get AI-powered recommendations or explore trending content across all platforms
+            Ask anything — get recommendations, conversations, reviews, or predictions.
           </p>
         </div>
 
-        {/* Recommendation Section */}
+        {/* Search Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-lg">
-          <div className="mb-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              💫 Ask for Recs
-            </h2>
-            <p className="text-sm text-white/90 mt-1">
-              Describe what you're in the mood for and get personalized suggestions
-            </p>
-          </div>
           <div className="relative">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <Input
                   type="text"
-                  placeholder="Try 'uplifting movies' or 'sci-fi like Blade Runner'..."
+                  placeholder="🔍 Ask about anything you're consuming…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !isSearching && handleSearch()}
@@ -458,6 +461,34 @@ export default function Discover() {
               </Button>
             </div>
             
+            {/* Try Asking Examples */}
+            {!searchResults && !isSearching && (
+              <div className="mt-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                <p className="text-white/90 text-sm font-medium mb-3">Try asking:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {[
+                    "Shows like The Bear",
+                    "What are people saying about Bridgerton?",
+                    "Movies for a rainy Sunday",
+                    "Did my friends like Project Hail Mary?",
+                    "Hot takes on DWTS finale"
+                  ].map((example) => (
+                    <button
+                      key={example}
+                      onClick={() => {
+                        setSearchQuery(example);
+                        setTimeout(() => handleSearch(), 100);
+                      }}
+                      className="text-left px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-colors"
+                      data-testid={`example-query-${example.substring(0, 10)}`}
+                    >
+                      "{example}"
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {/* Loading State Message */}
             {isSearching && (
               <div className="mt-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
@@ -472,16 +503,16 @@ export default function Discover() {
             )}
           </div>
 
-          {/* Search Results */}
+          {/* Search Results - Three Section Layout */}
           {searchResults && (
-            <div className="mt-6 bg-white rounded-xl p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-black">Results</h3>
+            <div className="mt-6 space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-white">Results</h3>
                 <Button
                   onClick={resetSearch}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-600 hover:text-black"
+                  className="text-white/90 hover:text-white"
                   data-testid="clear-search"
                 >
                   <X size={16} className="mr-1" />
@@ -495,10 +526,67 @@ export default function Discover() {
                 </div>
               )}
 
-              {searchResults.type === 'conversational' && searchResults.recommendations && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {searchResults.recommendations.map((rec, idx) => (
+              {/* SECTION 1: Conversation Results */}
+              {searchResults.conversations && searchResults.conversations.length > 0 && (
+                <div className="bg-white rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-xl font-bold text-black flex items-center gap-2">
+                      🔥 Talk About {searchQuery}
+                    </h4>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">Top fan conversations, predictions, polls, and reviews</p>
+                  <div className="space-y-3 mb-4">
+                    {searchResults.conversations.slice(0, 3).map((conv) => (
+                      <div
+                        key={conv.id}
+                        onClick={() => setLocation('/feed')}
+                        className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-purple-400 transition-colors cursor-pointer"
+                        data-testid={`conversation-${conv.id}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                            {conv.user_name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-black">@{conv.user_name}</p>
+                            <p className="text-sm text-gray-700 mt-1 line-clamp-2">{conv.content}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                                {conv.content_type}
+                              </span>
+                              {conv.engagement_count && conv.engagement_count > 0 && (
+                                <span className="text-xs text-gray-500">
+                                  {conv.engagement_count} {conv.engagement_count === 1 ? 'reaction' : 'reactions'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    onClick={() => setLocation('/feed')}
+                    variant="outline"
+                    className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
+                    data-testid="see-all-talk"
+                  >
+                    See all Talk →
+                  </Button>
+                </div>
+              )}
+
+              {/* SECTION 2: Recommendation Results */}
+              {searchResults.recommendations && searchResults.recommendations.length > 0 && (
+                <div className="bg-white rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-xl font-bold text-black flex items-center gap-2">
+                      🎯 Personalized Recommendations
+                    </h4>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">Because you watched, based on your friends' ratings, trending with similar users</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    {searchResults.recommendations.slice(0, 4).map((rec, idx) => (
                       <div
                         key={idx}
                         onClick={() => {
@@ -509,7 +597,7 @@ export default function Discover() {
                         className={`bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all ${
                           rec.external_id ? 'cursor-pointer' : ''
                         }`}
-                        data-testid={`ai-result-${idx}`}
+                        data-testid={`recommendation-${idx}`}
                       >
                         <div className="flex gap-4">
                           {rec.poster_url ? (
@@ -527,18 +615,72 @@ export default function Discover() {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start gap-2 mb-2">
-                              <h4 className="font-bold text-black text-lg flex-1">{rec.title}</h4>
-                            </div>
+                            <h5 className="font-bold text-black text-base mb-1">{rec.title}</h5>
                             {rec.year && (
-                              <p className="text-sm text-gray-600 mb-2">📅 {rec.year}</p>
+                              <p className="text-xs text-gray-600 mb-2">📅 {rec.year}</p>
                             )}
-                            <p className="text-sm text-gray-700 line-clamp-3 mb-2">{rec.description}</p>
-                            <div className="flex items-center gap-2">
-                              <span className="inline-block text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
-                                {rec.type}
-                              </span>
+                            <p className="text-sm text-gray-700 line-clamp-2 mb-2">{rec.description}</p>
+                            <span className="inline-block text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+                              {rec.type}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
+                    data-testid="see-more-recommendations"
+                  >
+                    See more recommendations
+                  </Button>
+                </div>
+              )}
+
+              {/* SECTION 3: Media Page Previews */}
+              {searchResults.mediaResults && searchResults.mediaResults.length > 0 && (
+                <div className="bg-white rounded-xl p-6">
+                  <h4 className="text-xl font-bold text-black mb-4">Media Results</h4>
+                  <div className="space-y-3">
+                    {searchResults.mediaResults.map((result) => (
+                      <div
+                        key={result.id}
+                        className="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-purple-400 transition-colors"
+                        data-testid={`media-result-${result.id}`}
+                      >
+                        <div className="flex items-start gap-4">
+                          {result.poster_url && (
+                            <img
+                              src={result.poster_url}
+                              alt={result.title}
+                              className="w-20 h-28 object-cover rounded-lg flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-start gap-2 mb-2">
+                              {getMediaIcon(result.type)}
+                              <h5 className="font-semibold text-black flex-1">{result.title}</h5>
                             </div>
+                            {result.year && (
+                              <p className="text-sm text-gray-600 mb-2">{result.year} • {result.type}</p>
+                            )}
+                            {result.rating && (
+                              <div className="flex items-center gap-1 mb-2">
+                                <span className="text-sm text-gray-600">⭐ {result.rating}</span>
+                              </div>
+                            )}
+                            {result.description && (
+                              <p className="text-sm text-gray-700 mb-3 line-clamp-2">{result.description}</p>
+                            )}
+                            <Button
+                              onClick={() => handleResultClick(result)}
+                              size="sm"
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
+                              data-testid={`open-media-${result.id}`}
+                            >
+                              Open Media Page →
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -547,46 +689,50 @@ export default function Discover() {
                 </div>
               )}
 
-              {searchResults.type === 'direct' && searchResults.results && (
-                <div className="space-y-3">
-                  {searchResults.results.map((result) => (
-                    <div
-                      key={result.id}
-                      onClick={() => handleResultClick(result)}
-                      className="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-purple-400 transition-colors cursor-pointer"
-                      data-testid={`search-result-${result.id}`}
-                    >
-                      <div className="flex items-start gap-4">
-                        {result.poster_url && (
-                          <img
-                            src={result.poster_url}
-                            alt={result.title}
-                            className="w-16 h-24 object-cover rounded-lg"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-start gap-2">
-                            {getMediaIcon(result.type)}
-                            <h4 className="font-semibold text-black flex-1">{result.title}</h4>
-                          </div>
-                          {result.year && (
-                            <p className="text-sm text-gray-600 mt-1">{result.year}</p>
+              {/* Legacy support for old result formats */}
+              {searchResults.type === 'direct' && searchResults.results && !searchResults.mediaResults && (
+                <div className="bg-white rounded-xl p-6">
+                  <h4 className="text-xl font-bold text-black mb-4">Results</h4>
+                  <div className="space-y-3">
+                    {searchResults.results.map((result) => (
+                      <div
+                        key={result.id}
+                        onClick={() => handleResultClick(result)}
+                        className="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-purple-400 transition-colors cursor-pointer"
+                        data-testid={`search-result-${result.id}`}
+                      >
+                        <div className="flex items-start gap-4">
+                          {result.poster_url && (
+                            <img
+                              src={result.poster_url}
+                              alt={result.title}
+                              className="w-16 h-24 object-cover rounded-lg"
+                            />
                           )}
-                          {result.description && (
-                            <p className="text-sm text-gray-700 mt-2 line-clamp-2">{result.description}</p>
-                          )}
-                          <div className="flex items-center gap-3 mt-2">
-                            <span className="inline-block text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
-                              {result.type}
-                            </span>
-                            {result.rating && (
-                              <span className="text-xs text-gray-600">⭐ {result.rating}</span>
+                          <div className="flex-1">
+                            <div className="flex items-start gap-2">
+                              {getMediaIcon(result.type)}
+                              <h4 className="font-semibold text-black flex-1">{result.title}</h4>
+                            </div>
+                            {result.year && (
+                              <p className="text-sm text-gray-600 mt-1">{result.year}</p>
                             )}
+                            {result.description && (
+                              <p className="text-sm text-gray-700 mt-2 line-clamp-2">{result.description}</p>
+                            )}
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="inline-block text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
+                                {result.type}
+                              </span>
+                              {result.rating && (
+                                <span className="text-xs text-gray-600">⭐ {result.rating}</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
