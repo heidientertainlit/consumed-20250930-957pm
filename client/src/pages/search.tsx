@@ -425,7 +425,7 @@ export default function Search() {
           <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Ask Anything
           </h1>
-          <p className="text-base text-gray-300">
+          <p className="text-base text-gray-600">
             Ask for recommendations or see what people are saying about what you're consuming.
           </p>
         </div>

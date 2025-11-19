@@ -1464,7 +1464,7 @@ export default function Feed() {
           <h1 className="text-3xl font-semibold text-black mb-2 text-center" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
             Feed
           </h1>
-          <p className="text-base text-gray-900 text-center font-medium mb-1">
+          <p className="text-base text-gray-600 text-center font-medium mb-1">
             Here's what your friends are watching, reading, and listening to. Add yours:
           </p>
         </div>
