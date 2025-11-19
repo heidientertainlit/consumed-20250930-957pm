@@ -22,18 +22,17 @@ type CategoryType = 'consumption' | 'conversation' | 'call-it';
 
 export default function Leaderboard() {
   const { session, user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'circle' | 'global'>('circle');
   const [activeCategory, setActiveCategory] = useState<CategoryType>('consumption');
   const { toast } = useToast();
 
-  // Fetch leaderboard data
+  // Fetch leaderboard data (global, weekly)
   const { data: leaderboardData, isLoading } = useQuery({
-    queryKey: ['leaderboard', activeTab],
+    queryKey: ['leaderboard', 'global'],
     queryFn: async () => {
       if (!session?.access_token) return null;
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=${activeTab}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=weekly`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -240,30 +239,6 @@ export default function Leaderboard() {
           <p className="text-base text-gray-600 max-w-xs mx-auto">
             Most active fans and trending voices.
           </p>
-        </div>
-
-        {/* Circle/Global Tabs */}
-        <div className="flex gap-3 mb-4 justify-center">
-          <button
-            onClick={() => setActiveTab('circle')}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all border ${
-              activeTab === 'circle'
-                ? 'bg-purple-600 text-white border-purple-600'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            Your Circle
-          </button>
-          <button
-            onClick={() => setActiveTab('global')}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all border ${
-              activeTab === 'global'
-                ? 'bg-purple-600 text-white border-purple-600'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            Global
-          </button>
         </div>
 
         {/* Category Tabs */}
