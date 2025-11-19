@@ -123,17 +123,10 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
   };
 
   const options = getOptions();
-  const isConsumedContent = game.originType === 'consumed' || game.origin_type === 'consumed';
-  
-  // Debug logging
-  if (game.title === 'Mean Girls') {
-    console.log('🎮 Mean Girls Game Debug:', {
-      originType: game.originType,
-      origin_type: game.origin_type,
-      isConsumedContent,
-      allKeys: Object.keys(game)
-    });
-  }
+  // Check multiple ways: explicit flag, or no creator (consumed content has no creator)
+  const isConsumedContent = game.originType === 'consumed' || 
+                           game.origin_type === 'consumed' || 
+                           (!game.creator_username && !game.originUserId && !game.origin_user_id);
 
   // Compact version for friendsupdate page
   if (compact) {
