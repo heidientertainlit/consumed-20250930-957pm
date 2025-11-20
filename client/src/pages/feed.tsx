@@ -1674,7 +1674,7 @@ export default function Feed() {
                   {/* Action buttons */}
                   <div className="flex gap-2">
                     <Link 
-                      to="/media/movie/tmdb/569094"
+                      to="/media/movie/tmdb/693134"
                       className="flex-1 text-xs font-medium text-purple-600 hover:text-purple-700 py-2 px-3 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors text-center"
                     >
                       → See all activity
