@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Flame, Target, MessageCircle } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -137,10 +137,9 @@ export default function MediaDetail() {
 
   // Separate reviews from other activity
   const reviews = socialActivity.filter((post: any) => post.rating);
-  const hotTakes = socialActivity.filter((post: any) => post.post_type === 'hot_take');
   const predictions = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'prediction');
   const polls = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'poll');
-  const conversations = socialActivity.filter((post: any) => !post.rating && post.post_type !== 'hot_take' && !post.prediction_pool_id);
+  const conversations = socialActivity.filter((post: any) => !post.rating && !post.prediction_pool_id);
 
   // Fetch user's lists (including custom lists)
   const { data: userListsData } = useQuery({
@@ -656,13 +655,6 @@ export default function MediaDetail() {
                       <span className="text-gray-600">Reviews</span>
                     </div>
                   )}
-                  {hotTakes.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Flame className="w-4 h-4 text-orange-500" />
-                      <span className="font-semibold text-gray-900">{hotTakes.length}</span>
-                      <span className="text-gray-600">Hot Takes</span>
-                    </div>
-                  )}
                   {predictions.length > 0 && (
                     <div className="flex items-center gap-2">
                       <Target className="w-4 h-4 text-purple-500" />
@@ -684,40 +676,6 @@ export default function MediaDetail() {
                       <span className="text-gray-600">Posts</span>
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-
-            {/* Hot Takes */}
-            {hotTakes.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  Hot Takes ({hotTakes.length})
-                </h2>
-                <div className="space-y-4">
-                  {hotTakes.map((take: any) => (
-                    <div key={take.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-orange-600 text-sm font-medium">
-                            {take.users?.display_name?.[0]?.toUpperCase() || take.users?.user_name?.[0]?.toUpperCase() || '?'}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">
-                            {take.users?.display_name || take.users?.user_name || 'Anonymous'}
-                          </p>
-                          <p className="text-gray-700 text-sm leading-relaxed mt-1">{take.content}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            <span>{take.likes_count || 0} 🔥</span>
-                            <span>{take.comments_count || 0} replies</span>
-                            <span>{new Date(take.created_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
