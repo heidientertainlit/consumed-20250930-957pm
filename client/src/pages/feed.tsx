@@ -1673,17 +1673,12 @@ export default function Feed() {
                   
                   {/* Action buttons */}
                   <div className="flex gap-2">
-                    <button 
-                      className="flex-1 text-xs font-medium text-purple-600 hover:text-purple-700 py-2 px-3 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors"
-                      onClick={() => {
-                        toast({
-                          title: "Preview Feature",
-                          description: "This unified grouping will work once the edge function is deployed!"
-                        });
-                      }}
+                    <Link 
+                      to="/media/movie/tmdb/569094"
+                      className="flex-1 text-xs font-medium text-purple-600 hover:text-purple-700 py-2 px-3 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors text-center"
                     >
                       → See all activity
-                    </button>
+                    </Link>
                   </div>
                 </div>
                 
@@ -1729,18 +1724,12 @@ export default function Feed() {
                         </div>
                         
                         {/* See what they said link */}
-                        <button 
+                        <Link 
+                          to={`/media/${media.mediaType}/${media.externalSource}/${media.externalId}`}
                           className="mt-3 text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center"
-                          onClick={() => {
-                            // TODO: Expand to show individual posts
-                            toast({
-                              title: "Coming soon",
-                              description: "Grouped post expansion is being implemented"
-                            });
-                          }}
                         >
-                          → See what they said
-                        </button>
+                          → See all activity
+                        </Link>
                       </div>
                       
                       {/* Media image */}

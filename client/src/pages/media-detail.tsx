@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Flame, Target, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -80,21 +80,33 @@ export default function MediaDetail() {
     enabled: !!params?.source && !!params?.id && !!session?.access_token
   });
 
-  // Fetch reviews/ratings for this specific media
-  const { data: reviews = [] } = useQuery({
-    queryKey: ['media-reviews', params?.source, params?.id],
+  // Fetch ALL social activity for this specific media
+  const { data: socialActivity = [] } = useQuery({
+    queryKey: ['media-social-activity', params?.source, params?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('social_posts')
         .select(`
           id,
           user_id,
+          post_type,
           rating,
           content,
           created_at,
+          reply_count,
+          reaction_count,
+          prediction_pool_id,
           users:user_id (
             display_name,
             user_name
+          ),
+          prediction_pools:prediction_pool_id (
+            id,
+            game_type,
+            question,
+            description,
+            options,
+            total_participants
           )
         `)
         .eq('media_external_source', params?.source)
@@ -102,13 +114,20 @@ export default function MediaDetail() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Failed to fetch reviews:', error);
+        console.error('Failed to fetch social activity:', error);
         return [];
       }
       return data || [];
     },
     enabled: !!params?.source && !!params?.id
   });
+
+  // Separate reviews from other activity
+  const reviews = socialActivity.filter((post: any) => post.rating);
+  const hotTakes = socialActivity.filter((post: any) => post.post_type === 'hot_take');
+  const predictions = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'prediction');
+  const polls = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'poll');
+  const conversations = socialActivity.filter((post: any) => !post.rating && post.post_type !== 'hot_take' && !post.prediction_pool_id);
 
   // Fetch user's lists (including custom lists)
   const { data: userListsData } = useQuery({
@@ -610,10 +629,153 @@ export default function MediaDetail() {
               </div>
             </div>
 
+            {/* Social Activity Summary */}
+            {socialActivity.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Community Activity
+                </h2>
+                <div className="flex flex-wrap gap-4 text-sm">
+                  {reviews.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-yellow-500" />
+                      <span className="font-semibold text-gray-900">{reviews.length}</span>
+                      <span className="text-gray-600">Reviews</span>
+                    </div>
+                  )}
+                  {hotTakes.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Flame className="w-4 h-4 text-orange-500" />
+                      <span className="font-semibold text-gray-900">{hotTakes.length}</span>
+                      <span className="text-gray-600">Hot Takes</span>
+                    </div>
+                  )}
+                  {predictions.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-purple-500" />
+                      <span className="font-semibold text-gray-900">{predictions.length}</span>
+                      <span className="text-gray-600">Predictions</span>
+                    </div>
+                  )}
+                  {polls.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4 text-blue-500" />
+                      <span className="font-semibold text-gray-900">{polls.length}</span>
+                      <span className="text-gray-600">Polls</span>
+                    </div>
+                  )}
+                  {conversations.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4 text-gray-500" />
+                      <span className="font-semibold text-gray-900">{conversations.length}</span>
+                      <span className="text-gray-600">Posts</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Hot Takes */}
+            {hotTakes.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  Hot Takes ({hotTakes.length})
+                </h2>
+                <div className="space-y-4">
+                  {hotTakes.map((take: any) => (
+                    <div key={take.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-orange-600 text-sm font-medium">
+                            {take.users?.display_name?.[0]?.toUpperCase() || take.users?.user_name?.[0]?.toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {take.users?.display_name || take.users?.user_name || 'Anonymous'}
+                          </p>
+                          <p className="text-gray-700 text-sm leading-relaxed mt-1">{take.content}</p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <span>{take.reaction_count || 0} upvotes</span>
+                            <span>{take.reply_count || 0} replies</span>
+                            <span>{new Date(take.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Predictions */}
+            {predictions.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Target className="w-5 h-5 text-purple-500" />
+                  Predictions ({predictions.length})
+                </h2>
+                <div className="space-y-4">
+                  {predictions.map((pred: any) => (
+                    <div key={pred.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-purple-600 text-sm font-medium">
+                            {pred.users?.display_name?.[0]?.toUpperCase() || pred.users?.user_name?.[0]?.toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 mb-1">
+                            {pred.prediction_pools?.question}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {pred.prediction_pools?.total_participants || 0} participants
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Polls */}
+            {polls.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-blue-500" />
+                  Polls ({polls.length})
+                </h2>
+                <div className="space-y-4">
+                  {polls.map((poll: any) => (
+                    <div key={poll.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-600 text-sm font-medium">
+                            {poll.users?.display_name?.[0]?.toUpperCase() || poll.users?.user_name?.[0]?.toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 mb-1">
+                            {poll.prediction_pools?.question}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {poll.prediction_pools?.total_participants || 0} votes
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Reviews & Ratings */}
             {reviews.length > 0 && (
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-500" />
                   Reviews & Ratings ({reviews.length})
                 </h2>
                 <div className="space-y-4">
@@ -661,6 +823,39 @@ export default function MediaDetail() {
                       {review.content && (
                         <p className="text-gray-700 text-sm leading-relaxed">{review.content}</p>
                       )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* General Posts/Conversations */}
+            {conversations.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-gray-500" />
+                  Conversations ({conversations.length})
+                </h2>
+                <div className="space-y-4">
+                  {conversations.map((post: any) => (
+                    <div key={post.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-gray-600 text-sm font-medium">
+                            {post.users?.display_name?.[0]?.toUpperCase() || post.users?.user_name?.[0]?.toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {post.users?.display_name || post.users?.user_name || 'Anonymous'}
+                          </p>
+                          <p className="text-gray-700 text-sm leading-relaxed mt-1">{post.content}</p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <span>{post.reply_count || 0} replies</span>
+                            <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
