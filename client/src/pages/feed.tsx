@@ -1694,11 +1694,13 @@ export default function Feed() {
                 // After 2nd post (position 2), show prediction
                 const shouldShowPrediction = patternPosition === 2;
                 
-                // After prediction (position 3), show trivia
+                // After prediction (position 3), show trivia (only actual trivia, not polls)
                 const shouldShowTrivia = patternPosition === 3;
                 const triviaIndex = Math.floor(postIndex / 8);
-                const currentGame = playGames && playGames.length > 0 
-                  ? playGames[triviaIndex % playGames.length]
+                // Filter to only show actual trivia games, not polls or predictions
+                const triviaGames = playGames?.filter(g => g.type === 'trivia') || [];
+                const currentGame = triviaGames && triviaGames.length > 0 
+                  ? triviaGames[triviaIndex % triviaGames.length]
                   : null;
                 
                 // After trivia (position 4), show creator update
