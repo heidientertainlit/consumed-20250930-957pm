@@ -95,6 +95,7 @@ export const socialPosts = pgTable("social_posts", {
   containsSpoilers: boolean("contains_spoilers").default(false),
   likesCount: integer("likes_count").default(0),
   commentsCount: integer("comments_count").default(0),
+  predictionPoolId: text("prediction_pool_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
