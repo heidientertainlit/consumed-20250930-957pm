@@ -586,7 +586,7 @@ export default function Feed() {
     // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
     if (feedFilter === 'friends') {
       // Show only posts from friends (not own posts)
-      if (post.user.id === user?.id || !friendIds.has(post.user.id)) {
+      if (!post.user || post.user.id === user?.id || !friendIds.has(post.user.id)) {
         return false;
       }
     }
@@ -1540,10 +1540,10 @@ export default function Feed() {
               {(() => {
                 // Extract friend activities from recent posts with media
                 const friendActivities = filteredPosts
-                  .filter((p: SocialPost) => p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
+                  .filter((p: SocialPost) => p.user && p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
                   .slice(0, 6)
                   .map((p: SocialPost) => ({
-                    username: p.user.username,
+                    username: p.user!.username,
                     media: p.mediaItems[0].title,
                     action: p.content ? 'is loving' : 'added'
                   }));
@@ -1875,6 +1875,7 @@ export default function Feed() {
                     })()}
                     
                     {/* User Info and Date */}
+                    {post.user && (
                     <div className="flex items-center space-x-2 mb-3">
                       <Link href={`/user/${post.user.id}`}>
                         <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
@@ -1902,6 +1903,7 @@ export default function Feed() {
                         </button>
                       )}
                     </div>
+                    )}
 
                   {/* Post Content */}
                   {post.content ? (
@@ -2108,12 +2110,14 @@ export default function Feed() {
                         </div>
                         
                         {/* See more link */}
+                        {post.user && (
                         <button
                           onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
                           className="text-sm text-gray-500 hover:text-purple-600 transition-colors"
                         >
                           See more of @{post.user.username}'s lists →
                         </button>
+                        )}
                       </div>
                     )
                   )}
