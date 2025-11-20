@@ -27,7 +27,7 @@ import { copyLink } from "@/lib/share";
 interface SocialPost {
   id: string;
   type: string;
-  user: {
+  user?: {
     id: string;
     username: string;
     displayName: string;
@@ -61,6 +61,19 @@ interface SocialPost {
     externalId: string;
     externalSource: string;
   }>;
+  // Grouped media fields
+  groupedActivities?: Array<{
+    postId: string;
+    userId: string;
+    username: string;
+    displayName: string;
+    avatar: string;
+    activityText: string;
+    content: string;
+    rating?: number;
+    timestamp: string;
+  }>;
+  activityCount?: number;
   // Prediction-specific fields
   poolId?: string;
   question?: string;
@@ -1602,6 +1615,66 @@ export default function Feed() {
               </div>
               
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
+                // Check if this is a grouped media item
+                if (post.type === 'media_group' && post.groupedActivities && post.mediaItems?.[0]) {
+                  const media = post.mediaItems[0];
+                  const activities = post.groupedActivities;
+                  
+                  return (
+                    <div key={post.id} className="mb-4 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                      {/* Media header */}
+                      <div className="p-4 pb-2">
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">{media.title}</h3>
+                        {media.creator && (
+                          <p className="text-sm text-gray-600 mb-3">{media.creator}</p>
+                        )}
+                        
+                        {/* Activity summary - inline rendering */}
+                        <div className="text-sm text-gray-800">
+                          {activities.slice(0, 3).map((activity, idx) => (
+                            <span key={activity.postId}>
+                              <Link to={`/@${activity.username}`} className="font-semibold hover:text-purple-600">
+                                {activity.displayName}
+                              </Link>
+                              {' '}
+                              <span className="text-gray-700">{activity.activityText}</span>
+                              {idx < Math.min(activities.length - 1, 2) && ' • '}
+                            </span>
+                          ))}
+                          {activities.length > 3 && (
+                            <span className="text-gray-600 font-medium"> +{activities.length - 3} more</span>
+                          )}
+                        </div>
+                        
+                        {/* See what they said link */}
+                        <button 
+                          className="mt-3 text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center"
+                          onClick={() => {
+                            // TODO: Expand to show individual posts
+                            toast({
+                              title: "Coming soon",
+                              description: "Grouped post expansion is being implemented"
+                            });
+                          }}
+                        >
+                          → See what they said
+                        </button>
+                      </div>
+                      
+                      {/* Media image */}
+                      {media.imageUrl && (
+                        <div className="aspect-[16/9] relative bg-gray-100">
+                          <img 
+                            src={media.imageUrl} 
+                            alt={media.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                
                 // Check if this item is a prediction from the API
                 if (post.type === 'prediction' && post.question) {
                   return (

@@ -157,7 +157,125 @@ serve(async (req) => {
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
-      const transformedPosts = posts?.map(post => {
+      // Group posts by media (media_external_id + media_external_source)
+      const mediaGroups = new Map<string, any[]>();
+      const nonMediaPosts: any[] = [];
+
+      posts?.forEach(post => {
+        const hasMedia = post.media_title && post.media_title.trim() !== '' && post.media_external_id;
+        
+        if (hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia') {
+          const mediaKey = `${post.media_external_source}:${post.media_external_id}`;
+          if (!mediaGroups.has(mediaKey)) {
+            mediaGroups.set(mediaKey, []);
+          }
+          mediaGroups.get(mediaKey)!.push(post);
+        } else {
+          nonMediaPosts.push(post);
+        }
+      });
+
+      // Transform grouped media posts
+      const groupedItems: any[] = [];
+      
+      mediaGroups.forEach((groupPosts, mediaKey) => {
+        if (groupPosts.length === 1) {
+          // If only one post about this media, don't group it
+          const post = groupPosts[0];
+          const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+          
+          groupedItems.push({
+            id: post.id,
+            type: post.post_type || 'update',
+            user: {
+              id: post.user_id,
+              username: postUser.user_name || 'Unknown',
+              displayName: postUser.display_name || postUser.user_name || 'Unknown',
+              avatar: postUser.avatar || ''
+            },
+            content: post.content || '',
+            timestamp: post.created_at,
+            likes: post.likes_count || 0,
+            comments: post.comments_count || 0,
+            shares: 0,
+            likedByCurrentUser: likedPostIds.has(post.id),
+            rating: post.rating,
+            progress: post.progress,
+            containsSpoilers: post.contains_spoilers || false,
+            mediaItems: [{
+              id: `${post.media_external_source}-${post.media_external_id}`,
+              title: post.media_title || '',
+              creator: post.media_creator || '',
+              mediaType: post.media_type || 'unknown',
+              imageUrl: post.image_url || '',
+              rating: post.rating,
+              externalId: post.media_external_id || '',
+              externalSource: post.media_external_source || ''
+            }]
+          });
+        } else {
+          // Group multiple posts about the same media
+          const firstPost = groupPosts[0];
+          // Get most recent timestamp safely
+          const mostRecentTimestamp = groupPosts.reduce((latest, post) => {
+            return new Date(post.created_at) > new Date(latest) ? post.created_at : latest;
+          }, groupPosts[0].created_at);
+          
+          const activities = groupPosts.map(post => {
+            const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+            let activityText = '';
+            
+            if (post.post_type === 'finished') {
+              activityText = 'finished it';
+            } else if (post.post_type === 'added_to_list') {
+              activityText = 'added it to their list';
+            } else if (post.post_type === 'rating') {
+              // Handle fractional ratings safely
+              const rating = Math.max(0, Math.min(5, Math.floor(post.rating || 0)));
+              const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+              activityText = `rated it ${stars}`;
+            } else if (post.post_type === 'progress') {
+              activityText = `updated progress`;
+            } else if (post.post_type === 'review') {
+              activityText = 'reviewed it';
+            } else {
+              activityText = 'shared it';
+            }
+            
+            return {
+              postId: post.id,
+              userId: post.user_id,
+              username: postUser.user_name || 'Unknown',
+              displayName: postUser.display_name || postUser.user_name || 'Unknown',
+              avatar: postUser.avatar || '',
+              activityText,
+              content: post.content || '',
+              rating: post.rating,
+              timestamp: post.created_at
+            };
+          });
+          
+          groupedItems.push({
+            id: `grouped-${mediaKey}`,
+            type: 'media_group',
+            timestamp: mostRecentTimestamp,
+            mediaItems: [{
+              id: `${firstPost.media_external_source}-${firstPost.media_external_id}`,
+              title: firstPost.media_title || '',
+              creator: firstPost.media_creator || '',
+              mediaType: firstPost.media_type || 'unknown',
+              imageUrl: firstPost.image_url || '',
+              externalId: firstPost.media_external_id || '',
+              externalSource: firstPost.media_external_source || ''
+            }],
+            groupedActivities: activities,
+            activityCount: activities.length
+          });
+        }
+      });
+
+      // Transform non-media posts (predictions, polls, regular posts without media)
+      const transformedNonMediaPosts = nonMediaPosts.map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
         const hasMedia = post.media_title && post.media_title.trim() !== '';
@@ -194,10 +312,18 @@ serve(async (req) => {
         };
       }) || [];
 
-      console.log('Returning posts:', transformedPosts.length);
-      console.log('Posts with media:', transformedPosts.filter(p => p.mediaItems.length > 0).length);
+      // Combine grouped media items with non-media posts and sort by timestamp
+      const allItems = [...groupedItems, ...transformedNonMediaPosts].sort((a, b) => {
+        const aTime = new Date(a.timestamp).getTime();
+        const bTime = new Date(b.timestamp).getTime();
+        return bTime - aTime; // Most recent first
+      });
 
-      return new Response(JSON.stringify(transformedPosts), {
+      console.log('Returning items:', allItems.length);
+      console.log('Grouped media items:', groupedItems.length);
+      console.log('Non-media posts:', transformedNonMediaPosts.length);
+
+      return new Response(JSON.stringify(allItems), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
