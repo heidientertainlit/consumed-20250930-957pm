@@ -1613,6 +1613,71 @@ export default function Feed() {
                   })}
                 </div>
               </div>
+
+              {/* MOCK: Grouped Media Preview (remove after deploying edge function) */}
+              <div className="mb-4 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm relative">
+                {/* Preview badge */}
+                <div className="absolute top-2 right-2 z-10">
+                  <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
+                    Preview
+                  </span>
+                </div>
+                
+                {/* Media header */}
+                <div className="p-4 pb-2">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Dune: Part Two</h3>
+                  <p className="text-sm text-gray-600 mb-3">Denis Villeneuve</p>
+                  
+                  {/* Activity summary - inline rendering */}
+                  <div className="text-sm text-gray-800">
+                    <span>
+                      <Link to="/@emma" className="font-semibold hover:text-purple-600">
+                        Emma
+                      </Link>
+                      {' '}
+                      <span className="text-gray-700">finished it</span>
+                      {' • '}
+                    </span>
+                    <span>
+                      <Link to="/@rachel" className="font-semibold hover:text-purple-600">
+                        Rachel
+                      </Link>
+                      {' '}
+                      <span className="text-gray-700">added it to their list</span>
+                      {' • '}
+                    </span>
+                    <span>
+                      <Link to="/@sarah" className="font-semibold hover:text-purple-600">
+                        Sarah
+                      </Link>
+                      {' '}
+                      <span className="text-gray-700">rated it ★★★★☆</span>
+                    </span>
+                  </div>
+                  
+                  {/* See what they said link */}
+                  <button 
+                    className="mt-3 text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center"
+                    onClick={() => {
+                      toast({
+                        title: "Preview Feature",
+                        description: "This is a preview of the grouped media feature. Deploy the edge function to enable it!"
+                      });
+                    }}
+                  >
+                    → See what they said
+                  </button>
+                </div>
+                
+                {/* Media image */}
+                <div className="aspect-[16/9] relative bg-gray-100">
+                  <img 
+                    src="https://image.tmdb.org/t/p/w780/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg" 
+                    alt="Dune: Part Two"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
               
               {filteredPosts.map((post: SocialPost, postIndex: number) => {
                 // Check if this is a grouped media item
