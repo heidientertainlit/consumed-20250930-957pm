@@ -1649,10 +1649,6 @@ export default function Feed() {
                   {/* Aggregated discussion metrics */}
                   <div className="flex items-center gap-3 text-xs text-gray-600 mb-3 pb-3 border-b border-gray-100">
                     <span className="flex items-center gap-1">
-                      <Flame size={14} className="text-orange-500" />
-                      <strong className="text-gray-900">12</strong> Hot Takes
-                    </span>
-                    <span className="flex items-center gap-1">
                       <Target size={14} className="text-purple-500" />
                       <strong className="text-gray-900">3</strong> Predictions
                     </span>
