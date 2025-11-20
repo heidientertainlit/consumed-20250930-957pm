@@ -238,7 +238,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
 
               {/* Question */}
               <p className="text-sm font-medium text-gray-900 mb-2">
-                {game.prediction || game.question || game.title}
+                {game.prediction || game.question || game.description || game.title}
               </p>
 
               {/* Poll Results */}
@@ -349,7 +349,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
 
           {/* Question */}
           <p className="text-sm font-medium text-gray-900 mb-2">
-            {game.prediction || game.question || game.title}
+            {game.prediction || game.question || game.description || game.title}
           </p>
 
           {/* Options */}
@@ -445,7 +445,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
               </div>
             </div>
             <h3 className="text-sm font-semibold text-gray-900 leading-snug">
-              {game.prediction || game.question || game.title}
+              {game.prediction || game.question || game.description || game.title}
             </h3>
           </CardHeader>
           <CardContent className="px-3 pb-3">
