@@ -96,17 +96,9 @@ export default function MediaDetail() {
           reply_count,
           reaction_count,
           prediction_pool_id,
-          users:user_id (
+          users!social_posts_user_id_fkey (
             display_name,
             user_name
-          ),
-          prediction_pools:prediction_pool_id (
-            id,
-            game_type,
-            question,
-            description,
-            options,
-            total_participants
           )
         `)
         .eq('media_external_source', params?.source)
@@ -117,6 +109,27 @@ export default function MediaDetail() {
         console.error('Failed to fetch social activity:', error);
         return [];
       }
+
+      // Fetch prediction pool details separately for posts that have them
+      const postsWithPools = data?.filter(p => p.prediction_pool_id) || [];
+      if (postsWithPools.length > 0) {
+        const poolIds = postsWithPools.map(p => p.prediction_pool_id);
+        const { data: pools } = await supabase
+          .from('prediction_pools')
+          .select('id, game_type, question, description, options, total_participants')
+          .in('id', poolIds);
+
+        // Attach pool data to posts
+        if (pools) {
+          const poolMap = new Map(pools.map(p => [p.id, p]));
+          data?.forEach((post: any) => {
+            if (post.prediction_pool_id) {
+              post.prediction_pools = poolMap.get(post.prediction_pool_id);
+            }
+          });
+        }
+      }
+
       return data || [];
     },
     enabled: !!params?.source && !!params?.id
