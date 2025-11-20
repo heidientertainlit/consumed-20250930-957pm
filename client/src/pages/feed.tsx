@@ -1628,31 +1628,29 @@ export default function Feed() {
                   <h3 className="text-lg font-bold text-gray-900 mb-1">Dune: Part Two</h3>
                   <p className="text-sm text-gray-600 mb-3">Denis Villeneuve</p>
                   
-                  {/* Activity summary - inline rendering */}
-                  <div className="text-sm text-gray-800">
-                    <span>
+                  {/* Activity summary - stacked for readability */}
+                  <div className="text-sm text-gray-800 space-y-1">
+                    <div>
                       <Link to="/@emma" className="font-semibold hover:text-purple-600">
                         Emma
                       </Link>
                       {' '}
                       <span className="text-gray-700">finished it</span>
-                      {' • '}
-                    </span>
-                    <span>
+                    </div>
+                    <div>
                       <Link to="/@rachel" className="font-semibold hover:text-purple-600">
                         Rachel
                       </Link>
                       {' '}
                       <span className="text-gray-700">added it to their list</span>
-                      {' • '}
-                    </span>
-                    <span>
+                    </div>
+                    <div>
                       <Link to="/@sarah" className="font-semibold hover:text-purple-600">
                         Sarah
                       </Link>
                       {' '}
                       <span className="text-gray-700">rated it ★★★★☆</span>
-                    </span>
+                    </div>
                   </div>
                   
                   {/* See what they said link */}
@@ -1694,20 +1692,19 @@ export default function Feed() {
                           <p className="text-sm text-gray-600 mb-3">{media.creator}</p>
                         )}
                         
-                        {/* Activity summary - inline rendering */}
-                        <div className="text-sm text-gray-800">
-                          {activities.slice(0, 3).map((activity, idx) => (
-                            <span key={activity.postId}>
+                        {/* Activity summary - stacked for readability */}
+                        <div className="text-sm text-gray-800 space-y-1">
+                          {activities.slice(0, 3).map((activity) => (
+                            <div key={activity.postId}>
                               <Link to={`/@${activity.username}`} className="font-semibold hover:text-purple-600">
                                 {activity.displayName}
                               </Link>
                               {' '}
                               <span className="text-gray-700">{activity.activityText}</span>
-                              {idx < Math.min(activities.length - 1, 2) && ' • '}
-                            </span>
+                            </div>
                           ))}
                           {activities.length > 3 && (
-                            <span className="text-gray-600 font-medium"> +{activities.length - 3} more</span>
+                            <div className="text-gray-600 font-medium">+{activities.length - 3} more</div>
                           )}
                         </div>
                         
