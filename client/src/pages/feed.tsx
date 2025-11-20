@@ -1614,7 +1614,7 @@ export default function Feed() {
                 </div>
               </div>
 
-              {/* MOCK: Grouped Media Preview (remove after deploying edge function) */}
+              {/* MOCK: Smart Unified Grouped Card (remove after deploying edge function) */}
               <div className="mb-4 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm relative">
                 {/* Preview badge */}
                 <div className="absolute top-2 right-2 z-10">
@@ -1628,8 +1628,8 @@ export default function Feed() {
                   <h3 className="text-lg font-bold text-gray-900 mb-1">Dune: Part Two</h3>
                   <p className="text-sm text-gray-600 mb-3">Denis Villeneuve</p>
                   
-                  {/* Activity summary - stacked for readability */}
-                  <div className="text-sm text-gray-800 space-y-1">
+                  {/* Individual activities */}
+                  <div className="text-sm text-gray-800 space-y-1 mb-3">
                     <div>
                       <Link to="/@emma" className="font-semibold hover:text-purple-600">
                         Emma
@@ -1642,29 +1642,49 @@ export default function Feed() {
                         Rachel
                       </Link>
                       {' '}
-                      <span className="text-gray-700">added it to their list</span>
-                    </div>
-                    <div>
-                      <Link to="/@sarah" className="font-semibold hover:text-purple-600">
-                        Sarah
-                      </Link>
-                      {' '}
-                      <span className="text-gray-700">rated it ★★★★☆</span>
+                      <span className="text-gray-700">rated it ★★★★★</span>
                     </div>
                   </div>
+
+                  {/* Aggregated discussion metrics */}
+                  <div className="flex items-center gap-3 text-xs text-gray-600 mb-3 pb-3 border-b border-gray-100">
+                    <span className="flex items-center gap-1">
+                      <Flame size={14} className="text-orange-500" />
+                      <strong className="text-gray-900">12</strong> Hot Takes
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Target size={14} className="text-purple-500" />
+                      <strong className="text-gray-900">3</strong> Predictions
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageCircle size={14} className="text-blue-500" />
+                      <strong className="text-gray-900">24</strong> Comments
+                    </span>
+                  </div>
+
+                  {/* Featured top take */}
+                  <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                    <p className="text-xs text-gray-500 mb-1">Top take:</p>
+                    <p className="text-sm text-gray-900 italic">"Best sequel since Empire Strikes Back"</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      — <Link to="/@alex" className="font-semibold hover:text-purple-600">Alex</Link>
+                    </p>
+                  </div>
                   
-                  {/* See what they said link */}
-                  <button 
-                    className="mt-3 text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center"
-                    onClick={() => {
-                      toast({
-                        title: "Preview Feature",
-                        description: "This is a preview of the grouped media feature. Deploy the edge function to enable it!"
-                      });
-                    }}
-                  >
-                    → See what they said
-                  </button>
+                  {/* Action buttons */}
+                  <div className="flex gap-2">
+                    <button 
+                      className="flex-1 text-xs font-medium text-purple-600 hover:text-purple-700 py-2 px-3 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors"
+                      onClick={() => {
+                        toast({
+                          title: "Preview Feature",
+                          description: "This unified grouping will work once the edge function is deployed!"
+                        });
+                      }}
+                    >
+                      → See all activity
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Media image */}
