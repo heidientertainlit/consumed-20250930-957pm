@@ -93,8 +93,6 @@ export default function MediaDetail() {
           rating,
           content,
           created_at,
-          reply_count,
-          reaction_count,
           prediction_pool_id,
           users!social_posts_user_id_fkey (
             display_name,
@@ -710,8 +708,6 @@ export default function MediaDetail() {
                           </p>
                           <p className="text-gray-700 text-sm leading-relaxed mt-1">{take.content}</p>
                           <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            <span>{take.reaction_count || 0} upvotes</span>
-                            <span>{take.reply_count || 0} replies</span>
                             <span>{new Date(take.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
@@ -864,7 +860,6 @@ export default function MediaDetail() {
                           </p>
                           <p className="text-gray-700 text-sm leading-relaxed mt-1">{post.content}</p>
                           <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            <span>{post.reply_count || 0} replies</span>
                             <span>{new Date(post.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
