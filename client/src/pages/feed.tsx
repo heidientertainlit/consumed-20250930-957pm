@@ -1474,17 +1474,6 @@ export default function Feed() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-2 text-center" style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '-0.02em' }}>
-            Feed
-          </h1>
-          <p className="text-base text-gray-600 text-center mb-1">
-            See what your friends are consuming — and add yours.
-          </p>
-        </div>
-
-
         {/* Activity Stream */}
         <div className="space-y-6">
 

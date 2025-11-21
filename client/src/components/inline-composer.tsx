@@ -277,7 +277,7 @@ export default function InlineComposer() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for a movie, show, book, album..."
+              placeholder="🔍 Search for a movie, show, book, podcast, music..."
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 placeholder:text-gray-400"
               data-testid="input-media-search"
             />
