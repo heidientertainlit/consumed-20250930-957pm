@@ -1585,7 +1585,7 @@ export default function Feed() {
               {recommendedContent && recommendedContent.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs text-gray-500">
-                    Recommended for you
+                    Recommended for you based on what you and your friends are consuming
                   </p>
                   <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
                     {recommendedContent.slice(0, 6).map((item: any, index: number) => (
