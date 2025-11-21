@@ -346,70 +346,82 @@ export default function InlineComposer() {
             </Button>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action List - Minimal UI */}
           {actionMode === "" && (
             <div>
               <p className="text-sm text-gray-600 mb-3">How do you want to share it?</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setActionMode("thought")}
-                  className="p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200"
                   data-testid="button-add-thought"
                 >
-                  <MessageCircle className="w-5 h-5 text-gray-600 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">Add a thought</p>
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="w-5 h-5 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">Add a thought</span>
+                  </div>
+                  <span className="text-gray-400">→</span>
                 </button>
                 <button
                   onClick={() => setActionMode("rating")}
-                  className="p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200"
                   data-testid="button-rate-it"
                 >
-                  <Star className="w-5 h-5 text-yellow-500 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">Rate it</p>
+                  <div className="flex items-center gap-3">
+                    <Star className="w-5 h-5 text-yellow-500" />
+                    <span className="text-sm font-medium text-gray-900">Rate it</span>
+                  </div>
+                  <span className="text-gray-400">→</span>
                 </button>
                 <button
                   onClick={() => setActionMode("prediction")}
-                  className="p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200"
                   data-testid="button-make-prediction"
                 >
-                  <Target className="w-5 h-5 text-purple-600 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">Make a prediction</p>
+                  <div className="flex items-center gap-3">
+                    <Target className="w-5 h-5 text-purple-600" />
+                    <span className="text-sm font-medium text-gray-900">Make a prediction</span>
+                  </div>
+                  <span className="text-gray-400">→</span>
                 </button>
                 <button
                   onClick={() => setActionMode("poll")}
-                  className="p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200"
                   data-testid="button-ask-poll"
                 >
-                  <Vote className="w-5 h-5 text-blue-600 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">Ask a poll</p>
+                  <div className="flex items-center gap-3">
+                    <Vote className="w-5 h-5 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-900">Ask a poll</span>
+                  </div>
+                  <span className="text-gray-400">→</span>
                 </button>
                 <button
                   onClick={() => setActionMode("list")}
-                  className="p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200"
                   data-testid="button-add-to-list"
                 >
-                  <ListPlus className="w-5 h-5 text-green-600 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">Add to a list</p>
+                  <div className="flex items-center gap-3">
+                    <ListPlus className="w-5 h-5 text-green-600" />
+                    <span className="text-sm font-medium text-gray-900">Add to a list</span>
+                  </div>
+                  <span className="text-gray-400">→</span>
                 </button>
-              </div>
-
-              {/* Skip to Just Track */}
-              <div className="mt-4 flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={containsSpoilers}
-                    onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
-                  />
-                  <span className="text-gray-600">Contains spoilers</span>
-                </label>
-                <Button
+                <button
                   onClick={handlePost}
                   disabled={isPosting}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                  data-testid="button-post-simple"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                  data-testid="button-just-track"
                 >
-                  {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Just Track It"}
-                </Button>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">✓</span>
+                    <span className="text-sm font-medium text-gray-900">Just track it</span>
+                  </div>
+                  {isPosting ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  ) : (
+                    <span className="text-gray-400">→</span>
+                  )}
+                </button>
               </div>
             </div>
           )}
