@@ -87,10 +87,82 @@ serve(async (req) => {
         });
       }
 
-      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers, list_id } = body;
+      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers, list_id, type, prediction_question, prediction_options, poll_question, poll_options } = body;
 
       console.log('Creating post for user:', appUser.id);
       console.log('Request body:', body);
+
+      // Handle user-generated predictions
+      if (type === 'prediction' && prediction_question && prediction_options && Array.isArray(prediction_options) && prediction_options.length >= 2) {
+        const { data: pool, error: poolError } = await supabase
+          .from('prediction_pools')
+          .insert({
+            question: prediction_question,
+            type: 'prediction',
+            options: prediction_options,
+            status: 'open',
+            points_reward: 20,
+            origin_type: 'user',
+            origin_user_id: appUser.id,
+            media_title: media_title || null,
+            media_type: media_type || null,
+            media_creator: media_creator || null,
+            media_image_url: media_image_url || null,
+            media_external_id: media_external_id || null,
+            media_external_source: media_external_source || null
+          })
+          .select()
+          .single();
+
+        if (poolError) {
+          console.error('Prediction pool creation error:', poolError);
+          return new Response(JSON.stringify({ error: poolError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ pool }), {
+          status: 201,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Handle user-generated polls
+      if (type === 'poll' && poll_question && poll_options && Array.isArray(poll_options) && poll_options.length >= 2) {
+        const { data: pool, error: poolError } = await supabase
+          .from('prediction_pools')
+          .insert({
+            question: poll_question,
+            type: 'poll',
+            options: poll_options,
+            status: 'open',
+            points_reward: 10,
+            origin_type: 'user',
+            origin_user_id: appUser.id,
+            media_title: media_title || null,
+            media_type: media_type || null,
+            media_creator: media_creator || null,
+            media_image_url: media_image_url || null,
+            media_external_id: media_external_id || null,
+            media_external_source: media_external_source || null
+          })
+          .select()
+          .single();
+
+        if (poolError) {
+          console.error('Poll creation error:', poolError);
+          return new Response(JSON.stringify({ error: poolError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ pool }), {
+          status: 201,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
 
       const { data: post, error } = await supabase
         .from('social_posts')
