@@ -263,13 +263,13 @@ export default function InlineComposer() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200">
+    <div>
       {/* Step 1: Media Search */}
       {stage === "search" && (
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+        <div>
+          <h1 className="text-3xl font-semibold text-black mb-6 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
             What are you consuming?
-          </h3>
+          </h1>
           
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -277,7 +277,7 @@ export default function InlineComposer() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="🔍 Search for a movie, show, book, podcast, music..."
+              placeholder="Search for a movie, show, book, podcast, music..."
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 placeholder:text-gray-400"
               data-testid="input-media-search"
             />
@@ -321,7 +321,7 @@ export default function InlineComposer() {
 
       {/* Step 2: Actions (after media selected) */}
       {stage === "actions" && selectedMedia && (
-        <div className="p-6">
+        <div>
           {/* Selected Media Card */}
           <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
             {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image) && (
