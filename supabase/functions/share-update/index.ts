@@ -94,6 +94,7 @@ serve(async (req) => {
 
       // Handle user-generated predictions
       if (type === 'prediction' && prediction_question && prediction_options && Array.isArray(prediction_options) && prediction_options.length >= 2) {
+        // Create prediction pool
         const { data: pool, error: poolError } = await supabase
           .from('prediction_pools')
           .insert({
@@ -122,7 +123,48 @@ serve(async (req) => {
           });
         }
 
-        return new Response(JSON.stringify({ pool }), {
+        // Create social post referencing the prediction pool
+        const { data: post, error: postError } = await supabase
+          .from('social_posts')
+          .insert({
+            user_id: appUser.id,
+            content: prediction_question,
+            post_type: 'prediction',
+            prediction_pool_id: pool.id,
+            media_title: media_title || null,
+            media_type: media_type || null,
+            media_creator: media_creator || null,
+            image_url: media_image_url || null,
+            media_external_id: media_external_id || null,
+            media_external_source: media_external_source || null,
+            contains_spoilers: contains_spoilers || false
+          })
+          .select()
+          .single();
+
+        if (postError) {
+          console.error('Social post creation error for prediction:', postError);
+          // Rollback: delete the orphaned prediction pool
+          const { error: deleteError } = await supabase.from('prediction_pools').delete().eq('id', pool.id);
+          if (deleteError) {
+            console.error('Failed to rollback prediction pool:', deleteError);
+            // Try with service role as fallback
+            const supabaseAdmin = createClient(
+              Deno.env.get('SUPABASE_URL') ?? '',
+              Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            );
+            const { error: adminDeleteError } = await supabaseAdmin.from('prediction_pools').delete().eq('id', pool.id);
+            if (adminDeleteError) {
+              console.error('Failed to rollback prediction pool with admin:', adminDeleteError);
+            }
+          }
+          return new Response(JSON.stringify({ error: postError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ pool, post }), {
           status: 201,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -130,6 +172,7 @@ serve(async (req) => {
 
       // Handle user-generated polls
       if (type === 'poll' && poll_question && poll_options && Array.isArray(poll_options) && poll_options.length >= 2) {
+        // Create poll pool
         const { data: pool, error: poolError } = await supabase
           .from('prediction_pools')
           .insert({
@@ -158,7 +201,48 @@ serve(async (req) => {
           });
         }
 
-        return new Response(JSON.stringify({ pool }), {
+        // Create social post referencing the poll pool
+        const { data: post, error: postError } = await supabase
+          .from('social_posts')
+          .insert({
+            user_id: appUser.id,
+            content: poll_question,
+            post_type: 'poll',
+            prediction_pool_id: pool.id,
+            media_title: media_title || null,
+            media_type: media_type || null,
+            media_creator: media_creator || null,
+            image_url: media_image_url || null,
+            media_external_id: media_external_id || null,
+            media_external_source: media_external_source || null,
+            contains_spoilers: contains_spoilers || false
+          })
+          .select()
+          .single();
+
+        if (postError) {
+          console.error('Social post creation error for poll:', postError);
+          // Rollback: delete the orphaned poll pool
+          const { error: deleteError } = await supabase.from('prediction_pools').delete().eq('id', pool.id);
+          if (deleteError) {
+            console.error('Failed to rollback poll pool:', deleteError);
+            // Try with service role as fallback
+            const supabaseAdmin = createClient(
+              Deno.env.get('SUPABASE_URL') ?? '',
+              Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            );
+            const { error: adminDeleteError } = await supabaseAdmin.from('prediction_pools').delete().eq('id', pool.id);
+            if (adminDeleteError) {
+              console.error('Failed to rollback poll pool with admin:', adminDeleteError);
+            }
+          }
+          return new Response(JSON.stringify({ error: postError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ pool, post }), {
           status: 201,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
