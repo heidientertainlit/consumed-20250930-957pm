@@ -1577,36 +1577,8 @@ export default function Feed() {
                 );
               })()}
 
-              {/* Feed Filter Pills */}
-              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm overflow-x-auto">
-                <div className="mb-2">
-                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Filter Feed</p>
-                </div>
-                <div className="flex gap-1.5 justify-start flex-wrap">
-                  <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
-                  {[
-                    { id: "predictions", label: "🎯 Prediction" },
-                    { id: "polls", label: "🗳️ Poll" },
-                    { id: "rate-review", label: "⭐ Rate/Review" }
-                  ].map((filter) => {
-                    const isActive = feedFilter === filter.id;
-                    return (
-                      <button
-                        key={filter.id}
-                        onClick={() => setFeedFilter(filter.id)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                          isActive
-                            ? "bg-purple-600 text-white shadow-sm"
-                            : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300"
-                        }`}
-                        data-testid={`filter-${filter.id}`}
-                      >
-                        {filter.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* Feed Filter Button */}
+              <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
 
               {/* MOCK: Smart Unified Grouped Card (remove after deploying edge function) */}
               <div className="mb-4 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm relative">

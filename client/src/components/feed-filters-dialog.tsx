@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
@@ -17,6 +17,13 @@ interface FeedFiltersDialogProps {
 export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFiltersDialogProps) {
   const [open, setOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState<FeedFilters>(filters);
+
+  // Sync local filters with incoming props when dialog opens
+  useEffect(() => {
+    if (open) {
+      setLocalFilters(filters);
+    }
+  }, [open, filters]);
 
   const audiences = [
     { id: "everyone", label: "Everyone" },
@@ -83,14 +90,14 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-300 relative"
+          className="px-4 py-2 rounded-full text-sm font-medium transition-all bg-white text-gray-600 hover:bg-gray-100 border border-gray-300 relative"
           data-testid="button-open-filters"
         >
-          <div className="flex items-center gap-1.5">
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Filters</span>
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4" />
+            <span>Filter Feed</span>
             {activeFilterCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.5 bg-purple-600 text-white rounded-full text-[10px]">
+              <span className="ml-1 px-1.5 py-0.5 bg-purple-600 text-white rounded-full text-[10px]">
                 {activeFilterCount}
               </span>
             )}
