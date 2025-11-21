@@ -1578,9 +1578,6 @@ export default function Feed() {
                 );
               })()}
 
-              {/* Feed Filter Button */}
-              <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
-
               {/* Recommended for you section */}
               {recommendedContent && recommendedContent.length > 0 && (
                 <div className="space-y-2">
@@ -1639,6 +1636,9 @@ export default function Feed() {
                   </div>
                 </div>
               )}
+
+              {/* Feed Filter Button */}
+              <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
 
               {/* MOCK: Smart Unified Grouped Card (remove after deploying edge function) */}
               <div className="mb-4 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm relative">
