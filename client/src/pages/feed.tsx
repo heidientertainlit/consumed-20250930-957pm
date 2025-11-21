@@ -1605,7 +1605,7 @@ export default function Feed() {
                               className="w-full h-full object-cover"
                             />
                           </button>
-                          <div className="absolute top-1 right-1 flex gap-1">
+                          <div className="absolute bottom-1 right-1 flex gap-1">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
