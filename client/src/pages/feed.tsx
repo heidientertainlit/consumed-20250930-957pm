@@ -1583,26 +1583,26 @@ export default function Feed() {
 
               {/* Recommended for you section */}
               {recommendedContent && recommendedContent.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-xs text-gray-500 text-center">
-                    Recommended for you (based on what you and your friends are consuming)
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-500">
+                    Recommended for you
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {recommendedContent.slice(0, 8).map((item: any, index: number) => (
+                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                    {recommendedContent.slice(0, 6).map((item: any, index: number) => (
                       <button
                         key={index}
                         onClick={() => handleMediaClick(item)}
-                        className="flex flex-col text-left transition-transform hover:scale-105"
+                        className="flex-shrink-0 w-20 transition-transform hover:scale-105"
                         data-testid={`recommended-item-${index}`}
                       >
-                        <div className="w-full aspect-[2/3] overflow-hidden rounded-lg shadow-sm mb-2">
+                        <div className="w-20 h-28 overflow-hidden rounded-lg shadow-sm mb-1">
                           <img
                             src={item.imageUrl || '/placeholder.png'}
                             alt={item.title}
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <p className="text-xs font-medium text-gray-900 line-clamp-2">{item.title}</p>
+                        <p className="text-xs text-gray-900 line-clamp-1">{item.title}</p>
                       </button>
                     ))}
                   </div>
