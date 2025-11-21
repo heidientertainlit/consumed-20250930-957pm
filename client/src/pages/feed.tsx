@@ -133,8 +133,9 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
 function MediaCardActions({ media, session }: { media: any; session: any }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  // Fetch media details to get platform data
+  // Fetch media details ONLY when dropdown is opened
   const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['media-details', media.externalSource, media.externalId],
     queryFn: async () => {
@@ -155,11 +156,11 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!session?.access_token && !!media.externalId && !!media.externalSource,
+    enabled: isDropdownOpen && !!session?.access_token && !!media.externalId && !!media.externalSource,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  // Fetch user lists for Add to List dropdown
+  // Fetch user lists ONLY when dropdown is opened
   const { data: userLists } = useQuery({
     queryKey: ['user-lists-with-media'],
     queryFn: async () => {
@@ -178,7 +179,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
       if (!response.ok) return [];
       return response.json();
     },
-    enabled: !!session?.access_token,
+    enabled: isDropdownOpen && !!session?.access_token,
   });
 
   // Add to list mutation
@@ -348,7 +349,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
       </div>
 
       {/* Center: Add to List */}
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
