@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Star, Target, Vote, MessageCircle, Loader2, Search } from "lucide-react";
+import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import MentionTextarea from "@/components/mention-textarea";
 import { queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 
 type ComposerStage = "search" | "actions";
-type ActionMode = "" | "thought" | "rating" | "prediction" | "poll";
+type ActionMode = "" | "thought" | "rating" | "prediction" | "poll" | "list";
 
 export default function InlineComposer() {
   const { session, user } = useAuth();
@@ -31,10 +32,17 @@ export default function InlineComposer() {
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [selectedListId, setSelectedListId] = useState<string>("");
   
   // Common state
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+
+  // Fetch user's lists
+  const { data: userLists = [] } = useQuery<any[]>({
+    queryKey: ['/api/lists', user?.id],
+    enabled: !!user?.id && actionMode === "list",
+  });
 
   // Auto-search when query changes
   useEffect(() => {
@@ -60,6 +68,7 @@ export default function InlineComposer() {
     setPredictionOptions(["", ""]);
     setPollQuestion("");
     setPollOptions(["", ""]);
+    setSelectedListId("");
     setContainsSpoilers(false);
   };
 
@@ -113,6 +122,52 @@ export default function InlineComposer() {
 
     setIsPosting(true);
     try {
+      // Handle adding to list separately
+      if (actionMode === "list") {
+        if (!selectedListId) {
+          toast({
+            title: "List Required",
+            description: "Please select a list.",
+            variant: "destructive",
+          });
+          setIsPosting(false);
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-media-to-list`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              list_id: selectedListId,
+              media_title: selectedMedia.title || "",
+              media_type: selectedMedia.type || "movie",
+              media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+              media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+              media_external_id: selectedMedia.external_id || selectedMedia.id || "",
+              media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to add to list");
+
+        toast({
+          title: "Added to List!",
+          description: `${selectedMedia.title} has been added to your list.`,
+        });
+
+        queryClient.invalidateQueries({ queryKey: ['/api/lists'] });
+        resetComposer();
+        setIsPosting(false);
+        return;
+      }
+
+      // Handle social posting
       const payload: any = {
         media_title: selectedMedia.title || "",
         media_type: selectedMedia.type || "movie",
@@ -302,7 +357,7 @@ export default function InlineComposer() {
                   data-testid="button-add-thought"
                 >
                   <MessageCircle className="w-5 h-5 text-gray-600 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">📝 Add a thought</p>
+                  <p className="text-sm font-medium text-gray-900">Add a thought</p>
                 </button>
                 <button
                   onClick={() => setActionMode("rating")}
@@ -310,7 +365,7 @@ export default function InlineComposer() {
                   data-testid="button-rate-it"
                 >
                   <Star className="w-5 h-5 text-yellow-500 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">⭐ Rate it</p>
+                  <p className="text-sm font-medium text-gray-900">Rate it</p>
                 </button>
                 <button
                   onClick={() => setActionMode("prediction")}
@@ -318,7 +373,7 @@ export default function InlineComposer() {
                   data-testid="button-make-prediction"
                 >
                   <Target className="w-5 h-5 text-purple-600 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">🎯 Make a prediction</p>
+                  <p className="text-sm font-medium text-gray-900">Make a prediction</p>
                 </button>
                 <button
                   onClick={() => setActionMode("poll")}
@@ -326,7 +381,15 @@ export default function InlineComposer() {
                   data-testid="button-ask-poll"
                 >
                   <Vote className="w-5 h-5 text-blue-600 mb-1" />
-                  <p className="text-sm font-medium text-gray-900">📊 Ask a poll</p>
+                  <p className="text-sm font-medium text-gray-900">Ask a poll</p>
+                </button>
+                <button
+                  onClick={() => setActionMode("list")}
+                  className="p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
+                  data-testid="button-add-to-list"
+                >
+                  <ListPlus className="w-5 h-5 text-green-600 mb-1" />
+                  <p className="text-sm font-medium text-gray-900">Add to a list</p>
                 </button>
               </div>
 
@@ -576,6 +639,48 @@ export default function InlineComposer() {
                     {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* List Mode */}
+          {actionMode === "list" && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-700 mb-2">Select a list:</p>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {userLists && userLists.length > 0 ? (
+                  userLists.map((list: any) => (
+                    <button
+                      key={list.id}
+                      onClick={() => setSelectedListId(list.id)}
+                      className={`w-full p-3 rounded-lg border text-left transition-all ${
+                        selectedListId === list.id
+                          ? "border-purple-500 bg-purple-50"
+                          : "border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                      }`}
+                      data-testid={`button-select-list-${list.id}`}
+                    >
+                      <p className="font-medium text-gray-900">{list.name}</p>
+                      {list.description && (
+                        <p className="text-xs text-gray-600 mt-1">{list.description}</p>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">No lists found. Create one first!</p>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <Button onClick={() => setActionMode("")} variant="ghost" size="sm">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handlePost}
+                  disabled={isPosting || !selectedListId}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add to List"}
+                </Button>
               </div>
             </div>
           )}
