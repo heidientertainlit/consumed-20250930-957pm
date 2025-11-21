@@ -1530,50 +1530,38 @@ export default function Feed() {
             </div>
           ) : filteredPosts && filteredPosts.length > 0 ? (
             <div className="space-y-4">
-              {/* Compact Friend Activity Ticker - Shows on both Friends and All tabs */}
+              {/* Quick Glimpse - Single activity preview */}
               {(() => {
-                // Extract friend activities from recent posts with media
-                const friendActivities = filteredPosts
+                // Get the most recent friend activity
+                const recentActivity = filteredPosts
                   .filter((p: SocialPost) => p.user && p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
-                  .slice(0, 6)
-                  .map((p: SocialPost) => ({
-                    username: p.user!.username,
-                    media: p.mediaItems[0].title,
-                    action: p.content ? 'is loving' : 'added'
-                  }));
+                  .slice(0, 1)[0];
                 
-                if (friendActivities.length === 0) return null;
+                if (!recentActivity) return null;
+                
+                const username = recentActivity.user!.username;
+                const media = recentActivity.mediaItems[0].title;
+                const action = recentActivity.content ? 'is loving' : 'added';
                 
                 return (
-                  <div className="bg-gray-50 rounded-lg p-3 overflow-hidden border border-gray-100">
-                    <style>{`
-                      @keyframes tickerScroll {
-                        0% { transform: translateY(0); }
-                        100% { transform: translateY(-${friendActivities.length * 24}px); }
-                      }
-                      .ticker-wrapper {
-                        animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
-                      }
-                    `}</style>
-                    <p className="text-xs font-medium mb-1.5 text-gray-500">
-                      Quick Glimpse
-                    </p>
-                    <div className="h-5 overflow-hidden">
-                      <div className="ticker-wrapper">
-                        {/* Duplicate for seamless loop */}
-                        {[...friendActivities, ...friendActivities].map((activity, idx) => (
-                          <div 
-                            key={idx}
-                            className="h-5 flex items-center text-xs text-gray-600"
-                          >
-                            <span className="font-medium">{activity.username}</span>
-                            <span className="mx-1 opacity-70">{activity.action}</span>
-                            <span className="opacity-80">{activity.media}</span>
-                          </div>
-                        ))}
-                      </div>
+                  <>
+                    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                      <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <span>✨</span>
+                        Quick Glimpse
+                      </p>
+                      <p className="text-base text-gray-900">
+                        <span className="font-medium">{username}</span> {action} {media}
+                      </p>
                     </div>
-                  </div>
+
+                    {/* Recommended for you section */}
+                    <div className="text-center py-3">
+                      <p className="text-xs text-gray-500">
+                        Recommended for you (based on what you and your friends are consuming)
+                      </p>
+                    </div>
+                  </>
                 );
               })()}
 

@@ -269,10 +269,10 @@ export default function InlineComposer() {
         <div>
           <div className="text-center mb-6">
             <h1 className="text-3xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              What are you consuming?
+              What's everyone consuming?
             </h1>
             <p className="text-white/80 text-sm">
-              See what your friends are watching, reading, listening to — and add yours.
+              See their picks. Share yours.
             </p>
           </div>
           
