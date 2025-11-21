@@ -267,55 +267,55 @@ export default function InlineComposer() {
       {/* Step 1: Media Search */}
       {stage === "search" && (
         <div>
-          <h1 className="text-3xl font-semibold text-black mb-6 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-3xl font-semibold text-white mb-6 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
             What are you consuming?
           </h1>
           
-          <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-6 shadow-lg">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for a movie, show, book, podcast, music..."
-                className="w-full pl-10 pr-4 py-3 bg-white border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 text-gray-900 placeholder:text-gray-400 shadow-sm"
-                data-testid="input-media-search"
-              />
-            </div>
+          <div className="relative max-w-2xl mx-auto">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for a movie, show, book, podcast, music..."
+              className="w-full pl-12 pr-4 py-4 bg-white border-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-300 text-gray-900 placeholder:text-gray-400 shadow-lg"
+              data-testid="input-media-search"
+            />
           </div>
 
           {/* Search Results */}
           {isSearching && (
             <div className="mt-4 flex justify-center py-4">
-              <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-white" />
             </div>
           )}
 
           {!isSearching && searchResults.length > 0 && (
-            <div className="mt-4 space-y-2 max-h-96 overflow-y-auto">
-              {searchResults.map((media, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSelectMedia(media)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
-                  data-testid={`button-select-media-${index}`}
-                >
-                  {(media.poster_url || media.image_url || media.image) && (
-                    <img
-                      src={media.poster_url || media.image_url || media.image}
-                      alt={media.title}
-                      className="w-12 h-16 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{media.title}</p>
-                    <p className="text-sm text-gray-600">
-                      {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
-                    </p>
-                  </div>
-                </button>
-              ))}
+            <div className="mt-4 max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-4 max-h-96 overflow-y-auto">
+              <div className="space-y-2">
+                {searchResults.map((media, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSelectMedia(media)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
+                    data-testid={`button-select-media-${index}`}
+                  >
+                    {(media.poster_url || media.image_url || media.image) && (
+                      <img
+                        src={media.poster_url || media.image_url || media.image}
+                        alt={media.title}
+                        className="w-12 h-16 object-cover rounded"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{media.title}</p>
+                      <p className="text-sm text-gray-600">
+                        {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -323,7 +323,7 @@ export default function InlineComposer() {
 
       {/* Step 2: Actions (after media selected) */}
       {stage === "actions" && selectedMedia && (
-        <div>
+        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-4">
           {/* Selected Media Card */}
           <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
             {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image) && (

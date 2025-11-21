@@ -1473,12 +1473,17 @@ export default function Feed() {
       <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
+      {/* Extended Purple Gradient Section for Composer */}
+      <div className="bg-gradient-to-b from-[#1a1a2e] via-purple-900 to-transparent pb-8">
+        <div className="max-w-4xl mx-auto px-4 pt-6">
+          {/* Inline Composer - Always Visible */}
+          <InlineComposer />
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Activity Stream */}
         <div className="space-y-6">
-
-          {/* Inline Composer - Always Visible */}
-          <InlineComposer />
 
           {isLoading ? (
             <div className="space-y-4">
