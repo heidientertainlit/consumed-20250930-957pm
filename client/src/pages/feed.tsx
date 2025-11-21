@@ -1530,43 +1530,84 @@ export default function Feed() {
             </div>
           ) : filteredPosts && filteredPosts.length > 0 ? (
             <div className="space-y-4">
-              {/* Quick Glimpse - Single activity preview */}
+              {/* Quick Glimpse - Scrolling ticker */}
               {(() => {
-                // Get the most recent friend activity
-                const recentActivity = filteredPosts
+                // Extract friend activities from recent posts with media
+                const friendActivities = filteredPosts
                   .filter((p: SocialPost) => p.user && p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
-                  .slice(0, 1)[0];
+                  .slice(0, 6)
+                  .map((p: SocialPost) => ({
+                    username: p.user!.username,
+                    media: p.mediaItems[0].title,
+                    action: p.content ? 'is loving' : 'added'
+                  }));
                 
-                if (!recentActivity) return null;
-                
-                const username = recentActivity.user!.username;
-                const media = recentActivity.mediaItems[0].title;
-                const action = recentActivity.content ? 'is loving' : 'added';
+                if (friendActivities.length === 0) return null;
                 
                 return (
-                  <>
-                    <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-                      <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                        <span>✨</span>
-                        Quick Glimpse
-                      </p>
-                      <p className="text-base text-gray-900">
-                        <span className="font-medium">{username}</span> {action} {media}
-                      </p>
+                  <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100 shadow-sm overflow-hidden">
+                    <style>{`
+                      @keyframes tickerScroll {
+                        0% { transform: translateY(0); }
+                        100% { transform: translateY(-${friendActivities.length * 20}px); }
+                      }
+                      .ticker-wrapper {
+                        animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
+                      }
+                    `}</style>
+                    <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <span>✨</span>
+                      Quick Glimpse
+                    </p>
+                    <div className="h-5 overflow-hidden">
+                      <div className="ticker-wrapper">
+                        {/* Duplicate for seamless loop */}
+                        {[...friendActivities, ...friendActivities].map((activity, idx) => (
+                          <div 
+                            key={idx}
+                            className="h-5 flex items-center text-sm text-gray-900"
+                          >
+                            <span className="font-medium">{activity.username}</span>
+                            <span className="mx-1">{activity.action}</span>
+                            <span>{activity.media}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-
-                    {/* Recommended for you section */}
-                    <div className="text-center py-3">
-                      <p className="text-xs text-gray-500">
-                        Recommended for you (based on what you and your friends are consuming)
-                      </p>
-                    </div>
-                  </>
+                  </div>
                 );
               })()}
 
               {/* Feed Filter Button */}
               <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
+
+              {/* Recommended for you section */}
+              {recommendedContent && recommendedContent.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs text-gray-500 text-center">
+                    Recommended for you (based on what you and your friends are consuming)
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {recommendedContent.slice(0, 8).map((item: any, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => handleMediaClick(item)}
+                        className="flex flex-col text-left transition-transform hover:scale-105"
+                        data-testid={`recommended-item-${index}`}
+                      >
+                        <div className="w-full aspect-[2/3] overflow-hidden rounded-lg shadow-sm mb-2">
+                          <img
+                            src={item.imageUrl || '/placeholder.png'}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-xs font-medium text-gray-900 line-clamp-2">{item.title}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* MOCK: Smart Unified Grouped Card (remove after deploying edge function) */}
               <div className="mb-4 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm relative">
