@@ -135,7 +135,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   const queryClient = useQueryClient();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  // Fetch media details ONLY when dropdown is opened
+  // Fetch media details for platform chips (always load for visible content)
   const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['media-details', media.externalSource, media.externalId],
     queryFn: async () => {
@@ -156,7 +156,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: isDropdownOpen && !!session?.access_token && !!media.externalId && !!media.externalSource,
+    enabled: !!session?.access_token && !!media.externalId && !!media.externalSource,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
@@ -1547,21 +1547,18 @@ export default function Feed() {
                 
                 return (
                   <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100 shadow-sm overflow-hidden">
-                    <style>{`
-                      @keyframes tickerScroll {
-                        0% { transform: translateY(0); }
-                        100% { transform: translateY(-${friendActivities.length * 20}px); }
-                      }
-                      .ticker-wrapper {
-                        animation: tickerScroll ${friendActivities.length * 3}s linear infinite;
-                      }
-                    `}</style>
                     <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <span>✨</span>
                       Quick Glimpse
                     </p>
                     <div className="h-5 overflow-hidden">
-                      <div className="ticker-wrapper">
+                      <div 
+                        className="ticker-wrapper"
+                        style={{
+                          '--ticker-distance': `-${friendActivities.length * 20}px`,
+                          '--ticker-duration': `${friendActivities.length * 3}s`
+                        } as React.CSSProperties}
+                      >
                         {/* Duplicate for seamless loop */}
                         {[...friendActivities, ...friendActivities].map((activity, idx) => (
                           <div 

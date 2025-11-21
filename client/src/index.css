@@ -12,6 +12,16 @@
   display: none; /* Chrome, Safari and Opera */
 }
 
+/* Quick Glimpse ticker animation */
+@keyframes tickerScroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(var(--ticker-distance)); }
+}
+
+.ticker-wrapper {
+  animation: tickerScroll var(--ticker-duration) linear infinite;
+}
+
 :root {
   --background: hsl(240, 10%, 3.9%);
   --foreground: hsl(0, 0%, 98%);
