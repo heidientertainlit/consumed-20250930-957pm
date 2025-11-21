@@ -1474,7 +1474,7 @@ export default function Feed() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       {/* Extended Purple Gradient Section for Composer */}
-      <div className="bg-gradient-to-b from-[#1a1a2e] via-purple-900 to-transparent pb-8">
+      <div className="bg-gradient-to-r from-slate-900 to-purple-900 pb-8">
         <div className="max-w-4xl mx-auto px-4 pt-6">
           {/* Inline Composer - Always Visible */}
           <InlineComposer />
