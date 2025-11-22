@@ -241,7 +241,11 @@ export default function InlineComposer() {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Failed to post");
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Share update failed:", response.status, errorData);
+        throw new Error(`Failed to post: ${errorData}`);
+      }
 
       toast({
         title: "Posted!",
