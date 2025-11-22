@@ -253,6 +253,7 @@ serve(async (req) => {
         .insert({
           user_id: appUser.id,
           content,
+          post_type: type || 'update',
           list_id: list_id || null,
           media_title,
           media_type,
