@@ -232,6 +232,8 @@ export default function InlineComposer() {
         payload.type = "add-media";
       }
 
+      console.log("📤 Sending post payload:", payload);
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`, {
         method: "POST",
         headers: {
@@ -241,11 +243,16 @@ export default function InlineComposer() {
         body: JSON.stringify(payload),
       });
 
+      console.log("📥 Response status:", response.status);
+
       if (!response.ok) {
         const errorData = await response.text();
-        console.error("Share update failed:", response.status, errorData);
+        console.error("❌ Share update failed:", response.status, errorData);
         throw new Error(`Failed to post: ${errorData}`);
       }
+
+      const result = await response.json();
+      console.log("✅ Post created successfully:", result);
 
       toast({
         title: "Posted!",
