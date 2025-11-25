@@ -44,17 +44,17 @@ export default function MediaCarousel({
   onRate,
 }: MediaCarouselProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-3 shadow-lg border border-gray-800/50 overflow-visible" data-testid={`carousel-${mediaType}`}>
+    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-2 shadow-lg border border-gray-800/50 overflow-visible" data-testid={`carousel-${mediaType}`}>
       {/* Header */}
-      <div className="mb-2">
-        <h3 className="text-sm font-semibold text-white">
+      <div className="mb-1.5">
+        <h3 className="text-xs font-semibold text-white">
           {title}
         </h3>
       </div>
 
       {/* Scrollable carousel - overflow only on horizontal */}
       <div className="overflow-x-auto overflow-y-visible scrollbar-hide">
-        <div className="flex gap-2 w-max">
+        <div className="flex gap-1.5 w-max">
           {items.map((item) => {
             // Create a guaranteed unique key scoped to this carousel
             // Include the carousel title to ensure uniqueness across multiple carousels
@@ -64,7 +64,7 @@ export default function MediaCarousel({
             const uniqueKey = `${title}-${itemKey}`;
             
             return (
-              <div key={uniqueKey} className="flex-shrink-0 w-20">
+              <div key={uniqueKey} className="flex-shrink-0 w-14">
                 <MediaCard
                   item={item}
                   onItemClick={onItemClick}
