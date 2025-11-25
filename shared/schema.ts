@@ -140,6 +140,9 @@ export const predictionPools = pgTable("prediction_pools", {
   commentsCount: integer("comments_count").default(0),
   originType: text("origin_type"), // 'consumed' or 'user' - who created it
   originUserId: varchar("origin_user_id"), // user ID if user-created
+  invitedUserId: varchar("invited_user_id"), // Invited friend for collaborative predictions
+  mediaExternalId: text("media_external_id"), // Link to specific media
+  mediaExternalSource: varchar("media_external_source"), // Media source (tmdb, spotify, etc)
   resolvedAt: timestamp("resolved_at"), // when prediction was resolved
   resolvedBy: text("resolved_by"), // 'creator', 'crowd', or 'system'
   createdAt: timestamp("created_at"),
