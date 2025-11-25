@@ -397,21 +397,8 @@ export default function CollaborativePredictionCard({
         {question}
       </p>
 
-      {/* Results Banner - Show when resolved */}
-      {isCompleted && winning_option && (
-        <div className="mb-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl">
-          <p className="text-sm font-bold text-green-700">
-            🎉 {winning_option === "Yes" ? creatorPrediction : friendPrediction} won this prediction!
-          </p>
-          <p className="text-xs text-green-600 mt-1">
-            Winners got +20 points
-          </p>
-        </div>
-      )}
-
       {/* Voting Options - Stacked vertically */}
-      {!isCompleted && (
-        <div className="space-y-2 mb-3">
+      <div className="space-y-2 mb-3">
           {/* Multi-option predictions (new format) */}
           {prediction.options && prediction.options.length > 0 ? (
             prediction.options.map((option, index) => {
@@ -520,7 +507,6 @@ export default function CollaborativePredictionCard({
             </>
           )}
         </div>
-      )}
 
       {/* Submit Button */}
       {!userHasAnswered && selectedOption && (
