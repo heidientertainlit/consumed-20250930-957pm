@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus, Plus } from "lucide-react";
+import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus, Plus, User } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
