@@ -101,7 +101,14 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     setIsDragging(true);
   };
   
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't trigger item click if user is interacting with buttons
+    if (e.target instanceof HTMLButtonElement || 
+        (e.target as HTMLElement)?.closest('button') ||
+        (e.target as HTMLElement)?.closest('[role="menuitem"]')) {
+      return;
+    }
+    
     if (!isDragging) {
       onItemClick?.(item);
     }
@@ -336,7 +343,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         className="relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onClick={handleClick}
+        onClick={(e) => handleClick(e as React.MouseEvent)}
         data-testid={`media-card-${item.id}`}
       >
         {imageError || !item.imageUrl ? (
