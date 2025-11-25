@@ -214,13 +214,23 @@ serve(async (req) => {
 
           console.log('Searching for users with query:', query, 'excluding user:', appUser.id);
 
+          // Use admin client for better access
+          const supabaseAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '', 
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+          );
+
           // Get all users except current user, then filter manually for better control
-          const { data: allUsers, error: fetchError } = await supabase
+          const { data: allUsers, error: fetchError } = await supabaseAdmin
             .from('users')
-            .select('id, user_name, email, first_name, last_name, display_name')
+            .select('id, user_name, email, first_name, last_name, display_name, avatar')
             .neq('id', appUser.id);
 
-          console.log('Fetched all users:', { count: allUsers?.length || 0, error: fetchError });
+          console.log('Fetched all users:', { count: allUsers?.length || 0, error: fetchError?.message });
+          
+          if (allUsers && allUsers.length > 0) {
+            console.log('Sample users:', allUsers.slice(0, 3));
+          }
 
           if (fetchError) {
             console.error('User fetch error:', fetchError);
@@ -239,11 +249,17 @@ serve(async (req) => {
             const lastName = (user.last_name || '').toLowerCase();
             const fullName = `${firstName} ${lastName}`.trim();
             
-            return userName.includes(queryLower) ||
+            const matches = userName.includes(queryLower) ||
                    email.includes(queryLower) ||
                    firstName.includes(queryLower) ||
                    lastName.includes(queryLower) ||
                    fullName.includes(queryLower);
+            
+            if (matches) {
+              console.log('Match found:', { user_name: userName, email });
+            }
+            
+            return matches;
           }).slice(0, 20); // Get top 20 matches
 
           console.log('Matched users count:', matchedUsers.length);
