@@ -74,43 +74,31 @@ export default function InlineComposer() {
 
   const userLists = userListsData?.lists || [];
 
-  // Fetch user's friends for predictions
+  // Fetch user's friends for predictions (using exact same API as friends.tsx)
   const { data: friendsData } = useQuery<any>({
-    queryKey: ['user-friends'],
+    queryKey: ['prediction-friends'],
     queryFn: async () => {
-      if (!session?.access_token) return null;
+      if (!session?.access_token) return { friends: [] };
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      try {
-        const response = await fetch(`${supabaseUrl}/functions/v1/manage-friendships`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ action: "list" }),
-        });
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'getFriends' }),
+      });
 
-        if (!response.ok) {
-          console.error('Failed to fetch friends:', response.statusText);
-          return { friends: [] };
-        }
-
-        const data = await response.json();
-        console.log('Friends data:', data);
-        return data;
-      } catch (error) {
-        console.error('Friends fetch error:', error);
-        return { friends: [] };
-      }
+      if (!response.ok) return { friends: [] };
+      return response.json();
     },
     enabled: !!session?.access_token && actionMode === "prediction",
   });
 
-  // Extract actual friend objects from the nested structure
+  // Extract friend list - handle both formats (getFriends returns different structure)
   const allFriends = (friendsData?.friends || [])
-    .map((f: any) => f.friend || f)
-    .filter((f: any) => f?.id || f?.user_id);
+    .map((f: any) => f.user || f)
+    .filter((f: any) => f?.id);
   
   // Filter friends based on search input
   const filteredFriends = friendSearchInput.trim() 
