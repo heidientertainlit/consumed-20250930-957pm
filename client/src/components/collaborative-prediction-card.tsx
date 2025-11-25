@@ -61,6 +61,9 @@ export default function CollaborativePredictionCard({
   onCastPrediction 
 }: CollaborativePredictionCardProps) {
   const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id, deadline, status = 'open', resolved_at, winning_option, type, userVotes = [] } = prediction;
+  
+  console.log('CARD DEBUG: userVotes received:', userVotes, 'poolId:', poolId);
+  
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -524,7 +527,7 @@ export default function CollaborativePredictionCard({
               {/* Legacy 2-option format */}
               <div>
                 {/* Show voters for Yes option */}
-                {userVotes && Array.isArray(userVotes) && userVotes.filter(uv => uv?.vote === "Yes").length > 0 && (
+                {Array.isArray(userVotes) && userVotes.some(uv => uv?.vote === "Yes") ? (
                   <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
                     {userVotes.filter(uv => uv?.vote === "Yes").map((voter, idx) => (
                       <span key={idx} className="text-xs font-semibold text-purple-600">
@@ -532,9 +535,7 @@ export default function CollaborativePredictionCard({
                       </span>
                     ))}
                   </div>
-                )}
-                {/* Show creator name if no votes yet */}
-                {(!userVotes || !Array.isArray(userVotes) || userVotes.filter(uv => uv?.vote === "Yes").length === 0) && (
+                ) : (
                   <p className="text-xs text-gray-600 mb-1 ml-1">
                     <span className="font-semibold">{creator?.username}</span>
                   </p>
@@ -565,7 +566,7 @@ export default function CollaborativePredictionCard({
               {friendPrediction ? (
                 <div>
                   {/* Show voters for No option */}
-                  {userVotes && Array.isArray(userVotes) && userVotes.filter(uv => uv?.vote === "No").length > 0 && (
+                  {Array.isArray(userVotes) && userVotes.some(uv => uv?.vote === "No") ? (
                     <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
                       {userVotes.filter(uv => uv?.vote === "No").map((voter, idx) => (
                         <span key={idx} className="text-xs font-semibold text-purple-600">
@@ -573,9 +574,7 @@ export default function CollaborativePredictionCard({
                         </span>
                       ))}
                     </div>
-                  )}
-                  {/* Show friend name if no votes yet */}
-                  {(!userVotes || !Array.isArray(userVotes) || userVotes.filter(uv => uv?.vote === "No").length === 0) && (
+                  ) : (
                     <p className="text-xs text-gray-600 mb-1 ml-1">
                       <span className="font-semibold">{invitedFriend?.username}</span>
                     </p>
