@@ -1693,21 +1693,7 @@ export default function Feed() {
                       </div>
                     )}
 
-                    {/* After trivia: Show Pop Culture Update - TODO: bring back later */}
-                    {/* {shouldShowCreatorUpdate && currentCreatorUpdate && (
-                      <div className="mb-4">
-                        <CreatorUpdateCard 
-                          update={currentCreatorUpdate}
-                          onClick={() => {
-                            const mediaType = currentCreatorUpdate.type === 'book' ? 'book' : 
-                                             currentCreatorUpdate.type === 'album' || currentCreatorUpdate.type === 'single' ? 'music' : 
-                                             currentCreatorUpdate.type === 'movie' ? 'movie' : 
-                                             currentCreatorUpdate.type === 'tv' ? 'tv' : 'mixed';
-                            setLocation(`/media/${mediaType}/${currentCreatorUpdate.external_source}/${currentCreatorUpdate.external_id}`);
-                          }}
-                        />
-                      </div>
-                    )} */
+                    {/* TODO: Pop Culture Updates - will bring back later */}
 
                     {/* After 2 more posts: Show Recommended Carousel */}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
