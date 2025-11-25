@@ -457,6 +457,11 @@ export default function InlineComposer() {
           }
 
           const result = await response.json();
+          console.log('🎯 Create prediction response:', result);
+          
+          if (result.error) {
+            throw new Error(result.error);
+          }
 
           toast({
             title: "Prediction Created!",
