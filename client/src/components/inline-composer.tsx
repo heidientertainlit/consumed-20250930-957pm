@@ -37,6 +37,8 @@ export default function InlineComposer() {
   const [predictionQuestion, setPredictionQuestion] = useState("");
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
   const [selectedFriendId, setSelectedFriendId] = useState<string>("");
+  const [creatorPrediction, setCreatorPrediction] = useState<string>("");
+  const [friendSearchInput, setFriendSearchInput] = useState("");
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [selectedListId, setSelectedListId] = useState<string>("");
@@ -70,30 +72,39 @@ export default function InlineComposer() {
 
   const userLists = userListsData?.lists || [];
 
-  // Fetch user's friends for predictions (enabled when in prediction mode)
+  // Fetch user's friends for predictions
   const { data: friendsData } = useQuery<any>({
     queryKey: ['user-friends'],
     queryFn: async () => {
       if (!session?.access_token) return null;
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const response = await fetch(`${supabaseUrl}/functions/v1/manage-friendships?action=list`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-      });
+      try {
+        const response = await fetch(`${supabaseUrl}/functions/v1/manage-friendships`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action: "list" }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch friends');
+        if (!response.ok) {
+          console.error('Failed to fetch friends:', response.statusText);
+          return { friends: [] };
+        }
+
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Friends fetch error:', error);
+        return { friends: [] };
       }
-
-      return response.json();
     },
     enabled: !!session?.access_token && actionMode === "prediction",
   });
 
-  const friends = friendsData?.friends || [];
+  const friends = (friendsData?.friends || friendsData?.accepted || []).filter((f: any) => f?.id || f?.user_id);
 
   // Track to specific list
   const handleTrackToList = async (media: any, listIdOrType: number | string) => {
@@ -215,6 +226,8 @@ export default function InlineComposer() {
     setPredictionQuestion("");
     setPredictionOptions(["", ""]);
     setSelectedFriendId("");
+    setCreatorPrediction("");
+    setFriendSearchInput("");
     setPollQuestion("");
     setPollOptions(["", ""]);
     setSelectedListId("");
@@ -388,6 +401,16 @@ export default function InlineComposer() {
           return;
         }
 
+        if (!creatorPrediction) {
+          toast({
+            title: "Your Prediction Required",
+            description: "Please select which option you predict.",
+            variant: "destructive",
+          });
+          setIsPosting(false);
+          return;
+        }
+
         const option1 = predictionOptions[0]?.trim();
         const option2 = predictionOptions[1]?.trim();
 
@@ -415,6 +438,7 @@ export default function InlineComposer() {
               invited_user_id: selectedFriendId,
               option_1_label: option1,
               option_2_label: option2,
+              creator_prediction: creatorPrediction,
               media_external_id: selectedMedia.external_id || selectedMedia.id,
               media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
               points_reward: 20,
@@ -892,33 +916,47 @@ export default function InlineComposer() {
                   >
                     <option value="">Select a friend...</option>
                     {friends.map((friend: any) => (
-                      <option key={friend.id} value={friend.id}>
-                        @{friend.username || friend.user_name}
+                      <option key={friend.id || friend.user_id} value={friend.id || friend.user_id}>
+                        @{friend.username || friend.user_name || friend.display_name || 'User'}
                       </option>
                     ))}
                   </select>
                 ) : (
                   <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
-                    You don't have any friends yet. Add friends to create predictions with them!
+                    No friends available yet. Add friends to create predictions with them!
                   </div>
                 )}
               </div>
 
-              {/* Prediction Options (exactly 2) */}
+              {/* Prediction Options (exactly 2) with Creator Selection */}
               <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-600">Choose your prediction:</label>
                 {predictionOptions.map((option, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...predictionOptions];
-                      newOptions[index] = e.target.value;
-                      setPredictionOptions(newOptions);
-                    }}
-                    placeholder={`Option ${index + 1}`}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
+                  <div key={index} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      id={`option-${index}`}
+                      name="creator-prediction"
+                      value={option || `Option ${index + 1}`}
+                      checked={creatorPrediction === (option || `Option ${index + 1}`)}
+                      onChange={(e) => setCreatorPrediction(e.target.value)}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => {
+                        const newOptions = [...predictionOptions];
+                        newOptions[index] = e.target.value;
+                        setPredictionOptions(newOptions);
+                        if (creatorPrediction === option && e.target.value) {
+                          setCreatorPrediction(e.target.value);
+                        }
+                      }}
+                      placeholder={`Option ${index + 1}`}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
                 ))}
               </div>
 
