@@ -426,26 +426,33 @@ export default function InlineComposer() {
         // Call create-prediction edge function
         try {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+          const predictionPayload = {
+            question: predictionQuestion.trim(),
+            invited_user_id: selectedFriendId || null,
+            option_1_label: option1,
+            option_2_label: option2,
+            creator_prediction: creatorPrediction,
+            media_external_id: selectedMedia.external_id || selectedMedia.id,
+            media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+            points_reward: 20,
+          };
+          
+          console.log('🎯 Sending prediction:', predictionPayload);
+          
           const response = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${session.access_token}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              question: predictionQuestion.trim(),
-              invited_user_id: selectedFriendId,
-              option_1_label: option1,
-              option_2_label: option2,
-              creator_prediction: creatorPrediction,
-              media_external_id: selectedMedia.external_id || selectedMedia.id,
-              media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
-              points_reward: 20,
-            }),
+            body: JSON.stringify(predictionPayload),
           });
 
+          console.log('🎯 Response status:', response.status);
+          
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('🎯 Create prediction error:', errorData);
             throw new Error(errorData.error || errorData.message || 'Failed to create prediction');
           }
 

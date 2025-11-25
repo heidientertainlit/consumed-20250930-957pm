@@ -56,6 +56,8 @@ serve(async (req) => {
       points_reward = 20
     } = await req.json();
 
+    console.log('DEBUG: create-prediction input:', { question, invited_user_id, option_1_label, option_2_label });
+
     if (!question || !option_1_label || !option_2_label) {
       return new Response(JSON.stringify({ 
         error: 'question, option_1_label, and option_2_label are required' 
@@ -65,7 +67,7 @@ serve(async (req) => {
       });
     }
 
-    // Verify invited user exists if provided
+    // Verify invited user exists if provided (but don't fail if they don't - make it optional)
     let invitedUser = null;
     if (invited_user_id) {
       const { data: user, error: invitedUserError } = await supabase
@@ -74,14 +76,13 @@ serve(async (req) => {
         .eq('id', invited_user_id)
         .single();
 
-      if (invitedUserError || !user) {
-        return new Response(JSON.stringify({ error: 'Invited user not found' }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+      if (invitedUserError) {
+        console.warn('Invited user not found:', invitedUserError);
+        // Don't fail - just proceed without invited user
+      } else if (user) {
+        invitedUser = user;
+        console.log('Invited user found:', user.user_name);
       }
-      
-      invitedUser = user;
     }
 
     // Use admin client to create prediction
@@ -92,41 +93,49 @@ serve(async (req) => {
 
     // Generate pool ID
     const poolId = `user-${appUser.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    console.log('DEBUG: Creating pool with ID:', poolId);
+
+    const insertData = {
+      id: poolId,
+      title: question,
+      description: question, // Use question as description instead of empty string
+      type: 'predict',
+      status: 'open',
+      category: 'user-prediction',
+      icon: '🎯',
+      points_reward: points_reward,
+      options: [option_1_label, option_2_label],
+      origin_type: 'user',
+      origin_user_id: appUser.id,
+      invited_user_id: invited_user_id || null,
+      media_external_id: media_external_id || null,
+      media_external_source: media_external_source || null,
+      deadline: null,
+      likes_count: 0,
+      comments_count: 0,
+      participants: 0,
+      created_at: new Date().toISOString()
+    };
+
+    console.log('DEBUG: Insert data:', insertData);
 
     // Create prediction pool
     const { data: pool, error: poolError } = await supabaseAdmin
       .from('prediction_pools')
-      .insert({
-        id: poolId,
-        title: question,
-        description: '',
-        type: 'predict',
-        status: 'open',
-        category: 'user-prediction',
-        icon: '🎯',
-        points_reward: points_reward,
-        options: [option_1_label, option_2_label],
-        origin_type: 'user',
-        origin_user_id: appUser.id,
-        invited_user_id: invited_user_id,
-        media_external_id: media_external_id || null,
-        media_external_source: media_external_source || null,
-        deadline: null,
-        likes_count: 0,
-        comments_count: 0,
-        participants: 0,
-        created_at: new Date().toISOString()
-      })
+      .insert(insertData)
       .select('*')
       .single();
 
     if (poolError) {
       console.error('Error creating prediction pool:', poolError);
-      return new Response(JSON.stringify({ error: poolError.message }), {
+      console.error('Pool error details:', { code: poolError.code, message: poolError.message, hint: poolError.hint });
+      return new Response(JSON.stringify({ error: poolError.message, details: poolError }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    console.log('DEBUG: Pool created successfully:', pool?.id);
 
     return new Response(JSON.stringify({ 
       success: true,
