@@ -111,8 +111,11 @@ export default function CollaborativePredictionCard({
     },
   });
 
-  // Check if current user is the creator
-  const isCreator = origin_user_id && session?.user?.id === origin_user_id;
+  // Check if current user is the creator (compare with app user ID from session metadata)
+  const appUserId = session?.user?.user_metadata?.id || session?.user?.id;
+  const isCreator = origin_user_id && appUserId === origin_user_id;
+  
+  console.log('DEBUG: isCreator check', { origin_user_id, appUserId, isCreator, origin_type });
 
   // Check if prediction is completed
   const isCompleted = status === 'completed';
@@ -418,8 +421,8 @@ export default function CollaborativePredictionCard({
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4 mb-4`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <div className={`w-8 h-8 ${isConsumedPrediction ? 'bg-gradient-to-br from-purple-500 to-blue-500' : 'bg-purple-100'} rounded-full flex items-center justify-center`}>
+        <div className="flex items-center space-x-2 flex-1">
+          <div className={`w-8 h-8 ${isConsumedPrediction ? 'bg-gradient-to-br from-purple-500 to-blue-500' : 'bg-purple-100'} rounded-full flex items-center justify-center flex-shrink-0`}>
             <TrendingUp size={16} className={isConsumedPrediction ? 'text-white' : 'text-purple-600'} />
           </div>
           <div className="flex-1">
@@ -448,6 +451,19 @@ export default function CollaborativePredictionCard({
             )}
           </div>
         </div>
+        
+        {/* Delete button in header */}
+        {isCreator && origin_type === 'user' && (
+          <button
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending}
+            className="flex items-center justify-center ml-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0"
+            title="Delete prediction"
+            data-testid="button-delete-prediction"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
       </div>
 
       {/* Question */}
@@ -605,30 +621,16 @@ export default function CollaborativePredictionCard({
           </button>
         </div>
         
-        <div className="flex items-center gap-3">
-          {voteCounts && voteCounts.total > 0 && (
-            <button
-              onClick={() => setShowParticipants(!showParticipants)}
-              className="flex items-center gap-1 text-purple-600 hover:text-purple-700 text-xs font-medium"
-            >
-              <Users size={12} />
-              <span>{voteCounts.total} predictions</span>
-              <span className="text-[10px]">{showParticipants ? '▲' : '▼'}</span>
-            </button>
-          )}
-          
-          {isCreator && origin_type === 'user' && (
-            <button
-              onClick={() => deleteMutation.mutate()}
-              disabled={deleteMutation.isPending}
-              className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors"
-              title="Delete prediction"
-              data-testid="button-delete-prediction"
-            >
-              <Trash2 size={16} />
-            </button>
-          )}
-        </div>
+        {voteCounts && voteCounts.total > 0 && (
+          <button
+            onClick={() => setShowParticipants(!showParticipants)}
+            className="flex items-center gap-1 text-purple-600 hover:text-purple-700 text-xs font-medium"
+          >
+            <Users size={12} />
+            <span>{voteCounts.total} predictions</span>
+            <span className="text-[10px]">{showParticipants ? '▲' : '▼'}</span>
+          </button>
+        )}
       </div>
       
       {/* Participants Dropdown */}
@@ -637,6 +639,7 @@ export default function CollaborativePredictionCard({
           {/* Show user votes from feed data if available */}
           {userVotes && userVotes.length > 0 ? (
             (() => {
+              console.log('DEBUG: Displaying userVotes:', userVotes);
               const byVote: { [key: string]: typeof userVotes } = {};
               userVotes.forEach(uv => {
                 if (!byVote[uv.vote]) byVote[uv.vote] = [];
@@ -648,11 +651,11 @@ export default function CollaborativePredictionCard({
                   {Object.entries(byVote).map(([vote, voters]) => (
                     <div key={vote}>
                       <p className="text-xs font-semibold text-gray-700 mb-1.5">
-                        {vote} ({voters.length})
+                        <strong>{vote}</strong> ({voters.length})
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {voters.map((v, idx) => (
-                          <span key={idx} className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                          <span key={idx} className="inline-block px-2.5 py-1.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
                             @{v.user}
                           </span>
                         ))}
