@@ -172,15 +172,13 @@ serve(async (req) => {
 
       console.log('DEBUG: predictions data:', predictions);
       
-      // Fetch vote counts and user votes for predictions
-      let voteCounts: { [poolId: string]: { [option: string]: number } } = {};
-      let userVoteDetails: { [poolId: string]: Array<{ user: string; vote: string; userId: string }> } = {};
-      
+      // Fetch votes for predictions first
+      let votes: any[] = [];
       if (predictions && predictions.length > 0) {
         const predictionIds = predictions.map(p => p.id);
         console.log('DEBUG: predictionIds for vote lookup:', predictionIds);
         
-        const { data: votes, error: votesError } = await supabaseAdmin
+        const { data: votesData, error: votesError } = await supabaseAdmin
           .from('user_predictions')
           .select('pool_id, prediction, user_id')
           .in('pool_id', predictionIds);
@@ -188,24 +186,8 @@ serve(async (req) => {
         if (votesError) {
           console.error('DEBUG: Error fetching votes:', votesError);
         }
-
-        // Count votes by pool and prediction option, and store user details
-        votes?.forEach((vote: any) => {
-          if (!voteCounts[vote.pool_id]) {
-            voteCounts[vote.pool_id] = {};
-            userVoteDetails[vote.pool_id] = [];
-          }
-          voteCounts[vote.pool_id][vote.prediction] = (voteCounts[vote.pool_id][vote.prediction] || 0) + 1;
-          
-          const voter = userMap.get(vote.user_id);
-          userVoteDetails[vote.pool_id].push({
-            user: voter?.user_name || 'Unknown',
-            vote: vote.prediction,
-            userId: vote.user_id
-          });
-        });
-
-        console.log('DEBUG: Vote counts:', voteCounts);
+        
+        votes = votesData || [];
       }
 
       // Check if current user has voted on any predictions
@@ -221,11 +203,14 @@ serve(async (req) => {
       const userVotedPoolIds = new Set(userVotes?.map(v => v.pool_id) || []);
       console.log('DEBUG: User voted pool IDs:', Array.from(userVotedPoolIds));
 
+      // Collect all user IDs including post creators, prediction creators, invited friends, AND voters
+      const voterIds = votes.map(v => v.user_id);
       const userIds = [
         ...new Set([
           ...((posts?.map(post => post.user_id) || []) as string[]),
           ...((predictions?.map(pred => pred.origin_user_id) || []) as string[]),
-          ...((predictions?.map(pred => pred.invited_user_id) || []).filter(id => id) as string[])
+          ...((predictions?.map(pred => pred.invited_user_id) || []).filter(id => id) as string[]),
+          ...voterIds
         ])
       ];
       
@@ -248,6 +233,27 @@ serve(async (req) => {
 
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
+
+      // NOW process votes with userMap available
+      let voteCounts: { [poolId: string]: { [option: string]: number } } = {};
+      let userVoteDetails: { [poolId: string]: Array<{ user: string; vote: string; userId: string }> } = {};
+      
+      votes.forEach((vote: any) => {
+        if (!voteCounts[vote.pool_id]) {
+          voteCounts[vote.pool_id] = {};
+          userVoteDetails[vote.pool_id] = [];
+        }
+        voteCounts[vote.pool_id][vote.prediction] = (voteCounts[vote.pool_id][vote.prediction] || 0) + 1;
+        
+        const voter = userMap.get(vote.user_id);
+        userVoteDetails[vote.pool_id].push({
+          user: voter?.user_name || 'Unknown',
+          vote: vote.prediction,
+          userId: vote.user_id
+        });
+      });
+
+      console.log('DEBUG: Vote counts:', voteCounts);
 
       // Group posts by media (media_external_id + media_external_source)
       const mediaGroups = new Map<string, any[]>();
