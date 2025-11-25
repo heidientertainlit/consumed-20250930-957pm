@@ -50,7 +50,8 @@ export default function InlineComposer() {
     queryFn: async () => {
       if (!session?.access_token) return null;
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-lists-with-media`, {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/get-user-lists-with-media`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${session.access_token}`,
@@ -108,9 +109,10 @@ export default function InlineComposer() {
       };
 
       // Use different endpoints for custom vs default lists
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       const url = isCustom 
-        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-custom-list`
-        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-media`;
+        ? `${supabaseUrl}/functions/v1/add-to-custom-list`
+        : `${supabaseUrl}/functions/v1/track-media`;
 
       // Extract list type from list object - could be 'queue', 'currently', 'finished', etc.
       let listType = list.type;
@@ -200,8 +202,9 @@ export default function InlineComposer() {
 
     setIsSearching(true);
     try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-search`,
+        `${supabaseUrl}/functions/v1/media-search`,
         {
           method: "POST",
           headers: {
@@ -254,8 +257,9 @@ export default function InlineComposer() {
           return;
         }
 
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-media-to-list`,
+          `${supabaseUrl}/functions/v1/add-media-to-list`,
           {
             method: "POST",
             headers: {
@@ -354,7 +358,8 @@ export default function InlineComposer() {
 
       console.log("📤 Sending post payload:", payload);
       
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`, {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/share-update`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session?.access_token}`,
