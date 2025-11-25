@@ -371,8 +371,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           />
         )}
         
-        {/* Mobile-friendly action buttons - bottom right, only show on hover/tap */}
-        <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-20 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Action buttons - always visible, bottom right */}
+        <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-20 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button
