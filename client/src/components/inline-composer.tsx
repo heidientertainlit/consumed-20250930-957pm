@@ -398,21 +398,18 @@ export default function InlineComposer() {
                       <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm px-3 py-2 rounded-full">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              size="icon"
-                              variant="secondary"
-                              className="h-5 w-5 rounded-full bg-transparent hover:text-purple-400 text-white p-0"
+                            <button
+                              className="text-white hover:text-purple-400 transition-colors"
                               data-testid={`button-add-media-${index}`}
                             >
                               <Plus className="w-5 h-5" />
-                            </Button>
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent 
                             align="end" 
                             side="top"
-                            sideOffset={8}
-                            alignOffset={-16}
-                            className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
+                            sideOffset={12}
+                            className="w-56 bg-gray-900 border border-gray-700 max-h-[70vh] overflow-y-auto"
                           >
                             {userLists.map((list) => (
                               <DropdownMenuItem
