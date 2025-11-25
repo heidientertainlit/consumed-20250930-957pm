@@ -1560,62 +1560,15 @@ export default function Feed() {
                 );
               })()}
 
-              {/* Recommended for you section */}
+              {/* Recommended for you section - using MediaCarousel with working + and ★ buttons */}
               {recommendedContent && recommendedContent.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-500">
-                    Recommended for you
-                  </p>
-                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-                    {recommendedContent.slice(0, 6).map((item: any, index: number) => (
-                      <div
-                        key={index}
-                        className="flex-shrink-0 w-20"
-                        data-testid={`recommended-item-${index}`}
-                      >
-                        <div className="w-20 h-28 overflow-hidden rounded-lg shadow-sm mb-1 relative group">
-                          <button
-                            onClick={() => handleMediaClick(item)}
-                            className="w-full h-full"
-                          >
-                            <img
-                              src={item.imageUrl || '/placeholder.png'}
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                          <div className="absolute bottom-1 right-1 flex gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // TODO: Add to list functionality
-                              }}
-                              className="w-6 h-6 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
-                              data-testid={`add-to-list-${index}`}
-                            >
-                              <span className="text-sm">+</span>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // TODO: Rate functionality
-                              }}
-                              className="w-6 h-6 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
-                              data-testid={`rate-${index}`}
-                            >
-                              <span className="text-xs">★</span>
-                            </button>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleMediaClick(item)}
-                          className="w-full text-left"
-                        >
-                          <p className="text-xs text-gray-900 line-clamp-1">{item.title}</p>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="mb-4">
+                  <MediaCarousel
+                    title="Recommended for you"
+                    mediaType="mixed"
+                    items={recommendedContent}
+                    onItemClick={handleMediaClick}
+                  />
                 </div>
               )}
 
