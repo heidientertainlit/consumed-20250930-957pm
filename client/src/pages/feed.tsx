@@ -2135,11 +2135,10 @@ export default function Feed() {
                           </div>
                         </div>
                         
-                        {/* See more link */}
                         {post.user && (
                           <button
                             onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
-                            className="mt-2 text-sm text-gray-500 hover:text-purple-600 transition-colors"
+                            className="mt-2 text-sm text-gray-500 hover:text-purple-600 transition-colors block"
                           >
                             See more of @{post.user.username}'s lists →
                           </button>
