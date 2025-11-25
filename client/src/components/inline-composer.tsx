@@ -407,9 +407,11 @@ export default function InlineComposer() {
         };
       }
 
-      console.log("📤 Sending post payload:", payload);
-      
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      console.log("📤 Payload:", JSON.stringify(payload, null, 2));
+      console.log("🔗 URL:", `${supabaseUrl}/functions/v1/share-update`);
+      console.log("🔑 Token exists:", !!session?.access_token);
+      
       const response = await fetch(`${supabaseUrl}/functions/v1/share-update`, {
         method: "POST",
         headers: {
@@ -419,22 +421,21 @@ export default function InlineComposer() {
         body: JSON.stringify(payload),
       });
 
-      console.log("📥 Response status:", response.status);
+      const responseText = await response.text();
+      console.log("📥 Status:", response.status);
+      console.log("📥 Headers:", {
+        'content-type': response.headers.get('content-type'),
+        'access-control': response.headers.get('access-control-allow-origin'),
+      });
+      console.log("📥 Body:", responseText);
 
       if (!response.ok) {
-        let errorData = '';
-        try {
-          errorData = await response.text();
-        } catch (e) {
-          errorData = 'Unknown error';
-        }
-        console.error("❌ Share update failed:", response.status, errorData);
-        console.error("📋 Full response:", { status: response.status, headers: response.headers, body: errorData });
-        throw new Error(`Failed to post (${response.status}): ${errorData}`);
+        console.error("❌ FAILED:", response.status, responseText);
+        throw new Error(`Failed to post (${response.status}): ${responseText}`);
       }
 
-      const result = await response.json();
-      console.log("✅ Post created successfully:", result);
+      const result = JSON.parse(responseText);
+      console.log("✅ Success:", result);
 
       toast({
         title: "Posted!",
