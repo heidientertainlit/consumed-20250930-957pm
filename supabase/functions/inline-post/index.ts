@@ -112,20 +112,26 @@ serve(async (req) => {
 
       // Handle predictions
       if (type === 'prediction' && prediction_question && Array.isArray(prediction_options) && prediction_options.length >= 2) {
+        const poolId = crypto.randomUUID();
         const { data: pool, error: poolError } = await supabase
           .from('prediction_pools')
           .insert({
-            question: prediction_question,
+            id: poolId,
+            title: prediction_question.substring(0, 100),
+            description: prediction_question,
             type: 'prediction',
-            options: prediction_options,
             status: 'open',
+            category: 'user-prediction',
+            icon: '🎯',
+            options: prediction_options,
             points_reward: 20,
             origin_type: 'user',
             origin_user_id: appUser.id,
-            media_title: media_title || null,
-            media_type: media_type || null,
             media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null
+            media_external_source: media_external_source || null,
+            likes_count: 0,
+            comments_count: 0,
+            participants: 0
           })
           .select()
           .single();
@@ -146,8 +152,8 @@ serve(async (req) => {
             content: prediction_question,
             post_type: 'prediction',
             prediction_pool_id: pool.id,
-            media_title: media_title || null,
-            media_type: media_type || null,
+            media_title: prediction_question.substring(0, 100),
+            media_type: 'prediction',
             media_external_id: media_external_id || null,
             media_external_source: media_external_source || null,
             visibility,
@@ -172,20 +178,26 @@ serve(async (req) => {
 
       // Handle polls
       if (type === 'poll' && poll_question && Array.isArray(poll_options) && poll_options.length >= 2) {
+        const poolId = crypto.randomUUID();
         const { data: pool, error: poolError } = await supabase
           .from('prediction_pools')
           .insert({
-            question: poll_question,
+            id: poolId,
+            title: poll_question.substring(0, 100),
+            description: poll_question,
             type: 'poll',
-            options: poll_options,
             status: 'open',
+            category: 'user-poll',
+            icon: '🗳️',
+            options: poll_options,
             points_reward: 10,
             origin_type: 'user',
             origin_user_id: appUser.id,
-            media_title: media_title || null,
-            media_type: media_type || null,
             media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null
+            media_external_source: media_external_source || null,
+            likes_count: 0,
+            comments_count: 0,
+            participants: 0
           })
           .select()
           .single();
@@ -206,8 +218,8 @@ serve(async (req) => {
             content: poll_question,
             post_type: 'poll',
             prediction_pool_id: pool.id,
-            media_title: media_title || null,
-            media_type: media_type || null,
+            media_title: poll_question.substring(0, 100),
+            media_type: 'poll',
             media_external_id: media_external_id || null,
             media_external_source: media_external_source || null,
             visibility,

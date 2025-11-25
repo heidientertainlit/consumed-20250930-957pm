@@ -25,6 +25,7 @@ serve(async (req) => {
     // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
+      console.error('Auth error:', userError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -39,12 +40,16 @@ serve(async (req) => {
       .single();
 
     if (appUserError || !appUser) {
+      console.error('App user error:', appUserError);
       return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
+    const body = await req.json();
+    console.log('DEBUG: Received body:', JSON.stringify(body));
+    
     const { 
       question,
       options,
@@ -57,48 +62,61 @@ serve(async (req) => {
       media_external_source,
       deadline,
       points_reward = 20
-    } = await req.json();
-
-    console.log('DEBUG: create-prediction input:', { question, options, poll_type, type });
+    } = body;
 
     // Support both new format (options array) and old format (option_1_label, option_2_label)
     let finalOptions: string[] = [];
     if (options && Array.isArray(options) && options.length > 0) {
-      finalOptions = options;
+      finalOptions = options.filter((o: string) => o && o.trim());
     } else if (option_1_label && option_2_label) {
       finalOptions = [option_1_label, option_2_label];
-    } else {
-      return new Response(JSON.stringify({ 
-        error: 'Either options array or (option_1_label and option_2_label) are required' 
-      }), {
+    }
+
+    // For yes-no polls, provide default options
+    if (poll_type === 'yes-no' && finalOptions.length === 0) {
+      finalOptions = ['Yes', 'No'];
+    }
+
+    console.log('DEBUG: Final options:', finalOptions);
+
+    if (!question) {
+      return new Response(JSON.stringify({ error: 'Question is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    if (!question || finalOptions.length < 2) {
-      return new Response(JSON.stringify({ 
-        error: 'question and at least 2 options are required' 
-      }), {
+    if (finalOptions.length < 2) {
+      return new Response(JSON.stringify({ error: 'At least 2 options are required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Determine pool type for database
-    let poolType = type === 'vote' ? 'poll' : 'predict';
+    // Determine pool type and category for database
+    const isPoll = type === 'vote';
+    const poolType = isPoll ? 'poll' : 'prediction';
+    const poolCategory = isPoll ? 'user-poll' : 'user-prediction';
+    const poolIcon = isPoll ? '🗳️' : '🎯';
+    const poolPoints = isPoll ? 10 : points_reward;
 
-    // Insert into prediction_pools using authenticated client (matching inline-post pattern)
+    // Generate a unique ID for the pool
+    const poolId = crypto.randomUUID();
+    
+    console.log('DEBUG: Creating pool with id:', poolId, 'type:', poolType);
+
+    // Insert into prediction_pools with CORRECT column names
     const { data: pool, error: poolError } = await supabase
       .from('prediction_pools')
       .insert({
-        title: question,
+        id: poolId,
+        title: question.substring(0, 100),
         description: question,
         type: poolType,
         status: 'open',
-        category: type === 'vote' ? 'user-poll' : 'user-prediction',
-        icon: type === 'vote' ? '🗳️' : '🎯',
-        points_reward: points_reward,
+        category: poolCategory,
+        icon: poolIcon,
+        points_reward: poolPoints,
         options: finalOptions,
         origin_type: 'user',
         origin_user_id: appUser.id,
@@ -123,16 +141,16 @@ serve(async (req) => {
 
     console.log('SUCCESS: Pool created:', pool.id);
 
-    // Create associated social post (matching inline-post pattern exactly)
+    // Create associated social post with CORRECT column names
     const { data: post, error: postError } = await supabase
       .from('social_posts')
       .insert({
         user_id: appUser.id,
         content: question,
-        post_type: type === 'vote' ? 'poll' : 'prediction',
+        post_type: poolType,
         prediction_pool_id: pool.id,
-        media_title: question,
-        media_type: type === 'vote' ? 'poll' : 'prediction',
+        media_title: question.substring(0, 100),
+        media_type: poolType,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
         contains_spoilers: false
@@ -142,7 +160,7 @@ serve(async (req) => {
 
     if (postError) {
       console.error('ERROR: Social post creation failed:', JSON.stringify(postError));
-      return new Response(JSON.stringify({ error: 'Pool created but social post failed' }), {
+      return new Response(JSON.stringify({ error: 'Pool created but social post failed: ' + postError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -155,6 +173,7 @@ serve(async (req) => {
       pool,
       post
     }), {
+      status: 201,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
