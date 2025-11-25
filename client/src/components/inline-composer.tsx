@@ -300,23 +300,17 @@ export default function InlineComposer() {
         return;
       }
 
-      // Handle social posting
+      // Handle social posting - use minimal payload like the working share-update-dialog-v2
       let payload: any = {};
 
       // Add action-specific data
       if (actionMode === "thought" && thoughtText.trim()) {
-        // Minimal payload for thought posts (like share-update-dialog-v2)
+        // Minimal payload for thought posts (exactly like share-update-dialog-v2 "text" type)
         payload = {
           content: thoughtText.trim(),
           type: "thought",
           visibility: "public",
           contains_spoilers: containsSpoilers,
-          media_title: selectedMedia?.title || null,
-          media_type: selectedMedia?.type || null,
-          media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist || null,
-          media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.image || selectedMedia?.thumbnail || null,
-          media_external_id: selectedMedia?.external_id || selectedMedia?.id || null,
-          media_external_source: selectedMedia?.external_source || selectedMedia?.source || null,
         };
       } else if (actionMode === "rating") {
         if (ratingValue === 0) {
@@ -329,17 +323,15 @@ export default function InlineComposer() {
           return;
         }
         payload = {
-          media_title: selectedMedia.title || null,
-          media_type: selectedMedia.type || null,
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || null,
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || null,
-          media_external_id: selectedMedia.external_id || selectedMedia.id || null,
-          media_external_source: selectedMedia.external_source || selectedMedia.source || null,
+          content: `Rated ${selectedMedia.title}`,
+          type: "rate-review",
           visibility: "public",
           contains_spoilers: containsSpoilers,
           rating: ratingValue,
-          content: `Rated ${selectedMedia.title}`,
-          type: "rate-review",
+          media_title: selectedMedia.title,
+          media_type: selectedMedia.type,
+          media_external_id: selectedMedia.external_id || selectedMedia.id,
+          media_external_source: selectedMedia.external_source || selectedMedia.source,
         };
       } else if (actionMode === "prediction") {
         const filledOptions = predictionOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
@@ -353,18 +345,16 @@ export default function InlineComposer() {
           return;
         }
         payload = {
-          media_title: selectedMedia.title || null,
-          media_type: selectedMedia.type || null,
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || null,
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || null,
-          media_external_id: selectedMedia.external_id || selectedMedia.id || null,
-          media_external_source: selectedMedia.external_source || selectedMedia.source || null,
-          visibility: "public",
-          contains_spoilers: containsSpoilers,
           content: predictionQuestion.trim(),
           type: "prediction",
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
           prediction_question: predictionQuestion.trim(),
           prediction_options: filledOptions,
+          media_title: selectedMedia.title,
+          media_type: selectedMedia.type,
+          media_external_id: selectedMedia.external_id || selectedMedia.id,
+          media_external_source: selectedMedia.external_source || selectedMedia.source,
         };
       } else if (actionMode === "poll") {
         const filledOptions = pollOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
@@ -378,41 +368,32 @@ export default function InlineComposer() {
           return;
         }
         payload = {
-          media_title: selectedMedia.title || null,
-          media_type: selectedMedia.type || null,
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || null,
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || null,
-          media_external_id: selectedMedia.external_id || selectedMedia.id || null,
-          media_external_source: selectedMedia.external_source || selectedMedia.source || null,
-          visibility: "public",
-          contains_spoilers: containsSpoilers,
           content: pollQuestion.trim(),
           type: "poll",
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
           poll_question: pollQuestion.trim(),
           poll_options: filledOptions,
+          media_title: selectedMedia.title,
+          media_type: selectedMedia.type,
+          media_external_id: selectedMedia.external_id || selectedMedia.id,
+          media_external_source: selectedMedia.external_source || selectedMedia.source,
         };
       } else {
         // Just tracking media consumption
         payload = {
-          media_title: selectedMedia.title || null,
-          media_type: selectedMedia.type || null,
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || null,
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || null,
-          media_external_id: selectedMedia.external_id || selectedMedia.id || null,
-          media_external_source: selectedMedia.external_source || selectedMedia.source || null,
-          visibility: "public",
-          contains_spoilers: containsSpoilers,
           content: `Added ${selectedMedia.title}`,
           type: "add-media",
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+          media_title: selectedMedia.title,
+          media_type: selectedMedia.type,
+          media_external_id: selectedMedia.external_id || selectedMedia.id,
+          media_external_source: selectedMedia.external_source || selectedMedia.source,
         };
       }
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      console.log("📤 Payload:", JSON.stringify(payload, null, 2));
-      console.log("🔗 URL:", `${supabaseUrl}/functions/v1/share-update`);
-      console.log("🔑 Token exists:", !!session?.access_token);
-      
-      const response = await fetch(`${supabaseUrl}/functions/v1/share-update`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session?.access_token}`,
@@ -421,21 +402,7 @@ export default function InlineComposer() {
         body: JSON.stringify(payload),
       });
 
-      const responseText = await response.text();
-      console.log("📥 Status:", response.status);
-      console.log("📥 Headers:", {
-        'content-type': response.headers.get('content-type'),
-        'access-control': response.headers.get('access-control-allow-origin'),
-      });
-      console.log("📥 Body:", responseText);
-
-      if (!response.ok) {
-        console.error("❌ FAILED:", response.status, responseText);
-        throw new Error(`Failed to post (${response.status}): ${responseText}`);
-      }
-
-      const result = JSON.parse(responseText);
-      console.log("✅ Success:", result);
+      if (!response.ok) throw new Error("Failed to post");
 
       toast({
         title: "Posted!",
