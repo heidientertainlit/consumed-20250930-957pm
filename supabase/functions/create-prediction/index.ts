@@ -85,26 +85,19 @@ serve(async (req) => {
       });
     }
 
-    // Determine icon and category based on type
-    let icon = '🎯';
-    let category = 'user-prediction';
-    let postType = 'prediction';
-    if (type === 'vote') {
-      icon = '🗳️';
-      category = 'user-poll';
-      postType = 'poll';
-    }
+    // Determine pool type for database
+    let poolType = type === 'vote' ? 'poll' : 'predict';
 
-    // Insert into prediction_pools using authenticated client
+    // Insert into prediction_pools using authenticated client (matching inline-post pattern)
     const { data: pool, error: poolError } = await supabase
       .from('prediction_pools')
       .insert({
         title: question,
         description: question,
-        type: type,
+        type: poolType,
         status: 'open',
-        category: category,
-        icon: icon,
+        category: type === 'vote' ? 'user-poll' : 'user-prediction',
+        icon: type === 'vote' ? '🗳️' : '🎯',
         points_reward: points_reward,
         options: finalOptions,
         origin_type: 'user',
@@ -122,7 +115,7 @@ serve(async (req) => {
 
     if (poolError) {
       console.error('ERROR: Pool creation failed:', JSON.stringify(poolError));
-      return new Response(JSON.stringify({ error: poolError.message || 'Failed to create prediction/poll' }), {
+      return new Response(JSON.stringify({ error: poolError.message || 'Failed to create pool' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -130,13 +123,13 @@ serve(async (req) => {
 
     console.log('SUCCESS: Pool created:', pool.id);
 
-    // Create associated social post
+    // Create associated social post (matching inline-post pattern exactly)
     const { data: post, error: postError } = await supabase
       .from('social_posts')
       .insert({
         user_id: appUser.id,
         content: question,
-        post_type: postType,
+        post_type: type === 'vote' ? 'poll' : 'prediction',
         prediction_pool_id: pool.id,
         media_title: question,
         media_type: type === 'vote' ? 'poll' : 'prediction',
