@@ -2135,9 +2135,8 @@ export default function Feed() {
                           </div>
                         </div>
                         
-                        {/* See more link */}
                         {post.user && (
-                          <div className="mt-3">
+                          <div className="mt-3 px-3 pb-3">
                             <button
                               onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
                               className="text-sm text-gray-500 hover:text-purple-600 transition-colors"
