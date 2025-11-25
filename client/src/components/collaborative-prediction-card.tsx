@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Users, Heart, MessageCircle, ArrowUp } from "lucide-react";
+import { TrendingUp, Users, Heart, MessageCircle, ArrowUp, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -12,6 +12,7 @@ interface CollaborativePrediction {
   question: string;
   type?: 'vote' | 'predict' | 'trivia';
   creator: {
+    id?: string;
     username: string;
   };
   invitedFriend: {
@@ -43,6 +44,11 @@ interface CollaborativePrediction {
     count: number;
     percentage: number;
   }>;
+  userVotes?: Array<{
+    user: string;
+    vote: string;
+    userId: string;
+  }>;
 }
 
 interface CollaborativePredictionCardProps {
@@ -54,7 +60,7 @@ export default function CollaborativePredictionCard({
   prediction, 
   onCastPrediction 
 }: CollaborativePredictionCardProps) {
-  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id, deadline, status = 'open', resolved_at, winning_option, type } = prediction;
+  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id, deadline, status = 'open', resolved_at, winning_option, type, userVotes = [] } = prediction;
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -65,6 +71,48 @@ export default function CollaborativePredictionCard({
   const [showParticipants, setShowParticipants] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [resolutionVote, setResolutionVote] = useState<string | null>(null);
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.access_token || !poolId) return;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/delete-prediction`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ pool_id: poolId }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete prediction');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Prediction deleted",
+        description: "Your prediction has been removed from the feed.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to delete",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Check if current user is the creator
+  const isCreator = origin_user_id && session?.user?.id === origin_user_id;
 
   // Check if prediction is completed
   const isCompleted = status === 'completed';
@@ -557,59 +605,105 @@ export default function CollaborativePredictionCard({
           </button>
         </div>
         
-        {voteCounts && voteCounts.total > 0 && (
-          <button
-            onClick={() => setShowParticipants(!showParticipants)}
-            className="flex items-center gap-1 text-purple-600 hover:text-purple-700 text-xs font-medium"
-          >
-            <Users size={12} />
-            <span>{voteCounts.total} predictions</span>
-            <span className="text-[10px]">{showParticipants ? '▲' : '▼'}</span>
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {voteCounts && voteCounts.total > 0 && (
+            <button
+              onClick={() => setShowParticipants(!showParticipants)}
+              className="flex items-center gap-1 text-purple-600 hover:text-purple-700 text-xs font-medium"
+            >
+              <Users size={12} />
+              <span>{voteCounts.total} predictions</span>
+              <span className="text-[10px]">{showParticipants ? '▲' : '▼'}</span>
+            </button>
+          )}
+          
+          {isCreator && origin_type === 'user' && (
+            <button
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors"
+              title="Delete prediction"
+              data-testid="button-delete-prediction"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Participants Dropdown */}
-      {showParticipants && voteCounts && voteCounts.total > 0 && participantsData?.participants && participantsData.participants.length > 0 && (
+      {showParticipants && (userVotes?.length > 0 || participantsData?.participants?.length > 0) && (
         <div className="mt-3 bg-gray-50 rounded-xl p-3 space-y-2">
-          {/* Group participants by their vote */}
-          {(() => {
-            const yesPredictions = participantsData.participants.filter((p: any) => p.prediction === 'Yes');
-            const noPredictions = participantsData.participants.filter((p: any) => p.prediction === 'No');
-            
-            return (
-              <div className="space-y-3">
-                {yesPredictions.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-700 mb-1.5">
-                      {creatorPrediction} ({yesPredictions.length})
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {yesPredictions.map((p: any, idx: number) => (
-                        <span key={idx} className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
-                          @{p.users?.user_name || p.users?.display_name || 'unknown'}
-                        </span>
-                      ))}
+          {/* Show user votes from feed data if available */}
+          {userVotes && userVotes.length > 0 ? (
+            (() => {
+              const byVote: { [key: string]: typeof userVotes } = {};
+              userVotes.forEach(uv => {
+                if (!byVote[uv.vote]) byVote[uv.vote] = [];
+                byVote[uv.vote].push(uv);
+              });
+              
+              return (
+                <div className="space-y-3">
+                  {Object.entries(byVote).map(([vote, voters]) => (
+                    <div key={vote}>
+                      <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                        {vote} ({voters.length})
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {voters.map((v, idx) => (
+                          <span key={idx} className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                            @{v.user}
+                          </span>
+                        ))}
+                      </div>
                     </div>
+                  ))}
+                </div>
+              );
+            })()
+          ) : (
+            // Fallback to mock data if available
+            participantsData?.participants && participantsData.participants.length > 0 && (
+              (() => {
+                const yesPredictions = participantsData.participants.filter((p: any) => p.prediction === 'Yes');
+                const noPredictions = participantsData.participants.filter((p: any) => p.prediction === 'No');
+                
+                return (
+                  <div className="space-y-3">
+                    {yesPredictions.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                          {creatorPrediction} ({yesPredictions.length})
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {yesPredictions.map((p: any, idx: number) => (
+                            <span key={idx} className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                              @{p.users?.user_name || p.users?.display_name || 'unknown'}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {noPredictions.length > 0 && friendPrediction && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                          {friendPrediction} ({noPredictions.length})
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {noPredictions.map((p: any, idx: number) => (
+                            <span key={idx} className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                              @{p.users?.user_name || p.users?.display_name || 'unknown'}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-                {noPredictions.length > 0 && friendPrediction && (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-700 mb-1.5">
-                      {friendPrediction} ({noPredictions.length})
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {noPredictions.map((p: any, idx: number) => (
-                        <span key={idx} className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                          @{p.users?.user_name || p.users?.display_name || 'unknown'}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+                );
+              })()
+            )
+          )}
         </div>
       )}
 
