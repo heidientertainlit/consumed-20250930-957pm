@@ -284,7 +284,9 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   };
   
   const platforms = getPlatforms();
-  const listsArray = Array.isArray(userLists) ? userLists : [];
+  // Extract lists from response object
+  const listsData = userLists?.lists || userLists || [];
+  const listsArray = Array.isArray(listsData) ? listsData : [];
   const defaultLists = listsArray.filter((list: any) => list.is_default);
   const customLists = listsArray.filter((list: any) => !list.is_default);
 
