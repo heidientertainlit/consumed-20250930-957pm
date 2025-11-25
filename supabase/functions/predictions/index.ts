@@ -223,13 +223,8 @@ serve(async (req) => {
 
       console.log('DEBUG /predict: About to upsert', { user_id: appUser.id, pool_id, prediction, pointsEarned });
 
-      // Insert or update user prediction using service role to bypass RLS
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
-      const { data: upsertResult, error: insertError } = await supabaseAdmin
+      // Insert or update user prediction - use regular client, RLS policies handle access control
+      const { data: upsertResult, error: insertError } = await supabase
         .from('user_predictions')
         .upsert({
           user_id: appUser.id,
@@ -243,7 +238,7 @@ serve(async (req) => {
         })
         .select();
 
-      console.log('DEBUG /predict: Upsert result', { error: insertError, data: upsertResult });
+      console.log('DEBUG /predict: Upsert result', { error: insertError, data: upsertResult, rowCount: upsertResult?.length });
 
       if (insertError) {
         console.error('DEBUG /predict: Upsert failed', insertError);
