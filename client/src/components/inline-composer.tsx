@@ -305,12 +305,18 @@ export default function InlineComposer() {
 
       // Add action-specific data
       if (actionMode === "thought" && thoughtText.trim()) {
-        // Minimal payload for thought posts (exactly like share-update-dialog-v2 "text" type)
+        // Thought posts with full media context
         payload = {
           content: thoughtText.trim(),
           type: "thought",
           visibility: "public",
           contains_spoilers: containsSpoilers,
+          media_title: selectedMedia.title,
+          media_type: selectedMedia.type,
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
+          media_external_id: selectedMedia.external_id || selectedMedia.id,
+          media_external_source: selectedMedia.external_source || selectedMedia.source,
         };
       } else if (actionMode === "rating") {
         if (ratingValue === 0) {
