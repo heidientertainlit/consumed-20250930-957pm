@@ -288,84 +288,98 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   const defaultLists = listsArray.filter((list: any) => list.is_default);
   const customLists = listsArray.filter((list: any) => !list.is_default);
 
+  const displayedPlatforms = platforms.slice(0, 2);
+  const remainingCount = platforms.length - displayedPlatforms.length;
+
   return (
-    <div className="pt-2 mt-2 border-t border-gray-200 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
-      {/* Left: Platform chips with label */}
-      <div className="flex items-center gap-1.5 flex-wrap flex-1">
-        {platforms.length > 0 && (
-          <>
-            <span className="text-xs text-gray-500 whitespace-nowrap">{getPlatformLabel()}:</span>
-            {platforms.slice(0, 3).map((platform: any, idx: number) => (
-              <a
-                key={idx}
-                href={platform.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors whitespace-nowrap text-xs"
-                onClick={(e) => e.stopPropagation()}
-                data-testid={`platform-chip-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                {platform.logo && (
-                  <img src={platform.logo} alt={platform.name} className="w-3.5 h-3.5 object-contain flex-shrink-0" />
-                )}
-                <span className="text-gray-700 font-medium">{platform.name}</span>
-              </a>
-            ))}
-          </>
-        )}
-      </div>
-
-      {/* Center: Add to List */}
-      <DropdownMenu onOpenChange={setIsDropdownOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-            disabled={addToListMutation.isPending}
-            data-testid="button-add-to-list"
-          >
-            <Plus size={14} className="mr-1" />
-            <span className="text-xs">Add</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="center" className="w-48">
-          {defaultLists.map((list: any) => (
-            <DropdownMenuItem
-              key={list.id}
-              onClick={() => addToListMutation.mutate({ listType: list.list_type, isCustom: false })}
-              data-testid={`add-to-${list.name.toLowerCase().replace(/\s+/g, '-')}`}
+    <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+      {/* Platforms row */}
+      {platforms.length > 0 && (
+        <div className="pt-2 border-t border-gray-200 flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500 whitespace-nowrap">{getPlatformLabel()}:</span>
+          {displayedPlatforms.map((platform: any, idx: number) => (
+            <a
+              key={idx}
+              href={platform.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors whitespace-nowrap text-xs"
+              onClick={(e) => e.stopPropagation()}
+              data-testid={`platform-chip-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
-              {list.name}
-            </DropdownMenuItem>
+              {platform.logo && (
+                <img src={platform.logo} alt={platform.name} className="w-3.5 h-3.5 object-contain flex-shrink-0" />
+              )}
+              <span className="text-gray-700 font-medium">{platform.name}</span>
+            </a>
           ))}
-          {customLists.length > 0 && (
-            <>
-              <DropdownMenuSeparator />
-              {customLists.map((list: any) => (
-                <DropdownMenuItem
-                  key={list.id}
-                  onClick={() => addToListMutation.mutate({ listType: list.id, isCustom: true })}
-                  data-testid={`add-to-custom-${list.id}`}
-                >
-                  {list.name}
-                </DropdownMenuItem>
-              ))}
-            </>
+          {remainingCount > 0 && (
+            <button
+              className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+              onClick={(e) => e.stopPropagation()}
+              data-testid="button-view-more-platforms"
+            >
+              +{remainingCount} more
+            </button>
           )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </div>
+      )}
 
-      {/* Right: Share */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 w-7 p-0 text-gray-600 hover:text-purple-600 hover:bg-purple-50"
-        onClick={handleShare}
-        data-testid="button-share-media"
-      >
-        <Share size={14} />
-      </Button>
+      {/* Actions row */}
+      <div className="flex items-center justify-start gap-2 pb-2">
+        {/* Add to List */}
+        <DropdownMenu onOpenChange={setIsDropdownOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              disabled={addToListMutation.isPending}
+              data-testid="button-add-to-list"
+            >
+              <Plus size={14} className="mr-1" />
+              <span className="text-xs">Add</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {defaultLists.map((list: any) => (
+              <DropdownMenuItem
+                key={list.id}
+                onClick={() => addToListMutation.mutate({ listType: list.list_type, isCustom: false })}
+                data-testid={`add-to-${list.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {list.name}
+              </DropdownMenuItem>
+            ))}
+            {customLists.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                {customLists.map((list: any) => (
+                  <DropdownMenuItem
+                    key={list.id}
+                    onClick={() => addToListMutation.mutate({ listType: list.id, isCustom: true })}
+                    data-testid={`add-to-custom-${list.id}`}
+                  >
+                    {list.name}
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Share */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50"
+          onClick={handleShare}
+          data-testid="button-share-media"
+        >
+          <Share size={14} className="mr-1" />
+          <span className="text-xs">Share</span>
+        </Button>
+      </div>
     </div>
   );
 }
