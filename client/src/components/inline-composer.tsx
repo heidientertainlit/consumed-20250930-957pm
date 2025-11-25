@@ -305,7 +305,7 @@ export default function InlineComposer() {
 
       // Add action-specific data
       if (actionMode === "thought" && thoughtText.trim()) {
-        // Thought posts with full media context
+        // Thought posts with full media context - ensure external IDs are properly set for platform lookup
         payload = {
           content: thoughtText.trim(),
           type: "thought",
@@ -316,7 +316,7 @@ export default function InlineComposer() {
           media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
           media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
           media_external_id: selectedMedia.external_id || selectedMedia.id,
-          media_external_source: selectedMedia.external_source || selectedMedia.source,
+          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
         };
       } else if (actionMode === "rating") {
         if (ratingValue === 0) {
