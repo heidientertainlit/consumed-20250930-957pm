@@ -2009,48 +2009,44 @@ export default function Feed() {
                     </div>
                   ) : (
                     !post.content && post.mediaItems && post.mediaItems.length > 0 && (
-                      <div className="mb-2">
-                        {/* Text at top */}
-                        <p className="text-gray-800 text-sm mb-3">
-                          Added <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
-                        </p>
-                        
-                        {/* Media Card */}
-                        <div className="bg-gray-50 rounded-lg p-3 mb-2">
-                          <div 
-                            className="flex items-center space-x-3 cursor-pointer mb-2"
-                            onClick={() => {
-                              const media = post.mediaItems[0];
-                              if (media.externalId && media.externalSource) {
-                                setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                              }
-                            }}
-                          >
-                            <div className="w-16 h-20 rounded overflow-hidden flex-shrink-0">
-                              <img 
-                                src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
-                                alt={`${post.mediaItems[0].title} artwork`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
-                                {post.mediaItems[0].title}
-                              </h3>
-                              {post.mediaItems[0].creator && (
-                                <div className="text-gray-600 text-xs mb-0.5">
-                                  by {post.mediaItems[0].creator}
-                                </div>
-                              )}
-                              <div className="text-gray-500 text-xs capitalize">
-                                {post.mediaItems[0].mediaType}
-                              </div>
-                            </div>
-                            <ChevronRight className="text-gray-400 flex-shrink-0" size={20} />
+                      <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                        <div 
+                          className="flex items-center space-x-3 cursor-pointer mb-2"
+                          onClick={() => {
+                            const media = post.mediaItems[0];
+                            if (media.externalId && media.externalSource) {
+                              setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                            }
+                          }}
+                        >
+                          <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0">
+                            <img 
+                              src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
+                              alt={`${post.mediaItems[0].title} artwork`}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                          
-                          {/* Platform badges and share button */}
-                          <div className="pt-2 border-t border-gray-200 flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-gray-700 text-xs mb-1">
+                              Added
+                            </p>
+                            <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                              {post.mediaItems[0].title}
+                            </h3>
+                            {post.mediaItems[0].creator && (
+                              <div className="text-gray-600 text-xs mb-0.5">
+                                by {post.mediaItems[0].creator}
+                              </div>
+                            )}
+                            <div className="text-gray-500 text-xs capitalize">
+                              {post.mediaItems[0].mediaType}
+                            </div>
+                          </div>
+                          <ChevronRight className="text-gray-400 flex-shrink-0" size={16} />
+                        </div>
+                        
+                        {/* Platform badges and share button */}
+                        <div className="pt-2 border-t border-gray-200 flex items-center justify-between gap-2">
                             {/* Left: Platform chips */}
                             <div className="flex items-center gap-1.5 flex-1 min-w-0">
                               {(() => {
