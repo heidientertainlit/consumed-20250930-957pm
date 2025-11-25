@@ -347,10 +347,10 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
             {defaultLists.map((list: any) => (
               <DropdownMenuItem
                 key={list.id}
-                onClick={() => addToListMutation.mutate({ listType: list.list_type, isCustom: false })}
-                data-testid={`add-to-${list.name.toLowerCase().replace(/\s+/g, '-')}`}
+                onClick={() => addToListMutation.mutate({ listType: list.title, isCustom: false })}
+                data-testid={`add-to-${list.title.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                {list.name}
+                {list.title}
               </DropdownMenuItem>
             ))}
             {customLists.length > 0 && (
@@ -362,7 +362,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
                     onClick={() => addToListMutation.mutate({ listType: list.id, isCustom: true })}
                     data-testid={`add-to-custom-${list.id}`}
                   >
-                    {list.name}
+                    {list.title}
                   </DropdownMenuItem>
                 ))}
               </>
