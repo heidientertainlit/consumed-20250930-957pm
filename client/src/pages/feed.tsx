@@ -1693,8 +1693,8 @@ export default function Feed() {
                       </div>
                     )}
 
-                    {/* After trivia: Show Pop Culture Update */}
-                    {shouldShowCreatorUpdate && currentCreatorUpdate && (
+                    {/* After trivia: Show Pop Culture Update - TODO: bring back later */}
+                    {/* {shouldShowCreatorUpdate && currentCreatorUpdate && (
                       <div className="mb-4">
                         <CreatorUpdateCard 
                           update={currentCreatorUpdate}
@@ -1707,7 +1707,7 @@ export default function Feed() {
                           }}
                         />
                       </div>
-                    )}
+                    )} */
 
                     {/* After 2 more posts: Show Recommended Carousel */}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
