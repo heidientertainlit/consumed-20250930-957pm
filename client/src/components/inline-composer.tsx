@@ -97,6 +97,7 @@ export default function InlineComposer() {
         }
 
         const data = await response.json();
+        console.log('Friends data:', data);
         return data;
       } catch (error) {
         console.error('Friends fetch error:', error);
@@ -106,12 +107,15 @@ export default function InlineComposer() {
     enabled: !!session?.access_token && actionMode === "prediction",
   });
 
-  const allFriends = (friendsData?.friends || friendsData?.accepted || []).filter((f: any) => f?.id || f?.user_id);
+  // Extract actual friend objects from the nested structure
+  const allFriends = (friendsData?.friends || [])
+    .map((f: any) => f.friend || f)
+    .filter((f: any) => f?.id || f?.user_id);
   
   // Filter friends based on search input
   const filteredFriends = friendSearchInput.trim() 
     ? allFriends.filter((f: any) => {
-        const name = (f.username || f.user_name || f.display_name || '').toLowerCase();
+        const name = (f.user_name || f.username || f.display_name || '').toLowerCase();
         return name.includes(friendSearchInput.toLowerCase());
       })
     : allFriends;
@@ -950,22 +954,26 @@ export default function InlineComposer() {
                             key={friend.id || friend.user_id}
                             onClick={() => {
                               setSelectedFriendId(friend.id || friend.user_id);
-                              setSelectedFriendName(`@${friend.username || friend.user_name || friend.display_name || 'User'}`);
+                              setSelectedFriendName(`@${friend.user_name || friend.username || friend.display_name || 'User'}`);
                               setFriendSearchInput("");
                               setShowFriendDropdown(false);
                             }}
                             className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
                           >
-                            @{friend.username || friend.user_name || friend.display_name || 'User'}
+                            @{friend.user_name || friend.username || friend.display_name || 'User'}
                           </button>
                         ))
                       ) : friendSearchInput ? (
                         <div className="px-3 py-2 text-sm text-gray-500">
                           No friends matching "{friendSearchInput}"
                         </div>
+                      ) : allFriends.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-gray-500">
+                          No friends yet. Add friends to predict with them!
+                        </div>
                       ) : (
                         <div className="px-3 py-2 text-sm text-gray-500">
-                          Type to search friends
+                          Type to search your {allFriends.length} friend{allFriends.length !== 1 ? 's' : ''}
                         </div>
                       )}
                     </div>
