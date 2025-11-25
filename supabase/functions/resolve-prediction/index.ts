@@ -62,8 +62,9 @@ serve(async (req) => {
       });
     }
 
-    // Verify user is authorized to resolve (creator or admin)
-    if (pool.origin_user_id && pool.origin_user_id !== user.id && pool.origin_type !== 'consumed') {
+    // Verify user is authorized to resolve (creator of user-generated predictions)
+    // Consumed predictions can be resolved by anyone (for backward compatibility)
+    if (pool.origin_type === 'user' && pool.origin_user_id !== user.id) {
       return new Response(JSON.stringify({ 
         error: 'Only the creator can resolve this prediction' 
       }), {
