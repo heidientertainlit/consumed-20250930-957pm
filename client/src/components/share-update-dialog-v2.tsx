@@ -72,7 +72,8 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   ];
 
   const handlePost = async () => {
-    if (!content.trim() && postMode === "text") {
+    // Validate based on post mode
+    if (postMode === "text" && !content.trim()) {
       toast({
         title: "Empty Post",
         description: "Please write something before posting.",
@@ -81,28 +82,67 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
       return;
     }
 
+    if (postMode === "tribe" && predictionOptions.filter(o => o.trim()).length < 2) {
+      toast({
+        title: "Invalid Poll",
+        description: "Please provide at least 2 options for your poll.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsPosting(true);
     try {
-      // For now, just text posts work - other modes are placeholders
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`, {
+      let endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`;
+      let body: any = {};
+
+      if (postMode === "tribe") {
+        // Poll creation
+        endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-prediction`;
+        const filledOptions = predictionOptions.filter(o => o.trim());
+        body = {
+          question: content.trim() || "What do you think?",
+          options: filledOptions,
+          poll_type: predictionType,
+          type: "vote",
+        };
+      } else if (postMode === "prediction") {
+        // Prediction creation
+        endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-prediction`;
+        const filledOptions = predictionOptions.filter(o => o.trim());
+        body = {
+          question: content.trim(),
+          options: filledOptions,
+          poll_type: predictionType,
+          type: "predict",
+        };
+      } else {
+        // Text/other posts
+        body = {
+          content: content.trim(),
+          type: "text",
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+        };
+      }
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session?.access_token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          content: content.trim(),
-          type: "text",
-          visibility: "public",
-          contains_spoilers: containsSpoilers,
-        }),
+        body: JSON.stringify(body),
       });
 
-      if (!response.ok) throw new Error("Failed to post");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to post");
+      }
 
       toast({
         title: "Posted!",
-        description: "Your update has been shared.",
+        description: postMode === "tribe" ? "Your poll has been created!" : "Your update has been shared.",
       });
 
       // Reset and close
@@ -111,7 +151,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
       console.error("Post error:", error);
       toast({
         title: "Post Failed",
-        description: "Unable to share your update. Please try again.",
+        description: error instanceof Error ? error.message : "Unable to share your update. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -120,11 +160,16 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
   };
 
   const handleModeClick = (mode: PostMode) => {
-    if (mode === "text" || mode === "mood" || mode === "media" || mode === "prediction") {
+    if (mode === "text" || mode === "mood" || mode === "media" || mode === "prediction" || mode === "tribe") {
       setPostMode(mode);
       // Auto-open media search when entering consuming mode
       if (mode === "media") {
         setShowMediaSearch(true);
+      }
+      // Initialize poll options when entering tribe (poll) mode
+      if (mode === "tribe") {
+        setPredictionType("yes-no");
+        setPredictionOptions(["Yes", "No"]);
       }
     } else {
       // For now, show coming soon toast for other modes

@@ -47,6 +47,9 @@ serve(async (req) => {
 
     const { 
       question,
+      options,
+      poll_type = "yes-no",
+      type = "predict",
       invited_user_id,
       option_1_label,
       option_2_label,
@@ -56,11 +59,26 @@ serve(async (req) => {
       points_reward = 20
     } = await req.json();
 
-    console.log('DEBUG: create-prediction input:', { question, option_1_label, option_2_label });
+    console.log('DEBUG: create-prediction input:', { question, options, poll_type, type });
 
-    if (!question || !option_1_label || !option_2_label) {
+    // Support both new format (options array) and old format (option_1_label, option_2_label)
+    let finalOptions: string[] = [];
+    if (options && Array.isArray(options) && options.length > 0) {
+      finalOptions = options;
+    } else if (option_1_label && option_2_label) {
+      finalOptions = [option_1_label, option_2_label];
+    } else {
       return new Response(JSON.stringify({ 
-        error: 'question, option_1_label, and option_2_label are required' 
+        error: 'Either options array or (option_1_label and option_2_label) are required' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!question || finalOptions.length < 2) {
+      return new Response(JSON.stringify({ 
+        error: 'question and at least 2 options are required' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -87,18 +105,26 @@ serve(async (req) => {
     // Insert directly without modifiers first
     console.log('DEBUG: Attempting insert for ID:', poolId);
     
+    // Determine icon and category based on type
+    let icon = '🎯';
+    let category = 'user-prediction';
+    if (type === 'vote') {
+      icon = '🗳️';
+      category = 'user-poll';
+    }
+
     const { error: poolError, status: insertStatus } = await supabaseAdmin
       .from('prediction_pools')
       .insert({
         id: poolId,
         title: question,
         description: question,
-        type: 'predict',
+        type: type,
         status: 'open',
-        category: 'user-prediction',
-        icon: '🎯',
+        category: category,
+        icon: icon,
         points_reward: points_reward,
-        options: [option_1_label, option_2_label],
+        options: finalOptions,
         origin_type: 'user',
         origin_user_id: appUser.id,
         invited_user_id: invited_user_id || null,
