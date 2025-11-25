@@ -112,9 +112,22 @@ export default function InlineComposer() {
         ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-custom-list`
         : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-media`;
 
+      // Extract list type from list object - could be 'queue', 'currently', 'finished', etc.
+      let listType = list.type;
+      if (!listType) {
+        // Try to infer from title/name
+        const title = (list.title || list.name || '').toLowerCase();
+        if (title.includes('queue')) listType = 'queue';
+        else if (title.includes('currently')) listType = 'currently';
+        else if (title.includes('finished')) listType = 'finished';
+        else if (title.includes('did not')) listType = 'dnf';
+        else if (title.includes('favorite')) listType = 'favorites';
+        else listType = 'queue'; // fallback
+      }
+
       const body = isCustom
         ? { media: mediaData, customListId: listIdOrType }
-        : { media: mediaData, listType: list.type };
+        : { media: mediaData, listType };
 
       const response = await fetch(url, {
         method: 'POST',
@@ -462,36 +475,15 @@ export default function InlineComposer() {
                             alignOffset={-16}
                             className="w-56 bg-gray-900 border border-gray-700 max-h-[70vh] overflow-y-auto"
                           >
-                            <DropdownMenuItem
-                              onClick={() => handleTrackToList(media, 'queue')}
-                              className="cursor-pointer text-white hover:bg-gray-800"
-                            >
-                              Add to Queue
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleTrackToList(media, 'currently')}
-                              className="cursor-pointer text-white hover:bg-gray-800"
-                            >
-                              Add to Currently
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleTrackToList(media, 'finished')}
-                              className="cursor-pointer text-white hover:bg-gray-800"
-                            >
-                              Add to Finished
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleTrackToList(media, 'dnf')}
-                              className="cursor-pointer text-white hover:bg-gray-800"
-                            >
-                              Add to Did Not Finish
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleTrackToList(media, 'favorites')}
-                              className="cursor-pointer text-white hover:bg-gray-800"
-                            >
-                              Add to Favorites
-                            </DropdownMenuItem>
+                            {userLists.filter((list: any) => !list.isCustom).map((list: any) => (
+                              <DropdownMenuItem
+                                key={list.id}
+                                onClick={() => handleTrackToList(media, list.id)}
+                                className="cursor-pointer text-white hover:bg-gray-800"
+                              >
+                                Add to {list.title || list.name}
+                              </DropdownMenuItem>
+                            ))}
                             
                             {/* Custom Lists */}
                             {userLists.filter((list: any) => list.isCustom).length > 0 && (
