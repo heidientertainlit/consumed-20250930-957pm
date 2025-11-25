@@ -1,94 +1,112 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-};
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_ANON_KEY') || '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization') }
+          headers: {
+            Authorization: authHeader
+          }
         }
       }
-    );
+    )
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      })
     }
 
-    const { pool_id } = await req.json();
+    const { pool_id } = await req.json()
     if (!pool_id) {
-      return new Response(JSON.stringify({ error: 'pool_id required' }), {
+      return new Response(JSON.stringify({ error: 'Missing pool_id' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      })
     }
 
-    const { data: appUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', user.email)
-      .single();
-
-    if (!appUser) {
-      return new Response(JSON.stringify({ error: 'User not found' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
+    // Use admin client to delete prediction (bypasses RLS)
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          }
+        }
+      }
+    )
 
-    const { data: prediction } = await supabaseAdmin
+    // Check if user owns the prediction
+    const { data: prediction, error: fetchError } = await supabaseAdmin
       .from('prediction_pools')
-      .select('origin_user_id')
+      .select('id, origin_user_id')
       .eq('id', pool_id)
-      .single();
+      .single()
 
-    if (!prediction || prediction.origin_user_id !== appUser.id) {
-      return new Response(JSON.stringify({ error: 'Not authorized' }), {
+    if (fetchError || !prediction) {
+      return new Response(JSON.stringify({ error: 'Prediction not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    if (prediction.origin_user_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Not authorized to delete this prediction' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      })
     }
 
+    // Delete the prediction
     const { error: deleteError } = await supabaseAdmin
       .from('prediction_pools')
       .delete()
-      .eq('id', pool_id);
+      .eq('id', pool_id)
+      .eq('origin_user_id', user.id)
 
     if (deleteError) {
-      return new Response(JSON.stringify({ error: deleteError.message }), {
+      console.error('Delete error:', deleteError)
+      return new Response(JSON.stringify({ error: 'Failed to delete prediction' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      })
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, deleted_pool_id: pool_id }), {
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
+    })
   } catch (error) {
+    console.error('Error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    })
   }
-});
+})
