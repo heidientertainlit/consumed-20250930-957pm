@@ -292,21 +292,23 @@ export default function InlineComposer() {
       }
 
       // Handle social posting
-      const payload: any = {
-        media_title: selectedMedia.title || "",
-        media_type: selectedMedia.type || "movie",
-        media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
-        media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
-        media_external_id: selectedMedia.external_id || selectedMedia.id || "",
-        media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
-        visibility: "public",
-        contains_spoilers: containsSpoilers,
-      };
+      let payload: any = {};
 
       // Add action-specific data
       if (actionMode === "thought" && thoughtText.trim()) {
-        payload.content = thoughtText.trim();
-        payload.type = "thought";
+        // Minimal payload for thought posts (like share-update-dialog-v2)
+        payload = {
+          content: thoughtText.trim(),
+          type: "thought",
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+          media_title: selectedMedia?.title || "",
+          media_type: selectedMedia?.type || "movie",
+          media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist || "",
+          media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.image || selectedMedia?.thumbnail || "",
+          media_external_id: selectedMedia?.external_id || selectedMedia?.id || "",
+          media_external_source: selectedMedia?.external_source || selectedMedia?.source || 'tmdb',
+        };
       } else if (actionMode === "rating") {
         if (ratingValue === 0) {
           toast({
@@ -317,9 +319,19 @@ export default function InlineComposer() {
           setIsPosting(false);
           return;
         }
-        payload.rating = ratingValue;
-        payload.content = `Rated ${selectedMedia.title}`;
-        payload.type = "rate-review";
+        payload = {
+          media_title: selectedMedia.title || "",
+          media_type: selectedMedia.type || "movie",
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+          media_external_id: selectedMedia.external_id || selectedMedia.id || "",
+          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+          rating: ratingValue,
+          content: `Rated ${selectedMedia.title}`,
+          type: "rate-review",
+        };
       } else if (actionMode === "prediction") {
         const filledOptions = predictionOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
         if (!predictionQuestion.trim() || filledOptions.length < 2) {
@@ -331,10 +343,20 @@ export default function InlineComposer() {
           setIsPosting(false);
           return;
         }
-        payload.content = predictionQuestion.trim();
-        payload.type = "prediction";
-        payload.prediction_question = predictionQuestion.trim();
-        payload.prediction_options = filledOptions;
+        payload = {
+          media_title: selectedMedia.title || "",
+          media_type: selectedMedia.type || "movie",
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+          media_external_id: selectedMedia.external_id || selectedMedia.id || "",
+          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+          content: predictionQuestion.trim(),
+          type: "prediction",
+          prediction_question: predictionQuestion.trim(),
+          prediction_options: filledOptions,
+        };
       } else if (actionMode === "poll") {
         const filledOptions = pollOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
         if (!pollQuestion.trim() || filledOptions.length < 2) {
@@ -346,14 +368,34 @@ export default function InlineComposer() {
           setIsPosting(false);
           return;
         }
-        payload.content = pollQuestion.trim();
-        payload.type = "poll";
-        payload.poll_question = pollQuestion.trim();
-        payload.poll_options = filledOptions;
+        payload = {
+          media_title: selectedMedia.title || "",
+          media_type: selectedMedia.type || "movie",
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+          media_external_id: selectedMedia.external_id || selectedMedia.id || "",
+          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+          content: pollQuestion.trim(),
+          type: "poll",
+          poll_question: pollQuestion.trim(),
+          poll_options: filledOptions,
+        };
       } else {
         // Just tracking media consumption
-        payload.content = `Added ${selectedMedia.title}`;
-        payload.type = "add-media";
+        payload = {
+          media_title: selectedMedia.title || "",
+          media_type: selectedMedia.type || "movie",
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+          media_external_id: selectedMedia.external_id || selectedMedia.id || "",
+          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+          content: `Added ${selectedMedia.title}`,
+          type: "add-media",
+        };
       }
 
       console.log("📤 Sending post payload:", payload);
