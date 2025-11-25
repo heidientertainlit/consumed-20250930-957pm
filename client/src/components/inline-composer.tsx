@@ -50,7 +50,7 @@ export default function InlineComposer() {
     queryFn: async () => {
       if (!session?.access_token) return null;
 
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-lists-with-media`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${session.access_token}`,
@@ -109,8 +109,8 @@ export default function InlineComposer() {
 
       // Use different endpoints for custom vs default lists
       const url = isCustom 
-        ? 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list'
-        : 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media';
+        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-to-custom-list`
+        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-media`;
 
       const body = isCustom
         ? { media: mediaData, customListId: listIdOrType }
