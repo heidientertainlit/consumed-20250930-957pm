@@ -36,6 +36,7 @@ export default function InlineComposer() {
   const [ratingValue, setRatingValue] = useState(0);
   const [predictionQuestion, setPredictionQuestion] = useState("");
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
+  const [selectedFriendId, setSelectedFriendId] = useState<string>("");
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [selectedListId, setSelectedListId] = useState<string>("");
@@ -68,6 +69,31 @@ export default function InlineComposer() {
   });
 
   const userLists = userListsData?.lists || [];
+
+  // Fetch user's friends for predictions (enabled when in prediction mode)
+  const { data: friendsData } = useQuery<any>({
+    queryKey: ['user-friends'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/manage-friendships?action=list`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch friends');
+      }
+
+      return response.json();
+    },
+    enabled: !!session?.access_token && actionMode === "prediction",
+  });
+
+  const friends = friendsData?.friends || [];
 
   // Track to specific list
   const handleTrackToList = async (media: any, listIdOrType: number | string) => {
@@ -188,6 +214,7 @@ export default function InlineComposer() {
     setRatingValue(0);
     setPredictionQuestion("");
     setPredictionOptions(["", ""]);
+    setSelectedFriendId("");
     setPollQuestion("");
     setPollOptions(["", ""]);
     setSelectedListId("");
@@ -340,28 +367,86 @@ export default function InlineComposer() {
           media_external_source: selectedMedia.external_source || selectedMedia.source,
         };
       } else if (actionMode === "prediction") {
-        const filledOptions = predictionOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
-        if (!predictionQuestion.trim() || filledOptions.length < 2) {
+        // Handle collaborative user-driven predictions
+        if (!predictionQuestion.trim()) {
           toast({
-            title: "Incomplete Prediction",
-            description: "Please add a question and at least 2 non-empty options.",
+            title: "Question Required",
+            description: "Please enter your prediction question.",
             variant: "destructive",
           });
           setIsPosting(false);
           return;
         }
-        payload = {
-          content: predictionQuestion.trim(),
-          type: "prediction",
-          visibility: "public",
-          contains_spoilers: containsSpoilers,
-          prediction_question: predictionQuestion.trim(),
-          prediction_options: filledOptions,
-          media_title: selectedMedia.title,
-          media_type: selectedMedia.type,
-          media_external_id: selectedMedia.external_id || selectedMedia.id,
-          media_external_source: selectedMedia.external_source || selectedMedia.source,
-        };
+
+        if (!selectedFriendId) {
+          toast({
+            title: "Friend Required",
+            description: "Please select a friend to predict with.",
+            variant: "destructive",
+          });
+          setIsPosting(false);
+          return;
+        }
+
+        const option1 = predictionOptions[0]?.trim();
+        const option2 = predictionOptions[1]?.trim();
+
+        if (!option1 || !option2) {
+          toast({
+            title: "Incomplete Options",
+            description: "Please fill in both prediction options.",
+            variant: "destructive",
+          });
+          setIsPosting(false);
+          return;
+        }
+
+        // Call create-prediction edge function
+        try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+          const response = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              question: predictionQuestion.trim(),
+              invited_user_id: selectedFriendId,
+              option_1_label: option1,
+              option_2_label: option2,
+              media_external_id: selectedMedia.external_id || selectedMedia.id,
+              media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+              points_reward: 20,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || errorData.message || 'Failed to create prediction');
+          }
+
+          const result = await response.json();
+
+          toast({
+            title: "Prediction Created!",
+            description: `You and your friend have been invited to predict.`,
+          });
+
+          queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+          resetComposer();
+          setIsPosting(false);
+          return;
+        } catch (error) {
+          console.error("Create prediction error:", error);
+          toast({
+            title: "Prediction Failed",
+            description: error instanceof Error ? error.message : "Unable to create prediction. Please try again.",
+            variant: "destructive",
+          });
+          setIsPosting(false);
+          return;
+        }
       } else if (actionMode === "poll") {
         const filledOptions = pollOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
         if (!pollQuestion.trim() || filledOptions.length < 2) {
@@ -795,47 +880,48 @@ export default function InlineComposer() {
                 placeholder="What do you predict will happen?"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
-              <div className="space-y-2">
-                {predictionOptions.map((option, index) => (
-                  <div key={index} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={option}
-                      onChange={(e) => {
-                        const newOptions = [...predictionOptions];
-                        newOptions[index] = e.target.value;
-                        setPredictionOptions(newOptions);
-                      }}
-                      placeholder={`Option ${index + 1}`}
-                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                    {predictionOptions.length > 2 && (
-                      <Button
-                        onClick={() => {
-                          if (predictionOptions.length > 2) {
-                            setPredictionOptions(predictionOptions.filter((_, i) => i !== index));
-                          }
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 w-9 p-0 text-gray-400 hover:text-gray-900"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                {predictionOptions.length < 10 && (
-                  <Button
-                    onClick={() => setPredictionOptions([...predictionOptions, ""])}
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs"
+              
+              {/* Friend Selector */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Invite a friend to predict</label>
+                {friends.length > 0 ? (
+                  <select
+                    value={selectedFriendId}
+                    onChange={(e) => setSelectedFriendId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
-                    + Add Option ({predictionOptions.length}/10)
-                  </Button>
+                    <option value="">Select a friend...</option>
+                    {friends.map((friend: any) => (
+                      <option key={friend.id} value={friend.id}>
+                        @{friend.username || friend.user_name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                    You don't have any friends yet. Add friends to create predictions with them!
+                  </div>
                 )}
               </div>
+
+              {/* Prediction Options (exactly 2) */}
+              <div className="space-y-2">
+                {predictionOptions.map((option, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    value={option}
+                    onChange={(e) => {
+                      const newOptions = [...predictionOptions];
+                      newOptions[index] = e.target.value;
+                      setPredictionOptions(newOptions);
+                    }}
+                    placeholder={`Option ${index + 1}`}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                ))}
+              </div>
+
               <div className="flex items-center justify-between">
                 <Button onClick={() => setActionMode("")} variant="ghost" size="sm">
                   Cancel
@@ -850,8 +936,8 @@ export default function InlineComposer() {
                   </label>
                   <Button
                     onClick={handlePost}
-                    disabled={isPosting}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    disabled={isPosting || !selectedFriendId}
+                    className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
                   </Button>
