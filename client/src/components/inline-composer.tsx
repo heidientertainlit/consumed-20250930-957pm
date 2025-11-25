@@ -638,23 +638,60 @@ export default function InlineComposer() {
             </div>
           )}
 
-          {/* Thought Mode */}
+          {/* Thought Mode - Exact feed dialog experience */}
           {actionMode === "thought" && (
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Selected Media Card */}
+              {selectedMedia && (
+                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  {selectedMedia.poster_url && (
+                    <img 
+                      src={selectedMedia.poster_url} 
+                      alt={selectedMedia.title}
+                      className="w-12 h-16 object-cover rounded"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{selectedMedia.title}</p>
+                    <p className="text-xs text-gray-500 capitalize">{selectedMedia.type || 'media'}</p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setSelectedMedia(null);
+                      setActionMode("");
+                      setStage("search");
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Thought Textarea */}
               <MentionTextarea
                 value={thoughtText}
                 onChange={setThoughtText}
-                placeholder="Add a quick thought..."
+                placeholder="Share what you're thinking..."
                 className="border border-gray-200 rounded-lg p-3 text-sm resize-none focus-visible:ring-2 focus-visible:ring-purple-500 text-gray-900 bg-white placeholder:text-gray-400 w-full"
-                minHeight="80px"
+                minHeight="100px"
                 session={session}
               />
-              <div className="flex items-center justify-between">
-                <Button onClick={() => setActionMode("")} variant="ghost" size="sm">
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-2">
+                <Button 
+                  onClick={() => setActionMode("")} 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-900"
+                >
                   Cancel
                 </Button>
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <Checkbox
                       checked={containsSpoilers}
                       onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
@@ -663,8 +700,8 @@ export default function InlineComposer() {
                   </label>
                   <Button
                     onClick={handlePost}
-                    disabled={isPosting}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    disabled={isPosting || !thoughtText.trim()}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6"
                   >
                     {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
                   </Button>
