@@ -38,11 +38,72 @@ export default function InlineComposer() {
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
-  // Fetch user's lists
+  // Fetch user's lists (enabled for quick tracking)
   const { data: userLists = [] } = useQuery<any[]>({
     queryKey: ['/api/lists', user?.id],
-    enabled: !!user?.id && actionMode === "list",
+    enabled: !!user?.id && (actionMode === "list" || stage === "search"),
   });
+
+  // Quick track to default list
+  const handleQuickTrack = async (media: any) => {
+    if (!session || !userLists.length) {
+      toast({
+        title: "Unable to Track",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Find "Currently" list or use first list
+      const defaultList = userLists.find(l => l.title === "Currently") || userLists[0];
+      if (!defaultList) {
+        toast({
+          title: "No List Found",
+          description: "Create a list first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-media-to-list`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            list_id: defaultList.id,
+            media_title: media.title || "",
+            media_type: media.type || "movie",
+            media_creator: media.creator || media.author || media.artist || "",
+            media_image_url: media.poster_url || media.image_url || media.image || media.thumbnail || "",
+            media_external_id: media.external_id || media.id || "",
+            media_external_source: media.external_source || media.source || "tmdb",
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to track");
+
+      toast({
+        title: "Tracked!",
+        description: `Added to ${defaultList.title}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['/api/lists'] });
+    } catch (error) {
+      console.error("Quick track error:", error);
+      toast({
+        title: "Track Failed",
+        description: "Unable to track item. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Auto-search when query changes
   useEffect(() => {
@@ -310,26 +371,38 @@ export default function InlineComposer() {
             <div className="mt-4 max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-4 max-h-96 overflow-y-auto">
               <div className="space-y-2">
                 {searchResults.map((media, index) => (
-                  <button
+                  <div
                     key={index}
-                    onClick={() => handleSelectMedia(media)}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
-                    data-testid={`button-select-media-${index}`}
+                    className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
                   >
-                    {(media.poster_url || media.image_url || media.image) && (
-                      <img
-                        src={media.poster_url || media.image_url || media.image}
-                        alt={media.title}
-                        className="w-12 h-16 object-cover rounded"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{media.title}</p>
-                      <p className="text-sm text-gray-600">
-                        {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
-                      </p>
-                    </div>
-                  </button>
+                    <button
+                      onClick={() => handleSelectMedia(media)}
+                      className="flex-1 flex items-center gap-3 text-left"
+                      data-testid={`button-select-media-${index}`}
+                    >
+                      {(media.poster_url || media.image_url || media.image) && (
+                        <img
+                          src={media.poster_url || media.image_url || media.image}
+                          alt={media.title}
+                          className="w-12 h-16 object-cover rounded"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">{media.title}</p>
+                        <p className="text-sm text-gray-600">
+                          {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
+                        </p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => handleQuickTrack(media)}
+                      className="px-3 py-2 bg-purple-600 text-white text-xs font-medium rounded hover:bg-purple-700 transition-colors flex-shrink-0 whitespace-nowrap"
+                      data-testid={`button-quick-track-${index}`}
+                      title="Add to Currently list"
+                    >
+                      + Track
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
