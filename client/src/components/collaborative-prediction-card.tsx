@@ -62,8 +62,6 @@ export default function CollaborativePredictionCard({
 }: CollaborativePredictionCardProps) {
   const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id, deadline, status = 'open', resolved_at, winning_option, type, userVotes = [] } = prediction;
   
-  console.log('CARD DEBUG: userVotes received:', userVotes, 'poolId:', poolId);
-  
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
