@@ -388,9 +388,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         )}
         
         {/* Action buttons - always visible, bottom right */}
-        <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-20 pointer-events-auto">
+        <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-50 pointer-events-auto">
           {/* Add to List Button */}
-          <div className="relative">
+          <div className="relative overflow-visible">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -406,7 +406,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             {/* List Menu */}
             {showListMenu && (
               <div 
-                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm"
+                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50"
                 onClick={(e) => e.stopPropagation()}
               >
                 {['Queue', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
@@ -449,7 +449,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           </div>
           
           {/* Rating Button */}
-          <div className="relative">
+          <div className="relative overflow-visible">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -464,7 +464,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             {/* Star Rating Menu */}
             {showRatingStars && (
               <div 
-                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5"
+                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50"
                 onClick={(e) => e.stopPropagation()}
               >
                 {[5, 4, 3, 2, 1].map((stars) => (
