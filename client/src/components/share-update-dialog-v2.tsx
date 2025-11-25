@@ -126,6 +126,10 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         };
       }
 
+      console.log("DEBUG: Posting to", endpoint);
+      console.log("DEBUG: Body", JSON.stringify(body));
+      console.log("DEBUG: Session access_token present?", !!session?.access_token);
+      
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -135,9 +139,12 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         body: JSON.stringify(body),
       });
 
+      console.log("DEBUG: Response status", response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to post");
+        console.log("DEBUG: Error response", errorData);
+        throw new Error(errorData.error || errorData.message || "Failed to post");
       }
 
       toast({
