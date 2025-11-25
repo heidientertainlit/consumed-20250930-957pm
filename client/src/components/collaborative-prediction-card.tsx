@@ -382,11 +382,21 @@ export default function CollaborativePredictionCard({
             ) : (
               <p className="text-sm text-gray-700">
                 <span className="font-semibold text-gray-900">@{creator.username}</span>
-                <span className="text-gray-500"> asked:</span>
+                {invitedFriend && (
+                  <>
+                    <span className="text-gray-500"> and </span>
+                    <span className="font-semibold text-gray-900">@{invitedFriend.username}</span>
+                  </>
+                )}
+                <span className="text-gray-500"> predict</span>
+                {mediaTitle && (
+                  <>
+                    <span className="text-gray-500"> about </span>
+                    <span className="font-semibold text-gray-900">{mediaTitle}</span>
+                  </>
+                )}
+                <span className="text-gray-500">:</span>
               </p>
-            )}
-            {mediaTitle && (
-              <p className="text-xs text-gray-500">about {mediaTitle}</p>
             )}
           </div>
         </div>
