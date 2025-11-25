@@ -391,16 +391,6 @@ export default function InlineComposer() {
           return;
         }
 
-        if (!selectedFriendId) {
-          toast({
-            title: "Friend Required",
-            description: "Please select a friend to predict with.",
-            variant: "destructive",
-          });
-          setIsPosting(false);
-          return;
-        }
-
         if (!creatorPrediction) {
           toast({
             title: "Your Prediction Required",
@@ -905,27 +895,21 @@ export default function InlineComposer() {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               
-              {/* Friend Selector */}
+              {/* Friend Selector (Optional) */}
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Invite a friend to predict</label>
-                {friends.length > 0 ? (
-                  <select
-                    value={selectedFriendId}
-                    onChange={(e) => setSelectedFriendId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">Select a friend...</option>
-                    {friends.map((friend: any) => (
-                      <option key={friend.id || friend.user_id} value={friend.id || friend.user_id}>
-                        @{friend.username || friend.user_name || friend.display_name || 'User'}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
-                    No friends available yet. Add friends to create predictions with them!
-                  </div>
-                )}
+                <label className="text-sm font-medium text-gray-700 block mb-2">Invite a friend to predict (optional)</label>
+                <select
+                  value={selectedFriendId}
+                  onChange={(e) => setSelectedFriendId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">No one (just me)</option>
+                  {friends.map((friend: any) => (
+                    <option key={friend.id || friend.user_id} value={friend.id || friend.user_id}>
+                      @{friend.username || friend.user_name || friend.display_name || 'User'}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Prediction Options (exactly 2) with Creator Selection */}
@@ -974,7 +958,7 @@ export default function InlineComposer() {
                   </label>
                   <Button
                     onClick={handlePost}
-                    disabled={isPosting || !selectedFriendId}
+                    disabled={isPosting}
                     className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}

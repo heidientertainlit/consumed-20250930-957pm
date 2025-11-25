@@ -56,27 +56,32 @@ serve(async (req) => {
       points_reward = 20
     } = await req.json();
 
-    if (!question || !invited_user_id || !option_1_label || !option_2_label) {
+    if (!question || !option_1_label || !option_2_label) {
       return new Response(JSON.stringify({ 
-        error: 'question, invited_user_id, option_1_label, and option_2_label are required' 
+        error: 'question, option_1_label, and option_2_label are required' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Verify invited user exists
-    const { data: invitedUser, error: invitedUserError } = await supabase
-      .from('users')
-      .select('id, user_name')
-      .eq('id', invited_user_id)
-      .single();
+    // Verify invited user exists if provided
+    let invitedUser = null;
+    if (invited_user_id) {
+      const { data: user, error: invitedUserError } = await supabase
+        .from('users')
+        .select('id, user_name')
+        .eq('id', invited_user_id)
+        .single();
 
-    if (invitedUserError || !invitedUser) {
-      return new Response(JSON.stringify({ error: 'Invited user not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      if (invitedUserError || !user) {
+        return new Response(JSON.stringify({ error: 'Invited user not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      invitedUser = user;
     }
 
     // Use admin client to create prediction
