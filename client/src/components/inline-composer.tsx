@@ -37,6 +37,7 @@ export default function InlineComposer() {
   // Common state
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [openTrackDropdown, setOpenTrackDropdown] = useState<number | null>(null);
 
   // Fetch user's lists (enabled for quick tracking)
   const { data: userLists = [] } = useQuery<any[]>({
@@ -44,9 +45,9 @@ export default function InlineComposer() {
     enabled: !!user?.id && (actionMode === "list" || stage === "search"),
   });
 
-  // Quick track to default list
-  const handleQuickTrack = async (media: any) => {
-    if (!session || !userLists.length) {
+  // Track to specific list
+  const handleTrackToList = async (media: any, listId: number | string) => {
+    if (!session) {
       toast({
         title: "Unable to Track",
         description: "Please try again.",
@@ -56,16 +57,8 @@ export default function InlineComposer() {
     }
 
     try {
-      // Find "Currently" list or use first list
-      const defaultList = userLists.find(l => l.title === "Currently") || userLists[0];
-      if (!defaultList) {
-        toast({
-          title: "No List Found",
-          description: "Create a list first.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const list = userLists.find(l => l.id === listId);
+      if (!list) throw new Error("List not found");
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-media-to-list`,
@@ -76,7 +69,7 @@ export default function InlineComposer() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            list_id: defaultList.id,
+            list_id: listId,
             media_title: media.title || "",
             media_type: media.type || "movie",
             media_creator: media.creator || media.author || media.artist || "",
@@ -91,12 +84,13 @@ export default function InlineComposer() {
 
       toast({
         title: "Tracked!",
-        description: `Added to ${defaultList.title}`,
+        description: `Added to ${list.title}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ['/api/lists'] });
+      setOpenTrackDropdown(null);
     } catch (error) {
-      console.error("Quick track error:", error);
+      console.error("Track error:", error);
       toast({
         title: "Track Failed",
         description: "Unable to track item. Please try again.",
@@ -373,35 +367,53 @@ export default function InlineComposer() {
                 {searchResults.map((media, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
+                    className="relative"
                   >
-                    <button
-                      onClick={() => handleSelectMedia(media)}
-                      className="flex-1 flex items-center gap-3 text-left"
-                      data-testid={`button-select-media-${index}`}
-                    >
-                      {(media.poster_url || media.image_url || media.image) && (
-                        <img
-                          src={media.poster_url || media.image_url || media.image}
-                          alt={media.title}
-                          className="w-12 h-16 object-cover rounded"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">{media.title}</p>
-                        <p className="text-sm text-gray-600">
-                          {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
-                        </p>
+                    <div className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all">
+                      <button
+                        onClick={() => handleSelectMedia(media)}
+                        className="flex-1 flex items-center gap-3 text-left"
+                        data-testid={`button-select-media-${index}`}
+                      >
+                        {(media.poster_url || media.image_url || media.image) && (
+                          <img
+                            src={media.poster_url || media.image_url || media.image}
+                            alt={media.title}
+                            className="w-12 h-16 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{media.title}</p>
+                          <p className="text-sm text-gray-600">
+                            {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => setOpenTrackDropdown(openTrackDropdown === index ? null : index)}
+                        className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors flex-shrink-0 whitespace-nowrap"
+                        data-testid={`button-track-dropdown-${index}`}
+                        title="Add to list"
+                      >
+                        + Track
+                      </button>
+                    </div>
+
+                    {/* Dropdown Menu */}
+                    {openTrackDropdown === index && userLists.length > 0 && (
+                      <div className="absolute right-0 top-full mt-1 w-64 bg-gray-900 text-white rounded-lg shadow-xl z-50 py-2">
+                        {userLists.map((list) => (
+                          <button
+                            key={list.id}
+                            onClick={() => handleTrackToList(media, list.id)}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-800 transition-colors text-sm"
+                            data-testid={`button-add-to-list-${list.id}`}
+                          >
+                            Add to {list.title}
+                          </button>
+                        ))}
                       </div>
-                    </button>
-                    <button
-                      onClick={() => handleQuickTrack(media)}
-                      className="px-3 py-2 bg-purple-600 text-white text-xs font-medium rounded hover:bg-purple-700 transition-colors flex-shrink-0 whitespace-nowrap"
-                      data-testid={`button-quick-track-${index}`}
-                      title="Add to Currently list"
-                    >
-                      + Track
-                    </button>
+                    )}
                   </div>
                 ))}
               </div>
