@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus } from "lucide-react";
+import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -369,10 +369,10 @@ export default function InlineComposer() {
                     key={index}
                     className="relative"
                   >
-                    <div className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all">
+                    <div className="relative group">
                       <button
                         onClick={() => handleSelectMedia(media)}
-                        className="flex-1 flex items-center gap-3 text-left"
+                        className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
                         data-testid={`button-select-media-${index}`}
                       >
                         {(media.poster_url || media.image_url || media.image) && (
@@ -389,14 +389,26 @@ export default function InlineComposer() {
                           </p>
                         </div>
                       </button>
-                      <button
-                        onClick={() => setOpenTrackDropdown(openTrackDropdown === index ? null : index)}
-                        className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors flex-shrink-0 whitespace-nowrap"
-                        data-testid={`button-track-dropdown-${index}`}
-                        title="Add to list"
-                      >
-                        + Track
-                      </button>
+
+                      {/* Icon buttons overlay */}
+                      <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm px-3 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => setOpenTrackDropdown(openTrackDropdown === index ? null : index)}
+                          className="text-white hover:text-purple-400 transition-colors"
+                          data-testid={`button-add-media-${index}`}
+                          title="Add to list"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => setOpenTrackDropdown(openTrackDropdown === index ? null : index)}
+                          className="text-white hover:text-yellow-400 transition-colors"
+                          data-testid={`button-star-media-${index}`}
+                          title="Add to favorites"
+                        >
+                          <Star className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Dropdown Menu */}
