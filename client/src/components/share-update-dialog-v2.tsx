@@ -82,13 +82,23 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
       return;
     }
 
-    if (postMode === "tribe" && predictionOptions.filter(o => o.trim()).length < 2) {
-      toast({
-        title: "Invalid Poll",
-        description: "Please provide at least 2 options for your poll.",
-        variant: "destructive",
-      });
-      return;
+    if (postMode === "tribe") {
+      if (!content.trim()) {
+        toast({
+          title: "Missing Question",
+          description: "Please enter a poll question.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (predictionType !== "yes-no" && predictionOptions.filter(o => o.trim()).length < 2) {
+        toast({
+          title: "Invalid Poll",
+          description: "Please provide at least 2 options for your poll.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsPosting(true);
@@ -943,7 +953,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 onClick={handlePost}
                 disabled={Boolean(
                   isPosting || 
-                  (postMode !== "tribe" && !content.trim()) || 
+                  (!content.trim() && postMode !== "text") || 
                   content.length > maxChars ||
                   (postMode === "mood" && !conversationTopic) ||
                   (postMode === "prediction" && content && predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim())) ||
