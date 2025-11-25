@@ -2137,12 +2137,12 @@ export default function Feed() {
                         
                         {/* See more link */}
                         {post.user && (
-                        <button
-                          onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
-                          className="text-sm text-gray-500 hover:text-purple-600 transition-colors"
-                        >
-                          See more of @{post.user.username}'s lists →
-                        </button>
+                          <button
+                            onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                            className="mt-2 text-sm text-gray-500 hover:text-purple-600 transition-colors"
+                          >
+                            See more of @{post.user.username}'s lists →
+                          </button>
                         )}
                       </div>
                     )
