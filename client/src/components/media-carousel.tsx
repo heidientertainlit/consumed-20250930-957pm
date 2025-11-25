@@ -346,7 +346,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const platformBadge = getPlatformBadge();
 
   return (
-    <div className="group relative">
+    <div className="group relative overflow-visible">
       {/* Poster */}
       <div
         className="relative aspect-[2/3] rounded-lg overflow-hidden"
@@ -406,7 +406,14 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             {/* List Menu */}
             {showListMenu && (
               <div 
-                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50"
+                className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50"
+                style={{
+                  bottom: 'auto',
+                  right: 'auto',
+                  left: '50%',
+                  top: '-10px',
+                  transform: 'translateX(-50%) translateY(-100%)'
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {['Queue', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
@@ -464,7 +471,14 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             {/* Star Rating Menu */}
             {showRatingStars && (
               <div 
-                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50"
+                className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50"
+                style={{
+                  bottom: 'auto',
+                  right: 'auto',
+                  left: '50%',
+                  top: '-10px',
+                  transform: 'translateX(-50%) translateY(-100%)'
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {[5, 4, 3, 2, 1].map((stars) => (
