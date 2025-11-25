@@ -129,23 +129,32 @@ serve(async (req) => {
 
     console.log('DEBUG: Insert data:', JSON.stringify(insertData));
 
-    // Create prediction pool - no select() to avoid silent failures
+    // Create prediction pool with explicit select to confirm insert
     const { data: pool, error: poolError } = await supabaseAdmin
       .from('prediction_pools')
-      .insert(insertData);
+      .insert(insertData)
+      .select('id, title, origin_type, origin_user_id');
 
     if (poolError) {
       console.error('ERROR: Failed to insert prediction pool');
       console.error('Error code:', poolError.code);
       console.error('Error message:', poolError.message);
-      console.error('Error details:', poolError);
+      console.error('Error full:', JSON.stringify(poolError));
       return new Response(JSON.stringify({ error: poolError.message, code: poolError.code }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('SUCCESS: Pool created and committed to database');
+    if (!pool) {
+      console.error('ERROR: No data returned after insert - possible RLS or trigger issue');
+      return new Response(JSON.stringify({ error: 'Insert failed - no confirmation' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('SUCCESS: Pool created in database:', JSON.stringify(pool));
 
     return new Response(JSON.stringify({ 
       success: true,
