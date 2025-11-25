@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 
 type ComposerStage = "search" | "actions";
-type ActionMode = "" | "thought" | "rating" | "prediction" | "poll" | "list";
+type ActionMode = "" | "thought" | "rating" | "prediction" | "poll" | "list" | "track";
 
 export default function InlineComposer() {
   const { session, user } = useAuth();
@@ -618,7 +618,7 @@ export default function InlineComposer() {
                   <span className="text-gray-400">→</span>
                 </button>
                 <button
-                  onClick={handlePost}
+                  onClick={() => setActionMode("track")}
                   disabled={isPosting}
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
                   data-testid="button-just-track"
@@ -627,11 +627,7 @@ export default function InlineComposer() {
                     <span className="text-lg">✓</span>
                     <span className="text-sm font-medium text-gray-900">Just track it</span>
                   </div>
-                  {isPosting ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                  ) : (
-                    <span className="text-gray-400">→</span>
-                  )}
+                  <span className="text-gray-400">→</span>
                 </button>
               </div>
             </div>
@@ -862,6 +858,37 @@ export default function InlineComposer() {
                     {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Track Mode - Just track without posting */}
+          {actionMode === "track" && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-700 mb-2">Select a list to track to:</p>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {userLists && userLists.length > 0 ? (
+                  userLists.map((list: any) => (
+                    <button
+                      key={list.id}
+                      onClick={() => {
+                        handleTrackToList(selectedMedia, list.id);
+                        resetComposer();
+                      }}
+                      className="w-full p-3 rounded-lg border text-left transition-all border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+                      data-testid={`button-track-to-list-${list.id}`}
+                    >
+                      <p className="font-medium text-gray-900">{list.title || list.name}</p>
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">No lists found. Create one first!</p>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <Button onClick={() => setActionMode("")} variant="ghost" size="sm">
+                  Cancel
+                </Button>
               </div>
             </div>
           )}
