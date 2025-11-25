@@ -265,44 +265,11 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
     }
   };
 
-  // Get platforms with fallbacks - always return platforms even without API data
+  // Get platforms - only from API data, no fallbacks
   const getPlatforms = () => {
-    const mediaType = media.mediaType?.toLowerCase();
-    
-    // If API returned platforms, use them
     if (mediaDetails?.platforms && mediaDetails.platforms.length > 0) {
       return mediaDetails.platforms;
     }
-    
-    // Always provide fallback platforms based on media type
-    if (mediaType === 'podcast') {
-      return [
-        { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
-        { name: 'Apple', url: `https://podcasts.apple.com/search?term=${encodeURIComponent(media.title)}` },
-      ];
-    }
-    
-    if (mediaType === 'music') {
-      return [
-        { name: 'Spotify', url: `https://open.spotify.com/search/${encodeURIComponent(media.title)}` },
-        { name: 'Apple', url: `https://music.apple.com/search?term=${encodeURIComponent(media.title)}` },
-      ];
-    }
-    
-    if (mediaType === 'movie' || mediaType === 'tv') {
-      return [
-        { name: 'Netflix', url: `https://www.netflix.com/search?q=${encodeURIComponent(media.title)}` },
-        { name: 'Prime', url: `https://www.amazon.com/s?k=${encodeURIComponent(media.title)}` },
-      ];
-    }
-    
-    if (mediaType === 'book') {
-      return [
-        { name: 'Amazon', url: `https://www.amazon.com/s?k=${encodeURIComponent(media.title)}` },
-        { name: 'Goodreads', url: `https://www.goodreads.com/search?q=${encodeURIComponent(media.title)}` },
-      ];
-    }
-    
     return [];
   };
 
@@ -324,7 +291,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   return (
     <div className="pt-2 mt-2 border-t border-gray-200 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
       {/* Left: Platform chips with label */}
-      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+      <div className="flex items-center gap-1.5 flex-wrap flex-1">
         {platforms.length > 0 && (
           <>
             <span className="text-xs text-gray-500 whitespace-nowrap">{getPlatformLabel()}:</span>
@@ -334,14 +301,14 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
                 href={platform.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-colors whitespace-nowrap text-xs"
                 onClick={(e) => e.stopPropagation()}
                 data-testid={`platform-chip-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 {platform.logo && (
-                  <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
+                  <img src={platform.logo} alt={platform.name} className="w-3.5 h-3.5 object-contain flex-shrink-0" />
                 )}
-                <span className="text-xs text-gray-700">{platform.name}</span>
+                <span className="text-gray-700 font-medium">{platform.name}</span>
               </a>
             ))}
           </>
