@@ -94,6 +94,8 @@ serve(async (req) => {
     const poolId = `user-${appUser.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
     // Create prediction pool
+    const defaultDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days from now
+    
     const { data: pool, error: poolError } = await supabaseAdmin
       .from('prediction_pools')
       .insert({
@@ -111,7 +113,7 @@ serve(async (req) => {
         invited_user_id: invited_user_id,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
-        deadline: deadline || null,
+        deadline: deadline || defaultDeadline,
         likes_count: 0,
         comments_count: 0,
         participants: 0,
