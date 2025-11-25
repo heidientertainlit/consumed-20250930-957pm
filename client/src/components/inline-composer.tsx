@@ -393,7 +393,7 @@ export default function InlineComposer() {
         };
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inline-post`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session?.access_token}`,
