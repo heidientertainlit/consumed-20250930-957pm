@@ -287,7 +287,8 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   // Extract lists from response object
   const listsData = userLists?.lists || userLists || [];
   const listsArray = Array.isArray(listsData) ? listsData : [];
-  const defaultLists = listsArray.filter((list: any) => list.is_default);
+  // Filter out 'All' list from the dropdown (only for viewing, not for adding)
+  const defaultLists = listsArray.filter((list: any) => list.is_default && list.title !== 'All');
   const customLists = listsArray.filter((list: any) => !list.is_default);
 
   const displayedPlatforms = platforms.slice(0, 2);
