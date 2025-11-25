@@ -161,14 +161,22 @@ serve(async (req) => {
 
       console.log('Found predictions:', predictions?.length || 0);
 
+      console.log('DEBUG: predictions data:', predictions);
+      
       // Fetch vote counts for predictions
       let voteCounts: { [poolId: string]: { [option: string]: number } } = {};
       if (predictions && predictions.length > 0) {
         const predictionIds = predictions.map(p => p.id);
-        const { data: votes } = await supabase
+        console.log('DEBUG: predictionIds for vote lookup:', predictionIds);
+        
+        const { data: votes, error: votesError } = await supabase
           .from('user_predictions')
           .select('pool_id, prediction')
           .in('pool_id', predictionIds);
+
+        if (votesError) {
+          console.error('DEBUG: Error fetching votes:', votesError);
+        }
 
         // Count votes by pool and prediction option
         votes?.forEach((vote: any) => {
@@ -178,16 +186,21 @@ serve(async (req) => {
           voteCounts[vote.pool_id][vote.prediction] = (voteCounts[vote.pool_id][vote.prediction] || 0) + 1;
         });
 
-        console.log('Vote counts:', voteCounts);
+        console.log('DEBUG: Vote counts:', voteCounts);
       }
 
       // Check if current user has voted on any predictions
-      const { data: userVotes } = await supabase
+      const { data: userVotes, error: userVotesError } = await supabase
         .from('user_predictions')
         .select('pool_id')
         .eq('user_id', appUser.id);
 
+      if (userVotesError) {
+        console.error('DEBUG: Error fetching user votes:', userVotesError);
+      }
+
       const userVotedPoolIds = new Set(userVotes?.map(v => v.pool_id) || []);
+      console.log('DEBUG: User voted pool IDs:', Array.from(userVotedPoolIds));
 
       const userIds = [
         ...new Set([
