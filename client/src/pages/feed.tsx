@@ -1620,30 +1620,8 @@ export default function Feed() {
                 // Only show Recommended for you carousel
                 const currentCarousel = { type: 'mixed', title: 'Recommended for you', items: recommendedContent };
                 
-                // Dummy predictions data
+                // Dummy predictions data (user-created only - consumed ones to be added later)
                 const predictions = [
-                  {
-                    id: "pred-consumed",
-                    question: "Will The Bear win Outstanding Comedy Series at the 2025 Emmys?",
-                    creator: { username: "consumed" },
-                    invitedFriend: { username: "team" },
-                    creatorPrediction: "Yes",
-                    friendPrediction: "No",
-                    mediaTitle: "The Bear",
-                    participantCount: 142,
-                    userHasAnswered: false,
-                    poolId: "pred-pool-consumed",
-                    voteCounts: { yes: 89, no: 53, total: 142 },
-                    likesCount: 45,
-                    commentsCount: 18,
-                    isLiked: false,
-                    origin_type: 'consumed' as const,
-                    origin_user_id: null,
-                    deadline: new Date(Date.now() - 86400000).toISOString(),
-                    status: 'open' as const,
-                    resolved_at: null,
-                    winning_option: null
-                  },
                   {
                     id: "pred-1",
                     question: "Will Dune Part 2 win Best Picture at the Oscars?",
