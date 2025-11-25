@@ -1,5 +1,6 @@
 import { Plus, Star, Film, Tv, Music, Book, Mic } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
