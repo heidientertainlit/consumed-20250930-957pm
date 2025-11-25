@@ -92,7 +92,7 @@ serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      console.log('Getting social posts...');
+      console.log('Getting social posts and predictions...');
       
       // Get pagination params from query string
       const url = new URL(req.url);
@@ -136,7 +136,39 @@ serve(async (req) => {
 
       console.log('Found posts:', posts?.length || 0);
 
-      const userIds = [...new Set(posts?.map(post => post.user_id) || [])];
+      // Fetch user-created predictions from prediction_pools
+      const { data: predictions, error: predictionsError } = await supabase
+        .from('prediction_pools')
+        .select(`
+          id,
+          title,
+          description,
+          type,
+          status,
+          options,
+          origin_user_id,
+          invited_user_id,
+          media_external_id,
+          media_external_source,
+          participants,
+          likes_count,
+          comments_count,
+          created_at
+        `)
+        .eq('origin_type', 'user')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      console.log('Found predictions:', predictions?.length || 0);
+
+      const userIds = [
+        ...new Set([
+          ...((posts?.map(post => post.user_id) || []) as string[]),
+          ...((predictions?.map(pred => pred.origin_user_id) || []) as string[]),
+          ...((predictions?.map(pred => pred.invited_user_id) || []).filter(id => id) as string[])
+        ])
+      ];
+      
       const { data: users, error: usersError } = await supabase
         .from('users')
         .select('id, user_name, display_name, email, avatar')
@@ -312,8 +344,46 @@ serve(async (req) => {
         };
       }) || [];
 
-      // Combine grouped media items with non-media posts and sort by timestamp
-      const allItems = [...groupedItems, ...transformedNonMediaPosts].sort((a, b) => {
+      // Transform predictions into feed items
+      const transformedPredictions = (predictions || []).map((pred: any) => {
+        const creatorUser = userMap.get(pred.origin_user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+        const invitedUser = pred.invited_user_id ? (userMap.get(pred.invited_user_id) || null) : null;
+
+        return {
+          id: pred.id,
+          type: 'prediction',
+          poolId: pred.id,
+          question: pred.title,
+          description: pred.description,
+          status: pred.status,
+          options: pred.options || [],
+          optionVotes: (pred.options || []).map((opt: string) => ({
+            option: opt,
+            count: 0,
+            percentage: 0
+          })),
+          creator: {
+            id: pred.origin_user_id,
+            username: creatorUser.user_name || 'Unknown',
+            displayName: creatorUser.display_name || creatorUser.user_name || 'Unknown',
+            avatar: creatorUser.avatar || ''
+          },
+          invitedFriend: invitedUser ? {
+            id: pred.invited_user_id,
+            username: invitedUser.user_name || 'Unknown',
+            displayName: invitedUser.display_name || invitedUser.user_name || 'Unknown'
+          } : null,
+          timestamp: pred.created_at,
+          likes: pred.likes_count || 0,
+          comments: pred.comments_count || 0,
+          participantCount: pred.participants || 0,
+          mediaExternalId: pred.media_external_id,
+          mediaExternalSource: pred.media_external_source
+        };
+      }) || [];
+
+      // Combine all items (grouped media, non-media posts, and predictions) and sort by timestamp
+      const allItems = [...groupedItems, ...transformedNonMediaPosts, ...transformedPredictions].sort((a, b) => {
         const aTime = new Date(a.timestamp).getTime();
         const bTime = new Date(b.timestamp).getTime();
         return bTime - aTime; // Most recent first
@@ -322,6 +392,7 @@ serve(async (req) => {
       console.log('Returning items:', allItems.length);
       console.log('Grouped media items:', groupedItems.length);
       console.log('Non-media posts:', transformedNonMediaPosts.length);
+      console.log('Predictions:', transformedPredictions.length);
 
       return new Response(JSON.stringify(allItems), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
