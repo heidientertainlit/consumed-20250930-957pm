@@ -89,6 +89,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [showRatingStars, setShowRatingStars] = useState(false);
   const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+  const [showListMenu, setShowListMenu] = useState(false);
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -388,126 +389,111 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         
         {/* Action buttons - always visible, bottom right */}
         <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-20 pointer-events-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button
-                size="icon"
-                variant="secondary"
-                className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md pointer-events-auto"
-                data-testid={`add-to-list-${item.id}`}
-                disabled={addToListMutation.isPending}
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              side="top" 
-              sideOffset={8}
-              alignOffset={-16}
-              className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
+          {/* Add to List Button */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowListMenu(!showListMenu);
+              }}
+              className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
+              data-testid={`add-to-list-${item.id}`}
+              disabled={addToListMutation.isPending}
             >
-              <DropdownMenuItem
-                onClick={(e) => handleAddToList('Queue', false, e)}
-                className="cursor-pointer text-white hover:bg-gray-800"
-                disabled={addToListMutation.isPending}
+              <Plus className="h-3 w-3" />
+            </button>
+            
+            {/* List Menu */}
+            {showListMenu && (
+              <div 
+                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm"
+                onClick={(e) => e.stopPropagation()}
               >
-                Add to Queue
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => handleAddToList('Currently', false, e)}
-                className="cursor-pointer text-white hover:bg-gray-800"
-                disabled={addToListMutation.isPending}
-              >
-                Add to Currently
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => handleAddToList('Finished', false, e)}
-                className="cursor-pointer text-white hover:bg-gray-800"
-                disabled={addToListMutation.isPending}
-              >
-                Add to Finished
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => handleAddToList('Did Not Finish', false, e)}
-                className="cursor-pointer text-white hover:bg-gray-800"
-                disabled={addToListMutation.isPending}
-              >
-                Add to Did Not Finish
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => handleAddToList('Favorites', false, e)}
-                className="cursor-pointer text-white hover:bg-gray-800"
-                disabled={addToListMutation.isPending}
-              >
-                Add to Favorites
-              </DropdownMenuItem>
-              
-              {/* Custom Lists */}
-              {lists.filter((list: any) => list.isCustom).length > 0 && (
-                <>
-                  <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t border-gray-700 mt-1 pt-2">
-                    MY CUSTOM LISTS
-                  </div>
-                  {lists
-                    .filter((list: any) => list.isCustom)
-                    .map((list: any) => (
-                      <DropdownMenuItem
-                        key={list.id}
-                        onClick={(e) => handleAddToList(list.id, true, e)}
-                        className="cursor-pointer text-white hover:bg-gray-800"
-                        disabled={addToListMutation.isPending}
-                      >
-                        Add to {list.title}
-                      </DropdownMenuItem>
-                    ))}
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {['Queue', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
+                  <button
+                    key={listTitle}
+                    onClick={() => {
+                      handleAddToList(listTitle, false);
+                      setShowListMenu(false);
+                    }}
+                    disabled={addToListMutation.isPending}
+                    className="px-2 py-1 text-white text-xs hover:bg-gray-700 rounded transition-colors text-left"
+                  >
+                    {listTitle}
+                  </button>
+                ))}
+                
+                {/* Custom Lists */}
+                {lists.filter((list: any) => list.isCustom).length > 0 && (
+                  <>
+                    <div className="border-t border-gray-600 my-1" />
+                    {lists
+                      .filter((list: any) => list.isCustom)
+                      .map((list: any) => (
+                        <button
+                          key={list.id}
+                          onClick={() => {
+                            handleAddToList(list.id, true);
+                            setShowListMenu(false);
+                          }}
+                          disabled={addToListMutation.isPending}
+                          className="px-2 py-1 text-white text-xs hover:bg-gray-700 rounded transition-colors text-left"
+                        >
+                          {list.title}
+                        </button>
+                      ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md pointer-events-auto"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowRatingStars(!showRatingStars);
-            }}
-            data-testid={`rate-${item.id}`}
-          >
-            <Star className="h-3 w-3" />
-          </Button>
-          
-          {/* Inline vertical star rating */}
-          {showRatingStars && (
-            <div 
-              className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5"
-              onClick={(e) => e.stopPropagation()}
+          {/* Rating Button */}
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowRatingStars(!showRatingStars);
+              }}
+              className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
+              data-testid={`rate-${item.id}`}
             >
-              {[5, 4, 3, 2, 1].map((stars) => (
-                <button
-                  key={stars}
-                  type="button"
-                  onClick={() => handleRateClick(stars)}
-                  onMouseEnter={() => setHoveredStar(stars)}
-                  onMouseLeave={() => setHoveredStar(null)}
-                  disabled={rateMutation.isPending}
-                  className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
-                  data-testid={`star-${stars}`}
-                >
-                  <Star 
-                    className={`h-4 w-4 transition-all ${
-                      hoveredStar === stars
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-gray-400'
-                    }`}
-                  />
-                  <span className="text-white text-xs font-medium">{stars}</span>
-                </button>
-              ))}
-            </div>
-          )}
+              <Star className="h-3 w-3" />
+            </button>
+            
+            {/* Star Rating Menu */}
+            {showRatingStars && (
+              <div 
+                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {[5, 4, 3, 2, 1].map((stars) => (
+                  <button
+                    key={stars}
+                    type="button"
+                    onClick={() => {
+                      handleRateClick(stars);
+                      setShowRatingStars(false);
+                    }}
+                    onMouseEnter={() => setHoveredStar(stars)}
+                    onMouseLeave={() => setHoveredStar(null)}
+                    disabled={rateMutation.isPending}
+                    className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
+                    data-testid={`star-${stars}`}
+                  >
+                    <Star 
+                      className={`h-4 w-4 transition-all ${
+                        hoveredStar === stars
+                          ? 'text-yellow-400 fill-yellow-400'
+                          : 'text-gray-400'
+                      }`}
+                    />
+                    <span className="text-white text-xs font-medium">{stars}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
       </div>
