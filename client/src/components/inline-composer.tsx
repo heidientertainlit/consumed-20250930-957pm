@@ -41,6 +41,8 @@ export default function InlineComposer() {
   const [creatorPrediction, setCreatorPrediction] = useState<string>("");
   const [friendSearchInput, setFriendSearchInput] = useState("");
   const [showFriendDropdown, setShowFriendDropdown] = useState(false);
+  const [friendSearchResults, setFriendSearchResults] = useState<any[]>([]);
+  const [isSearchingFriends, setIsSearchingFriends] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [selectedListId, setSelectedListId] = useState<string>("");
@@ -74,39 +76,40 @@ export default function InlineComposer() {
 
   const userLists = userListsData?.lists || [];
 
-  // Fetch user's friends for predictions (using exact same API as friends.tsx)
-  const { data: friendsData } = useQuery<any>({
-    queryKey: ['prediction-friends'],
-    queryFn: async () => {
-      if (!session?.access_token) return { friends: [] };
+  // Search for friends (using exact same logic as profile page)
+  const searchFriends = async (query: string) => {
+    if (!query || query.length < 2 || !session?.access_token) {
+      setFriendSearchResults([]);
+      return;
+    }
 
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships`, {
+    setIsSearchingFriends(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-friendships', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action: 'getFriends' }),
+        body: JSON.stringify({
+          action: 'searchUsers',
+          query: query
+        })
       });
 
-      if (!response.ok) return { friends: [] };
-      return response.json();
-    },
-    enabled: !!session?.access_token && actionMode === "prediction",
-  });
-
-  // Extract friend list - handle both formats (getFriends returns different structure)
-  const allFriends = (friendsData?.friends || [])
-    .map((f: any) => f.user || f)
-    .filter((f: any) => f?.id);
-  
-  // Filter friends based on search input
-  const filteredFriends = friendSearchInput.trim() 
-    ? allFriends.filter((f: any) => {
-        const name = (f.user_name || f.username || f.display_name || '').toLowerCase();
-        return name.includes(friendSearchInput.toLowerCase());
-      })
-    : allFriends;
+      if (response.ok) {
+        const data = await response.json();
+        setFriendSearchResults(data.users || []);
+      } else {
+        setFriendSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Friend search error:', error);
+      setFriendSearchResults([]);
+    } finally {
+      setIsSearchingFriends(false);
+    }
+  };
 
   // Track to specific list
   const handleTrackToList = async (media: any, listIdOrType: number | string) => {
@@ -232,6 +235,8 @@ export default function InlineComposer() {
     setCreatorPrediction("");
     setFriendSearchInput("");
     setShowFriendDropdown(false);
+    setFriendSearchResults([]);
+    setIsSearchingFriends(false);
     setPollQuestion("");
     setPollOptions(["", ""]);
     setSelectedListId("");
@@ -907,68 +912,85 @@ export default function InlineComposer() {
                     type="text"
                     value={selectedFriendId ? selectedFriendName : friendSearchInput}
                     onChange={(e) => {
-                      setFriendSearchInput(e.target.value);
+                      const value = e.target.value;
+                      setFriendSearchInput(value);
                       if (selectedFriendId) {
                         setSelectedFriendId("");
                         setSelectedFriendName("");
                       }
+                      searchFriends(value);
                       setShowFriendDropdown(true);
                     }}
-                    onFocus={() => setShowFriendDropdown(true)}
+                    onFocus={() => {
+                      setShowFriendDropdown(true);
+                      if (friendSearchInput.length >= 2) {
+                        searchFriends(friendSearchInput);
+                      }
+                    }}
                     placeholder="Search friends or leave blank for just you..."
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                   
                   {/* Friend Dropdown */}
-                  {showFriendDropdown && (friendSearchInput || allFriends.length > 0) && (
+                  {showFriendDropdown && !selectedFriendId && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
-                      {selectedFriendId && (
-                        <button
-                          onClick={() => {
-                            setSelectedFriendId("");
-                            setSelectedFriendName("");
-                            setFriendSearchInput("");
-                            setShowFriendDropdown(false);
-                          }}
-                          className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-200"
-                        >
-                          ✓ Clear selection (just me)
-                        </button>
-                      )}
-                      
-                      {filteredFriends.length > 0 ? (
-                        filteredFriends.map((friend: any) => (
-                          <button
-                            key={friend.id || friend.user_id}
-                            onClick={() => {
-                              setSelectedFriendId(friend.id || friend.user_id);
-                              setSelectedFriendName(`@${friend.user_name || friend.username || friend.display_name || 'User'}`);
-                              setFriendSearchInput("");
-                              setShowFriendDropdown(false);
-                            }}
-                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
-                          >
-                            @{friend.user_name || friend.username || friend.display_name || 'User'}
-                          </button>
-                        ))
-                      ) : friendSearchInput ? (
-                        <div className="px-3 py-2 text-sm text-gray-500">
-                          No friends matching "{friendSearchInput}"
+                      {isSearchingFriends ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="text-xs text-gray-500">Searching...</div>
                         </div>
-                      ) : allFriends.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-gray-500">
-                          No friends yet. Add friends to predict with them!
+                      ) : friendSearchResults.length > 0 ? (
+                        <div className="space-y-1">
+                          {friendSearchResults.map((friend: any) => (
+                            <button
+                              key={friend.id}
+                              onClick={() => {
+                                setSelectedFriendId(friend.id);
+                                setSelectedFriendName(`@${friend.user_name}`);
+                                setFriendSearchInput("");
+                                setShowFriendDropdown(false);
+                                setFriendSearchResults([]);
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <User size={16} className="text-purple-600" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-900">@{friend.user_name}</p>
+                                <p className="text-xs text-gray-500 truncate">{friend.email}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : friendSearchInput.length >= 2 ? (
+                        <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                          No users found matching "{friendSearchInput}"
                         </div>
                       ) : (
-                        <div className="px-3 py-2 text-sm text-gray-500">
-                          Type to search your {allFriends.length} friend{allFriends.length !== 1 ? 's' : ''}
+                        <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                          Type at least 2 characters to search for friends
                         </div>
                       )}
                     </div>
                   )}
                 </div>
                 {selectedFriendId && (
-                  <p className="text-xs text-purple-600 mt-1">Selected: {selectedFriendName}</p>
+                  <div className="mt-2 flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User size={14} className="text-purple-600" />
+                    </div>
+                    <p className="text-xs text-purple-600 font-medium">Selected: {selectedFriendName}</p>
+                    <button
+                      onClick={() => {
+                        setSelectedFriendId("");
+                        setSelectedFriendName("");
+                        setFriendSearchInput("");
+                      }}
+                      className="text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 )}
               </div>
 
