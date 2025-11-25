@@ -86,10 +86,20 @@ serve(async (req) => {
     }
 
     // Use admin client to create prediction
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    console.log('DEBUG: Admin client init - URL exists:', !!supabaseUrl, 'Key exists:', !!serviceRoleKey);
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('ERROR: Missing environment variables for admin client');
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     // Generate pool ID
     const poolId = `user-${appUser.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -98,7 +108,7 @@ serve(async (req) => {
     const insertData = {
       id: poolId,
       title: question,
-      description: question, // Use question as description instead of empty string
+      description: question,
       type: 'predict',
       status: 'open',
       category: 'user-prediction',
@@ -117,25 +127,25 @@ serve(async (req) => {
       created_at: new Date().toISOString()
     };
 
-    console.log('DEBUG: Insert data:', insertData);
+    console.log('DEBUG: Insert data:', JSON.stringify(insertData));
 
-    // Create prediction pool
+    // Create prediction pool - no select() to avoid silent failures
     const { data: pool, error: poolError } = await supabaseAdmin
       .from('prediction_pools')
-      .insert(insertData)
-      .select('*')
-      .single();
+      .insert(insertData);
 
     if (poolError) {
-      console.error('Error creating prediction pool:', poolError);
-      console.error('Pool error details:', { code: poolError.code, message: poolError.message, hint: poolError.hint });
-      return new Response(JSON.stringify({ error: poolError.message, details: poolError }), {
+      console.error('ERROR: Failed to insert prediction pool');
+      console.error('Error code:', poolError.code);
+      console.error('Error message:', poolError.message);
+      console.error('Error details:', poolError);
+      return new Response(JSON.stringify({ error: poolError.message, code: poolError.code }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('DEBUG: Pool created successfully:', pool?.id);
+    console.log('SUCCESS: Pool created and committed to database');
 
     return new Response(JSON.stringify({ 
       success: true,
