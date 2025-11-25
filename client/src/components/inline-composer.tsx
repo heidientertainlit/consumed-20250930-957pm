@@ -234,6 +234,15 @@ export default function InlineComposer() {
   };
 
   const handlePost = async () => {
+    if (!session?.access_token) {
+      toast({
+        title: "Not Authenticated",
+        description: "Please log in first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!selectedMedia) {
       toast({
         title: "Media Required",
@@ -413,9 +422,15 @@ export default function InlineComposer() {
       console.log("📥 Response status:", response.status);
 
       if (!response.ok) {
-        const errorData = await response.text();
+        let errorData = '';
+        try {
+          errorData = await response.text();
+        } catch (e) {
+          errorData = 'Unknown error';
+        }
         console.error("❌ Share update failed:", response.status, errorData);
-        throw new Error(`Failed to post: ${errorData}`);
+        console.error("📋 Full response:", { status: response.status, headers: response.headers, body: errorData });
+        throw new Error(`Failed to post (${response.status}): ${errorData}`);
       }
 
       const result = await response.json();
