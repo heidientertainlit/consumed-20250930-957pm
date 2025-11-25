@@ -69,8 +69,8 @@ export default function InlineComposer() {
   const userLists = userListsData?.lists || [];
 
   // Track to specific list
-  const handleTrackToList = async (media: any, listId: number | string) => {
-    if (!session) {
+  const handleTrackToList = async (media: any, listIdOrType: number | string) => {
+    if (!session?.access_token) {
       toast({
         title: "Unable to Track",
         description: "Please try again.",
@@ -80,37 +80,67 @@ export default function InlineComposer() {
     }
 
     try {
-      const list = userLists.find((l: any) => l.id === listId);
+      const list = userLists.find((l: any) => l.id === listIdOrType);
       if (!list) throw new Error("List not found");
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-media-to-list`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            list_id: listId,
-            media_title: media.title || "",
-            media_type: media.type || "movie",
-            media_creator: media.creator || media.author || media.artist || "",
-            media_image_url: media.poster_url || media.image_url || media.image || media.thumbnail || "",
-            media_external_id: media.external_id || media.id || "",
-            media_external_source: media.external_source || media.source || "tmdb",
-          }),
+      const isCustom = list.isCustom === true;
+
+      // Determine external source/ID
+      let externalSource = media.external_source || media.source || 'tmdb';
+      let externalId = media.external_id || media.id || '';
+
+      // Infer from media type if needed
+      if (!media.external_source) {
+        if (media.type === 'book') {
+          externalSource = 'openlibrary';
+        } else if (media.type === 'podcast') {
+          externalSource = 'spotify';
         }
-      );
+      }
 
-      if (!response.ok) throw new Error("Failed to track");
+      const mediaData = {
+        title: media.title || "",
+        mediaType: media.type || "movie",
+        creator: media.creator || media.author || media.artist || "",
+        imageUrl: media.poster_url || media.image_url || media.image || media.thumbnail || "",
+        externalId,
+        externalSource
+      };
 
-      toast({
-        title: "Tracked!",
-        description: `Added to ${list.title}`,
+      // Use different endpoints for custom vs default lists
+      const url = isCustom 
+        ? 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list'
+        : 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media';
+
+      const body = isCustom
+        ? { media: mediaData, customListId: listIdOrType }
+        : { media: mediaData, listType: list.type };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
       });
 
-      queryClient.invalidateQueries({ queryKey: ['/api/lists'] });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || errorData.message || 'Failed to add to list');
+      }
+
+      const result = await response.json();
+      const isDuplicate = result?.message === 'Item already in list';
+
+      toast({
+        title: isDuplicate ? "Already in list!" : "Tracked!",
+        description: isDuplicate 
+          ? `${media.title} is already in this list.`
+          : `${media.title} added to ${list.title}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
     } catch (error) {
       console.error("Track error:", error);
       toast({
