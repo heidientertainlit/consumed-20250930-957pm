@@ -478,9 +478,19 @@ export default function CollaborativePredictionCard({
             prediction.options.map((option, index) => {
               const optionData = prediction.optionVotes?.find(ov => ov.option === option);
               const percentage = optionData?.percentage || 0;
+              const votersForOption = userVotes?.filter(uv => uv.vote === option) || [];
               
               return (
                 <div key={index}>
+                  {votersForOption.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
+                      {votersForOption.map((voter, idx) => (
+                        <span key={idx} className="text-xs font-semibold text-purple-600">
+                          @{voter.user}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <button
                     onClick={() => handleSelectOption(option)}
                     disabled={userHasAnswered || voteMutation.isPending}
@@ -514,6 +524,15 @@ export default function CollaborativePredictionCard({
                     <span className="font-semibold">{creator.username}</span>
                   </p>
                 )}
+                {userVotes?.filter(uv => uv.vote === "Yes").length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
+                    {userVotes.filter(uv => uv.vote === "Yes").map((voter, idx) => (
+                      <span key={idx} className="text-xs font-semibold text-purple-600">
+                        @{voter.user}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <button
                   onClick={() => handleSelectOption("Yes")}
                   disabled={userHasAnswered || voteMutation.isPending}
@@ -543,6 +562,15 @@ export default function CollaborativePredictionCard({
                     <p className="text-xs text-gray-600 mb-1 ml-1">
                       <span className="font-semibold">{invitedFriend.username}</span>
                     </p>
+                  )}
+                  {userVotes?.filter(uv => uv.vote === "No").length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
+                      {userVotes.filter(uv => uv.vote === "No").map((voter, idx) => (
+                        <span key={idx} className="text-xs font-semibold text-purple-600">
+                          @{voter.user}
+                        </span>
+                      ))}
+                    </div>
                   )}
                   <button
                     onClick={() => handleSelectOption("No")}
