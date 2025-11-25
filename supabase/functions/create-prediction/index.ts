@@ -138,9 +138,10 @@ serve(async (req) => {
         content: question,
         post_type: postType,
         prediction_pool_id: pool.id,
+        media_title: question,
+        media_type: type === 'vote' ? 'poll' : 'prediction',
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
-        visibility: 'public',
         contains_spoilers: false
       })
       .select()
