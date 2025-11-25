@@ -85,38 +85,20 @@ serve(async (req) => {
       });
     }
 
-    // Generate pool ID
-    const poolId = `user-${appUser.id}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    console.log('DEBUG: Creating pool with ID:', poolId);
-
-    // Use admin client with explicit RLS bypass
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-          detectSessionInUrl: false
-        }
-      }
-    );
-
-    // Insert directly without modifiers first
-    console.log('DEBUG: Attempting insert for ID:', poolId);
-    
     // Determine icon and category based on type
     let icon = '🎯';
     let category = 'user-prediction';
+    let postType = 'prediction';
     if (type === 'vote') {
       icon = '🗳️';
       category = 'user-poll';
+      postType = 'poll';
     }
 
-    const { error: poolError, status: insertStatus } = await supabaseAdmin
+    // Insert into prediction_pools using authenticated client
+    const { data: pool, error: poolError } = await supabase
       .from('prediction_pools')
       .insert({
-        id: poolId,
         title: question,
         description: question,
         type: type,
@@ -130,45 +112,54 @@ serve(async (req) => {
         invited_user_id: invited_user_id || null,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
-        deadline: null,
+        deadline: deadline || null,
         likes_count: 0,
         comments_count: 0,
         participants: 0
-      });
-
-    if (poolError) {
-      console.error('ERROR: Insert failed');
-      console.error('Status:', insertStatus);
-      console.error('Error:', JSON.stringify(poolError));
-      return new Response(JSON.stringify({ error: poolError.message, code: poolError.code }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    console.log('DEBUG: Insert returned status:', insertStatus);
-
-    // Now select to confirm it's there
-    const { data: confirmData, error: confirmError } = await supabaseAdmin
-      .from('prediction_pools')
-      .select('id, title, origin_type')
-      .eq('id', poolId)
+      })
+      .select()
       .single();
 
-    if (confirmError) {
-      console.error('ERROR: Could not confirm insert');
-      console.error('Confirm error:', JSON.stringify(confirmError));
-      return new Response(JSON.stringify({ error: 'Insert confirmed but select failed', details: confirmError }), {
+    if (poolError) {
+      console.error('ERROR: Pool creation failed:', JSON.stringify(poolError));
+      return new Response(JSON.stringify({ error: poolError.message || 'Failed to create prediction/poll' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('SUCCESS: Pool confirmed in database:', JSON.stringify(confirmData));
+    console.log('SUCCESS: Pool created:', pool.id);
+
+    // Create associated social post
+    const { data: post, error: postError } = await supabase
+      .from('social_posts')
+      .insert({
+        user_id: appUser.id,
+        content: question,
+        post_type: postType,
+        prediction_pool_id: pool.id,
+        media_external_id: media_external_id || null,
+        media_external_source: media_external_source || null,
+        visibility: 'public',
+        contains_spoilers: false
+      })
+      .select()
+      .single();
+
+    if (postError) {
+      console.error('ERROR: Social post creation failed:', JSON.stringify(postError));
+      return new Response(JSON.stringify({ error: 'Pool created but social post failed' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('SUCCESS: Social post created:', post.id);
 
     return new Response(JSON.stringify({ 
       success: true,
-      pool: confirmData
+      pool,
+      post
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
