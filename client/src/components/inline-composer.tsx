@@ -311,12 +311,12 @@ export default function InlineComposer() {
           type: "thought",
           visibility: "public",
           contains_spoilers: containsSpoilers,
-          media_title: selectedMedia?.title || "",
-          media_type: selectedMedia?.type || "movie",
-          media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist || "",
-          media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.image || selectedMedia?.thumbnail || "",
-          media_external_id: selectedMedia?.external_id || selectedMedia?.id || "",
-          media_external_source: selectedMedia?.external_source || selectedMedia?.source || 'tmdb',
+          media_title: selectedMedia?.title || null,
+          media_type: selectedMedia?.type || null,
+          media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist || null,
+          media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.image || selectedMedia?.thumbnail || null,
+          media_external_id: selectedMedia?.external_id || selectedMedia?.id || null,
+          media_external_source: selectedMedia?.external_source || selectedMedia?.source || null,
         };
       } else if (actionMode === "rating") {
         if (ratingValue === 0) {
@@ -329,12 +329,12 @@ export default function InlineComposer() {
           return;
         }
         payload = {
-          media_title: selectedMedia.title || "",
-          media_type: selectedMedia.type || "movie",
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
-          media_external_id: selectedMedia.external_id || selectedMedia.id || "",
-          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          media_title: selectedMedia.title || null,
+          media_type: selectedMedia.type || null,
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || null,
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || null,
+          media_external_id: selectedMedia.external_id || selectedMedia.id || null,
+          media_external_source: selectedMedia.external_source || selectedMedia.source || null,
           visibility: "public",
           contains_spoilers: containsSpoilers,
           rating: ratingValue,
@@ -353,12 +353,12 @@ export default function InlineComposer() {
           return;
         }
         payload = {
-          media_title: selectedMedia.title || "",
-          media_type: selectedMedia.type || "movie",
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
-          media_external_id: selectedMedia.external_id || selectedMedia.id || "",
-          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          media_title: selectedMedia.title || null,
+          media_type: selectedMedia.type || null,
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || null,
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || null,
+          media_external_id: selectedMedia.external_id || selectedMedia.id || null,
+          media_external_source: selectedMedia.external_source || selectedMedia.source || null,
           visibility: "public",
           contains_spoilers: containsSpoilers,
           content: predictionQuestion.trim(),
@@ -378,12 +378,12 @@ export default function InlineComposer() {
           return;
         }
         payload = {
-          media_title: selectedMedia.title || "",
-          media_type: selectedMedia.type || "movie",
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
-          media_external_id: selectedMedia.external_id || selectedMedia.id || "",
-          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          media_title: selectedMedia.title || null,
+          media_type: selectedMedia.type || null,
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || null,
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || null,
+          media_external_id: selectedMedia.external_id || selectedMedia.id || null,
+          media_external_source: selectedMedia.external_source || selectedMedia.source || null,
           visibility: "public",
           contains_spoilers: containsSpoilers,
           content: pollQuestion.trim(),
@@ -394,12 +394,12 @@ export default function InlineComposer() {
       } else {
         // Just tracking media consumption
         payload = {
-          media_title: selectedMedia.title || "",
-          media_type: selectedMedia.type || "movie",
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
-          media_external_id: selectedMedia.external_id || selectedMedia.id || "",
-          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          media_title: selectedMedia.title || null,
+          media_type: selectedMedia.type || null,
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || null,
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || null,
+          media_external_id: selectedMedia.external_id || selectedMedia.id || null,
+          media_external_source: selectedMedia.external_source || selectedMedia.source || null,
           visibility: "public",
           contains_spoilers: containsSpoilers,
           content: `Added ${selectedMedia.title}`,
