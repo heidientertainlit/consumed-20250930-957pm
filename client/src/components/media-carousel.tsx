@@ -43,7 +43,7 @@ export default function MediaCarousel({
   onRate,
 }: MediaCarouselProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-3 shadow-lg border border-gray-800/50" data-testid={`carousel-${mediaType}`}>
+    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-3 shadow-lg border border-gray-800/50 overflow-visible" data-testid={`carousel-${mediaType}`}>
       {/* Header */}
       <div className="mb-2">
         <h3 className="text-sm font-semibold text-white">
@@ -51,27 +51,29 @@ export default function MediaCarousel({
         </h3>
       </div>
 
-      {/* Scrollable carousel */}
-      <div className="flex overflow-x-auto gap-2 scrollbar-hide">
-        {items.map((item) => {
-          // Create a guaranteed unique key scoped to this carousel
-          // Include the carousel title to ensure uniqueness across multiple carousels
-          const itemKey = item.externalId && item.externalSource
-            ? `${item.externalSource}-${item.externalId}`
-            : `${item.mediaType || 'media'}-${item.platform || 'noplatform'}-${item.id}`;
-          const uniqueKey = `${title}-${itemKey}`;
-          
-          return (
-            <div key={uniqueKey} className="flex-shrink-0 w-20">
-              <MediaCard
-                item={item}
-                onItemClick={onItemClick}
-                onAddToList={onAddToList}
-                onRate={onRate}
-              />
-            </div>
-          );
-        })}
+      {/* Scrollable carousel - overflow only on horizontal */}
+      <div className="overflow-x-auto overflow-y-visible scrollbar-hide">
+        <div className="flex gap-2 w-max">
+          {items.map((item) => {
+            // Create a guaranteed unique key scoped to this carousel
+            // Include the carousel title to ensure uniqueness across multiple carousels
+            const itemKey = item.externalId && item.externalSource
+              ? `${item.externalSource}-${item.externalId}`
+              : `${item.mediaType || 'media'}-${item.platform || 'noplatform'}-${item.id}`;
+            const uniqueKey = `${title}-${itemKey}`;
+            
+            return (
+              <div key={uniqueKey} className="flex-shrink-0 w-20">
+                <MediaCard
+                  item={item}
+                  onItemClick={onItemClick}
+                  onAddToList={onAddToList}
+                  onRate={onRate}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -406,14 +408,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             {/* List Menu */}
             {showListMenu && (
               <div 
-                className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50"
-                style={{
-                  bottom: 'auto',
-                  right: 'auto',
-                  left: '50%',
-                  top: '-10px',
-                  transform: 'translateX(-50%) translateY(-100%)'
-                }}
+                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50 pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {['Queue', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
@@ -471,14 +466,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             {/* Star Rating Menu */}
             {showRatingStars && (
               <div 
-                className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50"
-                style={{
-                  bottom: 'auto',
-                  right: 'auto',
-                  left: '50%',
-                  top: '-10px',
-                  transform: 'translateX(-50%) translateY(-100%)'
-                }}
+                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50 pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {[5, 4, 3, 2, 1].map((stars) => (
