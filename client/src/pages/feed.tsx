@@ -144,7 +144,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
       }
       
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-media-details?source=${media.externalSource}&id=${media.externalId}`,
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-media-details?source=${media.externalSource}&external_id=${media.externalId}&media_type=${media.mediaType}`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
