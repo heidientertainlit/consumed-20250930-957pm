@@ -93,9 +93,49 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const [showRatingStars, setShowRatingStars] = useState(false);
   const [hoveredStar, setHoveredStar] = useState<number | null>(null);
   const [showListMenu, setShowListMenu] = useState(false);
+  const [listMenuPos, setListMenuPos] = useState({ top: 0, left: 0 });
+  const [ratingMenuPos, setRatingMenuPos] = useState({ top: 0, left: 0 });
+  const addButtonRef = useRef<HTMLButtonElement>(null);
+  const ratingButtonRef = useRef<HTMLButtonElement>(null);
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (addButtonRef.current && showListMenu) {
+      const rect = addButtonRef.current.getBoundingClientRect();
+      setListMenuPos({
+        top: rect.top - 8,
+        left: rect.left + rect.width / 2,
+      });
+    }
+  }, [showListMenu]);
+
+  useEffect(() => {
+    if (ratingButtonRef.current && showRatingStars) {
+      const rect = ratingButtonRef.current.getBoundingClientRect();
+      setRatingMenuPos({
+        top: rect.top - 8,
+        left: rect.left + rect.width / 2,
+      });
+    }
+  }, [showRatingStars]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showListMenu && !addButtonRef.current?.contains(e.target as Node)) {
+        setShowListMenu(false);
+      }
+      if (showRatingStars && !ratingButtonRef.current?.contains(e.target as Node)) {
+        setShowRatingStars(false);
+      }
+    };
+
+    if (showListMenu || showRatingStars) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showListMenu, showRatingStars]);
   
   const handlePointerDown = () => {
     setIsDragging(false);
@@ -393,25 +433,30 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         {/* Action buttons - always visible, bottom right */}
         <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-50 pointer-events-auto">
           {/* Add to List Button */}
-          <div className="relative overflow-visible">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowListMenu(!showListMenu);
+          <button
+            ref={addButtonRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowListMenu(!showListMenu);
+            }}
+            className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
+            data-testid={`add-to-list-${item.id}`}
+            disabled={addToListMutation.isPending}
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+          
+          {/* List Menu - Portal */}
+          {showListMenu && createPortal(
+            <div 
+              className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50"
+              style={{
+                top: `${listMenuPos.top}px`,
+                left: `${listMenuPos.left}px`,
+                transform: 'translate(-50%, -100%)',
               }}
-              className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
-              data-testid={`add-to-list-${item.id}`}
-              disabled={addToListMutation.isPending}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Plus className="h-3 w-3" />
-            </button>
-            
-            {/* List Menu */}
-            {showListMenu && (
-              <div 
-                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50 pointer-events-auto"
-                onClick={(e) => e.stopPropagation()}
-              >
                 {['Queue', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
                   <button
                     key={listTitle}
@@ -448,28 +493,32 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                   </>
                 )}
               </div>
-            )}
-          </div>
+            , document.body)}
           
           {/* Rating Button */}
-          <div className="relative overflow-visible">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowRatingStars(!showRatingStars);
+          <button
+            ref={ratingButtonRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowRatingStars(!showRatingStars);
+            }}
+            className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
+            data-testid={`rate-${item.id}`}
+          >
+            <Star className="h-3 w-3" />
+          </button>
+          
+          {/* Star Rating Menu - Portal */}
+          {showRatingStars && createPortal(
+            <div 
+              className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50"
+              style={{
+                top: `${ratingMenuPos.top}px`,
+                left: `${ratingMenuPos.left}px`,
+                transform: 'translate(-50%, -100%)',
               }}
-              className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
-              data-testid={`rate-${item.id}`}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Star className="h-3 w-3" />
-            </button>
-            
-            {/* Star Rating Menu */}
-            {showRatingStars && (
-              <div 
-                className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50 pointer-events-auto"
-                onClick={(e) => e.stopPropagation()}
-              >
                 {[5, 4, 3, 2, 1].map((stars) => (
                   <button
                     key={stars}
@@ -495,8 +544,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                   </button>
                 ))}
               </div>
-            )}
-          </div>
+            , document.body)}
         </div>
 
       </div>
