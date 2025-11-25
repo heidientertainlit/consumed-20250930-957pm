@@ -136,7 +136,7 @@ serve(async (req) => {
 
       console.log('Found posts:', posts?.length || 0);
 
-      // Fetch user-created predictions from prediction_pools
+      // Fetch user-created predictions from prediction_pools with vote counts
       const { data: predictions, error: predictionsError } = await supabase
         .from('prediction_pools')
         .select(`
@@ -160,6 +160,34 @@ serve(async (req) => {
         .limit(limit);
 
       console.log('Found predictions:', predictions?.length || 0);
+
+      // Fetch vote counts for predictions
+      let voteCounts: { [poolId: string]: { [option: string]: number } } = {};
+      if (predictions && predictions.length > 0) {
+        const predictionIds = predictions.map(p => p.id);
+        const { data: votes } = await supabase
+          .from('user_predictions')
+          .select('pool_id, prediction')
+          .in('pool_id', predictionIds);
+
+        // Count votes by pool and prediction option
+        votes?.forEach((vote: any) => {
+          if (!voteCounts[vote.pool_id]) {
+            voteCounts[vote.pool_id] = {};
+          }
+          voteCounts[vote.pool_id][vote.prediction] = (voteCounts[vote.pool_id][vote.prediction] || 0) + 1;
+        });
+
+        console.log('Vote counts:', voteCounts);
+      }
+
+      // Check if current user has voted on any predictions
+      const { data: userVotes } = await supabase
+        .from('user_predictions')
+        .select('pool_id')
+        .eq('user_id', appUser.id);
+
+      const userVotedPoolIds = new Set(userVotes?.map(v => v.pool_id) || []);
 
       const userIds = [
         ...new Set([
@@ -349,6 +377,23 @@ serve(async (req) => {
         const creatorUser = userMap.get(pred.origin_user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         const invitedUser = pred.invited_user_id ? (userMap.get(pred.invited_user_id) || null) : null;
 
+        // Calculate vote percentages for this prediction
+        const poolVotes = voteCounts[pred.id] || {};
+        const totalVotes = Object.values(poolVotes).reduce((sum: number, count: number) => sum + count, 0);
+        
+        const optionVotes = (pred.options || []).map((opt: string) => {
+          const count = poolVotes[opt] || 0;
+          const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+          return {
+            option: opt,
+            count,
+            percentage
+          };
+        });
+
+        // Check if current user has already voted on this prediction
+        const userHasAnswered = userVotedPoolIds.has(pred.id);
+
         return {
           id: pred.id,
           type: 'prediction',
@@ -357,11 +402,7 @@ serve(async (req) => {
           description: pred.description,
           status: pred.status,
           options: pred.options || [],
-          optionVotes: (pred.options || []).map((opt: string) => ({
-            option: opt,
-            count: 0,
-            percentage: 0
-          })),
+          optionVotes,
           creator: {
             id: pred.origin_user_id,
             username: creatorUser.user_name || 'Unknown',
@@ -376,7 +417,13 @@ serve(async (req) => {
           timestamp: pred.created_at,
           likes: pred.likes_count || 0,
           comments: pred.comments_count || 0,
-          participantCount: pred.participants || 0,
+          participantCount: totalVotes,
+          userHasAnswered,
+          voteCounts: {
+            yes: poolVotes['Yes'] || 0,
+            no: poolVotes['No'] || 0,
+            total: totalVotes
+          },
           mediaExternalId: pred.media_external_id,
           mediaExternalSource: pred.media_external_source
         };
