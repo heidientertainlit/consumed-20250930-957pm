@@ -436,6 +436,8 @@ serve(async (req) => {
           options: pred.options || [],
           optionVotes,
           userVotes: userVoteDetails[pred.id] || [],
+          origin_type: pred.origin_type || 'user',
+          origin_user_id: pred.origin_user_id,
           creator: {
             id: pred.origin_user_id,
             username: creatorUser.user_name || 'Unknown',
