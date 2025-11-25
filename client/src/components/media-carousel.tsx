@@ -242,7 +242,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         }
       }
 
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rate-media', {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rate-media`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -393,35 +393,35 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
             >
               <DropdownMenuItem
-                onClick={(e) => handleAddToList('queue', false, e)}
+                onClick={(e) => handleAddToList('Queue', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
                 Add to Queue
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={(e) => handleAddToList('currently', false, e)}
+                onClick={(e) => handleAddToList('Currently', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
                 Add to Currently
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={(e) => handleAddToList('finished', false, e)}
+                onClick={(e) => handleAddToList('Finished', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
                 Add to Finished
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={(e) => handleAddToList('dnf', false, e)}
+                onClick={(e) => handleAddToList('Did Not Finish', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
                 Add to Did Not Finish
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={(e) => handleAddToList('favorites', false, e)}
+                onClick={(e) => handleAddToList('Favorites', false, e)}
                 className="cursor-pointer text-white hover:bg-gray-800"
                 disabled={addToListMutation.isPending}
               >
