@@ -166,6 +166,8 @@ serve(async (req) => {
     if (req.method === 'POST' && pathname.endsWith('/predict')) {
       const { pool_id, prediction, score } = await req.json();
       
+      console.log('DEBUG /predict: Received vote', { pool_id, prediction, user_id: appUser.id, score });
+      
       if (!pool_id || !prediction) {
         return new Response(JSON.stringify({ 
           error: 'pool_id and prediction are required' 
@@ -181,6 +183,8 @@ serve(async (req) => {
         .select('status, points_reward, type, options, correct_answer')
         .eq('id', pool_id)
         .single();
+
+      console.log('DEBUG /predict: Pool lookup', { pool_id, poolExists: !!pool });
 
       if (!pool) {
         return new Response(JSON.stringify({ error: 'Pool not found' }), {
@@ -217,8 +221,15 @@ serve(async (req) => {
         }
       }
 
-      // Insert or update user prediction
-      const { error: insertError } = await supabase
+      console.log('DEBUG /predict: About to upsert', { user_id: appUser.id, pool_id, prediction, pointsEarned });
+
+      // Insert or update user prediction using service role to bypass RLS
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { data: upsertResult, error: insertError } = await supabaseAdmin
         .from('user_predictions')
         .upsert({
           user_id: appUser.id,
@@ -229,9 +240,13 @@ serve(async (req) => {
         }, { 
           onConflict: 'user_id,pool_id',
           ignoreDuplicates: false 
-        });
+        })
+        .select();
+
+      console.log('DEBUG /predict: Upsert result', { error: insertError, data: upsertResult });
 
       if (insertError) {
+        console.error('DEBUG /predict: Upsert failed', insertError);
         return new Response(JSON.stringify({ error: insertError.message }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
