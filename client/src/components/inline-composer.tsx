@@ -45,10 +45,28 @@ export default function InlineComposer() {
   const [isPosting, setIsPosting] = useState(false);
 
   // Fetch user's lists (enabled for quick tracking)
-  const { data: userLists = [] } = useQuery<any[]>({
-    queryKey: ['/api/lists', user?.id],
-    enabled: !!user?.id && (actionMode === "list" || stage === "search"),
+  const { data: userListsData } = useQuery<any>({
+    queryKey: ['user-lists-with-media'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user lists');
+      }
+
+      return response.json();
+    },
+    enabled: !!session?.access_token && (actionMode === "list" || stage === "search"),
   });
+
+  const userLists = userListsData?.lists || [];
 
   // Track to specific list
   const handleTrackToList = async (media: any, listId: number | string) => {
@@ -62,7 +80,7 @@ export default function InlineComposer() {
     }
 
     try {
-      const list = userLists.find(l => l.id === listId);
+      const list = userLists.find((l: any) => l.id === listId);
       if (!list) throw new Error("List not found");
 
       const response = await fetch(
