@@ -101,16 +101,24 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     setIsDragging(true);
   };
   
-  const handleClick = (e: React.MouseEvent) => {
-    // Don't trigger item click if user is interacting with buttons
-    if (e.target instanceof HTMLButtonElement || 
-        (e.target as HTMLElement)?.closest('button') ||
-        (e.target as HTMLElement)?.closest('[role="menuitem"]')) {
+  const handlePosterClick = (e: React.MouseEvent) => {
+    // Only navigate if clicking on the actual poster image/placeholder, not buttons
+    const target = e.target as HTMLElement;
+    
+    // Don't navigate if clicking buttons area or any interactive element
+    if (target.closest('button') || 
+        target.closest('[role="menuitem"]') ||
+        target.closest('[role="menu"]')) {
       return;
     }
     
-    if (!isDragging) {
-      onItemClick?.(item);
+    // Only trigger navigation on actual poster area (img or placeholder divs)
+    if (target instanceof HTMLImageElement || 
+        target.closest('.bg-gradient-to-br') ||
+        target.closest('[role="img"]')) {
+      if (!isDragging) {
+        onItemClick?.(item);
+      }
     }
   };
   
@@ -340,10 +348,10 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     <div className="group relative">
       {/* Poster */}
       <div
-        className="relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer"
+        className="relative aspect-[2/3] rounded-lg overflow-hidden"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onClick={(e) => handleClick(e as React.MouseEvent)}
+        onClick={handlePosterClick}
         data-testid={`media-card-${item.id}`}
       >
         {imageError || !item.imageUrl ? (
