@@ -358,7 +358,8 @@ export default function InlineComposer() {
 
       console.log("📤 Sending post payload:", payload);
       
-      const response = await fetch(`/api/share-update`, {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/share-update`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session?.access_token}`,

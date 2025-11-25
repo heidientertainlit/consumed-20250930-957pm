@@ -468,29 +468,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Backend proxy for Supabase edge functions to avoid CORS issues
-  app.post("/api/share-update", async (req, res) => {
-    try {
-      const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const authHeader = req.headers.authorization;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/share-update`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader || ''
-        },
-        body: JSON.stringify(req.body)
-      });
-
-      const data = await response.json();
-      res.status(response.status).json(data);
-    } catch (error) {
-      console.error('Share update proxy error:', error);
-      res.status(500).json({ message: "Failed to share update" });
-    }
-  });
-
   const httpServer = createServer(app);
   return httpServer;
 }
