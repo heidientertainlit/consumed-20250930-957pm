@@ -410,19 +410,60 @@ export default function InlineComposer() {
                           <DropdownMenuContent 
                             align="end" 
                             side="top"
-                            sideOffset={12}
-                            className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
+                            sideOffset={8}
+                            alignOffset={-16}
+                            className="w-56 bg-gray-900 border border-gray-700 max-h-[70vh] overflow-y-auto"
                           >
-                            {userLists.map((list) => (
-                              <DropdownMenuItem
-                                key={list.id}
-                                onClick={() => handleTrackToList(media, list.id)}
-                                className="cursor-pointer text-white hover:bg-gray-800"
-                                data-testid={`button-add-to-list-${list.id}`}
-                              >
-                                Add to {list.title}
-                              </DropdownMenuItem>
-                            ))}
+                            <DropdownMenuItem
+                              onClick={() => handleTrackToList(media, 'queue')}
+                              className="cursor-pointer text-white hover:bg-gray-800"
+                            >
+                              Add to Queue
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleTrackToList(media, 'currently')}
+                              className="cursor-pointer text-white hover:bg-gray-800"
+                            >
+                              Add to Currently
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleTrackToList(media, 'finished')}
+                              className="cursor-pointer text-white hover:bg-gray-800"
+                            >
+                              Add to Finished
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleTrackToList(media, 'dnf')}
+                              className="cursor-pointer text-white hover:bg-gray-800"
+                            >
+                              Add to Did Not Finish
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleTrackToList(media, 'favorites')}
+                              className="cursor-pointer text-white hover:bg-gray-800"
+                            >
+                              Add to Favorites
+                            </DropdownMenuItem>
+                            
+                            {/* Custom Lists */}
+                            {userLists.filter((list: any) => list.isCustom).length > 0 && (
+                              <>
+                                <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t border-gray-700 mt-1 pt-2">
+                                  MY CUSTOM LISTS
+                                </div>
+                                {userLists
+                                  .filter((list: any) => list.isCustom)
+                                  .map((list: any) => (
+                                    <DropdownMenuItem
+                                      key={list.id}
+                                      onClick={() => handleTrackToList(media, list.id)}
+                                      className="cursor-pointer text-white hover:bg-gray-800"
+                                    >
+                                      Add to {list.title}
+                                    </DropdownMenuItem>
+                                  ))}
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                         
