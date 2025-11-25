@@ -43,7 +43,6 @@ export default function InlineComposer() {
   // Common state
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
-  const [openListDropdown, setOpenListDropdown] = useState<number | null>(null);
 
   // Fetch user's lists (enabled for quick tracking)
   const { data: userLists = [] } = useQuery<any[]>({
@@ -396,22 +395,41 @@ export default function InlineComposer() {
                       </button>
 
                       {/* Icon buttons overlay */}
-                      <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm px-3 py-2 rounded-full">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenListDropdown(openListDropdown === index ? null : index);
-                          }}
-                          className="text-white hover:text-purple-400 transition-colors"
-                          data-testid={`button-add-media-${index}`}
-                        >
-                          <Plus className="w-5 h-5" />
-                        </button>
+                      <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm px-3 py-2 rounded-full z-50">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              size="icon"
+                              variant="secondary"
+                              className="h-5 w-5 rounded-full bg-transparent hover:text-purple-400 text-white p-0 border-0"
+                              data-testid={`button-add-media-${index}`}
+                            >
+                              <Plus className="w-5 h-5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent 
+                            align="end" 
+                            side="top"
+                            sideOffset={12}
+                            className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
+                          >
+                            {userLists.map((list) => (
+                              <DropdownMenuItem
+                                key={list.id}
+                                onClick={() => handleTrackToList(media, list.id)}
+                                className="cursor-pointer text-white hover:bg-gray-800"
+                                data-testid={`button-add-to-list-${list.id}`}
+                              >
+                                Add to {list.title}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         
                         <Button
                           size="icon"
                           variant="secondary"
-                          className="h-5 w-5 rounded-full bg-transparent hover:text-yellow-400 text-white p-0"
+                          className="h-5 w-5 rounded-full bg-transparent hover:text-yellow-400 text-white p-0 border-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             // TODO: Add to favorites functionality
@@ -422,28 +440,6 @@ export default function InlineComposer() {
                           <Star className="w-5 h-5" />
                         </Button>
                       </div>
-
-                      {/* Lists Dropdown - Inline version */}
-                      {openListDropdown === index && userLists.length > 0 && (
-                        <div 
-                          className="absolute bottom-full right-0 mb-2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-2 max-h-64 overflow-y-auto"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {userLists.map((list) => (
-                            <button
-                              key={list.id}
-                              onClick={() => {
-                                handleTrackToList(media, list.id);
-                                setOpenListDropdown(null);
-                              }}
-                              className="w-full px-4 py-2 text-left text-white hover:bg-gray-800 transition-colors text-sm"
-                              data-testid={`button-add-to-list-${list.id}`}
-                            >
-                              Add to {list.title}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
