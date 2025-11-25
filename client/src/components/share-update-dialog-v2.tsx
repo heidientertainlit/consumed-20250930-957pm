@@ -284,6 +284,9 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     if (postMode === "prediction") {
       return "Ask a prediction question (ex: Will Dune Part 3 get greenlit?)";
     }
+    if (postMode === "tribe") {
+      return "Ask your poll question (ex: Who do you save most?)";
+    }
     return "Share your thoughts or pick a specific way to engage about your entertainment";
   };
 
@@ -296,6 +299,9 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
     }
     if (postMode === "prediction") {
       return isPosting ? "Posting..." : "Create Prediction";
+    }
+    if (postMode === "tribe") {
+      return isPosting ? "Creating..." : "Create Poll";
     }
     return isPosting ? "Posting..." : "Post";
   };
@@ -578,6 +584,72 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                       )}
                     </>
                   )}
+                </div>
+              )}
+
+              {/* Poll Mode */}
+              {postMode === "tribe" && (
+                <div className="space-y-3 mt-2">
+                  {/* Poll Type Selector */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Poll Type</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handlePredictionTypeChange("yes-no")}
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          predictionType === "yes-no"
+                            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        Yes/No 🗳️
+                      </button>
+                      <button
+                        onClick={() => handlePredictionTypeChange("multi-choice")}
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          predictionType === "multi-choice"
+                            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        Custom Options 📋
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Poll Options */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700 mb-2">
+                      {predictionType === "yes-no" ? "Options (Auto-set)" : `Options (${predictionOptions.filter(o => o.trim()).length}/4)`}
+                    </p>
+                    <div className="space-y-2">
+                      {predictionOptions.slice(0, predictionType === "yes-no" ? 2 : 4).map((option, idx) => (
+                        <input
+                          key={idx}
+                          type="text"
+                          value={option}
+                          onChange={(e) => updatePredictionOption(idx, e.target.value)}
+                          placeholder={
+                            predictionType === "yes-no"
+                              ? option
+                              : `Option ${idx + 1}`
+                          }
+                          disabled={predictionType === "yes-no"}
+                          className={`w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            predictionType === "yes-no" ? "bg-gray-100 cursor-not-allowed text-black font-medium" : "bg-white text-black"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    {predictionType === "multi-choice" && predictionOptions.filter(o => o.trim()).length < 4 && (
+                      <button
+                        onClick={() => setPredictionOptions([...predictionOptions.slice(0, 4)])}
+                        className="mt-2 w-full py-2 text-xs text-blue-600 border border-dashed border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                      >
+                        + Add Option ({predictionOptions.filter(o => o.trim()).length}/4)
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -864,10 +936,11 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
                 onClick={handlePost}
                 disabled={Boolean(
                   isPosting || 
-                  !content.trim() || 
+                  (postMode !== "tribe" && !content.trim()) || 
                   content.length > maxChars ||
                   (postMode === "mood" && !conversationTopic) ||
-                  (postMode === "prediction" && content && predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim()))
+                  (postMode === "prediction" && content && predictionType !== "yes-no" && predictionOptions.some(opt => !opt.trim())) ||
+                  (postMode === "tribe" && predictionType !== "yes-no" && predictionOptions.filter(opt => opt.trim()).length < 2)
                 )}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto text-sm"
               >
