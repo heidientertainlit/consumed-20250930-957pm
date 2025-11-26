@@ -109,13 +109,11 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
       if (postMode === "tribe") {
         // Poll creation
-        endpoint = `${supabaseUrl}/functions/v1/create-prediction`;
+        endpoint = `${supabaseUrl}/functions/v1/create-poll`;
         const filledOptions = predictionOptions.filter(o => o.trim());
         body = {
           question: content.trim() || "What do you think?",
           options: filledOptions,
-          poll_type: predictionType,
-          type: "vote",
         };
       } else if (postMode === "prediction") {
         // Prediction creation
