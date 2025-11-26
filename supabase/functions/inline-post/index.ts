@@ -150,7 +150,7 @@ serve(async (req) => {
           .insert({
             user_id: appUser.id,
             content: prediction_question,
-            post_type: 'post',
+            post_type: 'predict',
             prediction_pool_id: pool.id,
             media_title: prediction_question.substring(0, 100),
             media_type: 'Movie',
@@ -216,7 +216,7 @@ serve(async (req) => {
           .insert({
             user_id: appUser.id,
             content: poll_question,
-            post_type: 'post',
+            post_type: 'poll',
             prediction_pool_id: pool.id,
             media_title: poll_question.substring(0, 100),
             media_type: 'Movie',

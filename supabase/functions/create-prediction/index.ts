@@ -141,14 +141,15 @@ serve(async (req) => {
 
     console.log('SUCCESS: Pool created:', pool.id);
 
-    // Create associated social post with CORRECT values matching existing data
-    // post_type should be 'post' and media_type should be a real media type like 'Movie'
+    // Create associated social post with proper type for polls/predictions
+    // Use 'poll' for vote pools, 'predict' for prediction pools so feed can identify them
+    const postType = isPoll ? 'poll' : 'predict';
     const { data: post, error: postError } = await supabase
       .from('social_posts')
       .insert({
         user_id: appUser.id,
         content: question,
-        post_type: 'post',
+        post_type: postType,
         prediction_pool_id: pool.id,
         media_title: question.substring(0, 100),
         media_type: 'Movie',
