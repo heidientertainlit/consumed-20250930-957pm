@@ -103,12 +103,13 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
     setIsPosting(true);
     try {
-      let endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      let endpoint = `${supabaseUrl}/functions/v1/share-update`;
       let body: any = {};
 
       if (postMode === "tribe") {
         // Poll creation
-        endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-prediction`;
+        endpoint = `${supabaseUrl}/functions/v1/create-prediction`;
         const filledOptions = predictionOptions.filter(o => o.trim());
         body = {
           question: content.trim() || "What do you think?",
@@ -118,7 +119,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         };
       } else if (postMode === "prediction") {
         // Prediction creation
-        endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-prediction`;
+        endpoint = `${supabaseUrl}/functions/v1/create-prediction`;
         const filledOptions = predictionOptions.filter(o => o.trim());
         body = {
           question: content.trim(),
