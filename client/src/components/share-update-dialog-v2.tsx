@@ -135,6 +135,8 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         };
       }
 
+      console.log("DEBUG: Fetching", endpoint, "with body", body);
+      
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -144,10 +146,15 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         body: JSON.stringify(body),
       });
 
+      console.log("DEBUG: Response status", response.status);
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error("DEBUG: Error response", errorData);
         throw new Error(errorData.error || errorData.message || "Failed to post");
       }
+      
+      console.log("DEBUG: Success!");
 
       toast({
         title: "Posted!",
