@@ -6,7 +6,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import MentionTextarea from "@/components/mention-textarea";
-import { supabase } from "@/lib/supabase";
 
 interface ShareUpdateDialogV2Props {
   isOpen: boolean;
@@ -104,12 +103,13 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
     setIsPosting(true);
     try {
-      let functionName = "share-update";
+      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
+      let endpoint = `${supabaseUrl}/functions/v1/share-update`;
       let body: any = {};
 
       if (postMode === "tribe") {
         // Poll creation
-        functionName = "create-prediction";
+        endpoint = `${supabaseUrl}/functions/v1/create-prediction`;
         const filledOptions = predictionOptions.filter(o => o.trim());
         body = {
           question: content.trim() || "What do you think?",
@@ -119,7 +119,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         };
       } else if (postMode === "prediction") {
         // Prediction creation
-        functionName = "create-prediction";
+        endpoint = `${supabaseUrl}/functions/v1/create-prediction`;
         const filledOptions = predictionOptions.filter(o => o.trim());
         body = {
           question: content.trim(),
@@ -137,19 +137,19 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         };
       }
 
-      console.log("DEBUG: Calling Supabase function", functionName);
-      console.log("DEBUG: Body", JSON.stringify(body));
-      
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body,
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       });
 
-      if (error) {
-        console.error("Function error:", error);
-        throw new Error(error.message || "Failed to post");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || errorData.message || "Failed to post");
       }
-
-      console.log("DEBUG: Response", data);
 
       toast({
         title: "Posted!",
