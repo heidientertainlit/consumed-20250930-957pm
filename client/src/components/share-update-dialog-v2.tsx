@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import MentionTextarea from "@/components/mention-textarea";
+import { supabase } from "@/lib/supabase";
 
 interface ShareUpdateDialogV2Props {
   isOpen: boolean;
@@ -103,13 +104,12 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
 
     setIsPosting(true);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      let endpoint = `${supabaseUrl}/functions/v1/share-update`;
+      let functionName = "share-update";
       let body: any = {};
 
       if (postMode === "tribe") {
         // Poll creation
-        endpoint = `${supabaseUrl}/functions/v1/create-prediction`;
+        functionName = "create-prediction";
         const filledOptions = predictionOptions.filter(o => o.trim());
         body = {
           question: content.trim() || "What do you think?",
@@ -119,7 +119,7 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         };
       } else if (postMode === "prediction") {
         // Prediction creation
-        endpoint = `${supabaseUrl}/functions/v1/create-prediction`;
+        functionName = "create-prediction";
         const filledOptions = predictionOptions.filter(o => o.trim());
         body = {
           question: content.trim(),
@@ -137,26 +137,19 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         };
       }
 
-      console.log("DEBUG: Posting to", endpoint);
+      console.log("DEBUG: Calling Supabase function", functionName);
       console.log("DEBUG: Body", JSON.stringify(body));
-      console.log("DEBUG: Session access_token present?", !!session?.access_token);
       
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session?.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body,
       });
 
-      console.log("DEBUG: Response status", response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log("DEBUG: Error response", errorData);
-        throw new Error(errorData.error || errorData.message || "Failed to post");
+      if (error) {
+        console.error("Function error:", error);
+        throw new Error(error.message || "Failed to post");
       }
+
+      console.log("DEBUG: Response", data);
 
       toast({
         title: "Posted!",
