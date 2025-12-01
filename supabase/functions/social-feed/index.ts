@@ -157,6 +157,7 @@ serve(async (req) => {
 
       console.log('Prediction pools loaded:', predictionPoolMap.size);
 
+      const predictions: any[] = [];
       console.log('DEBUG: predictions data:', predictions);
       
       // Fetch votes for predictions first
