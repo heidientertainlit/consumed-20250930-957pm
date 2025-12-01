@@ -10,6 +10,11 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
+// Validate that service key is available
+if (!supabaseServiceKey) {
+  console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not set!');
+}
+
 // Create admin client with service role key for database operations
 const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { persistSession: false }
