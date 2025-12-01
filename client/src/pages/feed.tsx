@@ -1620,58 +1620,13 @@ export default function Feed() {
                 // Only show Recommended for you carousel
                 const currentCarousel = { type: 'mixed', title: 'Recommended for you', items: recommendedContent };
                 
-                // Dummy predictions data (user-created only - consumed ones to be added later)
-                const predictions = [
-                  {
-                    id: "pred-1",
-                    question: "Will Dune Part 2 win Best Picture at the Oscars?",
-                    creator: { username: "heidi" },
-                    invitedFriend: { username: "trey" },
-                    creatorPrediction: "Yes",
-                    friendPrediction: "No",
-                    mediaTitle: "Dune Part 2",
-                    participantCount: 8,
-                    userHasAnswered: false,
-                    poolId: "pred-pool-1",
-                    voteCounts: { yes: 5, no: 3, total: 8 },
-                    likesCount: 12,
-                    commentsCount: 3,
-                    isLiked: false,
-                    origin_type: 'user' as const,
-                    deadline: null,
-                    status: 'completed' as const,
-                    resolved_at: new Date(Date.now() - 3600000).toISOString(),
-                    winning_option: "Yes"
-                  },
-                  {
-                    id: "pred-3",
-                    question: "Will they finish watching Breaking Bad?",
-                    creator: { username: "alex" },
-                    invitedFriend: { username: "jordan" },
-                    creatorPrediction: "Yes - they're hooked!",
-                    friendPrediction: "Probably, but it'll take months",
-                    mediaTitle: "Breaking Bad",
-                    participantCount: 15,
-                    userHasAnswered: false,
-                    poolId: "pred-pool-3",
-                    voteCounts: { yes: 9, no: 6, total: 15 },
-                    likesCount: 8,
-                    commentsCount: 2,
-                    isLiked: false,
-                    origin_type: 'user' as const,
-                    deadline: new Date(Date.now() + 86400000).toISOString(),
-                    status: 'open' as const,
-                    resolved_at: null,
-                    winning_option: null
-                  }
-                ];
-                const predictionIndex = Math.floor(postIndex / 8);
-                const currentPrediction = predictions[predictionIndex % predictions.length];
+                // No dummy predictions - only show real API predictions
+                const currentPrediction = null;
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
-                    {/* After 2 posts: Show Prediction */}
-                    {shouldShowPrediction && (
+                    {/* After 2 posts: Show Prediction - Disabled (only show real API predictions) */}
+                    {shouldShowPrediction && currentPrediction && (
                       <div className="mb-4">
                         <CollaborativePredictionCard 
                           prediction={currentPrediction}
