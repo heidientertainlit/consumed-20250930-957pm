@@ -136,39 +136,21 @@ serve(async (req) => {
 
       console.log('Found posts:', posts?.length || 0);
 
-      // Use admin client to fetch user-created predictions (bypass RLS)
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
-      const { data: predictions, error: predictionsError } = await supabaseAdmin
-        .from('prediction_pools')
-        .select(`
-          id,
-          title,
-          description,
-          type,
-          status,
-          options,
-          origin_user_id,
-          invited_user_id,
-          media_external_id,
-          media_external_source,
-          participants,
-          likes_count,
-          comments_count,
-          created_at
-        `)
-        .eq('origin_type', 'user')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (predictionsError) {
-        console.error('Error fetching user predictions:', predictionsError);
-      }
-
-      console.log('Found predictions:', predictions?.length || 0);
+      // TODO: Re-enable user-created predictions fetch when ready
+      // For now, disabled to avoid showing test/unwanted data
+      // const supabaseAdmin = createClient(
+      //   Deno.env.get('SUPABASE_URL') ?? '',
+      //   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      // );
+      // const { data: predictions, error: predictionsError } = await supabaseAdmin
+      //   .from('prediction_pools')
+      //   .select(...)
+      //   .eq('origin_type', 'user')
+      //   .order('created_at', { ascending: false })
+      //   .limit(limit);
+      
+      const predictions: any[] = [];
+      console.log('Found predictions:', 0);
 
       console.log('DEBUG: predictions data:', predictions);
       
