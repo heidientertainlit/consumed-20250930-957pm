@@ -423,23 +423,20 @@ export default function InlineComposer() {
           return;
         }
 
-        // Call create-prediction edge function
+        // Call inline-post edge function for predictions
         try {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
           const predictionPayload = {
-            question: predictionQuestion.trim(),
-            invited_user_id: selectedFriendId || null,
-            option_1_label: option1,
-            option_2_label: option2,
-            creator_prediction: creatorPrediction,
+            type: 'prediction',
+            prediction_question: predictionQuestion.trim(),
+            prediction_options: [option1, option2],
             media_external_id: selectedMedia.external_id || selectedMedia.id,
             media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
-            points_reward: 20,
           };
           
           console.log('🎯 Sending prediction:', predictionPayload);
           
-          const response = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
+          const response = await fetch(`${supabaseUrl}/functions/v1/inline-post`, {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${session.access_token}`,
@@ -916,95 +913,6 @@ export default function InlineComposer() {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               
-              {/* Friend Selector (Optional with Search) */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Invite a friend to predict (optional)</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={selectedFriendId ? selectedFriendName : friendSearchInput}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setFriendSearchInput(value);
-                      if (selectedFriendId) {
-                        setSelectedFriendId("");
-                        setSelectedFriendName("");
-                      }
-                      searchFriends(value);
-                      setShowFriendDropdown(true);
-                    }}
-                    onFocus={() => {
-                      setShowFriendDropdown(true);
-                      if (friendSearchInput.length >= 2) {
-                        searchFriends(friendSearchInput);
-                      }
-                    }}
-                    placeholder="Search friends or leave blank for just you..."
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                  
-                  {/* Friend Dropdown */}
-                  {showFriendDropdown && !selectedFriendId && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
-                      {isSearchingFriends ? (
-                        <div className="flex items-center justify-center py-4">
-                          <div className="text-xs text-gray-500">Searching...</div>
-                        </div>
-                      ) : friendSearchResults.length > 0 ? (
-                        <div className="space-y-1">
-                          {friendSearchResults.map((friend: any) => (
-                            <button
-                              key={friend.id}
-                              onClick={() => {
-                                setSelectedFriendId(friend.id);
-                                setSelectedFriendName(`@${friend.user_name}`);
-                                setFriendSearchInput("");
-                                setShowFriendDropdown(false);
-                                setFriendSearchResults([]);
-                              }}
-                              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 border-b border-gray-100 last:border-b-0"
-                            >
-                              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <User size={16} className="text-purple-600" />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-900">@{friend.user_name}</p>
-                                <p className="text-xs text-gray-500 truncate">{friend.email}</p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      ) : friendSearchInput.length >= 2 ? (
-                        <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                          No users found matching "{friendSearchInput}"
-                        </div>
-                      ) : (
-                        <div className="px-3 py-4 text-sm text-gray-500 text-center">
-                          Type at least 2 characters to search for friends
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {selectedFriendId && (
-                  <div className="mt-2 flex items-center space-x-2">
-                    <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <User size={14} className="text-purple-600" />
-                    </div>
-                    <p className="text-xs text-purple-600 font-medium">Selected: {selectedFriendName}</p>
-                    <button
-                      onClick={() => {
-                        setSelectedFriendId("");
-                        setSelectedFriendName("");
-                        setFriendSearchInput("");
-                      }}
-                      className="text-xs text-gray-400 hover:text-gray-600"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-              </div>
 
               {/* Prediction Options (exactly 2) with Creator Selection */}
               <div className="space-y-2">
