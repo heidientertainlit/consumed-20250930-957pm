@@ -10,26 +10,10 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-// Helper to make REST API calls to Supabase
-async function restApiCall(method: string, table: string, data?: Record<string, any>) {
-  const response = await fetch(`${supabaseUrl}/rest/v1/${table}`, {
-    method,
-    headers: {
-      'apikey': supabaseServiceKey,
-      'Authorization': `Bearer ${supabaseServiceKey}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    },
-    body: data ? JSON.stringify(data) : undefined
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`REST API error: ${response.status} - ${error}`);
-  }
-
-  return response.json();
-}
+// Create admin client with service role key for database operations
+const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { persistSession: false }
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -65,7 +49,7 @@ serve(async (req) => {
       .single();
 
     if (appUserError && appUserError.code === 'PGRST116') {
-      // User doesn't exist, create them using REST API
+      // User doesn't exist, create them using admin client
       console.log('Creating new user:', user.email);
       
       const newUserData = {
@@ -77,16 +61,20 @@ serve(async (req) => {
         last_name: user.user_metadata?.last_name || ''
       };
 
-      try {
-        const [newUser] = await restApiCall('POST', 'users', newUserData);
-        appUser = newUser;
-      } catch (createError) {
+      const { data: newUser, error: createError } = await adminClient
+        .from('users')
+        .insert(newUserData)
+        .select()
+        .single();
+
+      if (createError) {
         console.error('Failed to create user:', createError);
-        return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+        return new Response(JSON.stringify({ error: 'Failed to create user', details: createError.message }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+      appUser = newUser;
     } else if (appUserError) {
       console.error('App user error:', appUserError);
       return new Response(JSON.stringify({ error: 'Database error' }), {
@@ -131,152 +119,191 @@ serve(async (req) => {
       // Handle predictions
       if (type === 'prediction' && prediction_question && Array.isArray(prediction_options) && prediction_options.length >= 2) {
         const poolId = crypto.randomUUID();
+        console.log('Creating prediction with poolId:', poolId);
+        console.log('Options:', prediction_options);
         
-        try {
-          // Create prediction pool using REST API
-          const poolData = {
-            id: poolId,
-            title: prediction_question.substring(0, 100),
-            description: prediction_question,
-            type: 'predict',
-            status: 'open',
-            category: 'movie',
-            icon: '🎯',
-            options: prediction_options,
-            points_reward: 20,
-            origin_type: 'user',
-            origin_user_id: appUser.id,
-            media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null,
-            likes_count: 0,
-            comments_count: 0,
-            participants: 0
-          };
+        // Create prediction pool using admin client
+        const poolData = {
+          id: poolId,
+          title: prediction_question.substring(0, 100),
+          description: prediction_question,
+          type: 'predict',
+          status: 'open',
+          category: 'movie',
+          icon: '🎯',
+          options: prediction_options,
+          points_reward: 20,
+          origin_type: 'user',
+          origin_user_id: appUser.id,
+          media_external_id: media_external_id || null,
+          media_external_source: media_external_source || null,
+          likes_count: 0,
+          comments_count: 0,
+          participants: 0
+        };
 
-          await restApiCall('POST', 'prediction_pools', poolData);
-          console.log('Prediction pool created:', { poolId });
+        const { data: pool, error: poolError } = await adminClient
+          .from('prediction_pools')
+          .insert(poolData)
+          .select()
+          .single();
 
-          // Create associated social post using REST API
-          const postData = {
-            user_id: appUser.id,
-            content: prediction_question,
-            post_type: 'prediction',
-            prediction_pool_id: poolId,
-            media_title: media_title || prediction_question.substring(0, 100),
-            media_type: 'Movie',
-            media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null,
-            visibility,
-            contains_spoilers,
-            image_url: null
-          };
-
-          const [post] = await restApiCall('POST', 'social_posts', postData);
-          console.log('Social post created for prediction:', post);
-
-          return new Response(JSON.stringify({ pool: poolData, post }), {
-            status: 201,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        } catch (err) {
-          console.error('Prediction creation error:', err);
-          return new Response(JSON.stringify({ error: 'Failed to create prediction', details: err.message }), {
+        if (poolError) {
+          console.error('Prediction pool creation error:', poolError);
+          return new Response(JSON.stringify({ error: 'Failed to create prediction pool', details: poolError.message }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
+        console.log('Prediction pool created:', pool);
+
+        // Create associated social post using admin client
+        const postData = {
+          user_id: appUser.id,
+          content: prediction_question,
+          post_type: 'prediction',
+          prediction_pool_id: poolId,
+          media_title: media_title || prediction_question.substring(0, 100),
+          media_type: 'Movie',
+          media_external_id: media_external_id || null,
+          media_external_source: media_external_source || null,
+          visibility,
+          contains_spoilers,
+          image_url: null
+        };
+
+        const { data: post, error: postError } = await adminClient
+          .from('social_posts')
+          .insert(postData)
+          .select()
+          .single();
+
+        if (postError) {
+          console.error('Social post creation error:', postError);
+          return new Response(JSON.stringify({ error: 'Failed to create social post', details: postError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        console.log('Social post created for prediction:', post);
+
+        return new Response(JSON.stringify({ pool, post }), {
+          status: 201,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
       // Handle polls
       if (type === 'poll' && poll_question && Array.isArray(poll_options) && poll_options.length >= 2) {
         const poolId = crypto.randomUUID();
+        console.log('Creating poll with poolId:', poolId);
         
-        try {
-          // Create poll pool using REST API
-          const poolData = {
-            id: poolId,
-            title: poll_question.substring(0, 100),
-            description: poll_question,
-            type: 'vote',
-            status: 'open',
-            category: 'movie',
-            icon: '🗳️',
-            options: poll_options,
-            points_reward: 10,
-            origin_type: 'user',
-            origin_user_id: appUser.id,
-            media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null,
-            likes_count: 0,
-            comments_count: 0,
-            participants: 0
-          };
+        // Create poll pool using admin client
+        const poolData = {
+          id: poolId,
+          title: poll_question.substring(0, 100),
+          description: poll_question,
+          type: 'vote',
+          status: 'open',
+          category: 'movie',
+          icon: '🗳️',
+          options: poll_options,
+          points_reward: 10,
+          origin_type: 'user',
+          origin_user_id: appUser.id,
+          media_external_id: media_external_id || null,
+          media_external_source: media_external_source || null,
+          likes_count: 0,
+          comments_count: 0,
+          participants: 0
+        };
 
-          await restApiCall('POST', 'prediction_pools', poolData);
-          console.log('Poll pool created:', { poolId });
+        const { data: pool, error: poolError } = await adminClient
+          .from('prediction_pools')
+          .insert(poolData)
+          .select()
+          .single();
 
-          // Create associated social post using REST API
-          const postData = {
-            user_id: appUser.id,
-            content: poll_question,
-            post_type: 'poll',
-            prediction_pool_id: poolId,
-            media_title: poll_question.substring(0, 100),
-            media_type: 'Movie',
-            media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null,
-            visibility,
-            contains_spoilers,
-            image_url: null
-          };
-
-          const [post] = await restApiCall('POST', 'social_posts', postData);
-          console.log('Social post created for poll:', post);
-
-          return new Response(JSON.stringify({ pool: poolData, post }), {
-            status: 201,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        } catch (err) {
-          console.error('Poll creation error:', err);
-          return new Response(JSON.stringify({ error: 'Failed to create poll', details: err.message }), {
+        if (poolError) {
+          console.error('Poll pool creation error:', poolError);
+          return new Response(JSON.stringify({ error: 'Failed to create poll pool', details: poolError.message }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
-      }
+        console.log('Poll pool created:', pool);
 
-      // Handle all other post types (thought, rate-review, add-media)
-      try {
+        // Create associated social post using admin client
         const postData = {
           user_id: appUser.id,
-          content,
-          post_type: type || 'update',
-          rating: rating || null,
-          media_title: media_title || null,
-          media_type: media_type || null,
-          media_creator: media_creator || null,
-          image_url: null,
+          content: poll_question,
+          post_type: 'poll',
+          prediction_pool_id: poolId,
+          media_title: poll_question.substring(0, 100),
+          media_type: 'Movie',
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
           visibility,
-          contains_spoilers
+          contains_spoilers,
+          image_url: null
         };
 
-        const [post] = await restApiCall('POST', 'social_posts', postData);
-        console.log('Post created:', post);
+        const { data: post, error: postError } = await adminClient
+          .from('social_posts')
+          .insert(postData)
+          .select()
+          .single();
 
-        return new Response(JSON.stringify(post), {
+        if (postError) {
+          console.error('Poll social post creation error:', postError);
+          return new Response(JSON.stringify({ error: 'Failed to create poll post', details: postError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        console.log('Social post created for poll:', post);
+
+        return new Response(JSON.stringify({ pool, post }), {
           status: 201,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
-      } catch (err) {
-        console.error('Post creation error:', err);
-        return new Response(JSON.stringify({ error: 'Failed to create post', details: err.message }), {
+      }
+
+      // Handle all other post types (thought, rate-review, add-media)
+      const postData = {
+        user_id: appUser.id,
+        content,
+        post_type: type || 'update',
+        rating: rating || null,
+        media_title: media_title || null,
+        media_type: media_type || null,
+        media_creator: media_creator || null,
+        image_url: null,
+        media_external_id: media_external_id || null,
+        media_external_source: media_external_source || null,
+        visibility,
+        contains_spoilers
+      };
+
+      const { data: post, error: postError } = await adminClient
+        .from('social_posts')
+        .insert(postData)
+        .select()
+        .single();
+
+      if (postError) {
+        console.error('Post creation error:', postError);
+        return new Response(JSON.stringify({ error: 'Failed to create post', details: postError.message }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+      console.log('Post created:', post);
+
+      return new Response(JSON.stringify(post), {
+        status: 201,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
   } catch (error) {
