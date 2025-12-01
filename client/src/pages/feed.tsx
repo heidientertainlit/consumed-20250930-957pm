@@ -1599,7 +1599,7 @@ export default function Feed() {
 
                 {/* Prediction Question */}
                 <p className="text-base font-semibold text-gray-900 mb-4">
-                  Will she leave?
+                  What do you predict will happen?
                 </p>
 
                 {/* Voting Options */}
