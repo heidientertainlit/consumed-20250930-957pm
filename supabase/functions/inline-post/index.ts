@@ -167,7 +167,8 @@ serve(async (req) => {
             media_external_id: media_external_id || null,
             media_external_source: media_external_source || null,
             visibility,
-            contains_spoilers
+            contains_spoilers,
+            image_url: null
           };
 
           const [post] = await restApiCall('POST', 'social_posts', postData);
@@ -225,7 +226,8 @@ serve(async (req) => {
             media_external_id: media_external_id || null,
             media_external_source: media_external_source || null,
             visibility,
-            contains_spoilers
+            contains_spoilers,
+            image_url: null
           };
 
           const [post] = await restApiCall('POST', 'social_posts', postData);
@@ -254,7 +256,7 @@ serve(async (req) => {
           media_title: media_title || null,
           media_type: media_type || null,
           media_creator: media_creator || null,
-          image_url: media_image_url || null,
+          image_url: null,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
           visibility,

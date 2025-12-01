@@ -121,7 +121,8 @@ serve(async (req) => {
           media_external_id, 
           media_external_source, 
           media_description,
-          contains_spoilers
+          contains_spoilers,
+          prediction_pool_id
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -136,21 +137,25 @@ serve(async (req) => {
 
       console.log('Found posts:', posts?.length || 0);
 
-      // TODO: Re-enable user-created predictions fetch when ready
-      // For now, disabled to avoid showing test/unwanted data
-      // const supabaseAdmin = createClient(
-      //   Deno.env.get('SUPABASE_URL') ?? '',
-      //   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      // );
-      // const { data: predictions, error: predictionsError } = await supabaseAdmin
-      //   .from('prediction_pools')
-      //   .select(...)
-      //   .eq('origin_type', 'user')
-      //   .order('created_at', { ascending: false })
-      //   .limit(limit);
+      // Fetch prediction pools for posts with prediction_pool_id
+      let predictionPoolMap = new Map<string, any>();
+      const predictionPoolIds = posts?.filter(p => p.prediction_pool_id).map(p => p.prediction_pool_id) || [];
       
-      const predictions: any[] = [];
-      console.log('Found predictions:', 0);
+      if (predictionPoolIds.length > 0) {
+        const { data: pools, error: poolsError } = await supabase
+          .from('prediction_pools')
+          .select('id, title, description, options, status, origin_type, origin_user_id, created_at, likes_count, comments_count')
+          .in('id', predictionPoolIds);
+        
+        if (pools) {
+          predictionPoolMap = new Map(pools.map(p => [p.id, p]));
+        }
+        if (poolsError) {
+          console.error('Error fetching prediction pools:', poolsError);
+        }
+      }
+
+      console.log('Prediction pools loaded:', predictionPoolMap.size);
 
       console.log('DEBUG: predictions data:', predictions);
       
@@ -358,8 +363,61 @@ serve(async (req) => {
       const transformedNonMediaPosts = nonMediaPosts.map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
-        const hasMedia = post.media_title && post.media_title.trim() !== '';
+        // Check if this is a prediction post with pool data
+        const isPrediction = post.post_type === 'predict' && post.prediction_pool_id;
+        const predictionPool = isPrediction ? predictionPoolMap.get(post.prediction_pool_id) : null;
         
+        const hasMedia = post.media_title && post.media_title.trim() !== '' && !isPrediction;
+        
+        // If this is a prediction, return prediction format
+        if (isPrediction && predictionPool) {
+          const totalVotes = (predictionPool.options || []).reduce((sum: number, opt: string) => {
+            return sum + (voteCounts[post.prediction_pool_id]?.[opt] || 0);
+          }, 0);
+          
+          const optionVotes = (predictionPool.options || []).map((opt: string) => {
+            const count = voteCounts[post.prediction_pool_id]?.[opt] || 0;
+            const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+            return {
+              option: opt,
+              count,
+              percentage
+            };
+          });
+          
+          const userHasAnswered = userVotedPoolIds.has(post.prediction_pool_id);
+
+          return {
+            id: post.id,
+            poolId: post.prediction_pool_id,
+            type: 'prediction',
+            title: predictionPool.title || '',
+            question: predictionPool.title || '',
+            description: predictionPool.description || '',
+            options: predictionPool.options || [],
+            optionVotes,
+            status: predictionPool.status || 'open',
+            origin_type: predictionPool.origin_type || 'user',
+            origin_user_id: predictionPool.origin_user_id || post.user_id,
+            user: {
+              id: post.user_id,
+              username: postUser.user_name || 'Unknown',
+              displayName: postUser.display_name || postUser.user_name || 'Unknown',
+              avatar: postUser.avatar || ''
+            },
+            creator: {
+              id: predictionPool.origin_user_id || post.user_id,
+              username: postUser.user_name || 'Unknown'
+            },
+            timestamp: post.created_at,
+            likes: predictionPool.likes_count || 0,
+            comments: predictionPool.comments_count || 0,
+            participantCount: totalVotes,
+            userHasAnswered
+          };
+        }
+        
+        // Regular non-prediction post
         return {
           id: post.id,
           type: post.post_type || 'update',
