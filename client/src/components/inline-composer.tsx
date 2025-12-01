@@ -400,16 +400,6 @@ export default function InlineComposer() {
           return;
         }
 
-        if (!creatorPrediction) {
-          toast({
-            title: "Your Prediction Required",
-            description: "Please select which option you predict.",
-            variant: "destructive",
-          });
-          setIsPosting(false);
-          return;
-        }
-
         const option1 = predictionOptions[0]?.trim();
         const option2 = predictionOptions[1]?.trim();
 
@@ -462,7 +452,7 @@ export default function InlineComposer() {
 
           toast({
             title: "Prediction Created!",
-            description: `You and your friend have been invited to predict.`,
+            description: "Your prediction is now live on the feed.",
           });
 
           queryClient.invalidateQueries({ queryKey: ['social-feed'] });
