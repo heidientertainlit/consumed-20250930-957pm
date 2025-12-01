@@ -392,7 +392,7 @@ export default function InlineComposer() {
           media_external_source: selectedMedia.external_source || selectedMedia.source,
         };
       } else if (actionMode === "prediction") {
-        // Handle collaborative user-driven predictions
+        // Handle collaborative user-driven predictions - same pattern as thoughts
         if (!predictionQuestion.trim()) {
           toast({
             title: "Question Required",
@@ -416,65 +416,21 @@ export default function InlineComposer() {
           return;
         }
 
-        // Call inline-post edge function for predictions
-        try {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-          const predictionPayload = {
-            type: 'prediction',
-            prediction_question: predictionQuestion.trim(),
-            prediction_options: [option1, option2],
-            media_title: selectedMedia?.title || '',
-            media_external_id: selectedMedia?.external_id || selectedMedia?.id || '',
-            media_external_source: selectedMedia?.external_source || selectedMedia?.source || 'tmdb',
-            visibility: 'public',
-            contains_spoilers: containsSpoilers,
-          };
-          
-          console.log('🎯 Sending prediction:', predictionPayload);
-          
-          const response = await fetch(`${supabaseUrl}/functions/v1/inline-post`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(predictionPayload),
-          });
-
-          console.log('🎯 Response status:', response.status);
-          
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-            console.error('🎯 Create prediction error:', errorData);
-            throw new Error(errorData.error || errorData.message || 'Failed to create prediction');
-          }
-
-          const result = await response.json();
-          console.log('🎯 Create prediction response:', result);
-          
-          if (result.error) {
-            throw new Error(result.error);
-          }
-
-          toast({
-            title: "Prediction Created!",
-            description: "Your prediction is now live on the feed.",
-          });
-
-          queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-          resetComposer();
-          setIsPosting(false);
-          return;
-        } catch (error) {
-          console.error("Create prediction error:", error);
-          toast({
-            title: "Prediction Failed",
-            description: error instanceof Error ? error.message : "Unable to create prediction. Please try again.",
-            variant: "destructive",
-          });
-          setIsPosting(false);
-          return;
-        }
+        // Use same payload pattern as thoughts - let it flow through the shared fetch
+        payload = {
+          content: predictionQuestion.trim(),
+          type: "prediction",
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+          prediction_question: predictionQuestion.trim(),
+          prediction_options: [option1, option2],
+          media_title: selectedMedia.title,
+          media_type: selectedMedia.type,
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
+          media_external_id: selectedMedia.external_id || selectedMedia.id,
+          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+        };
       } else if (actionMode === "poll") {
         const filledOptions = pollOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
         if (!pollQuestion.trim() || filledOptions.length < 2) {
