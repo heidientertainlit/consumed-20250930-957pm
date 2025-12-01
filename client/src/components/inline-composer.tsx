@@ -943,9 +943,13 @@ export default function InlineComposer() {
               </div>
 
               <div className="flex items-center justify-between">
-                <Button onClick={() => setActionMode("")} variant="ghost" size="sm">
+                <button 
+                  type="button"
+                  onClick={() => setActionMode("")} 
+                  className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+                >
                   Cancel
-                </Button>
+                </button>
                 <div className="flex items-center gap-2">
                   <label className="flex items-center gap-2 text-sm">
                     <Checkbox
@@ -954,14 +958,17 @@ export default function InlineComposer() {
                     />
                     <span className="text-gray-600">Spoilers</span>
                   </label>
-                  <Button
+                  <button
                     type="button"
-                    onClick={handlePost}
+                    onClick={() => {
+                      console.log('🎯 Prediction Post button clicked!');
+                      handlePost();
+                    }}
                     disabled={isPosting}
-                    className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
-                  </Button>
+                    {isPosting ? "Posting..." : "Post"}
+                  </button>
                 </div>
               </div>
             </div>
