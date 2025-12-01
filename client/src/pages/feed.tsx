@@ -1530,36 +1530,36 @@ export default function Feed() {
                 if (friendActivities.length === 0) return null;
                 
                 return (
-                  <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100 shadow-sm">
-                    <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100 shadow-sm overflow-hidden">
+                    <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <span>✨</span>
                       Quick Glimpse
                     </p>
-                    <div className="overflow-hidden">
+                    <div className="h-20 overflow-hidden">
                       <div 
-                        className="flex whitespace-nowrap gap-6"
+                        className="flex flex-col"
                         style={{
-                          animation: `scroll ${friendActivities.length * 4}s linear infinite`
-                        }}
+                          animation: `scrollVertical ${friendActivities.length * 3}s linear infinite`,
+                          '--scroll-distance': `-${friendActivities.length * 20}px`
+                        } as React.CSSProperties}
                       >
                         {/* Duplicate for seamless loop */}
                         {[...friendActivities, ...friendActivities].map((activity, idx) => (
                           <div 
                             key={idx}
-                            className="flex items-center gap-1 text-sm text-gray-700 flex-shrink-0"
+                            className="h-5 flex items-center text-xs text-gray-700 whitespace-nowrap"
                           >
-                            <span className="font-medium">{activity.username}</span>
-                            <span className="text-gray-500">{activity.action}</span>
-                            <span className="font-medium text-gray-900">{activity.media}</span>
-                            <span className="text-gray-400">•</span>
+                            <span className="font-medium truncate">{activity.username}</span>
+                            <span className="mx-1 text-gray-500">{activity.action}</span>
+                            <span className="truncate">{activity.media}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                     <style>{`
-                      @keyframes scroll {
-                        0% { transform: translateX(0); }
-                        100% { transform: translateX(-50%); }
+                      @keyframes scrollVertical {
+                        0% { transform: translateY(0); }
+                        100% { transform: translateY(calc(var(--scroll-distance))); }
                       }
                     `}</style>
                   </div>
