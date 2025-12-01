@@ -420,8 +420,11 @@ export default function InlineComposer() {
             type: 'prediction',
             prediction_question: predictionQuestion.trim(),
             prediction_options: [option1, option2],
-            media_external_id: selectedMedia.external_id || selectedMedia.id,
-            media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+            media_title: selectedMedia?.title || '',
+            media_external_id: selectedMedia?.external_id || selectedMedia?.id || '',
+            media_external_source: selectedMedia?.external_source || selectedMedia?.source || 'tmdb',
+            visibility: 'public',
+            contains_spoilers: containsSpoilers,
           };
           
           console.log('🎯 Sending prediction:', predictionPayload);
