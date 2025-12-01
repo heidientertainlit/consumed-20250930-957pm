@@ -23,6 +23,13 @@ serve(async (req) => {
       }
     );
 
+    // Create admin client at function level for RLS-bypassing operations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '', 
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
+    );
+
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -43,10 +50,6 @@ serve(async (req) => {
     if (appUserError && appUserError.code === 'PGRST116') {
       // User doesn't exist, create them using service role client (bypass RLS)
       console.log('Creating new user:', user.email);
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', 
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
       
       const { data: newUser, error: createError } = await supabaseAdmin
         .from('users')
