@@ -1586,10 +1586,26 @@ export default function Feed() {
                 
                 // Check if this item is a prediction from the API
                 if (post.type === 'prediction' && post.question) {
+                  // Transform prediction post data for the card component
+                  const predictionCardData = {
+                    ...post,
+                    id: post.id,
+                    title: post.question,
+                    mediaTitle: post.mediaItems?.[0]?.title,
+                    creator: post.user || { username: 'Unknown' },
+                    poolId: post.id,
+                    options: post.options || [],
+                    optionVotes: (post as any).optionVotes || [],
+                    userVotes: (post as any).userVotes || [],
+                    userHasAnswered: (post as any).userHasAnswered || false,
+                    likesCount: post.likes || 0,
+                    commentsCount: post.comments || 0,
+                  };
+
                   return (
                     <div key={`prediction-${post.id}`} className="mb-4">
                       <CollaborativePredictionCard 
-                        prediction={post as any}
+                        prediction={predictionCardData as any}
                       />
                     </div>
                   );

@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { TrendingUp, Heart, MessageCircle, Users, Trash2 } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { useLocation } from "wouter";
 
 interface PredictionOption {
   option: string;
@@ -47,6 +48,13 @@ interface PredictionCard {
   options?: string[];
   optionVotes?: PredictionOption[];
   userVotes?: UserVote[];
+  mediaItems?: Array<{
+    title: string;
+    mediaType?: string;
+    externalId?: string;
+    externalSource?: string;
+  }>;
+  type?: string;
 }
 
 interface PredictionCardProps {
@@ -56,11 +64,12 @@ interface PredictionCardProps {
 export default function CollaborativePredictionCard({ 
   prediction
 }: PredictionCardProps) {
-  const { creator, title, mediaTitle, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, origin_type = 'user', origin_user_id, status = 'open', type, userVotes = [], options = [], optionVotes = [] } = prediction;
+  const { creator, title, mediaTitle, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, origin_type = 'user', origin_user_id, status = 'open', type, userVotes = [], options = [], optionVotes = [], mediaItems } = prediction;
   
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [liked, setLiked] = useState(isLiked);
@@ -296,10 +305,20 @@ export default function CollaborativePredictionCard({
               <p className="text-sm text-gray-700">
                 <span className="font-semibold text-gray-900">@{creator.username}</span>
                 <span className="text-gray-500"> predicts</span>
-                {mediaTitle && (
+                {mediaTitle && mediaItems?.[0] && (
                   <>
                     <span className="text-gray-500"> about </span>
-                    <span className="font-semibold text-gray-900">{mediaTitle}</span>
+                    <button
+                      onClick={() => {
+                        const media = mediaItems[0];
+                        if (media.externalId && media.externalSource) {
+                          setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                        }
+                      }}
+                      className="font-semibold text-gray-900 hover:text-purple-600 transition-colors cursor-pointer underline"
+                    >
+                      {mediaTitle}
+                    </button>
                   </>
                 )}
                 <span className="text-gray-500">:</span>
