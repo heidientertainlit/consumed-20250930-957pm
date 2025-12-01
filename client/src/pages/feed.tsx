@@ -1470,6 +1470,76 @@ export default function Feed() {
         {/* Activity Stream */}
         <div className="space-y-6">
 
+          {/* EXAMPLE: Correct Prediction Card Layout */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            {/* Header with creator, media title, and delete */}
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-gray-700 flex-1">
+                <span className="font-semibold text-gray-900">@punkinpie123</span>
+                <span className="text-gray-500"> predicts about </span>
+                <button className="font-semibold text-gray-900 hover:text-purple-600 underline">
+                  Does Mary leave the show?
+                </button>
+                <span className="text-gray-500">:</span>
+              </p>
+              <button className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                <Trash2 size={18} />
+              </button>
+            </div>
+
+            {/* Question */}
+            <p className="text-lg font-semibold text-gray-900 mb-4">
+              Will it be a good ending?
+            </p>
+
+            {/* Media Card - Clickable */}
+            <div className="bg-gray-50 rounded-lg p-3 mb-4 cursor-pointer hover:bg-gray-100 transition-colors">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0">
+                  <img 
+                    src="https://via.placeholder.com/50x80?text=Show"
+                    alt="Show"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                    Does Mary leave the show?
+                  </h3>
+                  <div className="text-gray-500 text-xs capitalize">
+                    TV
+                  </div>
+                </div>
+                <ChevronRight className="text-gray-400 flex-shrink-0" size={16} />
+              </div>
+            </div>
+
+            {/* Voting Options */}
+            <div className="space-y-2 mb-4">
+              <button className="w-full rounded-full px-4 py-2.5 border-2 border-purple-300 bg-white hover:border-purple-400 text-sm font-medium text-left text-gray-900 transition-all">
+                Yes, she leaves
+              </button>
+              <button className="w-full rounded-full px-4 py-2.5 border-2 border-purple-300 bg-white hover:border-purple-400 text-sm font-medium text-left text-gray-900 transition-all">
+                No, she stays
+              </button>
+            </div>
+
+            {/* Action Bar */}
+            <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+              <div className="flex items-center space-x-6">
+                <button className="flex items-center space-x-2 text-gray-500 hover:text-red-500 transition-colors">
+                  <Heart size={18} />
+                  <span className="text-sm">42</span>
+                </button>
+                <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors">
+                  <MessageCircle size={18} />
+                  <span className="text-sm">8</span>
+                </button>
+              </div>
+              <span className="text-sm text-gray-500">2h ago</span>
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3, 4].map((n) => (
