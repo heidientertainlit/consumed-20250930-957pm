@@ -283,6 +283,9 @@ export default function InlineComposer() {
   };
 
   const handlePost = async () => {
+    console.log('🎯 handlePost called with actionMode:', actionMode);
+    console.log('🎯 selectedMedia:', selectedMedia);
+    
     if (!session?.access_token) {
       toast({
         title: "Not Authenticated",
@@ -952,6 +955,7 @@ export default function InlineComposer() {
                     <span className="text-gray-600">Spoilers</span>
                   </label>
                   <Button
+                    type="button"
                     onClick={handlePost}
                     disabled={isPosting}
                     className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
