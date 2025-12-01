@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -53,6 +53,7 @@ interface PredictionCard {
     mediaType?: string;
     externalId?: string;
     externalSource?: string;
+    imageUrl?: string;
   }>;
   type?: string;
 }
@@ -289,45 +290,35 @@ export default function CollaborativePredictionCard({
   const totalVotes = optionVotes?.reduce((sum, ov) => sum + ov.count, 0) || 0;
   
   return (
-    <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4 mb-4`}>
-      {/* Header */}
+    <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
+      {/* Header with creator and delete button */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2 flex-1">
-          <div className={`w-8 h-8 ${isConsumedPrediction ? 'bg-gradient-to-br from-purple-500 to-blue-500' : 'bg-purple-100'} rounded-full flex items-center justify-center flex-shrink-0`}>
-            <TrendingUp size={16} className={isConsumedPrediction ? 'text-white' : 'text-purple-600'} />
-          </div>
-          <div className="flex-1">
-            {isConsumedPrediction ? (
-              <p className="text-sm">
-                <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
-              </p>
-            ) : (
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">@{creator.username}</span>
-                <span className="text-gray-500"> predicts</span>
-                {mediaTitle && mediaItems?.[0] && (
-                  <>
-                    <span className="text-gray-500"> about </span>
-                    <button
-                      onClick={() => {
-                        const media = mediaItems[0];
-                        if (media.externalId && media.externalSource) {
-                          setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                        }
-                      }}
-                      className="font-semibold text-gray-900 hover:text-purple-600 transition-colors cursor-pointer underline"
-                    >
-                      {mediaTitle}
-                    </button>
-                  </>
-                )}
-                <span className="text-gray-500">:</span>
-              </p>
-            )}
-          </div>
-        </div>
+        <p className="text-sm text-gray-700 flex-1">
+          {isConsumedPrediction ? (
+            <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
+          ) : (
+            <>
+              <span className="font-semibold text-gray-900">@{creator.username}</span>
+              <span className="text-gray-500"> predicts about </span>
+              {mediaTitle && mediaItems?.[0] && (
+                <button
+                  onClick={() => {
+                    const media = mediaItems[0];
+                    if (media.externalId && media.externalSource) {
+                      setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                    }
+                  }}
+                  className="font-semibold text-gray-900 hover:text-purple-600 transition-colors cursor-pointer underline"
+                >
+                  {mediaTitle}
+                </button>
+              )}
+              <span className="text-gray-500">:</span>
+            </>
+          )}
+        </p>
         
-        {/* Delete button in header */}
+        {/* Delete button */}
         {isCreator && origin_type === 'user' && (
           <button
             onClick={() => deleteMutation.mutate()}
@@ -342,9 +333,41 @@ export default function CollaborativePredictionCard({
       </div>
 
       {/* Question */}
-      <p className="text-sm font-medium text-gray-900 mb-3">
+      <p className="text-lg font-semibold text-gray-900 mb-4">
         {title}
       </p>
+
+      {/* Media card - clickable */}
+      {mediaItems?.[0] && (
+        <div 
+          className="bg-gray-50 rounded-lg p-3 mb-4 cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={() => {
+            const media = mediaItems[0];
+            if (media.externalId && media.externalSource) {
+              setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+            }
+          }}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0">
+              <img 
+                src={mediaItems[0].imageUrl || 'https://via.placeholder.com/50x80'}
+                alt={mediaItems[0].title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                {mediaItems[0].title}
+              </h3>
+              <div className="text-gray-500 text-xs capitalize">
+                {mediaItems[0].mediaType}
+              </div>
+            </div>
+            <ChevronRightIcon className="text-gray-400 flex-shrink-0" size={16} />
+          </div>
+        </div>
+      )}
 
       {/* Voting Options - Stacked vertically */}
       <div className="space-y-2 mb-3">
