@@ -151,8 +151,8 @@ serve(async (req) => {
 
         console.log('Prediction pool created:', { poolId, pool });
 
-        // Create associated social post
-        const { data: post, error: postError } = await supabase
+        // Create associated social post - use admin client to avoid schema cache issues
+        const { data: post, error: postError } = await supabaseAdmin
           .from('social_posts')
           .insert({
             user_id: appUser.id,
@@ -224,8 +224,8 @@ serve(async (req) => {
 
         console.log('Poll pool created:', { poolId, pool });
 
-        // Create associated social post
-        const { data: post, error: postError } = await supabase
+        // Create associated social post - use admin client to avoid schema cache issues
+        const { data: post, error: postError } = await supabaseAdmin
           .from('social_posts')
           .insert({
             user_id: appUser.id,
