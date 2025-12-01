@@ -162,11 +162,23 @@ serve(async (req) => {
 
       console.log('Prediction pools loaded:', predictionPoolMap.size);
 
-      // Create mapping from pool_id to media_title from associated social_posts
+      // Create mapping from pool_id to media data from associated social_posts
       const poolMediaTitleMap = new Map<string, string>();
+      const poolMediaDataMap = new Map<string, any>();
       posts?.forEach(post => {
-        if (post.prediction_pool_id && post.media_title) {
-          poolMediaTitleMap.set(post.prediction_pool_id, post.media_title);
+        if (post.prediction_pool_id) {
+          if (post.media_title) {
+            poolMediaTitleMap.set(post.prediction_pool_id, post.media_title);
+          }
+          // Store full media data for building mediaItems
+          poolMediaDataMap.set(post.prediction_pool_id, {
+            title: post.media_title,
+            mediaType: post.media_type,
+            externalId: post.media_external_id,
+            externalSource: post.media_external_source,
+            imageUrl: post.image_url,
+            creator: post.media_creator
+          });
         }
       });
 
@@ -472,7 +484,17 @@ serve(async (req) => {
           },
           mediaExternalId: pred.media_external_id,
           mediaExternalSource: pred.media_external_source,
-          mediaTitle: poolMediaTitleMap.get(pred.id) || null
+          mediaTitle: poolMediaTitleMap.get(pred.id) || null,
+          // Add mediaItems for the prediction card to display media info
+          mediaItems: poolMediaDataMap.has(pred.id) ? [{
+            id: `pred-media-${pred.id}`,
+            title: poolMediaDataMap.get(pred.id).title || '',
+            mediaType: poolMediaDataMap.get(pred.id).mediaType || '',
+            externalId: poolMediaDataMap.get(pred.id).externalId || pred.media_external_id || '',
+            externalSource: poolMediaDataMap.get(pred.id).externalSource || pred.media_external_source || '',
+            imageUrl: poolMediaDataMap.get(pred.id).imageUrl || '',
+            creator: poolMediaDataMap.get(pred.id).creator || ''
+          }] : []
         };
       }) || [];
 
