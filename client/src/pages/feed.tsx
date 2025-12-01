@@ -1632,7 +1632,10 @@ export default function Feed() {
               <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
 
               
-              {filteredPosts.map((post: SocialPost, postIndex: number) => {
+              {filteredPosts.filter((post: SocialPost) => {
+                // Filter out incorrectly rendered prediction posts
+                return !(post.mediaItems?.[0]?.title === "Does Mary leave the show?" && !post.type);
+              }).map((post: SocialPost, postIndex: number) => {
                 
                 // Check if this item is a prediction from the API
                 if (post.type === 'prediction' && post.question) {
