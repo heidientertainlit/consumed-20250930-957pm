@@ -113,7 +113,12 @@ serve(async (req) => {
       // Handle predictions
       if (type === 'prediction' && prediction_question && Array.isArray(prediction_options) && prediction_options.length >= 2) {
         const poolId = crypto.randomUUID();
-        const { data: pool, error: poolError } = await supabase
+        // Use admin client to bypass RLS for user-created predictions
+        const supabaseAdmin = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+        const { data: pool, error: poolError } = await supabaseAdmin
           .from('prediction_pools')
           .insert({
             id: poolId,
@@ -179,7 +184,12 @@ serve(async (req) => {
       // Handle polls
       if (type === 'poll' && poll_question && Array.isArray(poll_options) && poll_options.length >= 2) {
         const poolId = crypto.randomUUID();
-        const { data: pool, error: poolError } = await supabase
+        // Use admin client to bypass RLS for user-created polls
+        const supabaseAdmin = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+        const { data: pool, error: poolError } = await supabaseAdmin
           .from('prediction_pools')
           .insert({
             id: poolId,
