@@ -1620,8 +1620,8 @@ export default function Feed() {
 
               
               {filteredPosts.filter((post: SocialPost) => {
-                // Filter out any media-only posts that should be predictions
-                return !(post.mediaItems?.length > 0 && !post.content && !post.type && post.mediaItems[0]?.title?.toLowerCase().includes("leave"));
+                // Filter out incorrectly formatted prediction posts
+                return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((post: SocialPost, postIndex: number) => {
                 
                 // Check if this item is a prediction from the API
