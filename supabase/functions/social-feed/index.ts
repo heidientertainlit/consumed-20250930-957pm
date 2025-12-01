@@ -145,13 +145,15 @@ serve(async (req) => {
       const predictionPoolIds = posts?.filter(p => p.prediction_pool_id).map(p => p.prediction_pool_id) || [];
       
       if (predictionPoolIds.length > 0) {
-        const { data: pools, error: poolsError } = await supabase
+        // Use admin client to bypass RLS on prediction_pools
+        const { data: pools, error: poolsError } = await supabaseAdmin
           .from('prediction_pools')
           .select('id, title, description, options, status, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source')
           .in('id', predictionPoolIds);
         
         if (pools) {
           predictionPoolMap = new Map(pools.map(p => [p.id, p]));
+          console.log('Prediction pools fetched:', pools.length);
         }
         if (poolsError) {
           console.error('Error fetching prediction pools:', poolsError);
