@@ -1625,21 +1625,25 @@ export default function Feed() {
               }).map((post: SocialPost, postIndex: number) => {
                 
                 // Check if this item is a prediction from the API
-                if (post.type === 'prediction' && post.question) {
+                if (post.type === 'prediction' && (post as any).question) {
                   // Transform prediction post data for the card component
+                  const predPost = post as any;
                   const predictionCardData = {
                     ...post,
-                    id: post.id,
-                    title: post.question,
-                    mediaTitle: post.mediaItems?.[0]?.title,
-                    creator: post.user || { username: 'Unknown' },
-                    poolId: post.id,
-                    options: post.options || [],
-                    optionVotes: (post as any).optionVotes || [],
-                    userVotes: (post as any).userVotes || [],
-                    userHasAnswered: (post as any).userHasAnswered || false,
-                    likesCount: post.likes || 0,
-                    commentsCount: post.comments || 0,
+                    id: predPost.poolId || post.id,
+                    title: predPost.question,
+                    mediaTitle: predPost.mediaTitle || post.mediaItems?.[0]?.title,
+                    creator: predPost.creator || post.user || { username: 'Unknown' },
+                    poolId: predPost.poolId || post.id,
+                    options: predPost.options || [],
+                    optionVotes: predPost.optionVotes || [],
+                    userVotes: predPost.userVotes || [],
+                    userHasAnswered: predPost.userHasAnswered || false,
+                    likesCount: predPost.likes || 0,
+                    commentsCount: predPost.comments || 0,
+                    origin_type: predPost.origin_type || 'user',
+                    origin_user_id: predPost.origin_user_id,
+                    status: predPost.status || 'open',
                   };
 
                   return (

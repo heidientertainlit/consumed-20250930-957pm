@@ -144,7 +144,7 @@ serve(async (req) => {
       if (predictionPoolIds.length > 0) {
         const { data: pools, error: poolsError } = await supabase
           .from('prediction_pools')
-          .select('id, title, description, options, status, origin_type, origin_user_id, created_at, likes_count, comments_count')
+          .select('id, title, description, options, status, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source')
           .in('id', predictionPoolIds);
         
         if (pools) {
@@ -156,6 +156,14 @@ serve(async (req) => {
       }
 
       console.log('Prediction pools loaded:', predictionPoolMap.size);
+
+      // Create mapping from pool_id to media_title from associated social_posts
+      const poolMediaTitleMap = new Map<string, string>();
+      posts?.forEach(post => {
+        if (post.prediction_pool_id && post.media_title) {
+          poolMediaTitleMap.set(post.prediction_pool_id, post.media_title);
+        }
+      });
 
       // Convert prediction pools to predictions array
       const predictions: any[] = Array.from(predictionPoolMap.values());
@@ -361,8 +369,11 @@ serve(async (req) => {
         }
       });
 
-      // Transform non-media posts (predictions, polls, regular posts without media)
-      const transformedNonMediaPosts = nonMediaPosts.map(post => {
+      // Transform non-media posts (regular posts without media)
+      // SKIP predictions - they're included separately in transformedPredictions with proper data
+      const transformedNonMediaPosts = nonMediaPosts
+        .filter(post => !(post.post_type === 'prediction' && post.prediction_pool_id))
+        .map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
         const hasMedia = post.media_title && post.media_title.trim() !== '';
@@ -455,7 +466,8 @@ serve(async (req) => {
             total: totalVotes
           },
           mediaExternalId: pred.media_external_id,
-          mediaExternalSource: pred.media_external_source
+          mediaExternalSource: pred.media_external_source,
+          mediaTitle: poolMediaTitleMap.get(pred.id) || null
         };
       }) || [];
 
