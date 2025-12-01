@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Users, Heart, MessageCircle, ArrowUp, Trash2 } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -7,21 +7,27 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 
-interface CollaborativePrediction {
+interface PredictionOption {
+  option: string;
+  count: number;
+  percentage: number;
+}
+
+interface UserVote {
+  user: string;
+  vote: string;
+  userId: string;
+}
+
+interface PredictionCard {
   id: string;
-  question: string;
-  type?: 'vote' | 'predict' | 'trivia';
+  title: string;
+  description?: string;
   creator: {
     id?: string;
     username: string;
   };
-  invitedFriend: {
-    username: string;
-  };
-  creatorPrediction: string;
-  friendPrediction?: string;
   mediaTitle?: string;
-  participantCount?: number;
   userHasAnswered?: boolean;
   likesCount?: number;
   commentsCount?: number;
@@ -39,28 +45,18 @@ interface CollaborativePrediction {
   resolved_at?: string | null;
   winning_option?: string;
   options?: string[];
-  optionVotes?: Array<{
-    option: string;
-    count: number;
-    percentage: number;
-  }>;
-  userVotes?: Array<{
-    user: string;
-    vote: string;
-    userId: string;
-  }>;
+  optionVotes?: PredictionOption[];
+  userVotes?: UserVote[];
 }
 
-interface CollaborativePredictionCardProps {
-  prediction: CollaborativePrediction;
-  onCastPrediction?: () => void;
+interface PredictionCardProps {
+  prediction: PredictionCard;
 }
 
 export default function CollaborativePredictionCard({ 
-  prediction, 
-  onCastPrediction 
-}: CollaborativePredictionCardProps) {
-  const { creator, invitedFriend, question, creatorPrediction, friendPrediction, mediaTitle, participantCount, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, voteCounts, origin_type = 'user', origin_user_id, deadline, status = 'open', resolved_at, winning_option, type, userVotes = [] } = prediction;
+  prediction
+}: PredictionCardProps) {
+  const { creator, title, mediaTitle, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, origin_type = 'user', origin_user_id, status = 'open', type, userVotes = [], options = [], optionVotes = [] } = prediction;
   
   const { session } = useAuth();
   const { toast } = useToast();
@@ -71,7 +67,13 @@ export default function CollaborativePredictionCard({
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount);
   const [showParticipants, setShowParticipants] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [resolutionVote, setResolutionVote] = useState<string | null>(null);
+
+  // Check if current user is the creator
+  const appUserId = session?.user?.user_metadata?.id || session?.user?.id;
+  const isCreator = origin_user_id && appUserId === origin_user_id;
+
+  // Check if prediction is completed
+  const isCompleted = status === 'completed';
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -111,30 +113,6 @@ export default function CollaborativePredictionCard({
       });
     },
   });
-
-  // Check if current user is the creator (compare with app user ID from session metadata)
-  const appUserId = session?.user?.user_metadata?.id || session?.user?.id;
-  const isCreator = origin_user_id && appUserId === origin_user_id;
-  
-  console.log('DEBUG: isCreator check', { origin_user_id, appUserId, isCreator, origin_type });
-
-  // Check if prediction is completed
-  const isCompleted = status === 'completed';
-  
-  // Check if this is a poll (not a prediction) - polls don't show usernames
-  const isPoll = type === 'vote';
-  
-  // Check if deadline has passed (for timed predictions)
-  const deadlinePassed = deadline ? new Date(deadline) < new Date() : false;
-  const needsResolution = deadlinePassed && status === 'open';
-
-  // Calculate vote percentages
-  const yesPercentage = voteCounts && voteCounts.total > 0 
-    ? Math.round((voteCounts.yes / voteCounts.total) * 100)
-    : 0;
-  const noPercentage = voteCounts && voteCounts.total > 0
-    ? Math.round((voteCounts.no / voteCounts.total) * 100)
-    : 0;
 
   // Vote mutation
   const voteMutation = useMutation({
@@ -203,12 +181,10 @@ export default function CollaborativePredictionCard({
       return response.json();
     },
     onMutate: async () => {
-      // Optimistic update
       setLiked(!liked);
       setCurrentLikesCount(liked ? currentLikesCount - 1 : currentLikesCount + 1);
     },
     onError: () => {
-      // Revert on error
       setLiked(liked);
       setCurrentLikesCount(currentLikesCount);
       toast({
@@ -241,122 +217,6 @@ export default function CollaborativePredictionCard({
       return response.json();
     },
     enabled: showComments && !!poolId,
-  });
-
-  // Fetch participants or use mock data
-  const { data: participantsData } = useQuery({
-    queryKey: ['prediction-participants', poolId, voteCounts],
-    queryFn: async () => {
-      // Generate mock fallback data from voteCounts
-      const generateMockParticipants = () => {
-        const mockParticipants = [];
-        const yesCount = voteCounts?.yes || 5;
-        const noCount = voteCounts?.no || 3;
-        
-        for (let i = 0; i < yesCount; i++) {
-          mockParticipants.push({
-            prediction: 'Yes',
-            users: { user_name: `user${i + 1}`, display_name: `User ${i + 1}` }
-          });
-        }
-        
-        for (let i = 0; i < noCount; i++) {
-          mockParticipants.push({
-            prediction: 'No',
-            users: { user_name: `user${yesCount + i + 1}`, display_name: `User ${yesCount + i + 1}` }
-          });
-        }
-        
-        return mockParticipants;
-      };
-
-      // If no session or poolId, return mock data
-      if (!session?.access_token || !poolId) {
-        return { participants: generateMockParticipants() };
-      }
-
-      try {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-          global: {
-            headers: { Authorization: `Bearer ${session.access_token}` }
-          }
-        });
-
-        const { data, error } = await supabase
-          .from('user_predictions')
-          .select(`
-            prediction,
-            users:user_id (
-              user_name,
-              display_name
-            )
-          `)
-          .eq('pool_id', poolId);
-
-        if (error) {
-          console.error('Error fetching participants:', error);
-          // Return mock data on error
-          return { participants: generateMockParticipants() };
-        }
-
-        // If no data returned from API, use mock fallback
-        if (!data || data.length === 0) {
-          return { participants: generateMockParticipants() };
-        }
-
-        return { participants: data };
-      } catch (err) {
-        console.error('Exception fetching participants:', err);
-        return { participants: generateMockParticipants() };
-      }
-    },
-    enabled: showParticipants,
-  });
-
-  // Resolve prediction mutation
-  const resolveMutation = useMutation({
-    mutationFn: async (winningOption: string) => {
-      if (!session?.access_token || !poolId) return;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/resolve-prediction`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            pool_id: poolId,
-            winning_option: winningOption,
-            resolved_by: 'crowd'
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to resolve prediction');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Prediction Resolved!",
-        description: "Points have been awarded to winners.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-    },
-    onError: () => {
-      toast({
-        title: "Failed to resolve",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    },
   });
 
   // Post comment mutation
@@ -417,6 +277,7 @@ export default function CollaborativePredictionCard({
   };
 
   const isConsumedPrediction = origin_type === 'consumed';
+  const totalVotes = optionVotes?.reduce((sum, ov) => sum + ov.count, 0) || 0;
   
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4 mb-4`}>
@@ -434,13 +295,7 @@ export default function CollaborativePredictionCard({
             ) : (
               <p className="text-sm text-gray-700">
                 <span className="font-semibold text-gray-900">@{creator.username}</span>
-                {invitedFriend && (
-                  <>
-                    <span className="text-gray-500"> and </span>
-                    <span className="font-semibold text-gray-900">@{invitedFriend.username}</span>
-                  </>
-                )}
-                <span className="text-gray-500"> predict</span>
+                <span className="text-gray-500"> predicts</span>
                 {mediaTitle && (
                   <>
                     <span className="text-gray-500"> about </span>
@@ -469,151 +324,59 @@ export default function CollaborativePredictionCard({
 
       {/* Question */}
       <p className="text-sm font-medium text-gray-900 mb-3">
-        {question}
+        {title}
       </p>
 
       {/* Voting Options - Stacked vertically */}
       <div className="space-y-2 mb-3">
-          {/* Multi-option predictions (new format) */}
-          {prediction.options && prediction.options.length > 0 ? (
-            prediction.options.map((option, index) => {
-              const optionData = prediction.optionVotes?.find(ov => ov.option === option);
-              const percentage = optionData?.percentage || 0;
-              
-              // Get voters for this specific option
-              const votersForOption = (userVotes && Array.isArray(userVotes)) 
-                ? userVotes.filter(uv => uv?.vote === option) 
-                : [];
-              
-              return (
-                <div key={index}>
-                  {votersForOption && votersForOption.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
-                      {votersForOption.map((voter, idx) => (
-                        <span key={idx} className="text-xs font-semibold text-purple-600">
-                          @{voter?.user}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <button
-                    onClick={() => handleSelectOption(option)}
-                    disabled={userHasAnswered || voteMutation.isPending}
-                    className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
-                      userHasAnswered 
-                        ? "bg-white border-purple-300 opacity-60 cursor-default"
-                        : selectedOption === option
-                        ? "bg-purple-100 border-purple-500"
-                        : "bg-white border-purple-300 hover:border-purple-400"
-                    }`}
-                    data-testid={`button-vote-option-${index}`}
-                  >
-                    <p className={`text-sm font-medium text-left ${selectedOption === option ? "text-purple-700" : "text-black"}`}>
-                      {option}
-                    </p>
-                    {userHasAnswered && (
-                      <span className="text-sm font-semibold text-gray-700">
-                        {percentage}%
-                      </span>
-                    )}
-                  </button>
-                </div>
-              );
-            })
-          ) : (
-            <>
-              {/* Legacy 2-option format */}
-              <div>
-                {/* Show voters for Yes option */}
-                {Array.isArray(userVotes) && userVotes.some(uv => uv?.vote === "Yes") ? (
+        {options && options.length > 0 ? (
+          options.map((option, index) => {
+            const optionData = optionVotes?.find(ov => ov.option === option);
+            const percentage = optionData?.percentage || 0;
+            const count = optionData?.count || 0;
+            
+            // Get voters for this specific option
+            const votersForOption = (userVotes && Array.isArray(userVotes)) 
+              ? userVotes.filter(uv => uv?.vote === option) 
+              : [];
+            
+            return (
+              <div key={index}>
+                {votersForOption && votersForOption.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
-                    {userVotes.filter(uv => uv?.vote === "Yes").map((voter, idx) => (
+                    {votersForOption.map((voter, idx) => (
                       <span key={idx} className="text-xs font-semibold text-purple-600">
                         @{voter?.user}
                       </span>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-xs text-gray-600 mb-1 ml-1">
-                    <span className="font-semibold">{creator?.username}</span>
-                  </p>
                 )}
                 <button
-                  onClick={() => handleSelectOption("Yes")}
+                  onClick={() => handleSelectOption(option)}
                   disabled={userHasAnswered || voteMutation.isPending}
                   className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
                     userHasAnswered 
                       ? "bg-white border-purple-300 opacity-60 cursor-default"
-                      : selectedOption === "Yes"
+                      : selectedOption === option
                       ? "bg-purple-100 border-purple-500"
                       : "bg-white border-purple-300 hover:border-purple-400"
                   }`}
-                  data-testid="button-vote-yes"
+                  data-testid={`button-vote-option-${index}`}
                 >
-                  <p className={`text-sm font-medium text-left ${selectedOption === "Yes" ? "text-purple-700" : "text-black"}`}>
-                    {creatorPrediction}
+                  <p className={`text-sm font-medium text-left ${selectedOption === option ? "text-purple-700" : "text-black"}`}>
+                    {option}
                   </p>
-                  {voteCounts && (
+                  {userHasAnswered && totalVotes > 0 && (
                     <span className="text-sm font-semibold text-gray-700">
-                      {yesPercentage}%
+                      {percentage}% ({count})
                     </span>
                   )}
                 </button>
               </div>
-
-              {friendPrediction ? (
-                <div>
-                  {/* Show voters for No option */}
-                  {Array.isArray(userVotes) && userVotes.some(uv => uv?.vote === "No") ? (
-                    <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
-                      {userVotes.filter(uv => uv?.vote === "No").map((voter, idx) => (
-                        <span key={idx} className="text-xs font-semibold text-purple-600">
-                          @{voter?.user}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-600 mb-1 ml-1">
-                      <span className="font-semibold">{invitedFriend?.username}</span>
-                    </p>
-                  )}
-                  <button
-                    onClick={() => handleSelectOption("No")}
-                    disabled={userHasAnswered || voteMutation.isPending}
-                    className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
-                      userHasAnswered 
-                        ? "bg-white border-purple-300 opacity-60 cursor-default"
-                        : selectedOption === "No"
-                        ? "bg-purple-100 border-purple-500"
-                        : "bg-white border-purple-300 hover:border-purple-400"
-                    }`}
-                    data-testid="button-vote-no"
-                  >
-                    <p className={`text-sm font-medium text-left ${selectedOption === "No" ? "text-purple-700" : "text-black"}`}>
-                      {friendPrediction}
-                    </p>
-                    {voteCounts && (
-                      <span className="text-sm font-semibold text-gray-700">
-                        {noPercentage}%
-                      </span>
-                    )}
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  {!isConsumedPrediction && !isPoll && (
-                    <p className="text-xs text-gray-600 mb-1 ml-1">
-                      <span className="font-semibold">{invitedFriend.username}</span>
-                    </p>
-                  )}
-                  <div className="flex-1 bg-gray-50 rounded-full px-4 py-2.5 border-2 border-gray-200">
-                    <p className="text-sm text-gray-400 italic text-left">Pending...</p>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+            );
+          })
+        ) : null}
+      </div>
 
       {/* Submit Button */}
       {!userHasAnswered && selectedOption && (
@@ -622,6 +385,7 @@ export default function CollaborativePredictionCard({
             onClick={handleSubmitVote}
             disabled={voteMutation.isPending}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full"
+            data-testid="button-submit-vote"
           >
             {voteMutation.isPending ? "Submitting..." : "Cast Prediction"}
           </Button>
@@ -654,92 +418,48 @@ export default function CollaborativePredictionCard({
           </button>
         </div>
         
-        {voteCounts && voteCounts.total > 0 && (
+        {totalVotes > 0 && (
           <button
             onClick={() => setShowParticipants(!showParticipants)}
             className="flex items-center gap-1 text-purple-600 hover:text-purple-700 text-xs font-medium"
+            data-testid="button-show-participants"
           >
             <Users size={12} />
-            <span>{voteCounts.total} predictions</span>
+            <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
             <span className="text-[10px]">{showParticipants ? '▲' : '▼'}</span>
           </button>
         )}
       </div>
       
       {/* Participants Dropdown */}
-      {showParticipants && (userVotes?.length > 0 || participantsData?.participants?.length > 0) && (
+      {showParticipants && userVotes?.length > 0 && (
         <div className="mt-3 bg-gray-50 rounded-xl p-3 space-y-2">
-          {/* Show user votes from feed data if available */}
-          {userVotes && userVotes.length > 0 ? (
-            (() => {
-              console.log('DEBUG: Displaying userVotes:', userVotes);
-              const byVote: { [key: string]: typeof userVotes } = {};
-              userVotes.forEach(uv => {
-                if (!byVote[uv.vote]) byVote[uv.vote] = [];
-                byVote[uv.vote].push(uv);
-              });
-              
-              return (
-                <div className="space-y-3">
-                  {Object.entries(byVote).map(([vote, voters]) => (
-                    <div key={vote}>
-                      <p className="text-xs font-semibold text-gray-700 mb-1.5">
-                        <strong>{vote}</strong> ({voters.length})
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {voters.map((v, idx) => (
-                          <span key={idx} className="inline-block px-2.5 py-1.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                            @{v.user}
-                          </span>
-                        ))}
-                      </div>
+          {(() => {
+            const byVote: { [key: string]: typeof userVotes } = {};
+            userVotes.forEach(uv => {
+              if (!byVote[uv.vote]) byVote[uv.vote] = [];
+              byVote[uv.vote].push(uv);
+            });
+            
+            return (
+              <div className="space-y-3">
+                {Object.entries(byVote).map(([vote, voters]) => (
+                  <div key={vote}>
+                    <p className="text-xs font-semibold text-gray-700 mb-1.5">
+                      <strong>{vote}</strong> ({voters.length})
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {voters.map((v, idx) => (
+                        <span key={idx} className="inline-block px-2.5 py-1.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                          @{v.user}
+                        </span>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              );
-            })()
-          ) : (
-            // Fallback to mock data if available
-            participantsData?.participants && participantsData.participants.length > 0 && (
-              (() => {
-                const yesPredictions = participantsData.participants.filter((p: any) => p.prediction === 'Yes');
-                const noPredictions = participantsData.participants.filter((p: any) => p.prediction === 'No');
-                
-                return (
-                  <div className="space-y-3">
-                    {yesPredictions.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-1.5">
-                          {creatorPrediction} ({yesPredictions.length})
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {yesPredictions.map((p: any, idx: number) => (
-                            <span key={idx} className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
-                              @{p.users?.user_name || p.users?.display_name || 'unknown'}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {noPredictions.length > 0 && friendPrediction && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-1.5">
-                          {friendPrediction} ({noPredictions.length})
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {noPredictions.map((p: any, idx: number) => (
-                            <span key={idx} className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                              @{p.users?.user_name || p.users?.display_name || 'unknown'}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                );
-              })()
-            )
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 

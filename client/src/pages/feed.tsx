@@ -1584,7 +1584,6 @@ export default function Feed() {
                     <div key={`prediction-${post.id}`} className="mb-4">
                       <CollaborativePredictionCard 
                         prediction={post as any}
-                        onCastPrediction={() => console.log("Cast prediction")}
                       />
                     </div>
                   );
@@ -1630,7 +1629,6 @@ export default function Feed() {
                       <div className="mb-4">
                         <CollaborativePredictionCard 
                           prediction={currentPrediction}
-                          onCastPrediction={() => console.log("Cast prediction")}
                         />
                       </div>
                     )}
@@ -1936,7 +1934,7 @@ export default function Feed() {
                         {/* See more link */}
                         {post.user && (
                         <button
-                          onClick={() => setLocation(`/user/${post.user.id}?tab=lists`)}
+                          onClick={() => setLocation(`/user/${post.user?.id}?tab=lists`)}
                           className="text-sm text-gray-500 hover:text-purple-600 transition-colors"
                         >
                           See more of @{post.user.username}'s lists →
