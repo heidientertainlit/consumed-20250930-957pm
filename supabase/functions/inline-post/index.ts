@@ -151,8 +151,8 @@ serve(async (req) => {
 
         console.log('Prediction pool created:', { poolId, pool });
 
-        // Create associated social post - use admin client to avoid schema cache issues
-        const { data: post, error: postError } = await supabaseAdmin
+        // Create associated social post - skip select() to avoid schema cache issues
+        const { error: postError } = await supabaseAdmin
           .from('social_posts')
           .insert({
             user_id: appUser.id,
@@ -165,9 +165,7 @@ serve(async (req) => {
             media_external_source: media_external_source || null,
             visibility,
             contains_spoilers
-          })
-          .select()
-          .single();
+          });
 
         if (postError) {
           console.error('Social post creation error:', postError);
@@ -176,6 +174,9 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
+        
+        // Return just the poolId since we can't reliably select due to schema cache
+        const post = { prediction_pool_id: poolId };
 
         return new Response(JSON.stringify({ pool, post }), {
           status: 201,
@@ -224,8 +225,8 @@ serve(async (req) => {
 
         console.log('Poll pool created:', { poolId, pool });
 
-        // Create associated social post - use admin client to avoid schema cache issues
-        const { data: post, error: postError } = await supabaseAdmin
+        // Create associated social post - skip select() to avoid schema cache issues
+        const { error: postError } = await supabaseAdmin
           .from('social_posts')
           .insert({
             user_id: appUser.id,
@@ -238,17 +239,18 @@ serve(async (req) => {
             media_external_source: media_external_source || null,
             visibility,
             contains_spoilers
-          })
-          .select()
-          .single();
+          });
 
         if (postError) {
           console.error('Social post creation error:', postError);
-          return new Response(JSON.stringify({ error: 'Failed to create social post' }), {
+          return new Response(JSON.stringify({ error: 'Failed to create poll' }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
+        
+        // Return just the poolId since we can't reliably select due to schema cache
+        const post = { prediction_pool_id: poolId };
 
         return new Response(JSON.stringify({ pool, post }), {
           status: 201,
