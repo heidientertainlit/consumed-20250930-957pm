@@ -292,7 +292,7 @@ export default function CollaborativePredictionCard({
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
       {/* Header with creator and delete button */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-700 flex-1">
           {isConsumedPrediction ? (
             <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
@@ -313,7 +313,6 @@ export default function CollaborativePredictionCard({
                   {mediaTitle}
                 </button>
               )}
-              <span className="text-gray-500">:</span>
             </>
           )}
         </p>
@@ -332,42 +331,10 @@ export default function CollaborativePredictionCard({
         )}
       </div>
 
-      {/* Question */}
-      <p className="text-lg font-semibold text-gray-900 mb-4">
+      {/* Prediction Question */}
+      <p className="text-base font-semibold text-gray-900 mb-4">
         {title}
       </p>
-
-      {/* Media card - clickable */}
-      {mediaItems?.[0] && (
-        <div 
-          className="bg-gray-50 rounded-lg p-3 mb-4 cursor-pointer hover:bg-gray-100 transition-colors"
-          onClick={() => {
-            const media = mediaItems[0];
-            if (media.externalId && media.externalSource) {
-              setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-            }
-          }}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0">
-              <img 
-                src={mediaItems[0].imageUrl || 'https://via.placeholder.com/50x80'}
-                alt={mediaItems[0].title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
-                {mediaItems[0].title}
-              </h3>
-              <div className="text-gray-500 text-xs capitalize">
-                {mediaItems[0].mediaType}
-              </div>
-            </div>
-            <ChevronRightIcon className="text-gray-400 flex-shrink-0" size={16} />
-          </div>
-        </div>
-      )}
 
       {/* Voting Options - Stacked vertically */}
       <div className="space-y-2 mb-3">
