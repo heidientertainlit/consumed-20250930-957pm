@@ -138,7 +138,7 @@ serve(async (req) => {
 
         if (poolError) {
           console.error('Prediction pool creation error:', poolError);
-          return new Response(JSON.stringify({ error: 'Failed to create prediction' }), {
+          return new Response(JSON.stringify({ error: poolError.message || 'Failed to create prediction', details: poolError }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
@@ -164,7 +164,7 @@ serve(async (req) => {
 
         if (postError) {
           console.error('Social post creation error:', postError);
-          return new Response(JSON.stringify({ error: 'Failed to create social post' }), {
+          return new Response(JSON.stringify({ error: postError.message || 'Failed to create social post', details: postError }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
