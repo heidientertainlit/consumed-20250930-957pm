@@ -1579,54 +1579,41 @@ export default function Feed() {
               )}
 
               {/* EXAMPLE: Correct Prediction Card Layout */}
-              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-                {/* Header with creator, media title link, and delete */}
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-gray-700 flex-1">
-                    <span className="font-semibold text-gray-900">@punkinpie123</span>
-                    <span className="text-gray-500"> predicts about </span>
-                    <button 
-                      onClick={() => setLocation('/media/tv/tmdb/253463')}
-                      className="font-semibold text-gray-900 hover:text-purple-600 underline"
-                    >
-                      Selling Sunset
-                    </button>
-                  </p>
-                  <button className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-
-                {/* Prediction Question */}
-                <p className="text-base font-semibold text-gray-900 mb-4">
-                  What do you predict will happen?
-                </p>
-
-                {/* Voting Options */}
-                <div className="space-y-2 mb-4">
-                  <button className="w-full rounded-full px-4 py-2.5 border-2 border-purple-300 bg-white hover:border-purple-400 text-sm font-medium text-left text-gray-900 transition-all">
-                    Yes, definitely
-                  </button>
-                  <button className="w-full rounded-full px-4 py-2.5 border-2 border-purple-300 bg-white hover:border-purple-400 text-sm font-medium text-left text-gray-900 transition-all">
-                    No, she stays
-                  </button>
-                </div>
-
-                {/* Action Bar */}
-                <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-                  <div className="flex items-center space-x-6">
-                    <button className="flex items-center space-x-2 text-gray-500 hover:text-red-500 transition-colors">
-                      <Heart size={18} />
-                      <span className="text-sm">42</span>
-                    </button>
-                    <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors">
-                      <MessageCircle size={18} />
-                      <span className="text-sm">8</span>
-                    </button>
-                  </div>
-                  <span className="text-sm text-gray-500">2h ago</span>
-                </div>
-              </div>
+              <CollaborativePredictionCard 
+                prediction={{
+                  id: 'example-pred-1',
+                  poolId: 'example-pool-1',
+                  title: 'Will she leave the show?',
+                  creator: { 
+                    id: 'user-123',
+                    username: 'punkinpie123' 
+                  },
+                  mediaTitle: 'Selling Sunset',
+                  mediaItems: [{
+                    title: 'Selling Sunset',
+                    mediaType: 'TV',
+                    externalId: '253463',
+                    externalSource: 'tmdb',
+                    imageUrl: ''
+                  }],
+                  options: ['Yes, definitely', 'No, she stays'],
+                  optionVotes: [
+                    { option: 'Yes, definitely', count: 42, percentage: 60 },
+                    { option: 'No, she stays', count: 28, percentage: 40 }
+                  ],
+                  userVotes: [
+                    { user: 'alex_films', userId: 'u1', vote: 'Yes, definitely' },
+                    { user: 'movie_lover', userId: 'u2', vote: 'No, she stays' },
+                    { user: 'tv_junkie', userId: 'u3', vote: 'Yes, definitely' },
+                    { user: 'drama_fan', userId: 'u4', vote: 'Yes, definitely' }
+                  ],
+                  likesCount: 42,
+                  commentsCount: 8,
+                  origin_type: 'user',
+                  origin_user_id: 'user-123',
+                  status: 'open'
+                }}
+              />
 
               {/* Feed Filter Button */}
               <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
