@@ -1477,8 +1477,11 @@ export default function Feed() {
               <p className="text-sm text-gray-700 flex-1">
                 <span className="font-semibold text-gray-900">@punkinpie123</span>
                 <span className="text-gray-500"> predicts about </span>
-                <button className="font-semibold text-gray-900 hover:text-purple-600 underline">
-                  Does Mary leave the show?
+                <button 
+                  onClick={() => setLocation('/media/tv/tmdb/253463')}
+                  className="font-semibold text-gray-900 hover:text-purple-600 underline"
+                >
+                  Selling Sunset
                 </button>
               </p>
               <button className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
