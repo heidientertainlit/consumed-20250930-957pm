@@ -317,13 +317,17 @@ export default function CollaborativePredictionCard({
           )}
         </p>
         
-        {/* Delete button */}
-        {isCreator && origin_type === 'user' && (
+        {/* Delete button - Show for creators of user-generated predictions */}
+        {origin_type === 'user' && (
           <button
             onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-            className="flex items-center justify-center ml-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors flex-shrink-0"
-            title="Delete prediction"
+            disabled={deleteMutation.isPending || !isCreator}
+            className={`flex items-center justify-center ml-2 p-1.5 rounded-full transition-colors flex-shrink-0 ${
+              isCreator 
+                ? 'text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer' 
+                : 'text-gray-300 cursor-not-allowed opacity-50'
+            }`}
+            title={isCreator ? "Delete prediction" : "Only creator can delete"}
             data-testid="button-delete-prediction"
           >
             <Trash2 size={18} />
