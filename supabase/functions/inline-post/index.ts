@@ -151,14 +151,13 @@ serve(async (req) => {
 
         console.log('Prediction pool created:', { poolId, pool });
 
-        // Create associated social post
+        // Create associated social post (skip prediction_pool_id for now, it's optional)
         const { data: post, error: postError } = await supabase
           .from('social_posts')
           .insert({
             user_id: appUser.id,
             content: prediction_question,
             post_type: 'predict',
-            prediction_pool_id: poolId,
             media_title: prediction_question.substring(0, 100),
             media_type: 'Movie',
             media_external_id: media_external_id || null,
@@ -224,14 +223,13 @@ serve(async (req) => {
 
         console.log('Poll pool created:', { poolId, pool });
 
-        // Create associated social post
+        // Create associated social post (skip prediction_pool_id for now, it's optional)
         const { data: post, error: postError } = await supabase
           .from('social_posts')
           .insert({
             user_id: appUser.id,
             content: poll_question,
             post_type: 'poll',
-            prediction_pool_id: poolId,
             media_title: poll_question.substring(0, 100),
             media_type: 'Movie',
             media_external_id: media_external_id || null,
