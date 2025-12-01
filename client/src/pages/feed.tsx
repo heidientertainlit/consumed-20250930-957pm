@@ -1530,32 +1530,38 @@ export default function Feed() {
                 if (friendActivities.length === 0) return null;
                 
                 return (
-                  <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100 shadow-sm overflow-hidden">
-                    <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100 shadow-sm">
+                    <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <span>✨</span>
                       Quick Glimpse
                     </p>
-                    <div className="h-5 overflow-hidden">
+                    <div className="overflow-hidden">
                       <div 
-                        className="ticker-wrapper"
+                        className="flex whitespace-nowrap gap-6"
                         style={{
-                          '--ticker-distance': `-${friendActivities.length * 20}px`,
-                          '--ticker-duration': `${friendActivities.length * 3}s`
-                        } as React.CSSProperties}
+                          animation: `scroll ${friendActivities.length * 4}s linear infinite`
+                        }}
                       >
                         {/* Duplicate for seamless loop */}
                         {[...friendActivities, ...friendActivities].map((activity, idx) => (
                           <div 
                             key={idx}
-                            className="h-5 flex items-center text-sm text-gray-900"
+                            className="flex items-center gap-1 text-sm text-gray-700 flex-shrink-0"
                           >
                             <span className="font-medium">{activity.username}</span>
-                            <span className="mx-1">{activity.action}</span>
-                            <span>{activity.media}</span>
+                            <span className="text-gray-500">{activity.action}</span>
+                            <span className="font-medium text-gray-900">{activity.media}</span>
+                            <span className="text-gray-400">•</span>
                           </div>
                         ))}
                       </div>
                     </div>
+                    <style>{`
+                      @keyframes scroll {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-50%); }
+                      }
+                    `}</style>
                   </div>
                 );
               })()}
