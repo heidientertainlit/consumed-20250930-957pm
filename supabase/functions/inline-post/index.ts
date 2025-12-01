@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -118,64 +119,78 @@ serve(async (req) => {
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
-        const { data: pool, error: poolError } = await supabaseAdmin
-          .from('prediction_pools')
-          .insert({
-            id: poolId,
-            title: prediction_question.substring(0, 100),
-            description: prediction_question,
-            type: 'predict',
-            status: 'open',
-            category: 'movie',
-            icon: '🎯',
-            options: prediction_options,
-            points_reward: 20,
-            origin_type: 'user',
-            origin_user_id: appUser.id,
-            media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null,
-            likes_count: 0,
-            comments_count: 0,
-            participants: 0
-          })
-          .select()
-          .single();
+        
+        // Use direct SQL connection to bypass schema cache
+        const dbUrl = Deno.env.get('DATABASE_URL');
+        const client = new Client(dbUrl);
+        
+        try {
+          await client.connect();
+          
+          // Insert prediction pool
+          await client.queryArray(
+            `INSERT INTO prediction_pools (
+              id, title, description, type, status, category, icon, options, 
+              points_reward, origin_type, origin_user_id, media_external_id, 
+              media_external_source, likes_count, comments_count, participants
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+            )`,
+            [
+              poolId,
+              prediction_question.substring(0, 100),
+              prediction_question,
+              'predict',
+              'open',
+              'movie',
+              '🎯',
+              prediction_options,
+              20,
+              'user',
+              appUser.id,
+              media_external_id || null,
+              media_external_source || null,
+              0,
+              0,
+              0
+            ]
+          );
 
-        if (poolError) {
-          console.error('Prediction pool creation error:', poolError);
-          return new Response(JSON.stringify({ error: poolError.message || 'Failed to create prediction', details: poolError }), {
+          console.log('Prediction pool created:', { poolId });
+
+          // Insert social post
+          await client.queryArray(
+            `INSERT INTO social_posts (
+              user_id, content, post_type, prediction_pool_id, media_title, media_type,
+              media_external_id, media_external_source, visibility, contains_spoilers
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+            )`,
+            [
+              appUser.id,
+              prediction_question,
+              'predict',
+              poolId,
+              prediction_question.substring(0, 100),
+              'Movie',
+              media_external_id || null,
+              media_external_source || null,
+              visibility,
+              contains_spoilers
+            ]
+          );
+          
+          console.log('Social post created for prediction');
+        } catch (err) {
+          console.error('Database error:', err);
+          return new Response(JSON.stringify({ error: 'Failed to create prediction', details: err.message }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
-        }
-
-        console.log('Prediction pool created:', { poolId, pool });
-
-        // Create associated social post - skip select() to avoid schema cache issues
-        const { error: postError } = await supabaseAdmin
-          .from('social_posts')
-          .insert({
-            user_id: appUser.id,
-            content: prediction_question,
-            post_type: 'predict',
-            prediction_pool_id: poolId,
-            media_title: prediction_question.substring(0, 100),
-            media_type: 'Movie',
-            media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null,
-            visibility,
-            contains_spoilers
-          });
-
-        if (postError) {
-          console.error('Social post creation error:', postError);
-          return new Response(JSON.stringify({ error: postError.message || 'Failed to create social post', details: postError }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+        } finally {
+          await client.end();
         }
         
-        // Return just the poolId since we can't reliably select due to schema cache
         const post = { prediction_pool_id: poolId };
 
         return new Response(JSON.stringify({ pool, post }), {
@@ -192,64 +207,78 @@ serve(async (req) => {
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
-        const { data: pool, error: poolError } = await supabaseAdmin
-          .from('prediction_pools')
-          .insert({
-            id: poolId,
-            title: poll_question.substring(0, 100),
-            description: poll_question,
-            type: 'vote',
-            status: 'open',
-            category: 'movie',
-            icon: '🗳️',
-            options: poll_options,
-            points_reward: 10,
-            origin_type: 'user',
-            origin_user_id: appUser.id,
-            media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null,
-            likes_count: 0,
-            comments_count: 0,
-            participants: 0
-          })
-          .select()
-          .single();
+        
+        // Use direct SQL connection to bypass schema cache
+        const dbUrl = Deno.env.get('DATABASE_URL');
+        const client = new Client(dbUrl);
+        
+        try {
+          await client.connect();
+          
+          // Insert poll pool
+          await client.queryArray(
+            `INSERT INTO prediction_pools (
+              id, title, description, type, status, category, icon, options, 
+              points_reward, origin_type, origin_user_id, media_external_id, 
+              media_external_source, likes_count, comments_count, participants
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+            )`,
+            [
+              poolId,
+              poll_question.substring(0, 100),
+              poll_question,
+              'vote',
+              'open',
+              'movie',
+              '🗳️',
+              poll_options,
+              10,
+              'user',
+              appUser.id,
+              media_external_id || null,
+              media_external_source || null,
+              0,
+              0,
+              0
+            ]
+          );
 
-        if (poolError) {
-          console.error('Poll pool creation error:', poolError);
-          return new Response(JSON.stringify({ error: 'Failed to create poll' }), {
+          console.log('Poll pool created:', { poolId });
+
+          // Insert social post
+          await client.queryArray(
+            `INSERT INTO social_posts (
+              user_id, content, post_type, prediction_pool_id, media_title, media_type,
+              media_external_id, media_external_source, visibility, contains_spoilers
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+            )`,
+            [
+              appUser.id,
+              poll_question,
+              'poll',
+              poolId,
+              poll_question.substring(0, 100),
+              'Movie',
+              media_external_id || null,
+              media_external_source || null,
+              visibility,
+              contains_spoilers
+            ]
+          );
+          
+          console.log('Social post created for poll');
+        } catch (err) {
+          console.error('Database error:', err);
+          return new Response(JSON.stringify({ error: 'Failed to create poll', details: err.message }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
-        }
-
-        console.log('Poll pool created:', { poolId, pool });
-
-        // Create associated social post - skip select() to avoid schema cache issues
-        const { error: postError } = await supabaseAdmin
-          .from('social_posts')
-          .insert({
-            user_id: appUser.id,
-            content: poll_question,
-            post_type: 'poll',
-            prediction_pool_id: poolId,
-            media_title: poll_question.substring(0, 100),
-            media_type: 'Movie',
-            media_external_id: media_external_id || null,
-            media_external_source: media_external_source || null,
-            visibility,
-            contains_spoilers
-          });
-
-        if (postError) {
-          console.error('Social post creation error:', postError);
-          return new Response(JSON.stringify({ error: 'Failed to create poll' }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+        } finally {
+          await client.end();
         }
         
-        // Return just the poolId since we can't reliably select due to schema cache
         const post = { prediction_pool_id: poolId };
 
         return new Response(JSON.stringify({ pool, post }), {
