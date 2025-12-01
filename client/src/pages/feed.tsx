@@ -1566,6 +1566,18 @@ export default function Feed() {
                 );
               })()}
 
+              {/* Recommended for you section - using MediaCarousel with working + and ★ buttons */}
+              {recommendedContent && recommendedContent.length > 0 && (
+                <div className="mb-4">
+                  <MediaCarousel
+                    title="Recommended for you"
+                    mediaType="mixed"
+                    items={recommendedContent}
+                    onItemClick={handleMediaClick}
+                  />
+                </div>
+              )}
+
               {/* EXAMPLE: Correct Prediction Card Layout */}
               <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
                 {/* Header with creator, media title link, and delete */}
@@ -1615,18 +1627,6 @@ export default function Feed() {
                   <span className="text-sm text-gray-500">2h ago</span>
                 </div>
               </div>
-
-              {/* Recommended for you section - using MediaCarousel with working + and ★ buttons */}
-              {recommendedContent && recommendedContent.length > 0 && (
-                <div className="mb-4">
-                  <MediaCarousel
-                    title="Recommended for you"
-                    mediaType="mixed"
-                    items={recommendedContent}
-                    onItemClick={handleMediaClick}
-                  />
-                </div>
-              )}
 
               {/* Feed Filter Button */}
               <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
