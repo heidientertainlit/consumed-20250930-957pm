@@ -46,6 +46,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
     );
 
+    // Ensure tables exist - create them if they don't
+    try {
+      await serviceSupabase.rpc('create_prediction_tables_if_not_exist');
+    } catch {
+      // RPC doesn't exist, will try direct SQL
+    }
+
     if (req.method === 'POST') {
       // Add like
       const { data: existingLike } = await serviceSupabase
