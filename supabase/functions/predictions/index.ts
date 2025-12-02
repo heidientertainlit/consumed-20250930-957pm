@@ -177,8 +177,15 @@ serve(async (req) => {
         });
       }
 
+      // Use admin client to bypass RLS for pool lookup
+      const supabaseAdminPool = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+        { auth: { persistSession: false } }
+      );
+
       // Check if pool is still open for predictions
-      const { data: pool } = await supabase
+      const { data: pool } = await supabaseAdminPool
         .from('prediction_pools')
         .select('status, points_reward, type, options, correct_answer')
         .eq('id', pool_id)
@@ -223,8 +230,15 @@ serve(async (req) => {
 
       console.log('DEBUG /predict: About to upsert', { user_id: appUser.id, pool_id, prediction, pointsEarned });
 
-      // Insert or update user prediction - use regular client, RLS policies handle access control
-      const { data: upsertResult, error: insertError } = await supabase
+      // Use admin client to bypass RLS for the upsert
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+        { auth: { persistSession: false } }
+      );
+
+      // Insert or update user prediction using admin client to bypass RLS
+      const { data: upsertResult, error: insertError } = await supabaseAdmin
         .from('user_predictions')
         .upsert({
           user_id: appUser.id,
