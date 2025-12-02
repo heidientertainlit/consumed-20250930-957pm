@@ -513,30 +513,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
 
           <Link
-            href="/search"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/search" ? "bg-white/20" : ""}`}
-          >
-            <div className="h-6 w-6 flex items-center justify-center">
-              <img 
-                src={new URL('@assets/ai-technology_1763529186482.png', import.meta.url).href}
-                alt="AI Search"
-                className="w-6 h-6 brightness-0 invert"
-              />
-            </div>
-            <span className="text-xs font-medium text-white whitespace-nowrap">Search</span>
-          </Link>
-
-          <Link
-            href="/leaderboard"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
-          >
-            <div className="h-6 w-6 flex items-center justify-center">
-              <Trophy className="text-white" size={24} />
-            </div>
-            <span className="text-xs font-medium text-white whitespace-nowrap">Leaders</span>
-          </Link>
-
-          <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
             className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
           >
