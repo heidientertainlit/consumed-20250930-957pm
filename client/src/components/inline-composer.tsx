@@ -375,25 +375,74 @@ export default function InlineComposer() {
           media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
         };
       } else if (actionMode === "rating") {
-        if (ratingValue === 0) {
+        // At least one thing must be selected (rating, review, or list)
+        if (ratingValue === 0 && !reviewText.trim() && !trackListId) {
           toast({
-            title: "Rating Required",
-            description: "Please select a star rating.",
+            title: "Action Required",
+            description: "Please rate, write a review, or add to a list.",
             variant: "destructive",
           });
           setIsPosting(false);
           return;
         }
         
+        // If only adding to list (no rating/review), just do the list add without social post
+        if (ratingValue === 0 && !reviewText.trim() && trackListId) {
+          try {
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+            const listResponse = await fetch(
+              `${supabaseUrl}/functions/v1/add-media-to-list`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${session?.access_token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  list_id: trackListId,
+                  media_title: selectedMedia.title || "",
+                  media_type: selectedMedia.type || "movie",
+                  media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+                  media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+                  media_external_id: selectedMedia.external_id || selectedMedia.id || "",
+                  media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
+                }),
+              }
+            );
+            
+            if (!listResponse.ok) throw new Error("Failed to add to list");
+            
+            toast({
+              title: "Added to List!",
+              description: `${selectedMedia.title} has been added to your list.`,
+            });
+            
+            queryClient.invalidateQueries({ queryKey: ['/api/lists'] });
+            queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+            resetComposer();
+            setIsPosting(false);
+            return;
+          } catch (listError) {
+            console.error('Error adding to list:', listError);
+            toast({
+              title: "Error",
+              description: "Failed to add to list.",
+              variant: "destructive",
+            });
+            setIsPosting(false);
+            return;
+          }
+        }
+        
         // Build content: start with review if present, otherwise just indicate a rating
-        let content = reviewText.trim() || `Rated ${selectedMedia.title}`;
+        let content = reviewText.trim() || (ratingValue > 0 ? `Rated ${selectedMedia.title}` : `Added ${selectedMedia.title}`);
         
         payload = {
           content: content,
           type: "rate-review",
           visibility: "public",
           contains_spoilers: containsSpoilers,
-          rating: ratingValue,
+          rating: ratingValue > 0 ? ratingValue : undefined,
           media_title: selectedMedia.title,
           media_type: selectedMedia.type,
           media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
@@ -831,12 +880,12 @@ export default function InlineComposer() {
             <div className="space-y-4">
               {/* Star Rating */}
               <div>
-                <label className="text-xs font-medium text-gray-600 mb-2 block">Your Rating</label>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Your Rating (optional)</label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
-                      onClick={() => setRatingValue(star)}
+                      onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
                       className="focus:outline-none"
                     >
                       <Star
@@ -895,7 +944,7 @@ export default function InlineComposer() {
                   </label>
                   <Button
                     onClick={handlePost}
-                    disabled={isPosting || ratingValue === 0}
+                    disabled={isPosting || (ratingValue === 0 && !reviewText.trim() && !trackListId)}
                     className="bg-purple-600 hover:bg-purple-700 text-white"
                   >
                     {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
