@@ -7,7 +7,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🚀 PREDICTION-LIKE FUNCTION INVOKED');
+  console.log('Request method:', req.method);
+  
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight');
     return new Response('ok', { headers: corsHeaders });
   }
 
