@@ -40,9 +40,15 @@ serve(async (req) => {
       });
     }
 
+    // Use service role for all database operations
+    const serviceSupabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '', 
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
+    );
+
     if (req.method === 'POST') {
       // Add like
-      const { data: existingLike } = await supabase
+      const { data: existingLike } = await serviceSupabase
         .from('prediction_likes')
         .select('id')
         .eq('pool_id', pool_id)
@@ -56,7 +62,7 @@ serve(async (req) => {
         });
       }
 
-      const { error } = await supabase
+      const { error } = await serviceSupabase
         .from('prediction_likes')
         .insert({ pool_id: pool_id, user_id: user.id });
 
@@ -68,11 +74,6 @@ serve(async (req) => {
       }
 
       // Increment likes_count on the prediction pool
-      const serviceSupabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', 
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
-      );
-
       const { data: pool } = await serviceSupabase
         .from('prediction_pools')
         .select('likes_count')
@@ -94,7 +95,7 @@ serve(async (req) => {
 
     if (req.method === 'DELETE') {
       // Remove like
-      const { error } = await supabase
+      const { error } = await serviceSupabase
         .from('prediction_likes')
         .delete()
         .eq('pool_id', pool_id)
@@ -108,11 +109,6 @@ serve(async (req) => {
       }
 
       // Decrement likes_count on the prediction pool
-      const serviceSupabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', 
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
-      );
-
       const { data: pool } = await serviceSupabase
         .from('prediction_pools')
         .select('likes_count')

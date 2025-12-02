@@ -181,8 +181,7 @@ serve(async (req) => {
           content,
           created_at,
           user_id,
-          parent_comment_id,
-          users!inner(user_name, email)
+          parent_comment_id
         `)
         .single();
 
@@ -192,6 +191,13 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+
+      // Fetch user info separately using service client
+      const { data: userData } = await serviceSupabase
+        .from('users')
+        .select('user_name, email')
+        .eq('id', user.id)
+        .single();
 
       // Increment comments_count on the prediction pool
       const { data: pool } = await serviceSupabase
@@ -213,7 +219,7 @@ serve(async (req) => {
         created_at: comment.created_at,
         user_id: comment.user_id,
         parent_comment_id: comment.parent_comment_id,
-        username: comment.users?.user_name || comment.users?.email?.split('@')[0],
+        username: userData?.user_name || userData?.email?.split('@')[0] || user.email?.split('@')[0],
         likesCount: 0,
         isLiked: false,
         replies: []
