@@ -1826,6 +1826,23 @@ export default function Feed() {
                           {renderPostWithRating(post.content)}
                         </div>
                       )}
+                      {/* Show rating stars below review text if post has a rating */}
+                      {post.rating && post.rating > 0 && (
+                        <div className="flex items-center gap-1 mt-2">
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
+                            return (
+                              <span key={star} className="relative inline-block w-4 h-4">
+                                <Star size={16} className="absolute text-gray-300" />
+                                <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
+                                  <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                                </span>
+                              </span>
+                            );
+                          })}
+                          <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                        </div>
+                      )}
                     </div>
                   ) : null}
 
@@ -1882,17 +1899,22 @@ export default function Feed() {
                         {/* Text at top - show rating stars if present */}
                         <div className="text-gray-800 text-sm mb-3">
                           {post.rating ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span>Rated</span>
                               <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
-                              <div className="flex items-center">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star 
-                                    key={star} 
-                                    size={14} 
-                                    className={star <= (post.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"} 
-                                  />
-                                ))}
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((star) => {
+                                  const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
+                                  return (
+                                    <span key={star} className="relative inline-block w-3.5 h-3.5">
+                                      <Star size={14} className="absolute text-gray-300" />
+                                      <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
+                                        <Star size={14} className="fill-yellow-400 text-yellow-400" />
+                                      </span>
+                                    </span>
+                                  );
+                                })}
+                                <span className="ml-1 text-sm font-medium text-gray-700">{post.rating}</span>
                               </div>
                             </div>
                           ) : (

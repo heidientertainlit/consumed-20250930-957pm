@@ -916,7 +916,7 @@ export default function InlineComposer() {
                       if (isNaN(val)) setRatingValue(0);
                       else setRatingValue(Math.min(5, Math.max(0, val)));
                     }}
-                    placeholder="0-5"
+                    placeholder="ex: 4.5"
                     className="w-16 px-2 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center"
                   />
                 </div>
