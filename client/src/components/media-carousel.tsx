@@ -44,7 +44,7 @@ export default function MediaCarousel({
   onRate,
 }: MediaCarouselProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-3 shadow-lg border border-gray-800/50 overflow-visible pb-20" data-testid={`carousel-${mediaType}`}>
+    <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-2xl p-3 shadow-lg border border-gray-800/50 overflow-visible" data-testid={`carousel-${mediaType}`}>
       {/* Header */}
       <div className="mb-2">
         <h3 className="text-sm font-semibold text-white">
