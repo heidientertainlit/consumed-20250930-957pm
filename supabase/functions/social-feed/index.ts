@@ -248,6 +248,20 @@ serve(async (req) => {
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
+      // Get predictions that the current user has liked
+      const predictionIds = predictions?.map(pred => pred.id) || [];
+      let likedPredictionIds = new Set<string>();
+      if (predictionIds.length > 0) {
+        const { data: predictionLikes, error: predLikesError } = await supabaseAdmin
+          .from('prediction_likes')
+          .select('pool_id')
+          .eq('user_id', appUser.id)
+          .in('pool_id', predictionIds);
+
+        console.log('Prediction likes lookup:', { likes: predictionLikes?.length, predLikesError });
+        likedPredictionIds = new Set(predictionLikes?.map(like => like.pool_id) || []);
+      }
+
       // NOW process votes with userMap available
       let voteCounts: { [poolId: string]: { [option: string]: number } } = {};
       let userVoteDetails: { [poolId: string]: Array<{ user: string; vote: string; userId: string }> } = {};
@@ -494,7 +508,9 @@ serve(async (req) => {
             externalSource: poolMediaDataMap.get(pred.id).externalSource || pred.media_external_source || '',
             imageUrl: poolMediaDataMap.get(pred.id).imageUrl || '',
             creator: poolMediaDataMap.get(pred.id).creator || ''
-          }] : []
+          }] : [],
+          // Add isLiked status for predictions
+          isLiked: likedPredictionIds.has(pred.id)
         };
       }) || [];
 

@@ -47,7 +47,7 @@ serve(async (req) => {
     );
 
     if (req.method === 'POST') {
-      // Add like
+      // Add like - but first check if already exists
       const { data: existingLike } = await serviceSupabase
         .from('prediction_likes')
         .select('id')
@@ -56,8 +56,8 @@ serve(async (req) => {
         .single();
 
       if (existingLike) {
-        return new Response(JSON.stringify({ error: 'Already liked' }), {
-          status: 400,
+        // Already liked - return success (idempotent)
+        return new Response(JSON.stringify({ success: true, already_liked: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
@@ -94,6 +94,21 @@ serve(async (req) => {
     }
 
     if (req.method === 'DELETE') {
+      // Check if like exists first
+      const { data: existingLike } = await serviceSupabase
+        .from('prediction_likes')
+        .select('id')
+        .eq('pool_id', pool_id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (!existingLike) {
+        // Not liked - return success (idempotent)
+        return new Response(JSON.stringify({ success: true, not_liked: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // Remove like
       const { error } = await serviceSupabase
         .from('prediction_likes')
