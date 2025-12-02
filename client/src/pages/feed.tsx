@@ -1514,7 +1514,7 @@ export default function Feed() {
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
           ) : filteredPosts && filteredPosts.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-24">
               {/* Quick Glimpse - Scrolling ticker */}
               {(() => {
                 // Extract friend activities from recent posts with media
