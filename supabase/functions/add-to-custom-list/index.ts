@@ -137,11 +137,16 @@ serve(async (req) => {
     // Create a social post for this addition
     if (mediaItem) {
       try {
+        // Determine post type based on whether there's a rating
+        const postType = rating ? 'rate-review' : 'add-to-list';
+        
         const { error: postError } = await supabase
           .from('social_posts')
           .insert({
             user_id: appUser.id,
+            post_type: postType,
             list_id: customList.id,
+            content: rating ? `Rated ${title}` : `Added ${title} to ${customList.title}`,
             media_title: title,
             media_type: mediaType,
             media_creator: creator,
@@ -155,7 +160,7 @@ serve(async (req) => {
           console.error('Failed to create social post:', postError);
           // Don't fail the whole request if post creation fails
         } else {
-          console.log('Created social post for custom list addition');
+          console.log('Created social post for custom list addition with post_type:', postType);
         }
       } catch (postCreateError) {
         console.error('Error creating social post:', postCreateError);
