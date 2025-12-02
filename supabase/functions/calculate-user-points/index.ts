@@ -129,6 +129,60 @@ serve(async (req) => {
 
     const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + pollPoints;
 
+    // Calculate global rank by counting users with more points
+    // Use service role for cross-user queries
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '', 
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get all users' list items to calculate their points
+    const { data: allListItems } = await supabaseAdmin
+      .from('list_items')
+      .select('user_id, media_type, notes');
+
+    const { data: allPredictions } = await supabaseAdmin
+      .from('user_predictions')
+      .select('user_id, points_earned');
+
+    // Calculate points for all users
+    const userPointsMap: Record<string, number> = {};
+    
+    if (allListItems) {
+      for (const item of allListItems) {
+        if (!userPointsMap[item.user_id]) userPointsMap[item.user_id] = 0;
+        
+        // Add points based on media type
+        switch (item.media_type) {
+          case 'book': userPointsMap[item.user_id] += 15; break;
+          case 'movie': userPointsMap[item.user_id] += 8; break;
+          case 'tv': userPointsMap[item.user_id] += 10; break;
+          case 'music': userPointsMap[item.user_id] += 1; break;
+          case 'podcast': userPointsMap[item.user_id] += 3; break;
+          case 'game': userPointsMap[item.user_id] += 5; break;
+        }
+        
+        // Add review points
+        if (item.notes && item.notes.trim().length > 0) {
+          userPointsMap[item.user_id] += 10;
+        }
+      }
+    }
+
+    // Add prediction points
+    if (allPredictions) {
+      for (const pred of allPredictions) {
+        if (!userPointsMap[pred.user_id]) userPointsMap[pred.user_id] = 0;
+        userPointsMap[pred.user_id] += (pred.points_earned || 0);
+      }
+    }
+
+    // Count how many users have more points than current user
+    const currentUserPoints = userPointsMap[targetUserId] || 0;
+    const usersWithMorePoints = Object.values(userPointsMap).filter(pts => pts > currentUserPoints).length;
+    const globalRank = usersWithMorePoints + 1;
+    const totalUsersWithPoints = Object.keys(userPointsMap).length;
+
     // Create the points data - we'll use a simple user_points table with category and points
     const pointsData = [
       { user_id: appUser.id, category: 'all_time', points: allTimePoints },
@@ -183,6 +237,10 @@ serve(async (req) => {
         predictions: predictions?.length || 0,
         polls: 0, // Poll votes now counted in predictions
         total: listItems.length
+      },
+      rank: {
+        global: globalRank,
+        total_users: totalUsersWithPoints
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

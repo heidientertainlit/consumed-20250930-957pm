@@ -96,6 +96,7 @@ export default function UserProfile() {
 
   // User points states
   const [userPoints, setUserPoints] = useState<any>(null);
+  const [userRank, setUserRank] = useState<{ global: number; total_users: number } | null>(null);
   const [isLoadingPoints, setIsLoadingPoints] = useState(false);
 
   // User profile data from custom users table
@@ -1098,14 +1099,17 @@ export default function UserProfile() {
       if (response.ok) {
         const data = await response.json();
         setUserPoints(data.points);
-        console.log('User points loaded:', data.points);
+        setUserRank(data.rank || null);
+        console.log('User points loaded:', data.points, 'Rank:', data.rank);
       } else {
         console.error('Failed to fetch user points');
         setUserPoints(null);
+        setUserRank(null);
       }
     } catch (error) {
       console.error('Error fetching user points:', error);
       setUserPoints(null);
+      setUserRank(null);
     } finally {
       setIsLoadingPoints(false);
     }
@@ -1954,6 +1958,28 @@ export default function UserProfile() {
   const mediaTypeCounts = getMediaTypeCounts();
   const filteredMediaHistory = getFilteredMediaHistory();
 
+  // Calculate "Mostly Into" - top 2 media types by count
+  const getMostlyIntoTypes = () => {
+    const typeLabels: Record<string, string> = {
+      movie: 'Movies',
+      tv: 'TV',
+      book: 'Books',
+      music: 'Music',
+      podcast: 'Podcasts',
+      game: 'Games'
+    };
+    
+    const sortedTypes = Object.entries(mediaTypeCounts)
+      .filter(([_, count]) => (count as number) > 0)
+      .sort((a, b) => (b[1] as number) - (a[1] as number))
+      .slice(0, 2)
+      .map(([type]) => typeLabels[type] || type);
+    
+    return sortedTypes;
+  };
+  
+  const mostlyIntoTypes = getMostlyIntoTypes();
+
   // Generate years and months for filter dropdowns
   const getAvailableYears = () => {
     const allItems = getAllMediaItems();
@@ -2014,12 +2040,14 @@ export default function UserProfile() {
                       </div>
                     ) : null}
 
-                    {/* Global Rank - HARDCODED (needs backend) */}
-                    <div className="flex items-center space-x-2">
-                      <Medal className="text-purple-500" size={18} />
-                      <span className="text-base font-bold text-gray-800">#127</span>
-                      <span className="text-sm text-gray-600">global rank</span>
-                    </div>
+                    {/* Global Rank */}
+                    {userRank && (
+                      <div className="flex items-center space-x-2">
+                        <Medal className="text-purple-500" size={18} />
+                        <span className="text-base font-bold text-gray-800">#{userRank.global}</span>
+                        <span className="text-sm text-gray-600">global rank</span>
+                      </div>
+                    )}
 
                     {/* Items Logged - WORKING */}
                     <div className="flex items-center space-x-2">
@@ -2028,28 +2056,14 @@ export default function UserProfile() {
                       <span className="text-sm text-gray-600">items logged</span>
                     </div>
 
-                    {/* Win Streak - HARDCODED (needs backend) */}
-                    <div className="flex items-center space-x-2">
-                      <Flame className="text-orange-500" size={18} />
-                      <span className="text-base font-bold text-gray-800">5</span>
-                      <span className="text-sm text-gray-600">win streak</span>
-                    </div>
-
-                    {/* Predictions - WORKING (count from userPredictionsList) */}
-                    {userPredictionsList && userPredictionsList.length > 0 && (
+                    {/* Mostly Into - Calculated from media type counts */}
+                    {mostlyIntoTypes && mostlyIntoTypes.length > 0 && (
                       <div className="flex items-center space-x-2">
-                        <Target className="text-red-500" size={18} />
-                        <span className="text-base font-bold text-gray-800">{userPredictionsList.length}</span>
-                        <span className="text-sm text-gray-600">predictions</span>
+                        <BarChart3 className="text-green-500" size={18} />
+                        <span className="text-sm text-gray-600">Mostly Into:</span>
+                        <span className="text-sm font-medium text-gray-800">{mostlyIntoTypes.join(', ')}</span>
                       </div>
                     )}
-
-                    {/* Mostly Into - HARDCODED (needs backend calculation) */}
-                    <div className="flex items-center space-x-2">
-                      <BarChart3 className="text-green-500" size={18} />
-                      <span className="text-sm text-gray-600">Mostly Into:</span>
-                      <span className="text-sm font-medium text-gray-800">TV, Podcasts</span>
-                    </div>
                   </div>
                 </div>
 
