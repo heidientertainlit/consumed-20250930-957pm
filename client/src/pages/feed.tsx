@@ -1605,6 +1605,7 @@ export default function Feed() {
                     userHasAnswered: predPost.userHasAnswered || false,
                     likesCount: predPost.likes || 0,
                     commentsCount: predPost.comments || 0,
+                    isLiked: predPost.isLiked || false,
                     origin_type: predPost.origin_type || 'user',
                     origin_user_id: predPost.origin_user_id,
                     status: predPost.status || 'open',
