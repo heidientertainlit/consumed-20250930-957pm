@@ -881,25 +881,44 @@ export default function InlineComposer() {
               {/* Brief description */}
               <p className="text-xs text-gray-500">Rate it, write a review, or just add to a list — do one or all!</p>
               
-              {/* Star Rating */}
+              {/* Star Rating with decimal support */}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-2 block">Your Rating (optional)</label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
-                      className="focus:outline-none"
-                    >
-                      <Star
-                        className={`w-10 h-10 ${
-                          star <= ratingValue
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300 hover:text-yellow-200"
-                        }`}
-                      />
-                    </button>
-                  ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const fillPercent = Math.min(Math.max(ratingValue - (star - 1), 0), 1) * 100;
+                      return (
+                        <button
+                          key={star}
+                          onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
+                          className="focus:outline-none relative"
+                        >
+                          <Star className="w-9 h-9 text-gray-300" />
+                          <div 
+                            className="absolute inset-0 overflow-hidden"
+                            style={{ width: `${fillPercent}%` }}
+                          >
+                            <Star className="w-9 h-9 fill-yellow-400 text-yellow-400" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={ratingValue || ""}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (isNaN(val)) setRatingValue(0);
+                      else setRatingValue(Math.min(5, Math.max(0, val)));
+                    }}
+                    placeholder="0-5"
+                    className="w-16 px-2 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center"
+                  />
                 </div>
               </div>
 
