@@ -104,6 +104,7 @@ export default function UserProfile() {
   const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
+  const [mediaHistoryRating, setMediaHistoryRating] = useState("all");
   const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
   const [showAllMediaHistory, setShowAllMediaHistory] = useState(false);
 
@@ -1832,6 +1833,14 @@ export default function UserProfile() {
         if (itemMonth !== monthNumber) return false;
       }
 
+      // Rating filter
+      if (mediaHistoryRating !== 'all') {
+        const ratingValue = parseFloat(mediaHistoryRating);
+        const itemRating = item.rating || 0;
+        // Match items with rating >= selected value and < next value
+        if (itemRating < ratingValue || itemRating >= ratingValue + 1) return false;
+      }
+
       return true;
     });
   };
@@ -2958,42 +2967,57 @@ export default function UserProfile() {
                 </button>
               </div>
 
-              {/* Year/Month Filters */}
-              {availableYears.length > 0 && (
-                <div className="flex gap-2 mb-4">
-                  <select
-                    value={mediaHistoryYear}
-                    onChange={(e) => setMediaHistoryYear(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white text-gray-700"
-                    data-testid="select-year"
-                  >
-                    <option value="all">All Years</option>
-                    {availableYears.map(year => (
-                      <option key={year} value={year.toString()}>{year}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={mediaHistoryMonth}
-                    onChange={(e) => setMediaHistoryMonth(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white text-gray-700"
-                    data-testid="select-month"
-                  >
-                    <option value="all">All Months</option>
-                    <option value="0">January</option>
-                    <option value="1">February</option>
-                    <option value="2">March</option>
-                    <option value="3">April</option>
-                    <option value="4">May</option>
-                    <option value="5">June</option>
-                    <option value="6">July</option>
-                    <option value="7">August</option>
-                    <option value="8">September</option>
-                    <option value="9">October</option>
-                    <option value="10">November</option>
-                    <option value="11">December</option>
-                  </select>
-                </div>
-              )}
+              {/* Year/Month/Rating Filters */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {availableYears.length > 0 && (
+                  <>
+                    <select
+                      value={mediaHistoryYear}
+                      onChange={(e) => setMediaHistoryYear(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white text-gray-700"
+                      data-testid="select-year"
+                    >
+                      <option value="all">All Years</option>
+                      {availableYears.map(year => (
+                        <option key={year} value={year.toString()}>{year}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={mediaHistoryMonth}
+                      onChange={(e) => setMediaHistoryMonth(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white text-gray-700"
+                      data-testid="select-month"
+                    >
+                      <option value="all">All Months</option>
+                      <option value="0">January</option>
+                      <option value="1">February</option>
+                      <option value="2">March</option>
+                      <option value="3">April</option>
+                      <option value="4">May</option>
+                      <option value="5">June</option>
+                      <option value="6">July</option>
+                      <option value="7">August</option>
+                      <option value="8">September</option>
+                      <option value="9">October</option>
+                      <option value="10">November</option>
+                      <option value="11">December</option>
+                    </select>
+                  </>
+                )}
+                <select
+                  value={mediaHistoryRating}
+                  onChange={(e) => setMediaHistoryRating(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white text-gray-700"
+                  data-testid="select-rating"
+                >
+                  <option value="all">All Ratings</option>
+                  <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+                  <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+                  <option value="3">⭐⭐⭐ 3 Stars</option>
+                  <option value="2">⭐⭐ 2 Stars</option>
+                  <option value="1">⭐ 1 Star</option>
+                </select>
+              </div>
 
               {/* Media History List - Minimalist */}
               {isLoadingLists ? (
@@ -3022,6 +3046,11 @@ export default function UserProfile() {
                            item.media_type === 'game' ? '🎮' : '📽️'}
                         </span>
                         <span className="text-sm text-gray-900 truncate flex-1">{item.title}</span>
+                        {item.rating > 0 && (
+                          <span className="text-xs text-amber-500 flex-shrink-0">
+                            {'⭐'.repeat(Math.floor(item.rating))}
+                          </span>
+                        )}
                       </div>
                       <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
                         {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
