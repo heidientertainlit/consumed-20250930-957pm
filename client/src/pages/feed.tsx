@@ -1578,43 +1578,6 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* EXAMPLE: Correct Prediction Card Layout */}
-              <CollaborativePredictionCard 
-                prediction={{
-                  id: 'example-pred-1',
-                  poolId: 'example-pool-1',
-                  title: 'Will she leave the show?',
-                  creator: { 
-                    id: 'user-123',
-                    username: 'punkinpie123' 
-                  },
-                  mediaTitle: 'Selling Sunset',
-                  mediaItems: [{
-                    title: 'Selling Sunset',
-                    mediaType: 'TV',
-                    externalId: '253463',
-                    externalSource: 'tmdb',
-                    imageUrl: ''
-                  }],
-                  options: ['Yes, definitely', 'No, she stays'],
-                  optionVotes: [
-                    { option: 'Yes, definitely', count: 42, percentage: 60 },
-                    { option: 'No, she stays', count: 28, percentage: 40 }
-                  ],
-                  userVotes: [
-                    { user: 'alex_films', userId: 'u1', vote: 'Yes, definitely' },
-                    { user: 'movie_lover', userId: 'u2', vote: 'No, she stays' },
-                    { user: 'tv_junkie', userId: 'u3', vote: 'Yes, definitely' },
-                    { user: 'drama_fan', userId: 'u4', vote: 'Yes, definitely' }
-                  ],
-                  likesCount: 42,
-                  commentsCount: 8,
-                  origin_type: 'user',
-                  origin_user_id: 'user-123',
-                  status: 'open'
-                }}
-              />
-
               {/* Feed Filter Button */}
               <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
 
