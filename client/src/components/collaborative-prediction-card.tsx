@@ -191,12 +191,23 @@ export default function CollaborativePredictionCard({
       return response.json();
     },
     onMutate: async () => {
-      setLiked(!liked);
-      setCurrentLikesCount(liked ? currentLikesCount - 1 : currentLikesCount + 1);
+      // Save original values for rollback
+      const wasLiked = liked;
+      const prevCount = currentLikesCount;
+      
+      // Optimistic update
+      setLiked(!wasLiked);
+      setCurrentLikesCount(wasLiked ? prevCount - 1 : prevCount + 1);
+      
+      // Return context for rollback
+      return { wasLiked, prevCount };
     },
-    onError: () => {
-      setLiked(liked);
-      setCurrentLikesCount(currentLikesCount);
+    onError: (_error, _variables, context) => {
+      // Rollback to original values
+      if (context) {
+        setLiked(context.wasLiked);
+        setCurrentLikesCount(context.prevCount);
+      }
       toast({
         title: "Failed to like",
         description: "Please try again.",

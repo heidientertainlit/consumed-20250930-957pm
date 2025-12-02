@@ -84,8 +84,7 @@ serve(async (req) => {
           content,
           created_at,
           user_id,
-          parent_comment_id,
-          users!inner(user_name, email)
+          parent_comment_id
         `)
         .eq('pool_id', pool_id)
         .order('created_at', { ascending: true });
@@ -97,13 +96,28 @@ serve(async (req) => {
         });
       }
 
+      // Fetch user info for all commenters
+      const userIds = [...new Set(comments?.map(c => c.user_id) || [])];
+      const userMap: Record<string, { user_name?: string; email?: string }> = {};
+      
+      if (userIds.length > 0) {
+        const { data: users } = await serviceSupabase
+          .from('users')
+          .select('id, user_name, email')
+          .in('id', userIds);
+        
+        users?.forEach(u => {
+          userMap[u.id] = { user_name: u.user_name, email: u.email };
+        });
+      }
+
       let transformedComments = comments?.map(comment => ({
         id: comment.id,
         content: comment.content,
         created_at: comment.created_at,
         user_id: comment.user_id,
         parent_comment_id: comment.parent_comment_id,
-        username: comment.users?.user_name || comment.users?.email?.split('@')[0]
+        username: userMap[comment.user_id]?.user_name || userMap[comment.user_id]?.email?.split('@')[0] || 'Anonymous'
       })) || [];
 
       // Include like metadata if requested
