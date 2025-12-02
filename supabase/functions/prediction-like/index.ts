@@ -12,7 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    console.log('prediction-like called, method:', req.method);
+    console.log('=== prediction-like STARTED ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '', 
@@ -28,15 +30,27 @@ serve(async (req) => {
     console.log('Auth result:', { userId: user?.id, error: userError?.message });
     
     if (userError || !user) {
+      console.log('Auth failed, returning 401');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const body = await req.json();
-    const { pool_id } = body;
-    console.log('Request body:', { pool_id });
+    let pool_id: string | null = null;
+    
+    // Try to get pool_id from request body
+    try {
+      const body = await req.json();
+      pool_id = body.pool_id;
+      console.log('Got pool_id from body:', pool_id);
+    } catch (bodyError) {
+      console.log('Failed to parse body, trying URL params');
+      // Fallback: try to get from URL search params
+      const url = new URL(req.url);
+      pool_id = url.searchParams.get('pool_id');
+      console.log('Got pool_id from URL:', pool_id);
+    }
 
     if (!pool_id) {
       return new Response(JSON.stringify({ error: 'Missing pool_id' }), {

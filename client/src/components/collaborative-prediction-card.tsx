@@ -169,12 +169,21 @@ export default function CollaborativePredictionCard({
   // Like mutation
   const likeMutation = useMutation({
     mutationFn: async () => {
-      if (!session?.access_token || !poolId) return;
+      console.log('=== LIKE MUTATION CALLED ===');
+      console.log('session:', session?.access_token ? 'has token' : 'no token');
+      console.log('poolId:', poolId);
+      console.log('liked state:', liked);
+      
+      if (!session?.access_token || !poolId) {
+        console.log('Early return: missing session or poolId');
+        return;
+      }
 
       const method = liked ? 'DELETE' : 'POST';
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-like`,
-        {
+      const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-like`;
+      console.log('Fetching:', method, url);
+      
+      const response = await fetch(url, {
           method,
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -184,7 +193,11 @@ export default function CollaborativePredictionCard({
         }
       );
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response:', errorText);
         throw new Error('Failed to like prediction');
       }
 
