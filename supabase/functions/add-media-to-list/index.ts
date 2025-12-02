@@ -199,33 +199,27 @@ serve(async (req) => {
           ? `Rated ${media_title}` 
           : `Added ${media_title} to ${list.title}`;
         
-        console.log('Creating social post with data:', {
+        // Match the exact structure used by inline-post (which works)
+        const postData = {
           user_id: appUser?.id,
-          post_type: postType,
-          list_id: list.id,
           content: content,
-          media_title: media_title,
-          media_type: media_type,
-          media_external_id: media_external_id,
-          media_external_source: media_external_source,
-          image_url: media_image_url
-        });
+          post_type: postType,
+          rating: rating || null,
+          media_title: media_title || null,
+          media_type: media_type || null,
+          media_creator: media_creator || null,
+          image_url: media_image_url || null,
+          media_external_id: media_external_id || null,
+          media_external_source: media_external_source || null,
+          visibility: 'public',
+          contains_spoilers: false
+        };
         
-        const { data: postData, error: postError } = await adminClient
+        console.log('Creating social post with data (matching inline-post):', postData);
+        
+        const { data: createdPost, error: postError } = await adminClient
           .from('social_posts')
-          .insert({
-            user_id: appUser?.id,
-            post_type: postType,
-            list_id: list.id,
-            content: content,
-            media_title: media_title,
-            media_type: media_type,
-            media_creator: media_creator,
-            image_url: media_image_url,
-            media_external_id: media_external_id,
-            media_external_source: media_external_source,
-            rating: rating || null
-          })
+          .insert(postData)
           .select()
           .single();
         
@@ -233,7 +227,7 @@ serve(async (req) => {
           console.error('Failed to create social post:', postError);
           socialPostError = postError.message;
         } else {
-          console.log('Created social post for list addition:', postData);
+          console.log('Created social post for list addition:', createdPost);
           socialPostCreated = true;
         }
       } catch (postCreateError) {
