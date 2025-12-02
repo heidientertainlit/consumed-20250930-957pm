@@ -878,6 +878,9 @@ export default function InlineComposer() {
           {/* Rating Mode - Track & Rate */}
           {actionMode === "rating" && (
             <div className="space-y-4">
+              {/* Brief description */}
+              <p className="text-xs text-gray-500">Rate it, write a review, or just add to a list — do one or all!</p>
+              
               {/* Star Rating */}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-2 block">Your Rating (optional)</label>
