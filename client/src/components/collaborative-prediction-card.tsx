@@ -282,6 +282,42 @@ export default function CollaborativePredictionCard({
     },
   });
 
+  // Delete comment mutation
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: number) => {
+      if (!session?.access_token) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-comments?comment_id=${commentId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete comment');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prediction-comments', poolId] });
+      toast({
+        title: "Comment deleted",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to delete comment",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSelectOption = (option: string) => {
     if (userHasAnswered || voteMutation.isPending) return;
     setSelectedOption(option);
@@ -501,9 +537,22 @@ export default function CollaborativePredictionCard({
         <div className="mt-4 border-t border-gray-100 pt-4">
           <div className="space-y-3 mb-3">
             {commentsData?.comments?.map((comment: any) => (
-              <div key={comment.id} className="text-sm">
-                <p className="font-semibold text-gray-900">{comment.username}</p>
-                <p className="text-gray-700">{comment.content}</p>
+              <div key={comment.id} className="text-sm group flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">{comment.username}</p>
+                  <p className="text-gray-700">{comment.content}</p>
+                </div>
+                {comment.user_id === session?.user?.id && (
+                  <button
+                    onClick={() => deleteCommentMutation.mutate(comment.id)}
+                    disabled={deleteCommentMutation.isPending}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                    title="Delete comment"
+                    data-testid={`button-delete-comment-${comment.id}`}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             ))}
           </div>

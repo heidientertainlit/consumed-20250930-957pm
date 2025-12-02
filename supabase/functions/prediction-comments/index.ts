@@ -245,6 +245,75 @@ serve(async (req) => {
       });
     }
 
+    if (req.method === 'DELETE') {
+      const url = new URL(req.url);
+      const comment_id = url.searchParams.get('comment_id');
+
+      if (!comment_id) {
+        return new Response(JSON.stringify({ error: 'Missing comment_id' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const serviceSupabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '', 
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
+      );
+
+      // Verify the comment exists and belongs to the user
+      const { data: comment, error: fetchError } = await serviceSupabase
+        .from('prediction_comments')
+        .select('id, user_id, pool_id')
+        .eq('id', comment_id)
+        .single();
+
+      if (fetchError || !comment) {
+        return new Response(JSON.stringify({ error: 'Comment not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (comment.user_id !== user.id) {
+        return new Response(JSON.stringify({ error: 'Not authorized to delete this comment' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Delete the comment
+      const { error: deleteError } = await serviceSupabase
+        .from('prediction_comments')
+        .delete()
+        .eq('id', comment_id);
+
+      if (deleteError) {
+        return new Response(JSON.stringify({ error: deleteError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Decrement comments_count on the prediction pool
+      const { data: pool } = await serviceSupabase
+        .from('prediction_pools')
+        .select('comments_count')
+        .eq('id', comment.pool_id)
+        .single();
+
+      if (pool && pool.comments_count > 0) {
+        await serviceSupabase
+          .from('prediction_pools')
+          .update({ comments_count: pool.comments_count - 1 })
+          .eq('id', comment.pool_id);
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
