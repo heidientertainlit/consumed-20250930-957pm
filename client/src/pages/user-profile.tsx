@@ -134,6 +134,7 @@ export default function UserProfile() {
   const dnaRef = useRef<HTMLDivElement>(null);
   const friendsRef = useRef<HTMLDivElement>(null);
   const listsRef = useRef<HTMLDivElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('stats');
 
   // Fetch highlights from Supabase
@@ -869,7 +870,8 @@ export default function UserProfile() {
         { ref: statsRef, id: 'stats' },
         { ref: dnaRef, id: 'dna' },
         { ref: friendsRef, id: 'friends' },
-        { ref: listsRef, id: 'lists' }
+        { ref: listsRef, id: 'lists' },
+        { ref: historyRef, id: 'history' }
       ];
 
       const scrollPosition = window.scrollY + 200; // Offset for sticky nav
@@ -901,6 +903,9 @@ export default function UserProfile() {
         switch(tab) {
           case 'lists':
             targetRef = listsRef;
+            break;
+          case 'history':
+            targetRef = historyRef;
             break;
           case 'friends':
             targetRef = friendsRef;
@@ -2158,6 +2163,19 @@ export default function UserProfile() {
                 Lists
               </button>
             )}
+            {isOwnProfile && (
+              <button
+                onClick={() => scrollToSection(historyRef)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  activeSection === 'history'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+                data-testid="nav-history"
+              >
+                History
+              </button>
+            )}
           </div>
         </div>
 
@@ -2841,7 +2859,7 @@ export default function UserProfile() {
 
         {/* Media History Section - Only show on own profile */}
         {isOwnProfile && (
-          <div className="px-4 mb-8">
+          <div ref={historyRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
