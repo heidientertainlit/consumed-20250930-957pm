@@ -189,14 +189,29 @@ serve(async (req) => {
 
     console.log('Successfully added media to list:', list.title);
 
+    let socialPostCreated = false;
+    let socialPostError = null;
+    
     if (mediaItem) {
       try {
         const postType = rating ? 'rate-review' : 'added_to_list';
         const content = rating 
           ? `Rated ${media_title}` 
-          : '';
+          : `Added ${media_title} to ${list.title}`;
         
-        const { error: postError } = await adminClient
+        console.log('Creating social post with data:', {
+          user_id: appUser?.id,
+          post_type: postType,
+          list_id: list.id,
+          content: content,
+          media_title: media_title,
+          media_type: media_type,
+          media_external_id: media_external_id,
+          media_external_source: media_external_source,
+          image_url: media_image_url
+        });
+        
+        const { data: postData, error: postError } = await adminClient
           .from('social_posts')
           .insert({
             user_id: appUser?.id,
@@ -210,22 +225,29 @@ serve(async (req) => {
             media_external_id: media_external_id,
             media_external_source: media_external_source,
             rating: rating || null
-          });
+          })
+          .select()
+          .single();
         
         if (postError) {
           console.error('Failed to create social post:', postError);
+          socialPostError = postError.message;
         } else {
-          console.log('Created social post for list addition with post_type:', postType);
+          console.log('Created social post for list addition:', postData);
+          socialPostCreated = true;
         }
       } catch (postCreateError) {
         console.error('Error creating social post:', postCreateError);
+        socialPostError = postCreateError.message;
       }
     }
 
     return new Response(JSON.stringify({
       success: true,
       data: mediaItem,
-      listTitle: list.title
+      listTitle: list.title,
+      socialPostCreated,
+      socialPostError
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
