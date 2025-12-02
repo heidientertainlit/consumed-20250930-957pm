@@ -54,7 +54,7 @@ WITH all_activity AS (
   -- List additions
   SELECT 
     user_id,
-    added_at as last_activity_at,
+    created_at as last_activity_at,
     'list_add' as activity_type
   FROM list_items
   
@@ -67,15 +67,6 @@ WITH all_activity AS (
     'post' as activity_type
   FROM social_posts
   
-  UNION ALL
-  
-  -- Ratings (if you have a ratings table)
-  SELECT 
-    user_id,
-    created_at as last_activity_at,
-    'rating' as activity_type
-  FROM list_items
-  WHERE rating IS NOT NULL
 )
 SELECT 
   user_id,
@@ -206,7 +197,7 @@ BEGIN
       list_items.external_source,
       COUNT(DISTINCT list_items.user_id) as add_count
     FROM list_items
-    WHERE list_items.added_at >= NOW() - INTERVAL '7 days'
+    WHERE list_items.created_at >= NOW() - INTERVAL '7 days'
       AND list_items.title IS NOT NULL
       AND list_items.title != ''
       AND LENGTH(list_items.title) >= 2

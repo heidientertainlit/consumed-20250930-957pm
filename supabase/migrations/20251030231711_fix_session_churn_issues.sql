@@ -17,7 +17,7 @@ WITH all_activity AS (
   -- List additions
   SELECT 
     user_id,
-    added_at as last_activity_at,
+    created_at as last_activity_at,
     'list_add' as activity_type
   FROM list_items
   
@@ -29,16 +29,6 @@ WITH all_activity AS (
     created_at as last_activity_at,
     'post' as activity_type
   FROM social_posts
-  
-  UNION ALL
-  
-  -- Ratings
-  SELECT 
-    user_id,
-    created_at as last_activity_at,
-    'rating' as activity_type
-  FROM list_items
-  WHERE rating IS NOT NULL
 )
 SELECT 
   user_id,
