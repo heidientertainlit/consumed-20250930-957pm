@@ -431,7 +431,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         )}
         
         {/* Action buttons - always visible, bottom right */}
-        <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-50 pointer-events-auto">
+        <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-10 pointer-events-auto">
           {/* Add to List Button */}
           <button
             ref={addButtonRef}
