@@ -7,6 +7,38 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
+// Helper function to fetch image URL from TMDB when not provided by client
+async function fetchTmdbPosterUrl(externalId: string | null, externalSource: string | null): Promise<string | null> {
+  if (!externalId || externalSource !== 'tmdb') return null;
+  
+  const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
+  if (!tmdbApiKey) return null;
+  
+  try {
+    // Try as movie first
+    let response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.poster_path) {
+        return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+      }
+    }
+    
+    // Try as TV show
+    response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.poster_path) {
+        return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching TMDB poster:', error);
+  }
+  
+  return null;
+}
+
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -162,6 +194,13 @@ serve(async (req) => {
         }
         console.log('Prediction pool created:', pool);
 
+        // Ensure we have an image URL - fetch from TMDB if not provided
+        let finalImageUrl = media_image_url || null;
+        if (!finalImageUrl && media_external_id && media_external_source === 'tmdb') {
+          console.log('Fetching TMDB poster for prediction post...');
+          finalImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source);
+        }
+
         // Create associated social post using admin client
         const postData = {
           user_id: appUser.id,
@@ -175,7 +214,7 @@ serve(async (req) => {
           media_external_source: media_external_source || null,
           visibility,
           contains_spoilers,
-          image_url: media_image_url || null
+          image_url: finalImageUrl
         };
 
         const { data: post, error: postError } = await adminClient
@@ -239,6 +278,13 @@ serve(async (req) => {
         }
         console.log('Poll pool created:', pool);
 
+        // Ensure we have an image URL - fetch from TMDB if not provided
+        let pollImageUrl = media_image_url || null;
+        if (!pollImageUrl && media_external_id && media_external_source === 'tmdb') {
+          console.log('Fetching TMDB poster for poll post...');
+          pollImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source);
+        }
+
         // Create associated social post using admin client
         const postData = {
           user_id: appUser.id,
@@ -251,7 +297,7 @@ serve(async (req) => {
           media_external_source: media_external_source || null,
           visibility,
           contains_spoilers,
-          image_url: null
+          image_url: pollImageUrl
         };
 
         const { data: post, error: postError } = await adminClient
@@ -276,6 +322,13 @@ serve(async (req) => {
       }
 
       // Handle all other post types (thought, rate-review, add-media)
+      // Ensure we have an image URL - fetch from TMDB if not provided
+      let regularPostImageUrl = media_image_url || null;
+      if (!regularPostImageUrl && media_external_id && media_external_source === 'tmdb') {
+        console.log('Fetching TMDB poster for regular post...');
+        regularPostImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source);
+      }
+
       const postData = {
         user_id: appUser.id,
         content,
@@ -284,7 +337,7 @@ serve(async (req) => {
         media_title: media_title || null,
         media_type: media_type || null,
         media_creator: media_creator || null,
-        image_url: null,
+        image_url: regularPostImageUrl,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
         visibility,

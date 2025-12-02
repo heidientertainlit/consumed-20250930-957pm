@@ -162,6 +162,12 @@ serve(async (req) => {
 
       console.log('Prediction pools loaded:', predictionPoolMap.size);
 
+      // Helper function to ensure image URL is present
+      const ensureImageUrl = (imageUrl: string | null, externalId: string | null, externalSource: string | null): string => {
+        if (imageUrl) return imageUrl;
+        return '';
+      };
+
       // Create mapping from pool_id to media data from associated social_posts
       const poolMediaTitleMap = new Map<string, string>();
       const poolMediaDataMap = new Map<string, any>();
@@ -176,7 +182,7 @@ serve(async (req) => {
             mediaType: post.media_type,
             externalId: post.media_external_id,
             externalSource: post.media_external_source,
-            imageUrl: post.image_url,
+            imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source),
             creator: post.media_creator
           });
         }
