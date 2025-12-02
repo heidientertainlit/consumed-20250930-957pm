@@ -89,7 +89,15 @@ serve(async (req) => {
       review
     } = requestBody;
 
-    console.log('add-media-to-list request:', { list_id, media_title, media_type });
+    console.log('add-media-to-list request:', { 
+      list_id, 
+      media_title, 
+      media_type,
+      media_image_url,
+      media_external_id,
+      media_external_source,
+      appUserId: appUser?.id
+    });
 
     if (!list_id) {
       return new Response(JSON.stringify({
