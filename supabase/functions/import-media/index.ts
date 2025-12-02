@@ -13,6 +13,7 @@ interface MediaItem {
   imageUrl?: string;
   notes?: string;
   listType: string;
+  rating?: number;
 }
 
 // Parse Netflix CSV format
@@ -40,25 +41,66 @@ function parseGoodreads(csvText: string): MediaItem[] {
   const lines = csvText.split('\n').filter(line => line.trim());
   const items: MediaItem[] = [];
   
-  // Find header indices
+  // Find header indices - Goodreads CSV has columns like: Title, Author, My Rating, Date Read, etc.
   const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
   const titleIdx = header.indexOf('title');
   const authorIdx = header.indexOf('author');
+  const ratingIdx = header.findIndex(h => h.includes('my rating') || h === 'rating');
+  const dateReadIdx = header.findIndex(h => h.includes('date read'));
+  const shelfIdx = header.findIndex(h => h.includes('exclusive shelf') || h === 'shelf');
+  
+  console.log('Goodreads headers found:', { titleIdx, authorIdx, ratingIdx, dateReadIdx, shelfIdx });
   
   // Parse data rows
   for (let i = 1; i < lines.length; i++) {
-    const fields = lines[i].split(',').map(f => f.trim().replace(/^"|"$/g, ''));
+    // Handle CSV with quotes properly (Goodreads has commas in titles)
+    const fields = parseCSVLine(lines[i]);
     if (fields[titleIdx]) {
+      const rating = ratingIdx >= 0 ? parseInt(fields[ratingIdx]) || 0 : 0;
+      const shelf = shelfIdx >= 0 ? fields[shelfIdx]?.toLowerCase() : 'read';
+      
+      // Map Goodreads shelves to our list types
+      let listType = 'finished';
+      if (shelf === 'to-read' || shelf === 'want-to-read') {
+        listType = 'want-to';
+      } else if (shelf === 'currently-reading') {
+        listType = 'currently';
+      }
+      
       items.push({
         title: fields[titleIdx],
         mediaType: 'book',
         creator: fields[authorIdx] || '',
-        listType: 'finished'
+        rating: rating,
+        listType: listType
       });
     }
   }
   
+  console.log(`Goodreads: Parsed ${items.length} books, ${items.filter(i => i.rating && i.rating > 0).length} with ratings`);
   return items;
+}
+
+// Helper to parse CSV line with proper quote handling
+function parseCSVLine(line: string): string[] {
+  const fields: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      fields.push(current.trim().replace(/^"|"$/g, ''));
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  fields.push(current.trim().replace(/^"|"$/g, ''));
+  
+  return fields;
 }
 
 // Parse Letterboxd CSV format
@@ -301,7 +343,8 @@ serve(async (req) => {
           media_type: item.mediaType,
           creator: item.creator || '',
           image_url: item.imageUrl || null,
-          notes: item.notes || null
+          notes: item.notes || null,
+          rating: item.rating || 0
         };
       });
 

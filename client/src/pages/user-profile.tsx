@@ -3019,6 +3019,27 @@ export default function UserProfile() {
                 </select>
               </div>
 
+              {/* Search Bar */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <input
+                  type="text"
+                  placeholder="Search your history... (e.g., movies with Reese Witherspoon)"
+                  value={mediaHistorySearch}
+                  onChange={(e) => setMediaHistorySearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                  data-testid="input-media-search"
+                />
+                {mediaHistorySearch && (
+                  <button
+                    onClick={() => setMediaHistorySearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
               {/* Media History List - Minimalist */}
               {isLoadingLists ? (
                 <div className="text-center py-4">
