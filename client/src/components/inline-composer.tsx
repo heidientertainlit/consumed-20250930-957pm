@@ -712,25 +712,14 @@ export default function InlineComposer() {
                   <span className="text-gray-400">→</span>
                 </button>
                 <button
-                  onClick={() => setActionMode("list")}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                  onClick={() => setActionMode("track")}
+                  disabled={isPosting}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
                   data-testid="button-add-to-list"
                 >
                   <div className="flex items-center gap-3">
                     <ListPlus className="w-5 h-5 text-green-600" />
                     <span className="text-sm font-medium text-gray-900">Add to a list</span>
-                  </div>
-                  <span className="text-gray-400">→</span>
-                </button>
-                <button
-                  onClick={() => setActionMode("track")}
-                  disabled={isPosting}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-                  data-testid="button-just-track"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">✓</span>
-                    <span className="text-sm font-medium text-gray-900">Just track it</span>
                   </div>
                   <span className="text-gray-400">→</span>
                 </button>
