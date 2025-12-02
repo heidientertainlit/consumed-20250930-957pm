@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -2833,6 +2833,221 @@ export default function UserProfile() {
                     <Plus size={16} className="mr-2" />
                     Create Your First List
                   </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Media History Section - Only show on own profile */}
+        {isOwnProfile && (
+          <div className="px-4 mb-8">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <Clock className="text-purple-800" size={24} />
+                  <h2 className="text-xl font-bold text-gray-800">Media History</h2>
+                </div>
+                <span className="text-sm text-gray-500">
+                  {filteredMediaHistory.length} {filteredMediaHistory.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <button
+                  onClick={() => setMediaHistoryType('all')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    mediaHistoryType === 'all'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-all"
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('movies')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'movies'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-movies"
+                >
+                  <Film size={14} />
+                  Movies {mediaTypeCounts.movie > 0 && `(${mediaTypeCounts.movie})`}
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('tv')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'tv'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-tv"
+                >
+                  <Tv size={14} />
+                  TV {mediaTypeCounts.tv > 0 && `(${mediaTypeCounts.tv})`}
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('books')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'books'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-books"
+                >
+                  <BookOpen size={14} />
+                  Books {mediaTypeCounts.book > 0 && `(${mediaTypeCounts.book})`}
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('music')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'music'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-music"
+                >
+                  <Music size={14} />
+                  Music {mediaTypeCounts.music > 0 && `(${mediaTypeCounts.music})`}
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('podcasts')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'podcasts'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-podcasts"
+                >
+                  <Mic size={14} />
+                  Podcasts {mediaTypeCounts.podcast > 0 && `(${mediaTypeCounts.podcast})`}
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('games')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'games'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-games"
+                >
+                  <Gamepad2 size={14} />
+                  Games {mediaTypeCounts.game > 0 && `(${mediaTypeCounts.game})`}
+                </button>
+              </div>
+
+              {/* Year/Month Filters */}
+              {availableYears.length > 0 && (
+                <div className="flex gap-2 mb-4">
+                  <select
+                    value={mediaHistoryYear}
+                    onChange={(e) => setMediaHistoryYear(e.target.value)}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white text-gray-700"
+                    data-testid="select-year"
+                  >
+                    <option value="all">All Years</option>
+                    {availableYears.map(year => (
+                      <option key={year} value={year.toString()}>{year}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={mediaHistoryMonth}
+                    onChange={(e) => setMediaHistoryMonth(e.target.value)}
+                    className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm bg-white text-gray-700"
+                    data-testid="select-month"
+                  >
+                    <option value="all">All Months</option>
+                    <option value="0">January</option>
+                    <option value="1">February</option>
+                    <option value="2">March</option>
+                    <option value="3">April</option>
+                    <option value="4">May</option>
+                    <option value="5">June</option>
+                    <option value="6">July</option>
+                    <option value="7">August</option>
+                    <option value="8">September</option>
+                    <option value="9">October</option>
+                    <option value="10">November</option>
+                    <option value="11">December</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Media History List */}
+              {isLoadingLists ? (
+                <div className="text-center py-8">
+                  <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
+                  <p className="text-gray-500 mt-2">Loading media history...</p>
+                </div>
+              ) : filteredMediaHistory.length > 0 ? (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {filteredMediaHistory.slice(0, 20).map((item: any, index: number) => (
+                    <div
+                      key={item.media_id || index}
+                      className="border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
+                      onClick={() => {
+                        if (item.external_id) {
+                          setLocation(`/media/${item.media_type}/${item.external_id}`);
+                        }
+                      }}
+                    >
+                      <div className="px-4 py-3 flex items-center gap-3">
+                        {item.poster_url ? (
+                          <img 
+                            src={item.poster_url} 
+                            alt={item.title}
+                            className="w-12 h-16 object-cover rounded-md"
+                          />
+                        ) : (
+                          <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-md flex items-center justify-center">
+                            {item.media_type === 'movie' ? <Film className="text-purple-600" size={18} /> :
+                             item.media_type === 'tv' ? <Tv className="text-blue-600" size={18} /> :
+                             item.media_type === 'book' ? <BookOpen className="text-green-600" size={18} /> :
+                             item.media_type === 'music' ? <Music className="text-pink-600" size={18} /> :
+                             item.media_type === 'podcast' ? <Mic className="text-orange-600" size={18} /> :
+                             item.media_type === 'game' ? <Gamepad2 className="text-indigo-600" size={18} /> :
+                             <Film className="text-gray-600" size={18} />}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 truncate">{item.title}</h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span className="capitalize">{item.media_type}</span>
+                            {item.creator && (
+                              <>
+                                <span>·</span>
+                                <span className="truncate">{item.creator}</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {item.listName}
+                            </Badge>
+                            <span className="text-xs text-gray-400">
+                              {new Date(item.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className="text-gray-400 flex-shrink-0" size={18} />
+                      </div>
+                    </div>
+                  ))}
+                  {filteredMediaHistory.length > 20 && (
+                    <p className="text-center text-sm text-gray-500 py-2">
+                      Showing 20 of {filteredMediaHistory.length} items
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="text-gray-300 mx-auto mb-3" size={48} />
+                  <p className="text-gray-500">No media in your history yet</p>
+                  <p className="text-sm text-gray-400 mt-1">Start tracking to see your consumption history</p>
                 </div>
               )}
             </div>
