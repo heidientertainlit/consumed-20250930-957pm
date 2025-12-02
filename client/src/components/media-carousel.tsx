@@ -457,7 +457,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-                {['Queue', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
+                {['Want To', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
                   <button
                     key={listTitle}
                     onClick={() => {

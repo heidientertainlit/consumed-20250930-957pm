@@ -2600,7 +2600,7 @@ export default function UserProfile() {
                                     className="cursor-pointer text-white hover:bg-gray-800"
                                     disabled={addDNARecommendationMutation.isPending}
                                   >
-                                    Add to Queue
+                                    Add to Want To
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={(e) => {

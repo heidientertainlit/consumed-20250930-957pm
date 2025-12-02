@@ -43,7 +43,7 @@ serve(async (req) => {
     // Map list names to list types for lookup
     const listTypeMap: { [key: string]: string } = {
       'currently': 'Currently',
-      'queue': 'Queue',
+      'queue': 'Want To',
       'finished': 'Finished',
       'dnf': 'Did Not Finish',
       'favorites': 'Favorites'

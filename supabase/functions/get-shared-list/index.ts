@@ -89,7 +89,7 @@ serve(async (req) => {
     // For system lists, convert URL slug back to title and find by title
     const systemListMapping = {
       'currently': 'Currently',
-      'queue': 'Queue', 
+      'queue': 'Want To', 
       'finished': 'Finished',
       'did-not-finish': 'Did Not Finish'
     };

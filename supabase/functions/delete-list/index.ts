@@ -66,7 +66,7 @@ serve(async (req) => {
     // CRITICAL SAFETY CHECK: Prevent deletion of system/default lists
     if (list.is_default === true) {
       return new Response(JSON.stringify({
-        error: 'Cannot delete system lists (Currently, Queue, Finished, Did Not Finish, Favorites). Only custom lists can be deleted.'
+        error: 'Cannot delete system lists (Currently, Want To, Finished, Did Not Finish, Favorites). Only custom lists can be deleted.'
       }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

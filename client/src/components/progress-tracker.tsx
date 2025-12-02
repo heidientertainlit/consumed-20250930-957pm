@@ -227,7 +227,7 @@ export function ProgressTracker({
                 onClick={() => moveToListMutation.mutate('queue')}
                 className="cursor-pointer"
               >
-                Queue
+                Want To
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => moveToListMutation.mutate('favorites')}
@@ -427,7 +427,7 @@ export function ProgressTracker({
                 onClick={() => moveToListMutation.mutate('queue')}
                 className="cursor-pointer"
               >
-                Queue
+                Want To
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => moveToListMutation.mutate('favorites')}

@@ -450,7 +450,7 @@ export default function Track() {
   };
 
   // Build filter options dynamically: system lists + custom lists
-  const systemListTitles = ["All", "Currently", "Queue", "Finished", "Did Not Finish", "Favorites"];
+  const systemListTitles = ["All", "Currently", "Want To", "Finished", "Did Not Finish", "Favorites"];
   const customLists = userLists.filter((list: any) => list.isCustom) || [];
   const filterOptions = [...systemListTitles, ...customLists.map((list: any) => list.title)];
 
@@ -507,14 +507,14 @@ export default function Track() {
 
         {/* Queue Preview Section */}
         {(() => {
-          const queueList = userLists.find((list: any) => list.title === "Queue");
+          const queueList = userLists.find((list: any) => list.title === "Want To");
           const queueItems = queueList?.items || [];
           
           if (queueItems.length > 0) {
             return (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  Looking for something to consume? Here's what's in your Queue:
+                  Looking for something to consume? Here's what's in your Want To list:
                 </h3>
                 
                 {/* Horizontal scrollable list */}
@@ -629,10 +629,10 @@ export default function Track() {
                       {list.title === "Currently" && <Play className="text-purple-700 mr-3" size={24} />}
                       {list.title === "Finished" && <Star className="text-purple-700 mr-3" size={24} />}
                       {list.title === "Did Not Finish" && <X className="text-purple-700 mr-3" size={24} />}
-                      {list.title === "Queue" && <Users className="text-purple-700 mr-3" size={24} />}
+                      {list.title === "Want To" && <Users className="text-purple-700 mr-3" size={24} />}
                       {list.title === "Favorites" && <Heart className="text-purple-700 mr-3" size={24} />}
                       {list.title === "All Media" && <List className="text-purple-700 mr-3" size={24} />}
-                      {!["Currently", "Finished", "Did Not Finish", "Queue", "Favorites", "All Media"].includes(list.title) &&
+                      {!["Currently", "Finished", "Did Not Finish", "Want To", "Favorites", "All Media"].includes(list.title) &&
                         <List className="text-purple-700 mr-3" size={24} />}
                       <h3 className="font-bold text-lg text-gray-800">{list.title}</h3>
                     </div>
@@ -640,10 +640,10 @@ export default function Track() {
                       {list.title === "Currently" && "What you're consuming right now"}
                       {list.title === "Finished" && "Media you've completed"}
                       {list.title === "Did Not Finish" && "Media you started but didn't complete"}
-                      {list.title === "Queue" && "Media you want to consume later"}
+                      {list.title === "Want To" && "Media you want to consume later"}
                       {list.title === "Favorites" && "Your all-time favorite media"}
                       {list.title === "All Media" && "All tracked media items"}
-                      {!["Currently", "Finished", "Did Not Finish", "Queue", "Favorites", "All Media"].includes(list.title) &&
+                      {!["Currently", "Finished", "Did Not Finish", "Want To", "Favorites", "All Media"].includes(list.title) &&
                         (list.description || "Your custom list")}
                     </p>
                     <div className="text-2xl font-bold text-purple-800">{list.items?.length || 0}</div>
@@ -744,7 +744,7 @@ export default function Track() {
                             className="cursor-pointer text-white hover:bg-gray-800"
                             disabled={addRecommendationMutation.isPending}
                           >
-                            Add to Queue
+                            Add to Want To
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(e) => {

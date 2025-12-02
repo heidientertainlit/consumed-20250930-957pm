@@ -79,7 +79,7 @@ serve(async (req) => {
           // Create personal system lists for new user (idempotent)
           const systemLists = [
             'Currently',
-            'Queue',
+            'Want To',
             'Finished',
             'Did Not Finish',
             'Favorites'
@@ -140,7 +140,7 @@ serve(async (req) => {
       // Only include standard system lists with uniqueness check
       const requiredSystemLists = [
         'Currently',
-        'Queue',
+        'Want To',
         'Finished',
         'Did Not Finish',
         'Favorites'

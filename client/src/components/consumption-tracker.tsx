@@ -66,7 +66,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
     const nameMap: { [key: string]: string } = {
       'all': 'All',
       'currently': 'Currently',
-      'queue': 'Queue',
+      'queue': 'Want To',
       'finished': 'Finished',
       'dnf': 'Did Not Finish',
       'favorites': 'Favorites'
@@ -544,7 +544,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
                     onClick={() => handleAddMedia('queue')}
                     className="cursor-pointer"
                   >
-                    Queue
+                    Want To
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleAddMedia('finished')}

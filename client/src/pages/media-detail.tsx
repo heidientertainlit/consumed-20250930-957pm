@@ -469,7 +469,7 @@ export default function MediaDetail() {
                                 className="cursor-pointer"
                                 disabled={addMediaToListMutation.isPending}
                               >
-                                Queue
+                                Want To
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleAddMediaToList('finished')}

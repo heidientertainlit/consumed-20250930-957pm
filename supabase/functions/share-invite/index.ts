@@ -44,7 +44,7 @@ serve(async (req) => {
           
           const slugToTitle = {
             'currently': 'Currently',
-            'queue': 'Queue',
+            'queue': 'Want To',
             'finished': 'Finished',
             'did-not-finish': 'Did Not Finish',
             'all': 'All'

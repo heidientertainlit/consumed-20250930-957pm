@@ -543,7 +543,7 @@ export default function Library() {
 
             <div>
               <MediaCarousel
-                title="Mike's Queue You Might Like"
+                title="Mike's Want To List You Might Like"
                 mediaType="movie"
                 items={[
                   { id: '1', title: 'Oppenheimer', imageUrl: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', mediaType: 'movie', externalId: '872585', externalSource: 'tmdb' },

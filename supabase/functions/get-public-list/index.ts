@@ -60,7 +60,7 @@ serve(async (req) => {
     // Map list slug to actual list title for filtering
     const slugToTitle = {
       'currently': 'Currently',
-      'queue': 'Queue',
+      'queue': 'Want To',
       'finished': 'Finished',
       'did-not-finish': 'Did Not Finish',
       'all': 'All'

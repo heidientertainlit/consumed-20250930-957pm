@@ -138,7 +138,7 @@ export default function ListDetail() {
     switch (title) {
       case "All": return "All your tracked media items";
       case "Currently": return "What you're watching, reading, or playing right now";
-      case "Queue": return "Media you want to consume later";
+      case "Want To": return "Media you want to consume later";
       case "Finished": return "Media you've completed";
       case "Did Not Finish": return "Media you started but didn't complete";
       case "Favorites": return "Your favorite media items";
@@ -150,7 +150,7 @@ export default function ListDetail() {
     const typeMap: { [key: string]: string } = {
       'All': 'all',
       'Currently': 'currently',
-      'Queue': 'queue',
+      'Want To': 'queue',
       'Finished': 'finished',
       'Did Not Finish': 'dnf',
       'Favorites': 'favorites'
