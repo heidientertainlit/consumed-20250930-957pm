@@ -2977,77 +2977,48 @@ export default function UserProfile() {
                 </div>
               )}
 
-              {/* Media History List */}
+              {/* Media History List - Minimalist */}
               {isLoadingLists ? (
-                <div className="text-center py-8">
-                  <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
-                  <p className="text-gray-500 mt-2">Loading media history...</p>
+                <div className="text-center py-4">
+                  <Loader2 className="animate-spin text-gray-400 mx-auto" size={20} />
                 </div>
               ) : filteredMediaHistory.length > 0 ? (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filteredMediaHistory.slice(0, 20).map((item: any, index: number) => (
+                <div className="space-y-1 max-h-80 overflow-y-auto">
+                  {filteredMediaHistory.slice(0, 30).map((item: any, index: number) => (
                     <div
                       key={item.media_id || index}
-                      className="border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
+                      className="flex items-center justify-between py-2 px-1 hover:bg-gray-50 rounded cursor-pointer transition-colors"
                       onClick={() => {
                         if (item.external_id) {
                           setLocation(`/media/${item.media_type}/${item.external_id}`);
                         }
                       }}
                     >
-                      <div className="px-4 py-3 flex items-center gap-3">
-                        {item.poster_url ? (
-                          <img 
-                            src={item.poster_url} 
-                            alt={item.title}
-                            className="w-12 h-16 object-cover rounded-md"
-                          />
-                        ) : (
-                          <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-md flex items-center justify-center">
-                            {item.media_type === 'movie' ? <Film className="text-purple-600" size={18} /> :
-                             item.media_type === 'tv' ? <Tv className="text-blue-600" size={18} /> :
-                             item.media_type === 'book' ? <BookOpen className="text-green-600" size={18} /> :
-                             item.media_type === 'music' ? <Music className="text-pink-600" size={18} /> :
-                             item.media_type === 'podcast' ? <Mic className="text-orange-600" size={18} /> :
-                             item.media_type === 'game' ? <Gamepad2 className="text-indigo-600" size={18} /> :
-                             <Film className="text-gray-600" size={18} />}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">{item.title}</h3>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <span className="capitalize">{item.media_type}</span>
-                            {item.creator && (
-                              <>
-                                <span>·</span>
-                                <span className="truncate">{item.creator}</span>
-                              </>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              {item.listName}
-                            </Badge>
-                            <span className="text-xs text-gray-400">
-                              {new Date(item.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        <ChevronRight className="text-gray-400 flex-shrink-0" size={18} />
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-gray-400 text-xs w-4">
+                          {item.media_type === 'movie' ? '🎬' :
+                           item.media_type === 'tv' ? '📺' :
+                           item.media_type === 'book' ? '📚' :
+                           item.media_type === 'music' ? '🎵' :
+                           item.media_type === 'podcast' ? '🎙️' :
+                           item.media_type === 'game' ? '🎮' : '📽️'}
+                        </span>
+                        <span className="text-sm text-gray-900 truncate flex-1">{item.title}</span>
                       </div>
+                      <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
+                        {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
                     </div>
                   ))}
-                  {filteredMediaHistory.length > 20 && (
-                    <p className="text-center text-sm text-gray-500 py-2">
-                      Showing 20 of {filteredMediaHistory.length} items
+                  {filteredMediaHistory.length > 30 && (
+                    <p className="text-center text-xs text-gray-400 py-2">
+                      +{filteredMediaHistory.length - 30} more
                     </p>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Clock className="text-gray-300 mx-auto mb-3" size={48} />
-                  <p className="text-gray-500">No media in your history yet</p>
-                  <p className="text-sm text-gray-400 mt-1">Start tracking to see your consumption history</p>
+                <div className="text-center py-6">
+                  <p className="text-sm text-gray-400">No media tracked yet</p>
                 </div>
               )}
             </div>
