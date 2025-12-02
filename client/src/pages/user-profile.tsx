@@ -14,13 +14,20 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useMutation } from "@tanstack/react-query";
 import { copyLink } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
@@ -107,6 +114,12 @@ export default function UserProfile() {
   const [mediaHistoryRating, setMediaHistoryRating] = useState("all");
   const [openFilterDropdown, setOpenFilterDropdown] = useState<'year' | 'month' | 'type' | null>(null);
   const [showAllMediaHistory, setShowAllMediaHistory] = useState(false);
+
+  // Import media modal states
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Highlights state
   const [highlights, setHighlights] = useState<any[]>([]);
@@ -1249,6 +1262,78 @@ export default function UserProfile() {
   const handleListClick = (listName: string) => {
     const listId = listName.toLowerCase().replace(/\s+/g, '-');
     setLocation(`/list/${listId}`);
+  };
+
+  // Handle file upload for media import
+  const handleFileUpload = async () => {
+    if (!uploadFile || !session?.access_token) {
+      toast({
+        title: "Error",
+        description: "Please select a file and ensure you're logged in",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/import-media", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Import failed: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: "Import successful!",
+        description: `Imported ${result.imported} items${result.failed > 0 ? ` (${result.failed} failed)` : ''}`,
+      });
+
+      // Refresh lists
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      fetchUserLists();
+
+      // Close modal and reset
+      setIsUploadModalOpen(false);
+      setUploadFile(null);
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import failed",
+        description: error.message || "Failed to import media",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.name.endsWith('.csv') && !file.name.endsWith('.zip')) {
+        toast({
+          title: "Invalid file",
+          description: "Please select a CSV or ZIP file",
+          variant: "destructive",
+        });
+        return;
+      }
+      setUploadFile(file);
+    }
   };
 
   // Entertainment DNA API Functions
@@ -2870,7 +2955,7 @@ export default function UserProfile() {
         {isOwnProfile && (
           <div ref={historyRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <Clock className="text-purple-800" size={24} />
                   <h2 className="text-xl font-bold text-gray-800">Media History</h2>
@@ -2878,6 +2963,30 @@ export default function UserProfile() {
                 <span className="text-sm text-gray-500">
                   {filteredMediaHistory.length} {filteredMediaHistory.length === 1 ? 'item' : 'items'}
                 </span>
+              </div>
+
+              {/* Import Buttons */}
+              <div className="flex gap-3 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-50"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  data-testid="button-import-goodreads"
+                >
+                  <BookOpen size={16} />
+                  Import Goodreads
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 border-red-300 text-red-700 hover:bg-red-50"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  data-testid="button-import-netflix"
+                >
+                  <Film size={16} />
+                  Import Netflix
+                </Button>
               </div>
 
               {/* Filter Pills */}
@@ -3754,6 +3863,158 @@ export default function UserProfile() {
           setIsAuthModalOpen(false);
         }}
       />
+
+      {/* Import Media Modal */}
+      <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="text-purple-600" size={20} />
+              Import Your Entertainment History
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 space-y-3">
+              <div>
+                Import your entertainment history from Netflix or Goodreads. Upload a CSV or ZIP file to get started.
+                <button
+                  onClick={() => setIsHelpModalOpen(true)}
+                  className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-700 underline"
+                >
+                  <HelpCircle className="h-3 w-3 mr-1" />
+                  How do I get my data?
+                </button>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            <div>
+              <label
+                htmlFor="file-upload-profile"
+                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold">Click to upload</span> or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">CSV or ZIP files</p>
+                </div>
+                <input
+                  id="file-upload-profile"
+                  type="file"
+                  className="hidden"
+                  accept=".csv,.zip"
+                  onChange={handleFileChange}
+                  data-testid="input-file-upload"
+                />
+              </label>
+              <p className="text-xs text-gray-500 mt-2">
+                Supported: Netflix, Goodreads (CSV or ZIP)
+              </p>
+            </div>
+
+            {uploadFile && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">{uploadFile.name}</span>
+                  </div>
+                  <button
+                    onClick={() => setUploadFile(null)}
+                    className="text-blue-600 hover:text-blue-800"
+                    data-testid="button-remove-file"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={handleFileUpload}
+              disabled={!uploadFile || isUploading}
+              className="w-full bg-purple-600 text-white hover:bg-purple-700"
+              data-testid="button-upload-file"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import File
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Help Modal - How to get your data */}
+      <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle className="text-purple-600" size={20} />
+              How to Get Your Data
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <Film className="h-4 w-4 text-red-600" />
+                </div>
+                <div>
+                  <span className="font-medium text-gray-800">Netflix:</span>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Go to your Account → Security → Personal Info Access → Request.{' '}
+                    <a
+                      href="https://www.netflix.com/account/getmyinfo"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      Get your Netflix data →
+                    </a>
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <BookOpen className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <span className="font-medium text-gray-800">Goodreads:</span>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Visit your Import/Export page and click "Export Library".{' '}
+                    <a
+                      href="https://www.goodreads.com/review/import"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      Export your Goodreads data →
+                    </a>
+                  </p>
+                </div>
+              </li>
+            </ul>
+
+            <Button
+              onClick={() => setIsHelpModalOpen(false)}
+              className="w-full bg-gray-100 text-gray-800 hover:bg-gray-200"
+              data-testid="button-close-help"
+            >
+              Got it!
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
