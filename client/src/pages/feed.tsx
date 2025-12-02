@@ -1633,6 +1633,7 @@ export default function Feed() {
                     id: predPost.poolId || post.id,
                     title: predPost.question,
                     mediaTitle: predPost.mediaTitle || post.mediaItems?.[0]?.title,
+                    mediaItems: predPost.mediaItems || post.mediaItems || [],
                     creator: predPost.creator || post.user || { username: 'Unknown' },
                     poolId: predPost.poolId || post.id,
                     options: predPost.options || [],
