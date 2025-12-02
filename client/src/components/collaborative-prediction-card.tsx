@@ -346,39 +346,61 @@ export default function CollaborativePredictionCard({
         </span>
       </div>
       
-      {/* Header with creator and delete button */}
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-700 flex-1">
-          {isConsumedPrediction ? (
-            <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
-          ) : (
-            <>
-              <span className="font-semibold text-gray-900">@{creator.username}</span>
-              <span className="text-gray-500"> predicts about </span>
-              {mediaTitle && (
-                <button
-                  onClick={() => {
-                    const media = mediaItems?.[0];
-                    if (media?.externalId && media?.externalSource) {
-                      setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
-                    }
-                  }}
-                  className="font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer underline"
-                  data-testid="link-prediction-media"
-                >
-                  {mediaTitle}
-                </button>
-              )}
-            </>
-          )}
-        </p>
+      {/* Header with creator, media poster, and delete button */}
+      <div className="flex items-start gap-3 mb-4">
+        {/* Media Poster - show if available */}
+        {mediaItems?.[0]?.imageUrl && (
+          <button
+            onClick={() => {
+              const media = mediaItems?.[0];
+              if (media?.externalId && media?.externalSource) {
+                setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
+              }
+            }}
+            className="flex-shrink-0"
+            data-testid="button-prediction-poster"
+          >
+            <img 
+              src={mediaItems[0].imageUrl} 
+              alt={mediaTitle || 'Media poster'}
+              className="w-12 h-16 object-cover rounded-md shadow-sm"
+            />
+          </button>
+        )}
+        
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-gray-700">
+            {isConsumedPrediction ? (
+              <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
+            ) : (
+              <>
+                <span className="font-semibold text-gray-900">@{creator.username}</span>
+                <span className="text-gray-500"> predicts about </span>
+                {mediaTitle && (
+                  <button
+                    onClick={() => {
+                      const media = mediaItems?.[0];
+                      if (media?.externalId && media?.externalSource) {
+                        setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
+                      }
+                    }}
+                    className="font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer underline"
+                    data-testid="link-prediction-media"
+                  >
+                    {mediaTitle}
+                  </button>
+                )}
+              </>
+            )}
+          </p>
+        </div>
         
         {/* Delete button - Show for creators of user-generated predictions */}
         {origin_type === 'user' && (
           <button
             onClick={() => deleteMutation.mutate()}
             disabled={deleteMutation.isPending || !isCreator}
-            className={`flex items-center justify-center ml-2 p-1.5 rounded-full transition-colors flex-shrink-0 ${
+            className={`flex items-center justify-center p-1.5 rounded-full transition-colors flex-shrink-0 ${
               isCreator 
                 ? 'text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer' 
                 : 'text-gray-300 cursor-not-allowed opacity-50'
