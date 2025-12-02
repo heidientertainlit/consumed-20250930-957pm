@@ -1833,10 +1833,26 @@ export default function Feed() {
                   ) : (
                     !post.content && post.mediaItems && post.mediaItems.length > 0 && (
                       <div className="mb-2">
-                        {/* Text at top */}
-                        <p className="text-gray-800 text-sm mb-3">
-                          Added <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
-                        </p>
+                        {/* Text at top - show rating stars if present */}
+                        <div className="text-gray-800 text-sm mb-3">
+                          {post.rating ? (
+                            <div className="flex items-center gap-2">
+                              <span>Rated</span>
+                              <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
+                              <div className="flex items-center">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star 
+                                    key={star} 
+                                    size={14} 
+                                    className={star <= (post.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"} 
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <p>Added <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span></p>
+                          )}
+                        </div>
                         
                         {/* Media Card */}
                         <div className="bg-gray-50 rounded-lg p-3 mb-2">
