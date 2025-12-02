@@ -350,7 +350,7 @@ export default function OnboardingPage() {
             <Button 
               onClick={() => {
                 // DNA profile is already saved by the edge function
-                window.location.href = '/feed';
+                window.location.href = '/activity';
               }}
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-base"
               data-testid="complete-onboarding-button"
@@ -376,7 +376,7 @@ export default function OnboardingPage() {
             Let's understand how you consume entertainment
           </p>
           <button
-            onClick={() => window.location.href = '/feed'}
+            onClick={() => window.location.href = '/activity'}
             className="text-xs text-gray-400 hover:text-gray-500 mt-2 underline"
           >
             Skip for now

@@ -503,13 +503,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50 pb-safe">
         <div className="flex justify-evenly items-center h-20 pb-2">
           <Link
-            href="/feed"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/feed" ? "bg-white/20" : ""}`}
+            href="/activity"
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/activity" ? "bg-white/20" : ""}`}
           >
             <div className="h-6 w-6 flex items-center justify-center">
               <Activity className="text-white" size={24} />
             </div>
-            <span className="text-xs font-medium text-white whitespace-nowrap">Feed</span>
+            <span className="text-xs font-medium text-white whitespace-nowrap">Activity</span>
           </Link>
 
           <Link

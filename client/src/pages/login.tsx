@@ -26,9 +26,9 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simple redirect: if user is logged in, go to feed
+    // Simple redirect: if user is logged in, go to activity
     if (!loading && user && !justSignedUp) {
-      setLocation('/feed');
+      setLocation('/activity');
     }
   }, [user, loading, justSignedUp, setLocation]);
 
@@ -103,8 +103,8 @@ export default function LoginPage() {
         description: "Start tracking your entertainment.",
       });
       
-      // Redirect new users to feed
-      setLocation('/feed');
+      // Redirect new users to activity
+      setLocation('/activity');
       setSubmitting(false);
     }
   };

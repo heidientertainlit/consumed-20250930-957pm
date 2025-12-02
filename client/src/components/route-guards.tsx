@@ -41,7 +41,7 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
 
   useEffect(() => {
     if (!loading && user) {
-      setLocation('/feed');
+      setLocation('/activity');
     }
   }, [user, loading, setLocation]);
 

@@ -61,7 +61,7 @@ export default function ResetPasswordPage() {
         title: "Password updated!",
         description: "Your password has been successfully reset.",
       });
-      setLocation('/feed');
+      setLocation('/activity');
     }
     
     setSubmitting(false);

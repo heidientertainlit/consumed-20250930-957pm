@@ -57,7 +57,7 @@ function Router() {
             <Leaderboard />
           </ProtectedRoute>
         </Route>
-        <Route path="/feed">
+        <Route path="/activity">
           <ProtectedRoute>
             <Feed />
           </ProtectedRoute>
