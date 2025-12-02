@@ -609,7 +609,7 @@ export default function Search() {
                     {searchResults.conversations.slice(0, 5).map((conv) => (
                       <div
                         key={conv.id}
-                        onClick={() => setLocation('/feed')}
+                        onClick={() => setLocation('/activity')}
                         className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-purple-400 transition-colors cursor-pointer"
                         data-testid={`conversation-${conv.id}`}
                       >
@@ -655,7 +655,7 @@ export default function Search() {
                         No one has posted about "{searchQuery}" yet. Be the first to start the conversation!
                       </p>
                       <Button
-                        onClick={() => setLocation('/feed')}
+                        onClick={() => setLocation('/activity')}
                         className="bg-purple-600 hover:bg-purple-700 text-white"
                         data-testid="start-conversation"
                       >

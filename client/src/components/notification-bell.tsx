@@ -141,11 +141,11 @@ export function NotificationBell() {
         // Post-related notifications - go to the specific post and comment
         if (notification.post_id) {
           const url = notification.comment_id 
-            ? `/feed?post=${notification.post_id}&comment=${notification.comment_id}`
-            : `/feed?post=${notification.post_id}`;
+            ? `/activity?post=${notification.post_id}&comment=${notification.comment_id}`
+            : `/activity?post=${notification.post_id}`;
           setLocation(url);
         } else {
-          setLocation('/feed');
+          setLocation('/activity');
         }
         break;
 
@@ -183,11 +183,11 @@ export function NotificationBell() {
       default:
         // Fallback: if there's a post_id, go to feed; if list_id, go to that list
         if (notification.post_id) {
-          setLocation(`/feed?post=${notification.post_id}`);
+          setLocation(`/activity?post=${notification.post_id}`);
         } else if (notification.list_id) {
           setLocation(`/list/${notification.list_id}`);
         } else {
-          setLocation('/feed');
+          setLocation('/activity');
         }
     }
   };
