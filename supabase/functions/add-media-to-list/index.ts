@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { persistSession: false }
+});
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -13,7 +20,7 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '', 
+      supabaseUrl, 
       Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
       {
         global: {
@@ -146,13 +153,12 @@ serve(async (req) => {
       });
     }
 
-    const { data: mediaItem, error: mediaError } = await supabase
+    const { data: mediaItem, error: mediaError } = await adminClient
       .from('list_items')
       .insert({
         list_id: list_id,
         user_id: appUser?.id,
         title: media_title || 'Untitled',
-        type: media_type || 'mixed',
         media_type: media_type || 'mixed',
         creator: media_creator || '',
         image_url: media_image_url || null,
@@ -182,7 +188,7 @@ serve(async (req) => {
           ? `Rated ${media_title}` 
           : '';
         
-        const { error: postError } = await supabase
+        const { error: postError } = await adminClient
           .from('social_posts')
           .insert({
             user_id: appUser?.id,

@@ -388,8 +388,20 @@ export default function InlineComposer() {
         
         // If only adding to list (no rating/review), just do the list add without social post
         if (ratingValue === 0 && !reviewText.trim() && trackListId) {
+          console.log('🎯 Adding to list only, trackListId:', trackListId);
+          console.log('🎯 selectedMedia:', selectedMedia);
           try {
             const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+            const requestBody = {
+              list_id: trackListId,
+              media_title: selectedMedia.title || "",
+              media_type: selectedMedia.type || "movie",
+              media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+              media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+              media_external_id: selectedMedia.external_id || selectedMedia.id || "",
+              media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
+            };
+            console.log('🎯 Request body:', requestBody);
             const listResponse = await fetch(
               `${supabaseUrl}/functions/v1/add-media-to-list`,
               {
@@ -398,19 +410,16 @@ export default function InlineComposer() {
                   Authorization: `Bearer ${session?.access_token}`,
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                  list_id: trackListId,
-                  media_title: selectedMedia.title || "",
-                  media_type: selectedMedia.type || "movie",
-                  media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
-                  media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
-                  media_external_id: selectedMedia.external_id || selectedMedia.id || "",
-                  media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
-                }),
+                body: JSON.stringify(requestBody),
               }
             );
             
-            if (!listResponse.ok) throw new Error("Failed to add to list");
+            if (!listResponse.ok) {
+              const errorData = await listResponse.json().catch(() => ({}));
+              console.error('add-media-to-list error:', errorData);
+              throw new Error(errorData.error || "Failed to add to list");
+            }
+            console.log('✅ Successfully added to list');
             
             toast({
               title: "Added to List!",
