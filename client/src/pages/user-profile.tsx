@@ -2992,7 +2992,7 @@ export default function UserProfile() {
                   data-testid="button-import-goodreads"
                 >
                   <BookOpen size={14} />
-                  Goodreads
+                  Import Goodreads
                 </Button>
                 <Button
                   size="sm"
@@ -3001,7 +3001,7 @@ export default function UserProfile() {
                   data-testid="button-import-netflix"
                 >
                   <Film size={14} />
-                  Netflix
+                  Import Netflix
                 </Button>
               </div>
 
