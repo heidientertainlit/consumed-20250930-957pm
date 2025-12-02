@@ -388,8 +388,8 @@ export default function InlineComposer() {
         
         // If only adding to list (no rating/review), just do the list add without social post
         if (ratingValue === 0 && !reviewText.trim() && trackListId) {
-          console.log('🎯 Adding to list only, trackListId:', trackListId);
-          console.log('🎯 selectedMedia:', selectedMedia);
+          console.log('🎯 Adding to list only, trackListId:', trackListId, 'type:', typeof trackListId);
+          console.log('🎯 selectedMedia:', JSON.stringify(selectedMedia, null, 2));
           try {
             const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
             const requestBody = {
@@ -401,7 +401,8 @@ export default function InlineComposer() {
               media_external_id: selectedMedia.external_id || selectedMedia.id || "",
               media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
             };
-            console.log('🎯 Request body:', requestBody);
+            console.log('🎯 Request body:', JSON.stringify(requestBody, null, 2));
+            console.log('🎯 Calling edge function:', `${supabaseUrl}/functions/v1/add-media-to-list`);
             const listResponse = await fetch(
               `${supabaseUrl}/functions/v1/add-media-to-list`,
               {
@@ -414,10 +415,13 @@ export default function InlineComposer() {
               }
             );
             
+            console.log('🎯 Response status:', listResponse.status);
+            const responseData = await listResponse.json().catch(() => ({}));
+            console.log('🎯 Response data:', JSON.stringify(responseData, null, 2));
+            
             if (!listResponse.ok) {
-              const errorData = await listResponse.json().catch(() => ({}));
-              console.error('add-media-to-list error:', errorData);
-              throw new Error(errorData.error || "Failed to add to list");
+              console.error('add-media-to-list error:', responseData);
+              throw new Error(responseData.error || "Failed to add to list");
             }
             console.log('✅ Successfully added to list');
             
