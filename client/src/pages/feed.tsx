@@ -2046,15 +2046,36 @@ export default function Feed() {
                           </div>
                         </div>
                         
-                        {/* See more link */}
-                        {post.user && (
-                        <button
-                          onClick={() => setLocation(`/user/${post.user?.id}?tab=lists`)}
-                          className="text-sm text-gray-500 hover:text-purple-600 transition-colors"
-                        >
-                          See more of @{post.user.username}'s lists →
-                        </button>
-                        )}
+                        {/* See more of user's lists link for added_to_list posts */}
+                        {(() => {
+                          // Get user info from post.user or fallback to groupedActivities
+                          let userId: string | undefined;
+                          let username: string | undefined;
+                          
+                          if (post.user) {
+                            userId = post.user.id;
+                            username = post.user.username;
+                          } else if (post.groupedActivities?.[0]) {
+                            const activity = post.groupedActivities[0] as any;
+                            userId = activity.userId;
+                            username = activity.username;
+                          }
+                          
+                          if (!userId || !username) return null;
+                          
+                          // Get the first name or username for display
+                          const displayName = username.replace(/consumed|IsConsumed/gi, '').trim() || username;
+                          
+                          return (
+                            <Link
+                              href={`/user/${userId}?tab=lists`}
+                              className="text-sm text-purple-600 hover:text-purple-700 transition-colors font-medium"
+                              data-testid={`link-see-lists-${userId}`}
+                            >
+                              See more of {displayName}'s lists →
+                            </Link>
+                          );
+                        })()}
                       </div>
                     )
                   )}
