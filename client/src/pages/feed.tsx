@@ -1728,7 +1728,7 @@ export default function Feed() {
                     })()}
                     
                     {/* User Info and Date */}
-                    {post.user && (
+                    {post.user ? (
                     <div className="flex items-center space-x-2 mb-3">
                       <Link href={`/user/${post.user.id}`}>
                         <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
@@ -1756,6 +1756,52 @@ export default function Feed() {
                         </button>
                       )}
                     </div>
+                    ) : (
+                    /* Fallback for posts missing user data - show user from grouped activities */
+                    (() => {
+                      const myActivity = post.groupedActivities?.find(a => a.userId === user?.id);
+                      const firstActivity = post.groupedActivities?.[0];
+                      const displayUser = myActivity || firstActivity;
+                      
+                      return (
+                        <div className="flex items-center space-x-2 mb-3">
+                          {displayUser ? (
+                            <>
+                              <Link href={`/user/${displayUser.userId}`}>
+                                <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
+                                  <User size={18} className="text-gray-600" />
+                                </div>
+                              </Link>
+                              <div className="flex-1">
+                                <Link 
+                                  href={`/user/${displayUser.userId}`}
+                                  className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                  data-testid={`link-user-${displayUser.userId}`}
+                                >
+                                  {displayUser.username}
+                                </Link>
+                                <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex-1">
+                              <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
+                            </div>
+                          )}
+                          {/* Show delete button if current user owns any activity in this post */}
+                          {myActivity && (
+                            <button
+                              onClick={() => handleDeletePost(myActivity.postId)}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                              data-testid={`button-delete-post-${post.id}`}
+                              title="Delete post"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()
                     )}
 
                   {/* Post Content */}
