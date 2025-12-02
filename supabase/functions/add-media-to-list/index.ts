@@ -177,10 +177,10 @@ serve(async (req) => {
 
     if (mediaItem) {
       try {
-        const postType = rating ? 'rate-review' : 'add-to-list';
+        const postType = rating ? 'rate-review' : 'added_to_list';
         const content = rating 
           ? `Rated ${media_title}` 
-          : `Added ${media_title} to ${list.title}`;
+          : '';
         
         const { error: postError } = await supabase
           .from('social_posts')
