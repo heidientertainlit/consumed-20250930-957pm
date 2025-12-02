@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3 } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -1998,53 +1998,57 @@ export default function UserProfile() {
                     </span>
                   </div>
 
-                  {/* Total Points Display */}
-                  <div className="flex items-center space-x-2 mb-2">
+                  {/* Stats Grid - Consistent styling */}
+                  <div className="flex flex-col gap-y-2 mt-1">
+                    {/* Total Points */}
                     {isLoadingPoints ? (
                       <div className="flex items-center space-x-2">
-                        <Trophy className="text-amber-500" size={20} />
-                        <span className="text-gray-600">Loading points...</span>
+                        <Trophy className="text-amber-500" size={18} />
+                        <span className="text-sm text-gray-500">Loading points...</span>
                       </div>
                     ) : userPoints ? (
                       <div className="flex items-center space-x-2">
-                        <Trophy className="text-amber-500" size={20} />
-                        <span className="text-lg font-bold text-amber-600">{userPoints.all_time || 0}</span>
-                        <span className="text-gray-600">total points</span>
+                        <Trophy className="text-amber-500" size={18} />
+                        <span className="text-base font-bold text-gray-800">{userPoints.all_time || 0}</span>
+                        <span className="text-sm text-gray-600">total points</span>
                       </div>
                     ) : null}
-                  </div>
 
-                  {/* Global Rank */}
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-lg">🏅</span>
-                    <span className="text-lg font-bold text-purple-600">#127</span>
-                    <span className="text-gray-600">global rank</span>
-                  </div>
+                    {/* Global Rank - HARDCODED (needs backend) */}
+                    <div className="flex items-center space-x-2">
+                      <Medal className="text-purple-500" size={18} />
+                      <span className="text-base font-bold text-gray-800">#127</span>
+                      <span className="text-sm text-gray-600">global rank</span>
+                    </div>
 
-                  {/* Quick Stats Matching Track Page */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <TrendingUp size={16} className="text-purple-600" />
-                      <span className="font-medium">{totalItemsLogged}</span>
-                      <span>items logged</span>
+                    {/* Items Logged - WORKING */}
+                    <div className="flex items-center space-x-2">
+                      <TrendingUp className="text-blue-500" size={18} />
+                      <span className="text-base font-bold text-gray-800">{totalItemsLogged}</span>
+                      <span className="text-sm text-gray-600">items logged</span>
                     </div>
-                  </div>
-                  
-                  {/* Play & Prediction Stats */}
-                  <div className="flex flex-col gap-y-1 text-sm text-gray-600 mt-2">
-                    <div className="flex items-center space-x-1">
-                      <span>🔥</span>
-                      <span>5 win streak</span>
+
+                    {/* Win Streak - HARDCODED (needs backend) */}
+                    <div className="flex items-center space-x-2">
+                      <Flame className="text-orange-500" size={18} />
+                      <span className="text-base font-bold text-gray-800">5</span>
+                      <span className="text-sm text-gray-600">win streak</span>
                     </div>
+
+                    {/* Predictions - WORKING (count from userPredictionsList) */}
                     {userPredictionsList && userPredictionsList.length > 0 && (
-                      <div className="flex items-center space-x-1">
-                        <span>🎯</span>
-                        <span>12 predictions</span>
+                      <div className="flex items-center space-x-2">
+                        <Target className="text-red-500" size={18} />
+                        <span className="text-base font-bold text-gray-800">{userPredictionsList.length}</span>
+                        <span className="text-sm text-gray-600">predictions</span>
                       </div>
                     )}
-                    <div className="flex items-center space-x-1">
-                      <span>📊</span>
-                      <span>Mostly Into: TV, Podcasts</span>
+
+                    {/* Mostly Into - HARDCODED (needs backend calculation) */}
+                    <div className="flex items-center space-x-2">
+                      <BarChart3 className="text-green-500" size={18} />
+                      <span className="text-sm text-gray-600">Mostly Into:</span>
+                      <span className="text-sm font-medium text-gray-800">TV, Podcasts</span>
                     </div>
                   </div>
                 </div>
@@ -2966,26 +2970,24 @@ export default function UserProfile() {
               </div>
 
               {/* Import Buttons */}
-              <div className="flex gap-3 mb-4">
+              <div className="flex gap-2 mb-4">
                 <Button
-                  variant="outline"
                   size="sm"
-                  className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-50"
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-auto"
                   onClick={() => setIsUploadModalOpen(true)}
                   data-testid="button-import-goodreads"
                 >
-                  <BookOpen size={16} />
-                  Import Goodreads
+                  <BookOpen size={14} />
+                  Goodreads
                 </Button>
                 <Button
-                  variant="outline"
                   size="sm"
-                  className="flex items-center gap-2 border-red-300 text-red-700 hover:bg-red-50"
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-auto"
                   onClick={() => setIsUploadModalOpen(true)}
                   data-testid="button-import-netflix"
                 >
-                  <Film size={16} />
-                  Import Netflix
+                  <Film size={14} />
+                  Netflix
                 </Button>
               </div>
 
