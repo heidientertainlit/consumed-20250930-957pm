@@ -34,6 +34,8 @@ export default function InlineComposer() {
   // Action-specific state
   const [thoughtText, setThoughtText] = useState("");
   const [ratingValue, setRatingValue] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [trackListId, setTrackListId] = useState<string>("");
   const [predictionQuestion, setPredictionQuestion] = useState("");
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
   const [selectedFriendId, setSelectedFriendId] = useState<string>("");
@@ -228,6 +230,8 @@ export default function InlineComposer() {
     setSearchResults([]);
     setThoughtText("");
     setRatingValue(0);
+    setReviewText("");
+    setTrackListId("");
     setPredictionQuestion("");
     setPredictionOptions(["", ""]);
     setSelectedFriendId("");
@@ -380,17 +384,52 @@ export default function InlineComposer() {
           setIsPosting(false);
           return;
         }
+        
+        // Build content: start with review if present, otherwise just indicate a rating
+        let content = reviewText.trim() || `Rated ${selectedMedia.title}`;
+        
         payload = {
-          content: `Rated ${selectedMedia.title}`,
+          content: content,
           type: "rate-review",
           visibility: "public",
           contains_spoilers: containsSpoilers,
           rating: ratingValue,
           media_title: selectedMedia.title,
           media_type: selectedMedia.type,
+          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
           media_external_id: selectedMedia.external_id || selectedMedia.id,
-          media_external_source: selectedMedia.external_source || selectedMedia.source,
+          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
         };
+        
+        // If a list was selected, also add to that list
+        if (trackListId) {
+          try {
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+            await fetch(
+              `${supabaseUrl}/functions/v1/add-media-to-list`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${session?.access_token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  list_id: trackListId,
+                  media_title: selectedMedia.title || "",
+                  media_type: selectedMedia.type || "movie",
+                  media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+                  media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+                  media_external_id: selectedMedia.external_id || selectedMedia.id || "",
+                  media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
+                }),
+              }
+            );
+            // Don't block on list add error - the main post is more important
+          } catch (listError) {
+            console.error('Error adding to list:', listError);
+          }
+        }
       } else if (actionMode === "prediction") {
         // Handle collaborative user-driven predictions - same pattern as thoughts
         if (!predictionQuestion.trim()) {
@@ -685,7 +724,7 @@ export default function InlineComposer() {
                 >
                   <div className="flex items-center gap-3">
                     <Star className="w-5 h-5 text-yellow-500" />
-                    <span className="text-sm font-medium text-gray-900">Rate it</span>
+                    <span className="text-sm font-medium text-gray-900">Track & Rate</span>
                   </div>
                   <span className="text-gray-400">→</span>
                 </button>
@@ -702,24 +741,12 @@ export default function InlineComposer() {
                 </button>
                 <button
                   onClick={() => setActionMode("poll")}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-200"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
                   data-testid="button-ask-poll"
                 >
                   <div className="flex items-center gap-3">
                     <Vote className="w-5 h-5 text-blue-600" />
                     <span className="text-sm font-medium text-gray-900">Ask a poll</span>
-                  </div>
-                  <span className="text-gray-400">→</span>
-                </button>
-                <button
-                  onClick={() => setActionMode("track")}
-                  disabled={isPosting}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-                  data-testid="button-add-to-list"
-                >
-                  <div className="flex items-center gap-3">
-                    <ListPlus className="w-5 h-5 text-green-600" />
-                    <span className="text-sm font-medium text-gray-900">Add to a list</span>
                   </div>
                   <span className="text-gray-400">→</span>
                 </button>
@@ -799,31 +826,66 @@ export default function InlineComposer() {
             </div>
           )}
 
-          {/* Rating Mode */}
+          {/* Rating Mode - Track & Rate */}
           {actionMode === "rating" && (
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setRatingValue(star)}
-                    className="focus:outline-none"
-                  >
-                    <Star
-                      className={`w-8 h-8 ${
-                        star <= ratingValue
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  </button>
-                ))}
+            <div className="space-y-4">
+              {/* Star Rating */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Your Rating</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRatingValue(star)}
+                      className="focus:outline-none"
+                    >
+                      <Star
+                        className={`w-10 h-10 ${
+                          star <= ratingValue
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300 hover:text-yellow-200"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center justify-between">
+
+              {/* Optional Review */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Review (optional)</label>
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  placeholder="Share your thoughts..."
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                  rows={3}
+                />
+              </div>
+
+              {/* Add to List (optional) */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-2 block">Add to a list (optional)</label>
+                <select
+                  value={trackListId}
+                  onChange={(e) => setTrackListId(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                >
+                  <option value="">Don't add to list</option>
+                  {userLists && userLists.map((list: any) => (
+                    <option key={list.id} value={list.id}>
+                      {list.title || list.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-2">
                 <Button onClick={() => setActionMode("")} variant="ghost" size="sm">
                   Cancel
                 </Button>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 text-sm">
                     <Checkbox
                       checked={containsSpoilers}
@@ -994,36 +1056,6 @@ export default function InlineComposer() {
             </div>
           )}
 
-          {/* Track Mode - Just track without posting */}
-          {actionMode === "track" && (
-            <div className="space-y-3">
-              <p className="text-sm text-gray-700 mb-2">Select a list to track to:</p>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {userLists && userLists.length > 0 ? (
-                  userLists.map((list: any) => (
-                    <button
-                      key={list.id}
-                      onClick={() => {
-                        handleTrackToList(selectedMedia, list.id);
-                        resetComposer();
-                      }}
-                      className="w-full p-3 rounded-lg border text-left transition-all border-gray-200 hover:border-purple-300 hover:bg-purple-50"
-                      data-testid={`button-track-to-list-${list.id}`}
-                    >
-                      <p className="font-medium text-gray-900">{list.title || list.name}</p>
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">No lists found. Create one first!</p>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <Button onClick={() => setActionMode("")} variant="ghost" size="sm">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* List Mode */}
           {actionMode === "list" && (
