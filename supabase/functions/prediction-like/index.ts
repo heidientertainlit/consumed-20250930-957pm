@@ -8,19 +8,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('🚀 PREDICTION-LIKE FUNCTION INVOKED');
-  console.log('Request method:', req.method);
-  
   if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS preflight');
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    console.log('=== prediction-like STARTED ===');
-    console.log('Method:', req.method);
-    console.log('URL:', req.url);
-    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '', 
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -32,10 +24,7 @@ serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log('Auth result:', { userId: user?.id, error: userError?.message });
-    
     if (userError || !user) {
-      console.log('Auth failed, returning 401');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -48,13 +37,10 @@ serve(async (req) => {
     try {
       const body = await req.json();
       pool_id = body.pool_id;
-      console.log('Got pool_id from body:', pool_id);
     } catch (bodyError) {
-      console.log('Failed to parse body, trying URL params');
       // Fallback: try to get from URL search params
       const url = new URL(req.url);
       pool_id = url.searchParams.get('pool_id');
-      console.log('Got pool_id from URL:', pool_id);
     }
 
     if (!pool_id) {
@@ -71,21 +57,16 @@ serve(async (req) => {
     );
 
     if (req.method === 'POST') {
-      console.log('POST: Adding like for pool_id:', pool_id, 'user_id:', user.id);
-      
       // Add like - but first check if already exists
-      const { data: existingLike, error: checkError } = await serviceSupabase
+      const { data: existingLike } = await serviceSupabase
         .from('prediction_likes')
         .select('id')
         .eq('pool_id', pool_id)
         .eq('user_id', user.id)
         .single();
 
-      console.log('Existing like check:', { existingLike, checkError: checkError?.message });
-
       if (existingLike) {
         // Already liked - return success (idempotent)
-        console.log('Already liked, returning success');
         return new Response(JSON.stringify({ success: true, already_liked: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -94,8 +75,6 @@ serve(async (req) => {
       const { error } = await serviceSupabase
         .from('prediction_likes')
         .insert({ pool_id: pool_id, user_id: user.id });
-
-      console.log('Insert result:', { error: error?.message });
 
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
