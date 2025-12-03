@@ -1521,11 +1521,23 @@ export default function Feed() {
                 const friendActivities = filteredPosts
                   .filter((p: SocialPost) => p.user && p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
                   .slice(0, 6)
-                  .map((p: SocialPost) => ({
-                    username: p.user!.username,
-                    media: p.mediaItems[0].title,
-                    action: p.content ? 'is loving' : 'added'
-                  }));
+                  .map((p: SocialPost) => {
+                    // Build action text based on rating
+                    let action = 'added';
+                    if (p.rating !== undefined && p.rating !== null) {
+                      action = `gave ${p.mediaItems[0].title} ${p.rating} star${p.rating !== 1 ? 's' : ''}`;
+                      return {
+                        username: p.user!.username,
+                        media: '', // Already included in action
+                        action
+                      };
+                    }
+                    return {
+                      username: p.user!.username,
+                      media: p.mediaItems[0].title,
+                      action: 'added'
+                    };
+                  });
                 
                 if (friendActivities.length === 0) return null;
                 

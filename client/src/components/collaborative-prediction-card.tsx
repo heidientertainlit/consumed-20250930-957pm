@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ThumbsUp, ThumbsDown } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ChevronUp, ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -652,25 +652,25 @@ export default function CollaborativePredictionCard({
                   )}
                 </div>
                 {/* Upvote/Downvote buttons */}
-                <div className="flex items-center gap-3 mt-1.5">
+                <div className="flex items-center gap-2 mt-1.5">
                   <button
                     onClick={() => handleVoteComment(comment.id, 1, comment.userVote)}
                     disabled={voteCommentMutation.isPending || removeVoteMutation.isPending}
-                    className={`flex items-center gap-1 text-xs transition-colors ${
+                    className={`flex items-center gap-0.5 text-xs transition-colors ${
                       comment.userVote === 1 
-                        ? 'text-green-600 font-medium' 
-                        : 'text-gray-400 hover:text-green-600'
+                        ? 'text-purple-600 font-medium' 
+                        : 'text-gray-400 hover:text-purple-600'
                     }`}
                     title="Upvote"
                     data-testid={`button-upvote-comment-${comment.id}`}
                   >
-                    <ThumbsUp size={12} className={comment.userVote === 1 ? 'fill-current' : ''} />
+                    <ChevronUp size={14} className={comment.userVote === 1 ? 'stroke-2' : ''} />
                     <span>{comment.upvotes || 0}</span>
                   </button>
                   <button
                     onClick={() => handleVoteComment(comment.id, -1, comment.userVote)}
                     disabled={voteCommentMutation.isPending || removeVoteMutation.isPending}
-                    className={`flex items-center gap-1 text-xs transition-colors ${
+                    className={`flex items-center gap-0.5 text-xs transition-colors ${
                       comment.userVote === -1 
                         ? 'text-red-500 font-medium' 
                         : 'text-gray-400 hover:text-red-500'
@@ -678,7 +678,7 @@ export default function CollaborativePredictionCard({
                     title="Downvote"
                     data-testid={`button-downvote-comment-${comment.id}`}
                   >
-                    <ThumbsDown size={12} className={comment.userVote === -1 ? 'fill-current' : ''} />
+                    <ChevronDown size={14} className={comment.userVote === -1 ? 'stroke-2' : ''} />
                     <span>{comment.downvotes || 0}</span>
                   </button>
                 </div>
