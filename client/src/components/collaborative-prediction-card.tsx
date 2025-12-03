@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -318,6 +318,80 @@ export default function CollaborativePredictionCard({
     },
   });
 
+  // Vote on comment mutation
+  const voteCommentMutation = useMutation({
+    mutationFn: async ({ commentId, voteType }: { commentId: number; voteType: 1 | -1 }) => {
+      if (!session?.access_token) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-comment-vote`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            comment_id: commentId,
+            vote_type: voteType,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to vote on comment');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prediction-comments', poolId] });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to vote",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove vote mutation
+  const removeVoteMutation = useMutation({
+    mutationFn: async (commentId: number) => {
+      if (!session?.access_token) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-comment-vote?comment_id=${commentId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to remove vote');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prediction-comments', poolId] });
+    },
+  });
+
+  const handleVoteComment = (commentId: number, voteType: 1 | -1, currentUserVote: number | null) => {
+    if (currentUserVote === voteType) {
+      // User is clicking the same vote type - remove the vote
+      removeVoteMutation.mutate(commentId);
+    } else {
+      // User is voting or changing vote
+      voteCommentMutation.mutate({ commentId, voteType });
+    }
+  };
+
   const handleSelectOption = (option: string) => {
     if (userHasAnswered || voteMutation.isPending) return;
     setSelectedOption(option);
@@ -559,22 +633,55 @@ export default function CollaborativePredictionCard({
         <div className="mt-4 border-t border-gray-100 pt-4">
           <div className="space-y-3 mb-3">
             {commentsData?.comments?.map((comment: any) => (
-              <div key={comment.id} className="text-sm group flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">{comment.username}</p>
-                  <p className="text-gray-700">{comment.content}</p>
+              <div key={comment.id} className="text-sm group">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900">{comment.username}</p>
+                    <p className="text-gray-700">{comment.content}</p>
+                  </div>
+                  {comment.user_id === session?.user?.id && (
+                    <button
+                      onClick={() => deleteCommentMutation.mutate(comment.id)}
+                      disabled={deleteCommentMutation.isPending}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                      title="Delete comment"
+                      data-testid={`button-delete-comment-${comment.id}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
-                {comment.user_id === session?.user?.id && (
+                {/* Upvote/Downvote buttons */}
+                <div className="flex items-center gap-3 mt-1.5">
                   <button
-                    onClick={() => deleteCommentMutation.mutate(comment.id)}
-                    disabled={deleteCommentMutation.isPending}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
-                    title="Delete comment"
-                    data-testid={`button-delete-comment-${comment.id}`}
+                    onClick={() => handleVoteComment(comment.id, 1, comment.userVote)}
+                    disabled={voteCommentMutation.isPending || removeVoteMutation.isPending}
+                    className={`flex items-center gap-1 text-xs transition-colors ${
+                      comment.userVote === 1 
+                        ? 'text-green-600 font-medium' 
+                        : 'text-gray-400 hover:text-green-600'
+                    }`}
+                    title="Upvote"
+                    data-testid={`button-upvote-comment-${comment.id}`}
                   >
-                    <Trash2 size={14} />
+                    <ThumbsUp size={12} className={comment.userVote === 1 ? 'fill-current' : ''} />
+                    <span>{comment.upvotes || 0}</span>
                   </button>
-                )}
+                  <button
+                    onClick={() => handleVoteComment(comment.id, -1, comment.userVote)}
+                    disabled={voteCommentMutation.isPending || removeVoteMutation.isPending}
+                    className={`flex items-center gap-1 text-xs transition-colors ${
+                      comment.userVote === -1 
+                        ? 'text-red-500 font-medium' 
+                        : 'text-gray-400 hover:text-red-500'
+                    }`}
+                    title="Downvote"
+                    data-testid={`button-downvote-comment-${comment.id}`}
+                  >
+                    <ThumbsDown size={12} className={comment.userVote === -1 ? 'fill-current' : ''} />
+                    <span>{comment.downvotes || 0}</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

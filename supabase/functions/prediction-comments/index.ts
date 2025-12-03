@@ -120,35 +120,41 @@ serve(async (req) => {
         username: userMap[comment.user_id]?.user_name || userMap[comment.user_id]?.email?.split('@')[0] || 'Anonymous'
       })) || [];
 
-      // Include like metadata if requested
+      // Include vote metadata if requested
       if (includeMeta && comments && comments.length > 0) {
         const commentIds = comments.map(c => c.id);
         
-        // Get like counts for each comment
-        const { data: likeCounts } = await serviceSupabase
-          .from('prediction_comment_likes')
-          .select('comment_id')
+        // Get all votes for these comments
+        const { data: allVotes } = await serviceSupabase
+          .from('prediction_comment_votes')
+          .select('comment_id, vote_type, user_id')
           .in('comment_id', commentIds);
 
-        const likeCountMap: Record<number, number> = {};
-        likeCounts?.forEach(like => {
-          likeCountMap[like.comment_id] = (likeCountMap[like.comment_id] || 0) + 1;
+        // Calculate vote counts per comment
+        const voteDataMap: Record<number, { upvotes: number; downvotes: number; userVote: number | null }> = {};
+        
+        commentIds.forEach(id => {
+          voteDataMap[id] = { upvotes: 0, downvotes: 0, userVote: null };
         });
 
-        // Check which comments current user has liked
-        const { data: userLikes } = await serviceSupabase
-          .from('prediction_comment_likes')
-          .select('comment_id')
-          .eq('user_id', user.id)
-          .in('comment_id', commentIds);
+        allVotes?.forEach(vote => {
+          if (vote.vote_type === 1) {
+            voteDataMap[vote.comment_id].upvotes++;
+          } else if (vote.vote_type === -1) {
+            voteDataMap[vote.comment_id].downvotes++;
+          }
+          if (vote.user_id === user.id) {
+            voteDataMap[vote.comment_id].userVote = vote.vote_type;
+          }
+        });
 
-        const userLikedSet = new Set(userLikes?.map(l => l.comment_id));
-
-        // Add metadata to each comment
+        // Add vote metadata to each comment
         transformedComments = transformedComments.map(comment => ({
           ...comment,
-          likesCount: likeCountMap[comment.id] || 0,
-          isLiked: userLikedSet.has(comment.id)
+          upvotes: voteDataMap[comment.id]?.upvotes || 0,
+          downvotes: voteDataMap[comment.id]?.downvotes || 0,
+          netScore: (voteDataMap[comment.id]?.upvotes || 0) - (voteDataMap[comment.id]?.downvotes || 0),
+          userVote: voteDataMap[comment.id]?.userVote || null
         }));
       }
 
@@ -234,8 +240,10 @@ serve(async (req) => {
         user_id: comment.user_id,
         parent_comment_id: comment.parent_comment_id,
         username: userData?.user_name || userData?.email?.split('@')[0] || user.email?.split('@')[0],
-        likesCount: 0,
-        isLiked: false,
+        upvotes: 0,
+        downvotes: 0,
+        netScore: 0,
+        userVote: null,
         replies: []
       };
 
