@@ -122,7 +122,7 @@ serve(async (req) => {
 
       // Include vote metadata if requested
       if (includeMeta && comments && comments.length > 0) {
-        const commentIds = comments.map(c => c.id);
+        const commentIds = comments.map(c => String(c.id));
         
         // Get all votes for these comments
         const { data: allVotes } = await serviceSupabase
@@ -130,32 +130,39 @@ serve(async (req) => {
           .select('comment_id, vote_type, user_id')
           .in('comment_id', commentIds);
 
-        // Calculate vote counts per comment
-        const voteDataMap: Record<number, { upvotes: number; downvotes: number; userVote: number | null }> = {};
+        // Calculate vote counts per comment (use string keys)
+        const voteDataMap: Record<string, { upvotes: number; downvotes: number; userVote: number | null }> = {};
         
         commentIds.forEach(id => {
           voteDataMap[id] = { upvotes: 0, downvotes: 0, userVote: null };
         });
 
         allVotes?.forEach(vote => {
+          const commentIdStr = String(vote.comment_id);
+          if (!voteDataMap[commentIdStr]) {
+            voteDataMap[commentIdStr] = { upvotes: 0, downvotes: 0, userVote: null };
+          }
           if (vote.vote_type === 1) {
-            voteDataMap[vote.comment_id].upvotes++;
+            voteDataMap[commentIdStr].upvotes++;
           } else if (vote.vote_type === -1) {
-            voteDataMap[vote.comment_id].downvotes++;
+            voteDataMap[commentIdStr].downvotes++;
           }
           if (vote.user_id === user.id) {
-            voteDataMap[vote.comment_id].userVote = vote.vote_type;
+            voteDataMap[commentIdStr].userVote = vote.vote_type;
           }
         });
 
         // Add vote metadata to each comment
-        transformedComments = transformedComments.map(comment => ({
-          ...comment,
-          upvotes: voteDataMap[comment.id]?.upvotes || 0,
-          downvotes: voteDataMap[comment.id]?.downvotes || 0,
-          netScore: (voteDataMap[comment.id]?.upvotes || 0) - (voteDataMap[comment.id]?.downvotes || 0),
-          userVote: voteDataMap[comment.id]?.userVote || null
-        }));
+        transformedComments = transformedComments.map(comment => {
+          const commentIdStr = String(comment.id);
+          return {
+            ...comment,
+            upvotes: voteDataMap[commentIdStr]?.upvotes || 0,
+            downvotes: voteDataMap[commentIdStr]?.downvotes || 0,
+            netScore: (voteDataMap[commentIdStr]?.upvotes || 0) - (voteDataMap[commentIdStr]?.downvotes || 0),
+            userVote: voteDataMap[commentIdStr]?.userVote || null
+          };
+        });
       }
 
       // Build nested tree structure

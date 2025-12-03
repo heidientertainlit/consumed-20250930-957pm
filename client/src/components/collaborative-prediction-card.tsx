@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ChevronUp, ChevronDown } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -320,7 +320,7 @@ export default function CollaborativePredictionCard({
 
   // Vote on comment mutation
   const voteCommentMutation = useMutation({
-    mutationFn: async ({ commentId, voteType }: { commentId: number; voteType: 1 | -1 }) => {
+    mutationFn: async ({ commentId, voteType }: { commentId: string; voteType: 1 | -1 }) => {
       if (!session?.access_token) return;
 
       const response = await fetch(
@@ -332,7 +332,7 @@ export default function CollaborativePredictionCard({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            comment_id: commentId,
+            comment_id: String(commentId),
             vote_type: voteType,
           }),
         }
@@ -358,11 +358,11 @@ export default function CollaborativePredictionCard({
 
   // Remove vote mutation
   const removeVoteMutation = useMutation({
-    mutationFn: async (commentId: number) => {
+    mutationFn: async (commentId: string) => {
       if (!session?.access_token) return;
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-comment-vote?comment_id=${commentId}`,
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-comment-vote?comment_id=${String(commentId)}`,
         {
           method: 'DELETE',
           headers: {
@@ -382,7 +382,7 @@ export default function CollaborativePredictionCard({
     },
   });
 
-  const handleVoteComment = (commentId: number, voteType: 1 | -1, currentUserVote: number | null) => {
+  const handleVoteComment = (commentId: string, voteType: 1 | -1, currentUserVote: number | null) => {
     if (currentUserVote === voteType) {
       // User is clicking the same vote type - remove the vote
       removeVoteMutation.mutate(commentId);
@@ -651,35 +651,41 @@ export default function CollaborativePredictionCard({
                     </button>
                   )}
                 </div>
-                {/* Upvote/Downvote buttons */}
-                <div className="flex items-center gap-2 mt-1.5">
+                {/* Upvote/Downvote buttons - Reddit style */}
+                <div className="flex items-center gap-1 mt-1.5">
                   <button
-                    onClick={() => handleVoteComment(comment.id, 1, comment.userVote)}
+                    onClick={() => handleVoteComment(String(comment.id), 1, comment.userVote)}
                     disabled={voteCommentMutation.isPending || removeVoteMutation.isPending}
-                    className={`flex items-center gap-0.5 text-xs transition-colors ${
+                    className={`p-0.5 rounded transition-colors ${
                       comment.userVote === 1 
-                        ? 'text-purple-600 font-medium' 
-                        : 'text-gray-400 hover:text-purple-600'
+                        ? 'text-orange-500' 
+                        : 'text-gray-400 hover:text-orange-500 hover:bg-gray-100'
                     }`}
                     title="Upvote"
+                    aria-label="Upvote comment"
                     data-testid={`button-upvote-comment-${comment.id}`}
                   >
-                    <ChevronUp size={14} className={comment.userVote === 1 ? 'stroke-2' : ''} />
-                    <span>{comment.upvotes || 0}</span>
+                    <ArrowBigUp size={18} className={comment.userVote === 1 ? 'fill-current' : ''} />
                   </button>
+                  <span className={`text-xs font-medium min-w-[16px] text-center ${
+                    comment.userVote === 1 ? 'text-orange-500' : 
+                    comment.userVote === -1 ? 'text-blue-600' : 'text-gray-500'
+                  }`}>
+                    {(comment.upvotes || 0) - (comment.downvotes || 0)}
+                  </span>
                   <button
-                    onClick={() => handleVoteComment(comment.id, -1, comment.userVote)}
+                    onClick={() => handleVoteComment(String(comment.id), -1, comment.userVote)}
                     disabled={voteCommentMutation.isPending || removeVoteMutation.isPending}
-                    className={`flex items-center gap-0.5 text-xs transition-colors ${
+                    className={`p-0.5 rounded transition-colors ${
                       comment.userVote === -1 
-                        ? 'text-red-500 font-medium' 
-                        : 'text-gray-400 hover:text-red-500'
+                        ? 'text-blue-600' 
+                        : 'text-gray-400 hover:text-blue-600 hover:bg-gray-100'
                     }`}
                     title="Downvote"
+                    aria-label="Downvote comment"
                     data-testid={`button-downvote-comment-${comment.id}`}
                   >
-                    <ChevronDown size={14} className={comment.userVote === -1 ? 'stroke-2' : ''} />
-                    <span>{comment.downvotes || 0}</span>
+                    <ArrowBigDown size={18} className={comment.userVote === -1 ? 'fill-current' : ''} />
                   </button>
                 </div>
               </div>
