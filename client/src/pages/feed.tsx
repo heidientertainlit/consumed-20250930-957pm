@@ -1779,7 +1779,7 @@ export default function Feed() {
                                   {post.user.username}
                                 </Link>
                                 <span className="text-gray-500"> rated </span>
-                                <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
+                                <span className="font-semibold text-gray-500">{post.mediaItems[0].title}</span>
                               </p>
                             );
                           } else {
@@ -1855,7 +1855,7 @@ export default function Feed() {
                                           {displayUser.username}
                                         </Link>
                                         <span className="text-gray-500"> rated </span>
-                                        <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
+                                        <span className="font-semibold text-gray-500">{post.mediaItems[0].title}</span>
                                       </p>
                                     );
                                   } else {
