@@ -109,6 +109,7 @@ serve(async (req) => {
 * Keep it human; one wink of humor max; no sales pitch.
 * Vary openings; ban these repeated phrases: "you're the kind of person who," "from bingeing to," "at the end of the day."
 * If inputs are sparse, write a shorter bio (≤100 words) without guessing.
+* For any fields where no input was provided (discovery method, social sharing, comfort picks, sports), return null or omit from the bio. Never invent data the user didn't provide.
 
 Survey Responses:
 ${formattedResponses}
