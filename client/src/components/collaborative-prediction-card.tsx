@@ -504,10 +504,10 @@ export default function CollaborativePredictionCard({
                 disabled={userHasAnswered || voteMutation.isPending}
                 className={`w-full rounded-lg px-4 py-3 transition-all flex items-center justify-between ${
                   userHasAnswered 
-                    ? "bg-gradient-to-r from-purple-700 to-purple-900 opacity-80 cursor-default"
+                    ? "bg-gradient-to-r from-purple-600 to-purple-700 cursor-not-allowed"
                     : selectedOption === option
-                    ? "bg-gradient-to-r from-purple-700 to-purple-900 ring-2 ring-purple-400"
-                    : "bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900"
+                    ? "bg-gradient-to-r from-purple-700 to-purple-900 ring-2 ring-purple-400 cursor-pointer"
+                    : "bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 cursor-pointer"
                 }`}
                 data-testid={`button-vote-option-${index}`}
               >
