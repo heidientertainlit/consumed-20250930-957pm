@@ -27,7 +27,12 @@ const carouselSlides = [
 ];
 
 function LoginCarousel() {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: true,
+    dragFree: false,
+    containScroll: "trimSnaps",
+    skipSnaps: false,
+  });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const onSelect = useCallback(() => {
@@ -45,8 +50,8 @@ function LoginCarousel() {
   }, [emblaApi, onSelect]);
 
   return (
-    <div className="overflow-hidden" ref={emblaRef}>
-      <div className="flex">
+    <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
+      <div className="flex touch-pan-y">
         {carouselSlides.map((slide, index) => (
           <div key={index} className="flex-[0_0_100%] min-w-0 px-2">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
