@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Dna, Loader2, ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
 
 interface SurveyAnswer {
   questionId: string;
@@ -26,7 +27,8 @@ interface SurveyQuestion {
 }
 
 export default function OnboardingPage() {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
+  const [, setLocation] = useLocation();
   const [answers, setAnswers] = useState<SurveyAnswer[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [dnaProfile, setDNAProfile] = useState<DNAProfile | null>(null);
@@ -42,11 +44,19 @@ export default function OnboardingPage() {
   const deepQuestions = surveyQuestions.filter(q => !q.is_quick_dna);
 
   useEffect(() => {
+    if (!loading && !session) {
+      setLocation('/login');
+    }
+  }, [loading, session, setLocation]);
+
+  useEffect(() => {
+    if (!session?.access_token) return;
+    
     const fetchSurveyQuestions = async () => {
       try {
         const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_questions?select=*&order=display_order.asc', {
           headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
+            'Authorization': `Bearer ${session.access_token}`,
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
             'Content-Type': 'application/json',
           },
@@ -183,6 +193,20 @@ export default function OnboardingPage() {
       return answer.trim().length > 0;
     });
   };
+
+  if (loading || !session) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Loader2 className="text-white animate-spin" size={32} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h1>
+          <p className="text-gray-600">Checking your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoadingQuestions) {
     return (
