@@ -540,7 +540,7 @@ export default function CollaborativePredictionCard({
             className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
             data-testid="button-submit-vote"
           >
-            {voteMutation.isPending ? "Submitting..." : "Cast Prediction"}
+            {voteMutation.isPending ? "Submitting..." : isPoll ? "Cast Vote" : "Cast Prediction"}
           </Button>
         </div>
       )}
