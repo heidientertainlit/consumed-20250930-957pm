@@ -410,9 +410,11 @@ export default function CollaborativePredictionCard({
   const isConsumedPrediction = origin_type === 'consumed';
   const totalVotes = optionVotes?.reduce((sum, ov) => sum + ov.count, 0) || 0;
   
+  const isPoll = type === 'vote';
+  
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
-      {/* Header: Poster + Media Title + Username */}
+      {/* Header: Poster + Username action + Media Title */}
       <div className="flex items-start gap-3 mb-4">
         {/* Media Poster - show if available */}
         {mediaItems?.[0]?.imageUrl && (
@@ -435,37 +437,34 @@ export default function CollaborativePredictionCard({
         )}
         
         <div className="flex-1 min-w-0">
-          {/* Media Title - Clickable */}
-          {mediaTitle && (
-            <button
-              onClick={() => {
-                const media = mediaItems?.[0];
-                if (media?.externalId && media?.externalSource) {
-                  setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
-                }
-              }}
-              className="text-base font-semibold text-gray-900 mb-1 hover:text-purple-700 transition-colors text-left"
-              data-testid="link-prediction-media-title"
-            >
-              {mediaTitle}
-            </button>
-          )}
-          
-          {/* Prediction/Poll by username */}
-          <p className="text-sm text-gray-500">
+          {/* Username posted a poll/prediction about [Media Title] */}
+          <p className="text-sm text-gray-700 mb-1">
             {isConsumedPrediction ? (
-              <span className="font-bold text-purple-700">🏆 Consumed {type === 'vote' ? 'Poll' : 'Prediction'}</span>
+              <span className="font-bold text-purple-700">🏆 Consumed {isPoll ? 'Poll' : 'Prediction'}</span>
             ) : (
               <>
-                <span className="text-purple-600">{type === 'vote' ? 'Poll' : 'Prediction'}</span>
-                <span> by </span>
                 <button
                   onClick={() => setLocation(`/profile/${creator.username}`)}
-                  className="text-purple-600 font-medium hover:text-purple-800 transition-colors"
+                  className="text-purple-600 font-semibold hover:text-purple-800 transition-colors"
                   data-testid="link-prediction-creator"
                 >
                   @{creator.username}
                 </button>
+                <span className="text-gray-500"> posted a {isPoll ? 'poll' : 'prediction'} about </span>
+                {mediaTitle && (
+                  <button
+                    onClick={() => {
+                      const media = mediaItems?.[0];
+                      if (media?.externalId && media?.externalSource) {
+                        setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
+                      }
+                    }}
+                    className="text-gray-500 hover:text-purple-700 transition-colors"
+                    data-testid="link-prediction-media-title"
+                  >
+                    {mediaTitle}
+                  </button>
+                )}
               </>
             )}
           </p>
@@ -477,7 +476,7 @@ export default function CollaborativePredictionCard({
             onClick={() => deleteMutation.mutate()}
             disabled={deleteMutation.isPending}
             className="flex items-center justify-center p-1.5 rounded-full transition-colors flex-shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer"
-            title="Delete prediction"
+            title={isPoll ? "Delete poll" : "Delete prediction"}
             data-testid="button-delete-prediction"
           >
             <Trash2 size={18} />
@@ -485,8 +484,8 @@ export default function CollaborativePredictionCard({
         )}
       </div>
 
-      {/* Prediction Question */}
-      <p className="text-base font-medium text-gray-900 mb-4">
+      {/* Question */}
+      <p className="text-base font-semibold text-gray-900 mb-4">
         {title}
       </p>
 
