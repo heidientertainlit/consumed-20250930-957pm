@@ -22,8 +22,8 @@ interface SurveyQuestion {
   question_type: string;
   options?: string[];
   display_order: number;
-  is_quick_dna: boolean;
-  is_optional: boolean;
+  is_required: boolean;
+  depends_on_option?: string | null;
 }
 
 export default function OnboardingPage() {
@@ -40,8 +40,23 @@ export default function OnboardingPage() {
   
   const deepDNARef = useRef<HTMLDivElement>(null);
 
-  const quickQuestions = surveyQuestions.filter(q => q.is_quick_dna);
-  const deepQuestions = surveyQuestions.filter(q => !q.is_quick_dna);
+  // Quick DNA: first 4 questions (gender, entertainment types, genres, drivers)
+  // Deep DNA: rest of questions (favorites, comfort, discovery, social, sports-related)
+  const quickQuestions = surveyQuestions
+    .filter(q => [1, 2, 3, 6].includes(q.display_order))
+    .filter(q => !q.depends_on_option); // Exclude conditional questions
+  
+  const deepQuestions = surveyQuestions
+    .filter(q => ![1, 2, 3, 6].includes(q.display_order))
+    .filter(q => {
+      // Filter out sports-related questions if user didn't select Sports
+      if (q.depends_on_option === 'Sports') {
+        const entertainmentAnswer = getAnswer('aa672604-6bf2-482c-9e2d-8c35145dd254');
+        const hasSelectedSports = Array.isArray(entertainmentAnswer) && entertainmentAnswer.includes('Sports');
+        return hasSelectedSports;
+      }
+      return true;
+    });
 
   useEffect(() => {
     if (!loading && !session) {
@@ -176,7 +191,7 @@ export default function OnboardingPage() {
   };
 
   const isQuickDNAComplete = () => {
-    const requiredQuickQuestions = quickQuestions.filter(q => !q.is_optional);
+    const requiredQuickQuestions = quickQuestions.filter(q => q.is_required);
     return requiredQuickQuestions.every(q => {
       const answer = getAnswer(q.id);
       if (!answer) return false;
@@ -308,7 +323,7 @@ export default function OnboardingPage() {
       <div key={question.id} className="mb-8" data-testid={`question-${question.id}`}>
         <h3 className="text-lg font-semibold text-gray-900 mb-3 leading-relaxed">
           {question.question_text}
-          {question.is_optional && <span className="text-gray-400 text-sm font-normal ml-2">(optional)</span>}
+          {!question.is_required && <span className="text-gray-400 text-sm font-normal ml-2">(optional)</span>}
         </h3>
 
         {question.question_type === 'text' && (
