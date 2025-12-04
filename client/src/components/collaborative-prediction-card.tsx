@@ -451,13 +451,13 @@ export default function CollaborativePredictionCard({
             </button>
           )}
           
-          {/* Prediction by username */}
+          {/* Prediction/Poll by username */}
           <p className="text-sm text-gray-500">
             {isConsumedPrediction ? (
-              <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
+              <span className="font-bold text-purple-700">🏆 Consumed {type === 'vote' ? 'Poll' : 'Prediction'}</span>
             ) : (
               <>
-                <span className="text-purple-600">Prediction</span>
+                <span className="text-purple-600">{type === 'vote' ? 'Poll' : 'Prediction'}</span>
                 <span> by </span>
                 <button
                   onClick={() => setLocation(`/profile/${creator.username}`)}

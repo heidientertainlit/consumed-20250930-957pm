@@ -407,9 +407,9 @@ serve(async (req) => {
       });
 
       // Transform non-media posts (regular posts without media)
-      // SKIP predictions - they're included separately in transformedPredictions with proper data
+      // SKIP predictions and polls - they're included separately in transformedPredictions with proper data
       const transformedNonMediaPosts = nonMediaPosts
-        .filter(post => !(post.post_type === 'prediction' && post.prediction_pool_id))
+        .filter(post => !((post.post_type === 'prediction' || post.post_type === 'poll') && post.prediction_pool_id))
         .map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
