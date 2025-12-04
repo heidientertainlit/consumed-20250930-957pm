@@ -23,7 +23,7 @@ const carouselSlides = [
   { image: pollsImg, title: "Share & Engage", description: "Share your thoughts, create polls and predictions, and log what you're reading, watching, and listening to" },
   { image: profileImg, title: "Your Profile", description: "Get your Entertainment DNA, add friends, create lists, and see your media history and stats" },
   { image: entertainmentDnaImg, title: "Entertainment DNA", description: "Your engagement builds your unique entertainment personality — like Spotify Wrapped, but all the time and for all your media" },
-  { image: listsImg, title: "Custom Lists", description: "Create your own custom lists and collaborate on them with friends" },
+  { image: listsImg, title: "Lists & Logging", description: "Keep track of what you want to consume, what you've finished, what you loved, and what you didn't — and collaborate on lists with friends" },
 ];
 
 function LoginCarousel() {
