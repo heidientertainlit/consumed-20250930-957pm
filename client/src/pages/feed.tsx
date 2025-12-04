@@ -1748,28 +1748,52 @@ export default function Feed() {
                         </div>
                       </Link>
                       <div className="flex-1">
-                        {/* Username with optional action text (like "added [media]") */}
-                        {!post.content && post.mediaItems && post.mediaItems.length > 0 && !post.rating ? (
-                          <p className="text-sm">
-                            <Link 
-                              href={`/user/${post.user.id}`}
-                              className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-                              data-testid={`link-user-${post.user.id}`}
-                            >
-                              {post.user.username}
-                            </Link>
-                            <span className="text-gray-500"> added </span>
-                            <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
-                          </p>
-                        ) : (
-                          <Link 
-                            href={`/user/${post.user.id}`}
-                            className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-                            data-testid={`link-user-${post.user.id}`}
-                          >
-                            {post.user.username}
-                          </Link>
-                        )}
+                        {/* Username with action text for add/rate posts */}
+                        {(() => {
+                          const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
+                          const contentLower = (post.content || '').toLowerCase();
+                          const isAddedPost = contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating);
+                          const isRatedPost = contentLower.startsWith('rated ') || post.rating;
+                          
+                          if (isAddedPost && hasMediaItems) {
+                            return (
+                              <p className="text-sm">
+                                <Link 
+                                  href={`/user/${post.user.id}`}
+                                  className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                  data-testid={`link-user-${post.user.id}`}
+                                >
+                                  {post.user.username}
+                                </Link>
+                                <span className="text-gray-500"> {post.content || `added ${post.mediaItems[0].title}`}</span>
+                              </p>
+                            );
+                          } else if (isRatedPost && hasMediaItems) {
+                            return (
+                              <p className="text-sm">
+                                <Link 
+                                  href={`/user/${post.user.id}`}
+                                  className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                  data-testid={`link-user-${post.user.id}`}
+                                >
+                                  {post.user.username}
+                                </Link>
+                                <span className="text-gray-500"> rated </span>
+                                <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
+                              </p>
+                            );
+                          } else {
+                            return (
+                              <Link 
+                                href={`/user/${post.user.id}`}
+                                className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                data-testid={`link-user-${post.user.id}`}
+                              >
+                                {post.user.username}
+                              </Link>
+                            );
+                          }
+                        })()}
                         <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                       </div>
                       {user?.id === post.user.id && (
@@ -1800,28 +1824,52 @@ export default function Feed() {
                                 </div>
                               </Link>
                               <div className="flex-1">
-                                {/* Username with optional action text (like "added [media]") */}
-                                {!post.content && post.mediaItems && post.mediaItems.length > 0 && !post.rating ? (
-                                  <p className="text-sm">
-                                    <Link 
-                                      href={`/user/${displayUser.userId}`}
-                                      className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-                                      data-testid={`link-user-${displayUser.userId}`}
-                                    >
-                                      {displayUser.username}
-                                    </Link>
-                                    <span className="text-gray-500"> added </span>
-                                    <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
-                                  </p>
-                                ) : (
-                                  <Link 
-                                    href={`/user/${displayUser.userId}`}
-                                    className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-                                    data-testid={`link-user-${displayUser.userId}`}
-                                  >
-                                    {displayUser.username}
-                                  </Link>
-                                )}
+                                {/* Username with action text for add/rate posts */}
+                                {(() => {
+                                  const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
+                                  const contentLower = (post.content || '').toLowerCase();
+                                  const isAddedPost = contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating);
+                                  const isRatedPost = contentLower.startsWith('rated ') || post.rating;
+                                  
+                                  if (isAddedPost && hasMediaItems) {
+                                    return (
+                                      <p className="text-sm">
+                                        <Link 
+                                          href={`/user/${displayUser.userId}`}
+                                          className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                          data-testid={`link-user-${displayUser.userId}`}
+                                        >
+                                          {displayUser.username}
+                                        </Link>
+                                        <span className="text-gray-500"> {post.content || `added ${post.mediaItems[0].title}`}</span>
+                                      </p>
+                                    );
+                                  } else if (isRatedPost && hasMediaItems) {
+                                    return (
+                                      <p className="text-sm">
+                                        <Link 
+                                          href={`/user/${displayUser.userId}`}
+                                          className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                          data-testid={`link-user-${displayUser.userId}`}
+                                        >
+                                          {displayUser.username}
+                                        </Link>
+                                        <span className="text-gray-500"> rated </span>
+                                        <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
+                                      </p>
+                                    );
+                                  } else {
+                                    return (
+                                      <Link 
+                                        href={`/user/${displayUser.userId}`}
+                                        className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                        data-testid={`link-user-${displayUser.userId}`}
+                                      >
+                                        {displayUser.username}
+                                      </Link>
+                                    );
+                                  }
+                                })()}
                                 <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                               </div>
                             </>
@@ -1846,47 +1894,75 @@ export default function Feed() {
                     })()
                     )}
 
-                  {/* Post Content */}
-                  {post.content ? (
-                    <div className="mb-2 relative">
-                      {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
-                        <>
-                          <p className="text-gray-800 text-sm blur-md select-none">{post.content}</p>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <button
-                              onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
-                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-1"
-                              data-testid={`reveal-spoiler-${post.id}`}
-                            >
-                              <Eye size={12} />
-                              <span>Show Spoiler</span>
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-gray-800 text-sm">
-                          {renderPostWithRating(post.content)}
-                        </div>
-                      )}
-                      {/* Show rating stars below review text if post has a rating */}
-                      {post.rating && post.rating > 0 && (
-                        <div className="flex items-center gap-1 mt-2">
-                          {[1, 2, 3, 4, 5].map((star) => {
-                            const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
-                            return (
-                              <span key={star} className="relative inline-block w-4 h-4">
-                                <Star size={16} className="absolute text-gray-300" />
-                                <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
-                                  <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                  {/* Post Content - hide "Added..." and "Rated..." content since it's shown in the header */}
+                  {(() => {
+                    if (!post.content) return null;
+                    const contentLower = post.content.toLowerCase();
+                    const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
+                    const isAddedOrRatedPost = (contentLower.startsWith('added ') || contentLower.startsWith('rated ')) && hasMediaItems;
+                    
+                    if (isAddedOrRatedPost) {
+                      return post.rating && post.rating > 0 ? (
+                        <div className="mb-2">
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => {
+                              const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
+                              return (
+                                <span key={star} className="relative inline-block w-4 h-4">
+                                  <Star size={16} className="absolute text-gray-300" />
+                                  <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
+                                    <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                                  </span>
                                 </span>
-                              </span>
-                            );
-                          })}
-                          <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                              );
+                            })}
+                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ) : null}
+                      ) : null;
+                    }
+                    
+                    return (
+                      <div className="mb-2 relative">
+                        {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
+                          <>
+                            <p className="text-gray-800 text-sm blur-md select-none">{post.content}</p>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <button
+                                onClick={() => setRevealedSpoilers(prev => new Set(prev).add(post.id))}
+                                className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all hover:scale-105 flex items-center space-x-1"
+                                data-testid={`reveal-spoiler-${post.id}`}
+                              >
+                                <Eye size={12} />
+                                <span>Show Spoiler</span>
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-gray-800 text-sm">
+                            {renderPostWithRating(post.content)}
+                          </div>
+                        )}
+                        {/* Show rating stars below review text if post has a rating */}
+                        {post.rating && post.rating > 0 && (
+                          <div className="flex items-center gap-1 mt-2">
+                            {[1, 2, 3, 4, 5].map((star) => {
+                              const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
+                              return (
+                                <span key={star} className="relative inline-block w-4 h-4">
+                                  <Star size={16} className="absolute text-gray-300" />
+                                  <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
+                                    <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                                  </span>
+                                </span>
+                              );
+                            })}
+                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Media Cards */}
                   {post.content && post.mediaItems && post.mediaItems.length > 0 ? (
