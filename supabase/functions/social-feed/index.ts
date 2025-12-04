@@ -412,9 +412,10 @@ serve(async (req) => {
       });
 
       // Transform non-media posts (regular posts without media)
-      // SKIP predictions and polls - they're included separately in transformedPredictions with proper data
+      // SKIP predictions, polls, and trivia - they're included separately in transformedPredictions with proper data
+      // Filter out ALL polls/predictions regardless of prediction_pool_id to avoid duplicates
       const transformedNonMediaPosts = nonMediaPosts
-        .filter(post => !((post.post_type === 'prediction' || post.post_type === 'poll') && post.prediction_pool_id))
+        .filter(post => post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia')
         .map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         

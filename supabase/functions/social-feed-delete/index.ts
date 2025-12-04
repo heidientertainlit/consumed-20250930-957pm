@@ -47,10 +47,25 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', 
       );
 
+      // Get app user from email to compare with post.user_id
+      const { data: appUser, error: appUserError } = await serviceSupabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+
+      if (appUserError || !appUser) {
+        console.error('Failed to get app user:', appUserError);
+        return new Response(JSON.stringify({ error: 'User not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // Check if user owns the post
       const { data: post } = await serviceSupabase
         .from('social_posts')
-        .select('user_id')
+        .select('user_id, prediction_pool_id')
         .eq('id', post_id)
         .single();
 
@@ -61,11 +76,25 @@ serve(async (req) => {
         });
       }
 
-      if (post.user_id !== user.id) {
+      // Compare with app user ID, not auth user ID
+      if (post.user_id !== appUser.id) {
         return new Response(JSON.stringify({ error: 'Unauthorized - you can only delete your own posts' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+
+      // If this post has a prediction_pool_id, delete that pool too
+      if (post.prediction_pool_id) {
+        const { error: poolError } = await serviceSupabase
+          .from('prediction_pools')
+          .delete()
+          .eq('id', post.prediction_pool_id);
+        
+        if (poolError) {
+          console.error('Error deleting prediction pool:', poolError);
+          // Continue to delete the post even if pool deletion fails
+        }
       }
 
       // Delete the post (cascading deletes will handle likes and comments)
