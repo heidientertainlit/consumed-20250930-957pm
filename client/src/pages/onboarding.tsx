@@ -44,20 +44,20 @@ export default function OnboardingPage() {
     return answers.find(a => a.questionId === questionId)?.answer;
   };
 
-  // Quick DNA: first 4 questions (gender, entertainment types, genres, drivers)
+  // Quick DNA: 5 questions (gender, entertainment types, genres, favorites, drivers)
   const quickQuestions = useMemo(() => {
     return surveyQuestions
-      .filter(q => [1, 2, 3, 6].includes(q.display_order))
+      .filter(q => [1, 2, 3, 4, 6].includes(q.display_order))
       .filter(q => !q.depends_on_option);
   }, [surveyQuestions]);
   
-  // Deep DNA: rest of questions (favorites, comfort, discovery, social, sports-related)
+  // Deep DNA: rest of questions (comfort, discovery, social, sports-related)
   const deepQuestions = useMemo(() => {
     const entertainmentAnswer = answers.find(a => a.questionId === 'aa672604-6bf2-482c-9e2d-8c35145dd254')?.answer;
     const hasSelectedSports = Array.isArray(entertainmentAnswer) && entertainmentAnswer.includes('Sports');
     
     return surveyQuestions
-      .filter(q => ![1, 2, 3, 6].includes(q.display_order))
+      .filter(q => ![1, 2, 3, 4, 6].includes(q.display_order))
       .filter(q => {
         if (q.depends_on_option === 'Sports') {
           return hasSelectedSports;
