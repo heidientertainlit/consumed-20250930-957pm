@@ -23,8 +23,19 @@ serve(async (req) => {
   }
   
   try {
-    const body = await req.json();
-    const { query, type } = body;
+    // Handle both GET (with query params) and POST (with JSON body)
+    let query: string | null = null;
+    let type: string | null = null;
+    
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      query = url.searchParams.get('query');
+      type = url.searchParams.get('type');
+    } else {
+      const body = await req.json();
+      query = body.query;
+      type = body.type;
+    }
     
     if (!query || query.trim().length === 0) {
       return new Response(JSON.stringify({ results: [] }), {
