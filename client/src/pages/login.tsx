@@ -165,14 +165,14 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         {/* Logo and welcome section */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-2">
             <img 
               src="/consumed-logo-white.png" 
               alt="Consumed" 
               className="h-16 w-auto"
             />
           </div>
-          <p className="text-purple-300 text-xl font-medium mb-4">What's entertaining your friends?</p>
+          <p className="text-purple-300 text-xl font-medium mb-3">What's entertaining your friends?</p>
           <p className="text-purple-100 text-sm max-w-lg mx-auto">
             Share your favorite movies, shows, books, podcasts, music and more — and see what others are saying too.
           </p>
