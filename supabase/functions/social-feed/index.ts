@@ -169,14 +169,25 @@ serve(async (req) => {
       };
 
       // Create mapping from pool_id to media data from associated social_posts
-      // Fall back to prediction_pools.media_title if social_posts.media_title is null
+      // Fall back to prediction_pools.media_title if social_posts.media_title is null or matches question
       const poolMediaTitleMap = new Map<string, string>();
       const poolMediaDataMap = new Map<string, any>();
       posts?.forEach(post => {
         if (post.prediction_pool_id) {
           const pool = predictionPoolMap.get(post.prediction_pool_id);
-          // Use post.media_title, fall back to pool.media_title
-          const mediaTitle = post.media_title || pool?.media_title || null;
+          
+          // Smart media title: skip post.media_title if it matches the question/content
+          // This handles cases where question was accidentally stored as media_title
+          const postMediaTitle = post.media_title;
+          const poolMediaTitle = pool?.media_title;
+          const questionContent = post.content || pool?.title;
+          
+          // Use post.media_title only if it's different from the question
+          const isPostTitleValid = postMediaTitle && 
+            postMediaTitle !== questionContent && 
+            !postMediaTitle.toLowerCase().includes(questionContent?.toLowerCase()?.substring(0, 15) || '');
+          
+          const mediaTitle = isPostTitleValid ? postMediaTitle : (poolMediaTitle || null);
           
           if (mediaTitle) {
             poolMediaTitleMap.set(post.prediction_pool_id, mediaTitle);
