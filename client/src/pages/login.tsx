@@ -403,13 +403,7 @@ export default function LoginPage() {
         <div className="mt-8 pb-8 text-center">
           <p className="text-purple-200 text-sm mb-6">
             Give feedback, get support, become a partner or get in touch by emailing{" "}
-            <a 
-              href="mailto:info@consumedapp.com" 
-              className="text-purple-300 hover:text-white underline inline-block"
-              data-testid="link-email"
-            >
-              info@consumedapp.com
-            </a>
+            <span className="text-purple-300 font-medium">info@consumedapp.com</span>
           </p>
           <div className="flex justify-center gap-6 mt-2">
             <a 
