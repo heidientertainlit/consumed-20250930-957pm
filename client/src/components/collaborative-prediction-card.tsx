@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -422,30 +423,41 @@ export default function CollaborativePredictionCard({
       
       {/* Header with creator info and delete button */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-gray-700 flex-1">
-          {isConsumedPrediction ? (
-            <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
-          ) : (
-            <>
-              <span className="font-semibold text-gray-900">@{creator.username}</span>
-              <span className="text-gray-500"> predicts about </span>
-              {mediaTitle && (
-                <button
-                  onClick={() => {
-                    const media = mediaItems?.[0];
-                    if (media?.externalId && media?.externalSource) {
-                      setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
-                    }
-                  }}
-                  className="font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer underline"
-                  data-testid="link-prediction-media"
-                >
-                  {mediaTitle}
-                </button>
-              )}
-            </>
+        <div className="flex items-center gap-2 flex-1">
+          {/* User Avatar */}
+          {!isConsumedPrediction && (
+            <Avatar className="h-8 w-8 flex-shrink-0">
+              <AvatarFallback className="bg-purple-600 text-white text-sm">
+                {creator.username?.charAt(0).toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
           )}
-        </p>
+          
+          <p className="text-sm text-gray-700">
+            {isConsumedPrediction ? (
+              <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
+            ) : (
+              <>
+                <span className="font-semibold text-gray-900">@{creator.username}</span>
+                <span className="text-gray-500"> predicts about </span>
+                {mediaTitle && (
+                  <button
+                    onClick={() => {
+                      const media = mediaItems?.[0];
+                      if (media?.externalId && media?.externalSource) {
+                        setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
+                      }
+                    }}
+                    className="font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer underline"
+                    data-testid="link-prediction-media"
+                  >
+                    {mediaTitle}
+                  </button>
+                )}
+              </>
+            )}
+          </p>
+        </div>
         
         {/* Delete button - Show for creators of user-generated predictions */}
         {origin_type === 'user' && (
