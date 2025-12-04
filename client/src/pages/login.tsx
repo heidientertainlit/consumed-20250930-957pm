@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { SiInstagram, SiTiktok } from "react-icons/si";
 import "./auth.css";
 
 import activityFeedImg from "@/assets/login-carousel/activity-feed.png";
@@ -396,6 +397,42 @@ export default function LoginPage() {
         {/* App Preview Carousel */}
         <div className="mt-8">
           <LoginCarousel />
+        </div>
+        
+        {/* Footer with contact and social links */}
+        <div className="mt-8 text-center">
+          <p className="text-purple-200 text-sm mb-4">
+            Give feedback, get support, become a partner or get in touch by emailing{" "}
+            <a 
+              href="mailto:info@consumedapp.com" 
+              className="text-purple-300 hover:text-white underline"
+              data-testid="link-email"
+            >
+              info@consumedapp.com
+            </a>
+          </p>
+          <div className="flex justify-center gap-4">
+            <a 
+              href="https://www.instagram.com/consumedapp" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-purple-300 hover:text-white transition-colors"
+              data-testid="link-instagram"
+              aria-label="Follow us on Instagram"
+            >
+              <SiInstagram className="w-6 h-6" />
+            </a>
+            <a 
+              href="https://www.tiktok.com/@consumedapp" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-purple-300 hover:text-white transition-colors"
+              data-testid="link-tiktok"
+              aria-label="Follow us on TikTok"
+            >
+              <SiTiktok className="w-6 h-6" />
+            </a>
+          </div>
         </div>
       </div>
 
