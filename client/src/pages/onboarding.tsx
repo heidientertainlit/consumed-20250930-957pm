@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Dna, Loader2, ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -40,23 +40,31 @@ export default function OnboardingPage() {
   
   const deepDNARef = useRef<HTMLDivElement>(null);
 
+  const getAnswer = (questionId: string) => {
+    return answers.find(a => a.questionId === questionId)?.answer;
+  };
+
   // Quick DNA: first 4 questions (gender, entertainment types, genres, drivers)
-  // Deep DNA: rest of questions (favorites, comfort, discovery, social, sports-related)
-  const quickQuestions = surveyQuestions
-    .filter(q => [1, 2, 3, 6].includes(q.display_order))
-    .filter(q => !q.depends_on_option); // Exclude conditional questions
+  const quickQuestions = useMemo(() => {
+    return surveyQuestions
+      .filter(q => [1, 2, 3, 6].includes(q.display_order))
+      .filter(q => !q.depends_on_option);
+  }, [surveyQuestions]);
   
-  const deepQuestions = surveyQuestions
-    .filter(q => ![1, 2, 3, 6].includes(q.display_order))
-    .filter(q => {
-      // Filter out sports-related questions if user didn't select Sports
-      if (q.depends_on_option === 'Sports') {
-        const entertainmentAnswer = getAnswer('aa672604-6bf2-482c-9e2d-8c35145dd254');
-        const hasSelectedSports = Array.isArray(entertainmentAnswer) && entertainmentAnswer.includes('Sports');
-        return hasSelectedSports;
-      }
-      return true;
-    });
+  // Deep DNA: rest of questions (favorites, comfort, discovery, social, sports-related)
+  const deepQuestions = useMemo(() => {
+    const entertainmentAnswer = answers.find(a => a.questionId === 'aa672604-6bf2-482c-9e2d-8c35145dd254')?.answer;
+    const hasSelectedSports = Array.isArray(entertainmentAnswer) && entertainmentAnswer.includes('Sports');
+    
+    return surveyQuestions
+      .filter(q => ![1, 2, 3, 6].includes(q.display_order))
+      .filter(q => {
+        if (q.depends_on_option === 'Sports') {
+          return hasSelectedSports;
+        }
+        return true;
+      });
+  }, [surveyQuestions, answers]);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -96,10 +104,6 @@ export default function OnboardingPage() {
     const newAnswers = answers.filter(a => a.questionId !== questionId);
     newAnswers.push({ questionId, answer: value });
     setAnswers(newAnswers);
-  };
-
-  const getAnswer = (questionId: string) => {
-    return answers.find(a => a.questionId === questionId)?.answer;
   };
 
   const handleExpandDeepDNA = () => {
