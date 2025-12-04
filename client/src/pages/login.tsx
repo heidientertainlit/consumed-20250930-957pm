@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,79 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
 import "./auth.css";
+
+import activityFeedImg from "@/assets/login-carousel/activity-feed.png";
+import pollsImg from "@/assets/login-carousel/polls.png";
+import profileImg from "@/assets/login-carousel/profile.png";
+import entertainmentDnaImg from "@/assets/login-carousel/entertainment-dna.png";
+import listsImg from "@/assets/login-carousel/lists.png";
+
+const carouselSlides = [
+  { image: activityFeedImg, title: "Activity Feed", description: "See what your friends are watching, reading, and listening to" },
+  { image: pollsImg, title: "Polls & Predictions", description: "Vote on entertainment debates and make predictions" },
+  { image: profileImg, title: "Your Profile", description: "Track everything you're consuming in one place" },
+  { image: entertainmentDnaImg, title: "Entertainment DNA", description: "Discover your unique entertainment personality" },
+  { image: listsImg, title: "Custom Lists", description: "Organize your favorites, queue, and more" },
+];
+
+function LoginCarousel() {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  return (
+    <div className="overflow-hidden" ref={emblaRef}>
+      <div className="flex">
+        {carouselSlides.map((slide, index) => (
+          <div key={index} className="flex-[0_0_100%] min-w-0 px-2">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                loading="lazy"
+                decoding="async"
+                className="w-48 h-auto mx-auto rounded-xl shadow-lg mb-4"
+                data-testid={`carousel-image-${index}`}
+              />
+              <h3 className="text-white font-semibold text-lg mb-1">{slide.title}</h3>
+              <p className="text-purple-200 text-sm">{slide.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Pagination dots */}
+      <div className="flex justify-center gap-2 mt-4">
+        {carouselSlides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => emblaApi?.scrollTo(index)}
+            className={`w-2 h-2 rounded-full transition-all ${
+              index === selectedIndex ? "bg-purple-400 w-4" : "bg-purple-600"
+            }`}
+            data-testid={`carousel-dot-${index}`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -352,6 +424,11 @@ export default function LoginPage() {
         <div className="text-center mt-8">
           <p className="text-purple-300 text-sm mb-2">See what you can do with consumed</p>
           <ChevronDown className="w-6 h-6 text-purple-400 mx-auto animate-bounce" />
+        </div>
+        
+        {/* App Preview Carousel */}
+        <div className="mt-8">
+          <LoginCarousel />
         </div>
       </div>
 
