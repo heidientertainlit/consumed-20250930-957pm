@@ -101,7 +101,7 @@ serve(async (req) => {
         media_image_url = null
       } = body;
 
-      console.log('Creating poll:', { question, options });
+      console.log('Creating poll:', { question, options, media_title, media_external_id });
 
       // Validate inputs
       if (!question || !Array.isArray(options) || options.length < 2) {
@@ -112,8 +112,16 @@ serve(async (req) => {
         });
       }
 
+      // Use admin client for inserts to bypass RLS
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
       const poolId = crypto.randomUUID();
-      const { data: pool, error: poolError } = await supabase
+      console.log('Creating pool with id:', poolId);
+      
+      const { data: pool, error: poolError } = await supabaseAdmin
         .from('prediction_pools')
         .insert({
           id: poolId,
@@ -138,15 +146,17 @@ serve(async (req) => {
         .single();
 
       if (poolError) {
-        console.error('Poll pool creation error:', poolError);
-        return new Response(JSON.stringify({ error: 'Failed to create poll' }), {
+        console.error('Poll pool creation error:', JSON.stringify(poolError));
+        return new Response(JSON.stringify({ error: 'Failed to create poll', details: poolError }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
+      console.log('Pool created successfully:', pool.id);
+
       // Create associated social post
-      const { data: post, error: postError } = await supabase
+      const { data: post, error: postError } = await supabaseAdmin
         .from('social_posts')
         .insert({
           user_id: appUser.id,
@@ -165,14 +175,16 @@ serve(async (req) => {
         .single();
 
       if (postError) {
-        console.error('Social post creation error:', postError);
-        return new Response(JSON.stringify({ error: 'Failed to create social post' }), {
+        console.error('Social post creation error:', JSON.stringify(postError));
+        return new Response(JSON.stringify({ error: 'Failed to create social post', details: postError }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      return new Response(JSON.stringify({ pool, post }), {
+      console.log('Social post created successfully:', post.id);
+
+      return new Response(JSON.stringify({ success: true, pool, post }), {
         status: 201,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
