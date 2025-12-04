@@ -18,7 +18,7 @@ import entertainmentDnaImg from "@/assets/login-carousel/entertainment-dna.png";
 import listsImg from "@/assets/login-carousel/lists.png";
 
 const carouselSlides = [
-  { image: activityFeedImg, title: "Activity Feed", description: "See what your friends are watching, reading, and listening to" },
+  { image: activityFeedImg, title: "Activity Feed", description: "See what your friends are watching, reading, and listening to — plus get personalized recommendations based on their tastes and yours" },
   { image: pollsImg, title: "Share & Engage", description: "Share your thoughts, create polls and predictions, and log what you're reading, watching, and listening to" },
   { image: profileImg, title: "Your Profile", description: "Get your Entertainment DNA, add friends, create lists, and see your media history and stats" },
   { image: entertainmentDnaImg, title: "Entertainment DNA", description: "Discover your unique entertainment personality" },
