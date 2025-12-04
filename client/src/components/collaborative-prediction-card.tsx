@@ -502,12 +502,12 @@ export default function CollaborativePredictionCard({
                 key={index}
                 onClick={() => handleSelectOption(option)}
                 disabled={userHasAnswered || voteMutation.isPending}
-                className={`w-full rounded-lg px-4 py-3 transition-all flex items-center justify-between ${
+                className={`w-full rounded-full px-4 py-3 transition-all flex items-center justify-between ${
                   userHasAnswered 
-                    ? "bg-gradient-to-r from-purple-600 to-purple-700 cursor-not-allowed"
+                    ? "bg-gradient-to-r from-pink-500 via-purple-500 to-violet-600 cursor-not-allowed"
                     : selectedOption === option
-                    ? "bg-gradient-to-r from-purple-700 to-purple-900 ring-2 ring-purple-400 cursor-pointer"
-                    : "bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900 cursor-pointer"
+                    ? "bg-gradient-to-r from-pink-500 via-purple-500 to-violet-600 ring-2 ring-purple-300 cursor-pointer"
+                    : "bg-gradient-to-r from-pink-500 via-purple-500 to-violet-600 hover:from-pink-600 hover:via-purple-600 hover:to-violet-700 cursor-pointer"
                 }`}
                 data-testid={`button-vote-option-${index}`}
               >
