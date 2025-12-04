@@ -129,6 +129,7 @@ serve(async (req) => {
           origin_user_id: appUser.id,
           media_external_id: media_external_id,
           media_external_source: media_external_source,
+          media_title: media_title,
           likes_count: 0,
           comments_count: 0,
           participants: 0

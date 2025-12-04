@@ -148,7 +148,7 @@ serve(async (req) => {
         // Use admin client to bypass RLS on prediction_pools
         const { data: pools, error: poolsError } = await supabaseAdmin
           .from('prediction_pools')
-          .select('id, title, description, options, status, type, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source')
+          .select('id, title, description, options, status, type, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source, media_title')
           .in('id', predictionPoolIds);
         
         if (pools) {
@@ -169,19 +169,24 @@ serve(async (req) => {
       };
 
       // Create mapping from pool_id to media data from associated social_posts
+      // Fall back to prediction_pools.media_title if social_posts.media_title is null
       const poolMediaTitleMap = new Map<string, string>();
       const poolMediaDataMap = new Map<string, any>();
       posts?.forEach(post => {
         if (post.prediction_pool_id) {
-          if (post.media_title) {
-            poolMediaTitleMap.set(post.prediction_pool_id, post.media_title);
+          const pool = predictionPoolMap.get(post.prediction_pool_id);
+          // Use post.media_title, fall back to pool.media_title
+          const mediaTitle = post.media_title || pool?.media_title || null;
+          
+          if (mediaTitle) {
+            poolMediaTitleMap.set(post.prediction_pool_id, mediaTitle);
           }
           // Store full media data for building mediaItems
           poolMediaDataMap.set(post.prediction_pool_id, {
-            title: post.media_title,
+            title: mediaTitle,
             mediaType: post.media_type,
-            externalId: post.media_external_id,
-            externalSource: post.media_external_source,
+            externalId: post.media_external_id || pool?.media_external_id,
+            externalSource: post.media_external_source || pool?.media_external_source,
             imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source),
             creator: post.media_creator
           });

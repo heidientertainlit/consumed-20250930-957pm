@@ -115,10 +115,10 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
           question: content.trim() || "What do you think?",
           options: filledOptions,
           media_title: attachedMedia?.title || null,
-          media_type: attachedMedia?.mediaType || null,
-          media_external_id: attachedMedia?.externalId || null,
-          media_external_source: attachedMedia?.externalSource || null,
-          media_image_url: attachedMedia?.imageUrl || null,
+          media_type: attachedMedia?.type || null,
+          media_external_id: attachedMedia?.external_id || null,
+          media_external_source: attachedMedia?.external_source || null,
+          media_image_url: attachedMedia?.poster_url || null,
         };
       } else if (postMode === "prediction") {
         // Prediction creation
