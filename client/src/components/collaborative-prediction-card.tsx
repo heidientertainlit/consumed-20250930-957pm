@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -424,13 +423,11 @@ export default function CollaborativePredictionCard({
       {/* Header with creator info and delete button */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 flex-1">
-          {/* User Avatar */}
+          {/* User Avatar - gray circle with User icon matching other cards */}
           {!isConsumedPrediction && (
-            <Avatar className="h-8 w-8 flex-shrink-0">
-              <AvatarFallback className="bg-purple-600 text-white text-sm">
-                {creator.username?.charAt(0).toUpperCase() || '?'}
-              </AvatarFallback>
-            </Avatar>
+            <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+              <User size={18} className="text-gray-600" />
+            </div>
           )}
           
           <p className="text-sm text-gray-700">

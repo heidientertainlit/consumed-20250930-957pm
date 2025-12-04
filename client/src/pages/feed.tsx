@@ -1748,13 +1748,28 @@ export default function Feed() {
                         </div>
                       </Link>
                       <div className="flex-1">
-                        <Link 
-                          href={`/user/${post.user.id}`}
-                          className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-                          data-testid={`link-user-${post.user.id}`}
-                        >
-                          {post.user.username}
-                        </Link>
+                        {/* Username with optional action text (like "added [media]") */}
+                        {!post.content && post.mediaItems && post.mediaItems.length > 0 && !post.rating ? (
+                          <p className="text-sm">
+                            <Link 
+                              href={`/user/${post.user.id}`}
+                              className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                              data-testid={`link-user-${post.user.id}`}
+                            >
+                              {post.user.username}
+                            </Link>
+                            <span className="text-gray-500"> added </span>
+                            <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
+                          </p>
+                        ) : (
+                          <Link 
+                            href={`/user/${post.user.id}`}
+                            className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                            data-testid={`link-user-${post.user.id}`}
+                          >
+                            {post.user.username}
+                          </Link>
+                        )}
                         <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                       </div>
                       {user?.id === post.user.id && (
@@ -1785,13 +1800,28 @@ export default function Feed() {
                                 </div>
                               </Link>
                               <div className="flex-1">
-                                <Link 
-                                  href={`/user/${displayUser.userId}`}
-                                  className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-                                  data-testid={`link-user-${displayUser.userId}`}
-                                >
-                                  {displayUser.username}
-                                </Link>
+                                {/* Username with optional action text (like "added [media]") */}
+                                {!post.content && post.mediaItems && post.mediaItems.length > 0 && !post.rating ? (
+                                  <p className="text-sm">
+                                    <Link 
+                                      href={`/user/${displayUser.userId}`}
+                                      className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                      data-testid={`link-user-${displayUser.userId}`}
+                                    >
+                                      {displayUser.username}
+                                    </Link>
+                                    <span className="text-gray-500"> added </span>
+                                    <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
+                                  </p>
+                                ) : (
+                                  <Link 
+                                    href={`/user/${displayUser.userId}`}
+                                    className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                    data-testid={`link-user-${displayUser.userId}`}
+                                  >
+                                    {displayUser.username}
+                                  </Link>
+                                )}
                                 <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                               </div>
                             </>
@@ -1937,9 +1967,9 @@ export default function Feed() {
                   ) : (
                     !post.content && post.mediaItems && post.mediaItems.length > 0 && (
                       <div className="mb-2">
-                        {/* Text at top - show rating stars if present */}
-                        <div className="text-gray-800 text-sm mb-3">
-                          {post.rating ? (
+                        {/* Show rating stars if present */}
+                        {post.rating && (
+                          <div className="text-gray-800 text-sm mb-3">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span>Rated</span>
                               <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
@@ -1958,10 +1988,8 @@ export default function Feed() {
                                 <span className="ml-1 text-sm font-medium text-gray-700">{post.rating}</span>
                               </div>
                             </div>
-                          ) : (
-                            <p>Added <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span></p>
-                          )}
-                        </div>
+                          </div>
+                        )}
                         
                         {/* Media Card */}
                         <div className="bg-gray-50 rounded-lg p-3 mb-2">
