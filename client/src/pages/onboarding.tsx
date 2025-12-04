@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Dna, Loader2, ChevronDown } from "lucide-react";
+import { Sparkles, Dna, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 
@@ -34,37 +34,19 @@ export default function OnboardingPage() {
   const [dnaProfile, setDNAProfile] = useState<DNAProfile | null>(null);
   const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
-  const [showDeepDNA, setShowDeepDNA] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Analyzing your responses...");
-  
-  const deepDNARef = useRef<HTMLDivElement>(null);
 
   const getAnswer = (questionId: string) => {
     return answers.find(a => a.questionId === questionId)?.answer;
   };
 
-  // Quick DNA: 5 questions (gender, entertainment types, genres, favorites, drivers)
-  const quickQuestions = useMemo(() => {
+  // 5 essential questions: gender, entertainment types, genres, favorites, drivers
+  const questions = useMemo(() => {
     return surveyQuestions
       .filter(q => [1, 2, 3, 4, 6].includes(q.display_order))
       .filter(q => !q.depends_on_option);
   }, [surveyQuestions]);
-  
-  // Deep DNA: rest of questions (comfort, discovery, social, sports-related)
-  const deepQuestions = useMemo(() => {
-    const entertainmentAnswer = answers.find(a => a.questionId === 'aa672604-6bf2-482c-9e2d-8c35145dd254')?.answer;
-    const hasSelectedSports = Array.isArray(entertainmentAnswer) && entertainmentAnswer.includes('Sports');
-    
-    return surveyQuestions
-      .filter(q => ![1, 2, 3, 4, 6].includes(q.display_order))
-      .filter(q => {
-        if (q.depends_on_option === 'Sports') {
-          return hasSelectedSports;
-        }
-        return true;
-      });
-  }, [surveyQuestions, answers]);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -104,13 +86,6 @@ export default function OnboardingPage() {
     const newAnswers = answers.filter(a => a.questionId !== questionId);
     newAnswers.push({ questionId, answer: value });
     setAnswers(newAnswers);
-  };
-
-  const handleExpandDeepDNA = () => {
-    setShowDeepDNA(true);
-    setTimeout(() => {
-      deepDNARef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
   };
 
   const generateDNA = async () => {
@@ -194,18 +169,9 @@ export default function OnboardingPage() {
     }
   };
 
-  const isQuickDNAComplete = () => {
-    const requiredQuickQuestions = quickQuestions.filter(q => q.is_required);
-    return requiredQuickQuestions.every(q => {
-      const answer = getAnswer(q.id);
-      if (!answer) return false;
-      if (Array.isArray(answer)) return answer.length > 0;
-      return answer.trim().length > 0;
-    });
-  };
-
-  const isDeepDNAComplete = () => {
-    return deepQuestions.every(q => {
+  const isComplete = () => {
+    const requiredQuestions = questions.filter(q => q.is_required);
+    return requiredQuestions.every(q => {
       const answer = getAnswer(q.id);
       if (!answer) return false;
       if (Array.isArray(answer)) return answer.length > 0;
@@ -413,73 +379,23 @@ export default function OnboardingPage() {
             </button>
           </div>
 
-          {/* Quick DNA Questions */}
+          {/* DNA Questions */}
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <Sparkles className="text-purple-600" size={16} />
-              </div>
-              <h2 className="text-lg font-bold text-gray-900">Quick DNA</h2>
-              <span className="text-sm text-gray-500">({quickQuestions.length} questions)</span>
-            </div>
-            
-            {quickQuestions.map(renderQuestion)}
+            {questions.map(renderQuestion)}
           </div>
 
-          {/* Action Buttons */}
-          <div className="border-t border-gray-100 pt-6 mb-6">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={generateDNA}
-                disabled={!isQuickDNAComplete()}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                data-testid="get-quick-dna-button"
-              >
-                <Sparkles size={18} className="mr-2" />
-                Get Your Quick DNA
-              </Button>
-              
-              {!showDeepDNA && (
-                <Button
-                  onClick={handleExpandDeepDNA}
-                  disabled={!isQuickDNAComplete()}
-                  variant="outline"
-                  className="flex-1 border-purple-300 text-purple-700 hover:bg-purple-50 rounded-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-testid="expand-deep-dna-button"
-                >
-                  <ChevronDown size={18} className="mr-2" />
-                  Answer {deepQuestions.length} more for deeper analysis
-                </Button>
-              )}
-            </div>
+          {/* Action Button */}
+          <div className="border-t border-gray-100 pt-6">
+            <Button
+              onClick={generateDNA}
+              disabled={!isComplete()}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="get-dna-button"
+            >
+              <Sparkles size={18} className="mr-2" />
+              Discover Your Entertainment DNA
+            </Button>
           </div>
-
-          {/* Deep DNA Questions (Expandable) */}
-          {showDeepDNA && (
-            <div ref={deepDNARef} className="border-t border-gray-100 pt-6">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
-                  <Dna className="text-white" size={16} />
-                </div>
-                <h2 className="text-lg font-bold text-gray-900">Deep DNA</h2>
-                <span className="text-sm text-gray-500">(+{deepQuestions.length} questions)</span>
-              </div>
-              
-              {deepQuestions.map(renderQuestion)}
-
-              <div className="mt-6">
-                <Button
-                  onClick={generateDNA}
-                  disabled={!isQuickDNAComplete() || !isDeepDNAComplete()}
-                  className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 hover:from-purple-700 hover:via-pink-700 hover:to-indigo-700 text-white rounded-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-testid="get-deep-dna-button"
-                >
-                  <Dna size={18} className="mr-2" />
-                  Unlock Your Deep DNA
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
