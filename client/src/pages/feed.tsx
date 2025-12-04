@@ -1746,8 +1746,7 @@ export default function Feed() {
                                 >
                                   {post.user.username}
                                 </Link>
-                                <span className="text-gray-500"> rated </span>
-                                <span className="font-semibold text-gray-500">{post.mediaItems[0].title}</span>
+                                <span className="text-gray-500"> rated {post.mediaItems[0].title}</span>
                               </p>
                             );
                           } else if (post.content && hasMediaItems) {
@@ -1761,8 +1760,7 @@ export default function Feed() {
                                 >
                                   {post.user.username}
                                 </Link>
-                                <span className="text-gray-500"> added thoughts about </span>
-                                <span className="font-semibold text-gray-500">{post.mediaItems[0].title}</span>
+                                <span className="text-gray-500"> added thoughts about {post.mediaItems[0].title}</span>
                               </p>
                             );
                           } else if (post.content && !hasMediaItems) {
@@ -1851,8 +1849,7 @@ export default function Feed() {
                                         >
                                           {displayUser.username}
                                         </Link>
-                                        <span className="text-gray-500"> rated </span>
-                                        <span className="font-semibold text-gray-500">{post.mediaItems[0].title}</span>
+                                        <span className="text-gray-500"> rated {post.mediaItems[0].title}</span>
                                       </p>
                                     );
                                   } else if (post.content && hasMediaItems) {
@@ -1866,8 +1863,7 @@ export default function Feed() {
                                         >
                                           {displayUser.username}
                                         </Link>
-                                        <span className="text-gray-500"> added thoughts about </span>
-                                        <span className="font-semibold text-gray-500">{post.mediaItems[0].title}</span>
+                                        <span className="text-gray-500"> added thoughts about {post.mediaItems[0].title}</span>
                                       </p>
                                     );
                                   } else if (post.content && !hasMediaItems) {
