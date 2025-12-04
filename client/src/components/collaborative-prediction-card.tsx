@@ -412,14 +412,6 @@ export default function CollaborativePredictionCard({
   
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
-      {/* Prediction Tag */}
-      <div className="mb-3">
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-          <Target size={12} />
-          Prediction
-        </span>
-      </div>
-      
       {/* Header with creator info and delete button */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 flex-1">
@@ -436,21 +428,7 @@ export default function CollaborativePredictionCard({
             ) : (
               <>
                 <span className="font-semibold text-gray-900">@{creator.username}</span>
-                <span className="text-gray-500"> predicts about </span>
-                {mediaTitle && (
-                  <button
-                    onClick={() => {
-                      const media = mediaItems?.[0];
-                      if (media?.externalId && media?.externalSource) {
-                        setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
-                      }
-                    }}
-                    className="font-semibold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer underline"
-                    data-testid="link-prediction-media"
-                  >
-                    {mediaTitle}
-                  </button>
-                )}
+                <span className="text-gray-500"> predicts about {mediaTitle || 'something'}</span>
               </>
             )}
           </p>
