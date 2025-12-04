@@ -48,7 +48,7 @@ serve(async (req) => {
                   title: item.title || item.name,
                   type: item.media_type === 'movie' ? 'movie' : 'tv',
                   creator: item.media_type === 'movie' ? 'Unknown' : 'TV Show',
-                  image: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
+                  poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
                   external_id: item.id?.toString(),
                   external_source: 'tmdb',
                   description: item.overview
@@ -87,7 +87,7 @@ serve(async (req) => {
                 title: book.title,
                 type: 'book',
                 creator: book.author_name?.[0] || 'Unknown Author',
-                image: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
+                poster_url: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
                 external_id: book.key,
                 external_source: 'openlibrary',
                 description: book.first_sentence?.[0] || ''
@@ -136,7 +136,7 @@ serve(async (req) => {
                     title: podcast.name,
                     type: 'podcast',
                     creator: podcast.publisher,
-                    image: podcast.images?.[0]?.url || '',
+                    poster_url: podcast.images?.[0]?.url || '',
                     external_id: podcast.id,
                     external_source: 'spotify',
                     description: podcast.description
@@ -189,7 +189,7 @@ serve(async (req) => {
                     title: album.name,
                     type: 'music',
                     creator: album.artists?.[0]?.name || 'Unknown Artist',
-                    image: album.images?.[0]?.url || '',
+                    poster_url: album.images?.[0]?.url || '',
                     external_id: album.id,
                     external_source: 'spotify',
                     description: `ALBUM • ${album.total_tracks || 0} tracks • ${album.release_date?.substring(0, 4) || 'Unknown year'}`
@@ -204,7 +204,7 @@ serve(async (req) => {
                     title: track.name,
                     type: 'music',
                     creator: track.artists?.[0]?.name || 'Unknown Artist',
-                    image: track.album?.images?.[0]?.url || '',
+                    poster_url: track.album?.images?.[0]?.url || '',
                     external_id: track.id,
                     external_source: 'spotify',
                     description: `TRACK • ${track.album?.name || 'Unknown Album'}`
@@ -233,7 +233,7 @@ serve(async (req) => {
                   title: video.snippet.title,
                   type: 'youtube',
                   creator: video.snippet.channelTitle,
-                  image: video.snippet.thumbnails?.medium?.url || '',
+                  poster_url: video.snippet.thumbnails?.medium?.url || '',
                   external_id: video.id.videoId,
                   external_source: 'youtube',
                   description: video.snippet.description

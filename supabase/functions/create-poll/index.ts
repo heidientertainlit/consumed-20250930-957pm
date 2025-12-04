@@ -101,7 +101,15 @@ serve(async (req) => {
         media_image_url = null
       } = body;
 
-      console.log('Creating poll:', { question, options, media_title, media_external_id });
+      console.log('Creating poll:', { 
+        question, 
+        options, 
+        media_title, 
+        media_type,
+        media_external_id, 
+        media_external_source,
+        media_image_url 
+      });
 
       // Validate inputs
       if (!question || !Array.isArray(options) || options.length < 2) {
