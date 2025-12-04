@@ -114,6 +114,11 @@ export default function ShareUpdateDialogV2({ isOpen, onClose }: ShareUpdateDial
         body = {
           question: content.trim() || "What do you think?",
           options: filledOptions,
+          media_title: attachedMedia?.title || null,
+          media_type: attachedMedia?.mediaType || null,
+          media_external_id: attachedMedia?.externalId || null,
+          media_external_source: attachedMedia?.externalSource || null,
+          media_image_url: attachedMedia?.imageUrl || null,
         };
       } else if (postMode === "prediction") {
         // Prediction creation
