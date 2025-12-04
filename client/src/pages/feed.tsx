@@ -1621,6 +1621,7 @@ export default function Feed() {
                     origin_type: predPost.origin_type || 'user',
                     origin_user_id: predPost.origin_user_id,
                     status: predPost.status || 'open',
+                    type: predPost.poolType || 'predict',
                   };
 
                   return (

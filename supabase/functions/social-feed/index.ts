@@ -472,6 +472,7 @@ serve(async (req) => {
         return {
           id: pred.id,
           type: 'prediction',
+          poolType: pred.type || 'predict',
           poolId: pred.id,
           question: pred.title,
           description: pred.description,
