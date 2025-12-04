@@ -435,9 +435,20 @@ export default function CollaborativePredictionCard({
         )}
         
         <div className="flex-1 min-w-0">
-          {/* Media Title */}
+          {/* Media Title - Clickable */}
           {mediaTitle && (
-            <p className="text-base font-semibold text-gray-900 mb-1">{mediaTitle}</p>
+            <button
+              onClick={() => {
+                const media = mediaItems?.[0];
+                if (media?.externalId && media?.externalSource) {
+                  setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
+                }
+              }}
+              className="text-base font-semibold text-gray-900 mb-1 hover:text-purple-700 transition-colors text-left"
+              data-testid="link-prediction-media-title"
+            >
+              {mediaTitle}
+            </button>
           )}
           
           {/* Prediction by username */}
@@ -448,7 +459,13 @@ export default function CollaborativePredictionCard({
               <>
                 <span className="text-purple-600">Prediction</span>
                 <span> by </span>
-                <span className="text-purple-600 font-medium">@{creator.username}</span>
+                <button
+                  onClick={() => setLocation(`/profile/${creator.username}`)}
+                  className="text-purple-600 font-medium hover:text-purple-800 transition-colors"
+                  data-testid="link-prediction-creator"
+                >
+                  @{creator.username}
+                </button>
               </>
             )}
           </p>
@@ -487,10 +504,10 @@ export default function CollaborativePredictionCard({
                 disabled={userHasAnswered || voteMutation.isPending}
                 className={`w-full rounded-lg px-4 py-3 transition-all flex items-center justify-between ${
                   userHasAnswered 
-                    ? "bg-gradient-to-r from-purple-500 to-purple-600 opacity-70 cursor-default"
+                    ? "bg-gradient-to-r from-purple-700 to-purple-900 opacity-80 cursor-default"
                     : selectedOption === option
-                    ? "bg-gradient-to-r from-purple-600 to-purple-700 ring-2 ring-purple-300"
-                    : "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                    ? "bg-gradient-to-r from-purple-700 to-purple-900 ring-2 ring-purple-400"
+                    : "bg-gradient-to-r from-purple-700 to-purple-800 hover:from-purple-800 hover:to-purple-900"
                 }`}
                 data-testid={`button-vote-option-${index}`}
               >
