@@ -148,7 +148,7 @@ serve(async (req) => {
         // Use admin client to bypass RLS on prediction_pools
         const { data: pools, error: poolsError } = await supabaseAdmin
           .from('prediction_pools')
-          .select('id, title, description, options, status, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source')
+          .select('id, title, description, options, status, type, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source')
           .in('id', predictionPoolIds);
         
         if (pools) {
