@@ -412,47 +412,7 @@ export default function CollaborativePredictionCard({
   
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
-      {/* Header with creator info and delete button */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 flex-1">
-          {/* User Avatar - gray circle with User icon matching other cards */}
-          {!isConsumedPrediction && (
-            <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-              <User size={18} className="text-gray-600" />
-            </div>
-          )}
-          
-          <p className="text-sm text-gray-700">
-            {isConsumedPrediction ? (
-              <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
-            ) : (
-              <>
-                <span className="font-semibold text-gray-900">@{creator.username}</span>
-                <span className="text-gray-500"> predicts about {mediaTitle || 'something'}</span>
-              </>
-            )}
-          </p>
-        </div>
-        
-        {/* Delete button - Show for creators of user-generated predictions */}
-        {origin_type === 'user' && (
-          <button
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending || !isCreator}
-            className={`flex items-center justify-center p-1.5 rounded-full transition-colors flex-shrink-0 ${
-              isCreator 
-                ? 'text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer' 
-                : 'text-gray-300 cursor-not-allowed opacity-50'
-            }`}
-            title={isCreator ? "Delete prediction" : "Only creator can delete"}
-            data-testid="button-delete-prediction"
-          >
-            <Trash2 size={18} />
-          </button>
-        )}
-      </div>
-
-      {/* Prediction Question with Poster */}
+      {/* Header: Poster + Media Title + Username */}
       <div className="flex items-start gap-3 mb-4">
         {/* Media Poster - show if available */}
         {mediaItems?.[0]?.imageUrl && (
@@ -474,57 +434,75 @@ export default function CollaborativePredictionCard({
           </button>
         )}
         
-        <p className="text-base font-semibold text-gray-900 flex-1">
-          {title}
-        </p>
+        <div className="flex-1 min-w-0">
+          {/* Media Title */}
+          {mediaTitle && (
+            <p className="text-base font-semibold text-gray-900 mb-1">{mediaTitle}</p>
+          )}
+          
+          {/* Prediction by username */}
+          <p className="text-sm text-gray-500">
+            {isConsumedPrediction ? (
+              <span className="font-bold text-purple-700">🏆 Consumed Prediction</span>
+            ) : (
+              <>
+                <span className="text-purple-600">Prediction</span>
+                <span> by </span>
+                <span className="text-purple-600 font-medium">@{creator.username}</span>
+              </>
+            )}
+          </p>
+        </div>
+        
+        {/* Delete button - Show for creators of user-generated predictions */}
+        {origin_type === 'user' && isCreator && (
+          <button
+            onClick={() => deleteMutation.mutate()}
+            disabled={deleteMutation.isPending}
+            className="flex items-center justify-center p-1.5 rounded-full transition-colors flex-shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer"
+            title="Delete prediction"
+            data-testid="button-delete-prediction"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
       </div>
 
-      {/* Voting Options - Stacked vertically */}
+      {/* Prediction Question */}
+      <p className="text-base font-medium text-gray-900 mb-4">
+        {title}
+      </p>
+
+      {/* Voting Options - Purple gradient buttons */}
       <div className="space-y-2 mb-3">
         {options && options.length > 0 ? (
           options.map((option, index) => {
             const optionData = optionVotes?.find(ov => ov.option === option);
             const percentage = optionData?.percentage || 0;
-            const count = optionData?.count || 0;
-            
-            // Get voters for this specific option
-            const votersForOption = (userVotes && Array.isArray(userVotes)) 
-              ? userVotes.filter(uv => uv?.vote === option) 
-              : [];
             
             return (
-              <div key={index}>
-                {votersForOption && votersForOption.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-1.5 ml-1">
-                    {votersForOption.map((voter, idx) => (
-                      <span key={idx} className="text-xs font-semibold text-purple-600">
-                        @{voter?.user}
-                      </span>
-                    ))}
-                  </div>
+              <button
+                key={index}
+                onClick={() => handleSelectOption(option)}
+                disabled={userHasAnswered || voteMutation.isPending}
+                className={`w-full rounded-lg px-4 py-3 transition-all flex items-center justify-between ${
+                  userHasAnswered 
+                    ? "bg-gradient-to-r from-purple-500 to-purple-600 opacity-70 cursor-default"
+                    : selectedOption === option
+                    ? "bg-gradient-to-r from-purple-600 to-purple-700 ring-2 ring-purple-300"
+                    : "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                }`}
+                data-testid={`button-vote-option-${index}`}
+              >
+                <span className="text-sm font-medium text-white">
+                  {option}
+                </span>
+                {userHasAnswered && totalVotes > 0 && (
+                  <span className="text-sm font-semibold text-white">
+                    {percentage}%
+                  </span>
                 )}
-                <button
-                  onClick={() => handleSelectOption(option)}
-                  disabled={userHasAnswered || voteMutation.isPending}
-                  className={`w-full rounded-full px-4 py-2.5 transition-all border-2 flex items-center justify-between ${
-                    userHasAnswered 
-                      ? "bg-white border-purple-300 opacity-60 cursor-default"
-                      : selectedOption === option
-                      ? "bg-purple-100 border-purple-500"
-                      : "bg-white border-purple-300 hover:border-purple-400"
-                  }`}
-                  data-testid={`button-vote-option-${index}`}
-                >
-                  <p className={`text-sm font-medium text-left ${selectedOption === option ? "text-purple-700" : "text-black"}`}>
-                    {option}
-                  </p>
-                  {userHasAnswered && totalVotes > 0 && (
-                    <span className="text-sm font-semibold text-gray-700">
-                      {percentage}% ({count})
-                    </span>
-                  )}
-                </button>
-              </div>
+              </button>
             );
           })
         ) : null}
@@ -536,7 +514,7 @@ export default function CollaborativePredictionCard({
           <Button
             onClick={handleSubmitVote}
             disabled={voteMutation.isPending}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full"
+            className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
             data-testid="button-submit-vote"
           >
             {voteMutation.isPending ? "Submitting..." : "Cast Prediction"}
@@ -544,43 +522,41 @@ export default function CollaborativePredictionCard({
         </div>
       )}
 
-      {/* Like, Comment, and Participant Count Actions */}
-      <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => likeMutation.mutate()}
-            disabled={likeMutation.isPending}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-purple-600 transition-colors"
-            data-testid="button-like-prediction"
-          >
-            <Heart
-              size={18}
-              className={liked ? "fill-purple-600 text-purple-600" : ""}
-            />
-            <span className="text-sm">{currentLikesCount}</span>
-          </button>
+      {/* Vote count */}
+      {totalVotes > 0 && (
+        <button
+          onClick={() => setShowParticipants(!showParticipants)}
+          className="flex items-center gap-1.5 text-gray-600 mb-3"
+          data-testid="button-show-participants"
+        >
+          <User size={14} />
+          <span className="text-sm">{totalVotes} votes</span>
+        </button>
+      )}
 
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1.5 text-gray-600 hover:text-purple-600 transition-colors"
-            data-testid="button-comment-prediction"
-          >
-            <MessageCircle size={18} />
-            <span className="text-sm">{commentsData?.comments?.length || commentsCount}</span>
-          </button>
-        </div>
-        
-        {totalVotes > 0 && (
-          <button
-            onClick={() => setShowParticipants(!showParticipants)}
-            className="flex items-center gap-1 text-purple-600 hover:text-purple-700 text-xs font-medium"
-            data-testid="button-show-participants"
-          >
-            <Users size={12} />
-            <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
-            <span className="text-[10px]">{showParticipants ? '▲' : '▼'}</span>
-          </button>
-        )}
+      {/* Like and Comment Actions */}
+      <div className="flex items-center gap-4 border-t border-gray-100 pt-3">
+        <button
+          onClick={() => likeMutation.mutate()}
+          disabled={likeMutation.isPending}
+          className="flex items-center gap-1.5 text-gray-600 hover:text-red-500 transition-colors"
+          data-testid="button-like-prediction"
+        >
+          <Heart
+            size={18}
+            className={liked ? "fill-red-500 text-red-500" : ""}
+          />
+          <span className="text-sm">{currentLikesCount}</span>
+        </button>
+
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-1.5 text-gray-600 hover:text-gray-800 transition-colors"
+          data-testid="button-comment-prediction"
+        >
+          <MessageCircle size={18} />
+          <span className="text-sm">{commentsData?.comments?.length || commentsCount}</span>
+        </button>
       </div>
       
       {/* Participants Dropdown */}
