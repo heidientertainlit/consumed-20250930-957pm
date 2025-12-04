@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ChevronDown } from "lucide-react";
 import "./auth.css";
 
 export default function LoginPage() {
@@ -172,9 +172,8 @@ export default function LoginPage() {
               className="h-16 w-auto"
             />
           </div>
-          <p className="text-purple-300 text-xl font-medium mb-3">What's entertaining your friends?</p>
-          <p className="text-purple-100 text-sm max-w-lg mx-auto">
-            Share your favorite movies, shows, books, podcasts, music and more — and see what others are saying too.
+          <p className="text-purple-100 text-base max-w-lg mx-auto">
+            See what entertainment everyone is consuming. <span className="font-semibold text-white">Share your favorite movies, shows, books, podcasts, music and more</span> — and see what others are saying too.
           </p>
         </div>
         
@@ -346,6 +345,12 @@ export default function LoginPage() {
               </form>
             </TabsContent>
           </Tabs>
+        </div>
+        
+        {/* See what you can do section */}
+        <div className="text-center mt-8">
+          <p className="text-purple-300 text-sm mb-2">See what you can do with consumed</p>
+          <ChevronDown className="w-6 h-6 text-purple-400 mx-auto animate-bounce" />
         </div>
       </div>
 
