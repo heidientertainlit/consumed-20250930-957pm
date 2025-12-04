@@ -172,8 +172,9 @@ export default function LoginPage() {
               className="h-16 w-auto"
             />
           </div>
-          <p className="text-purple-100 text-base max-w-lg mx-auto">
-            See what entertainment everyone is consuming. <span className="font-semibold text-white">Share your favorite movies, shows, books, podcasts, music and more</span> — and see what others are saying too.
+          <p className="text-purple-300 text-xl font-medium mb-3">What's entertaining your friends?</p>
+          <p className="text-purple-100 text-sm max-w-lg mx-auto">
+            Share your favorite movies, shows, books, podcasts, music and more — and see what others are saying too.
           </p>
         </div>
         
