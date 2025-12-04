@@ -28,6 +28,7 @@ import CTVRoku from "@/pages/ctv-roku";
 import EngagePage from "@/pages/engage";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
+import OnboardingPage from "./pages/onboarding";
 import NotFoundPage from "./pages/not-found";
 
 function Router() {
@@ -41,6 +42,11 @@ function Router() {
         </Route>
         <Route path="/reset-password">
           <ResetPasswordPage />
+        </Route>
+        <Route path="/onboarding">
+          <ProtectedRoute>
+            <OnboardingPage />
+          </ProtectedRoute>
         </Route>
         <Route path="/">
           <ProtectedRoute>
