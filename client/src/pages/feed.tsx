@@ -1750,6 +1750,20 @@ export default function Feed() {
                                 <span className="font-semibold text-gray-500">{post.mediaItems[0].title}</span>
                               </p>
                             );
+                          } else if (post.content && !hasMediaItems) {
+                            // Thoughts post - has content but no media
+                            return (
+                              <p className="text-sm">
+                                <Link 
+                                  href={`/user/${post.user.id}`}
+                                  className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                  data-testid={`link-user-${post.user.id}`}
+                                >
+                                  {post.user.username}
+                                </Link>
+                                <span className="text-gray-500"> added thoughts</span>
+                              </p>
+                            );
                           } else {
                             return (
                               <Link 
@@ -1824,6 +1838,20 @@ export default function Feed() {
                                         </Link>
                                         <span className="text-gray-500"> rated </span>
                                         <span className="font-semibold text-gray-500">{post.mediaItems[0].title}</span>
+                                      </p>
+                                    );
+                                  } else if (post.content && !hasMediaItems) {
+                                    // Thoughts post - has content but no media
+                                    return (
+                                      <p className="text-sm">
+                                        <Link 
+                                          href={`/user/${displayUser.userId}`}
+                                          className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                          data-testid={`link-user-${displayUser.userId}`}
+                                        >
+                                          {displayUser.username}
+                                        </Link>
+                                        <span className="text-gray-500"> added thoughts</span>
                                       </p>
                                     );
                                   } else {
