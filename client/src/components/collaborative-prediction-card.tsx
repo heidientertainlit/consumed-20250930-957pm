@@ -412,6 +412,13 @@ export default function CollaborativePredictionCard({
   
   const isPoll = type === 'vote';
   
+  // Smart media title: if mediaTitle matches question title, use mediaItems title instead
+  const actualMediaTitle = (mediaTitle && mediaTitle !== title && !mediaTitle.includes(title?.substring(0, 20))) 
+    ? mediaTitle 
+    : (mediaItems?.[0]?.title && mediaItems[0].title !== title) 
+      ? mediaItems[0].title 
+      : null;
+  
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
       {/* Header: Poster + Username action + Media Title */}
@@ -450,8 +457,8 @@ export default function CollaborativePredictionCard({
                 >
                   @{creator.username}
                 </button>
-                <span className="text-gray-500"> posted a {isPoll ? 'poll' : 'prediction'} about </span>
-                {mediaTitle && (
+                <span className="text-gray-500"> posted a {isPoll ? 'poll' : 'prediction'}{actualMediaTitle ? ' about ' : ''}</span>
+                {actualMediaTitle && (
                   <button
                     onClick={() => {
                       const media = mediaItems?.[0];
@@ -462,7 +469,7 @@ export default function CollaborativePredictionCard({
                     className="text-gray-500 hover:text-purple-700 transition-colors"
                     data-testid="link-prediction-media-title"
                   >
-                    {mediaTitle}
+                    {actualMediaTitle}
                   </button>
                 )}
               </>
