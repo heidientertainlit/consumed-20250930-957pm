@@ -2011,8 +2011,12 @@ export default function Feed() {
                         );
                       })}
                       
-                      {/* See more of user's lists link for added_to_list posts with content */}
-                      {post.type === 'added_to_list' && (() => {
+                      {/* See more of user's lists link for added_to_list posts */}
+                      {(() => {
+                        const contentLower = (post.content || '').toLowerCase();
+                        const isAddedPost = post.type === 'added_to_list' || contentLower.startsWith('added ');
+                        if (!isAddedPost) return null;
+                        
                         let userId: string | undefined;
                         let username: string | undefined;
                         
