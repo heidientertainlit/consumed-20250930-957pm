@@ -209,7 +209,7 @@ export default function LoginPage() {
             <img 
               src="/consumed-logo-white.png" 
               alt="Consumed" 
-              className="h-16 w-auto"
+              className="h-12 w-auto"
             />
           </div>
           <p className="text-purple-300 text-base font-medium mb-2">What's entertaining your friends?</p>
@@ -400,7 +400,7 @@ export default function LoginPage() {
         </div>
         
         {/* Footer with contact and social links */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 pb-8 text-center">
           <p className="text-purple-200 text-sm mb-4">
             Give feedback, get support, become a partner or get in touch by emailing{" "}
             <a 
