@@ -284,11 +284,11 @@ export default function CollaborativePredictionCard({
 
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
-    mutationFn: async (commentId: number) => {
+    mutationFn: async (commentId: string) => {
       if (!session?.access_token) return;
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-comments?comment_id=${commentId}`,
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/prediction-comments?comment_id=${String(commentId)}`,
         {
           method: 'DELETE',
           headers: {
@@ -641,7 +641,7 @@ export default function CollaborativePredictionCard({
                   </div>
                   {comment.user_id === session?.user?.id && (
                     <button
-                      onClick={() => deleteCommentMutation.mutate(comment.id)}
+                      onClick={() => deleteCommentMutation.mutate(String(comment.id))}
                       disabled={deleteCommentMutation.isPending}
                       className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
                       title="Delete comment"
