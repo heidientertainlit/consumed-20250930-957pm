@@ -1705,39 +1705,7 @@ export default function Feed() {
 
                   {/* Original Post */}
                   <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" id={`post-${post.id}`}>
-                    {/* Post Type Label */}
-                    {(() => {
-                      const postType = post.type?.toLowerCase() || '';
-                      let typeLabel = '';
-                      let typeColor = '';
-                      
-                      // Check if it's a simple "added to list" post (no content, just media)
-                      const isSimpleAddToList = !post.content && post.mediaItems && post.mediaItems.length > 0;
-                      
-                      // Skip label for simple add-to-list posts
-                      if (isSimpleAddToList) {
-                        return null;
-                      }
-                      
-                      if (postType === 'prediction') {
-                        typeLabel = '🎯 Prediction';
-                        typeColor = 'bg-blue-100 text-blue-700';
-                      } else if (postType === 'poll') {
-                        typeLabel = '🗳️ Poll';
-                        typeColor = 'bg-green-100 text-green-700';
-                      } else if (post.rating || (post.content && /⭐|\/5|rated/i.test(post.content))) {
-                        typeLabel = '⭐ Rate/Review';
-                        typeColor = 'bg-yellow-100 text-yellow-700';
-                      }
-                      
-                      return typeLabel ? (
-                        <div className="mb-2">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColor}`}>
-                            {typeLabel}
-                          </span>
-                        </div>
-                      ) : null;
-                    })()}
+                    {/* Post Type Label - hidden for now but type is tracked on backend */}
                     
                     {/* User Info and Date */}
                     {post.user ? (
