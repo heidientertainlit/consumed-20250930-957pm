@@ -62,6 +62,21 @@ Deno.serve(async (req) => {
       }
     )
 
+    // Get app user from email to compare with origin_user_id
+    const { data: appUser, error: appUserError } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', user.email)
+      .single()
+
+    if (appUserError || !appUser) {
+      console.error('Failed to get app user:', appUserError)
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     // Check if user owns the prediction
     const { data: prediction, error: fetchError } = await supabaseAdmin
       .from('prediction_pools')
@@ -76,11 +91,23 @@ Deno.serve(async (req) => {
       })
     }
 
-    if (prediction.origin_user_id !== user.id) {
+    // Compare with app user ID, not auth user ID
+    if (prediction.origin_user_id !== appUser.id) {
       return new Response(JSON.stringify({ error: 'Not authorized to delete this prediction' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
+    }
+
+    // Also delete associated social posts that reference this prediction
+    const { error: socialPostError } = await supabaseAdmin
+      .from('social_posts')
+      .delete()
+      .eq('prediction_pool_id', pool_id)
+
+    if (socialPostError) {
+      console.error('Error deleting social posts:', socialPostError)
+      // Continue anyway - the main prediction pool delete is more important
     }
 
     // Delete the prediction
@@ -88,7 +115,7 @@ Deno.serve(async (req) => {
       .from('prediction_pools')
       .delete()
       .eq('id', pool_id)
-      .eq('origin_user_id', user.id)
+      .eq('origin_user_id', appUser.id)
 
     if (deleteError) {
       console.error('Delete error:', deleteError)
