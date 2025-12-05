@@ -2451,21 +2451,27 @@ export default function UserProfile() {
                     <Brain className="text-white" size={32} />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Discover Your Entertainment DNA
+                    {isOwnProfile ? 'Complete the Survey to Get Your Entertainment DNA' : 'No Entertainment DNA Yet'}
                   </h3>
                   <p className="text-sm text-gray-600 max-w-md mx-auto">
-                    Unlock your unique entertainment personality profile. Get personalized recommendations and connect with others who share your taste.
+                    {isOwnProfile 
+                      ? 'Answer a few quick questions to unlock your unique entertainment personality profile and get personalized recommendations.'
+                      : 'This user hasn\'t completed their Entertainment DNA survey yet.'}
                   </p>
                 </div>
-                <Button 
-                  onClick={handleTakeDNASurvey}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8"
-                  data-testid="button-start-dna-survey"
-                >
-                  <Brain size={16} className="mr-2" />
-                  Start DNA Survey
-                </Button>
-                <p className="text-xs text-gray-500 mt-3">Takes about 5 minutes</p>
+                {isOwnProfile && (
+                  <>
+                    <Button 
+                      onClick={handleTakeDNASurvey}
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8"
+                      data-testid="button-start-dna-survey"
+                    >
+                      <Brain size={16} className="mr-2" />
+                      Complete DNA Survey
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-3">Takes about 2 minutes</p>
+                  </>
+                )}
               </div>
             )}
 
