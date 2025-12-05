@@ -261,40 +261,40 @@ export default function OnboardingPage() {
         {/* Shareable Card - Instagram Story optimized (9:16 aspect ratio) */}
         <div 
           ref={cardRef}
-          className="w-[320px] bg-gradient-to-b from-indigo-900 via-purple-900 to-black rounded-3xl overflow-hidden shadow-2xl"
+          className="w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl"
           style={{ aspectRatio: '9/16' }}
         >
           {/* Gradient top border */}
           <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"></div>
           
-          <div className="p-6 flex flex-col h-full">
+          <div className="p-5 flex flex-col h-full">
             {/* Header */}
-            <div className="text-center mb-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Dna className="text-white" size={28} />
+            <div className="text-center mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Dna className="text-white" size={24} />
               </div>
-              <h1 className="text-lg font-bold text-white mb-1">Your Entertainment DNA</h1>
-              <div className="w-10 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 mx-auto rounded-full"></div>
+              <h1 className="text-base font-bold text-gray-900">Your Entertainment DNA</h1>
+              <div className="w-10 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full mt-1"></div>
             </div>
 
             {/* DNA Label & Tagline */}
-            <div className="text-center mb-4">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
+            <div className="text-center mb-3">
+              <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 {dnaProfile.title}
               </h2>
-              <p className="text-purple-200 text-sm">{dnaProfile.description}</p>
+              <p className="text-gray-600 text-sm">{dnaProfile.description}</p>
             </div>
 
             {/* Flavor Notes */}
             {dnaProfile.superpowers && dnaProfile.superpowers.length > 0 && (
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4">
-                <h3 className="text-sm font-semibold text-white mb-2 flex items-center">
-                  <Sparkles className="mr-1.5 text-purple-400" size={14} />
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 mb-3">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1 flex items-center">
+                  <Sparkles className="mr-1.5 text-purple-600" size={14} />
                   Your Flavor Notes:
                 </h3>
-                <ul className="space-y-1">
+                <ul>
                   {dnaProfile.superpowers.slice(0, 3).map((power, index) => (
-                    <li key={index} className="text-purple-100 text-xs">• {power}</li>
+                    <li key={index} className="text-gray-700 text-xs leading-tight">• {power}</li>
                   ))}
                 </ul>
               </div>
@@ -302,15 +302,15 @@ export default function OnboardingPage() {
 
             {/* DNA Bio */}
             {dnaProfile.meaning && (
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-1 overflow-hidden">
-                <h3 className="text-sm font-semibold text-white mb-2">🔮 Your Entertainment DNA:</h3>
-                <p className="text-purple-100 text-xs leading-relaxed line-clamp-[8]">{dnaProfile.meaning}</p>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3 flex-1 overflow-hidden">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">🔮 Your Entertainment DNA Profile:</h3>
+                <p className="text-gray-700 text-xs leading-relaxed">{dnaProfile.meaning}</p>
               </div>
             )}
 
             {/* Footer */}
-            <div className="text-center mt-4 pt-3 border-t border-white/10">
-              <p className="text-purple-300 text-xs font-medium">consumedapp.io</p>
+            <div className="text-center mt-3 pt-2 border-t border-gray-100">
+              <p className="text-purple-600 text-xs font-medium">@consumedapp</p>
             </div>
           </div>
         </div>
