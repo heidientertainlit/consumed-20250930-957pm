@@ -421,28 +421,8 @@ export default function CollaborativePredictionCard({
   
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
-      {/* Header: Poster + Username action + Media Title */}
+      {/* Header: Username action + Media Title */}
       <div className="flex items-start gap-3 mb-4">
-        {/* Media Poster - show if available */}
-        {mediaItems?.[0]?.imageUrl && (
-          <button
-            onClick={() => {
-              const media = mediaItems?.[0];
-              if (media?.externalId && media?.externalSource) {
-                setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
-              }
-            }}
-            className="flex-shrink-0"
-            data-testid="button-prediction-poster"
-          >
-            <img 
-              src={mediaItems[0].imageUrl} 
-              alt={mediaTitle || 'Media poster'}
-              className="w-14 h-20 object-cover rounded-md shadow-sm"
-            />
-          </button>
-        )}
-        
         <div className="flex-1 min-w-0">
           {/* Username posted a poll/prediction about [Media Title] */}
           <p className="text-sm text-gray-700 mb-1">
@@ -496,39 +476,62 @@ export default function CollaborativePredictionCard({
         {title}
       </p>
 
-      {/* Voting Options - Purple gradient buttons */}
-      <div className="space-y-2 mb-3">
-        {options && options.length > 0 ? (
-          options.map((option, index) => {
-            const optionData = optionVotes?.find(ov => ov.option === option);
-            const percentage = optionData?.percentage || 0;
-            
-            return (
-              <button
-                key={index}
-                onClick={() => handleSelectOption(option)}
-                disabled={userHasAnswered || voteMutation.isPending}
-                className={`w-full rounded-full px-4 py-3 transition-all flex items-center justify-between ${
-                  userHasAnswered 
-                    ? "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 cursor-not-allowed"
-                    : selectedOption === option
-                    ? "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 ring-2 ring-purple-300 cursor-pointer"
-                    : "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 hover:from-purple-900 hover:via-purple-700 hover:to-violet-400 cursor-pointer"
-                }`}
-                data-testid={`button-vote-option-${index}`}
-              >
-                <span className="text-sm font-medium text-white">
-                  {option}
-                </span>
-                {userHasAnswered && totalVotes > 0 && (
-                  <span className="text-sm font-semibold text-white">
-                    {percentage}%
+      {/* Voting Options with Media Poster */}
+      <div className="flex gap-3 mb-3">
+        {/* Media Poster - show inline with options if available */}
+        {mediaItems?.[0]?.imageUrl && (
+          <button
+            onClick={() => {
+              const media = mediaItems?.[0];
+              if (media?.externalId && media?.externalSource) {
+                setLocation(`/media/${media.mediaType?.toLowerCase() || 'movie'}/${media.externalSource}/${media.externalId}`);
+              }
+            }}
+            className="flex-shrink-0"
+            data-testid="button-poll-media-poster"
+          >
+            <img 
+              src={mediaItems[0].imageUrl} 
+              alt={mediaTitle || 'Media poster'}
+              className="w-20 h-28 object-cover rounded-lg shadow-sm"
+            />
+          </button>
+        )}
+        
+        {/* Options */}
+        <div className="flex-1 space-y-2">
+          {options && options.length > 0 ? (
+            options.map((option, index) => {
+              const optionData = optionVotes?.find(ov => ov.option === option);
+              const percentage = optionData?.percentage || 0;
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleSelectOption(option)}
+                  disabled={userHasAnswered || voteMutation.isPending}
+                  className={`w-full rounded-full px-4 py-3 transition-all flex items-center justify-between ${
+                    userHasAnswered 
+                      ? "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 cursor-not-allowed"
+                      : selectedOption === option
+                      ? "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 ring-2 ring-purple-300 cursor-pointer"
+                      : "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 hover:from-purple-900 hover:via-purple-700 hover:to-violet-400 cursor-pointer"
+                  }`}
+                  data-testid={`button-vote-option-${index}`}
+                >
+                  <span className="text-sm font-medium text-white">
+                    {option}
                   </span>
-                )}
-              </button>
-            );
-          })
-        ) : null}
+                  {userHasAnswered && totalVotes > 0 && (
+                    <span className="text-sm font-semibold text-white">
+                      {percentage}%
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          ) : null}
+        </div>
       </div>
 
       {/* Submit Button */}

@@ -146,8 +146,9 @@ export default function LoginPage() {
         description: "Let's discover your Entertainment DNA.",
       });
       
-      // Redirect new users to onboarding
-      setLocation('/onboarding');
+      // Set flag for route guard to redirect to onboarding
+      sessionStorage.setItem('pendingOnboarding', 'true');
+      setJustSignedUp(true);
       setSubmitting(false);
     }
   };

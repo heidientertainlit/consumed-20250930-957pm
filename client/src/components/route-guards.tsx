@@ -41,7 +41,14 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
 
   useEffect(() => {
     if (!loading && user) {
-      setLocation('/activity');
+      // Check if this is a new signup that should go to onboarding
+      const pendingOnboarding = sessionStorage.getItem('pendingOnboarding');
+      if (pendingOnboarding === 'true') {
+        sessionStorage.removeItem('pendingOnboarding');
+        setLocation('/onboarding');
+      } else {
+        setLocation('/activity');
+      }
     }
   }, [user, loading, setLocation]);
 
