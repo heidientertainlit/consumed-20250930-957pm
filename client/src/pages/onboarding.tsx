@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Dna, Loader2 } from "lucide-react";
+import { Sparkles, Dna, Loader2, Download } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
+import html2canvas from "html2canvas";
 
 interface SurveyAnswer {
   questionId: string;
@@ -36,6 +37,8 @@ export default function OnboardingPage() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Analyzing your responses...");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const getAnswer = (questionId: string) => {
     return answers.find(a => a.questionId === questionId)?.answer;
@@ -231,56 +234,106 @@ export default function OnboardingPage() {
   }
 
   if (showResults && dnaProfile) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-6 shadow-2xl">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Dna className="text-white" size={32} />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Entertainment DNA</h1>
-            <div className="w-12 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 mx-auto rounded-full"></div>
-          </div>
+    const handleDownload = async () => {
+      if (!cardRef.current) return;
+      setIsDownloading(true);
+      
+      try {
+        const canvas = await html2canvas(cardRef.current, {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: null,
+        });
+        
+        const link = document.createElement('a');
+        link.download = 'my-entertainment-dna.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (error) {
+        console.error('Error downloading image:', error);
+      } finally {
+        setIsDownloading(false);
+      }
+    };
 
-          <div className="space-y-5">
-            <div className="text-center">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
+        {/* Shareable Card - Instagram Story optimized (9:16 aspect ratio) */}
+        <div 
+          ref={cardRef}
+          className="w-[320px] bg-gradient-to-b from-indigo-900 via-purple-900 to-black rounded-3xl overflow-hidden shadow-2xl"
+          style={{ aspectRatio: '9/16' }}
+        >
+          {/* Gradient top border */}
+          <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"></div>
+          
+          <div className="p-6 flex flex-col h-full">
+            {/* Header */}
+            <div className="text-center mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Dna className="text-white" size={28} />
+              </div>
+              <h1 className="text-lg font-bold text-white mb-1">Your Entertainment DNA</h1>
+              <div className="w-10 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 mx-auto rounded-full"></div>
+            </div>
+
+            {/* DNA Label & Tagline */}
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">
                 {dnaProfile.title}
               </h2>
-              <p className="text-gray-700 leading-relaxed">{dnaProfile.description}</p>
+              <p className="text-purple-200 text-sm">{dnaProfile.description}</p>
             </div>
 
+            {/* Flavor Notes */}
             {dnaProfile.superpowers && dnaProfile.superpowers.length > 0 && (
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5">
-                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
-                  <Sparkles className="mr-2 text-purple-600" size={20} />
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4">
+                <h3 className="text-sm font-semibold text-white mb-2 flex items-center">
+                  <Sparkles className="mr-1.5 text-purple-400" size={14} />
                   Your Flavor Notes:
                 </h3>
-                <ul className="space-y-2">
-                  {dnaProfile.superpowers.map((power, index) => (
-                    <li key={index} className="text-gray-700 text-sm leading-relaxed">• {power}</li>
+                <ul className="space-y-1">
+                  {dnaProfile.superpowers.slice(0, 3).map((power, index) => (
+                    <li key={index} className="text-purple-100 text-xs">• {power}</li>
                   ))}
                 </ul>
               </div>
             )}
 
+            {/* DNA Bio */}
             {dnaProfile.meaning && (
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-5">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">🔮 Your Entertainment DNA:</h3>
-                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">{dnaProfile.meaning}</p>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-1 overflow-hidden">
+                <h3 className="text-sm font-semibold text-white mb-2">🔮 Your Entertainment DNA:</h3>
+                <p className="text-purple-100 text-xs leading-relaxed line-clamp-[8]">{dnaProfile.meaning}</p>
               </div>
             )}
-          </div>
 
-          <div className="mt-6 text-center">
-            <Button 
-              onClick={() => window.location.href = '/activity'}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-base"
-              data-testid="complete-onboarding-button"
-            >
-              Start Exploring Consumed!
-            </Button>
+            {/* Footer */}
+            <div className="text-center mt-4 pt-3 border-t border-white/10">
+              <p className="text-purple-300 text-xs font-medium">consumedapp.io</p>
+            </div>
           </div>
+        </div>
+
+        {/* Action Buttons - Outside the shareable card */}
+        <div className="mt-6 flex flex-col gap-3 w-[320px]">
+          <Button 
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-6 py-2.5 rounded-full shadow-lg text-sm flex items-center justify-center gap-2"
+            data-testid="download-dna-button"
+          >
+            <Download size={18} />
+            {isDownloading ? 'Saving...' : 'Save to Share'}
+          </Button>
+          
+          <Button 
+            onClick={() => window.location.href = '/activity'}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-sm"
+            data-testid="complete-onboarding-button"
+          >
+            Start Exploring Consumed!
+          </Button>
         </div>
       </div>
     );

@@ -141,11 +141,6 @@ export default function LoginPage() {
       });
       setSubmitting(false);
     } else {
-      toast({
-        title: "Welcome to Consumed!",
-        description: "Let's discover your Entertainment DNA.",
-      });
-      
       // Set flag for route guard to redirect to onboarding
       sessionStorage.setItem('pendingOnboarding', 'true');
       setJustSignedUp(true);
