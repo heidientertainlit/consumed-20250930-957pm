@@ -89,8 +89,27 @@ serve(async (req) => {
 
 1. **Archetype Label** — 2–5 words, punchy and specific. Compose as \`modifier + base\` when helpful (e.g., "Cozy Completionist," "Twist-Hunting Sleuth," "Vibe-Forward Aesthete," "Canon Keeper," "Lore Librarian," "Hype Surfer," "Sideline Strategist"). If sports are prominent, you may append a tasteful modifier (e.g., "• NBA Edition"). Avoid bland words like "Enthusiast/Explorer."
 2. **One-Line Tag** — ≤120 characters, playful, riffs on the label.
-3. **Bio Paragraph** — 90–130 words. Address the user as "You…". Reference **Entertainment DNA** by name. Weave **2–4 specifics** from their inputs (genres, named favorites, comfort picks, drivers, discovery habits, sports/teams). Use **one** rhetorical device (metaphor, contrast, micro-story, or a crisp claim). No clichés; don't repeat the same opener across users; never invent titles they didn't list.
+3. **Bio Paragraph** — 90–130 words. Address the user as "You…". Reference **Entertainment DNA** by name. Use **one** rhetorical device (metaphor, contrast, micro-story, or a crisp claim). No clichés; don't repeat the same opener across users.
 4. **3 Flavor Notes** — bullets, 3–5 words each, crisp traits.
+
+**CRITICAL: Synthesis over listing**
+DO NOT directly name-drop what users listed. Instead, SYNTHESIZE their answers into insights about their viewing psychology:
+
+❌ BAD: "You love Anne Hathaway, romance movies, and The Office."
+✅ GOOD: "You gravitate toward performers who balance vulnerability with wit, and stories where emotional payoffs feel earned."
+
+❌ BAD: "Your favorites include crime dramas and fantasy."
+✅ GOOD: "Your Entertainment DNA craves worlds with hidden rules to decode—whether that's a detective's case board or a fantasy realm's magic system."
+
+❌ BAD: "You watch TV, movies, and read books."
+✅ GOOD: "You're format-fluid, following great stories wherever they live."
+
+**How to reference their inputs:**
+* Identify the PATTERN across their choices (why do these things appeal together?)
+* Describe the TYPE of content, not the specific titles
+* Use AT MOST one specific name, and only to illustrate a broader observation
+* Focus on what their choices REVEAL about their entertainment psychology
+* Infer the emotional/intellectual need their favorites satisfy
 
 **Archetype logic**
 * **Primary axis = Drivers** → map to base nouns:
@@ -110,6 +129,7 @@ serve(async (req) => {
 * Vary openings; ban these repeated phrases: "you're the kind of person who," "from bingeing to," "at the end of the day."
 * If inputs are sparse, write a shorter bio (≤100 words) without guessing.
 * For any fields where no input was provided (discovery method, social sharing, comfort picks, sports), return null or omit from the bio. Never invent data the user didn't provide.
+* Sound like a perceptive friend who "gets" them, not a algorithm reading back their list.
 
 Survey Responses:
 ${formattedResponses}
@@ -118,7 +138,7 @@ Please provide a JSON response with the following structure:
 {
   "label": "string (2–5 words archetype label)",
   "tagline": "string (≤120 chars one-line tag)",
-  "profileText": "string (90–130 words bio paragraph using 'Entertainment DNA')",
+  "profileText": "string (90–130 words bio paragraph using 'Entertainment DNA' - synthesize patterns, don't list names)",
   "favoriteGenres": ["extract exact genres mentioned"],
   "favoriteMediaTypes": ["extract exact media types mentioned"],
   "favoriteSports": ["extract sports mentioned if applicable"],
@@ -131,7 +151,7 @@ Please provide a JSON response with the following structure:
   }
 }
 
-Reference their specific answers about teams, shows, genres, and comfort entertainment. Make it personal and varied.`;
+Synthesize their answers into psychological insights. Make it feel like you truly understand WHY they love what they love.`;
 
       // Call OpenAI API
       const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
