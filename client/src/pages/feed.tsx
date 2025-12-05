@@ -915,19 +915,23 @@ export default function Feed() {
   // Delete post mutation
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      console.log('🗑️ Deleting post directly from Supabase:', postId);
-      if (!user?.id) throw new Error('Not authenticated');
+      console.log('🗑️ Deleting post via edge function:', postId);
+      if (!session?.access_token) throw new Error('Not authenticated');
 
-      // Delete directly using Supabase client
-      const { error } = await supabase
-        .from('social_posts')
-        .delete()
-        .eq('id', postId)
-        .eq('user_id', user.id); // Only delete if user owns the post
+      // Use edge function to handle poll/prediction cleanup properly
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-delete`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post_id: postId }),
+      });
 
-      if (error) {
-        console.error('❌ Delete error:', error);
-        throw new Error(error.message || 'Failed to delete post');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Delete error:', errorData);
+        throw new Error(errorData.error || 'Failed to delete post');
       }
 
       console.log('✅ Post deleted successfully');
