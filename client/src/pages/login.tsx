@@ -143,11 +143,11 @@ export default function LoginPage() {
     } else {
       toast({
         title: "Welcome to Consumed!",
-        description: "Start tracking your entertainment.",
+        description: "Let's discover your Entertainment DNA.",
       });
       
-      // Redirect new users to activity
-      setLocation('/activity');
+      // Redirect new users to onboarding
+      setLocation('/onboarding');
       setSubmitting(false);
     }
   };
