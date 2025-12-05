@@ -208,7 +208,7 @@ export default function LoginPage() {
               className="h-12 w-auto"
             />
           </div>
-          <p className="text-purple-300 text-base font-medium mb-2">What's entertaining your friends?</p>
+          <p className="text-purple-300 text-base font-medium mb-2">See what your friends are watching, reading, and listening to (and why).</p>
           <p className="text-purple-100 text-xs max-w-lg mx-auto">
             Share your favorite movies, shows, books, podcasts, music and more — and see what others are saying too.
           </p>
