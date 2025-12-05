@@ -84,8 +84,19 @@ serve(async (req) => {
         });
       }
 
-      // If this post has a prediction_pool_id, delete that pool too
+      // If this post has a prediction_pool_id, delete votes first, then the pool
       if (post.prediction_pool_id) {
+        // First delete all votes/predictions for this pool
+        const { error: votesError } = await serviceSupabase
+          .from('user_predictions')
+          .delete()
+          .eq('pool_id', post.prediction_pool_id);
+        
+        if (votesError) {
+          console.error('Error deleting user predictions:', votesError);
+        }
+
+        // Then delete the prediction pool
         const { error: poolError } = await serviceSupabase
           .from('prediction_pools')
           .delete()
