@@ -422,7 +422,7 @@ export default function CollaborativePredictionCard({
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
       {/* Header: Username action + Media Title */}
-      <div className="flex items-start gap-3 mb-4">
+      <div className="flex items-start gap-3 mb-2">
         <div className="flex-1 min-w-0">
           {/* Username posted a poll/prediction about [Media Title] */}
           <p className="text-sm text-gray-700 mb-1">
