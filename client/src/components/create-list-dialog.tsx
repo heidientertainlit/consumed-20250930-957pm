@@ -89,24 +89,27 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
 
   const createListMutation = useMutation({
     mutationFn: async () => {
+      const payload = { 
+        title: title.trim(),
+        visibility: isPublic ? 'public' : 'private',
+        items: selectedMedia.map(m => ({
+          title: m.title,
+          mediaType: m.type,
+          creator: m.creator,
+          imageUrl: m.image,
+          externalId: m.external_id,
+          externalSource: m.external_source,
+        }))
+      };
+      console.log('Creating list with payload:', payload);
+      
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/create-custom-list", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token || ''}`,
         },
-        body: JSON.stringify({ 
-          title: title.trim(),
-          visibility: isPublic ? 'public' : 'private',
-          items: selectedMedia.map(m => ({
-            title: m.title,
-            mediaType: m.type,
-            creator: m.creator,
-            imageUrl: m.image,
-            externalId: m.external_id,
-            externalSource: m.external_source,
-          }))
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -117,9 +120,10 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
       return response.json();
     },
     onSuccess: async (data) => {
+      console.log('List created successfully:', data);
       toast({
         title: "List Created!",
-        description: `"${data.list?.title || title}" has been created with ${selectedMedia.length} items`,
+        description: `"${data.list?.title || title}" has been created with ${data.itemsAdded || 0} items`,
       });
       
       await queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
