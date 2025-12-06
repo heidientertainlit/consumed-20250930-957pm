@@ -138,6 +138,11 @@ function Router() {
             <CreatorProfile />
           </ProtectedRoute>
         </Route>
+        <Route path="/me">
+          <ProtectedRoute>
+            <UserProfile />
+          </ProtectedRoute>
+        </Route>
         <Route path="/user/:id">
           <ProtectedRoute>
             <UserProfile />
