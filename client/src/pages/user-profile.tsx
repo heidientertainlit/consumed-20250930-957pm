@@ -6,6 +6,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
 import FriendsManager from "@/components/friends-manager";
 import CreateRankDialog from "@/components/create-rank-dialog";
+import CreateListDialog from "@/components/create-list-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -93,6 +94,7 @@ export default function UserProfile() {
   const [userRanks, setUserRanks] = useState<any[]>([]);
   const [isLoadingRanks, setIsLoadingRanks] = useState(false);
   const [showCreateRankDialog, setShowCreateRankDialog] = useState(false);
+  const [showCreateListDialog, setShowCreateListDialog] = useState(false);
 
   // User stats states
   const [userStats, setUserStats] = useState<any>(null);
@@ -2885,7 +2887,7 @@ export default function UserProfile() {
                 <div className="flex-1" />
                 <Button
                   size="sm"
-                  onClick={() => collectionsSubTab === 'lists' ? setLocation('/library') : setShowCreateRankDialog(true)}
+                  onClick={() => collectionsSubTab === 'lists' ? setShowCreateListDialog(true) : setShowCreateRankDialog(true)}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-8"
                   data-testid={collectionsSubTab === 'lists' ? 'button-create-list' : 'button-create-rank'}
                 >
@@ -2964,7 +2966,7 @@ export default function UserProfile() {
                       <List className="text-gray-300 mx-auto mb-3" size={48} />
                       <p className="text-gray-500 mb-4">No lists yet</p>
                       <Button
-                        onClick={() => setLocation('/library')}
+                        onClick={() => setShowCreateListDialog(true)}
                         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                         data-testid="button-get-started-lists"
                       >
@@ -3026,7 +3028,7 @@ export default function UserProfile() {
                         Create ranked lists like "Top 10 90s Movies" with drag-and-drop ordering.
                       </p>
                       <Button
-                        onClick={() => setLocation('/create-rank')}
+                        onClick={() => setShowCreateRankDialog(true)}
                         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                         data-testid="button-create-first-rank"
                       >
@@ -4107,6 +4109,11 @@ export default function UserProfile() {
       <CreateRankDialog
         open={showCreateRankDialog}
         onOpenChange={setShowCreateRankDialog}
+      />
+
+      <CreateListDialog
+        open={showCreateListDialog}
+        onOpenChange={setShowCreateListDialog}
       />
     </>
   );
