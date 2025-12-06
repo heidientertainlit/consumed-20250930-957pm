@@ -607,6 +607,15 @@ export default function Feed() {
 
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
+  
+  // Debug: Check listData on posts
+  const listPosts = socialPosts.filter(p => p.type === 'added_to_list');
+  console.log('📋 List posts debug:', listPosts.map(p => ({ 
+    id: p.id, 
+    listId: (p as any).listId,
+    hasListData: !!(p as any).listData,
+    listDataTitle: (p as any).listData?.title
+  })));
 
   // Filter posts by detailed filters and feed filter
   const filteredPosts = socialPosts.filter(post => {
@@ -2078,7 +2087,74 @@ export default function Feed() {
                   })()}
 
                   {/* Media Cards */}
-                  {post.content && post.mediaItems && post.mediaItems.length > 0 ? (
+                  {/* List Preview Card for added_to_list posts with listData - check this FIRST */}
+                  {post.type === 'added_to_list' && (post as any).listData && post.mediaItems && post.mediaItems.length > 0 ? (
+                    <div className="mb-2">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex gap-3">
+                          {/* Poster on left */}
+                          <div 
+                            className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
+                            onClick={() => {
+                              const media = post.mediaItems[0];
+                              if (media.externalId && media.externalSource) {
+                                setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                              }
+                            }}
+                          >
+                            <img 
+                              src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
+                              alt={`${post.mediaItems[0].title} artwork`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          
+                          {/* List items on right */}
+                          <div className="flex-1 min-w-0 space-y-1">
+                            {(post as any).listData.items.slice(0, 3).map((item: any, idx: number) => {
+                              const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :
+                                item.mediaType?.toLowerCase() === 'music' ? '🎵' :
+                                item.mediaType?.toLowerCase() === 'podcast' ? '🎧' :
+                                item.mediaType?.toLowerCase() === 'game' ? '🎮' : '🎬';
+                              return (
+                                <div 
+                                  key={item.id || idx}
+                                  className="flex items-center gap-1.5 cursor-pointer hover:text-purple-600 transition-colors"
+                                  onClick={() => {
+                                    if (item.externalId && item.externalSource) {
+                                      setLocation(`/media/${item.mediaType?.toLowerCase()}/${item.externalSource}/${item.externalId}`);
+                                    }
+                                  }}
+                                >
+                                  <span className="text-xs">{mediaTypeEmoji}</span>
+                                  <span className="text-sm text-gray-800 truncate">{item.title}</span>
+                                </div>
+                              );
+                            })}
+                            {(post as any).listData.totalCount > 3 && (
+                              <Link
+                                href={`/list/${(post as any).listId}`}
+                                className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                              >
+                                +{(post as any).listData.totalCount - 3} more →
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* See more of user's lists link */}
+                      {post.user && (
+                        <Link
+                          href={`/user/${post.user.id}?tab=lists`}
+                          className="text-sm text-purple-600 hover:text-purple-700 transition-colors font-medium mt-2 inline-block"
+                          data-testid={`link-see-lists-${post.user.id}`}
+                        >
+                          See more of {(post.user.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user.username}'s lists →
+                        </Link>
+                      )}
+                    </div>
+                  ) : post.content && post.mediaItems && post.mediaItems.length > 0 ? (
                     <div className="space-y-2 mb-2">
                       {post.mediaItems.map((media, index) => {
                         const isClickable = media.externalId && media.externalSource;
