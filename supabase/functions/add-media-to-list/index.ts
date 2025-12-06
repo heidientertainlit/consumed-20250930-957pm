@@ -212,7 +212,8 @@ serve(async (req) => {
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
           visibility: 'public',
-          contains_spoilers: false
+          contains_spoilers: false,
+          list_id: list_id // Store list_id for list preview in feed
         };
         
         console.log('Creating social post with data (matching inline-post):', postData);

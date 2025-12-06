@@ -1771,6 +1771,28 @@ export default function Feed() {
                           const isRatedPost = contentLower.startsWith('rated ') || post.rating;
                           
                           if (isAddedPost && hasMediaItems) {
+                            // Check if we have listData for the new format
+                            const listData = (post as any).listData;
+                            if (listData) {
+                              return (
+                                <p className="text-sm">
+                                  <Link 
+                                    href={`/user/${post.user.id}`}
+                                    className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                    data-testid={`link-user-${post.user.id}`}
+                                  >
+                                    {post.user.username}
+                                  </Link>
+                                  <span className="text-gray-500"> added to → </span>
+                                  <Link 
+                                    href={`/user/${post.user.id}?tab=lists`}
+                                    className="font-medium text-purple-600 hover:text-purple-700"
+                                  >
+                                    {listData.title}
+                                  </Link>
+                                </p>
+                              );
+                            }
                             return (
                               <p className="text-sm">
                                 <Link 
@@ -1874,6 +1896,28 @@ export default function Feed() {
                                   const isRatedPost = contentLower.startsWith('rated ') || post.rating;
                                   
                                   if (isAddedPost && hasMediaItems) {
+                                    // Check if we have listData for the new format
+                                    const listData = (post as any).listData;
+                                    if (listData) {
+                                      return (
+                                        <p className="text-sm">
+                                          <Link 
+                                            href={`/user/${displayUser.userId}`}
+                                            className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                            data-testid={`link-user-${displayUser.userId}`}
+                                          >
+                                            {displayUser.username}
+                                          </Link>
+                                          <span className="text-gray-500"> added to → </span>
+                                          <Link 
+                                            href={`/user/${displayUser.userId}?tab=lists`}
+                                            className="font-medium text-purple-600 hover:text-purple-700"
+                                          >
+                                            {listData.title}
+                                          </Link>
+                                        </p>
+                                      );
+                                    }
                                     return (
                                       <p className="text-sm">
                                         <Link 
@@ -2140,7 +2184,62 @@ export default function Feed() {
                           </div>
                         )}
                         
-                        {/* Media Card */}
+                        {/* List Preview Card for added_to_list posts with listData */}
+                        {post.type === 'added_to_list' && (post as any).listData ? (
+                          <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                            <div className="flex gap-3">
+                              {/* Poster on left */}
+                              <div 
+                                className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
+                                onClick={() => {
+                                  const media = post.mediaItems[0];
+                                  if (media.externalId && media.externalSource) {
+                                    setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                  }
+                                }}
+                              >
+                                <img 
+                                  src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
+                                  alt={`${post.mediaItems[0].title} artwork`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              
+                              {/* List items on right */}
+                              <div className="flex-1 min-w-0 space-y-1">
+                                {(post as any).listData.items.slice(0, 3).map((item: any, idx: number) => {
+                                  const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :
+                                    item.mediaType?.toLowerCase() === 'music' ? '🎵' :
+                                    item.mediaType?.toLowerCase() === 'podcast' ? '🎧' :
+                                    item.mediaType?.toLowerCase() === 'game' ? '🎮' : '🎬';
+                                  return (
+                                    <div 
+                                      key={item.id || idx}
+                                      className="flex items-center gap-1.5 cursor-pointer hover:text-purple-600 transition-colors"
+                                      onClick={() => {
+                                        if (item.externalId && item.externalSource) {
+                                          setLocation(`/media/${item.mediaType?.toLowerCase()}/${item.externalSource}/${item.externalId}`);
+                                        }
+                                      }}
+                                    >
+                                      <span className="text-xs">{mediaTypeEmoji}</span>
+                                      <span className="text-sm text-gray-800 truncate">{item.title}</span>
+                                    </div>
+                                  );
+                                })}
+                                {(post as any).listData.totalCount > 3 && (
+                                  <Link
+                                    href={`/user/${post.user?.id}?tab=lists`}
+                                    className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                                  >
+                                    +{(post as any).listData.totalCount - 3} more →
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                        /* Standard Media Card for other posts */
                         <div className="bg-gray-50 rounded-lg p-3 mb-2">
                           <div 
                             className="flex items-center space-x-3 cursor-pointer mb-2"
@@ -2263,6 +2362,7 @@ export default function Feed() {
                             </button>
                           </div>
                         </div>
+                        )}
                         
                         {/* See more of user's lists link for added_to_list posts */}
                         {(() => {
