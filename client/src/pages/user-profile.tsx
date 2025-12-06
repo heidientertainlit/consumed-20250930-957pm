@@ -151,6 +151,7 @@ export default function UserProfile() {
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('stats');
+  const [collectionsSubTab, setCollectionsSubTab] = useState<'lists' | 'ranks'>('lists');
 
   // Fetch highlights from Supabase
   const fetchHighlights = async () => {
@@ -2821,29 +2822,54 @@ export default function UserProfile() {
         {activeSection === 'collections' && isOwnProfile && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <List className="text-purple-800" size={24} />
-                  <h2 className="text-xl font-bold text-gray-800">Collections</h2>
-                </div>
+              {/* Sub-navigation: Lists vs Ranks */}
+              <div className="flex items-center gap-2 mb-6">
+                <button
+                  onClick={() => setCollectionsSubTab('lists')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    collectionsSubTab === 'lists'
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  data-testid="subtab-lists"
+                >
+                  <List size={16} />
+                  Lists
+                </button>
+                <button
+                  onClick={() => setCollectionsSubTab('ranks')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    collectionsSubTab === 'ranks'
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  data-testid="subtab-ranks"
+                >
+                  <Trophy size={16} />
+                  Ranks
+                </button>
+                <div className="flex-1" />
                 <Button
                   onClick={() => setLocation('/library')}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                   data-testid="button-create-collection"
                 >
                   <Plus size={16} className="mr-2" />
-                  Create
+                  {collectionsSubTab === 'lists' ? 'New List' : 'New Rank'}
                 </Button>
               </div>
 
-              {isLoadingLists ? (
-                <div className="text-center py-8">
-                  <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
-                  <p className="text-gray-500 mt-2">Loading your lists...</p>
-                </div>
-              ) : userLists && userLists.length > 0 ? (
-                <div className="space-y-2">
-                  {userLists.map((list: any) => (
+              {/* Lists Sub-Tab Content */}
+              {collectionsSubTab === 'lists' && (
+                <>
+                  {isLoadingLists ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
+                      <p className="text-gray-500 mt-2">Loading your lists...</p>
+                    </div>
+                  ) : userLists && userLists.length > 0 ? (
+                    <div className="space-y-2">
+                      {userLists.map((list: any) => (
                     <div
                       key={list.id}
                       className="border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
@@ -2898,17 +2924,38 @@ export default function UserProfile() {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <List className="text-gray-300 mx-auto mb-3" size={48} />
-                  <p className="text-gray-500 mb-4">No lists yet</p>
+                  ) : (
+                    <div className="text-center py-8">
+                      <List className="text-gray-300 mx-auto mb-3" size={48} />
+                      <p className="text-gray-500 mb-4">No lists yet</p>
+                      <Button
+                        onClick={() => setLocation('/library')}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                        data-testid="button-get-started-lists"
+                      >
+                        <Plus size={16} className="mr-2" />
+                        Create Your First List
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Ranks Sub-Tab Content */}
+              {collectionsSubTab === 'ranks' && (
+                <div className="text-center py-12">
+                  <Trophy className="text-gray-300 mx-auto mb-3" size={48} />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Ranks Coming Soon</h3>
+                  <p className="text-gray-500 mb-4 max-w-sm mx-auto">
+                    Create ranked lists like "Top 10 90s Movies" with drag-and-drop ordering and collaborate with friends.
+                  </p>
                   <Button
-                    onClick={() => setLocation('/library')}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                    data-testid="button-get-started-lists"
+                    disabled
+                    className="bg-gray-300 text-gray-500 cursor-not-allowed"
+                    data-testid="button-create-rank-disabled"
                   >
                     <Plus size={16} className="mr-2" />
-                    Create Your First List
+                    Coming Soon
                   </Button>
                 </div>
               )}
