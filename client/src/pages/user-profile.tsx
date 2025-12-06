@@ -878,83 +878,20 @@ export default function UserProfile() {
     }
   }, [session?.access_token, dnaProfileStatus, isOwnProfile]);
 
-  // Track active section based on scroll position
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = [
-        { ref: statsRef, id: 'stats' },
-        { ref: dnaRef, id: 'dna' },
-        { ref: friendsRef, id: 'friends' },
-        { ref: listsRef, id: 'lists' },
-        { ref: historyRef, id: 'history' }
-      ];
-
-      const scrollPosition = window.scrollY + 200; // Offset for sticky nav
-
-      for (const section of sections) {
-        if (section.ref.current) {
-          const { offsetTop, offsetHeight } = section.ref.current;
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            setActiveSection(section.id);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Handle URL tab parameter to scroll to specific section
+  // Handle URL tab parameter to switch to specific tab
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tab = urlParams.get('tab');
     
-    if (tab && userLists.length > 0) {
-      // Wait for DOM to be ready
-      setTimeout(() => {
-        let targetRef = null;
-        switch(tab) {
-          case 'lists':
-            targetRef = listsRef;
-            break;
-          case 'history':
-            targetRef = historyRef;
-            break;
-          case 'friends':
-            targetRef = friendsRef;
-            break;
-          case 'dna':
-            targetRef = dnaRef;
-            break;
-          case 'stats':
-            targetRef = statsRef;
-            break;
-        }
-        
-        if (targetRef?.current) {
-          setActiveSection(tab);
-          const offsetTop = targetRef.current.offsetTop - 120;
-          window.scrollTo({
-            top: offsetTop,
-            behavior: 'smooth'
-          });
-        }
-      }, 300);
+    if (tab) {
+      // Map 'lists' to 'collections' for backward compatibility
+      const validTabs = ['stats', 'dna', 'friends', 'collections', 'history'];
+      const normalizedTab = tab === 'lists' ? 'collections' : tab;
+      if (validTabs.includes(normalizedTab)) {
+        setActiveSection(normalizedTab);
+      }
     }
-  }, [userLists.length]);
-
-  // Scroll to section function
-  const scrollToSection = (sectionRef: React.RefObject<HTMLDivElement>) => {
-    if (sectionRef.current) {
-      const offsetTop = sectionRef.current.offsetTop - 120; // Offset for sticky elements
-      window.scrollTo({
-        top: offsetTop,
-        behavior: 'smooth'
-      });
-    }
-  };
+  }, []);
 
   // Handle save profile
   const handleSaveProfile = async () => {
@@ -2224,11 +2161,11 @@ export default function UserProfile() {
           ) : null;
         })()}
 
-        {/* Section Navigation Pills - Sticky */}
-        <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 mb-6 -mx-0">
+        {/* Section Navigation Pills - Tab-like behavior */}
+        <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             <button
-              onClick={() => scrollToSection(statsRef)}
+              onClick={() => setActiveSection('stats')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeSection === 'stats'
                   ? 'bg-purple-600 text-white shadow-md'
@@ -2239,7 +2176,7 @@ export default function UserProfile() {
               Stats
             </button>
             <button
-              onClick={() => scrollToSection(dnaRef)}
+              onClick={() => setActiveSection('dna')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeSection === 'dna'
                   ? 'bg-purple-600 text-white shadow-md'
@@ -2251,7 +2188,7 @@ export default function UserProfile() {
             </button>
             {isOwnProfile && (
               <button
-                onClick={() => scrollToSection(friendsRef)}
+                onClick={() => setActiveSection('friends')}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   activeSection === 'friends'
                     ? 'bg-purple-600 text-white shadow-md'
@@ -2264,20 +2201,20 @@ export default function UserProfile() {
             )}
             {isOwnProfile && (
               <button
-                onClick={() => scrollToSection(listsRef)}
+                onClick={() => setActiveSection('collections')}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeSection === 'lists'
+                  activeSection === 'collections'
                     ? 'bg-purple-600 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                 }`}
-                data-testid="nav-lists"
+                data-testid="nav-collections"
               >
-                Lists
+                Collections
               </button>
             )}
             {isOwnProfile && (
               <button
-                onClick={() => scrollToSection(historyRef)}
+                onClick={() => setActiveSection('history')}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   activeSection === 'history'
                     ? 'bg-purple-600 text-white shadow-md'
@@ -2292,6 +2229,7 @@ export default function UserProfile() {
         </div>
 
         {/* Your Stats */}
+        {activeSection === 'stats' && (
         <div ref={statsRef} className="px-4 mb-8">
           <div className="mt-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Stats</h3>
@@ -2355,8 +2293,10 @@ export default function UserProfile() {
             )}
           </div>
         </div>
+        )}
 
         {/* My Entertainment DNA */}
+        {activeSection === 'dna' && (
         <div ref={dnaRef} className="px-4 mb-8">
           <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>My Entertainment DNA</h3>
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
@@ -2868,30 +2808,31 @@ export default function UserProfile() {
             )}
           </div>
         </div>
+        )}
 
         {/* Friends Manager - Only show on own profile */}
-        {isOwnProfile && user?.id && (
+        {activeSection === 'friends' && isOwnProfile && user?.id && (
           <div ref={friendsRef} className="px-4 mb-8">
             <FriendsManager userId={user.id} />
           </div>
         )}
 
-        {/* Lists Section - Only show on own profile */}
-        {isOwnProfile && (
+        {/* Collections Section (Lists + Ranks) - Only show on own profile */}
+        {activeSection === 'collections' && isOwnProfile && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
                   <List className="text-purple-800" size={24} />
-                  <h2 className="text-xl font-bold text-gray-800">Lists</h2>
+                  <h2 className="text-xl font-bold text-gray-800">Collections</h2>
                 </div>
                 <Button
                   onClick={() => setLocation('/library')}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                  data-testid="button-create-list"
+                  data-testid="button-create-collection"
                 >
                   <Plus size={16} className="mr-2" />
-                  Create List
+                  Create
                 </Button>
               </div>
 
@@ -2976,7 +2917,7 @@ export default function UserProfile() {
         )}
 
         {/* Media History Section - Only show on own profile */}
-        {isOwnProfile && (
+        {activeSection === 'history' && isOwnProfile && (
           <div ref={historyRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
