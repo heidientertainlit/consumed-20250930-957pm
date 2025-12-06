@@ -5,6 +5,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
 import FriendsManager from "@/components/friends-manager";
+import CreateRankDialog from "@/components/create-rank-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -91,6 +92,7 @@ export default function UserProfile() {
   const [isLoadingLists, setIsLoadingLists] = useState(false);
   const [userRanks, setUserRanks] = useState<any[]>([]);
   const [isLoadingRanks, setIsLoadingRanks] = useState(false);
+  const [showCreateRankDialog, setShowCreateRankDialog] = useState(false);
 
   // User stats states
   const [userStats, setUserStats] = useState<any>(null);
@@ -2883,7 +2885,7 @@ export default function UserProfile() {
                 <div className="flex-1" />
                 <Button
                   size="sm"
-                  onClick={() => collectionsSubTab === 'lists' ? setLocation('/library') : setLocation('/create-rank')}
+                  onClick={() => collectionsSubTab === 'lists' ? setLocation('/library') : setShowCreateRankDialog(true)}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-8"
                   data-testid={collectionsSubTab === 'lists' ? 'button-create-list' : 'button-create-rank'}
                 >
@@ -4101,6 +4103,11 @@ export default function UserProfile() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CreateRankDialog
+        open={showCreateRankDialog}
+        onOpenChange={setShowCreateRankDialog}
+      />
     </>
   );
 }

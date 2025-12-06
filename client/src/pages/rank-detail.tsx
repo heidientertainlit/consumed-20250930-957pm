@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useParams } from 'wouter';
-import { ArrowLeft, Trophy, Plus, Search, GripVertical, Trash2, Globe, Lock, Loader2 } from 'lucide-react';
+import { useLocation, useParams, Link } from 'wouter';
+import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, MoreVertical, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
+import ConsumptionTracker from '@/components/consumption-tracker';
+import Navigation from '@/components/navigation';
 
 interface RankItem {
   id: string;
@@ -21,20 +24,11 @@ interface RankItem {
 
 interface Rank {
   id: string;
+  user_id: string;
   title: string;
   visibility: string;
   max_items: number;
   items: RankItem[];
-}
-
-interface MediaResult {
-  id: string;
-  title: string;
-  media_type: string;
-  creator?: string;
-  image_url?: string;
-  external_id: string;
-  external_source: string;
 }
 
 export default function RankDetail() {
@@ -42,360 +36,303 @@ export default function RankDetail() {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  const [rank, setRank] = useState<Rank | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAddingItem, setIsAddingItem] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (session?.access_token && id) {
-      fetchRank();
-    }
-  }, [session?.access_token, id]);
-
-  const fetchRank = async () => {
-    if (!session?.access_token) return;
-    
-    setIsLoading(true);
-    try {
+  const { data: rankData, isLoading } = useQuery({
+    queryKey: ['rank-detail', id],
+    queryFn: async () => {
+      if (!session?.access_token) throw new Error('Authentication required');
+      
       const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks?user_id=${session.user?.id}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const foundRank = data.ranks?.find((r: Rank) => r.id === id);
-        if (foundRank) {
-          setRank(foundRank);
-        } else {
-          toast({
-            title: "Rank not found",
-            variant: "destructive"
-          });
-          setLocation('/me');
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching rank:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      if (!response.ok) throw new Error('Failed to fetch ranks');
+      
+      const data = await response.json();
+      const foundRank = data.ranks?.find((r: Rank) => r.id === id);
+      return foundRank || null;
+    },
+    enabled: !!session?.access_token && !!id,
+  });
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !session?.access_token) return;
+  const privacyMutation = useMutation({
+    mutationFn: async (isPublic: boolean) => {
+      if (!rankData?.id) throw new Error('Rank ID required');
 
-    setIsSearching(true);
-    try {
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search?query=${encodeURIComponent(searchQuery)}`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
+      const { data, error } = await supabase
+        .from('ranks')
+        .update({ visibility: isPublic ? 'public' : 'private' })
+        .eq('id', rankData.id)
+        .select('id, title, visibility')
+        .single();
 
-      if (response.ok) {
-        const data = await response.json();
-        const results: MediaResult[] = [];
-        
-        if (data.movies) {
-          data.movies.forEach((m: any) => results.push({
-            id: `movie-${m.id}`,
-            title: m.title,
-            media_type: 'movie',
-            creator: m.release_date?.split('-')[0],
-            image_url: m.poster_path ? `https://image.tmdb.org/t/p/w200${m.poster_path}` : undefined,
-            external_id: String(m.id),
-            external_source: 'tmdb'
-          }));
-        }
-        if (data.tv) {
-          data.tv.forEach((t: any) => results.push({
-            id: `tv-${t.id}`,
-            title: t.name,
-            media_type: 'tv',
-            creator: t.first_air_date?.split('-')[0],
-            image_url: t.poster_path ? `https://image.tmdb.org/t/p/w200${t.poster_path}` : undefined,
-            external_id: String(t.id),
-            external_source: 'tmdb'
-          }));
-        }
-        if (data.books) {
-          data.books.forEach((b: any) => results.push({
-            id: `book-${b.key}`,
-            title: b.title,
-            media_type: 'book',
-            creator: b.author_name?.[0],
-            image_url: b.cover_i ? `https://covers.openlibrary.org/b/id/${b.cover_i}-M.jpg` : undefined,
-            external_id: b.key,
-            external_source: 'openlibrary'
-          }));
-        }
-        if (data.music) {
-          data.music.forEach((m: any) => results.push({
-            id: `music-${m.id}`,
-            title: m.name,
-            media_type: 'music',
-            creator: m.artists?.[0]?.name,
-            image_url: m.album?.images?.[0]?.url,
-            external_id: m.id,
-            external_source: 'spotify'
-          }));
-        }
-
-        setSearchResults(results.slice(0, 20));
-      }
-    } catch (error) {
-      console.error('Error searching media:', error);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleAddItem = async (media: MediaResult) => {
-    if (!session?.access_token || !rank) return;
-
-    setIsAddingItem(true);
-    try {
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-rank-item", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          rank_id: rank.id,
-          title: media.title,
-          media_type: media.media_type,
-          creator: media.creator,
-          image_url: media.image_url,
-          external_id: media.external_id,
-          external_source: media.external_source
-        }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Added!",
-          description: `"${media.title}" added to your rank`,
-        });
-        setShowAddDialog(false);
-        setSearchQuery('');
-        setSearchResults([]);
-        fetchRank();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add item');
-      }
-    } catch (error: any) {
-      console.error('Error adding item:', error);
+      if (error) throw new Error(error.message || 'Failed to update visibility');
+      return { success: true, rank: data, message: `Rank is now ${isPublic ? 'public' : 'private'}` };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['rank-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
       toast({
-        title: "Failed to add",
+        title: "Privacy Updated",
+        description: data.message,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Update Failed",
         description: error.message,
         variant: "destructive"
       });
-    } finally {
-      setIsAddingItem(false);
     }
-  };
+  });
 
-  const handleDeleteRank = async () => {
-    if (!session?.access_token || !rank) return;
-    
-    if (!confirm('Are you sure you want to delete this rank?')) return;
+  const deleteRankMutation = useMutation({
+    mutationFn: async (rankId: string) => {
+      if (!session?.access_token) throw new Error('Authentication required');
 
-    try {
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/delete-rank", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ rank_id: rank.id }),
+        body: JSON.stringify({ rank_id: rankId }),
       });
 
-      if (response.ok) {
-        toast({
-          title: "Rank deleted",
-        });
-        setLocation('/me');
-      }
-    } catch (error) {
-      console.error('Error deleting rank:', error);
+      if (!response.ok) throw new Error('Failed to delete rank');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
+      toast({ title: "Rank Deleted" });
+      setLocation('/me?tab=collections');
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase
+        .from('rank_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw new Error(error.message);
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rank-detail', id] });
+      toast({ title: "Item Removed" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Remove Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleDeleteRank = () => {
+    if (!rankData?.id) return;
+    if (confirm(`Are you sure you want to delete "${rankData.title}"? This action cannot be undone.`)) {
+      deleteRankMutation.mutate(rankData.id);
     }
   };
 
+  const handleRemoveItem = (itemId: string) => {
+    deleteItemMutation.mutate(itemId);
+  };
+
+  const isPublic = rankData?.visibility === 'public';
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-purple-600" size={32} />
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={() => {}} />
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!rank) {
+  if (!rankData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Rank not found</p>
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Navigation onTrackConsumption={() => {}} />
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Rank not found</h1>
+            <Button onClick={() => setLocation("/me")}>
+              Back to Profile
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setLocation('/me')}
-              className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
-              data-testid="button-back"
-            >
-              <ArrowLeft size={20} className="text-gray-700" />
-            </button>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">{rank.title}</h1>
-              <div className="flex items-center gap-1 text-sm text-gray-500">
-                {rank.visibility === 'public' ? (
-                  <>
-                    <Globe size={12} />
-                    <span>Public</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock size={12} />
-                    <span>Private</span>
-                  </>
-                )}
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <Navigation onTrackConsumption={() => {}} />
+
+      <div className="sticky top-16 z-40 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <button
+                onClick={() => setLocation("/me?tab=collections")}
+                className="p-1.5 text-gray-700 hover:text-black transition-colors"
+                data-testid="button-back"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg font-bold text-gray-900 truncate">{rankData.title}</h1>
+                <p className="text-xs text-gray-500">{rankData.items?.length || 0} items</p>
               </div>
             </div>
+
+            <div className="flex items-center gap-2">
+              <Badge 
+                onClick={() => {
+                  if (!privacyMutation.isPending) {
+                    privacyMutation.mutate(!isPublic);
+                  }
+                }}
+                variant="secondary" 
+                className="cursor-pointer hover:bg-gray-200 text-xs px-2 py-1"
+                data-testid="toggle-rank-privacy"
+              >
+                {isPublic ? (
+                  <><Globe size={12} className="mr-1 text-purple-600" /> Public</>
+                ) : (
+                  <><Lock size={12} className="mr-1" /> Private</>
+                )}
+              </Badge>
+
+              <Button
+                size="sm"
+                onClick={() => setIsTrackModalOpen(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-xs px-3 py-1.5"
+                data-testid="button-add-item"
+              >
+                <Plus size={14} className="mr-1" />
+                Add
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="px-2">
+                    <MoreVertical size={16} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    onClick={handleDeleteRank}
+                    disabled={deleteRankMutation.isPending}
+                    className="text-red-600"
+                  >
+                    <Trash2 size={14} className="mr-2" />
+                    {deleteRankMutation.isPending ? 'Deleting...' : 'Delete Rank'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          <button
-            onClick={handleDeleteRank}
-            className="p-2 hover:bg-red-50 rounded-full transition-colors"
-            data-testid="button-delete-rank"
-          >
-            <Trash2 size={18} className="text-red-500" />
-          </button>
         </div>
       </div>
 
-      <div className="p-4 max-w-lg mx-auto">
-        {rank.items && rank.items.length > 0 ? (
-          <div className="space-y-2 mb-4">
-            {rank.items.map((item, index) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-lg border border-gray-200 p-3 flex items-center gap-3"
-                data-testid={`rank-item-${item.id}`}
-              >
-                <div className="flex items-center gap-2 text-gray-400">
-                  <GripVertical size={16} />
-                  <span className="font-bold text-lg text-purple-600 w-6 text-center">
-                    {index + 1}
-                  </span>
-                </div>
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt={item.title}
-                    className="w-12 h-12 rounded object-cover"
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                    <Trophy size={20} className="text-gray-400" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 truncate">{item.title}</h3>
-                  {item.creator && (
-                    <p className="text-sm text-gray-500 truncate">{item.creator}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl p-8 text-center border border-gray-200 mb-4">
-            <Trophy className="text-gray-300 mx-auto mb-3" size={48} />
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">No items yet</h3>
-            <p className="text-gray-500 mb-4">Start adding items to your rank</p>
-          </div>
-        )}
-
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogTrigger asChild>
-            <Button
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-              data-testid="button-add-item"
-            >
-              <Plus size={18} className="mr-2" />
-              Add Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-white max-w-md max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="text-gray-900">Add to Rank</DialogTitle>
-            </DialogHeader>
-            <div className="flex gap-2 mb-4">
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search movies, TV, books, music..."
-                className="flex-1 bg-white border-gray-300 text-gray-900"
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                data-testid="input-media-search"
-              />
-              <Button
-                onClick={handleSearch}
-                disabled={isSearching}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-                data-testid="button-search"
-              >
-                {isSearching ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />}
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto space-y-2">
-              {searchResults.map((result) => (
-                <button
-                  key={result.id}
-                  onClick={() => handleAddItem(result)}
-                  disabled={isAddingItem}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-colors text-left"
-                  data-testid={`search-result-${result.id}`}
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        {rankData.items && rankData.items.length > 0 ? (
+          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-15 gap-1">
+            {rankData.items.map((item: RankItem, index: number) => {
+              const isClickable = item.external_id && item.external_source;
+              const mediaUrl = isClickable ? `/media/${item.media_type}/${item.external_source}/${item.external_id}` : null;
+              
+              return (
+                <div 
+                  key={item.id} 
+                  className="bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all relative group overflow-hidden"
                 >
-                  {result.image_url ? (
-                    <img
-                      src={result.image_url}
-                      alt={result.title}
-                      className="w-12 h-12 rounded object-cover"
-                    />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveItem(item.id)}
+                    className="absolute top-0.5 right-0.5 z-10 bg-black/60 hover:bg-red-600 text-white p-1 h-auto opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                    data-testid={`button-remove-${item.id}`}
+                  >
+                    <X size={12} />
+                  </Button>
+
+                  <div className="absolute top-0.5 left-0.5 z-10 bg-purple-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                    {index + 1}
+                  </div>
+
+                  {isClickable ? (
+                    <Link href={mediaUrl!}>
+                      <div className="aspect-[2/3] relative">
+                        <img
+                          src={item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop"}
+                          alt={item.title}
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      </div>
+                    </Link>
                   ) : (
-                    <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                      <Trophy size={20} className="text-gray-400" />
+                    <div className="aspect-[2/3] relative">
+                      <img
+                        src={item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop"}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{result.title}</h4>
-                    <p className="text-sm text-gray-500 truncate">
-                      {result.creator && `${result.creator} • `}
-                      <span className="capitalize">{result.media_type}</span>
-                    </p>
+
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <h3 className="font-semibold text-xs text-white line-clamp-2 leading-tight">
+                      {item.title}
+                    </h3>
                   </div>
-                </button>
-              ))}
-              {searchResults.length === 0 && searchQuery && !isSearching && (
-                <p className="text-center text-gray-500 py-8">No results found</p>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl p-12 text-center border border-gray-200">
+            <Trophy className="text-gray-300 mx-auto mb-3" size={48} />
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">No items yet</h3>
+            <p className="text-gray-500 mb-4">Click "Add" to start adding items to your rank</p>
+            <Button
+              onClick={() => setIsTrackModalOpen(true)}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus size={16} className="mr-2" />
+              Add First Item
+            </Button>
+          </div>
+        )}
       </div>
+
+      <ConsumptionTracker 
+        isOpen={isTrackModalOpen} 
+        onClose={() => setIsTrackModalOpen(false)}
+        targetRankId={rankData.id}
+      />
     </div>
   );
 }

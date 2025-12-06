@@ -20,6 +20,7 @@ interface ConsumptionTrackerProps {
   isOpen: boolean;
   onClose: () => void;
   defaultListType?: string; // Auto-select this list when provided
+  targetRankId?: string; // When provided, add media to this rank instead of list
 }
 
 interface MediaResult {
@@ -34,7 +35,7 @@ interface MediaResult {
   url?: string;
 }
 
-export default function ConsumptionTracker({ isOpen, onClose, defaultListType }: ConsumptionTrackerProps) {
+export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId }: ConsumptionTrackerProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["All Media"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
@@ -245,12 +246,67 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
     },
   });
 
+  const addToRankMutation = useMutation({
+    mutationFn: async (mediaData: MediaResult) => {
+      if (!session?.access_token || !targetRankId) {
+        throw new Error("Authentication or rank ID required");
+      }
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-rank-item", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          rank_id: targetRankId,
+          title: mediaData.title,
+          media_type: mediaData.type,
+          creator: mediaData.creator,
+          image_url: mediaData.image,
+          external_id: mediaData.external_id,
+          external_source: mediaData.external_source,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to add to rank: ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Added to Rank!",
+        description: "Item added successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['rank-detail', targetRankId] });
+      queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
+      onClose();
+      resetForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add item",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddMedia = (listType?: string, isCustom: boolean = false) => {
     if (!selectedMedia) return;
 
     // Check if user is authenticated
     if (!user || !session) {
       setShowAuthModal(true);
+      return;
+    }
+
+    // If adding to a rank, use rank mutation
+    if (targetRankId) {
+      addToRankMutation.mutate(selectedMedia);
       return;
     }
 
@@ -269,9 +325,14 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
       <DialogContent className="bg-white border border-gray-200 max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-4 flex-shrink-0">
           <div>
-            <DialogTitle className="text-2xl font-bold text-gray-900">Track Media</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              {targetRankId ? "Add to Rank" : "Track Media"}
+            </DialogTitle>
             <p className="text-gray-500 text-sm mt-1">
-              Share your entertainment experience with your friends.
+              {targetRankId 
+                ? "Search and add media to your ranked list."
+                : "Share your entertainment experience with your friends."
+              }
             </p>
           </div>
         </DialogHeader>
@@ -505,8 +566,17 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType }:
             Cancel
           </Button>
 
-          {/* Conditional Button: Direct add if defaultListType provided, otherwise show dropdown */}
-          {defaultListType ? (
+          {/* Conditional Button: Rank mode, direct add, or dropdown */}
+          {targetRankId ? (
+            <Button
+              onClick={() => handleAddMedia()}
+              disabled={!selectedMedia || addToRankMutation.isPending}
+              className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400"
+              data-testid="button-add-to-rank"
+            >
+              {addToRankMutation.isPending ? "Adding..." : "Add to Rank"}
+            </Button>
+          ) : defaultListType ? (
             <Button
               onClick={() => handleAddMedia(defaultListType)}
               disabled={!selectedMedia || trackMediaMutation.isPending}
