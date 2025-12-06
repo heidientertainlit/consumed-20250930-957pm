@@ -2850,12 +2850,13 @@ export default function UserProfile() {
                 </button>
                 <div className="flex-1" />
                 <Button
+                  size="sm"
                   onClick={() => setLocation('/library')}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-8"
                   data-testid="button-create-collection"
                 >
-                  <Plus size={16} className="mr-2" />
-                  {collectionsSubTab === 'lists' ? 'New List' : 'New Rank'}
+                  <Plus size={14} className="mr-1" />
+                  {collectionsSubTab === 'lists' ? 'New' : 'New'}
                 </Button>
               </div>
 
