@@ -171,7 +171,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); onOpenChange(isOpen); }}>
-      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col bg-white text-black border-gray-200 mx-4">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col bg-white text-black border-gray-200">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-black">Create New List</DialogTitle>
         </DialogHeader>

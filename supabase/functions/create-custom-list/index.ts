@@ -17,12 +17,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization') }
+          headers: { Authorization: req.headers.get('Authorization')! }
         }
       }
     );
 
-    // Get authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
@@ -34,10 +33,8 @@ serve(async (req) => {
       });
     }
 
-    // Get request body
-    const { title } = await req.json();
+    const { title, visibility, items } = await req.json();
 
-    // Validate input
     if (!title || title.trim().length === 0) {
       return new Response(JSON.stringify({
         error: 'List title is required'
@@ -56,13 +53,14 @@ serve(async (req) => {
       });
     }
 
-    // Create the custom list (public by default, owned by user)
+    const isPrivate = visibility === 'private';
+
     const { data: newList, error: createError } = await supabase
       .from('lists')
       .insert({
         title: title.trim(),
         user_id: user.id,
-        is_private: false // Public by default
+        is_private: isPrivate
       })
       .select('id, title, user_id, is_private')
       .single();
@@ -79,9 +77,36 @@ serve(async (req) => {
 
     console.log('Successfully created custom list:', newList);
 
+    let addedItems: any[] = [];
+    if (items && Array.isArray(items) && items.length > 0) {
+      const itemsToInsert = items.map((item: any) => ({
+        list_id: newList.id,
+        user_id: user.id,
+        title: item.title,
+        media_type: item.mediaType || item.media_type,
+        creator: item.creator,
+        image_url: item.imageUrl || item.image_url,
+        external_id: item.externalId || item.external_id,
+        external_source: item.externalSource || item.external_source,
+      }));
+
+      const { data: insertedItems, error: itemsError } = await supabase
+        .from('list_items')
+        .insert(itemsToInsert)
+        .select();
+
+      if (itemsError) {
+        console.error('Error adding items to list:', itemsError);
+      } else {
+        addedItems = insertedItems || [];
+        console.log(`Added ${addedItems.length} items to list`);
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
-      list: newList
+      list: newList,
+      itemsAdded: addedItems.length
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -90,7 +115,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Function error:', error);
     return new Response(JSON.stringify({
-      error: 'Internal server error: ' + error.message
+      error: 'Internal server error: ' + (error as Error).message
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
