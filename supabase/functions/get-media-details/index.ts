@@ -193,6 +193,9 @@ serve(async (req) => {
       // Check if externalId is an ISBN (all digits and hyphens)
       const isISBN = /^[\d-]+$/.test(externalId);
       
+      // Strip 'works/' prefix if already present (some IDs come as 'works/OL123')
+      const cleanId = externalId.replace(/^works\//, '');
+      
       if (isISBN) {
         // Lookup by ISBN first to get the work ID
         response = await fetch(`https://openlibrary.org/isbn/${externalId}.json`);
@@ -215,8 +218,8 @@ serve(async (req) => {
           }
         }
       } else {
-        // Standard work ID lookup
-        response = await fetch(`https://openlibrary.org/works/${externalId}.json`);
+        // Standard work ID lookup - use cleanId to avoid double 'works/' prefix
+        response = await fetch(`https://openlibrary.org/works/${cleanId}.json`);
         if (response.ok) {
           data = await response.json();
         }
