@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowLeft, Trophy, Info } from 'lucide-react';
+import { ArrowLeft, Trophy, Globe, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 
@@ -15,9 +14,7 @@ export default function CreateRank() {
   const { toast } = useToast();
   
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [maxItems, setMaxItems] = useState('10');
-  const [visibility, setVisibility] = useState('public');
+  const [isPublic, setIsPublic] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreate = async () => {
@@ -50,9 +47,7 @@ export default function CreateRank() {
         },
         body: JSON.stringify({
           title: title.trim(),
-          description: description.trim() || null,
-          max_items: parseInt(maxItems),
-          visibility
+          visibility: isPublic ? 'public' : 'private'
         }),
       });
 
@@ -118,69 +113,32 @@ export default function CreateRank() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Top 10 90s Movies"
-                className="mt-1.5"
+                className="mt-1.5 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
                 data-testid="input-rank-title"
               />
             </div>
 
-            <div>
-              <Label htmlFor="description" className="text-sm font-medium text-gray-700">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What's this ranking about?"
-                className="mt-1.5 resize-none"
-                rows={3}
-                data-testid="input-rank-description"
+            <div className="flex items-center justify-between py-3 border-t border-gray-100">
+              <div className="flex items-center gap-3">
+                {isPublic ? (
+                  <Globe size={20} className="text-purple-600" />
+                ) : (
+                  <Lock size={20} className="text-gray-500" />
+                )}
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {isPublic ? 'Public' : 'Private'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {isPublic ? 'Anyone can see this rank' : 'Only you can see this rank'}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={isPublic}
+                onCheckedChange={setIsPublic}
+                data-testid="switch-visibility"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="maxItems" className="text-sm font-medium text-gray-700">
-                  Max Items
-                </Label>
-                <Select value={maxItems} onValueChange={setMaxItems}>
-                  <SelectTrigger className="mt-1.5" data-testid="select-max-items">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">Top 5</SelectItem>
-                    <SelectItem value="10">Top 10</SelectItem>
-                    <SelectItem value="15">Top 15</SelectItem>
-                    <SelectItem value="20">Top 20</SelectItem>
-                    <SelectItem value="25">Top 25</SelectItem>
-                    <SelectItem value="50">Top 50</SelectItem>
-                    <SelectItem value="100">Top 100</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="visibility" className="text-sm font-medium text-gray-700">
-                  Visibility
-                </Label>
-                <Select value={visibility} onValueChange={setVisibility}>
-                  <SelectTrigger className="mt-1.5" data-testid="select-visibility">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="public">Public</SelectItem>
-                    <SelectItem value="friends">Friends Only</SelectItem>
-                    <SelectItem value="private">Private</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-2">
-              <Info size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-blue-800">
-                After creating your rank, you can add and reorder items using drag-and-drop.
-              </p>
             </div>
 
             <Button

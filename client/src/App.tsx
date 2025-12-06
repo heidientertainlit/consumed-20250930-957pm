@@ -22,6 +22,7 @@ import UserProfile from "@/pages/user-profile";
 import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
 import CreateRank from "@/pages/create-rank";
+import RankDetail from "@/pages/rank-detail";
 import EdnaSharePage from "@/pages/edna-share";
 import AdminDashboard from "@/pages/admin";
 import CTVDemo from "@/pages/ctv";
@@ -137,6 +138,11 @@ function Router() {
         <Route path="/create-rank">
           <ProtectedRoute>
             <CreateRank />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/rank/:id">
+          <ProtectedRoute>
+            <RankDetail />
           </ProtectedRoute>
         </Route>
         <Route path="/creator/:id">
