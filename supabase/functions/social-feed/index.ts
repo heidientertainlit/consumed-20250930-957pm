@@ -125,7 +125,8 @@ serve(async (req) => {
           media_external_source, 
           media_description,
           contains_spoilers,
-          prediction_pool_id
+          prediction_pool_id,
+          list_id
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -277,8 +278,61 @@ serve(async (req) => {
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
-      // List preview feature disabled temporarily - list_id column not yet in Supabase production
+      // Fetch list data for added_to_list posts
+      const listIds = posts?.filter(p => p.list_id && p.post_type === 'added_to_list').map(p => p.list_id) || [];
+      const uniqueListIds = [...new Set(listIds)];
       let listDataMap = new Map<string, { title: string; items: any[]; totalCount: number }>();
+      
+      if (uniqueListIds.length > 0) {
+        // Fetch list titles
+        const { data: lists, error: listsError } = await supabaseAdmin
+          .from('lists')
+          .select('id, title, user_id')
+          .in('id', uniqueListIds);
+        
+        if (listsError) {
+          console.error('Error fetching lists:', listsError);
+        }
+        
+        // Fetch list items for each list (limited to 4 items per list)
+        const { data: allListItems, error: itemsError } = await supabaseAdmin
+          .from('list_items')
+          .select('id, list_id, title, media_type, creator, image_url, external_id, external_source, created_at')
+          .in('list_id', uniqueListIds)
+          .order('created_at', { ascending: false });
+        
+        if (itemsError) {
+          console.error('Error fetching list items:', itemsError);
+        }
+        
+        // Get total counts per list
+        const itemCountsByList: { [key: string]: number } = {};
+        allListItems?.forEach(item => {
+          itemCountsByList[item.list_id] = (itemCountsByList[item.list_id] || 0) + 1;
+        });
+        
+        // Group items by list_id (only first 4)
+        const itemsByList: { [key: string]: any[] } = {};
+        allListItems?.forEach(item => {
+          if (!itemsByList[item.list_id]) {
+            itemsByList[item.list_id] = [];
+          }
+          if (itemsByList[item.list_id].length < 4) {
+            itemsByList[item.list_id].push(item);
+          }
+        });
+        
+        // Build the map
+        lists?.forEach(list => {
+          listDataMap.set(list.id, {
+            title: list.title,
+            items: itemsByList[list.id] || [],
+            totalCount: itemCountsByList[list.id] || 0
+          });
+        });
+        
+        console.log('List data loaded:', listDataMap.size, 'lists');
+      }
 
       // Get predictions that the current user has liked
       const predictionIds = predictions?.map(pred => pred.id) || [];
@@ -342,6 +396,9 @@ serve(async (req) => {
           const post = groupPosts[0];
           const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
           
+          // Get list data for added_to_list posts
+          const listData = post.list_id ? listDataMap.get(post.list_id) : null;
+          
           groupedItems.push({
             id: post.id,
             type: post.post_type || 'update',
@@ -360,6 +417,20 @@ serve(async (req) => {
             rating: post.rating,
             progress: post.progress,
             containsSpoilers: post.contains_spoilers || false,
+            listId: post.list_id || null,
+            listData: listData ? {
+              title: listData.title,
+              items: listData.items.map(item => ({
+                id: item.id,
+                title: item.title,
+                mediaType: item.media_type,
+                creator: item.creator,
+                imageUrl: item.image_url,
+                externalId: item.external_id,
+                externalSource: item.external_source
+              })),
+              totalCount: listData.totalCount
+            } : null,
             mediaItems: [{
               id: `${post.media_external_source}-${post.media_external_id}`,
               title: post.media_title || '',
