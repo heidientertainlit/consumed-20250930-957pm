@@ -123,7 +123,9 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch social feed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('Social feed error response:', response.status, errorText);
+    throw new Error(`Failed to fetch social feed: ${response.status} - ${errorText || response.statusText}`);
   }
 
   return response.json();
@@ -607,6 +609,14 @@ export default function Feed() {
 
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
+  
+  // Debug logging
+  console.log('📊 Feed Debug:', { 
+    infinitePosts: infinitePosts?.pages?.length, 
+    socialPosts: socialPosts.length,
+    isLoading,
+    feedError: feedError?.message
+  });
 
   // Filter posts by detailed filters and feed filter
   const filteredPosts = socialPosts.filter(post => {
