@@ -89,6 +89,8 @@ export default function UserProfile() {
   // User lists states
   const [userLists, setUserLists] = useState<any[]>([]);
   const [isLoadingLists, setIsLoadingLists] = useState(false);
+  const [userRanks, setUserRanks] = useState<any[]>([]);
+  const [isLoadingRanks, setIsLoadingRanks] = useState(false);
 
   // User stats states
   const [userStats, setUserStats] = useState<any>(null);
@@ -859,6 +861,7 @@ export default function UserProfile() {
     if (session?.access_token && viewingUserId) {
       fetchDnaProfile();
       fetchUserLists();
+      fetchUserRanks();
       fetchUserStats();
       fetchUserPoints();
       fetchUserPredictions();
@@ -989,6 +992,35 @@ export default function UserProfile() {
       setUserLists([]);
     } finally {
       setIsLoadingLists(false);
+    }
+  };
+
+  // Fetch user ranks from Supabase edge function
+  const fetchUserRanks = async () => {
+    if (!session?.access_token || !viewingUserId) return;
+
+    setIsLoadingRanks(true);
+    try {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks?user_id=${viewingUserId}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserRanks(data.ranks || []);
+        console.log('User ranks loaded:', data.ranks?.length);
+      } else {
+        console.error('Failed to fetch user ranks');
+        setUserRanks([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user ranks:', error);
+      setUserRanks([]);
+    } finally {
+      setIsLoadingRanks(false);
     }
   };
 
@@ -2944,21 +2976,64 @@ export default function UserProfile() {
 
               {/* Ranks Sub-Tab Content */}
               {collectionsSubTab === 'ranks' && (
-                <div className="text-center py-12">
-                  <Trophy className="text-gray-300 mx-auto mb-3" size={48} />
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Ranks Coming Soon</h3>
-                  <p className="text-gray-500 mb-4 max-w-sm mx-auto">
-                    Create ranked lists like "Top 10 90s Movies" with drag-and-drop ordering and collaborate with friends.
-                  </p>
-                  <Button
-                    disabled
-                    className="bg-gray-300 text-gray-500 cursor-not-allowed"
-                    data-testid="button-create-rank-disabled"
-                  >
-                    <Plus size={16} className="mr-2" />
-                    Coming Soon
-                  </Button>
-                </div>
+                <>
+                  {isLoadingRanks ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
+                      <p className="text-gray-500 mt-2">Loading your ranks...</p>
+                    </div>
+                  ) : userRanks && userRanks.length > 0 ? (
+                    <div className="space-y-2">
+                      {userRanks.map((rank: any) => (
+                        <div
+                          key={rank.id}
+                          className="border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
+                          onClick={() => setLocation(`/rank/${rank.id}`)}
+                          data-testid={`rank-card-${rank.id}`}
+                        >
+                          <div className="px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                                <Trophy className="text-purple-600" size={18} />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold text-gray-900">{rank.title}</h3>
+                                  {rank.visibility && rank.visibility !== 'public' && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {rank.visibility === 'private' ? <Lock size={10} className="mr-1" /> : <Users size={10} className="mr-1" />}
+                                      {rank.visibility}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                  {rank.items?.length || 0} of {rank.max_items || rank.maxItems || 10} items
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronRight className="text-gray-400" size={18} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Trophy className="text-gray-300 mx-auto mb-3" size={48} />
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Create Your First Rank</h3>
+                      <p className="text-gray-500 mb-4 max-w-sm mx-auto">
+                        Create ranked lists like "Top 10 90s Movies" with drag-and-drop ordering.
+                      </p>
+                      <Button
+                        onClick={() => setLocation('/create-rank')}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                        data-testid="button-create-first-rank"
+                      >
+                        <Plus size={16} className="mr-2" />
+                        Create Rank
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

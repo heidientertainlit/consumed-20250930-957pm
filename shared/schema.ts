@@ -229,6 +229,38 @@ export const followedCreators = pgTable("followed_creators", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Ranks table - for ranked lists like "Top 10 90s Movies"
+export const ranks = pgTable("ranks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  visibility: varchar("visibility").default("public"), // 'public', 'private', 'friends'
+  isCollaborative: boolean("is_collaborative").default(false),
+  maxItems: integer("max_items").default(10), // Default to Top 10
+  category: text("category"), // 'movies', 'tv', 'books', 'music', 'mixed'
+  coverImageUrl: text("cover_image_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Rank items - media items within a rank with position for ordering
+export const rankItems = pgTable("rank_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rankId: varchar("rank_id").notNull().references(() => ranks.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  position: integer("position").notNull(), // 1-based position for ordering
+  title: text("title").notNull(),
+  mediaType: text("media_type"), // 'movie', 'tv', 'book', 'music', 'podcast', 'game'
+  creator: text("creator"), // Director, author, artist
+  imageUrl: text("image_url"),
+  externalId: text("external_id"),
+  externalSource: text("external_source"), // 'tmdb', 'spotify', 'openlibrary', 'youtube'
+  notes: text("notes"), // Personal notes about why it's ranked here
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -310,6 +342,18 @@ export const insertFollowedCreatorSchema = createInsertSchema(followedCreators).
   createdAt: true,
 });
 
+export const insertRankSchema = createInsertSchema(ranks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRankItemSchema = createInsertSchema(rankItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Conversation topics (media or curated themes)
 export const conversationTopics = pgTable("conversation_topics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -379,6 +423,10 @@ export type MediaRating = typeof mediaRatings.$inferSelect;
 export type InsertMediaRating = z.infer<typeof insertMediaRatingSchema>;
 export type FollowedCreator = typeof followedCreators.$inferSelect;
 export type InsertFollowedCreator = z.infer<typeof insertFollowedCreatorSchema>;
+export type Rank = typeof ranks.$inferSelect;
+export type InsertRank = z.infer<typeof insertRankSchema>;
+export type RankItem = typeof rankItems.$inferSelect;
+export type InsertRankItem = z.infer<typeof insertRankItemSchema>;
 export type ConversationTopic = typeof conversationTopics.$inferSelect;
 export type InsertConversationTopic = z.infer<typeof insertConversationTopicSchema>;
 export type Conversation = typeof conversations.$inferSelect;

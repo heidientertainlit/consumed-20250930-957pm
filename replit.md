@@ -10,7 +10,8 @@ Preferred communication style: Simple, everyday language.
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
 - **Navigation**: Bottom navigation includes 4 items: Feed, Search (AI-powered), Leaderboard, and Me. Friends functionality moved to profile page. Discover, Track, and Play pages exist as backpages (accessible at `/discover`, `/track`, and `/play`) but are not shown in navigation.
-- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), and Friends (friend management - only visible on own profile). Section pills highlight active section and enable smooth scrolling navigation.
+- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends, Collections, History) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), Friends (friend management - only visible on own profile), Collections (Lists + Ranks), and History (media history with imports). Section pills highlight active section and enable tab-based navigation.
+- **Collections System**: Collections tab contains sub-navigation for Lists (existing media tracking lists) and Ranks (ranked lists like "Top 10 90s Movies"). Ranks feature supports drag-and-drop ordering, position-based ranking, and collaboration.
 - **Search Page**: AI-powered search at `/search` with unified results showing Conversations (posts/predictions/polls/reviews), AI Recommendations, and Media Results. Uses custom AI icon in navigation.
 
 ## System Architecture
@@ -75,6 +76,12 @@ Preferred communication style: Simple, everyday language.
 - **Personal System Lists**: 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) auto-created with privacy control.
 - **Custom Lists**: User-created lists with dedicated edge functions.
 - **Collaborative Lists**: Managed by `list_collaborators` table and associated edge functions.
+- **Ranked Lists (Ranks)**: Ordered media rankings (e.g., "Top 10 90s Movies") stored in `ranks` and `rank_items` tables. Features:
+  - Position-based ordering with drag-and-drop support via `reorder-rank-items` edge function
+  - Configurable max items (default 10)
+  - Visibility controls (public/private/friends)
+  - Edge functions: `create-rank`, `get-user-ranks`, `add-rank-item`, `reorder-rank-items`, `delete-rank`
+  - **IMPORTANT**: Requires SQL migration `supabase/migrations/20251206_create_ranks_tables.sql` to be run in Supabase SQL Editor
 - **Progress Tracking**: Uses `update-item-progress` edge function with modes: percent (0-100%), page (books), episode (TV shows), track (music).
 - **Social Features**: Engagement-focused leaderboards (conversation activity, social interaction, play activity), activity feeds, friend discovery, "Inner Circle".
 - **Play Section**: Category-based navigation for Trivia, Polls, Predictions.
