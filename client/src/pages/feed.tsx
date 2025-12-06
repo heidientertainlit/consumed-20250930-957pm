@@ -607,15 +607,6 @@ export default function Feed() {
 
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
-  
-  // Debug: Check listData on posts
-  const listPosts = socialPosts.filter(p => p.type === 'added_to_list');
-  console.log('📋 List posts debug:', listPosts.map(p => ({ 
-    id: p.id, 
-    listId: (p as any).listId,
-    hasListData: !!(p as any).listData,
-    listDataTitle: (p as any).listData?.title
-  })));
 
   // Filter posts by detailed filters and feed filter
   const filteredPosts = socialPosts.filter(post => {
