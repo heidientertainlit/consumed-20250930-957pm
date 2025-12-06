@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -33,14 +32,11 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(["All Media"]);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const [, setLocation] = useLocation();
-
-  const categories = ["All Media", "Movies", "TV Shows", "Books", "Music", "Podcasts", "YouTube", "Games"];
 
   const resetForm = () => {
     setTitle("");
@@ -48,7 +44,6 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
     setSearchQuery("");
     setSearchResults([]);
     setSelectedMedia([]);
-    setSelectedCategories(["All Media"]);
   };
 
   const searchMedia = async (query: string, type?: string) => {
@@ -84,20 +79,13 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
-        const categoryToType: Record<string, string> = {
-          "Movies": "movie", "TV Shows": "tv", "Books": "book",
-          "Music": "music", "Podcasts": "podcast", "YouTube": "youtube", "Games": "game"
-        };
-        const searchType = selectedCategories.includes("All Media")
-          ? undefined
-          : categoryToType[selectedCategories[0]];
-        searchMedia(searchQuery, searchType);
+        searchMedia(searchQuery);
       } else {
         setSearchResults([]);
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategories]);
+  }, [searchQuery]);
 
   const createListMutation = useMutation({
     mutationFn: async () => {
@@ -183,84 +171,49 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetForm(); onOpenChange(isOpen); }}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col bg-white text-black border-gray-200">
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col bg-white text-black border-gray-200 mx-4">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-black">Create New List</DialogTitle>
+          <DialogTitle className="text-lg font-bold text-black">Create New List</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-6 pr-2">
-          <div className="space-y-2">
-            <Label htmlFor="list-title" className="text-black font-medium">List Name</Label>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 pr-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="list-title" className="text-black font-medium text-sm">List Name</Label>
             <Input
               id="list-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., My Watchlist, Classics, Binge Queue"
+              placeholder="e.g., My Watchlist, Classics"
               maxLength={50}
               data-testid="input-list-title"
               autoFocus
-              className="bg-white text-black border-gray-300 placeholder:text-gray-500"
+              className="bg-white text-black border-gray-300 placeholder:text-gray-400 h-10"
             />
-            <p className="text-xs text-gray-500">{title.length}/50 characters</p>
+            <p className="text-xs text-gray-400">{title.length}/50</p>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
-              {isPublic ? <Globe size={18} className="text-purple-600" /> : <Lock size={18} className="text-gray-600" />}
-              <span className="font-medium text-black">{isPublic ? 'Public' : 'Private'}</span>
-              <span className="text-sm text-gray-500">
-                {isPublic ? 'Anyone can see this list' : 'Only you can see this list'}
-              </span>
+              {isPublic ? <Globe size={16} className="text-purple-600" /> : <Lock size={16} className="text-gray-500" />}
+              <span className="text-sm text-black">{isPublic ? 'Public' : 'Private'}</span>
             </div>
-            <Badge 
-              onClick={() => setIsPublic(!isPublic)}
-              variant="secondary" 
-              className="cursor-pointer hover:bg-gray-200 px-3 py-1"
+            <Switch
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
+              className="data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-gray-300"
               data-testid="toggle-list-visibility"
-            >
-              {isPublic ? 'Make Private' : 'Make Public'}
-            </Badge>
+            />
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-black font-medium">Add Media (Optional)</Label>
-            
-            <div className="flex flex-wrap gap-2 mb-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => {
-                    if (category === "All Media") {
-                      setSelectedCategories(["All Media"]);
-                    } else {
-                      const newSelected = selectedCategories.filter(c => c !== "All Media");
-                      if (selectedCategories.includes(category)) {
-                        const filtered = newSelected.filter(c => c !== category);
-                        setSelectedCategories(filtered.length === 0 ? ["All Media"] : filtered);
-                      } else {
-                        setSelectedCategories([...newSelected, category]);
-                      }
-                    }
-                  }}
-                  className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                    selectedCategories.includes(category)
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-
+          <div className="space-y-2">
+            <Label className="text-black font-medium text-sm">Add Media (Optional)</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search movies, TV shows, books, music..."
-                className="pl-10 bg-white border-gray-300 text-black placeholder:text-gray-500"
+                placeholder="Search movies, shows, books..."
+                className="pl-10 bg-white border-gray-300 text-black placeholder:text-gray-400 h-10"
               />
             </div>
 
@@ -317,10 +270,11 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+        <div className="flex justify-end gap-2 pt-3 border-t mt-3">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => { resetForm(); onOpenChange(false); }}
             className="border-gray-300 bg-white text-black hover:bg-gray-100"
             data-testid="button-cancel-create-list"
@@ -329,14 +283,15 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
           </Button>
           <Button
             onClick={handleSubmit}
+            size="sm"
             disabled={createListMutation.isPending || !title.trim()}
             className="bg-purple-600 hover:bg-purple-700 text-white"
             data-testid="button-create-list"
           >
             {createListMutation.isPending ? (
-              <><Loader2 className="animate-spin mr-2" size={16} /> Creating...</>
+              <><Loader2 className="animate-spin mr-1" size={14} /> Creating...</>
             ) : (
-              `Create List${selectedMedia.length > 0 ? ` (${selectedMedia.length} items)` : ''}`
+              `Create${selectedMedia.length > 0 ? ` (${selectedMedia.length})` : ''}`
             )}
           </Button>
         </div>
