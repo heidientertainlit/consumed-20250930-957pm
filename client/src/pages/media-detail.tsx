@@ -21,8 +21,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function MediaDetail() {
-  const [, params] = useRoute("/media/:type/:source/:id");
+  const [matchStandard, paramsStandard] = useRoute("/media/:type/:source/:id");
+  const [matchPrefixed, paramsPrefixed] = useRoute("/media/:type/:source/:prefix/:id");
   const [, setLocation] = useLocation();
+  
+  // Combine params - for Open Library, the ID includes the prefix (e.g., "works/OL123")
+  const params = matchPrefixed && paramsPrefixed ? {
+    type: paramsPrefixed.type,
+    source: paramsPrefixed.source,
+    id: `${paramsPrefixed.prefix}/${paramsPrefixed.id}`
+  } : paramsStandard;
   const { session, user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);

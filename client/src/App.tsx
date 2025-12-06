@@ -123,6 +123,11 @@ function Router() {
             <MediaDetail />
           </ProtectedRoute>
         </Route>
+        <Route path="/media/:type/:source/:prefix/:id">
+          <ProtectedRoute>
+            <MediaDetail />
+          </ProtectedRoute>
+        </Route>
         <Route path="/list/:id">
           <ProtectedRoute>
             <ListDetail />
