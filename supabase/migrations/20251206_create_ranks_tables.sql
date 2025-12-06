@@ -1,10 +1,10 @@
 -- Create ranks table for ranked lists like "Top 10 90s Movies"
 CREATE TABLE IF NOT EXISTS ranks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
-  visibility VARCHAR DEFAULT 'public', -- 'public', 'private', 'friends'
+  visibility TEXT DEFAULT 'public', -- 'public', 'private', 'friends'
   is_collaborative BOOLEAN DEFAULT false,
   max_items INTEGER DEFAULT 10, -- Default to Top 10
   category TEXT, -- 'movies', 'tv', 'books', 'music', 'mixed'
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS ranks (
 CREATE TABLE IF NOT EXISTS rank_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   rank_id UUID NOT NULL REFERENCES ranks(id) ON DELETE CASCADE,
-  user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   position INTEGER NOT NULL, -- 1-based position for ordering
   title TEXT NOT NULL,
   media_type TEXT, -- 'movie', 'tv', 'book', 'music', 'podcast', 'game'
@@ -41,46 +41,38 @@ ALTER TABLE ranks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rank_items ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for ranks table
--- Users can view public ranks or their own ranks
 CREATE POLICY "Users can view public ranks or own ranks" ON ranks
   FOR SELECT USING (
-    visibility = 'public' OR user_id = auth.uid()::text
+    visibility = 'public' OR user_id = auth.uid()
   );
 
--- Users can insert their own ranks
 CREATE POLICY "Users can insert own ranks" ON ranks
-  FOR INSERT WITH CHECK (user_id = auth.uid()::text);
+  FOR INSERT WITH CHECK (user_id = auth.uid());
 
--- Users can update their own ranks
 CREATE POLICY "Users can update own ranks" ON ranks
-  FOR UPDATE USING (user_id = auth.uid()::text);
+  FOR UPDATE USING (user_id = auth.uid());
 
--- Users can delete their own ranks
 CREATE POLICY "Users can delete own ranks" ON ranks
-  FOR DELETE USING (user_id = auth.uid()::text);
+  FOR DELETE USING (user_id = auth.uid());
 
 -- RLS Policies for rank_items table
--- Users can view items in public ranks or their own ranks
 CREATE POLICY "Users can view rank items" ON rank_items
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM ranks 
       WHERE ranks.id = rank_items.rank_id 
-      AND (ranks.visibility = 'public' OR ranks.user_id = auth.uid()::text)
+      AND (ranks.visibility = 'public' OR ranks.user_id = auth.uid())
     )
   );
 
--- Users can insert items into their own ranks
 CREATE POLICY "Users can insert rank items" ON rank_items
-  FOR INSERT WITH CHECK (user_id = auth.uid()::text);
+  FOR INSERT WITH CHECK (user_id = auth.uid());
 
--- Users can update items in their own ranks
 CREATE POLICY "Users can update rank items" ON rank_items
-  FOR UPDATE USING (user_id = auth.uid()::text);
+  FOR UPDATE USING (user_id = auth.uid());
 
--- Users can delete items from their own ranks
 CREATE POLICY "Users can delete rank items" ON rank_items
-  FOR DELETE USING (user_id = auth.uid()::text);
+  FOR DELETE USING (user_id = auth.uid());
 
 -- Service role bypass policies for edge functions
 CREATE POLICY "Service role can manage ranks" ON ranks

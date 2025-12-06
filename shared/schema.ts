@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb, serial, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, integer, timestamp, boolean, jsonb, serial, real, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -231,11 +231,11 @@ export const followedCreators = pgTable("followed_creators", {
 
 // Ranks table - for ranked lists like "Top 10 90s Movies"
 export const ranks = pgTable("ranks", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
-  visibility: varchar("visibility").default("public"), // 'public', 'private', 'friends'
+  visibility: text("visibility").default("public"), // 'public', 'private', 'friends'
   isCollaborative: boolean("is_collaborative").default(false),
   maxItems: integer("max_items").default(10), // Default to Top 10
   category: text("category"), // 'movies', 'tv', 'books', 'music', 'mixed'
@@ -246,9 +246,9 @@ export const ranks = pgTable("ranks", {
 
 // Rank items - media items within a rank with position for ordering
 export const rankItems = pgTable("rank_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  rankId: varchar("rank_id").notNull().references(() => ranks.id, { onDelete: "cascade" }),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: uuid("id").primaryKey().defaultRandom(),
+  rankId: uuid("rank_id").notNull().references(() => ranks.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   position: integer("position").notNull(), // 1-based position for ordering
   title: text("title").notNull(),
   mediaType: text("media_type"), // 'movie', 'tv', 'book', 'music', 'podcast', 'game'
