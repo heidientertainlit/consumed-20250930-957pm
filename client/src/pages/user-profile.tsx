@@ -2883,12 +2883,12 @@ export default function UserProfile() {
                 <div className="flex-1" />
                 <Button
                   size="sm"
-                  onClick={() => setLocation('/library')}
+                  onClick={() => collectionsSubTab === 'lists' ? setLocation('/library') : setLocation('/create-rank')}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-8"
-                  data-testid="button-create-collection"
+                  data-testid={collectionsSubTab === 'lists' ? 'button-create-list' : 'button-create-rank'}
                 >
                   <Plus size={14} className="mr-1" />
-                  {collectionsSubTab === 'lists' ? 'New' : 'New'}
+                  {collectionsSubTab === 'lists' ? 'List' : 'Rank'}
                 </Button>
               </div>
 
