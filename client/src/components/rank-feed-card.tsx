@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronUp, ChevronDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic } from "lucide-react";
+import { ArrowBigUp, ArrowBigDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -195,10 +195,6 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
           </div>
           <Trophy className="text-purple-500" size={20} />
         </div>
-        
-        {caption && (
-          <p className="mt-2 text-gray-800 text-sm">{caption}</p>
-        )}
       </div>
 
       {/* Rank Title */}
@@ -264,22 +260,22 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
               </div>
               
               {/* Side-by-side Vote Arrows with Score */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <button
                   onClick={(e) => { e.stopPropagation(); handleVote(item.id, 'up'); }}
                   disabled={voteMutation.isPending || isOwner}
-                  className={`p-1 rounded transition-colors ${
+                  className={`p-0.5 transition-colors ${
                     item.user_vote === 'up' 
-                      ? 'text-blue-600' 
-                      : 'text-gray-400 hover:text-blue-600'
+                      ? 'text-blue-500' 
+                      : 'text-gray-300 hover:text-blue-500'
                   } ${isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-testid={`vote-up-${item.id}`}
                 >
-                  <ChevronUp size={18} strokeWidth={item.user_vote === 'up' ? 2.5 : 1.5} />
+                  <ArrowBigUp size={20} fill={item.user_vote === 'up' ? 'currentColor' : 'none'} />
                 </button>
                 
-                <span className={`text-sm font-medium min-w-[20px] text-center ${
-                  netScore > 0 ? 'text-blue-600' : netScore < 0 ? 'text-blue-600' : 'text-gray-400'
+                <span className={`text-sm font-medium min-w-[24px] text-center ${
+                  item.user_vote ? 'text-blue-500' : 'text-gray-400'
                 }`}>
                   {netScore}
                 </span>
@@ -287,14 +283,14 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
                 <button
                   onClick={(e) => { e.stopPropagation(); handleVote(item.id, 'down'); }}
                   disabled={voteMutation.isPending || isOwner}
-                  className={`p-1 rounded transition-colors ${
+                  className={`p-0.5 transition-colors ${
                     item.user_vote === 'down' 
-                      ? 'text-blue-600' 
-                      : 'text-gray-400 hover:text-blue-600'
+                      ? 'text-blue-500' 
+                      : 'text-gray-300 hover:text-blue-500'
                   } ${isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-testid={`vote-down-${item.id}`}
                 >
-                  <ChevronDown size={18} strokeWidth={item.user_vote === 'down' ? 2.5 : 1.5} />
+                  <ArrowBigDown size={20} fill={item.user_vote === 'down' ? 'currentColor' : 'none'} />
                 </button>
               </div>
             </div>
