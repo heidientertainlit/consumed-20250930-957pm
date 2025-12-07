@@ -2707,11 +2707,11 @@ export default function UserProfile() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent 
-                                  align="end" 
+                                  align="center" 
                                   side="top" 
                                   sideOffset={8}
-                                  alignOffset={-16}
-                                  className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto"
+                                  collisionPadding={16}
+                                  className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto z-50"
                                 >
                                   <DropdownMenuItem
                                     onClick={(e) => {
