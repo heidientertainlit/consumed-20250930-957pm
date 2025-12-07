@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
-import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, MoreVertical, X } from 'lucide-react';
+import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, MoreVertical, X, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -115,6 +115,40 @@ export default function RankDetail() {
     onError: (error) => {
       toast({
         title: "Delete Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const shareRankMutation = useMutation({
+    mutationFn: async (rankId: string) => {
+      if (!session?.access_token) throw new Error('Authentication required');
+      
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/share-rank`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rankId }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to share rank');
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      toast({ 
+        title: "Shared to Feed!",
+        description: "Your rank is now visible in the activity feed." 
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Share Failed",
         description: error.message,
         variant: "destructive"
       });
@@ -242,6 +276,14 @@ export default function RankDetail() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
+                    disabled={shareRankMutation.isPending || !isPublic}
+                    data-testid="button-share-rank"
+                  >
+                    <Share2 size={14} className="mr-2" />
+                    {shareRankMutation.isPending ? 'Sharing...' : 'Share to Feed'}
+                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={handleDeleteRank}
                     disabled={deleteRankMutation.isPending}

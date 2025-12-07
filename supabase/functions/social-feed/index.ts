@@ -126,7 +126,8 @@ serve(async (req) => {
           media_description,
           contains_spoilers,
           prediction_pool_id,
-          list_id
+          list_id,
+          rank_id
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -334,6 +335,78 @@ serve(async (req) => {
         console.log('List data loaded:', listDataMap.size, 'lists');
       }
 
+      // Fetch rank data for rank_share posts
+      const rankIds = posts?.filter(p => p.rank_id && p.post_type === 'rank_share').map(p => p.rank_id) || [];
+      const uniqueRankIds = [...new Set(rankIds)];
+      let rankDataMap = new Map<string, any>();
+      
+      if (uniqueRankIds.length > 0) {
+        // Fetch ranks
+        const { data: ranks, error: ranksError } = await supabaseAdmin
+          .from('ranks')
+          .select('id, user_id, title, description, visibility, max_items, created_at')
+          .in('id', uniqueRankIds);
+        
+        if (ranksError) {
+          console.error('Error fetching ranks:', ranksError);
+        }
+        
+        // Fetch rank items for each rank
+        const { data: allRankItems, error: rankItemsError } = await supabaseAdmin
+          .from('rank_items')
+          .select('id, rank_id, title, media_type, creator, image_url, external_id, external_source, position, up_vote_count, down_vote_count')
+          .in('rank_id', uniqueRankIds)
+          .order('position', { ascending: true });
+        
+        if (rankItemsError) {
+          console.error('Error fetching rank items:', rankItemsError);
+        }
+
+        // Get user's votes on these rank items
+        const rankItemIds = allRankItems?.map(item => item.id) || [];
+        let userRankVotesMap = new Map<string, string>();
+        
+        if (rankItemIds.length > 0 && appUser) {
+          const { data: userRankVotes } = await supabaseAdmin
+            .from('rank_item_votes')
+            .select('rank_item_id, direction')
+            .eq('voter_id', appUser.id)
+            .in('rank_item_id', rankItemIds);
+          
+          userRankVotes?.forEach(vote => {
+            userRankVotesMap.set(vote.rank_item_id, vote.direction);
+          });
+        }
+        
+        // Group items by rank_id
+        const itemsByRank: { [key: string]: any[] } = {};
+        allRankItems?.forEach(item => {
+          if (!itemsByRank[item.rank_id]) {
+            itemsByRank[item.rank_id] = [];
+          }
+          itemsByRank[item.rank_id].push({
+            ...item,
+            user_vote: userRankVotesMap.get(item.id) || null
+          });
+        });
+        
+        // Build the map
+        ranks?.forEach(rank => {
+          rankDataMap.set(rank.id, {
+            id: rank.id,
+            user_id: rank.user_id,
+            title: rank.title,
+            description: rank.description,
+            visibility: rank.visibility,
+            max_items: rank.max_items,
+            created_at: rank.created_at,
+            items: itemsByRank[rank.id] || []
+          });
+        });
+        
+        console.log('Rank data loaded:', rankDataMap.size, 'ranks');
+      }
+
       // Get predictions that the current user has liked
       const predictionIds = predictions?.map(pred => pred.id) || [];
       let likedPredictionIds = new Set<string>();
@@ -506,12 +579,39 @@ serve(async (req) => {
       // Transform non-media posts (regular posts without media)
       // SKIP predictions, polls, and trivia - they're included separately in transformedPredictions with proper data
       // Filter out ALL polls/predictions regardless of prediction_pool_id to avoid duplicates
+      // But KEEP rank_share posts - they need special handling
       const transformedNonMediaPosts = nonMediaPosts
         .filter(post => post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia')
         .map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
         const hasMedia = post.media_title && post.media_title.trim() !== '';
+        
+        // Get rank data for rank_share posts
+        const rankData = post.rank_id ? rankDataMap.get(post.rank_id) : null;
+        
+        // For rank_share posts, return special structure with rankData
+        if (post.post_type === 'rank_share' && rankData) {
+          return {
+            id: post.id,
+            type: 'rank_share',
+            user: {
+              id: post.user_id,
+              username: postUser.user_name || 'Unknown',
+              displayName: postUser.display_name || postUser.user_name || 'Unknown',
+              avatar: postUser.avatar || ''
+            },
+            content: post.content || '',
+            timestamp: post.created_at,
+            likes: post.likes_count || 0,
+            comments: post.comments_count || 0,
+            shares: 0,
+            likedByCurrentUser: likedPostIds.has(post.id),
+            rankId: post.rank_id,
+            rankData: rankData,
+            mediaItems: []
+          };
+        }
         
         return {
           id: post.id,
@@ -531,6 +631,8 @@ serve(async (req) => {
           containsSpoilers: post.contains_spoilers || false,
           rating: post.rating,
           progress: post.progress,
+          rankId: post.rank_id || null,
+          rankData: rankData || null,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
