@@ -2178,7 +2178,9 @@ export default function UserProfile() {
                 {currentlyItems.map((item: any) => {
                   const mediaType = item.media_type || 'movie';
                   const source = item.external_source || 'tmdb';
-                  const id = item.external_id;
+                  // Clean the external_id - remove leading slashes to avoid double slashes in URL
+                  const rawId = item.external_id || '';
+                  const id = rawId.startsWith('/') ? rawId.substring(1) : rawId;
                   const hasValidLink = !!id;
                   
                   return (
