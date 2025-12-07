@@ -326,7 +326,7 @@ export default function MentionTextarea({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={className}
+        className={`focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus:outline-none ${className || ''}`}
         maxLength={maxLength}
         disabled={disabled}
         data-testid={testId}

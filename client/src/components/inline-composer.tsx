@@ -574,7 +574,7 @@ export default function InlineComposer() {
           {/* White card */}
           <div className="bg-white rounded-2xl shadow-sm">
             {/* Text input area */}
-            <div className="p-4" onFocus={() => setIsExpanded(true)}>
+            <div className="p-4" onClick={() => setIsExpanded(true)}>
               <MentionTextarea
                 value={contentText}
                 onChange={(val) => {
@@ -584,7 +584,7 @@ export default function InlineComposer() {
                   }
                 }}
                 placeholder="What are you watching, reading, or listening to?"
-                className="border-0 p-0 text-base resize-none focus-visible:ring-0 focus-visible:outline-none text-gray-900 bg-white placeholder:text-gray-400 w-full min-h-[40px]"
+                className="border-0 p-0 text-base resize-none ring-0 outline-none focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none text-gray-900 bg-white placeholder:text-gray-400 w-full min-h-[40px] [&>textarea]:ring-0 [&>textarea]:outline-none [&>textarea]:border-0"
                 minHeight={isExpanded ? "60px" : "40px"}
                 session={session}
               />
