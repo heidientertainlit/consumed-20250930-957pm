@@ -385,8 +385,33 @@ serve(async (req) => {
     // Wait for all searches to complete (with individual timeouts)
     await Promise.allSettled(searchPromises);
 
+    // Log final results with types breakdown
+    const typeBreakdown = results.reduce((acc: any, r: any) => {
+      acc[r.type] = (acc[r.type] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('Final results:', results.length, 'items - breakdown:', JSON.stringify(typeBreakdown));
+
+    // Interleave results from different types so variety appears early
+    const byType: { [key: string]: any[] } = {};
+    results.forEach(r => {
+      if (!byType[r.type]) byType[r.type] = [];
+      byType[r.type].push(r);
+    });
+    
+    const interleavedResults: any[] = [];
+    const types = Object.keys(byType);
+    let maxLen = Math.max(...types.map(t => byType[t].length));
+    for (let i = 0; i < maxLen; i++) {
+      for (const type of types) {
+        if (byType[type][i]) {
+          interleavedResults.push(byType[type][i]);
+        }
+      }
+    }
+
     return new Response(JSON.stringify({ 
-      results,
+      results: interleavedResults,
       partial: errors.length > 0,
       failedProviders: errors
     }), {

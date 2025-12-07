@@ -763,8 +763,8 @@ export default function InlineComposer() {
                       )}
 
                       {!isSearching && searchResults.length > 0 && (
-                        <div className="border-t border-gray-200 max-h-48 overflow-y-auto">
-                          {searchResults.slice(0, 5).map((media, index) => (
+                        <div className="border-t border-gray-200 max-h-64 overflow-y-auto">
+                          {searchResults.slice(0, 10).map((media, index) => (
                             <button
                               key={index}
                               onClick={() => handleSelectMedia(media)}
