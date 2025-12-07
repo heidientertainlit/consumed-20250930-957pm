@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,9 +19,9 @@ import { ProgressTracker } from "@/components/progress-tracker";
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
-  // Removed privacy state - all lists are now public for MVP
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isCollaboratorsDialogOpen, setIsCollaboratorsDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const queryClient = useQueryClient();
   const { session } = useAuth();
@@ -616,37 +616,121 @@ export default function ListDetail() {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-4">
+        
+        {/* View Toggle */}
+        <div className="flex justify-end mb-3">
+          <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-purple-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+              data-testid="button-view-list"
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-purple-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+              data-testid="button-view-grid"
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
+        </div>
 
-        {/* List Items - Ultra Compact Grid */}
-        <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-15 gap-1">
-          {(listData?.items || []).map((item: any) => {
-            const isClickable = item.external_id && item.external_source;
-            const mediaUrl = isClickable ? `/media/${item.type.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
-            
-            return (
-              <div 
-                key={item.id} 
-                className="bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all relative group overflow-hidden"
-              >
-                {/* Remove Button - Top Right */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveItem(item.id)}
-                  className="absolute top-0.5 right-0.5 z-10 bg-black/60 hover:bg-red-600 text-white p-1 h-auto opacity-0 group-hover:opacity-100 transition-opacity rounded"
-                  data-testid={`button-remove-${item.id}`}
+        {/* List View - Minimalist */}
+        {viewMode === 'list' && (
+          <div className="space-y-2">
+            {(listData?.items || []).map((item: any) => {
+              const isClickable = item.external_id && item.external_source;
+              const mediaUrl = isClickable ? `/media/${item.type?.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
+              
+              return (
+                <div 
+                  key={item.id} 
+                  className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-300 transition-colors group"
                 >
-                  <X size={12} />
-                </Button>
+                  {isClickable ? (
+                    <Link href={mediaUrl!} className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-100">
+                        {item.artwork && item.artwork !== "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop" ? (
+                          <img src={item.artwork} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                            {item.type?.charAt(0) || '?'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate text-sm">{item.title}</p>
+                        <p className="text-xs text-gray-500 truncate">{item.creator} · {item.type}</p>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-100">
+                        {item.artwork && item.artwork !== "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop" ? (
+                          <img src={item.artwork} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                            {item.type?.charAt(0) || '?'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate text-sm">{item.title}</p>
+                        <p className="text-xs text-gray-500 truncate">{item.creator} · {item.type}</p>
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveItem(item.id)}
+                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-1 h-auto"
+                    data-testid={`button-remove-${item.id}`}
+                  >
+                    <X size={16} />
+                  </Button>
+                </div>
+              );
+            })}
+            {(listData?.items || []).length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                <p>No items yet. Click "+ Add" to add media!</p>
+              </div>
+            )}
+          </div>
+        )}
 
-                {/* Artwork */}
-                {isClickable ? (
-                  <Link href={mediaUrl!}>
-                    <div className="aspect-[2/3] relative">
-                      <img
-                        src={item.artwork}
-                        alt={item.title}
-                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+        {/* Grid View - Posters */}
+        {viewMode === 'grid' && (
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            {(listData?.items || []).map((item: any) => {
+              const isClickable = item.external_id && item.external_source;
+              const mediaUrl = isClickable ? `/media/${item.type?.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
+              
+              return (
+                <div 
+                  key={item.id} 
+                  className="bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all relative group overflow-hidden"
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveItem(item.id)}
+                    className="absolute top-0.5 right-0.5 z-10 bg-black/60 hover:bg-red-600 text-white p-1 h-auto opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                    data-testid={`button-remove-grid-${item.id}`}
+                  >
+                    <X size={12} />
+                  </Button>
+
+                  {isClickable ? (
+                    <Link href={mediaUrl!}>
+                      <div className="aspect-[2/3] relative">
+                        <img
+                          src={item.artwork}
+                          alt={item.title}
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                       />
                     </div>
                   </Link>
@@ -669,7 +753,13 @@ export default function ListDetail() {
               </div>
             );
           })}
+          {(listData?.items || []).length === 0 && (
+            <div className="col-span-full text-center py-12 text-gray-500">
+              <p>No items yet. Click "+ Add" to add media!</p>
+            </div>
+          )}
         </div>
+        )}
 
       </div>
 

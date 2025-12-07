@@ -191,7 +191,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
               maxLength={50}
               data-testid="input-list-title"
               autoFocus
-              className="bg-white text-black border-gray-300 placeholder:text-gray-400 h-10"
+              className="bg-white text-black border-gray-300 placeholder:text-gray-400 h-10 focus:border-gray-400 focus:ring-1 focus:ring-gray-300 focus-visible:ring-1 focus-visible:ring-gray-300 focus-visible:ring-offset-0"
             />
             <p className="text-xs text-gray-400">{title.length}/50</p>
           </div>
@@ -217,7 +217,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search movies, shows, books..."
-                className="pl-10 bg-white border-gray-300 text-black placeholder:text-gray-400 h-10"
+                className="pl-10 bg-white border-gray-300 text-black placeholder:text-gray-400 h-10 focus:border-gray-400 focus:ring-1 focus:ring-gray-300 focus-visible:ring-1 focus-visible:ring-gray-300 focus-visible:ring-offset-0"
               />
             </div>
 
