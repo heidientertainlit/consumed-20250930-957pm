@@ -392,26 +392,32 @@ serve(async (req) => {
     }, {});
     console.log('Final results:', results.length, 'items - breakdown:', JSON.stringify(typeBreakdown));
 
-    // Interleave results from different types so variety appears early
-    const byType: { [key: string]: any[] } = {};
-    results.forEach(r => {
-      if (!byType[r.type]) byType[r.type] = [];
-      byType[r.type].push(r);
+    // Sort by relevance - exact/close title matches appear first
+    const queryLower = query.toLowerCase().trim();
+    const sortedResults = results.sort((a, b) => {
+      const aTitle = (a.title || '').toLowerCase();
+      const bTitle = (b.title || '').toLowerCase();
+      
+      // Exact match gets highest priority
+      const aExact = aTitle === queryLower ? 100 : 0;
+      const bExact = bTitle === queryLower ? 100 : 0;
+      
+      // Starts with query gets second priority
+      const aStarts = aTitle.startsWith(queryLower) ? 50 : 0;
+      const bStarts = bTitle.startsWith(queryLower) ? 50 : 0;
+      
+      // Contains query gets third priority
+      const aContains = aTitle.includes(queryLower) ? 25 : 0;
+      const bContains = bTitle.includes(queryLower) ? 25 : 0;
+      
+      const aScore = aExact + aStarts + aContains;
+      const bScore = bExact + bStarts + bContains;
+      
+      return bScore - aScore; // Higher score first
     });
-    
-    const interleavedResults: any[] = [];
-    const types = Object.keys(byType);
-    let maxLen = Math.max(...types.map(t => byType[t].length));
-    for (let i = 0; i < maxLen; i++) {
-      for (const type of types) {
-        if (byType[type][i]) {
-          interleavedResults.push(byType[type][i]);
-        }
-      }
-    }
 
     return new Response(JSON.stringify({ 
-      results: interleavedResults,
+      results: sortedResults,
       partial: errors.length > 0,
       failedProviders: errors
     }), {
