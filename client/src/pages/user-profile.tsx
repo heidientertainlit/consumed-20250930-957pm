@@ -1196,6 +1196,14 @@ export default function UserProfile() {
     setIsTrackModalOpen(true);
   };
 
+  // Helper function to map list titles for display (e.g., "Queue" -> "Want To")
+  const getDisplayTitle = (title: string): string => {
+    const displayMap: { [key: string]: string } = {
+      'Queue': 'Want To',
+    };
+    return displayMap[title] || title;
+  };
+
 
   const handleShareList = (listName: string, itemCount: number, isPublic: boolean) => {
     setSelectedListForShare({ name: listName, items: itemCount, isPublic });
@@ -2929,7 +2937,7 @@ export default function UserProfile() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-gray-900">{list.title}</h3>
+                              <h3 className="font-semibold text-gray-900">{getDisplayTitle(list.title)}</h3>
                               {!list.is_default && list.visibility && (
                                 <Badge variant="outline" className="text-xs">
                                   {list.visibility === 'private' ? <Lock size={10} className="mr-1" /> : <Users size={10} className="mr-1" />}

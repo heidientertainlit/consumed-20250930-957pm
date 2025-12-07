@@ -157,8 +157,18 @@ export default function ListDetail() {
   // All lists are public for MVP - removed state update logic
 
   // Helper functions
+  
+  // Map list titles for display (e.g., "Queue" -> "Want To")
+  function getDisplayTitle(title: string): string {
+    const displayMap: { [key: string]: string } = {
+      'Queue': 'Want To',
+    };
+    return displayMap[title] || title;
+  }
+
   function getListDescription(title: string) {
-    switch (title) {
+    const displayTitle = getDisplayTitle(title);
+    switch (displayTitle) {
       case "All": return "All your tracked media items";
       case "Currently": return "What you're watching, reading, or playing right now";
       case "Want To": return "Media you want to consume later";
@@ -170,15 +180,17 @@ export default function ListDetail() {
   }
 
   function getListTypeFromTitle(title: string): string {
+    const displayTitle = getDisplayTitle(title);
     const typeMap: { [key: string]: string } = {
       'All': 'all',
       'Currently': 'currently',
       'Want To': 'queue',
+      'Queue': 'queue',
       'Finished': 'finished',
       'Did Not Finish': 'dnf',
       'Favorites': 'favorites'
     };
-    return typeMap[title] || 'all';
+    return typeMap[displayTitle] || typeMap[title] || 'all';
   }
 
   function capitalizeFirst(str: string) {
@@ -556,7 +568,7 @@ export default function ListDetail() {
                 <ArrowLeft size={20} />
               </button>
               <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 truncate">{listData?.name}</h1>
+                <h1 className="text-lg font-bold text-gray-900 truncate">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
                 <p className="text-xs text-gray-500">{listData?.totalItems} items</p>
               </div>
             </div>
@@ -791,7 +803,7 @@ export default function ListDetail() {
           <DialogHeader>
             <DialogTitle className="text-gray-900">Manage Collaborators</DialogTitle>
             <DialogDescription className="text-gray-600">
-              Add friends to collaborate on "{listData?.name}". They'll be able to add and remove items.
+              Add friends to collaborate on "{listData?.name ? getDisplayTitle(listData.name) : ''}". They'll be able to add and remove items.
             </DialogDescription>
           </DialogHeader>
 
