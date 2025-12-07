@@ -145,27 +145,42 @@ export default function InlineComposer() {
       return;
     }
 
+    if (!session?.access_token) {
+      console.error("No session token for media search");
+      return;
+    }
+
     setIsSearching(true);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      console.log("Searching for:", query, "URL:", `${supabaseUrl}/functions/v1/media-search`);
+      
       const response = await fetch(
         `${supabaseUrl}/functions/v1/media-search`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${session?.access_token}`,
+            Authorization: `Bearer ${session.access_token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ query }),
         }
       );
 
+      console.log("Media search response status:", response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log("Media search results:", data.results?.length || 0, "items");
         setSearchResults(data.results || []);
+      } else {
+        const errorText = await response.text();
+        console.error("Media search failed:", response.status, errorText);
+        setSearchResults([]);
       }
     } catch (error) {
       console.error("Media search error:", error);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
