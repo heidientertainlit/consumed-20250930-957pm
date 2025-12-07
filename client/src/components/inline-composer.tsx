@@ -671,10 +671,9 @@ export default function InlineComposer() {
                     <button
                       onClick={() => {
                         setPostType("prediction");
-                        if (!selectedMedia) setIsMediaSearchOpen(true);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        postType === "prediction" && selectedMedia
+                        postType === "prediction"
                           ? "bg-purple-100 text-purple-700" 
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
@@ -688,10 +687,9 @@ export default function InlineComposer() {
                     <button
                       onClick={() => {
                         setPostType("poll");
-                        if (!selectedMedia) setIsMediaSearchOpen(true);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        postType === "poll" && selectedMedia
+                        postType === "poll"
                           ? "bg-blue-100 text-blue-700" 
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
