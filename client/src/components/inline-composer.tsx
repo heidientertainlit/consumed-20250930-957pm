@@ -880,7 +880,7 @@ export default function InlineComposer() {
                 )}
 
                 {/* Prediction options when Prediction is selected */}
-                {postType === "prediction" && selectedMedia && (
+                {postType === "prediction" && (
                   <div className="px-4 pb-3">
                     <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
                       <span className="text-xs text-gray-500">Your prediction options:</span>
@@ -916,7 +916,7 @@ export default function InlineComposer() {
                 )}
 
                 {/* Poll options when Poll is selected */}
-                {postType === "poll" && selectedMedia && (
+                {postType === "poll" && (
                   <div className="px-4 pb-3">
                     <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
                       <span className="text-xs text-gray-500">Poll options:</span>
