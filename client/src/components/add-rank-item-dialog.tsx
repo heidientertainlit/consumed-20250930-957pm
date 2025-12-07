@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
-import { Search, X, Plus, Loader2, Trophy } from "lucide-react";
+import { Search, X, Plus, Loader2, Trophy, GripVertical } from "lucide-react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface AddRankItemDialogProps {
   open: boolean;
@@ -33,11 +34,11 @@ export default function AddRankItemDialog({
   rankId, 
   rankTitle,
   currentItemCount,
-  maxItems = 10 
+  maxItems = 20 
 }: AddRankItemDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
-  const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
   const { toast } = useToast();
@@ -47,7 +48,7 @@ export default function AddRankItemDialog({
   const resetForm = () => {
     setSearchQuery("");
     setSearchResults([]);
-    setSelectedMedia(null);
+    setSelectedMedia([]);
   };
 
   const searchMedia = async (query: string) => {
@@ -92,39 +93,53 @@ export default function AddRankItemDialog({
     return () => clearTimeout(debounce);
   }, [searchQuery]);
 
-  const addItemMutation = useMutation({
-    mutationFn: async (media: MediaResult) => {
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-rank-item", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token || ''}`,
-        },
-        body: JSON.stringify({
-          rankId: rankId,
-          position: currentItemCount + 1,
-          media: {
-            title: media.title,
-            mediaType: media.type,
-            creator: media.creator,
-            imageUrl: media.image,
-            externalId: media.external_id,
-            externalSource: media.external_source,
-          }
-        }),
-      });
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(selectedMedia);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    setSelectedMedia(items);
+  };
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to add item');
+  const addItemsMutation = useMutation({
+    mutationFn: async (mediaItems: MediaResult[]) => {
+      const results = [];
+      for (let i = 0; i < mediaItems.length; i++) {
+        const media = mediaItems[i];
+        const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-rank-item", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token || ''}`,
+          },
+          body: JSON.stringify({
+            rankId: rankId,
+            position: currentItemCount + i + 1,
+            media: {
+              title: media.title,
+              mediaType: media.type,
+              creator: media.creator,
+              imageUrl: media.image,
+              externalId: media.external_id,
+              externalSource: media.external_source,
+            }
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to add item');
+        }
+        results.push(await response.json());
       }
-
-      return response.json();
+      return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       toast({
-        title: "Item Added!",
-        description: `Added to "${rankTitle}"`,
+        title: "Items Added!",
+        description: `Added ${results.length} item${results.length > 1 ? 's' : ''} to "${rankTitle}"`,
       });
       queryClient.invalidateQueries({ queryKey: ['rank-detail', rankId] });
       resetForm();
@@ -132,7 +147,7 @@ export default function AddRankItemDialog({
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to Add Item",
+        title: "Failed to Add Items",
         description: error.message || "Please try again",
         variant: "destructive",
       });
@@ -140,7 +155,8 @@ export default function AddRankItemDialog({
   });
 
   const handleSelectMedia = (media: MediaResult) => {
-    if (currentItemCount >= maxItems) {
+    const totalAfterAdd = currentItemCount + selectedMedia.length + 1;
+    if (totalAfterAdd > maxItems) {
       toast({
         title: "Limit Reached",
         description: `This rank is limited to ${maxItems} items`,
@@ -148,14 +164,20 @@ export default function AddRankItemDialog({
       });
       return;
     }
-    setSelectedMedia(media);
+    if (!selectedMedia.find(m => m.external_id === media.external_id && m.external_source === media.external_source)) {
+      setSelectedMedia([...selectedMedia, media]);
+    }
     setSearchQuery("");
     setSearchResults([]);
   };
 
-  const handleAddItem = () => {
-    if (!selectedMedia) return;
-    addItemMutation.mutate(selectedMedia);
+  const removeMedia = (index: number) => {
+    setSelectedMedia(selectedMedia.filter((_, i) => i !== index));
+  };
+
+  const handleAddItems = () => {
+    if (selectedMedia.length === 0) return;
+    addItemsMutation.mutate(selectedMedia);
   };
 
   const remainingSlots = maxItems - currentItemCount;
@@ -192,18 +214,18 @@ export default function AddRankItemDialog({
 
             {/* Search Results */}
             {searchResults.length > 0 && (
-              <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
                 {searchResults.map((result, index) => (
                   <div
                     key={index}
                     onClick={() => handleSelectMedia(result)}
-                    className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                    className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
                     data-testid={`search-result-${index}`}
                   >
                     {result.image ? (
-                      <img src={result.image} alt={result.title} className="w-12 h-12 object-cover rounded" />
+                      <img src={result.image} alt={result.title} className="w-10 h-10 object-cover rounded" />
                     ) : (
-                      <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
                         <Search className="text-gray-400" size={16} />
                       </div>
                     )}
@@ -217,26 +239,46 @@ export default function AddRankItemDialog({
               </div>
             )}
 
-            {/* Selected Media */}
-            {selectedMedia && (
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-purple-600 font-bold text-lg">#{currentItemCount + 1}</span>
-                  {selectedMedia.image && (
-                    <img src={selectedMedia.image} alt="" className="w-12 h-12 rounded object-cover" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-purple-900 text-sm truncate">{selectedMedia.title}</p>
-                    <p className="text-xs text-purple-700 truncate">{selectedMedia.creator} · {selectedMedia.type}</p>
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={() => setSelectedMedia(null)} 
-                    className="text-purple-600 hover:text-red-600 p-1"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+            {/* Selected Media with Drag & Drop */}
+            {selectedMedia.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">{selectedMedia.length} item{selectedMedia.length > 1 ? 's' : ''} selected - drag to reorder:</p>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="add-rank-items">
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1">
+                        {selectedMedia.map((media, index) => (
+                          <Draggable key={`${media.external_id}-${media.external_source}-${index}`} draggableId={`add-${media.external_id}-${index}`} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg px-2 py-2 ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                              >
+                                <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-purple-400 hover:text-purple-600">
+                                  <GripVertical size={16} />
+                                </div>
+                                <span className="text-purple-600 font-bold text-sm w-6">#{currentItemCount + index + 1}</span>
+                                {media.image && (
+                                  <img src={media.image} alt="" className="w-8 h-8 rounded object-cover" />
+                                )}
+                                <span className="text-sm text-purple-900 flex-1 truncate">{media.title}</span>
+                                <button 
+                                  type="button" 
+                                  onClick={() => removeMedia(index)} 
+                                  className="text-purple-600 hover:text-red-600 p-1"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               </div>
             )}
           </div>
@@ -254,16 +296,16 @@ export default function AddRankItemDialog({
             Cancel
           </Button>
           <Button
-            onClick={handleAddItem}
+            onClick={handleAddItems}
             size="sm"
-            disabled={addItemMutation.isPending || !selectedMedia}
+            disabled={addItemsMutation.isPending || selectedMedia.length === 0}
             className="bg-purple-600 hover:bg-purple-700 text-white"
             data-testid="button-add-rank-item"
           >
-            {addItemMutation.isPending ? (
+            {addItemsMutation.isPending ? (
               <><Loader2 className="animate-spin mr-1" size={14} /> Adding...</>
             ) : (
-              <>Add to Rank</>
+              <>Add{selectedMedia.length > 0 ? ` (${selectedMedia.length})` : ''}</>
             )}
           </Button>
         </div>

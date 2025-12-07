@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import { Search, Globe, Lock, X, Plus, Loader2, Users, Trophy } from "lucide-react";
+import { Search, Globe, Lock, X, Plus, Loader2, Users, Trophy, GripVertical } from "lucide-react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import UserSearch from "@/components/user-search";
 
 interface CreateRankDialogProps {
@@ -97,6 +98,16 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
     return () => clearTimeout(debounce);
   }, [searchQuery]);
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(selectedMedia);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    setSelectedMedia(items);
+  };
+
   const createRankMutation = useMutation({
     mutationFn: async () => {
       const payload = { 
@@ -125,7 +136,6 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
       console.log('Rank created successfully:', data);
       const rankId = data.data?.id || data.rank?.id;
       
-      // Add media items to the rank
       if (rankId && selectedMedia.length > 0) {
         for (let i = 0; i < selectedMedia.length; i++) {
           const media = selectedMedia[i];
@@ -155,7 +165,6 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
         }
       }
       
-      // Use refetchQueries to wait for fresh data before navigating
       await queryClient.refetchQueries({ queryKey: ['user-ranks'] });
       
       resetForm();
@@ -191,8 +200,8 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
   };
 
   const addMedia = (media: MediaResult) => {
-    if (selectedMedia.length >= 10) {
-      toast({ title: "Limit Reached", description: "Ranks are limited to 10 items", variant: "destructive" });
+    if (selectedMedia.length >= 20) {
+      toast({ title: "Limit Reached", description: "Ranks are limited to 20 items", variant: "destructive" });
       return;
     }
     if (!selectedMedia.find(m => m.external_id === media.external_id && m.external_source === media.external_source)) {
@@ -289,21 +298,39 @@ export default function CreateRankDialog({ open, onOpenChange }: CreateRankDialo
 
             {selectedMedia.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">{selectedMedia.length}/10 items added (ranked order):</p>
-                <div className="space-y-1">
-                  {selectedMedia.map((media, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2">
-                      <span className="text-purple-600 font-bold text-sm w-5">#{index + 1}</span>
-                      {media.image && (
-                        <img src={media.image} alt="" className="w-8 h-8 rounded object-cover" />
-                      )}
-                      <span className="text-sm text-purple-900 flex-1 truncate">{media.title}</span>
-                      <button type="button" onClick={() => removeMedia(index)} className="text-purple-600 hover:text-red-600">
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-sm text-gray-600">{selectedMedia.length}/20 items - drag to reorder:</p>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="rank-items">
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1">
+                        {selectedMedia.map((media, index) => (
+                          <Draggable key={`${media.external_id}-${media.external_source}-${index}`} draggableId={`${media.external_id}-${index}`} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg px-2 py-2 ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                              >
+                                <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-purple-400 hover:text-purple-600">
+                                  <GripVertical size={16} />
+                                </div>
+                                <span className="text-purple-600 font-bold text-sm w-6">#{index + 1}</span>
+                                {media.image && (
+                                  <img src={media.image} alt="" className="w-8 h-8 rounded object-cover" />
+                                )}
+                                <span className="text-sm text-purple-900 flex-1 truncate">{media.title}</span>
+                                <button type="button" onClick={() => removeMedia(index)} className="text-purple-600 hover:text-red-600 p-1">
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               </div>
             )}
           </div>
