@@ -24,6 +24,7 @@ export default function InlineComposer() {
   // Stage management - start open for frictionless experience
   const [stage, setStage] = useState<ComposerStage>("open");
   const [isExpanded, setIsExpanded] = useState(false); // Expands when user taps/types
+  const [isMediaSearchOpen, setIsMediaSearchOpen] = useState(false); // Inline media search
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [postType, setPostType] = useState<PostType>("thought");
   
@@ -120,6 +121,7 @@ export default function InlineComposer() {
   const resetComposer = () => {
     // Stay open but clear all fields
     setStage("open");
+    setIsMediaSearchOpen(false);
     setSelectedMedia(null);
     setPostType("thought");
     setSearchQuery("");
@@ -169,10 +171,10 @@ export default function InlineComposer() {
     }
   };
 
-  // PRESERVED: handleSelectMedia - selects media and returns to composer
+  // PRESERVED: handleSelectMedia - selects media and closes inline search
   const handleSelectMedia = (media: any) => {
     setSelectedMedia(media);
-    setStage("open");
+    setIsMediaSearchOpen(false);
     setSearchQuery("");
     setSearchResults([]);
   };
@@ -608,9 +610,9 @@ export default function InlineComposer() {
                   <div className="flex flex-wrap gap-2">
                     {/* Add Media */}
                     <button
-                      onClick={() => setStage("media-search")}
+                      onClick={() => setIsMediaSearchOpen(!isMediaSearchOpen)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        selectedMedia 
+                        selectedMedia || isMediaSearchOpen
                           ? "bg-purple-100 text-purple-700" 
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
@@ -624,7 +626,7 @@ export default function InlineComposer() {
                     <button
                       onClick={() => {
                         setPostType("rating");
-                        if (!selectedMedia) setStage("media-search");
+                        if (!selectedMedia) setIsMediaSearchOpen(true);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         postType === "rating" && selectedMedia
@@ -641,7 +643,7 @@ export default function InlineComposer() {
                     <button
                       onClick={() => {
                         setPostType("prediction");
-                        if (!selectedMedia) setStage("media-search");
+                        if (!selectedMedia) setIsMediaSearchOpen(true);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         postType === "prediction" && selectedMedia
@@ -658,7 +660,7 @@ export default function InlineComposer() {
                     <button
                       onClick={() => {
                         setPostType("poll");
-                        if (!selectedMedia) setStage("media-search");
+                        if (!selectedMedia) setIsMediaSearchOpen(true);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         postType === "poll" && selectedMedia
@@ -675,7 +677,7 @@ export default function InlineComposer() {
                     <button
                       onClick={() => {
                         setAddToList(!addToList);
-                        if (!addToList && !selectedMedia) setStage("media-search");
+                        if (!addToList && !selectedMedia) setIsMediaSearchOpen(true);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         addToList
@@ -692,7 +694,7 @@ export default function InlineComposer() {
                     <button
                       onClick={() => {
                         setAddToRank(!addToRank);
-                        if (!addToRank && !selectedMedia) setStage("media-search");
+                        if (!addToRank && !selectedMedia) setIsMediaSearchOpen(true);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         addToRank
@@ -705,6 +707,75 @@ export default function InlineComposer() {
                       <span>Add to Rank</span>
                     </button>
                   </div>
+
+                  {/* Inline Media Search - expands below action pills */}
+                  {isMediaSearchOpen && (
+                    <div className="mt-3 border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                      {/* Search Input */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search movies, shows, books, music..."
+                          className="w-full pl-9 pr-8 py-2.5 bg-transparent border-0 focus:outline-none text-sm text-gray-900 placeholder:text-gray-400"
+                          autoFocus
+                          data-testid="input-media-search"
+                        />
+                        <button
+                          onClick={() => {
+                            setIsMediaSearchOpen(false);
+                            setSearchQuery("");
+                            setSearchResults([]);
+                          }}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Search Results */}
+                      {isSearching && (
+                        <div className="flex justify-center py-4 border-t border-gray-200">
+                          <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                        </div>
+                      )}
+
+                      {!isSearching && searchResults.length > 0 && (
+                        <div className="border-t border-gray-200 max-h-48 overflow-y-auto">
+                          {searchResults.slice(0, 5).map((media, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleSelectMedia(media)}
+                              className="w-full flex items-center gap-3 p-2.5 hover:bg-white transition-colors text-left border-b border-gray-100 last:border-b-0"
+                              data-testid={`button-select-media-${index}`}
+                            >
+                              {(media.poster_url || media.image_url || media.image) && (
+                                <img
+                                  src={media.poster_url || media.image_url || media.image}
+                                  alt={media.title}
+                                  className="w-8 h-11 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 text-sm truncate">{media.title}</p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {!isSearching && searchQuery && searchResults.length === 0 && (
+                        <div className="text-center py-4 text-gray-500 text-sm border-t border-gray-200">
+                          No results for "{searchQuery}"
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* List dropdown when Add to List is selected */}
                   {addToList && (
@@ -890,78 +961,6 @@ export default function InlineComposer() {
         </div>
       )}
 
-      {/* Media Search Modal */}
-      {stage === "media-search" && (
-        <div className="bg-white rounded-2xl shadow-lg p-4">
-          {/* Header with back button */}
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              onClick={() => setStage("open")}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
-              data-testid="button-back-from-search"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-            <h3 className="font-semibold text-gray-900">Add Media</h3>
-          </div>
-
-          {/* Search Input */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for a movie, show, book, podcast, music..."
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 text-gray-900 placeholder:text-gray-400"
-              autoFocus
-              data-testid="input-media-search"
-            />
-          </div>
-
-          {/* Search Results */}
-          {isSearching && (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
-            </div>
-          )}
-
-          {!isSearching && searchResults.length > 0 && (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {searchResults.map((media, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSelectMedia(media)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all text-left"
-                  data-testid={`button-select-media-${index}`}
-                >
-                  {(media.poster_url || media.image_url || media.image) && (
-                    <img
-                      src={media.poster_url || media.image_url || media.image}
-                      alt={media.title}
-                      className="w-12 h-16 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{media.title}</p>
-                    <p className="text-sm text-gray-600">
-                      {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {!isSearching && searchQuery && searchResults.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No results found for "{searchQuery}"
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
