@@ -2284,11 +2284,12 @@ export default function Feed() {
                         );
                       })}
                       
-                      {/* See more of user's lists link for added_to_list posts */}
+                      {/* See more of user's lists link for posts with media */}
                       {(() => {
                         const contentLower = (post.content || '').toLowerCase();
                         const isAddedPost = post.type === 'added_to_list' || contentLower.startsWith('added ');
-                        if (!isAddedPost) return null;
+                        const isRateReview = post.type === 'rate-review';
+                        if (!isAddedPost && !isRateReview) return null;
                         
                         let userId: string | undefined;
                         let username: string | undefined;
