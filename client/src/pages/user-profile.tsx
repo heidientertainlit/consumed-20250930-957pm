@@ -2175,32 +2175,39 @@ export default function UserProfile() {
                 {firstName} is currently consuming...
               </p>
               <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-                {currentlyItems.map((item: any) => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      const mediaType = item.media_type || 'movie';
-                      const source = item.external_source || 'tmdb';
-                      const id = item.external_id;
-                      if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
-                    }}
-                    className="flex-shrink-0 cursor-pointer group"
-                  >
-                    <div className="w-16 h-24 rounded-lg overflow-hidden bg-gray-200 border border-gray-300 group-hover:border-purple-400 transition-colors">
-                      {item.image_url ? (
-                        <img
-                          src={item.image_url}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <Film size={24} />
-                        </div>
-                      )}
+                {currentlyItems.map((item: any) => {
+                  const mediaType = item.media_type || 'movie';
+                  const source = item.external_source || 'tmdb';
+                  const id = item.external_id;
+                  const hasValidLink = !!id;
+                  
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        if (hasValidLink) {
+                          setLocation(`/media/${mediaType}/${source}/${id}`);
+                        }
+                      }}
+                      className={`flex-shrink-0 group ${hasValidLink ? 'cursor-pointer active:scale-95 transition-transform' : 'cursor-default'}`}
+                      data-testid={`currently-consuming-${item.id}`}
+                    >
+                      <div className="w-16 h-24 rounded-lg overflow-hidden bg-gray-200 border border-gray-300 group-hover:border-purple-400 transition-colors">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.title}
+                            className="w-full h-full object-cover pointer-events-none"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <Film size={24} />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null;
