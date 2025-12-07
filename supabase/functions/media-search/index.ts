@@ -106,10 +106,13 @@ serve(async (req) => {
         // Try Google Books first (more reliable)
         try {
           const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`;
-          const googleResponse = await fetchWithTimeout(googleBooksUrl, {}, 3000);
+          console.log('Fetching Google Books:', googleBooksUrl);
+          const googleResponse = await fetchWithTimeout(googleBooksUrl, {}, 5000);
+          console.log('Google Books response status:', googleResponse.status);
           
           if (googleResponse.ok) {
             const googleData = await googleResponse.json();
+            console.log('Google Books items count:', googleData.items?.length || 0);
             googleData.items?.slice(0, 5).forEach((item: any) => {
               const volumeInfo = item.volumeInfo;
               if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
@@ -125,6 +128,7 @@ serve(async (req) => {
                 foundBooks = true;
               }
             });
+            console.log('Books added to results:', foundBooks);
           }
         } catch (error) {
           console.error('Google Books search error:', error);
