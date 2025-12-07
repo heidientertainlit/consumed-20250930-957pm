@@ -486,7 +486,8 @@ serve(async (req) => {
               id: post.user_id,
               username: postUser.user_name || 'Unknown',
               displayName: postUser.display_name || postUser.user_name || 'Unknown',
-              avatar: postUser.avatar || ''
+              avatar: postUser.avatar || '',
+              email: postUser.email || ''
             },
             content: post.content || '',
             timestamp: post.created_at,
@@ -557,6 +558,7 @@ serve(async (req) => {
               username: postUser.user_name || 'Unknown',
               displayName: postUser.display_name || postUser.user_name || 'Unknown',
               avatar: postUser.avatar || '',
+              email: postUser.email || '',
               activityText,
               content: post.content || '',
               rating: post.rating,
@@ -607,7 +609,8 @@ serve(async (req) => {
               id: post.user_id,
               username: postUser.user_name || 'Unknown',
               displayName: postUser.display_name || postUser.user_name || 'Unknown',
-              avatar: postUser.avatar || ''
+              avatar: postUser.avatar || '',
+              email: postUser.email || ''
             },
             content: post.content || '',
             timestamp: post.created_at,

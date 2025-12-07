@@ -33,6 +33,7 @@ interface SocialPost {
     username: string;
     displayName: string;
     avatar: string;
+    email?: string;
   };
   content: string;
   timestamp: string;
@@ -69,6 +70,7 @@ interface SocialPost {
     username: string;
     displayName: string;
     avatar: string;
+    email?: string;
     activityText: string;
     content: string;
     rating?: number;
@@ -1920,14 +1922,8 @@ export default function Feed() {
                           }
                         })()}
                       </div>
-                      {/* Debug delete button visibility */}
-                      {(() => {
-                        const canDelete = user?.id === post.user.id;
-                        if (!canDelete && user?.id) {
-                          console.log('🔒 Delete button hidden:', { authUserId: user?.id, postUserId: post.user.id, postId: post.id });
-                        }
-                        return canDelete;
-                      })() && (
+                      {/* Compare by email since auth UID may differ from app user ID */}
+                      {user?.email && post.user.email && user.email === post.user.email && (
                         <button
                           onClick={() => handleDeletePost(post.id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
@@ -1941,7 +1937,7 @@ export default function Feed() {
                     ) : (
                     /* Fallback for posts missing user data - show user from grouped activities */
                     (() => {
-                      const myActivity = post.groupedActivities?.find(a => a.userId === user?.id);
+                      const myActivity = post.groupedActivities?.find(a => a.email && user?.email && a.email === user.email);
                       const firstActivity = post.groupedActivities?.[0];
                       const displayUser = myActivity || firstActivity;
                       
