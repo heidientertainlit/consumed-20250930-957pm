@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronUp, ChevronDown, Trophy, User } from "lucide-react";
+import { ChevronUp, ChevronDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -39,18 +39,40 @@ interface RankFeedCardProps {
   createdAt?: string;
 }
 
+const getMediaIcon = (mediaType?: string) => {
+  switch (mediaType?.toLowerCase()) {
+    case 'movie':
+      return <Film size={12} className="text-purple-500" />;
+    case 'tv':
+    case 'show':
+      return <Tv size={12} className="text-blue-500" />;
+    case 'music':
+    case 'album':
+    case 'track':
+      return <Music size={12} className="text-green-500" />;
+    case 'book':
+      return <BookOpen size={12} className="text-amber-600" />;
+    case 'game':
+      return <Gamepad2 size={12} className="text-red-500" />;
+    case 'podcast':
+      return <Mic size={12} className="text-orange-500" />;
+    default:
+      return null;
+  }
+};
+
 export default function RankFeedCard({ rank, author, caption, createdAt }: RankFeedCardProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [localItems, setLocalItems] = useState<RankItemWithVotes[]>(rank.items || []);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   
   const isOwner = user?.id === rank.user_id;
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
-  // Fallback: fetch items directly if they weren't hydrated
   useEffect(() => {
     const fetchItems = async () => {
       if ((!rank.items || rank.items.length === 0) && rank.id && session?.access_token) {
@@ -142,7 +164,8 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
     return `${Math.floor(diffInMinutes / 1440)}d`;
   };
 
-  const displayItems = localItems.slice(0, 10);
+  const displayItems = showAll ? localItems : localItems.slice(0, 3);
+  const hasMoreItems = localItems.length > 3;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" data-testid={`rank-feed-card-${rank.id}`}>
@@ -190,10 +213,12 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
 
       {/* Minimalist Rank List */}
       <div className="divide-y divide-gray-50">
-        {displayItems.map((item, index) => {
+        {displayItems.map((item) => {
           const netScore = (item.up_vote_count || 0) - (item.down_vote_count || 0);
           const isClickable = item.external_id && item.external_source;
           const mediaUrl = isClickable ? `/media/${item.media_type}/${item.external_source}/${item.external_id}` : null;
+          const mediaIcon = getMediaIcon(item.media_type);
+          const displayCreator = item.creator && item.creator.toLowerCase() !== 'unknown' ? item.creator : null;
           
           return (
             <div 
@@ -213,7 +238,7 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
                     <img 
                       src={item.image_url} 
                       alt={item.title} 
-                      className="w-10 h-10 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity pointer-events-none" 
+                      className="w-10 h-10 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity" 
                     />
                   </Link>
                 ) : (
@@ -221,52 +246,55 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
                 )
               )}
               
-              {/* Title & Creator */}
+              {/* Title with Media Icon & Creator */}
               <div className="flex-1 min-w-0">
-                {isClickable ? (
-                  <Link href={mediaUrl!}>
-                    <p className="font-medium text-gray-900 text-sm truncate hover:text-purple-600 cursor-pointer">{item.title}</p>
-                  </Link>
-                ) : (
-                  <p className="font-medium text-gray-900 text-sm truncate">{item.title}</p>
-                )}
-                {item.creator && (
-                  <p className="text-xs text-gray-500 truncate">{item.creator}</p>
+                <div className="flex items-center gap-1.5">
+                  {mediaIcon}
+                  {isClickable ? (
+                    <Link href={mediaUrl!}>
+                      <p className="font-medium text-gray-900 text-sm truncate hover:text-purple-600 cursor-pointer">{item.title}</p>
+                    </Link>
+                  ) : (
+                    <p className="font-medium text-gray-900 text-sm truncate">{item.title}</p>
+                  )}
+                </div>
+                {displayCreator && (
+                  <p className="text-xs text-gray-500 truncate">{displayCreator}</p>
                 )}
               </div>
               
-              {/* Net Score (optional display) */}
-              {netScore !== 0 && (
-                <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${netScore > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-                  {netScore > 0 ? '+' : ''}{netScore}
-                </span>
-              )}
-              
-              {/* Vote Arrows */}
-              <div className="flex flex-col gap-0.5">
+              {/* Side-by-side Vote Arrows with Score */}
+              <div className="flex items-center gap-1">
                 <button
                   onClick={(e) => { e.stopPropagation(); handleVote(item.id, 'up'); }}
                   disabled={voteMutation.isPending || isOwner}
                   className={`p-1 rounded transition-colors ${
                     item.user_vote === 'up' 
-                      ? 'text-green-600 bg-green-100' 
-                      : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                      ? 'text-blue-600' 
+                      : 'text-gray-400 hover:text-blue-600'
                   } ${isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-testid={`vote-up-${item.id}`}
                 >
-                  <ChevronUp size={16} />
+                  <ChevronUp size={18} strokeWidth={item.user_vote === 'up' ? 2.5 : 1.5} />
                 </button>
+                
+                <span className={`text-sm font-medium min-w-[20px] text-center ${
+                  netScore > 0 ? 'text-blue-600' : netScore < 0 ? 'text-blue-600' : 'text-gray-400'
+                }`}>
+                  {netScore}
+                </span>
+                
                 <button
                   onClick={(e) => { e.stopPropagation(); handleVote(item.id, 'down'); }}
                   disabled={voteMutation.isPending || isOwner}
                   className={`p-1 rounded transition-colors ${
                     item.user_vote === 'down' 
-                      ? 'text-red-600 bg-red-100' 
-                      : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                      ? 'text-blue-600' 
+                      : 'text-gray-400 hover:text-blue-600'
                   } ${isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-testid={`vote-down-${item.id}`}
                 >
-                  <ChevronDown size={16} />
+                  <ChevronDown size={18} strokeWidth={item.user_vote === 'down' ? 2.5 : 1.5} />
                 </button>
               </div>
             </div>
@@ -274,13 +302,17 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
         })}
       </div>
 
-      {/* View Full Rank Link */}
-      {rank.items.length > 10 && (
-        <Link href={`/rank/${rank.id}`}>
-          <div className="px-4 py-2 text-center border-t border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
-            <span className="text-sm text-purple-600 font-medium">View all {rank.items.length} items →</span>
-          </div>
-        </Link>
+      {/* Show All / Show Less Button */}
+      {hasMoreItems && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="w-full px-4 py-2 text-center border-t border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors"
+          data-testid="toggle-show-all"
+        >
+          <span className="text-sm text-purple-600 font-medium">
+            {showAll ? 'Show less' : `Show all ${localItems.length} items`}
+          </span>
+        </button>
       )}
     </div>
   );
