@@ -13,6 +13,7 @@ import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
+import RankFeedCard from "@/components/rank-feed-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -1674,6 +1675,26 @@ export default function Feed() {
                     <div key={`prediction-${post.id}`} className="mb-4">
                       <CollaborativePredictionCard 
                         prediction={predictionCardData as any}
+                      />
+                    </div>
+                  );
+                }
+
+                // Check if this item is a rank_share post
+                if (post.type === 'rank_share' && (post as any).rankData) {
+                  const rankPost = post as any;
+                  return (
+                    <div key={`rank-${post.id}`} className="mb-4">
+                      <RankFeedCard
+                        rank={rankPost.rankData}
+                        author={{
+                          id: post.user?.id || '',
+                          user_name: post.user?.username || '',
+                          display_name: post.user?.displayName,
+                          profile_image_url: post.user?.avatar
+                        }}
+                        caption={post.content}
+                        createdAt={post.timestamp}
                       />
                     </div>
                   );

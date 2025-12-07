@@ -80,8 +80,9 @@ export const socialPosts = pgTable("social_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   listId: varchar("list_id"),
+  rankId: text("rank_id"), // For rank_share posts
   content: text("content"),
-  postType: text("post_type").default("update"),
+  postType: text("post_type").default("update"), // 'update', 'prediction', 'poll', 'hot_take', 'rate_review', 'rank_share'
   rating: real("rating"),
   progress: integer("progress"),
   mediaTitle: text("media_title"),
@@ -257,8 +258,20 @@ export const rankItems = pgTable("rank_items", {
   externalId: text("external_id"),
   externalSource: text("external_source"), // 'tmdb', 'spotify', 'openlibrary', 'youtube'
   notes: text("notes"), // Personal notes about why it's ranked here
+  upVoteCount: integer("up_vote_count").default(0), // Cached count of up votes
+  downVoteCount: integer("down_vote_count").default(0), // Cached count of down votes
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Rank item votes - for community voting on rank item positions
+// Note: unique constraint on (rank_item_id, user_id) should be added in Supabase
+export const rankItemVotes = pgTable("rank_item_votes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  rankItemId: uuid("rank_item_id").notNull().references(() => rankItems.id, { onDelete: "cascade" }),
+  voterId: varchar("voter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  direction: text("direction").notNull(), // 'up' or 'down'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -350,8 +363,15 @@ export const insertRankSchema = createInsertSchema(ranks).omit({
 
 export const insertRankItemSchema = createInsertSchema(rankItems).omit({
   id: true,
+  upVoteCount: true,
+  downVoteCount: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertRankItemVoteSchema = createInsertSchema(rankItemVotes).omit({
+  id: true,
+  createdAt: true,
 });
 
 // Conversation topics (media or curated themes)
@@ -427,6 +447,8 @@ export type Rank = typeof ranks.$inferSelect;
 export type InsertRank = z.infer<typeof insertRankSchema>;
 export type RankItem = typeof rankItems.$inferSelect;
 export type InsertRankItem = z.infer<typeof insertRankItemSchema>;
+export type RankItemVote = typeof rankItemVotes.$inferSelect;
+export type InsertRankItemVote = z.infer<typeof insertRankItemVoteSchema>;
 export type ConversationTopic = typeof conversationTopics.$inferSelect;
 export type InsertConversationTopic = z.infer<typeof insertConversationTopicSchema>;
 export type Conversation = typeof conversations.$inferSelect;
