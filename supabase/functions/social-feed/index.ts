@@ -449,7 +449,8 @@ serve(async (req) => {
       posts?.forEach(post => {
         const hasMedia = post.media_title && post.media_title.trim() !== '' && post.media_external_id;
         
-        if (hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia') {
+        // rank_share posts need special handling - don't group them with media
+        if (hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia' && post.post_type !== 'rank_share') {
           const mediaKey = `${post.media_external_source}:${post.media_external_id}`;
           if (!mediaGroups.has(mediaKey)) {
             mediaGroups.set(mediaKey, []);
@@ -592,6 +593,7 @@ serve(async (req) => {
         
         // For rank_share posts, return special structure with rankData
         if (post.post_type === 'rank_share' && rankData) {
+          console.log('DEBUG rank_share post:', post.id, 'rankId:', post.rank_id, 'rankData items:', rankData.items?.length);
           return {
             id: post.id,
             type: 'rank_share',
