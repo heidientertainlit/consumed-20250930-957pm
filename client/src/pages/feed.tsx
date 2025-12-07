@@ -2199,6 +2199,24 @@ export default function Feed() {
                         </div>
                       </div>
                       
+                      {/* Rating stars if post has a rating */}
+                      {post.rating && post.rating > 0 && (
+                        <div className="flex items-center gap-1 mt-2">
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
+                            return (
+                              <span key={star} className="relative inline-block w-4 h-4">
+                                <Star size={16} className="absolute text-gray-300" />
+                                <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
+                                  <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                                </span>
+                              </span>
+                            );
+                          })}
+                          <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                        </div>
+                      )}
+                      
                       {/* See more of user's lists link */}
                       {post.user && (
                         <Link
@@ -2369,6 +2387,24 @@ export default function Feed() {
                                 )}
                               </div>
                             </div>
+                            
+                            {/* Rating stars if post has a rating (for list posts with ratings) */}
+                            {post.rating && post.rating > 0 && (
+                              <div className="flex items-center gap-1 mt-2">
+                                {[1, 2, 3, 4, 5].map((star) => {
+                                  const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
+                                  return (
+                                    <span key={star} className="relative inline-block w-4 h-4">
+                                      <Star size={16} className="absolute text-gray-300" />
+                                      <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
+                                        <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                                      </span>
+                                    </span>
+                                  );
+                                })}
+                                <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                              </div>
+                            )}
                           </div>
                         ) : (
                         /* Standard Media Card for other posts */
