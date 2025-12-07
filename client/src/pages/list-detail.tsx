@@ -93,15 +93,38 @@ export default function ListDetail() {
     enabled: !!urlListName && (sharedUserId ? true : !!session?.access_token),
   });
 
+  // Helper function to create a URL-safe slug from a title
+  const createSlug = (title: string) => {
+    return title.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  // Decode URL to handle emojis and special characters
+  const decodedUrlListName = (() => {
+    try {
+      return decodeURIComponent(urlListName || '');
+    } catch {
+      return urlListName || '';
+    }
+  })();
+
   // Find the specific list from the REAL data based on URL slug
   const sharedListData = sharedUserId 
     ? userListsData?.lists?.[0] // For shared links, get the first (and only) list returned
     : userListsData?.lists?.find((list: any) => {
-        const sluggedTitle = list.title.toLowerCase().replace(/\s+/g, '-');
-        return sluggedTitle === urlListName;
+        const sluggedTitle = createSlug(list.title);
+        // Compare both encoded and decoded versions
+        return sluggedTitle === urlListName || sluggedTitle === decodedUrlListName;
       });
 
   console.log('Shared list data found:', sharedListData);
+  if (!sharedListData && userListsData?.lists) {
+    console.log('List not found - Debug info:', {
+      sharedUserId,
+      urlListName,
+      decodedUrlListName,
+      availableLists: userListsData.lists.map((l: any) => ({ title: l.title, slug: createSlug(l.title) }))
+    });
+  }
 
   // Update the data structure to match new response format
   const listData = sharedListData ? {
