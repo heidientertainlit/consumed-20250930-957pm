@@ -552,15 +552,15 @@ export default function InlineComposer() {
     <div>
       {/* Main Composer - Always Open */}
       {stage === "open" && (
-        <div className="bg-white rounded-2xl shadow-lg p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-5">
           {/* Main Text Input - Always visible at top */}
-          <div className="mb-4">
+          <div className="mb-5">
             <MentionTextarea
               value={contentText}
               onChange={setContentText}
               placeholder={getPlaceholder()}
-              className="border border-gray-200 rounded-lg p-3 text-sm resize-none focus-visible:ring-2 focus-visible:ring-purple-500 text-gray-900 bg-white placeholder:text-gray-400 w-full min-h-[80px]"
-              minHeight="80px"
+              className="border-0 p-0 text-base resize-none focus-visible:ring-0 focus-visible:outline-none text-gray-900 bg-white placeholder:text-gray-400 w-full min-h-[60px]"
+              minHeight="60px"
               session={session}
             />
           </div>
@@ -570,7 +570,7 @@ export default function InlineComposer() {
             {!selectedMedia ? (
               <button
                 onClick={() => setStage("media-search")}
-                className="flex items-center gap-2 px-4 py-3 w-full border border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-purple-400 hover:text-purple-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-3 w-full border-2 border-dashed border-purple-200 rounded-xl text-gray-500 hover:border-purple-400 hover:text-purple-600 hover:bg-purple-50 transition-all"
                 data-testid="button-add-media"
               >
                 <Plus className="w-5 h-5" />
@@ -578,23 +578,23 @@ export default function InlineComposer() {
               </button>
             ) : (
               /* Selected Media Card */
-              <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <div className="flex items-center gap-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-xl p-3">
                 {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image) && (
                   <img
                     src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image}
                     alt={selectedMedia.title}
-                    className="w-12 h-16 object-cover rounded"
+                    className="w-12 h-16 object-cover rounded-lg shadow-sm"
                   />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 truncate">{selectedMedia.title}</p>
-                  <p className="text-sm text-gray-600 capitalize">{selectedMedia.type}</p>
+                  <p className="text-sm text-gray-500 capitalize">{selectedMedia.type}</p>
                 </div>
                 <Button
                   onClick={() => setSelectedMedia(null)}
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
                   data-testid="button-remove-media"
                 >
                   <X className="w-4 h-4" />
@@ -606,54 +606,53 @@ export default function InlineComposer() {
           {/* Post Type Selector - Only show when media is attached */}
           {selectedMedia && (
             <div className="mb-4">
-              <p className="text-xs text-gray-500 mb-2">How do you want to post this?</p>
-              <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+              <div className="flex gap-2">
                 <button
                   onClick={() => setPostType("thought")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all ${
                     postType === "thought" 
-                      ? "bg-white text-gray-900 shadow-sm" 
-                      : "text-gray-600 hover:text-gray-900"
+                      ? "bg-purple-100 text-purple-700 ring-1 ring-purple-200" 
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                   data-testid="button-type-thought"
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <MessageCircle className="w-3.5 h-3.5" />
                   <span>Thought</span>
                 </button>
                 <button
                   onClick={() => setPostType("rating")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all ${
                     postType === "rating" 
-                      ? "bg-white text-gray-900 shadow-sm" 
-                      : "text-gray-600 hover:text-gray-900"
+                      ? "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200" 
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                   data-testid="button-type-rating"
                 >
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span>Track & Rate</span>
+                  <Star className="w-3.5 h-3.5" />
+                  <span>Rate</span>
                 </button>
                 <button
                   onClick={() => setPostType("prediction")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all ${
                     postType === "prediction" 
-                      ? "bg-white text-gray-900 shadow-sm" 
-                      : "text-gray-600 hover:text-gray-900"
+                      ? "bg-purple-100 text-purple-700 ring-1 ring-purple-200" 
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                   data-testid="button-type-prediction"
                 >
-                  <Target className="w-4 h-4 text-purple-600" />
+                  <Target className="w-3.5 h-3.5" />
                   <span>Prediction</span>
                 </button>
                 <button
                   onClick={() => setPostType("poll")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all ${
                     postType === "poll" 
-                      ? "bg-white text-gray-900 shadow-sm" 
-                      : "text-gray-600 hover:text-gray-900"
+                      ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" 
+                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                   }`}
                   data-testid="button-type-poll"
                 >
-                  <Vote className="w-4 h-4 text-blue-600" />
+                  <Vote className="w-3.5 h-3.5" />
                   <span>Poll</span>
                 </button>
               </div>
@@ -792,7 +791,7 @@ export default function InlineComposer() {
 
           {/* Optional Actions - Add to List / Add to Rank */}
           {selectedMedia && (
-            <div className="mb-4 flex flex-wrap gap-4">
+            <div className="mb-4 flex flex-wrap gap-3">
               {/* Add to List */}
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -802,15 +801,16 @@ export default function InlineComposer() {
                     setAddToList(checked as boolean);
                     if (!checked) setSelectedListId("");
                   }}
+                  className="border-gray-300 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
                 />
-                <label htmlFor="add-to-list" className="text-sm text-gray-700">Add to list</label>
+                <label htmlFor="add-to-list" className="text-sm text-gray-600">Add to list</label>
                 {addToList && (
                   <select
                     value={selectedListId}
                     onChange={(e) => setSelectedListId(e.target.value)}
-                    className="ml-2 px-2 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                    className="ml-1 px-3 py-1.5 text-sm border border-purple-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-300 bg-purple-50"
                   >
-                    <option value="">Select list...</option>
+                    <option value="">Select...</option>
                     {userLists.map((list: any) => (
                       <option key={list.id} value={list.id}>
                         {list.title || list.name}
@@ -829,15 +829,16 @@ export default function InlineComposer() {
                     setAddToRank(checked as boolean);
                     if (!checked) setSelectedRankId("");
                   }}
+                  className="border-gray-300 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
                 />
-                <label htmlFor="add-to-rank" className="text-sm text-gray-700">Add to rank</label>
+                <label htmlFor="add-to-rank" className="text-sm text-gray-600">Add to rank</label>
                 {addToRank && (
                   <select
                     value={selectedRankId}
                     onChange={(e) => setSelectedRankId(e.target.value)}
-                    className="ml-2 px-2 py-1 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                    className="ml-1 px-3 py-1.5 text-sm border border-purple-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-300 bg-purple-50"
                   >
-                    <option value="">Select rank...</option>
+                    <option value="">Select...</option>
                     {userRanks.map((rank: any) => (
                       <option key={rank.id} value={rank.id}>
                         {rank.title}
@@ -850,18 +851,19 @@ export default function InlineComposer() {
           )}
 
           {/* Footer - Spoilers + Post Button */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-4">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <Checkbox
                 checked={containsSpoilers}
                 onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+                className="border-gray-300"
               />
-              <span className="text-gray-600">Contains spoilers</span>
+              <span className="text-gray-500">Contains spoilers</span>
             </label>
             <Button
               onClick={handlePost}
               disabled={isPosting || !canPost()}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+              className="bg-purple-500 hover:bg-purple-600 text-white px-8 rounded-full shadow-md"
               data-testid="button-post"
             >
               {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
