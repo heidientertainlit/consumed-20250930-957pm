@@ -1509,9 +1509,9 @@ export default function Feed() {
       <div className="bg-gradient-to-r from-slate-900 to-purple-900 pb-8 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
           {/* Tagline */}
-          <div className="text-center mb-4">
-            <p className="text-white/90 text-sm font-medium">See what your friends are consuming — and why.</p>
-            <p className="text-purple-300/70 text-xs mt-0.5">Discover. React. Share your take.</p>
+          <div className="text-center mb-5">
+            <h2 className="text-white text-lg font-semibold tracking-tight">See what your friends are consuming — and why.</h2>
+            <p className="text-purple-300 text-sm mt-1">Discover. React. Share your take.</p>
           </div>
           
           {/* Inline Composer - Always Visible */}
