@@ -392,28 +392,28 @@ serve(async (req) => {
     }, {});
     console.log('Final results:', results.length, 'items - breakdown:', JSON.stringify(typeBreakdown));
 
-    // Sort by relevance - exact/close title matches appear first
+    // Sort: books first, then by title match relevance
     const queryLower = query.toLowerCase().trim();
-    const sortedResults = results.sort((a, b) => {
+    const sortedResults = [...results].sort((a, b) => {
+      // Books get priority boost
+      const aBookBonus = a.type === 'book' ? 200 : 0;
+      const bBookBonus = b.type === 'book' ? 200 : 0;
+      
       const aTitle = (a.title || '').toLowerCase();
       const bTitle = (b.title || '').toLowerCase();
       
-      // Exact match gets highest priority
+      // Title match scoring
       const aExact = aTitle === queryLower ? 100 : 0;
       const bExact = bTitle === queryLower ? 100 : 0;
-      
-      // Starts with query gets second priority
       const aStarts = aTitle.startsWith(queryLower) ? 50 : 0;
       const bStarts = bTitle.startsWith(queryLower) ? 50 : 0;
-      
-      // Contains query gets third priority
       const aContains = aTitle.includes(queryLower) ? 25 : 0;
       const bContains = bTitle.includes(queryLower) ? 25 : 0;
       
-      const aScore = aExact + aStarts + aContains;
-      const bScore = bExact + bStarts + bContains;
+      const aScore = aBookBonus + aExact + aStarts + aContains;
+      const bScore = bBookBonus + bExact + bStarts + bContains;
       
-      return bScore - aScore; // Higher score first
+      return bScore - aScore;
     });
 
     return new Response(JSON.stringify({ 
