@@ -23,6 +23,7 @@ export default function InlineComposer() {
   
   // Stage management - start open for frictionless experience
   const [stage, setStage] = useState<ComposerStage>("open");
+  const [isExpanded, setIsExpanded] = useState(false); // Expands when user taps/types
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [postType, setPostType] = useState<PostType>("thought");
   
@@ -550,19 +551,24 @@ export default function InlineComposer() {
 
   return (
     <div>
-      {/* Main Composer - Always Open */}
+      {/* Main Composer */}
       {stage === "open" && (
         <div className="space-y-3">
-          {/* White card with divider */}
+          {/* White card */}
           <div className="bg-white rounded-2xl shadow-sm">
             {/* Text input area */}
-            <div className="p-4 pb-3">
+            <div className="p-4" onFocus={() => setIsExpanded(true)}>
               <MentionTextarea
                 value={contentText}
-                onChange={setContentText}
-                placeholder={getPlaceholder()}
-                className="border-0 p-0 text-base resize-none focus-visible:ring-0 focus-visible:outline-none text-gray-900 bg-white placeholder:text-gray-400 w-full min-h-[48px]"
-                minHeight="48px"
+                onChange={(val) => {
+                  setContentText(val);
+                  if (val.trim().length > 0 && !isExpanded) {
+                    setIsExpanded(true);
+                  }
+                }}
+                placeholder="What are you watching, reading, or listening to?"
+                className="border-0 p-0 text-base resize-none focus-visible:ring-0 focus-visible:outline-none text-gray-900 bg-white placeholder:text-gray-400 w-full min-h-[40px]"
+                minHeight={isExpanded ? "60px" : "40px"}
                 session={session}
               />
               
@@ -591,273 +597,299 @@ export default function InlineComposer() {
               )}
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-gray-200 mx-4" />
+            {/* Expanded Actions - only show when expanded */}
+            {isExpanded && (
+              <>
+                {/* Divider */}
+                <div className="border-t border-gray-200 mx-4" />
 
-            {/* Actions Row - white with dark text */}
-            <div className="flex items-center justify-between px-4 py-2.5">
-              {/* Left side - Add Media button */}
-              <button
-                onClick={() => setStage("media-search")}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                data-testid="button-add-media"
-              >
-                <Plus className="w-5 h-5" />
-                <span className="text-sm font-medium">Add media</span>
-              </button>
+                {/* Action Buttons Grid */}
+                <div className="px-4 py-3">
+                  <div className="flex flex-wrap gap-2">
+                    {/* Add Media */}
+                    <button
+                      onClick={() => setStage("media-search")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        selectedMedia 
+                          ? "bg-purple-100 text-purple-700" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                      data-testid="button-add-media"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add media</span>
+                    </button>
 
-              {/* Right side - Spoilers + Post */}
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm cursor-pointer text-gray-500 hover:text-gray-700 transition-colors">
-                  <Checkbox
-                    checked={containsSpoilers}
-                    onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
-                    className="border-gray-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 h-4 w-4"
-                  />
-                  <span>Spoilers</span>
-                </label>
-                <Button
-                  onClick={handlePost}
-                  disabled={isPosting || !canPost()}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto rounded-full font-medium disabled:opacity-50"
-                  data-testid="button-post"
-                >
-                  {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
-                </Button>
-              </div>
-            </div>
-          </div>
+                    {/* Track & Rate */}
+                    <button
+                      onClick={() => {
+                        setPostType("rating");
+                        if (!selectedMedia) setStage("media-search");
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        postType === "rating" && selectedMedia
+                          ? "bg-yellow-100 text-yellow-700" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                      data-testid="button-type-rating"
+                    >
+                      <Star className="w-3.5 h-3.5" />
+                      <span>Track & Rate</span>
+                    </button>
 
-          {/* Post Type Pills - Only show when media is attached */}
-          {selectedMedia && (
-            <div className="flex gap-2 justify-center">
-              <button
-                onClick={() => setPostType("thought")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  postType === "thought" 
-                    ? "bg-white text-purple-700" 
-                    : "text-white/70 hover:text-white hover:bg-white/10"
-                }`}
-                data-testid="button-type-thought"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>Thought</span>
-              </button>
-              <button
-                onClick={() => setPostType("rating")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  postType === "rating" 
-                    ? "bg-white text-yellow-600" 
-                    : "text-white/70 hover:text-white hover:bg-white/10"
-                }`}
-                data-testid="button-type-rating"
-              >
-                <Star className="w-3.5 h-3.5" />
-                <span>Rate</span>
-              </button>
-              <button
-                onClick={() => setPostType("prediction")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  postType === "prediction" 
-                    ? "bg-white text-purple-700" 
-                    : "text-white/70 hover:text-white hover:bg-white/10"
-                }`}
-                data-testid="button-type-prediction"
-              >
-                <Target className="w-3.5 h-3.5" />
-                <span>Prediction</span>
-              </button>
-              <button
-                onClick={() => setPostType("poll")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  postType === "poll" 
-                    ? "bg-white text-blue-600" 
-                    : "text-white/70 hover:text-white hover:bg-white/10"
-                }`}
-                data-testid="button-type-poll"
-              >
-                <Vote className="w-3.5 h-3.5" />
-                <span>Poll</span>
-              </button>
-            </div>
-          )}
+                    {/* Prediction */}
+                    <button
+                      onClick={() => {
+                        setPostType("prediction");
+                        if (!selectedMedia) setStage("media-search");
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        postType === "prediction" && selectedMedia
+                          ? "bg-purple-100 text-purple-700" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                      data-testid="button-type-prediction"
+                    >
+                      <Target className="w-3.5 h-3.5" />
+                      <span>Prediction</span>
+                    </button>
 
-          {/* Dynamic Fields Based on Post Type - glassmorphism card */}
-          {selectedMedia && (postType === "rating" || postType === "prediction" || postType === "poll") && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
-              {/* Rating Fields */}
-              {postType === "rating" && (
-                <div className="flex items-center gap-3 justify-center">
-                  <span className="text-xs text-white/70">Rating:</span>
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((star) => {
-                      const fillPercent = Math.min(Math.max(ratingValue - (star - 1), 0), 1) * 100;
-                      return (
-                        <button
-                          key={star}
-                          onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
-                          className="focus:outline-none relative"
-                        >
-                          <Star className="w-6 h-6 text-white/30" />
-                          <div 
-                            className="absolute inset-0 overflow-hidden"
-                            style={{ width: `${fillPercent}%` }}
-                          >
-                            <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <input
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={ratingValue || ""}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      if (isNaN(val)) setRatingValue(0);
-                      else setRatingValue(Math.min(5, Math.max(0, val)));
-                    }}
-                    placeholder="0.0"
-                    className="w-14 px-2 py-1 text-xs border-0 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-400 text-center bg-white/90 text-gray-900"
-                  />
-                </div>
-              )}
+                    {/* Poll */}
+                    <button
+                      onClick={() => {
+                        setPostType("poll");
+                        if (!selectedMedia) setStage("media-search");
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        postType === "poll" && selectedMedia
+                          ? "bg-blue-100 text-blue-700" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                      data-testid="button-type-poll"
+                    >
+                      <Vote className="w-3.5 h-3.5" />
+                      <span>Poll</span>
+                    </button>
 
-              {/* Prediction Fields */}
-              {postType === "prediction" && (
-                <div className="space-y-2">
-                  <span className="text-xs text-white/70">Your prediction:</span>
-                  {predictionOptions.map((option, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        id={`option-${index}`}
-                        name="creator-prediction"
-                        value={option || `Option ${index + 1}`}
-                        checked={creatorPrediction === (option || `Option ${index + 1}`)}
-                        onChange={(e) => setCreatorPrediction(e.target.value)}
-                        className="w-3.5 h-3.5 text-purple-400 accent-purple-400"
+                    {/* Add to List */}
+                    <button
+                      onClick={() => {
+                        setAddToList(!addToList);
+                        if (!addToList && !selectedMedia) setStage("media-search");
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        addToList
+                          ? "bg-green-100 text-green-700" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                      data-testid="button-add-to-list"
+                    >
+                      <ListPlus className="w-3.5 h-3.5" />
+                      <span>Add to List</span>
+                    </button>
+
+                    {/* Add to Rank */}
+                    <button
+                      onClick={() => {
+                        setAddToRank(!addToRank);
+                        if (!addToRank && !selectedMedia) setStage("media-search");
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        addToRank
+                          ? "bg-orange-100 text-orange-700" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                      data-testid="button-add-to-rank"
+                    >
+                      <span className="text-xs">🔢</span>
+                      <span>Add to Rank</span>
+                    </button>
+
+                    {/* Spoilers */}
+                    <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all ${
+                      containsSpoilers
+                        ? "bg-red-100 text-red-700" 
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}>
+                      <Checkbox
+                        checked={containsSpoilers}
+                        onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+                        className="border-gray-400 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 h-3.5 w-3.5"
                       />
+                      <span>Spoilers</span>
+                    </label>
+                  </div>
+
+                  {/* List dropdown when Add to List is selected */}
+                  {addToList && (
+                    <div className="mt-3">
+                      <select
+                        value={selectedListId}
+                        onChange={(e) => setSelectedListId(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white text-gray-900"
+                      >
+                        <option value="">Select a list...</option>
+                        {userLists.map((list: any) => (
+                          <option key={list.id} value={list.id}>
+                            {list.title || list.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Rank dropdown when Add to Rank is selected */}
+                  {addToRank && (
+                    <div className="mt-3">
+                      <select
+                        value={selectedRankId}
+                        onChange={(e) => setSelectedRankId(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white text-gray-900"
+                      >
+                        <option value="">Select a rank...</option>
+                        {userRanks.map((rank: any) => (
+                          <option key={rank.id} value={rank.id}>
+                            {rank.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rating stars when Track & Rate is selected */}
+                {postType === "rating" && selectedMedia && (
+                  <div className="px-4 pb-3">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <span className="text-xs text-gray-500">Rating:</span>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => {
+                          const fillPercent = Math.min(Math.max(ratingValue - (star - 1), 0), 1) * 100;
+                          return (
+                            <button
+                              key={star}
+                              onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
+                              className="focus:outline-none relative"
+                            >
+                              <Star className="w-6 h-6 text-gray-300" />
+                              <div 
+                                className="absolute inset-0 overflow-hidden"
+                                style={{ width: `${fillPercent}%` }}
+                              >
+                                <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                       <input
-                        type="text"
-                        value={option}
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        value={ratingValue || ""}
                         onChange={(e) => {
-                          const newOptions = [...predictionOptions];
-                          newOptions[index] = e.target.value;
-                          setPredictionOptions(newOptions);
-                          if (creatorPrediction === option && e.target.value) {
-                            setCreatorPrediction(e.target.value);
-                          }
+                          const val = parseFloat(e.target.value);
+                          if (isNaN(val)) setRatingValue(0);
+                          else setRatingValue(Math.min(5, Math.max(0, val)));
                         }}
-                        placeholder={`Option ${index + 1}`}
-                        className="flex-1 px-3 py-1.5 text-sm border-0 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white/90 text-gray-900 placeholder:text-gray-400"
+                        placeholder="0.0"
+                        className="w-14 px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 text-center bg-white"
                       />
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                )}
 
-              {/* Poll Fields */}
-              {postType === "poll" && (
-                <div className="space-y-2">
-                  <span className="text-xs text-white/70">Poll options:</span>
-                  {pollOptions.map((option, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={option}
-                        onChange={(e) => {
-                          const newOptions = [...pollOptions];
-                          newOptions[index] = e.target.value;
-                          setPollOptions(newOptions);
-                        }}
-                        placeholder={`Option ${index + 1}`}
-                        className="flex-1 px-3 py-1.5 text-sm border-0 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white/90 text-gray-900 placeholder:text-gray-400"
-                      />
-                      {pollOptions.length > 2 && (
+                {/* Prediction options when Prediction is selected */}
+                {postType === "prediction" && selectedMedia && (
+                  <div className="px-4 pb-3">
+                    <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                      <span className="text-xs text-gray-500">Your prediction options:</span>
+                      {predictionOptions.map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            id={`option-${index}`}
+                            name="creator-prediction"
+                            value={option || `Option ${index + 1}`}
+                            checked={creatorPrediction === (option || `Option ${index + 1}`)}
+                            onChange={(e) => setCreatorPrediction(e.target.value)}
+                            className="w-3.5 h-3.5 text-purple-600"
+                          />
+                          <input
+                            type="text"
+                            value={option}
+                            onChange={(e) => {
+                              const newOptions = [...predictionOptions];
+                              newOptions[index] = e.target.value;
+                              setPredictionOptions(newOptions);
+                              if (creatorPrediction === option && e.target.value) {
+                                setCreatorPrediction(e.target.value);
+                              }
+                            }}
+                            placeholder={`Option ${index + 1}`}
+                            className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Poll options when Poll is selected */}
+                {postType === "poll" && selectedMedia && (
+                  <div className="px-4 pb-3">
+                    <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                      <span className="text-xs text-gray-500">Poll options:</span>
+                      {pollOptions.map((option, index) => (
+                        <div key={index} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={option}
+                            onChange={(e) => {
+                              const newOptions = [...pollOptions];
+                              newOptions[index] = e.target.value;
+                              setPollOptions(newOptions);
+                            }}
+                            placeholder={`Option ${index + 1}`}
+                            className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+                          />
+                          {pollOptions.length > 2 && (
+                            <button
+                              onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== index))}
+                              className="text-gray-400 hover:text-gray-600 p-1"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {pollOptions.length < 4 && (
                         <button
-                          onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== index))}
-                          className="text-white/50 hover:text-white p-1"
+                          onClick={() => setPollOptions([...pollOptions, ""])}
+                          className="text-xs text-purple-600 hover:text-purple-700"
                         >
-                          <X className="w-4 h-4" />
+                          + Add option
                         </button>
                       )}
                     </div>
-                  ))}
-                  {pollOptions.length < 4 && (
-                    <button
-                      onClick={() => setPollOptions([...pollOptions, ""])}
-                      className="text-xs text-purple-300 hover:text-purple-200"
-                    >
-                      + Add option
-                    </button>
-                  )}
+                  </div>
+                )}
+
+                {/* Post Button Row */}
+                <div className="px-4 pb-4 flex justify-end">
+                  <Button
+                    onClick={handlePost}
+                    disabled={isPosting || !canPost()}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 h-auto rounded-full font-medium disabled:opacity-50"
+                    data-testid="button-post"
+                  >
+                    {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
+                  </Button>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Optional: Add to List / Rank - compact row */}
-          {selectedMedia && (
-            <div className="flex gap-4 justify-center">
-              <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-                <Checkbox
-                  id="add-to-list"
-                  checked={addToList}
-                  onCheckedChange={(checked) => {
-                    setAddToList(checked as boolean);
-                    if (!checked) setSelectedListId("");
-                  }}
-                  className="border-white/40 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500 h-4 w-4"
-                />
-                <span className="text-white/70">List</span>
-                {addToList && (
-                  <select
-                    value={selectedListId}
-                    onChange={(e) => setSelectedListId(e.target.value)}
-                    className="ml-1 px-2 py-0.5 text-xs border-0 rounded focus:outline-none bg-white/90 text-gray-900"
-                  >
-                    <option value="">Select...</option>
-                    {userLists.map((list: any) => (
-                      <option key={list.id} value={list.id}>
-                        {list.title || list.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </label>
-
-              <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-                <Checkbox
-                  id="add-to-rank"
-                  checked={addToRank}
-                  onCheckedChange={(checked) => {
-                    setAddToRank(checked as boolean);
-                    if (!checked) setSelectedRankId("");
-                  }}
-                  className="border-white/40 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500 h-4 w-4"
-                />
-                <span className="text-white/70">Rank</span>
-                {addToRank && (
-                  <select
-                    value={selectedRankId}
-                    onChange={(e) => setSelectedRankId(e.target.value)}
-                    className="ml-1 px-2 py-0.5 text-xs border-0 rounded focus:outline-none bg-white/90 text-gray-900"
-                  >
-                    <option value="">Select...</option>
-                    {userRanks.map((rank: any) => (
-                      <option key={rank.id} value={rank.id}>
-                        {rank.title}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </label>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       )}
 
