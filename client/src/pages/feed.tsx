@@ -1181,8 +1181,12 @@ export default function Feed() {
   };
 
   const handleDeletePost = (postId: string) => {
+    console.log('🗑️ handleDeletePost called for:', postId);
     if (confirm('Are you sure you want to delete this post?')) {
+      console.log('✅ User confirmed delete');
       deletePostMutation.mutate(postId);
+    } else {
+      console.log('❌ User cancelled delete');
     }
   };
 
@@ -1916,7 +1920,14 @@ export default function Feed() {
                           }
                         })()}
                       </div>
-                      {user?.id === post.user.id && (
+                      {/* Debug delete button visibility */}
+                      {(() => {
+                        const canDelete = user?.id === post.user.id;
+                        if (!canDelete && user?.id) {
+                          console.log('🔒 Delete button hidden:', { authUserId: user?.id, postUserId: post.user.id, postId: post.id });
+                        }
+                        return canDelete;
+                      })() && (
                         <button
                           onClick={() => handleDeletePost(post.id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
