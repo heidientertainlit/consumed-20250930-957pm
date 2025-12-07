@@ -1850,6 +1850,7 @@ export default function Feed() {
                               </p>
                             );
                           } else if (isRatedPost && hasMediaItems) {
+                            const listData = (post as any).listData;
                             return (
                               <p className="text-sm">
                                 <Link 
@@ -1860,6 +1861,17 @@ export default function Feed() {
                                   {post.user.username}
                                 </Link>
                                 <span className="text-gray-500"> rated {post.mediaItems[0].title}</span>
+                                {listData && (
+                                  <>
+                                    <span className="text-gray-500"> → </span>
+                                    <Link 
+                                      href={`/user/${post.user.id}?tab=lists`}
+                                      className="font-medium text-purple-600 hover:text-purple-700"
+                                    >
+                                      {listData.title}
+                                    </Link>
+                                  </>
+                                )}
                               </p>
                             );
                           } else if (post.content && hasMediaItems) {
@@ -1974,6 +1986,7 @@ export default function Feed() {
                                       </p>
                                     );
                                   } else if (isRatedPost && hasMediaItems) {
+                                    const listData = (post as any).listData;
                                     return (
                                       <p className="text-sm">
                                         <Link 
@@ -1984,6 +1997,17 @@ export default function Feed() {
                                           {displayUser.username}
                                         </Link>
                                         <span className="text-gray-500"> rated {post.mediaItems[0].title}</span>
+                                        {listData && (
+                                          <>
+                                            <span className="text-gray-500"> → </span>
+                                            <Link 
+                                              href={`/user/${displayUser.userId}?tab=lists`}
+                                              className="font-medium text-purple-600 hover:text-purple-700"
+                                            >
+                                              {listData.title}
+                                            </Link>
+                                          </>
+                                        )}
                                       </p>
                                     );
                                   } else if (post.content && hasMediaItems) {

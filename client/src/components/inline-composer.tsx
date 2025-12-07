@@ -415,6 +415,7 @@ export default function InlineComposer() {
           media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
           media_external_id: selectedMedia.external_id || selectedMedia.id,
           media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          list_id: addToList && selectedListId ? selectedListId : undefined,
         };
       } else if (postType === "prediction") {
         if (!contentText.trim()) {

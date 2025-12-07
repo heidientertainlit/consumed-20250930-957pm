@@ -147,7 +147,8 @@ serve(async (req) => {
         prediction_question,
         prediction_options,
         poll_question,
-        poll_options
+        poll_options,
+        list_id
       } = body;
 
       console.log('Inline post type:', type);
@@ -341,7 +342,8 @@ serve(async (req) => {
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
         visibility,
-        contains_spoilers
+        contains_spoilers,
+        list_id: list_id || null
       };
 
       const { data: post, error: postError } = await adminClient

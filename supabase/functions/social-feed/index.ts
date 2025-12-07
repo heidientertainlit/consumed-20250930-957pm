@@ -621,6 +621,9 @@ serve(async (req) => {
           };
         }
         
+        // Get list data if post has list_id
+        const listData = post.list_id ? listDataMap.get(post.list_id) : null;
+        
         return {
           id: post.id,
           type: post.post_type || 'update',
@@ -641,6 +644,20 @@ serve(async (req) => {
           progress: post.progress,
           rankId: post.rank_id || null,
           rankData: rankData || null,
+          listId: post.list_id || null,
+          listData: listData ? {
+            title: listData.title,
+            items: listData.items.map(item => ({
+              id: item.id,
+              title: item.title,
+              mediaType: item.media_type,
+              creator: item.creator,
+              imageUrl: item.image_url,
+              externalId: item.external_id,
+              externalSource: item.external_source
+            })),
+            totalCount: listData.totalCount
+          } : null,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
