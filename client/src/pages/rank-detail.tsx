@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import ConsumptionTracker from '@/components/consumption-tracker';
+import AddRankItemDialog from '@/components/add-rank-item-dialog';
 import Navigation from '@/components/navigation';
 
 interface RankItem {
@@ -328,10 +328,13 @@ export default function RankDetail() {
         )}
       </div>
 
-      <ConsumptionTracker 
-        isOpen={isTrackModalOpen} 
-        onClose={() => setIsTrackModalOpen(false)}
-        targetRankId={rankData.id}
+      <AddRankItemDialog 
+        open={isTrackModalOpen} 
+        onOpenChange={setIsTrackModalOpen}
+        rankId={rankData.id}
+        rankTitle={rankData.title}
+        currentItemCount={rankData.items?.length || 0}
+        maxItems={rankData.max_items || 10}
       />
     </div>
   );
