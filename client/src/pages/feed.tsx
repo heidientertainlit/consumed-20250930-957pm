@@ -2094,7 +2094,7 @@ export default function Feed() {
                                 </span>
                               );
                             })}
-                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}/5</span>
                           </div>
                         </div>
                       ) : null;
@@ -2135,8 +2135,18 @@ export default function Feed() {
                                 </span>
                               );
                             })}
-                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}/5</span>
                           </div>
+                        )}
+                        {/* See more lists link for rate-review posts with list_id */}
+                        {post.type === 'rate-review' && (post as any).listId && post.user && (
+                          <Link
+                            href={`/user/${post.user.id}?tab=lists`}
+                            className="text-sm text-purple-600 hover:text-purple-700 transition-colors font-medium mt-2 inline-block"
+                            data-testid={`link-see-lists-${post.user.id}`}
+                          >
+                            See more of {(post.user.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user.username}'s lists →
+                          </Link>
                         )}
                       </div>
                     );
@@ -2213,7 +2223,7 @@ export default function Feed() {
                               </span>
                             );
                           })}
-                          <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                          <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}/5</span>
                         </div>
                       )}
                       
