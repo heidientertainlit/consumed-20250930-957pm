@@ -553,8 +553,8 @@ export default function InlineComposer() {
       {/* Main Composer - Always Open */}
       {stage === "open" && (
         <div className="space-y-3">
-          {/* White card with action bar at bottom */}
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          {/* White card with divider */}
+          <div className="bg-white rounded-2xl shadow-sm">
             {/* Text input area */}
             <div className="p-4 pb-3">
               <MentionTextarea
@@ -591,34 +591,35 @@ export default function InlineComposer() {
               )}
             </div>
 
-            {/* Actions Row - at bottom of white card with purple gradient */}
-            <div className="flex items-center justify-between bg-gradient-to-r from-purple-600/90 to-purple-500/90 px-4 py-2.5">
+            {/* Divider */}
+            <div className="border-t border-gray-200 mx-4" />
+
+            {/* Actions Row - white with dark text */}
+            <div className="flex items-center justify-between px-4 py-2.5">
               {/* Left side - Add Media button */}
               <button
                 onClick={() => setStage("media-search")}
-                className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
                 data-testid="button-add-media"
               >
-                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                  <Plus className="w-3.5 h-3.5" />
-                </div>
+                <Plus className="w-5 h-5" />
                 <span className="text-sm font-medium">Add media</span>
               </button>
 
               {/* Right side - Spoilers + Post */}
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-sm cursor-pointer text-white/80 hover:text-white transition-colors">
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm cursor-pointer text-gray-500 hover:text-gray-700 transition-colors">
                   <Checkbox
                     checked={containsSpoilers}
                     onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
-                    className="border-white/50 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-purple-600 h-4 w-4"
+                    className="border-gray-300 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 h-4 w-4"
                   />
                   <span>Spoilers</span>
                 </label>
                 <Button
                   onClick={handlePost}
                   disabled={isPosting || !canPost()}
-                  className="bg-white hover:bg-white/90 text-purple-600 px-5 py-1.5 h-auto rounded-full font-semibold shadow-lg disabled:opacity-50 disabled:shadow-none"
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-1.5 h-auto rounded-full font-medium disabled:opacity-50"
                   data-testid="button-post"
                 >
                   {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
