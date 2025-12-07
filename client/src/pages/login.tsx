@@ -209,7 +209,7 @@ export default function LoginPage() {
             />
           </div>
           <p className="text-purple-100 text-xs max-w-lg mx-auto">
-            Share your favorite movies, shows, books, podcasts, music and more — and see what others are saying too.
+            See what entertainment your friends are into (and why).
           </p>
         </div>
         
