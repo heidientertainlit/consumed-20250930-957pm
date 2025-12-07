@@ -704,20 +704,6 @@ export default function InlineComposer() {
                       <span className="text-xs">🔢</span>
                       <span>Add to Rank</span>
                     </button>
-
-                    {/* Spoilers */}
-                    <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all ${
-                      containsSpoilers
-                        ? "bg-red-100 text-red-700" 
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}>
-                      <Checkbox
-                        checked={containsSpoilers}
-                        onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
-                        className="border-gray-400 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 h-3.5 w-3.5"
-                      />
-                      <span>Spoilers</span>
-                    </label>
                   </div>
 
                   {/* List dropdown when Add to List is selected */}
@@ -876,8 +862,19 @@ export default function InlineComposer() {
                   </div>
                 )}
 
-                {/* Post Button Row */}
-                <div className="px-4 pb-4 flex justify-end">
+                {/* Bottom Row - Spoilers left, Post right */}
+                <div className="px-4 pb-4 flex items-center justify-between">
+                  {/* Spoilers checkbox */}
+                  <label className="flex items-center gap-2 text-sm cursor-pointer text-gray-500 hover:text-gray-700 transition-colors">
+                    <Checkbox
+                      checked={containsSpoilers}
+                      onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+                      className="border-gray-300 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500 h-4 w-4"
+                    />
+                    <span>Contains spoilers</span>
+                  </label>
+                  
+                  {/* Post button */}
                   <Button
                     onClick={handlePost}
                     disabled={isPosting || !canPost()}
