@@ -108,6 +108,11 @@ export default function InlineComposer() {
 
   // Auto-search when query changes
   useEffect(() => {
+    if (!session?.access_token) {
+      console.log("No session token yet, skipping search");
+      return;
+    }
+    
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
         handleMediaSearch(searchQuery);
@@ -116,7 +121,7 @@ export default function InlineComposer() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, session?.access_token]);
 
   const resetComposer = () => {
     // Stay open but clear all fields
