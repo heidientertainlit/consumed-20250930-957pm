@@ -90,7 +90,31 @@ serve(async (req) => {
         return { ...rank, items: [] };
       }
 
-      return { ...rank, items: items || [] };
+      // Fetch current user's votes for these items
+      let userVotes: Record<string, string> = {};
+      if (appUser?.id && items && items.length > 0) {
+        const itemIds = items.map(item => item.id);
+        const { data: votes } = await supabaseAdmin
+          .from('rank_item_votes')
+          .select('rank_item_id, direction')
+          .eq('voter_id', appUser.id)
+          .in('rank_item_id', itemIds);
+        
+        if (votes) {
+          userVotes = votes.reduce((acc: Record<string, string>, vote: any) => {
+            acc[vote.rank_item_id] = vote.direction;
+            return acc;
+          }, {});
+        }
+      }
+
+      // Add user_vote to each item
+      const itemsWithVotes = (items || []).map(item => ({
+        ...item,
+        user_vote: userVotes[item.id] || null
+      }));
+
+      return { ...rank, items: itemsWithVotes };
     }));
 
     console.log(`Returning ${ranksWithItems.length} ranks for user ${targetUserId}`);
