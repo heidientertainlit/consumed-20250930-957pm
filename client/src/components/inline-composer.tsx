@@ -14,15 +14,15 @@ import MentionTextarea from "@/components/mention-textarea";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 
-type ComposerStage = "closed" | "open" | "media-search";
+type ComposerStage = "open" | "media-search";
 type PostType = "thought" | "rating" | "prediction" | "poll";
 
 export default function InlineComposer() {
   const { session, user } = useAuth();
   const { toast } = useToast();
   
-  // Stage management - new unified approach
-  const [stage, setStage] = useState<ComposerStage>("closed");
+  // Stage management - start open for frictionless experience
+  const [stage, setStage] = useState<ComposerStage>("open");
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [postType, setPostType] = useState<PostType>("thought");
   
@@ -117,7 +117,8 @@ export default function InlineComposer() {
   }, [searchQuery]);
 
   const resetComposer = () => {
-    setStage("closed");
+    // Stay open but clear all fields
+    setStage("open");
     setSelectedMedia(null);
     setPostType("thought");
     setSearchQuery("");
@@ -549,33 +550,9 @@ export default function InlineComposer() {
 
   return (
     <div>
-      {/* Entry Point - Pill that looks like text field */}
-      {stage === "closed" && (
-        <button
-          onClick={() => setStage("open")}
-          className="w-full bg-white rounded-2xl shadow-lg px-5 py-4 text-left text-gray-400 hover:shadow-xl transition-shadow"
-          data-testid="button-open-composer"
-        >
-          Share what you're consuming...
-        </button>
-      )}
-
-      {/* Main Composer - Open State */}
+      {/* Main Composer - Always Open */}
       {stage === "open" && (
         <div className="bg-white rounded-2xl shadow-lg p-4">
-          {/* Close button */}
-          <div className="flex justify-end mb-2">
-            <Button
-              onClick={resetComposer}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
-              data-testid="button-close-composer"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-
           {/* Main Text Input - Always visible at top */}
           <div className="mb-4">
             <MentionTextarea
