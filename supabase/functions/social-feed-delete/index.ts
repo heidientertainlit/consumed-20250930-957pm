@@ -109,19 +109,29 @@ serve(async (req) => {
       }
 
       // Delete the post (cascading deletes will handle likes and comments)
-      const { error } = await serviceSupabase
+      console.log('Attempting to delete post:', post_id);
+      const { data: deletedData, error, count } = await serviceSupabase
         .from('social_posts')
         .delete()
-        .eq('id', post_id);
+        .eq('id', post_id)
+        .select();
+
+      console.log('Delete result:', { deletedData, error, count });
 
       if (error) {
+        console.error('Delete error:', error);
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
+      if (!deletedData || deletedData.length === 0) {
+        console.warn('No rows deleted - post may not exist or RLS blocking');
+      }
+
+      console.log('Post deleted successfully');
+      return new Response(JSON.stringify({ success: true, deleted: deletedData }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }

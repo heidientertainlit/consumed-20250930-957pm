@@ -977,8 +977,9 @@ export default function Feed() {
         throw new Error(errorData.error || 'Failed to delete post');
       }
 
-      console.log('✅ Post deleted successfully');
-      return { success: true };
+      const result = await response.json();
+      console.log('✅ Post deleted successfully, result:', result);
+      return result;
     },
     onMutate: async (postId) => {
       // Optimistic update - immediately remove post from UI
