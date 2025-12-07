@@ -152,7 +152,8 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
         }
       }
       
-      await queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      // Use refetchQueries to wait for fresh data before navigating
+      await queryClient.refetchQueries({ queryKey: ['user-lists-with-media'] });
       
       const listSlug = (data.list?.title || title).toLowerCase().replace(/\s+/g, '-');
       
