@@ -448,12 +448,15 @@ export default function InlineComposer() {
           contains_spoilers: containsSpoilers,
           prediction_question: contentText.trim(),
           prediction_options: [option1, option2],
-          media_title: selectedMedia.title,
-          media_type: selectedMedia.type,
-          media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
-          media_external_id: selectedMedia.external_id || selectedMedia.id,
-          media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          // Media is optional for predictions
+          ...(selectedMedia && {
+            media_title: selectedMedia.title,
+            media_type: selectedMedia.type,
+            media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
+            media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
+            media_external_id: selectedMedia.external_id || selectedMedia.id,
+            media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          }),
         };
       } else if (postType === "poll") {
         const filledOptions = pollOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
@@ -473,10 +476,13 @@ export default function InlineComposer() {
           contains_spoilers: containsSpoilers,
           poll_question: contentText.trim(),
           poll_options: filledOptions,
-          media_title: selectedMedia.title,
-          media_type: selectedMedia.type,
-          media_external_id: selectedMedia.external_id || selectedMedia.id,
-          media_external_source: selectedMedia.external_source || selectedMedia.source,
+          // Media is optional for polls
+          ...(selectedMedia && {
+            media_title: selectedMedia.title,
+            media_type: selectedMedia.type,
+            media_external_id: selectedMedia.external_id || selectedMedia.id,
+            media_external_source: selectedMedia.external_source || selectedMedia.source,
+          }),
         };
       }
 
@@ -492,8 +498,8 @@ export default function InlineComposer() {
 
       if (!response.ok) throw new Error("Failed to post");
 
-      // Handle optional add to list
-      if (addToList && selectedListId) {
+      // Handle optional add to list (only if media is selected)
+      if (addToList && selectedListId && selectedMedia) {
         try {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
           await fetch(`${supabaseUrl}/functions/v1/add-media-to-list`, {
@@ -518,8 +524,8 @@ export default function InlineComposer() {
         }
       }
 
-      // Handle optional add to rank
-      if (addToRank && selectedRankId) {
+      // Handle optional add to rank (only if media is selected)
+      if (addToRank && selectedRankId && selectedMedia) {
         await handleAddToRank(selectedMedia, selectedRankId);
       }
 
@@ -556,16 +562,16 @@ export default function InlineComposer() {
 
   // Check if can post
   const canPost = () => {
-    if (!selectedMedia) return false;
-    
     switch (postType) {
       case "thought":
-        return contentText.trim().length > 0;
+        return selectedMedia && contentText.trim().length > 0;
       case "rating":
-        return ratingValue > 0 || contentText.trim().length > 0;
+        return selectedMedia && (ratingValue > 0 || contentText.trim().length > 0);
       case "prediction":
+        // Predictions can be posted without media
         return contentText.trim().length > 0 && predictionOptions[0]?.trim() && predictionOptions[1]?.trim();
       case "poll":
+        // Polls can be posted without media
         const filledOptions = pollOptions.filter(opt => opt.trim());
         return contentText.trim().length > 0 && filledOptions.length >= 2;
       default:
