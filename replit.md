@@ -105,6 +105,47 @@ Preferred communication style: Simple, everyday language.
 - **Edge Functions**: Adhere to schema, handle user auto-creation, accept `user_id` for profile viewing.
 - **Privacy Toggle System**: `update-list-visibility` edge function.
 
+### Composer Implementation Backup (December 2024)
+**File**: `client/src/components/inline-composer.tsx` (1190 lines)
+
+**Current Flow (PRESERVE THIS)**:
+1. **Search Stage**: User searches for media with search box
+   - Shows "What's everyone consuming?" header
+   - Search results show media with quick-add (+) and star buttons
+   - Quick-add dropdown lets user add directly to any list
+   
+2. **Actions Stage**: After selecting media, shows action menu:
+   - "Add a thought" → `actionMode="thought"`
+   - "Track & Rate" → `actionMode="rating"` 
+   - "Make a prediction" → `actionMode="prediction"`
+   - "Ask a poll" → `actionMode="poll"`
+
+**Action Modes & Their Fields**:
+- **thought**: MentionTextarea for text, spoiler checkbox, Post button
+- **rating**: Star rating (1-5 with decimal), review textarea, list dropdown, spoiler checkbox
+- **prediction**: Question input, 2 options with radio selection, spoiler checkbox
+- **poll**: Question input, dynamic options list (2+ options), spoiler checkbox
+
+**Key Functions (DO NOT MODIFY)**:
+- `handleMediaSearch()` → calls `media-search` edge function
+- `handleSelectMedia()` → transitions to actions stage
+- `handleTrackToList()` → calls `track-media` or `add-to-custom-list` edge functions
+- `handlePost()` → calls `inline-post` edge function with action-specific payload
+
+**Edge Functions Used**:
+- `media-search` - Search for media
+- `track-media` - Add to system lists (Currently, Queue, etc.)
+- `add-to-custom-list` - Add to custom lists
+- `add-media-to-list` - Add media to any list
+- `inline-post` - Create social posts (thought, rate-review, prediction, poll)
+
+**Feed Card Types (PRESERVE EXACTLY)**:
+- Thought posts with media attachment
+- Rate/Review posts with star rating display
+- Prediction posts with voting options
+- Poll posts with voting options
+- Rank posts with item voting
+
 ## External Dependencies
 
 -   **Database & Backend**: Supabase (PostgreSQL + Edge Functions)
