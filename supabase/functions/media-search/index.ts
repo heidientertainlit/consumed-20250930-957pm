@@ -57,7 +57,14 @@ serve(async (req) => {
       });
     }
 
-    const results: any[] = [];
+    // Collect results by type first, then merge in desired order
+    const bookResults: any[] = [];
+    const movieTvResults: any[] = [];
+    const podcastResults: any[] = [];
+    const musicResults: any[] = [];
+    const youtubeResults: any[] = [];
+    const gamingResults: any[] = [];
+    const sportsResults: any[] = [];
     const errors: string[] = [];
 
     // Create all search promises to run in parallel
@@ -78,7 +85,7 @@ serve(async (req) => {
               const tmdbData = await tmdbResponse.json();
               tmdbData.results?.slice(0, 10).forEach((item: any) => {
                 if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type)) {
-                  results.push({
+                  movieTvResults.push({
                     title: item.title || item.name,
                     type: item.media_type === 'movie' ? 'movie' : 'tv',
                     creator: item.media_type === 'movie' ? 'Unknown' : 'TV Show',
@@ -116,7 +123,7 @@ serve(async (req) => {
             googleData.items?.slice(0, 5).forEach((item: any) => {
               const volumeInfo = item.volumeInfo;
               if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
-                results.push({
+                bookResults.push({
                   title: volumeInfo.title,
                   type: 'book',
                   creator: volumeInfo.authors?.[0] || 'Unknown Author',
@@ -152,7 +159,7 @@ serve(async (req) => {
               const bookData = await bookResponse.json();
               bookData.docs?.slice(0, 5).forEach((book: any) => {
                 if (isContentAppropriate(book, 'book')) {
-                  results.push({
+                  bookResults.push({
                     title: book.title,
                     type: 'book',
                     creator: book.author_name?.[0] || 'Unknown Author',
@@ -203,7 +210,7 @@ serve(async (req) => {
                 const spotifyData = await spotifyResponse.json();
                 spotifyData.shows?.items?.forEach((podcast: any) => {
                   if (isContentAppropriate(podcast, 'podcast')) {
-                    results.push({
+                    podcastResults.push({
                       title: podcast.name,
                       type: 'podcast',
                       creator: podcast.publisher,
@@ -256,7 +263,7 @@ serve(async (req) => {
                 
                 spotifyData.albums?.items?.slice(0, 5).forEach((album: any) => {
                   if (isContentAppropriate(album, 'music')) {
-                    results.push({
+                    musicResults.push({
                       title: album.name,
                       type: 'music',
                       creator: album.artists?.[0]?.name || 'Unknown Artist',
@@ -270,7 +277,7 @@ serve(async (req) => {
                 
                 spotifyData.tracks?.items?.slice(0, 5).forEach((track: any) => {
                   if (isContentAppropriate(track, 'music')) {
-                    results.push({
+                    musicResults.push({
                       title: track.name,
                       type: 'music',
                       creator: track.artists?.[0]?.name || 'Unknown Artist',
@@ -306,7 +313,7 @@ serve(async (req) => {
               const youtubeData = await youtubeResponse.json();
               youtubeData.items?.forEach((video: any) => {
                 if (isContentAppropriate(video.snippet, 'youtube')) {
-                  results.push({
+                  youtubeResults.push({
                     title: video.snippet.title,
                     type: 'youtube',
                     creator: video.snippet.channelTitle,
@@ -345,7 +352,7 @@ serve(async (req) => {
           
           if (gamingResponse.ok) {
             const gamingData = await gamingResponse.json();
-            results.push(...(gamingData.results || []));
+            gamingResults.push(...(gamingData.results || []));
           }
         } catch (error) {
           console.error('Gaming search routing error:', error);
@@ -373,7 +380,7 @@ serve(async (req) => {
           
           if (sportsResponse.ok) {
             const sportsData = await sportsResponse.json();
-            results.push(...(sportsData.results || []));
+            sportsResults.push(...(sportsData.results || []));
           }
         } catch (error) {
           console.error('Sports search routing error:', error);
@@ -385,39 +392,33 @@ serve(async (req) => {
     // Wait for all searches to complete (with individual timeouts)
     await Promise.allSettled(searchPromises);
 
-    // Log final results with types breakdown
-    const typeBreakdown = results.reduce((acc: any, r: any) => {
-      acc[r.type] = (acc[r.type] || 0) + 1;
-      return acc;
-    }, {});
-    console.log('Final results:', results.length, 'items - breakdown:', JSON.stringify(typeBreakdown));
+    // Smart interleave: take top result from each type, then next from each, etc.
+    // This ensures variety while keeping relevance (APIs return best matches first)
+    const allTyped = [
+      movieTvResults,
+      bookResults,
+      musicResults,
+      podcastResults,
+      youtubeResults,
+      gamingResults,
+      sportsResults
+    ];
+    
+    const results: any[] = [];
+    const maxLen = Math.max(...allTyped.map(arr => arr.length));
+    for (let i = 0; i < maxLen; i++) {
+      for (const typeArr of allTyped) {
+        if (typeArr[i]) {
+          results.push(typeArr[i]);
+        }
+      }
+    }
 
-    // Sort: books first, then by title match relevance
-    const queryLower = query.toLowerCase().trim();
-    const sortedResults = [...results].sort((a, b) => {
-      // Books get priority boost
-      const aBookBonus = a.type === 'book' ? 200 : 0;
-      const bBookBonus = b.type === 'book' ? 200 : 0;
-      
-      const aTitle = (a.title || '').toLowerCase();
-      const bTitle = (b.title || '').toLowerCase();
-      
-      // Title match scoring
-      const aExact = aTitle === queryLower ? 100 : 0;
-      const bExact = bTitle === queryLower ? 100 : 0;
-      const aStarts = aTitle.startsWith(queryLower) ? 50 : 0;
-      const bStarts = bTitle.startsWith(queryLower) ? 50 : 0;
-      const aContains = aTitle.includes(queryLower) ? 25 : 0;
-      const bContains = bTitle.includes(queryLower) ? 25 : 0;
-      
-      const aScore = aBookBonus + aExact + aStarts + aContains;
-      const bScore = bBookBonus + bExact + bStarts + bContains;
-      
-      return bScore - aScore;
-    });
+    // Log final results
+    console.log('Final results:', results.length, 'items');
 
     return new Response(JSON.stringify({ 
-      results: sortedResults,
+      results,
       partial: errors.length > 0,
       failedProviders: errors
     }), {
