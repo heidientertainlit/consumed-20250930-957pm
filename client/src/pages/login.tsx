@@ -208,7 +208,7 @@ export default function LoginPage() {
               className="h-12 w-auto"
             />
           </div>
-          <p className="text-purple-100 text-sm max-w-lg mx-auto">
+          <p className="text-white text-lg max-w-xs mx-auto leading-relaxed">
             See what entertainment your friends are into (and why).
           </p>
         </div>
