@@ -86,7 +86,8 @@ serve(async (req) => {
       media_external_id,
       media_external_source,
       rating,
-      review
+      review,
+      skip_social_post
     } = requestBody;
 
     console.log('add-media-to-list request:', { 
@@ -192,7 +193,8 @@ serve(async (req) => {
     let socialPostCreated = false;
     let socialPostError = null;
     
-    if (mediaItem) {
+    // Skip social post creation if flag is set (e.g., when inline-post already created the post)
+    if (mediaItem && !skip_social_post) {
       try {
         const postType = rating ? 'rate-review' : 'added_to_list';
         const content = rating 

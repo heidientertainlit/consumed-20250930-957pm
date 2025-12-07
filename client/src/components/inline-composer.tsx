@@ -510,6 +510,7 @@ export default function InlineComposer() {
               media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
               media_external_id: selectedMedia.external_id || selectedMedia.id || "",
               media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
+              skip_social_post: true, // Don't create another social_post - inline-post already created one
             }),
           });
         } catch (listError) {
