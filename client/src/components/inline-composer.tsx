@@ -865,11 +865,11 @@ export default function InlineComposer() {
                 {/* Bottom Row - Spoilers left, Post right */}
                 <div className="px-4 pb-4 flex items-center justify-between">
                   {/* Spoilers checkbox */}
-                  <label className="flex items-center gap-2 text-sm cursor-pointer text-gray-500 hover:text-gray-700 transition-colors">
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer text-gray-400 hover:text-gray-600 transition-colors">
                     <Checkbox
                       checked={containsSpoilers}
                       onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
-                      className="border-gray-300 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500 h-4 w-4"
+                      className="border-gray-300 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500 h-3 w-3"
                     />
                     <span>Contains spoilers</span>
                   </label>
