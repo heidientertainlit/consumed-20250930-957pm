@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronUp, ChevronDown, Trophy, User } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,10 +44,39 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [localItems, setLocalItems] = useState<RankItemWithVotes[]>(rank.items || []);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
   
   const isOwner = user?.id === rank.user_id;
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+  // Fallback: fetch items directly if they weren't hydrated
+  useEffect(() => {
+    const fetchItems = async () => {
+      if ((!rank.items || rank.items.length === 0) && rank.id && session?.access_token) {
+        setIsLoadingItems(true);
+        try {
+          const response = await fetch(`${supabaseUrl}/functions/v1/get-user-ranks?user_id=${rank.user_id}`, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const foundRank = data.ranks?.find((r: any) => r.id === rank.id);
+            if (foundRank?.items?.length > 0) {
+              setLocalItems(foundRank.items);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch rank items:', error);
+        } finally {
+          setIsLoadingItems(false);
+        }
+      }
+    };
+    fetchItems();
+  }, [rank.id, rank.user_id, rank.items, session?.access_token, supabaseUrl]);
 
   const voteMutation = useMutation({
     mutationFn: async ({ rankItemId, direction }: { rankItemId: string; direction: 'up' | 'down' }) => {

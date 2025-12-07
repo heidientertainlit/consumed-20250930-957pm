@@ -340,6 +340,8 @@ serve(async (req) => {
       const uniqueRankIds = [...new Set(rankIds)];
       let rankDataMap = new Map<string, any>();
       
+      console.log('DEBUG: Looking for rank_share posts, found rank IDs:', uniqueRankIds);
+      
       if (uniqueRankIds.length > 0) {
         // Fetch ranks
         const { data: ranks, error: ranksError } = await supabaseAdmin
@@ -347,16 +349,20 @@ serve(async (req) => {
           .select('id, user_id, title, description, visibility, max_items, created_at')
           .in('id', uniqueRankIds);
         
+        console.log('DEBUG: Fetched ranks:', ranks?.length, 'error:', ranksError);
+        
         if (ranksError) {
           console.error('Error fetching ranks:', ranksError);
         }
         
-        // Fetch rank items for each rank
+        // Fetch rank items for each rank - use select('*') to match get-user-ranks
         const { data: allRankItems, error: rankItemsError } = await supabaseAdmin
           .from('rank_items')
-          .select('id, rank_id, title, media_type, creator, image_url, external_id, external_source, position, up_vote_count, down_vote_count')
+          .select('*')
           .in('rank_id', uniqueRankIds)
           .order('position', { ascending: true });
+        
+        console.log('DEBUG: Fetched rank items:', allRankItems?.length, 'error:', rankItemsError, 'rankIds queried:', uniqueRankIds, 'items:', JSON.stringify(allRankItems?.slice(0, 3)));
         
         if (rankItemsError) {
           console.error('Error fetching rank items:', rankItemsError);

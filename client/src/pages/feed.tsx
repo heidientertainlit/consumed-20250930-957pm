@@ -1646,6 +1646,17 @@ export default function Feed() {
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((post: SocialPost, postIndex: number) => {
                 
+                // Debug: Log all post types to find rank_share
+                if ((post as any).rankId || post.type === 'rank_share' || (post as any).post_type === 'rank_share') {
+                  console.log('🔍 Found potential rank post:', {
+                    id: post.id,
+                    type: post.type,
+                    rankId: (post as any).rankId,
+                    hasRankData: !!(post as any).rankData,
+                    rankDataItems: (post as any).rankData?.items?.length
+                  });
+                }
+                
                 // Check if this item is a prediction from the API
                 if (post.type === 'prediction' && (post as any).question) {
                   // Transform prediction post data for the card component
@@ -1683,6 +1694,12 @@ export default function Feed() {
                 // Check if this item is a rank_share post
                 if (post.type === 'rank_share' && (post as any).rankData) {
                   const rankPost = post as any;
+                  console.log('🏆 Rank share post:', {
+                    postId: post.id,
+                    rankData: rankPost.rankData,
+                    items: rankPost.rankData?.items,
+                    itemCount: rankPost.rankData?.items?.length
+                  });
                   return (
                     <div key={`rank-${post.id}`} className="mb-4">
                       <RankFeedCard
