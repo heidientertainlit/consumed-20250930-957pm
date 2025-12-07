@@ -279,8 +279,8 @@ serve(async (req) => {
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
-      // Fetch list data for added_to_list posts
-      const listIds = posts?.filter(p => p.list_id && p.post_type === 'added_to_list').map(p => p.list_id) || [];
+      // Fetch list data for posts with list_id (added_to_list OR rate-review posts with list)
+      const listIds = posts?.filter(p => p.list_id).map(p => p.list_id) || [];
       const uniqueListIds = [...new Set(listIds)];
       let listDataMap = new Map<string, { title: string; items: any[]; totalCount: number }>();
       

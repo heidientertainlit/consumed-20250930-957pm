@@ -2144,7 +2144,7 @@ export default function Feed() {
 
                   {/* Media Cards */}
                   {/* List Preview Card for added_to_list posts with listData - check this FIRST */}
-                  {post.type === 'added_to_list' && (post as any).listData && post.mediaItems && post.mediaItems.length > 0 ? (
+                  {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && (post as any).listData && post.mediaItems && post.mediaItems.length > 0 ? (
                     <div className="mb-2">
                       <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex gap-3">
@@ -2334,8 +2334,8 @@ export default function Feed() {
                           </div>
                         )}
                         
-                        {/* List Preview Card for added_to_list posts with listData */}
-                        {post.type === 'added_to_list' && (post as any).listData ? (
+                        {/* List Preview Card for posts with listData */}
+                        {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && (post as any).listData ? (
                           <div className="bg-gray-50 rounded-lg p-3 mb-2">
                             <div className="flex gap-3">
                               {/* Poster on left */}
