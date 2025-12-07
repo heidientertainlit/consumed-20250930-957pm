@@ -553,74 +553,77 @@ export default function InlineComposer() {
       {/* Main Composer - Always Open */}
       {stage === "open" && (
         <div className="space-y-3">
-          {/* White card - just for text input */}
-          <div className="bg-white rounded-2xl shadow-sm p-4">
-            <MentionTextarea
-              value={contentText}
-              onChange={setContentText}
-              placeholder={getPlaceholder()}
-              className="border-0 p-0 text-base resize-none focus-visible:ring-0 focus-visible:outline-none text-gray-900 bg-white placeholder:text-gray-400 w-full min-h-[48px]"
-              minHeight="48px"
-              session={session}
-            />
-            
-            {/* Selected Media - inside card if attached */}
-            {selectedMedia && (
-              <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
-                {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image) && (
-                  <img
-                    src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image}
-                    alt={selectedMedia.title}
-                    className="w-10 h-14 object-cover rounded"
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm truncate">{selectedMedia.title}</p>
-                  <p className="text-xs text-gray-500 capitalize">{selectedMedia.type}</p>
+          {/* White card with action bar at bottom */}
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            {/* Text input area */}
+            <div className="p-4 pb-3">
+              <MentionTextarea
+                value={contentText}
+                onChange={setContentText}
+                placeholder={getPlaceholder()}
+                className="border-0 p-0 text-base resize-none focus-visible:ring-0 focus-visible:outline-none text-gray-900 bg-white placeholder:text-gray-400 w-full min-h-[48px]"
+                minHeight="48px"
+                session={session}
+              />
+              
+              {/* Selected Media - inside card if attached */}
+              {selectedMedia && (
+                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
+                  {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image) && (
+                    <img
+                      src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image}
+                      alt={selectedMedia.title}
+                      className="w-10 h-14 object-cover rounded"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">{selectedMedia.title}</p>
+                    <p className="text-xs text-gray-500 capitalize">{selectedMedia.type}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedMedia(null)}
+                    className="text-gray-400 hover:text-red-500 p-1"
+                    data-testid="button-remove-media"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setSelectedMedia(null)}
-                  className="text-gray-400 hover:text-red-500 p-1"
-                  data-testid="button-remove-media"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Actions Row - styled bar outside the white card */}
-          <div className="flex items-center justify-between bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-            {/* Left side - Add Media button */}
-            <button
-              onClick={() => setStage("media-search")}
-              className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
-              data-testid="button-add-media"
-            >
-              <div className="w-7 h-7 rounded-full bg-purple-500/30 flex items-center justify-center">
-                <Plus className="w-4 h-4" />
-              </div>
-              <span className="text-sm font-medium">Add media</span>
-            </button>
-
-            {/* Right side - Spoilers + Post */}
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-sm cursor-pointer text-white/70 hover:text-white/90 transition-colors">
-                <Checkbox
-                  checked={containsSpoilers}
-                  onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
-                  className="border-white/40 data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500 h-4 w-4"
-                />
-                <span>Spoilers</span>
-              </label>
-              <Button
-                onClick={handlePost}
-                disabled={isPosting || !canPost()}
-                className="bg-purple-500 hover:bg-purple-400 text-white px-5 py-1.5 h-auto rounded-full font-medium shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:shadow-none"
-                data-testid="button-post"
+            {/* Actions Row - at bottom of white card with purple gradient */}
+            <div className="flex items-center justify-between bg-gradient-to-r from-purple-600/90 to-purple-500/90 px-4 py-2.5">
+              {/* Left side - Add Media button */}
+              <button
+                onClick={() => setStage("media-search")}
+                className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
+                data-testid="button-add-media"
               >
-                {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
-              </Button>
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                  <Plus className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-sm font-medium">Add media</span>
+              </button>
+
+              {/* Right side - Spoilers + Post */}
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm cursor-pointer text-white/80 hover:text-white transition-colors">
+                  <Checkbox
+                    checked={containsSpoilers}
+                    onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+                    className="border-white/50 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-purple-600 h-4 w-4"
+                  />
+                  <span>Spoilers</span>
+                </label>
+                <Button
+                  onClick={handlePost}
+                  disabled={isPosting || !canPost()}
+                  className="bg-white hover:bg-white/90 text-purple-600 px-5 py-1.5 h-auto rounded-full font-semibold shadow-lg disabled:opacity-50 disabled:shadow-none"
+                  data-testid="button-post"
+                >
+                  {isPosting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
+                </Button>
+              </div>
             </div>
           </div>
 
