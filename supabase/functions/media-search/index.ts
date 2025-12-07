@@ -392,27 +392,58 @@ serve(async (req) => {
     // Wait for all searches to complete (with individual timeouts)
     await Promise.allSettled(searchPromises);
 
-    // Smart interleave: take top result from each type, then next from each, etc.
-    // This ensures variety while keeping relevance (APIs return best matches first)
-    const allTyped = [
-      movieTvResults,
-      bookResults,
-      musicResults,
-      podcastResults,
-      youtubeResults,
-      gamingResults,
-      sportsResults
+    // Combine all results
+    const allResults = [
+      ...movieTvResults,
+      ...bookResults,
+      ...musicResults,
+      ...podcastResults,
+      ...youtubeResults,
+      ...gamingResults,
+      ...sportsResults
     ];
+
+    // Score and sort by relevance to search query
+    const queryLower = query.toLowerCase().trim();
+    const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
     
-    const results: any[] = [];
-    const maxLen = Math.max(...allTyped.map(arr => arr.length));
-    for (let i = 0; i < maxLen; i++) {
-      for (const typeArr of allTyped) {
-        if (typeArr[i]) {
-          results.push(typeArr[i]);
-        }
+    const scoredResults = allResults.map(item => {
+      const title = (item.title || '').toLowerCase();
+      let score = 0;
+      
+      // Exact match = highest priority (100 points)
+      if (title === queryLower) {
+        score += 100;
       }
-    }
+      // Title starts with query (80 points)
+      else if (title.startsWith(queryLower)) {
+        score += 80;
+      }
+      // Query starts with title - user typing partial (70 points)
+      else if (queryLower.startsWith(title)) {
+        score += 70;
+      }
+      // Title contains full query (60 points)
+      else if (title.includes(queryLower)) {
+        score += 60;
+      }
+      // Word overlap scoring (up to 40 points)
+      else {
+        const titleWords = title.split(/\s+/);
+        const matchingWords = queryWords.filter(qw => 
+          titleWords.some(tw => tw.includes(qw) || qw.includes(tw))
+        );
+        score += Math.min(40, matchingWords.length * 15);
+      }
+      
+      return { ...item, _score: score };
+    });
+    
+    // Sort by score descending (best matches first)
+    scoredResults.sort((a, b) => b._score - a._score);
+    
+    // Remove internal score before returning
+    const results = scoredResults.map(({ _score, ...item }) => item);
 
     // Log final results
     console.log('Final results:', results.length, 'items');
