@@ -1896,7 +1896,6 @@ export default function Feed() {
                             );
                           }
                         })()}
-                        <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                       </div>
                       {user?.id === post.user.id && (
                         <button
@@ -2021,12 +2020,10 @@ export default function Feed() {
                                     );
                                   }
                                 })()}
-                                <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                               </div>
                             </>
                           ) : (
                             <div className="flex-1">
-                              <div className="text-xs text-gray-500">{formatFullDate(post.timestamp)}</div>
                             </div>
                           )}
                           {/* Show delete button if current user owns any activity in this post */}
