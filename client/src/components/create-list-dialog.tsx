@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import { Search, Globe, Lock, X, Plus, Loader2 } from "lucide-react";
+import { Search, Globe, Lock, X, Plus, Loader2, Users } from "lucide-react";
+import UserSearch from "@/components/user-search";
 
 interface CreateListDialogProps {
   open: boolean;
@@ -25,6 +26,12 @@ interface MediaResult {
   description?: string;
 }
 
+interface SelectedCollaborator {
+  id: string;
+  user_name: string;
+  display_name?: string;
+}
+
 export default function CreateListDialog({ open, onOpenChange }: CreateListDialogProps) {
   const [title, setTitle] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -32,6 +39,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedCollaborators, setSelectedCollaborators] = useState<SelectedCollaborator[]>([]);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -44,6 +52,7 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
     setSearchQuery("");
     setSearchResults([]);
     setSelectedMedia([]);
+    setSelectedCollaborators([]);
   };
 
   const searchMedia = async (query: string, type?: string) => {
@@ -121,18 +130,36 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
     },
     onSuccess: async (data) => {
       console.log('List created successfully:', data);
-      toast({
-        title: "List Created!",
-        description: `"${data.list?.title || title}" has been created with ${data.itemsAdded || 0} items`,
-      });
+      
+      // Add collaborators if any were selected
+      if (data.list?.id && selectedCollaborators.length > 0) {
+        for (const collaborator of selectedCollaborators) {
+          try {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-list-collaborator`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session?.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                listId: data.list.id,
+                userId: collaborator.id
+              }),
+            });
+          } catch (err) {
+            console.error('Failed to add collaborator:', err);
+          }
+        }
+      }
       
       await queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      
+      const listSlug = (data.list?.title || title).toLowerCase().replace(/\s+/g, '-');
       
       resetForm();
       onOpenChange(false);
       
       if (data.list?.id) {
-        const listSlug = (data.list.title || title).toLowerCase().replace(/\s+/g, '-');
         setLocation(`/list/${listSlug}`);
       }
     },
@@ -269,6 +296,43 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Collaborators Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-gray-500" />
+              <Label className="text-black font-medium text-sm">Invite Collaborators (Optional)</Label>
+            </div>
+            <UserSearch
+              onSelectUser={(user) => {
+                if (!selectedCollaborators.find(c => c.id === user.id)) {
+                  setSelectedCollaborators([...selectedCollaborators, {
+                    id: user.id,
+                    user_name: user.user_name,
+                    display_name: user.display_name
+                  }]);
+                }
+              }}
+              excludeUserIds={[session?.user?.id || '', ...selectedCollaborators.map(c => c.id)]}
+              placeholder="Search friends by name..."
+            />
+            {selectedCollaborators.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedCollaborators.map((collab) => (
+                  <div key={collab.id} className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+                    <span className="text-sm text-blue-900">@{collab.user_name}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedCollaborators(selectedCollaborators.filter(c => c.id !== collab.id))} 
+                      className="text-blue-600 hover:text-red-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

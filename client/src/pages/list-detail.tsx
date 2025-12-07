@@ -371,10 +371,6 @@ export default function ListDetail() {
     },
     onSuccess: () => {
       refetchCollaborators();
-      toast({
-        title: "Collaborator Added",
-        description: "User can now access and edit this list",
-      });
     },
     onError: (error) => {
       toast({
@@ -416,10 +412,6 @@ export default function ListDetail() {
     },
     onSuccess: () => {
       refetchCollaborators();
-      toast({
-        title: "Collaborator Removed",
-        description: "User no longer has access to this list",
-      });
     },
     onError: (error) => {
       toast({
