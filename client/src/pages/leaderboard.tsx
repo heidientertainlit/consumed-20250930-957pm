@@ -123,7 +123,8 @@ export default function Leaderboard() {
     entries: LeaderboardEntry[] | undefined,
     categoryName: string,
     emptyMessage: string,
-    isExpanded: boolean
+    isExpanded: boolean,
+    hideDetails: boolean = false
   ) => {
     if (!entries || entries.length === 0) {
       return (
@@ -173,7 +174,7 @@ export default function Leaderboard() {
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="text-right">
                     <p className="font-bold text-lg text-purple-600">{entry.score}</p>
-                    {entry.detail && (
+                    {!hideDetails && entry.detail && (
                       <p className="text-xs text-gray-500">{entry.detail}</p>
                     )}
                   </div>
@@ -224,7 +225,8 @@ export default function Leaderboard() {
     categoryName: string,
     emptyMessage: string,
     gradient: string = 'from-purple-600 to-blue-600',
-    actionLink?: { label: string; href: string }
+    actionLink?: { label: string; href: string },
+    hideDetails: boolean = false
   ) => {
     const isExpanded = expandedCategories.has(categoryName);
     
@@ -247,7 +249,7 @@ export default function Leaderboard() {
             )}
           </div>
         </div>
-        {renderLeaderboardList(entries, categoryName, emptyMessage, isExpanded)}
+        {renderLeaderboardList(entries, categoryName, emptyMessage, isExpanded, hideDetails)}
       </div>
     );
   };
@@ -374,7 +376,8 @@ export default function Leaderboard() {
                 'Trivia',
                 'No trivia results yet. Play some trivia!',
                 'from-yellow-500 to-orange-500',
-                { label: 'Play Trivia', href: '/play/trivia' }
+                { label: 'Play Trivia', href: '/play/trivia' },
+                true
               )}
               
               {renderCategoryCard(
@@ -384,7 +387,8 @@ export default function Leaderboard() {
                 'Polls',
                 'No poll activity yet. Vote on some polls!',
                 'from-blue-500 to-cyan-500',
-                { label: 'Do Polls', href: '/play/polls' }
+                { label: 'Do Polls', href: '/play/polls' },
+                true
               )}
               
               {renderCategoryCard(
@@ -394,7 +398,8 @@ export default function Leaderboard() {
                 'Predictions',
                 'No predictions resolved yet. Make some predictions!',
                 'from-green-500 to-emerald-500',
-                { label: 'Do Predictions', href: '/play/predictions' }
+                { label: 'Do Predictions', href: '/play/predictions' },
+                true
               )}
             </TabsContent>
 
