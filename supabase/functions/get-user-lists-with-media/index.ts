@@ -118,13 +118,51 @@ serve(async (req) => {
     // Get user_id from query parameter (for viewing other users) or use logged-in user
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get('user_id') || appUser?.id;
+    
+    // Determine if we're viewing another user's profile
+    const isViewingOtherUser = targetUserId && appUser?.id && targetUserId !== appUser.id;
+    
+    // If viewing another user, check if they're friends and use service role to bypass RLS
+    let queryClient = supabase; // Default to user's client (with RLS)
+    
+    if (isViewingOtherUser) {
+      // Use service role to check friendship and fetch data
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      
+      // Check if they are friends
+      const { data: friendship, error: friendError } = await supabaseAdmin
+        .from('friendships')
+        .select('id')
+        .eq('user_id', appUser.id)
+        .eq('friend_id', targetUserId)
+        .eq('status', 'accepted')
+        .maybeSingle();
+      
+      if (friendship) {
+        console.log('Users are friends, using admin client to fetch lists');
+        queryClient = supabaseAdmin;
+      } else {
+        console.log('Users are not friends, returning empty lists for privacy');
+        // Return empty lists if not friends
+        return new Response(JSON.stringify({ 
+          lists: [],
+          message: 'Not authorized to view this user\'s lists'
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
 
     let systemLists = [];
     let customLists = [];
     
     if (targetUserId) {
-      // Fetch system lists
-      const { data: userSystemLists, error: systemListsError } = await supabase
+      // Fetch system lists using the appropriate client
+      const { data: userSystemLists, error: systemListsError } = await queryClient
         .from('lists')
         .select('id, title, is_private')
         .eq('user_id', targetUserId)
@@ -188,7 +226,7 @@ serve(async (req) => {
         }
 
         // Re-fetch system lists after backfill
-        const { data: updatedSystemLists } = await supabase
+        const { data: updatedSystemLists } = await queryClient
           .from('lists')
           .select('id, title, is_private')
           .eq('user_id', targetUserId)
@@ -210,7 +248,7 @@ serve(async (req) => {
 
       // Fetch custom lists
       try {
-        const { data: userCustomLists, error: customListsError } = await supabase
+        const { data: userCustomLists, error: customListsError } = await queryClient
           .from('lists')
           .select('id, title, is_private')
           .eq('user_id', targetUserId)
@@ -256,7 +294,7 @@ serve(async (req) => {
     // Get user's media items
     let userItems = [];
     if (targetUserId) {
-      const { data: items, error: itemsError } = await supabase
+      const { data: items, error: itemsError } = await queryClient
         .from('list_items')
         .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id, external_id, external_source, progress, total, progress_mode, rating')
         .eq('user_id', targetUserId)
