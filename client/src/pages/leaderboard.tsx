@@ -281,7 +281,7 @@ export default function Leaderboard() {
                 data-testid="tab-engagement"
               >
                 <TrendingUp size={14} className="mr-1" />
-                Engagement
+                Engagers
               </TabsTrigger>
               <TabsTrigger 
                 value="games" 
