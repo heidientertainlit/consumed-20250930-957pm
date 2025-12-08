@@ -31,6 +31,7 @@ Preferred communication style: Simple, everyday language.
 - **Database**: Supabase PostgreSQL.
 - **Authentication**: Supabase Auth.
 - **Unified API Search**: Integration with Spotify, TMDB, YouTube, Open Library via Edge Functions.
+- **Netflix Import Fix**: Netflix imports now use TMDB API to detect movies vs TV shows (previously all marked as TV). Uses rate limiting (3 req/800ms) and caching for efficiency.
 - **Notification System**: Real-time unified system.
 - **Leaderboard System**: Engagement-focused with 5 categories (Fan Leaders, Conversation Starters, Top Predictors, Trivia Champs, Most Helpful) using 'Your Circle' (friends) and Global tabs.
 - **Unified Voting System**: Supports polls, predictions, and trivia.
