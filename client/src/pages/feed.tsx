@@ -5,6 +5,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
+import SwipeableGameCards from "@/components/swipeable-game-cards";
 import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
@@ -1808,73 +1809,24 @@ export default function Feed() {
                   );
                 }
 
-                // Pattern: 2 posts → prediction → trivia → creator update → 2 posts → recommended → (repeat)
-                // Pattern repeats every 8 items
-                const patternPosition = postIndex % 8;
-                
-                // After 2nd post (position 2), show prediction
-                const shouldShowPrediction = patternPosition === 2;
-                
-                // After prediction (position 3), show trivia (only actual trivia, not polls)
-                const shouldShowTrivia = patternPosition === 3;
-                const triviaIndex = Math.floor(postIndex / 8);
-                // Filter to only show actual trivia games, not polls or predictions
-                const triviaGames = playGames?.filter(g => g.type === 'trivia') || [];
-                const currentGame = triviaGames && triviaGames.length > 0 
-                  ? triviaGames[triviaIndex % triviaGames.length]
-                  : null;
-                
-                // After trivia (position 4), show creator update
-                const shouldShowCreatorUpdate = patternPosition === 4;
-                const creatorUpdateIndex = Math.floor(postIndex / 8);
-                const currentCreatorUpdate = creatorUpdates && creatorUpdates.length > 0 
-                  ? creatorUpdates[creatorUpdateIndex % creatorUpdates.length]
-                  : null;
-                
-                // After 2 more posts (position 7), show recommended carousel
-                const shouldShowMediaCarousel = patternPosition === 7;
-                const carouselIndex = Math.floor(postIndex / 8);
+                // Pattern: Every 5 posts, show a swipeable game card
+                // Every 10 posts (after 2nd game card), also show recommended carousel
+                const shouldShowGameCard = (postIndex + 1) % 5 === 0 && postIndex > 0;
+                const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0;
                 
                 // Only show Recommended for you carousel
                 const currentCarousel = { type: 'mixed', title: 'Recommended for you', items: recommendedContent };
-                
-                // No dummy predictions - only show real API predictions
-                const currentPrediction = null;
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
-                    {/* After 2 posts: Show Prediction - Disabled (only show real API predictions) */}
-                    {shouldShowPrediction && currentPrediction && (
+                    {/* Every 5 posts: Show Swipeable Game Cards */}
+                    {shouldShowGameCard && (
                       <div className="mb-4">
-                        <CollaborativePredictionCard 
-                          prediction={currentPrediction}
-                        />
+                        <SwipeableGameCards />
                       </div>
                     )}
 
-                    {/* After prediction: Show Trivia */}
-                    {shouldShowTrivia && currentGame && !currentGame.isLongForm && !currentGame.isMultiCategory && (
-                      <div className="mb-4">
-                        <PlayCard 
-                          game={currentGame}
-                          compact={true}
-                          onComplete={() => {
-                            queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
-                          }}
-                        />
-                        <a 
-                          href="/play/trivia"
-                          className="block text-center text-purple-600 hover:text-purple-700 text-sm font-medium mt-2"
-                          data-testid="link-play-more-trivia"
-                        >
-                          Play more trivia →
-                        </a>
-                      </div>
-                    )}
-
-                    {/* TODO: Pop Culture Updates - will bring back later */}
-
-                    {/* After 2 more posts: Show Recommended Carousel */}
+                    {/* Every 10 posts: Show Recommended Carousel */}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
                       <div className="mb-4">
                         <MediaCarousel
