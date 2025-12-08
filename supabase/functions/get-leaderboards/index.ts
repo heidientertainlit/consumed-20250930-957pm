@@ -329,7 +329,7 @@ serve(async (req) => {
         uniqueTypes: [...new Set((listItems || []).map((i: any) => i.media_type))]
       });
 
-      // Count by media type - using exact matching like calculate-user-points
+      // Count by media type - using .toLowerCase() like get-user-stats
       const consumptionMap: Record<string, Record<string, number>> = {};
       (listItems || []).forEach((item: any) => {
         // Apply date filter manually if set
@@ -341,8 +341,8 @@ serve(async (req) => {
           consumptionMap[item.user_id] = { book: 0, movie: 0, tv: 0, music: 0, podcast: 0, game: 0, total: 0 };
         }
         
-        // Exact matching on media_type (same as calculate-user-points)
-        const mediaType = item.media_type;
+        // Use toLowerCase() matching like get-user-stats does
+        const mediaType = (item.media_type || '').toLowerCase();
         if (mediaType === 'book') consumptionMap[item.user_id].book += 1;
         else if (mediaType === 'movie') consumptionMap[item.user_id].movie += 1;
         else if (mediaType === 'tv') consumptionMap[item.user_id].tv += 1;
@@ -353,8 +353,22 @@ serve(async (req) => {
         consumptionMap[item.user_id].total += 1;
       });
       
-      console.log('📊 consumptionMap users:', Object.keys(consumptionMap).length, 
-        'sample:', Object.entries(consumptionMap).slice(0, 3).map(([id, data]) => ({ id: id.substring(0, 8), ...data })));
+      // Log top users by book count for debugging
+      const topBookUsers = Object.entries(consumptionMap)
+        .sort((a, b) => b[1].book - a[1].book)
+        .slice(0, 5)
+        .map(([id, data]) => ({ 
+          id: id.substring(0, 8), 
+          username: userMap[id]?.username,
+          books: data.book, 
+          movies: data.movie, 
+          tv: data.tv,
+          total: data.total 
+        }));
+      
+      console.log('📊 Total list_items:', listItems?.length, 
+        'Total users:', Object.keys(consumptionMap).length,
+        'Top book users:', JSON.stringify(topBookUsers));
 
       // Books
       results.books = formatEntries(
