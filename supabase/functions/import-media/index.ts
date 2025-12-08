@@ -77,21 +77,70 @@ async function detectMediaType(title: string, retries = 2): Promise<'movie' | 't
   return 'tv';
 }
 
+// Validate if a string looks like a real media title (not junk data)
+function isValidTitle(title: string): boolean {
+  if (!title || title.length < 2) return false;
+  if (title.length > 200) return false;
+  
+  // Reject timestamps (00:43:51 format)
+  if (/^\d{2}:\d{2}:\d{2}$/.test(title)) return false;
+  
+  // Reject dates (2022-03-27 or 2022-03-27 15:37 format)
+  if (/^\d{4}-\d{2}-\d{2}/.test(title)) return false;
+  
+  // Reject email addresses
+  if (/^[^@]+@[^@]+\.[^@]+$/.test(title) || title.includes('GMAIL.COM') || title.includes('@')) return false;
+  
+  // Reject device IDs (AMZ_*, SAMSUNG_*, etc.)
+  if (/^(AMZ_|SAMSUNG_|LG_|ROKU_|APPLE_)/i.test(title)) return false;
+  
+  // Reject common Netflix profile names that aren't titles
+  if (/^(Kids|Kimberly|WeWorkKimiHouse)$/i.test(title)) return false;
+  
+  // Reject if it's just "true" or "false" (boolean values)
+  if (/^(true|false)$/i.test(title)) return false;
+  
+  // Reject very short nonsense (single words under 3 chars that aren't real titles)
+  if (title.length <= 3 && !/^(Up|Us|It|Her|Him|Elf|Ip Man)$/i.test(title)) return false;
+  
+  // Reject countdown/system strings
+  if (/^countdown_/i.test(title)) return false;
+  
+  // Reject if mostly numbers or special characters
+  const letterCount = (title.match(/[a-zA-Z]/g) || []).length;
+  if (letterCount < title.length * 0.3) return false;
+  
+  return true;
+}
+
 // Parse Netflix CSV format with TMDB lookup for media type detection
 async function parseNetflix(csvText: string): Promise<MediaItem[]> {
   const lines = csvText.split('\n').filter(line => line.trim());
   const items: MediaItem[] = [];
   
   // Skip header row, parse data
-  const titles: string[] = [];
+  const allTitles: string[] = [];
   for (let i = 1; i < lines.length; i++) {
     const fields = lines[i].split(',').map(f => f.trim().replace(/^"|"$/g, ''));
     if (fields.length >= 1 && fields[0]) {
-      titles.push(fields[0]);
+      allTitles.push(fields[0]);
     }
   }
   
-  console.log(`Netflix: Found ${titles.length} titles, detecting media types via TMDB...`);
+  // Filter out junk data
+  const titles = allTitles.filter(isValidTitle);
+  const rejectedCount = allTitles.length - titles.length;
+  
+  if (rejectedCount > 0) {
+    console.log(`Netflix: Rejected ${rejectedCount} invalid entries (timestamps, device IDs, etc.)`);
+  }
+  
+  if (titles.length === 0) {
+    console.log('Netflix: No valid titles found. Please upload ViewingActivity.csv from Netflix data export.');
+    return [];
+  }
+  
+  console.log(`Netflix: Found ${titles.length} valid titles, detecting media types via TMDB...`);
   
   // TMDB rate limit: 40 requests per 10 seconds (4/sec average)
   // Process 3 at a time with 800ms delay = ~3.75 req/sec (safe margin)
