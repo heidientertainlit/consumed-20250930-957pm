@@ -1,7 +1,7 @@
 # consumed - Entertainment Consumption Tracking MVP
 
 ## Overview
-consumed is a mobile-first MVP for tracking entertainment consumption, enabling users to log media, engage in social features like leaderboards and activity feeds, discover friends, and participate in trivia and prediction games. The platform aims to provide an immersive experience for managing and sharing entertainment, featuring a dark gradient theme, intuitive navigation, and an "Entertainment DNA" onboarding process.
+consumed is a mobile-first MVP designed for tracking entertainment consumption. It allows users to log various media, engage with social features like leaderboards and activity feeds, discover friends, and participate in trivia and prediction games. The platform aims to offer an immersive experience for managing and sharing entertainment, characterized by a dark gradient theme, intuitive navigation, and an "Entertainment DNA" onboarding process. The project envisions significant market potential by becoming the go-to platform for entertainment tracking and social engagement.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -18,133 +18,53 @@ Preferred communication style: Simple, everyday language.
 
 ### UI/UX Decisions
 - **Mobile-first design** with a **dark gradient theme**.
-- **Bottom Navigation**: Feed, Search (AI-powered), Leaderboard, Me. Friends moved to profile. Discover, Track, Play are backpages.
+- **Bottom Navigation**: Feed, Search (AI-powered), Leaderboard, Me.
 - **Top Navigation**: Search (🔍), Notifications, Profile.
-- **Profile Section Navigation**: Sticky pills (Stats, DNA, Friends) for quick navigation. Section pills highlight active section and enable smooth scrolling navigation.
+- **Profile Section Navigation**: Sticky pills for Stats, DNA, Friends, Collections, History.
 - **Component Library**: shadcn/ui (Radix UI, Tailwind CSS).
 - **Button Theme**: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
-- **Dual Search System**:
-    - **Direct Search** (🔍): For friends and media, using `media-search` and `search-users` edge functions.
-    - **Discover Page** (✨): AI-powered conversational recommendations via `conversational-search` edge function.
-- **Feed Content Filters**: Filter pills for content types (🎯 Prediction, 🗳️ Poll, 🔥 Hot Take, ⭐ Rate/Review).
-- **Inline Composer**: Simplified composer with clean text box and two buttons (➕ Add Media, ✨ More options). More options expands to show: 🎯 Prediction, 📦 Poll, ⭐ Rate/Review, 💬 Ask for Recs. Quick prompts include "I just finished..." Placeholder: "Share the entertainment you are consuming… or start a conversation."
+- **Composer**: Simplified inline composer with quick action buttons and dynamic forms for posts, ratings, predictions, and polls.
 
 ### Technical Implementations
 - **Frontend**: React 18, TypeScript, Wouter, TanStack Query, Vite.
 - **Backend**: Supabase Edge Functions (Deno runtime) for all server-side logic.
-- **Database**: Supabase PostgreSQL for all data storage.
-- **API Integration**: Unified API search (Spotify, TMDB, YouTube, Open Library) via Supabase Edge Functions.
-- **Authentication**: Supabase Auth for login/signup/password reset, with automatic user creation in a custom `users` table.
-- **Notification System**: Real-time unified system (`notifications` table, `send-notification` edge function).
-- **Sharing System**: Unified functionality (`/src/lib/share.ts`) for content sharing.
-- **Leaderboard System**: Engagement-focused leaderboard with 5 categories:
-  - **🌟 Fan Leaders**: Overall combined score (posts + replies + predictions + polls + reactions)
-  - **🔥 Conversation Starters**: Posts people engaged with most
-  - **🎯 Top Predictors**: Most accurate predictions
-  - **🧩 Trivia Champs**: Correct answers and streaks
-  - **❤️ Most Helpful**: Recommendations people saved
-  - Headline: "Who's Leading the Entertainment Conversation This Week?"
-  - Tracks conversation activity, social interaction, and play activity
-  - Does NOT track hours watched, books read, or consumption quantity
-  - Uses `get-leaderboards` edge function with Your Circle (friends) and Global tabs
-  - Old leaderboard preserved at `leaderboard-old.tsx` for reference
-- **Unified Voting System**: Uses `prediction_pools` and `user_predictions` tables for polls, predictions, and trivia, supporting sponsors.
-- **User Points System**: `calculate-user-points` edge function aggregates points.
-- **Smart Recommendations Caching**: `user_recommendations` cache table for instant loading, background GPT-4o generation, and `rebuild-recommendations` edge function.
-- **Creator Follow System**: `followed_creators` table, edge functions for follow/unfollow, and `get-creator-updates` for feed integration.
-- **Spoiler Protection**: Posts can be marked as spoilers, showing a blurred preview with a reveal overlay.
-- **Session Tracking & Analytics**: `user_sessions` table for engagement monitoring, churn analysis, and time-spent metrics via `get_churn_metrics` and `get_session_engagement` functions.
-- **Consumed vs User-Generated Content**: Predictions, polls, and trivia can be created either by the consumed team (platform-curated) or by users. Content origin is distinguished via `origin_type` ('consumed' or 'user') and `origin_user_id` fields:
-  - **Consumed Content**: Platform-curated predictions/polls/trivia added via SQL by consumed team, displayed with "🏆 Consumed" badge and purple gradient border (from-purple-50 to-blue-50, border-purple-300), icon with purple-to-blue gradient background.
-  - **User-Generated Content**: Created by users through inline composer, displayed with "@username asked:" format, simple white card with standard gray border, standard purple icon background.
-  - Both types use the same `prediction_pools` table and edge functions but are visually distinguished in the feed for different user experiences.
-- **Prediction Resolution System**: Predictions support optional end dates and scoring system:
-  - **Scoring**: +20 points for correct predictions, -5 points for incorrect predictions (via `resolve-prediction` edge function)
-  - **Timed Predictions**: Optional `deadline` field - when end date passes, prediction resurfaces in feed for resolution
-  - **Open-Ended Predictions**: No deadline - active until manual resolution or "It happened!" notification
-  - **Creator Resolution**: Prediction creator resolves by selecting winning option within 48 hours of deadline
-  - **Crowd-Resolve Fallback**: If creator doesn't resolve, crowd voting determines outcome (planned feature)
-  - **Stats Tracking**: `user_prediction_stats` table tracks total predictions, wins, current/best streaks, win percentage
-  - **Profile Display**: Compact stats in profile header (win streak, predictions count, mostly into, global rank)
+- **Database**: Supabase PostgreSQL.
+- **Authentication**: Supabase Auth.
+- **Unified API Search**: Integration with Spotify, TMDB, YouTube, Open Library via Edge Functions.
+- **Notification System**: Real-time unified system.
+- **Leaderboard System**: Engagement-focused with 5 categories (Fan Leaders, Conversation Starters, Top Predictors, Trivia Champs, Most Helpful) using 'Your Circle' (friends) and Global tabs.
+- **Unified Voting System**: Supports polls, predictions, and trivia.
+- **User Points System**: Aggregates points for user activities.
+- **Smart Recommendations**: GPT-4o powered with caching for instant loading.
+- **Creator Follow System**: Enables users to follow creators and receive updates.
+- **Spoiler Protection**: Blurs spoiler content until revealed.
+- **Session Tracking & Analytics**: Monitors user engagement and churn.
+- **Consumed vs User-Generated Content**: Differentiates platform-curated content with a "🏆 Consumed" badge from user-generated content.
+- **Prediction Resolution**: Supports timed and open-ended predictions with a scoring system and creator/crowd-resolve mechanisms.
+- **AI Builder** (`/library-ai`): Allows customization of list organization and tracking preferences via a visual builder and AI chat.
 
 ### Feature Specifications
 - **Media Tracking**: Simplified list-based system with privacy controls.
-- **AI-Powered Search**: Unified search experience at `/search` returning three result types:
-  - **Conversations**: Posts, predictions, polls, and reviews matching the query
-  - **AI Recommendations**: GPT-4o powered personalized content suggestions
-  - **Media Results**: Direct search results from Spotify, TMDB, YouTube, Open Library
-- **Personal System Lists**: 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) auto-created with privacy control.
-- **Custom Lists**: User-created lists with dedicated edge functions.
-- **Collaborative Lists**: Managed by `list_collaborators` table and associated edge functions.
-- **Ranked Lists (Ranks)**: Ordered media rankings (e.g., "Top 10 90s Movies") stored in `ranks` and `rank_items` tables. Features:
-  - Position-based ordering with drag-and-drop support via `reorder-rank-items` edge function
-  - Configurable max items (default 10)
-  - Visibility controls (public/private/friends)
-  - Edge functions: `create-rank`, `get-user-ranks`, `add-rank-item`, `reorder-rank-items`, `delete-rank`
-  - **IMPORTANT**: Requires SQL migration `supabase/migrations/20251206_create_ranks_tables.sql` to be run in Supabase SQL Editor
-- **Progress Tracking**: Uses `update-item-progress` edge function with modes: percent (0-100%), page (books), episode (TV shows), track (music).
-- **Social Features**: Engagement-focused leaderboards (conversation activity, social interaction, play activity), activity feeds, friend discovery, "Inner Circle".
+- **AI-Powered Search**: Unified search at `/search` for conversations, AI recommendations, and media results.
+- **Personal System Lists**: 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) with privacy control.
+- **Custom & Collaborative Lists**: User-created and shared lists.
+- **Ranked Lists (Ranks)**: Ordered media rankings with drag-and-drop functionality and configurable visibility.
+- **Progress Tracking**: Tracks media consumption by percent, page, episode, or track.
+- **Social Features**: Leaderboards, activity feeds, friend discovery, and an "Inner Circle."
 - **Play Section**: Category-based navigation for Trivia, Polls, Predictions.
-- **Profile Management**: Editable display name; usernames are permanent. Supports viewing other users' profiles. Profile focuses on Stats, DNA (Entertainment DNA profile), and Friends (friend management on own profile only).
-- **@ Mention System**: Tagging friends in posts/comments, real-time autocomplete, mention notifications, and precise navigation.
-- **Creator Recognition**: "Favorite Creators" based on media consumption.
-- **Media Item Pages**: Dynamic platform availability links ("Watch On", "Listen On", "Read On").
-- **Polls/Surveys System**: Uses unified voting system with sponsors, real-time voting, duplicate vote prevention, and points rewards.
+- **Profile Management**: Editable display names, permanent usernames, and detailed user profiles.
+- **@ Mention System**: Tagging friends with real-time autocomplete and notifications.
+- **Creator Recognition**: Identifies "Favorite Creators" based on media consumption.
+- **Media Item Pages**: Provides dynamic links to platforms for media consumption.
+- **Polls/Surveys System**: Real-time voting, duplicate vote prevention, and points rewards.
 - **Discover Page**: AI-powered recommendations and trending content carousels.
-- **Analytics Dashboard**: Admin dashboard at `/admin` with comprehensive engagement metrics (DAU/WAU/MAU, retention, churn, time spent) using SQL analytics functions and `get-analytics` edge function.
-- **Partnership Insights**: Analytics for partnerships (Netflix, Goodreads) including cross-platform affinity, trending content, and DNA personality clusters via `get-analytics?type=partnerships`.
-- **AI Builder** (`/library-ai`): Two-tab customization interface for personalizing the app:
-  - **List Organization**: System-wide configuration for how ALL lists work (default layout: grid/list/compact, global features: progress tracker, notes, collaborators, privacy, covers, tags)
-  - **Tracking Preferences**: Granular controls for media types, tracking options, and list display preferences
-  - **AI Chat Integration**: `builder-chat` edge function with Claude 4.1 Sonnet for natural language customization (fallback mock responses when API key unavailable)
-  - **Visual Builder**: White background, dark text, purple gradients for CTAs, matching Threads aesthetic
+- **Analytics Dashboard**: Admin dashboard at `/admin` for comprehensive engagement metrics and partnership insights.
 
 ### System Design Choices
 - **Database Schema**: Strict naming conventions, synced dev/prod schemas.
 - **Row Level Security (RLS)**: Strict RLS for data privacy.
 - **Edge Functions**: Adhere to schema, handle user auto-creation, accept `user_id` for profile viewing.
-- **Privacy Toggle System**: `update-list-visibility` edge function.
-
-### Composer Implementation Backup (December 2024)
-**File**: `client/src/components/inline-composer.tsx` (1190 lines)
-
-**Current Flow (PRESERVE THIS)**:
-1. **Search Stage**: User searches for media with search box
-   - Shows "What's everyone consuming?" header
-   - Search results show media with quick-add (+) and star buttons
-   - Quick-add dropdown lets user add directly to any list
-   
-2. **Actions Stage**: After selecting media, shows action menu:
-   - "Add a thought" → `actionMode="thought"`
-   - "Track & Rate" → `actionMode="rating"` 
-   - "Make a prediction" → `actionMode="prediction"`
-   - "Ask a poll" → `actionMode="poll"`
-
-**Action Modes & Their Fields**:
-- **thought**: MentionTextarea for text, spoiler checkbox, Post button
-- **rating**: Star rating (1-5 with decimal), review textarea, list dropdown, spoiler checkbox
-- **prediction**: Question input, 2 options with radio selection, spoiler checkbox
-- **poll**: Question input, dynamic options list (2+ options), spoiler checkbox
-
-**Key Functions (DO NOT MODIFY)**:
-- `handleMediaSearch()` → calls `media-search` edge function
-- `handleSelectMedia()` → transitions to actions stage
-- `handleTrackToList()` → calls `track-media` or `add-to-custom-list` edge functions
-- `handlePost()` → calls `inline-post` edge function with action-specific payload
-
-**Edge Functions Used**:
-- `media-search` - Search for media
-- `track-media` - Add to system lists (Currently, Queue, etc.)
-- `add-to-custom-list` - Add to custom lists
-- `add-media-to-list` - Add media to any list
-- `inline-post` - Create social posts (thought, rate-review, prediction, poll)
-
-**Feed Card Types (PRESERVE EXACTLY)**:
-- Thought posts with media attachment
-- Rate/Review posts with star rating display
-- Prediction posts with voting options
-- Poll posts with voting options
-- Rank posts with item voting
+- **Privacy Toggle System**: Controls list visibility.
 
 ## External Dependencies
 
