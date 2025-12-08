@@ -882,9 +882,10 @@ export default function UserProfile() {
   // Fetch profile data - accessible to everyone (public profiles)
   useEffect(() => {
     if (session?.access_token && viewingUserId) {
+      // Pass viewingUserId explicitly to avoid stale closure issues
       fetchDnaProfile();
-      fetchUserLists();
-      fetchUserRanks();
+      fetchUserLists(viewingUserId);
+      fetchUserRanks(viewingUserId);
       fetchUserStats();
       fetchUserPoints();
       fetchUserPredictions();
@@ -988,12 +989,13 @@ export default function UserProfile() {
   };
 
   // Fetch user lists from Supabase edge function
-  const fetchUserLists = async () => {
-    if (!session?.access_token || !viewingUserId) return;
+  const fetchUserLists = async (targetUserId?: string) => {
+    const userId = targetUserId || viewingUserId;
+    if (!session?.access_token || !userId) return;
 
     setIsLoadingLists(true);
     try {
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${viewingUserId}`, {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${userId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -1005,7 +1007,7 @@ export default function UserProfile() {
         // Keep all lists including "All" for accurate item count calculation
         // Filter is only for display purposes in some sections
         setUserLists(data.lists || []);
-        console.log('User lists loaded:', data.lists?.length);
+        console.log('User lists loaded for', userId, ':', data.lists?.length);
       } else {
         console.error('Failed to fetch user lists');
         setUserLists([]);
@@ -1019,12 +1021,13 @@ export default function UserProfile() {
   };
 
   // Fetch user ranks from Supabase edge function
-  const fetchUserRanks = async () => {
-    if (!session?.access_token || !viewingUserId) return;
+  const fetchUserRanks = async (targetUserId?: string) => {
+    const userId = targetUserId || viewingUserId;
+    if (!session?.access_token || !userId) return;
 
     setIsLoadingRanks(true);
     try {
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks?user_id=${viewingUserId}`, {
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks?user_id=${userId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -1034,7 +1037,7 @@ export default function UserProfile() {
       if (response.ok) {
         const data = await response.json();
         setUserRanks(data.ranks || []);
-        console.log('User ranks loaded:', data.ranks?.length);
+        console.log('User ranks loaded for', userId, ':', data.ranks?.length);
       } else {
         console.error('Failed to fetch user ranks');
         setUserRanks([]);
