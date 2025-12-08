@@ -972,6 +972,7 @@ export default function UserProfile() {
   const fetchUserLists = async () => {
     if (!session?.access_token || !viewingUserId) return;
 
+    console.log('📋 Fetching lists for user:', viewingUserId, 'isOwnProfile:', isOwnProfile);
     setIsLoadingLists(true);
     try {
       const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${viewingUserId}`, {
@@ -986,7 +987,7 @@ export default function UserProfile() {
         // Keep all lists including "All" for accurate item count calculation
         // Filter is only for display purposes in some sections
         setUserLists(data.lists || []);
-        console.log('User lists loaded:', data.lists?.length);
+        console.log('📋 User lists loaded for', viewingUserId, ':', data.lists?.length, 'lists');
       } else {
         console.error('Failed to fetch user lists');
         setUserLists([]);
