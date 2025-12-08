@@ -315,135 +315,157 @@ serve(async (req) => {
     }
 
     // 5. TOP CONSUMERS BY MEDIA TYPE
-    // Using same approach as calculate-user-points which works correctly
+    // Use user_points table as source of truth (same as profile page)
     if (category === 'all' || category === 'consumption') {
-      // Get ALL list items (same as calculate-user-points)
-      const { data: listItems, error: listError } = await supabase
-        .from('list_items')
-        .select('user_id, media_type, notes, created_at');
+      // Get all user_points from the table
+      const { data: userPoints, error: pointsError } = await supabase
+        .from('user_points')
+        .select('user_id, category, points');
       
-      console.log('📊 list_items query result:', {
-        count: listItems?.length || 0,
-        error: listError?.message,
-        sampleTypes: listItems?.slice(0, 20).map((i: any) => i.media_type),
-        uniqueTypes: [...new Set((listItems || []).map((i: any) => i.media_type))]
+      console.log('📊 user_points query result:', {
+        count: userPoints?.length || 0,
+        error: pointsError?.message,
+        sample: userPoints?.slice(0, 10)
       });
 
-      // Count by media type - using .toLowerCase() like get-user-stats
+      // Point multipliers to convert points back to counts
+      const pointMultipliers: Record<string, number> = {
+        books: 15,
+        movies: 8,
+        tv: 10,
+        music: 1,
+        podcasts: 3,
+        games: 5
+      };
+
+      // Build consumption map from user_points
       const consumptionMap: Record<string, Record<string, number>> = {};
-      (listItems || []).forEach((item: any) => {
-        // Apply date filter manually if set
-        if (dateFilter && item.created_at < dateFilter) {
-          return;
+      (userPoints || []).forEach((row: any) => {
+        if (!consumptionMap[row.user_id]) {
+          consumptionMap[row.user_id] = { books: 0, movies: 0, tv: 0, music: 0, podcasts: 0, games: 0, all_time: 0 };
         }
         
-        if (!consumptionMap[item.user_id]) {
-          consumptionMap[item.user_id] = { book: 0, movie: 0, tv: 0, music: 0, podcast: 0, game: 0, total: 0 };
+        // Store points and calculate counts
+        if (row.category === 'all_time') {
+          consumptionMap[row.user_id].all_time = row.points || 0;
+        } else if (pointMultipliers[row.category]) {
+          consumptionMap[row.user_id][row.category] = row.points || 0;
         }
-        
-        // Use toLowerCase() matching like get-user-stats does
-        const mediaType = (item.media_type || '').toLowerCase();
-        if (mediaType === 'book') consumptionMap[item.user_id].book += 1;
-        else if (mediaType === 'movie') consumptionMap[item.user_id].movie += 1;
-        else if (mediaType === 'tv') consumptionMap[item.user_id].tv += 1;
-        else if (mediaType === 'music') consumptionMap[item.user_id].music += 1;
-        else if (mediaType === 'podcast') consumptionMap[item.user_id].podcast += 1;
-        else if (mediaType === 'game') consumptionMap[item.user_id].game += 1;
-        
-        consumptionMap[item.user_id].total += 1;
       });
       
-      // Log top users by book count for debugging
+      // Log top users for debugging
       const topBookUsers = Object.entries(consumptionMap)
-        .sort((a, b) => b[1].book - a[1].book)
+        .sort((a, b) => b[1].books - a[1].books)
         .slice(0, 5)
         .map(([id, data]) => ({ 
           id: id.substring(0, 8), 
           username: userMap[id]?.username,
-          books: data.book, 
-          movies: data.movie, 
-          tv: data.tv,
-          total: data.total 
+          bookPts: data.books,
+          bookCount: Math.round(data.books / 15),
+          moviePts: data.movies,
+          movieCount: Math.round(data.movies / 8),
+          allTime: data.all_time
         }));
       
-      console.log('📊 Total list_items:', listItems?.length, 
+      console.log('📊 Total user_points rows:', userPoints?.length, 
         'Total users:', Object.keys(consumptionMap).length,
         'Top book users:', JSON.stringify(topBookUsers));
 
-      // Books
+      // Helper to convert points to count
+      const toCount = (points: number, multiplier: number) => Math.round(points / multiplier);
+
+      // Books - show count derived from points
       results.books = formatEntries(
         Object.entries(consumptionMap)
-          .filter(([_, data]) => data.book > 0)
-          .map(([user_id, data]) => ({ 
-            user_id, 
-            score: data.book,
-            detail: `${data.book} books`
-          }))
+          .filter(([_, data]) => data.books > 0)
+          .map(([user_id, data]) => {
+            const count = toCount(data.books, 15);
+            return { 
+              user_id, 
+              score: count,
+              detail: `${count} books`
+            };
+          })
       );
 
       // Movies
       results.movies = formatEntries(
         Object.entries(consumptionMap)
-          .filter(([_, data]) => data.movie > 0)
-          .map(([user_id, data]) => ({ 
-            user_id, 
-            score: data.movie,
-            detail: `${data.movie} movies`
-          }))
+          .filter(([_, data]) => data.movies > 0)
+          .map(([user_id, data]) => {
+            const count = toCount(data.movies, 8);
+            return { 
+              user_id, 
+              score: count,
+              detail: `${count} movies`
+            };
+          })
       );
 
       // TV Shows
       results.tv = formatEntries(
         Object.entries(consumptionMap)
           .filter(([_, data]) => data.tv > 0)
-          .map(([user_id, data]) => ({ 
-            user_id, 
-            score: data.tv,
-            detail: `${data.tv} shows`
-          }))
+          .map(([user_id, data]) => {
+            const count = toCount(data.tv, 10);
+            return { 
+              user_id, 
+              score: count,
+              detail: `${count} shows`
+            };
+          })
       );
 
       // Music
       results.music = formatEntries(
         Object.entries(consumptionMap)
           .filter(([_, data]) => data.music > 0)
-          .map(([user_id, data]) => ({ 
-            user_id, 
-            score: data.music,
-            detail: `${data.music} tracks`
-          }))
+          .map(([user_id, data]) => {
+            const count = toCount(data.music, 1);
+            return { 
+              user_id, 
+              score: count,
+              detail: `${count} tracks`
+            };
+          })
       );
 
       // Podcasts
       results.podcasts = formatEntries(
         Object.entries(consumptionMap)
-          .filter(([_, data]) => data.podcast > 0)
-          .map(([user_id, data]) => ({ 
-            user_id, 
-            score: data.podcast,
-            detail: `${data.podcast} podcasts`
-          }))
+          .filter(([_, data]) => data.podcasts > 0)
+          .map(([user_id, data]) => {
+            const count = toCount(data.podcasts, 3);
+            return { 
+              user_id, 
+              score: count,
+              detail: `${count} podcasts`
+            };
+          })
       );
 
       // Games
       results.games = formatEntries(
         Object.entries(consumptionMap)
-          .filter(([_, data]) => data.game > 0)
-          .map(([user_id, data]) => ({ 
-            user_id, 
-            score: data.game,
-            detail: `${data.game} games`
-          }))
+          .filter(([_, data]) => data.games > 0)
+          .map(([user_id, data]) => {
+            const count = toCount(data.games, 5);
+            return { 
+              user_id, 
+              score: count,
+              detail: `${count} games`
+            };
+          })
       );
 
-      // Total consumption
+      // Total consumption - use all_time points
       results.total_consumption = formatEntries(
         Object.entries(consumptionMap)
-          .filter(([_, data]) => data.total > 0)
+          .filter(([_, data]) => data.all_time > 0)
           .map(([user_id, data]) => ({ 
             user_id, 
-            score: data.total,
-            detail: `${data.total} items`
+            score: data.all_time,
+            detail: `${data.all_time.toLocaleString()} pts`
           }))
       );
     }
