@@ -315,68 +315,46 @@ serve(async (req) => {
     }
 
     // 5. TOP CONSUMERS BY MEDIA TYPE
+    // Using same approach as calculate-user-points which works correctly
     if (category === 'all' || category === 'consumption') {
-      // Get list items for consumption tracking
-      let listQuery = supabase
+      // Get ALL list items (same as calculate-user-points)
+      const { data: listItems, error: listError } = await supabase
         .from('list_items')
-        .select('user_id, media_type, type, created_at');
-      
-      if (dateFilter) {
-        listQuery = listQuery.gte('created_at', dateFilter);
-      }
-      
-      const { data: listItems, error: listError } = await listQuery;
+        .select('user_id, media_type, notes, created_at');
       
       console.log('📊 list_items query result:', {
         count: listItems?.length || 0,
         error: listError?.message,
-        sampleTypes: listItems?.slice(0, 10).map((i: any) => ({ media_type: i.media_type, type: i.type }))
+        sampleTypes: listItems?.slice(0, 20).map((i: any) => i.media_type),
+        uniqueTypes: [...new Set((listItems || []).map((i: any) => i.media_type))]
       });
 
-      // Map various media_type values to our categories
-      const normalizeMediaType = (mediaType: string | null, type: string | null): string => {
-        const mt = (mediaType || type || '').toLowerCase();
-        
-        // Books
-        if (mt.includes('book') || mt.includes('kindle') || mt.includes('audible') || mt.includes('audiobook')) {
-          return 'book';
-        }
-        // Movies
-        if (mt.includes('movie') || mt.includes('film')) {
-          return 'movie';
-        }
-        // TV Shows (including Netflix, streaming services)
-        if (mt.includes('tv') || mt.includes('show') || mt.includes('series') || mt.includes('netflix') || mt.includes('episode')) {
-          return 'tv';
-        }
-        // Music
-        if (mt.includes('music') || mt.includes('song') || mt.includes('album') || mt.includes('track') || mt.includes('spotify')) {
-          return 'music';
-        }
-        // Podcasts
-        if (mt.includes('podcast')) {
-          return 'podcast';
-        }
-        // Games
-        if (mt.includes('game') || mt.includes('gaming') || mt.includes('playstation') || mt.includes('xbox') || mt.includes('nintendo')) {
-          return 'game';
-        }
-        
-        return 'other';
-      };
-
-      // Count by media type
+      // Count by media type - using exact matching like calculate-user-points
       const consumptionMap: Record<string, Record<string, number>> = {};
       (listItems || []).forEach((item: any) => {
-        if (!consumptionMap[item.user_id]) {
-          consumptionMap[item.user_id] = { book: 0, movie: 0, tv: 0, music: 0, podcast: 0, game: 0, other: 0, total: 0 };
+        // Apply date filter manually if set
+        if (dateFilter && item.created_at < dateFilter) {
+          return;
         }
-        const normalizedType = normalizeMediaType(item.media_type, item.type);
-        consumptionMap[item.user_id][normalizedType] = (consumptionMap[item.user_id][normalizedType] || 0) + 1;
+        
+        if (!consumptionMap[item.user_id]) {
+          consumptionMap[item.user_id] = { book: 0, movie: 0, tv: 0, music: 0, podcast: 0, game: 0, total: 0 };
+        }
+        
+        // Exact matching on media_type (same as calculate-user-points)
+        const mediaType = item.media_type;
+        if (mediaType === 'book') consumptionMap[item.user_id].book += 1;
+        else if (mediaType === 'movie') consumptionMap[item.user_id].movie += 1;
+        else if (mediaType === 'tv') consumptionMap[item.user_id].tv += 1;
+        else if (mediaType === 'music') consumptionMap[item.user_id].music += 1;
+        else if (mediaType === 'podcast') consumptionMap[item.user_id].podcast += 1;
+        else if (mediaType === 'game') consumptionMap[item.user_id].game += 1;
+        
         consumptionMap[item.user_id].total += 1;
       });
       
-      console.log('📊 consumptionMap users:', Object.keys(consumptionMap).length);
+      console.log('📊 consumptionMap users:', Object.keys(consumptionMap).length, 
+        'sample:', Object.entries(consumptionMap).slice(0, 3).map(([id, data]) => ({ id: id.substring(0, 8), ...data })));
 
       // Books
       results.books = formatEntries(
