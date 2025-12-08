@@ -56,16 +56,6 @@ export default function UserProfile() {
   // Must wait for BOTH userMatch AND userParams.id to be available
   const isRouteResolving = location.startsWith('/user/') && (!userMatch || !userParams?.id);
 
-  // Debug logging for route resolution
-  console.log('🔍 Route debug:', { 
-    location, 
-    userMatch, 
-    userParamsId: userParams?.id, 
-    viewingUserId, 
-    isRouteResolving,
-    ownUserId: user?.id 
-  });
-
   // Store return URL for redirect after login
   useEffect(() => {
     if (!user && !loading && userParams?.id) {
@@ -1299,7 +1289,9 @@ export default function UserProfile() {
 
   const handleListClick = (listName: string) => {
     const listId = listName.toLowerCase().replace(/\s+/g, '-');
-    setLocation(`/list/${listId}`);
+    // Include user parameter when viewing someone else's profile
+    const userParam = !isOwnProfile && viewingUserId ? `?user=${viewingUserId}` : '';
+    setLocation(`/list/${listId}${userParam}`);
   };
 
   // Handle file upload for media import
@@ -2994,7 +2986,8 @@ export default function UserProfile() {
                       className="border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
                       onClick={() => {
                         const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                        setLocation(`/list/${listSlug}`);
+                        const userParam = !isOwnProfile && viewingUserId ? `?user=${viewingUserId}` : '';
+                        setLocation(`/list/${listSlug}${userParam}`);
                       }}
                     >
                       <div className="px-4 py-3 flex items-center justify-between">
