@@ -506,14 +506,15 @@ export default function PlayPage() {
               <CheckSquare className="text-blue-600" size={24} />
               <span className="text-xs font-medium text-blue-600">Polls</span>
             </button>
-            <button
-              onClick={() => setGameTypeFilter('trivia')}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors"
-              data-testid="browse-trivia"
-            >
-              <HelpCircle className="text-green-600" size={24} />
-              <span className="text-xs font-medium text-green-600">Trivia</span>
-            </button>
+            <Link href="/play/trivia">
+              <button
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors w-full"
+                data-testid="browse-trivia"
+              >
+                <HelpCircle className="text-green-600" size={24} />
+                <span className="text-xs font-medium text-green-600">Trivia</span>
+              </button>
+            </Link>
             <Link href="/leaderboard">
               <button
                 className="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors w-full"
@@ -580,12 +581,11 @@ export default function PlayPage() {
               </div>
               <h2 className="text-lg font-semibold text-gray-900">Trivia Challenges</h2>
             </div>
-            <button
-              onClick={() => setGameTypeFilter('trivia')}
-              className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-            >
-              View All
-            </button>
+            <Link href="/play/trivia">
+              <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                View All
+              </button>
+            </Link>
           </div>
           
           {triviaGames.length === 0 ? (
