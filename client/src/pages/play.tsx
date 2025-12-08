@@ -27,10 +27,14 @@ function usePredictionPools() {
     queryFn: async () => {
       console.log('🎮 Fetching games directly from Supabase database...');
       
+      // Get session for authenticated query
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔑 Session for pools query:', session ? 'active' : 'none');
+      
       // Query prediction_pools table directly
-      const { data: pools, error } = await supabase
+      const { data: pools, error, count } = await supabase
         .from('prediction_pools')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('status', 'open')
         .order('created_at', { ascending: false });
       
@@ -39,7 +43,12 @@ function usePredictionPools() {
         throw new Error('Failed to fetch prediction pools');
       }
       
-      console.log('✅ Games loaded directly from Supabase:', pools);
+      console.log('✅ Games loaded directly from Supabase:', pools?.length, 'games, count:', count);
+      
+      // Log trivia games specifically
+      const triviaGames = pools?.filter((p: any) => p.type === 'trivia') || [];
+      console.log('🎯 Trivia games found:', triviaGames.length, triviaGames.map((g: any) => g.title));
+      
       return pools || [];
     },
     enabled: true
