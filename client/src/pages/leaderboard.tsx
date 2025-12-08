@@ -367,6 +367,12 @@ export default function Leaderboard() {
             </TabsContent>
 
             <TabsContent value="games">
+              <div className="flex justify-end mb-4">
+                <Link href="/play" className="text-sm text-purple-600 hover:text-purple-700 font-medium" data-testid="link-play-games">
+                  Play Games →
+                </Link>
+              </div>
+              
               {renderCategoryCard(
                 'Trivia Champions',
                 Brain,
