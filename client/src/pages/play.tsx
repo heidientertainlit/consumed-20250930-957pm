@@ -412,9 +412,15 @@ export default function PlayPage() {
     return allGames.filter((game: any) => game.type === 'trivia').slice(0, 3);
   }, [allGames]);
 
-  const userRank = leaderboardData.findIndex((entry: any) => entry.user_id === currentUser?.id) + 1;
-  const userEntry = leaderboardData.find((entry: any) => entry.user_id === currentUser?.id);
-  const totalPoints = userEntry?.total_points || 0;
+  // Extract total consumption leaders array from leaderboard data (API returns object with categories)
+  const totalConsumptionLeaders = leaderboardData?.categories?.total_consumption || [];
+  const userRank = Array.isArray(totalConsumptionLeaders) 
+    ? totalConsumptionLeaders.findIndex((entry: any) => entry.user_id === currentUser?.id) + 1 
+    : 0;
+  const userEntry = Array.isArray(totalConsumptionLeaders)
+    ? totalConsumptionLeaders.find((entry: any) => entry.user_id === currentUser?.id)
+    : null;
+  const totalPoints = userEntry?.total_points || leaderboardData?.currentUser?.total_points || 0;
 
   if (isLoading) {
     return (
@@ -637,14 +643,14 @@ export default function PlayPage() {
             </Link>
           </div>
           
-          {leaderboardData.length === 0 ? (
+          {totalConsumptionLeaders.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Trophy className="w-12 h-12 mx-auto mb-3 text-gray-300" />
               <p className="text-sm">No leaderboard data yet</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {leaderboardData.slice(0, 5).map((entry: any, index: number) => (
+              {totalConsumptionLeaders.slice(0, 5).map((entry: any, index: number) => (
                 <div
                   key={entry.user_id}
                   className={`flex items-center justify-between p-3 rounded-xl ${
