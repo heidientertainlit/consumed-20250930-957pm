@@ -294,19 +294,6 @@ export default function Leaderboard() {
           ))}
         </div>
 
-        {!isLoading && leaderboardData?.categories?.total_consumption && (
-          <div className="mb-6">
-            {renderCategoryCard(
-              'Total Consumption Leaders',
-              Star,
-              leaderboardData?.categories?.total_consumption,
-              'Total Consumption Top',
-              'Track some media to appear here!',
-              'from-purple-600 to-blue-600'
-            )}
-          </div>
-        )}
-
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((n) => (
@@ -397,6 +384,17 @@ export default function Leaderboard() {
             </TabsContent>
 
             <TabsContent value="consumption">
+              <div className="mb-4">
+                {renderCategoryCard(
+                  'Total Consumption Leaders',
+                  Star,
+                  leaderboardData?.categories?.total_consumption,
+                  'Total Consumption',
+                  'Track some media to appear here!',
+                  'from-purple-600 to-blue-600'
+                )}
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {renderCategoryCard(
                   'Bookworms',
@@ -450,17 +448,6 @@ export default function Leaderboard() {
                   'Games',
                   'No games tracked yet',
                   'from-emerald-500 to-teal-500'
-                )}
-              </div>
-              
-              <div className="mt-4">
-                {renderCategoryCard(
-                  'Total Consumption Leaders',
-                  Star,
-                  leaderboardData?.categories?.total_consumption,
-                  'Total Consumption',
-                  'Track some media to appear here!',
-                  'from-purple-600 to-blue-600'
                 )}
               </div>
             </TabsContent>
