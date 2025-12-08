@@ -389,7 +389,8 @@ export default function Leaderboard() {
                 leaderboardData?.categories?.polls,
                 'Polls',
                 'No poll activity yet. Vote on some polls!',
-                'from-blue-500 to-cyan-500'
+                'from-blue-500 to-cyan-500',
+                { label: 'Do Polls', href: '/play/polls' }
               )}
               
               {renderCategoryCard(
@@ -398,7 +399,8 @@ export default function Leaderboard() {
                 leaderboardData?.categories?.predictions,
                 'Predictions',
                 'No predictions resolved yet. Make some predictions!',
-                'from-green-500 to-emerald-500'
+                'from-green-500 to-emerald-500',
+                { label: 'Do Predictions', href: '/play/predictions' }
               )}
             </TabsContent>
 

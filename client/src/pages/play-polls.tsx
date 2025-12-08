@@ -234,9 +234,8 @@ export default function PlayPollsPage() {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-2">
-                        <div className="text-2xl">{game.icon}</div>
                         <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium uppercase">
-                          Vote
+                          Poll
                         </Badge>
                       </div>
                       <Button
