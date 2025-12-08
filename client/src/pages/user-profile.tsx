@@ -3085,15 +3085,6 @@ export default function UserProfile() {
                   <BookOpen size={14} />
                   Import Goodreads
                 </Button>
-                <Button
-                  size="sm"
-                  className="flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-auto"
-                  onClick={() => setIsUploadModalOpen(true)}
-                  data-testid="button-import-netflix"
-                >
-                  <Film size={14} />
-                  Import Netflix
-                </Button>
               </div>
 
               {/* Filter Pills */}
@@ -3977,7 +3968,7 @@ export default function UserProfile() {
             </DialogTitle>
             <DialogDescription className="text-gray-600 space-y-3">
               <div>
-                Import your entertainment history from Netflix or Goodreads. Upload a CSV or ZIP file to get started.
+                Import your entertainment history from Goodreads. Upload a CSV or ZIP file to get started.
                 <button
                   onClick={() => setIsHelpModalOpen(true)}
                   className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-700 underline"
@@ -4012,7 +4003,7 @@ export default function UserProfile() {
                 />
               </label>
               <p className="text-xs text-gray-500 mt-2">
-                Supported: Netflix, Goodreads (CSV or ZIP)
+                Supported: Goodreads (CSV or ZIP)
               </p>
             </div>
 
@@ -4068,25 +4059,6 @@ export default function UserProfile() {
 
           <div className="space-y-4 mt-4">
             <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <Film className="h-4 w-4 text-red-600" />
-                </div>
-                <div>
-                  <span className="font-medium text-gray-800">Netflix:</span>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Go to your Account → Security → Personal Info Access → Request.{' '}
-                    <a
-                      href="https://www.netflix.com/account/getmyinfo"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      Get your Netflix data →
-                    </a>
-                  </p>
-                </div>
-              </li>
               <li className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                   <BookOpen className="h-4 w-4 text-green-600" />
