@@ -2167,7 +2167,7 @@ export default function UserProfile() {
         {(() => {
           const currentlyList = userLists.find(list => list.title === 'Currently');
           const currentlyItems = currentlyList?.items?.slice(0, 5) || [];
-          const firstName = userProfileData?.first_name || user?.user_metadata?.first_name || 'User';
+          const firstName = userProfileData?.first_name || userProfileData?.user_name || 'User';
           
           return currentlyItems.length > 0 ? (
             <div className="px-4 mb-4">
@@ -2253,7 +2253,7 @@ export default function UserProfile() {
                 Friends
               </button>
             )}
-            {isOwnProfile && (
+            {(isOwnProfile || friendshipStatus === 'friends') && (
               <button
                 onClick={() => setActiveSection('collections')}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
@@ -2286,7 +2286,7 @@ export default function UserProfile() {
         {activeSection === 'stats' && (
         <div ref={statsRef} className="px-4 mb-8">
           <div className="mt-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>Your Stats</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>{isOwnProfile ? 'Your' : 'Their'} Stats</h3>
             {isLoadingStats ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
                 <div className="flex items-center justify-center">
@@ -2871,8 +2871,8 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* Collections Section (Lists + Ranks) - Only show on own profile */}
-        {activeSection === 'collections' && isOwnProfile && (
+        {/* Collections Section (Lists + Ranks) - Show for own profile or friends */}
+        {activeSection === 'collections' && (isOwnProfile || friendshipStatus === 'friends') && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               {/* Sub-navigation: Lists vs Ranks */}
@@ -2902,15 +2902,17 @@ export default function UserProfile() {
                   Ranks
                 </button>
                 <div className="flex-1" />
-                <Button
-                  size="sm"
-                  onClick={() => collectionsSubTab === 'lists' ? setShowCreateListDialog(true) : setShowCreateRankDialog(true)}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-8"
-                  data-testid={collectionsSubTab === 'lists' ? 'button-create-list' : 'button-create-rank'}
-                >
-                  <Plus size={14} className="mr-1" />
-                  {collectionsSubTab === 'lists' ? 'List' : 'Rank'}
-                </Button>
+                {isOwnProfile && (
+                  <Button
+                    size="sm"
+                    onClick={() => collectionsSubTab === 'lists' ? setShowCreateListDialog(true) : setShowCreateRankDialog(true)}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-8"
+                    data-testid={collectionsSubTab === 'lists' ? 'button-create-list' : 'button-create-rank'}
+                  >
+                    <Plus size={14} className="mr-1" />
+                    {collectionsSubTab === 'lists' ? 'List' : 'Rank'}
+                  </Button>
+                )}
               </div>
 
               {/* Lists Sub-Tab Content */}
