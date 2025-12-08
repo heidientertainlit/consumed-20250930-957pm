@@ -294,6 +294,19 @@ export default function Leaderboard() {
           ))}
         </div>
 
+        {!isLoading && leaderboardData?.categories?.total_consumption && (
+          <div className="mb-6">
+            {renderCategoryCard(
+              'Total Consumption Leaders',
+              Star,
+              leaderboardData?.categories?.total_consumption,
+              'Total Consumption Top',
+              'Track some media to appear here!',
+              'from-purple-600 to-blue-600'
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((n) => (
