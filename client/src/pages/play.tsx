@@ -499,14 +499,15 @@ export default function PlayPage() {
                 <span className="text-xs font-medium text-red-600">Predictions</span>
               </button>
             </Link>
-            <button
-              onClick={() => setGameTypeFilter('vote')}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors"
-              data-testid="browse-polls"
-            >
-              <CheckSquare className="text-blue-600" size={24} />
-              <span className="text-xs font-medium text-blue-600">Polls</span>
-            </button>
+            <Link href="/play/polls">
+              <button
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors w-full"
+                data-testid="browse-polls"
+              >
+                <CheckSquare className="text-blue-600" size={24} />
+                <span className="text-xs font-medium text-blue-600">Polls</span>
+              </button>
+            </Link>
             <Link href="/play/trivia">
               <button
                 className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors w-full"
