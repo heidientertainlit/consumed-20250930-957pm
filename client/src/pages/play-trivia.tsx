@@ -251,7 +251,6 @@ export default function PlayTriviaPage() {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-2">
-                        <div className="text-2xl">{game.icon}</div>
                         <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase">
                           {game.isLongForm ? 'Trivia' : 'Quick Trivia'}
                         </Badge>
@@ -368,7 +367,6 @@ export default function PlayTriviaPage() {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-2">
-                        <div className="text-2xl">{game.icon}</div>
                         <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium uppercase">
                           High Stakes Trivia
                         </Badge>
