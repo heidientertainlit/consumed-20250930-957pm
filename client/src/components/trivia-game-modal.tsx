@@ -234,7 +234,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
                   className="bg-purple-600 hover:bg-purple-700 text-white" 
                   onClick={() => {
                     onClose();
-                    window.location.href = '/play';
+                    window.location.href = '/play/trivia';
                   }}
                   data-testid="button-play-more"
                 >
