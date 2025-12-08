@@ -209,8 +209,7 @@ export default function LoginPage() {
             />
           </div>
           <p className="text-white text-lg max-w-xs mx-auto leading-relaxed">
-            Your friends' entertainment, all in one place.<br />
-            See it. Talk about it. Add yours.
+            Everyone's entertainment picks, all in one place.
           </p>
         </div>
         
