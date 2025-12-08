@@ -53,7 +53,8 @@ export default function UserProfile() {
   const isOwnProfile = meMatch || !userParams?.id || userParams.id === 'profile' || viewingUserId === user?.id;
   
   // Track if route is still resolving to prevent showing wrong profile
-  const isRouteResolving = location.startsWith('/user/') && !userMatch;
+  // Must wait for BOTH userMatch AND userParams.id to be available
+  const isRouteResolving = location.startsWith('/user/') && (!userMatch || !userParams?.id);
 
   // Store return URL for redirect after login
   useEffect(() => {
