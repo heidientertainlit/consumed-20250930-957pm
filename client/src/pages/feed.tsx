@@ -109,6 +109,16 @@ interface SocialPost {
   winning_option?: string;
 }
 
+interface FeedResponse {
+  posts: SocialPost[];
+  currentUserId: string;
+}
+
+// Store the current user's app user ID globally for delete button matching
+let currentAppUserId: string | null = null;
+
+export const getCurrentAppUserId = () => currentAppUserId;
+
 const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number; session: any }): Promise<SocialPost[]> => {
   if (!session?.access_token) {
     throw new Error('No authentication token available');
@@ -129,7 +139,17 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
     throw new Error(`Failed to fetch social feed: ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  
+  // Handle new response format with currentUserId
+  if (data && typeof data === 'object' && 'posts' in data && 'currentUserId' in data) {
+    currentAppUserId = data.currentUserId;
+    console.log('📌 Current app user ID set to:', currentAppUserId);
+    return data.posts;
+  }
+  
+  // Fallback for old response format (array of posts)
+  return data;
 };
 
 // Media Card Quick Actions Component
@@ -1922,8 +1942,8 @@ export default function Feed() {
                           }
                         })()}
                       </div>
-                      {/* Compare by email since auth UID may differ from app user ID */}
-                      {user?.email && post.user.email && user.email === post.user.email && (
+                      {/* Use currentAppUserId for matching since auth UID may differ from app user ID */}
+                      {currentAppUserId && post.user.id === currentAppUserId && (
                         <button
                           onClick={() => handleDeletePost(post.id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
@@ -1937,7 +1957,7 @@ export default function Feed() {
                     ) : (
                     /* Fallback for posts missing user data - show user from grouped activities */
                     (() => {
-                      const myActivity = post.groupedActivities?.find(a => a.email && user?.email && a.email === user.email);
+                      const myActivity = post.groupedActivities?.find(a => currentAppUserId && a.userId === currentAppUserId);
                       const firstActivity = post.groupedActivities?.[0];
                       const displayUser = myActivity || firstActivity;
                       

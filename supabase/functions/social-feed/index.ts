@@ -761,7 +761,11 @@ serve(async (req) => {
       console.log('Non-media posts:', transformedNonMediaPosts.length);
       console.log('Predictions:', transformedPredictions.length);
 
-      return new Response(JSON.stringify(allItems), {
+      // Return response with current user's app user ID for delete button matching
+      return new Response(JSON.stringify({ 
+        posts: allItems, 
+        currentUserId: appUser.id 
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
