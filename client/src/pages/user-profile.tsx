@@ -41,18 +41,35 @@ export default function UserProfile() {
   const [location, setLocation] = useLocation();
 
   // Get user ID from URL using wouter's useRoute
-  const [match, params] = useRoute('/user/:id');
-  // If params.id is "profile" or not set, use current user's ID (own profile)
-  const viewingUserId = (params?.id && params.id !== 'profile') ? params.id : user?.id;
-  const isOwnProfile = !params?.id || params.id === 'profile' || viewingUserId === user?.id;
+  // Support both /user/:id and /me routes
+  const [userMatch, userParams] = useRoute('/user/:id');
+  const [meMatch] = useRoute('/me');
+  
+  // If we're on /me or params.id is "profile" or not set, use current user's ID (own profile)
+  // Otherwise use the ID from the URL
+  const viewingUserId = (userMatch && userParams?.id && userParams.id !== 'profile') 
+    ? userParams.id 
+    : user?.id;
+  const isOwnProfile = meMatch || !userParams?.id || userParams.id === 'profile' || viewingUserId === user?.id;
+  
+  // Debug: Log the profile being viewed
+  console.log('🔍 Profile Debug:', { 
+    userMatch,
+    meMatch,
+    paramsId: userParams?.id, 
+    viewingUserId, 
+    userId: user?.id, 
+    isOwnProfile,
+    currentLocation: location 
+  });
 
   // Store return URL for redirect after login
   useEffect(() => {
-    if (!user && !loading && params?.id) {
+    if (!user && !loading && userParams?.id) {
       // Store the profile URL they're trying to visit
-      sessionStorage.setItem('returnUrl', `/user/${params.id}`);
+      sessionStorage.setItem('returnUrl', `/user/${userParams.id}`);
     }
-  }, [user, loading, params?.id]);
+  }, [user, loading, userParams?.id]);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isDNAExpanded, setIsDNAExpanded] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
