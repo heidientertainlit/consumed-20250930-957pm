@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Trophy } from "lucide-react";
+import { CheckCircle, XCircle, Trophy, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -33,6 +33,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
   const [isComplete, setIsComplete] = useState(false);
   const [showCelebration, setShowCelebration] = useState<{ points: number } | null>(null);
   const [celebrationTimer, setCelebrationTimer] = useState<NodeJS.Timeout | null>(null);
+  const [hasSharedToFeed, setHasSharedToFeed] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
   const queryClient = useQueryClient();
@@ -76,6 +77,50 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
+    }
+  });
+
+  const shareToFeed = useMutation({
+    mutationFn: async (data: { title: string; score: number; total: number; points: number }) => {
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/posts`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: `Just scored ${data.score}/${data.total} on ${data.title} and earned ${data.points} points! 🎯`,
+          post_type: 'trivia_score'
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to share to feed: ${errorText}`);
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      setHasSharedToFeed(true);
+      queryClient.invalidateQueries({ queryKey: ['/api/feed'] });
+      toast({
+        title: "Shared!",
+        description: "Your score has been posted to your feed",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to share to feed. Please try again.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -161,28 +206,41 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
               </div>
             </div>
 
-            <div className="flex justify-center space-x-3">
-              <Button 
-                variant="outline" 
-                className="text-gray-900 bg-white hover:bg-gray-50 border-purple-500" 
-                onClick={() => {
-                  onClose();
-                  window.location.href = `/leaderboard?category=trivia_leader&challenge=${poolId}`;
-                }}
-                data-testid="button-view-leaderboard"
+            <div className="flex flex-col items-center space-y-3">
+              <Button
+                variant="outline"
+                className={`w-full max-w-xs border-purple-500 ${hasSharedToFeed ? 'bg-green-50 text-green-700 border-green-500' : 'text-purple-700 hover:bg-purple-50'}`}
+                onClick={() => shareToFeed.mutate({ title, score, total: questions.length, points: totalPointsEarned })}
+                disabled={hasSharedToFeed || shareToFeed.isPending}
+                data-testid="button-share-to-feed"
               >
-                View Leaderboard
+                <Share2 size={16} className="mr-2" />
+                {hasSharedToFeed ? 'Shared to Feed!' : shareToFeed.isPending ? 'Sharing...' : 'Add My Score to Feed'}
               </Button>
-              <Button 
-                className="bg-purple-600 hover:bg-purple-700 text-white" 
-                onClick={() => {
-                  onClose();
-                  window.location.href = '/play';
-                }}
-                data-testid="button-play-more"
-              >
-                Play More Games
-              </Button>
+
+              <div className="flex justify-center space-x-3">
+                <Button 
+                  variant="outline" 
+                  className="text-gray-900 bg-white hover:bg-gray-50 border-purple-500" 
+                  onClick={() => {
+                    onClose();
+                    window.location.href = `/leaderboard?category=trivia_leader&challenge=${poolId}`;
+                  }}
+                  data-testid="button-view-leaderboard"
+                >
+                  View Leaderboard
+                </Button>
+                <Button 
+                  className="bg-purple-600 hover:bg-purple-700 text-white" 
+                  onClick={() => {
+                    onClose();
+                    window.location.href = '/play';
+                  }}
+                  data-testid="button-play-more"
+                >
+                  Play More Games
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
