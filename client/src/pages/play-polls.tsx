@@ -176,8 +176,6 @@ export default function PlayPollsPage() {
 
   // Filter for poll/vote games only
   const pollGames = processedGames.filter((game: any) => game.type === 'vote');
-  const lowStakesGames = pollGames.filter((game: any) => !game.isHighStakes);
-  const highStakesGames = pollGames.filter((game: any) => game.isHighStakes);
 
   // Auto-open poll if gameId is in URL hash
   React.useEffect(() => {
@@ -227,12 +225,11 @@ export default function PlayPollsPage() {
           </p>
         </div>
 
-        {/* LOW STAKES Section */}
-        {lowStakesGames.length > 0 && (
+        {/* Polls Section */}
+        {pollGames.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Low Stakes</h2>
             <div className="space-y-4">
-              {lowStakesGames.map((game: any) => (
+              {pollGames.map((game: any) => (
                 <Card key={game.id} className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between mb-3">
@@ -309,69 +306,6 @@ export default function PlayPollsPage() {
                         </Button>
                       </>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* HIGH STAKES Section */}
-        {highStakesGames.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-              <span>High Stakes</span>
-              <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-xs font-bold border-0">
-                ⭐ PREMIUM
-              </Badge>
-            </h2>
-            <div className="space-y-4">
-              {highStakesGames.map((game: any) => (
-                <Card key={game.id} className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 shadow-sm rounded-2xl overflow-hidden">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="text-2xl">{game.icon}</div>
-                        <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium uppercase">
-                          High Stakes Poll
-                        </Badge>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleInviteFriends(game)}
-                        className="px-3 py-1.5 text-xs bg-purple-600 text-white hover:bg-purple-700 border-0 rounded-lg"
-                        data-testid={`invite-${game.id}`}
-                      >
-                        <UserPlus size={14} className="mr-1" />
-                        Invite to Play
-                      </Button>
-                    </div>
-
-                    <CardTitle className="text-xl font-bold text-amber-900 mb-2 mt-2">{game.title}</CardTitle>
-                    <p className="text-amber-800 text-sm mb-4">{game.description}</p>
-
-                    <div className="flex items-center space-x-4 text-sm text-amber-900">
-                      <div className="flex items-center space-x-1">
-                        <Star size={14} className="text-amber-600" />
-                        <span className="font-medium">Entry: {game.entryCost || 50} pts</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star size={14} className="text-amber-600" />
-                        <span className="font-medium">Win: {game.payout || 100} pts</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    <Button
-                      onClick={() => {/* Handle high stakes poll */}}
-                      className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-xl py-6"
-                      data-testid={`play-${game.id}`}
-                    >
-                      <Vote size={16} className="mr-2" />
-                      Vote Now
-                    </Button>
                   </CardContent>
                 </Card>
               ))}
