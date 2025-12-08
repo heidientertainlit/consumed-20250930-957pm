@@ -223,16 +223,28 @@ export default function Leaderboard() {
     entries: LeaderboardEntry[] | undefined,
     categoryName: string,
     emptyMessage: string,
-    gradient: string = 'from-purple-600 to-blue-600'
+    gradient: string = 'from-purple-600 to-blue-600',
+    actionLink?: { label: string; href: string }
   ) => {
     const isExpanded = expandedCategories.has(categoryName);
     
     return (
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
         <div className={`bg-gradient-to-r ${gradient} p-4`}>
-          <div className="flex items-center gap-2">
-            <Icon className="text-white" size={20} />
-            <h3 className="text-base font-bold text-white">{title}</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon className="text-white" size={20} />
+              <h3 className="text-base font-bold text-white">{title}</h3>
+            </div>
+            {actionLink && (
+              <Link 
+                href={actionLink.href}
+                className="text-white/90 hover:text-white text-sm font-medium flex items-center gap-1"
+                data-testid={`link-${categoryName.toLowerCase().replace(/\s/g, '-')}-action`}
+              >
+                {actionLink.label} →
+              </Link>
+            )}
           </div>
         </div>
         {renderLeaderboardList(entries, categoryName, emptyMessage, isExpanded)}
@@ -361,7 +373,8 @@ export default function Leaderboard() {
                 leaderboardData?.categories?.trivia,
                 'Trivia',
                 'No trivia results yet. Play some trivia!',
-                'from-yellow-500 to-orange-500'
+                'from-yellow-500 to-orange-500',
+                { label: 'Play Trivia', href: '/play/trivia' }
               )}
               
               {renderCategoryCard(

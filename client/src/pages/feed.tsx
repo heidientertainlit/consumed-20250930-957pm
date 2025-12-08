@@ -1862,6 +1862,13 @@ export default function Feed() {
                             queryClient.invalidateQueries({ queryKey: ["/api/play-games", user?.id] });
                           }}
                         />
+                        <a 
+                          href="/play/trivia"
+                          className="block text-center text-purple-600 hover:text-purple-700 text-sm font-medium mt-2"
+                          data-testid="link-play-more-trivia"
+                        >
+                          Play more trivia →
+                        </a>
                       </div>
                     )}
 
