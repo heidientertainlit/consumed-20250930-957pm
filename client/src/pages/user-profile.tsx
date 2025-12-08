@@ -56,6 +56,16 @@ export default function UserProfile() {
   // Must wait for BOTH userMatch AND userParams.id to be available
   const isRouteResolving = location.startsWith('/user/') && (!userMatch || !userParams?.id);
 
+  // Debug logging for route resolution
+  console.log('🔍 Route debug:', { 
+    location, 
+    userMatch, 
+    userParamsId: userParams?.id, 
+    viewingUserId, 
+    isRouteResolving,
+    ownUserId: user?.id 
+  });
+
   // Store return URL for redirect after login
   useEffect(() => {
     if (!user && !loading && userParams?.id) {
