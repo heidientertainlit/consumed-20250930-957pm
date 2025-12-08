@@ -1887,7 +1887,14 @@ export default function Feed() {
                     )}
 
                   {/* Original Post */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" id={`post-${post.id}`}>
+                  <div 
+                    className={`rounded-2xl border p-4 shadow-sm ${
+                      post.content && isLeaderboardRankingPost(post.content)
+                        ? 'bg-gradient-to-br from-purple-50 via-indigo-50 to-purple-100 border-purple-200'
+                        : 'bg-white border-gray-200'
+                    }`} 
+                    id={`post-${post.id}`}
+                  >
                     {/* Post Type Label - hidden for now but type is tracked on backend */}
                     
                     {/* User Info and Date */}
@@ -1981,6 +1988,22 @@ export default function Feed() {
                               </p>
                             );
                           } else if (post.content && !hasMediaItems) {
+                            // Check if this is a leaderboard achievement post
+                            const isLeaderboardPost = isLeaderboardRankingPost(post.content);
+                            if (isLeaderboardPost) {
+                              return (
+                                <p className="text-sm">
+                                  <Link 
+                                    href={`/user/${post.user.id}`}
+                                    className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                    data-testid={`link-user-${post.user.id}`}
+                                  >
+                                    {post.user.username}
+                                  </Link>
+                                  <span className="text-gray-500"> hit the leaderboard</span>
+                                </p>
+                              );
+                            }
                             // Thoughts post - has content but no media
                             return (
                               <p className="text-sm">
@@ -2118,6 +2141,22 @@ export default function Feed() {
                                       </p>
                                     );
                                   } else if (post.content && !hasMediaItems) {
+                                    // Check if this is a leaderboard achievement post
+                                    const isLeaderboardPost = isLeaderboardRankingPost(post.content);
+                                    if (isLeaderboardPost) {
+                                      return (
+                                        <p className="text-sm">
+                                          <Link 
+                                            href={`/user/${displayUser.userId}`}
+                                            className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                            data-testid={`link-user-${displayUser.userId}`}
+                                          >
+                                            {displayUser.username}
+                                          </Link>
+                                          <span className="text-gray-500"> hit the leaderboard</span>
+                                        </p>
+                                      );
+                                    }
                                     // Thoughts post - has content but no media
                                     return (
                                       <p className="text-sm">
