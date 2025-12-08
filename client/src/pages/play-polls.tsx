@@ -252,7 +252,9 @@ export default function PlayPollsPage() {
                     </div>
 
                     <CardTitle className="text-xl font-bold text-gray-900 mb-2 mt-2">{game.title}</CardTitle>
-                    <p className="text-gray-600 text-sm mb-4">{game.description}</p>
+                    {game.description && game.description !== game.title && (
+                      <p className="text-gray-600 text-sm mb-4">{game.description}</p>
+                    )}
 
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
@@ -276,7 +278,6 @@ export default function PlayPollsPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="text-gray-600 text-sm font-medium">Quick Vote:</div>
                         <div className="grid grid-cols-2 gap-3">
                           {(game.options || []).slice(0, 2).map((option: any, index: number) => {
                             const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
