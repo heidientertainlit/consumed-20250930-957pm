@@ -439,7 +439,8 @@ serve(async (req) => {
           creator: item.creator || '',
           image_url: item.imageUrl || null,
           notes: item.notes || null,
-          rating: item.rating || 0
+          rating: item.rating || 0,
+          external_source: 'tmdb_verified' // Mark as verified so auto-fix doesn't recheck
         };
       });
 
