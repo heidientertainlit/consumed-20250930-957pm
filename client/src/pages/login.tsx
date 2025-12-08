@@ -88,10 +88,6 @@ export default function LoginPage() {
         variant: "destructive",
       });
     } else {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
       setEmail("");
       setPassword("");
     }
@@ -209,7 +205,8 @@ export default function LoginPage() {
             />
           </div>
           <p className="text-white text-lg max-w-xs mx-auto leading-relaxed">
-            Everyone's entertainment picks, all in one place.
+            Everyone's entertainment picks,<br />
+            all in one place.
           </p>
         </div>
         

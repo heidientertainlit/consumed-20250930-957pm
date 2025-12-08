@@ -3327,10 +3327,6 @@ export default function UserProfile() {
                       variant: "destructive"
                     });
                   } else {
-                    toast({
-                      title: "Logged out",
-                      description: "You have been successfully logged out."
-                    });
                     setLocation('/login');
                   }
                 }}
