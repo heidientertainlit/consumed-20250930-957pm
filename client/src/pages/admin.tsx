@@ -1,14 +1,10 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Activity, Target, Zap, Heart, Wrench, Play, RefreshCw } from 'lucide-react';
+import { TrendingUp, Users, Activity, Target, Zap, Heart } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
 
 interface DashboardSummary {
   total_users: number;
@@ -146,163 +142,6 @@ interface PartnershipData {
 }
 
 const COLORS = ['#9333ea', '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff'];
-
-interface BackfillResult {
-  success: boolean;
-  dryRun: boolean;
-  processed: number;
-  moviesFound: number;
-  updates: Array<{ id: string; title: string; oldType: string; newType: string }>;
-  hasMore: boolean;
-}
-
-function BackfillMediaTypesTool() {
-  const { session } = useAuth();
-  const { toast } = useToast();
-  const [dryRun, setDryRun] = useState(true);
-  const [result, setResult] = useState<BackfillResult | null>(null);
-  const [offset, setOffset] = useState(0);
-  const limit = 100;
-
-  const backfillMutation = useMutation({
-    mutationFn: async ({ dryRun, offset }: { dryRun: boolean; offset: number }) => {
-      const response = await fetch(
-        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/backfill-media-types?dry_run=${dryRun}&limit=${limit}&offset=${offset}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Backfill failed');
-      }
-      
-      return response.json() as Promise<BackfillResult>;
-    },
-    onSuccess: (data) => {
-      setResult(data);
-      if (data.dryRun) {
-        toast({
-          title: 'Dry Run Complete',
-          description: `Found ${data.moviesFound} movies out of ${data.processed} items checked`,
-        });
-      } else {
-        toast({
-          title: 'Backfill Complete',
-          description: `Updated ${data.moviesFound} items from TV to Movie`,
-        });
-      }
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Backfill Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const handleRun = () => {
-    setOffset(0);
-    setResult(null);
-    backfillMutation.mutate({ dryRun, offset: 0 });
-  };
-
-  const handleContinue = () => {
-    setOffset(prev => prev + limit);
-    backfillMutation.mutate({ dryRun, offset: offset + limit });
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="text-white font-medium">Fix Netflix Media Types</h4>
-          <p className="text-sm text-gray-400">
-            Re-detect movies vs TV shows for Netflix imports using TMDB
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input
-              type="checkbox"
-              checked={dryRun}
-              onChange={(e) => setDryRun(e.target.checked)}
-              className="rounded"
-              data-testid="checkbox-backfill-dryrun"
-            />
-            Dry Run
-          </label>
-          <Button
-            onClick={handleRun}
-            disabled={backfillMutation.isPending}
-            size="sm"
-            className="bg-orange-600 hover:bg-orange-700"
-            data-testid="button-backfill-run"
-          >
-            {backfillMutation.isPending ? (
-              <RefreshCw className="animate-spin mr-2" size={16} />
-            ) : (
-              <Play size={16} className="mr-2" />
-            )}
-            {backfillMutation.isPending ? 'Running...' : 'Run'}
-          </Button>
-        </div>
-      </div>
-
-      {result && (
-        <div className="bg-gray-800 rounded-lg p-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">Status:</span>
-            <span className={result.dryRun ? 'text-yellow-400' : 'text-green-400'}>
-              {result.dryRun ? 'Dry Run (no changes made)' : 'Changes Applied'}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">Items Checked:</span>
-            <span className="text-white">{result.processed}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">Movies Found:</span>
-            <span className="text-purple-400">{result.moviesFound}</span>
-          </div>
-          
-          {result.updates.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-700">
-              <p className="text-sm text-gray-400 mb-2">Sample updates:</p>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {result.updates.slice(0, 10).map((update, idx) => (
-                  <div key={idx} className="text-xs text-gray-300 flex justify-between">
-                    <span className="truncate flex-1">{update.title}</span>
-                    <span className="text-orange-400 ml-2">→ movie</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {result.hasMore && (
-            <Button
-              onClick={handleContinue}
-              disabled={backfillMutation.isPending}
-              size="sm"
-              variant="outline"
-              className="w-full mt-2"
-              data-testid="button-backfill-continue"
-            >
-              Continue (next {limit} items)
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function AdminDashboard() {
   const { session } = useAuth();
@@ -1232,22 +1071,6 @@ export default function AdminDashboard() {
             )}
           </TabsContent>
         </Tabs>
-
-        {/* Admin Tools Section */}
-        <Card className="bg-gradient-to-br from-orange-600/20 to-red-600/20 backdrop-blur-sm border-orange-500/50">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Wrench className="text-orange-400" />
-              Admin Tools
-            </CardTitle>
-            <CardDescription className="text-gray-300">
-              Data maintenance and backfill operations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BackfillMediaTypesTool />
-          </CardContent>
-        </Card>
 
         {/* North Star Metric Callout */}
         <Card className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur-sm border-purple-500/50">
