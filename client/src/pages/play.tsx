@@ -231,7 +231,7 @@ export default function PlayPage() {
   }, 0);
   
   // Filter states
-  const [gameTypeFilter, setGameTypeFilter] = useState<string>('prediction');
+  const [gameTypeFilter, setGameTypeFilter] = useState<string>('predict');
   const [mediaTypeFilter, setMediaTypeFilter] = useState<string>('all');
 
   const handleTrackConsumption = () => {
@@ -326,7 +326,7 @@ export default function PlayPage() {
           pool.options[0].question;
         
         // Multi-category prediction games have array of category objects
-        const isMultiCategoryPrediction = pool.type === 'prediction' && 
+        const isMultiCategoryPrediction = pool.type === 'predict' && 
           Array.isArray(pool.options) && 
           pool.options.length > 0 && 
           typeof pool.options[0] === 'object' &&
@@ -347,7 +347,7 @@ export default function PlayPage() {
           typeof pool.options[0] === 'object';
         
         // Determine if this is a multi-category prediction game
-        const isMultiCategoryPrediction = pool.type === 'prediction' && 
+        const isMultiCategoryPrediction = pool.type === 'predict' && 
           Array.isArray(pool.options) && 
           pool.options.length > 0 && 
           typeof pool.options[0] === 'object' &&
@@ -412,7 +412,7 @@ export default function PlayPage() {
   // Get user's active predictions for "Predictions in Progress"
   const activePredictions = useMemo(() => {
     return userPredictionsList
-      .filter((pred: any) => pred.prediction_pools?.type === 'prediction')
+      .filter((pred: any) => pred.prediction_pools?.type === 'predict')
       .slice(0, 3);
   }, [userPredictionsList]);
 
@@ -491,7 +491,7 @@ export default function PlayPage() {
           <h3 className="text-base font-semibold text-gray-900 mb-4">What would you like to do</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <button
-              onClick={() => setGameTypeFilter('prediction')}
+              onClick={() => setGameTypeFilter('predict')}
               className="flex flex-col items-center gap-2 p-4 rounded-xl bg-red-50 hover:bg-red-100 transition-colors"
               data-testid="browse-predictions"
             >
@@ -703,7 +703,7 @@ export default function PlayPage() {
           <div className="space-y-4 mb-8">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                {gameTypeFilter === 'prediction' ? 'All Predictions' : gameTypeFilter === 'vote' ? 'All Polls' : 'All Trivia'}
+                {gameTypeFilter === 'predict' ? 'All Predictions' : gameTypeFilter === 'vote' ? 'All Polls' : 'All Trivia'}
               </h3>
               <button
                 onClick={() => setGameTypeFilter('all')}
@@ -714,7 +714,7 @@ export default function PlayPage() {
             </div>
             {filteredGames.length === 0 ? (
               <div className="text-center py-12 text-gray-500 bg-white rounded-2xl border border-gray-200">
-                No {gameTypeFilter === 'prediction' ? 'predictions' : gameTypeFilter === 'vote' ? 'polls' : 'trivia'} available right now. Check back soon!
+                No {gameTypeFilter === 'predict' ? 'predictions' : gameTypeFilter === 'vote' ? 'polls' : 'trivia'} available right now. Check back soon!
               </div>
             ) : (
               filteredGames.map((game: any) => {
