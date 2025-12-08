@@ -92,10 +92,7 @@ serve(async (req) => {
                     poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
                     external_id: item.id?.toString(),
                     external_source: 'tmdb',
-                    description: item.overview,
-                    popularity: item.popularity ?? 0,
-                    vote_count: item.vote_count ?? 0,
-                    release_date: item.release_date || item.first_air_date || null
+                    description: item.overview
                   });
                 }
               });
@@ -133,9 +130,7 @@ serve(async (req) => {
                   poster_url: volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || '',
                   external_id: item.id,
                   external_source: 'googlebooks',
-                  description: volumeInfo.description?.substring(0, 200) || '',
-                  release_date: volumeInfo.publishedDate || null,
-                  ratings_count: volumeInfo.ratingsCount ?? 0
+                  description: volumeInfo.description?.substring(0, 200) || ''
                 });
                 foundBooks = true;
               }
@@ -171,9 +166,7 @@ serve(async (req) => {
                     poster_url: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
                     external_id: book.key,
                     external_source: 'openlibrary',
-                    description: book.first_sentence?.[0] || '',
-                    release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
-                    edition_count: book.edition_count ?? 0
+                    description: book.first_sentence?.[0] || ''
                   });
                 }
               });
@@ -414,112 +407,33 @@ serve(async (req) => {
     const queryLower = query.toLowerCase().trim();
     const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
     
-    // Helper for safe string lowercasing
-    const safeLower = (val: any) => (typeof val === 'string' ? val : '').toLowerCase();
-    
-    // Check for explicit media type in query (e.g., "anne of green gables book")
-    const queryHasBook = /\b(book|novel|read)\b/i.test(query);
-    const queryHasMovie = /\b(movie|film|watch)\b/i.test(query);
-    const queryHasMusic = /\b(song|album|music|listen)\b/i.test(query);
-    const queryHasTv = /\b(show|series|tv)\b/i.test(query);
-    
     const scoredResults = allResults.map(item => {
-      const title = safeLower(item.title);
-      const creator = safeLower(item.creator);
-      const description = safeLower(item.description);
+      const title = (item.title || '').toLowerCase();
       let score = 0;
       
-      // 1. Title vs query - strongest signal
+      // Exact match = highest priority (100 points)
       if (title === queryLower) {
-        score += 100;  // Exact match
-      } else if (title.startsWith(queryLower)) {
-        score += 80;   // Title starts with query
-      } else if (queryLower.startsWith(title) && title.length > 0) {
-        score += 70;   // User still typing full title
-      } else if (title.includes(queryLower)) {
-        score += 60;   // Query appears in title
-      } else {
-        // Word overlap in title
+        score += 100;
+      }
+      // Title starts with query (80 points)
+      else if (title.startsWith(queryLower)) {
+        score += 80;
+      }
+      // Query starts with title - user typing partial (70 points)
+      else if (queryLower.startsWith(title)) {
+        score += 70;
+      }
+      // Title contains full query (60 points)
+      else if (title.includes(queryLower)) {
+        score += 60;
+      }
+      // Word overlap scoring (up to 40 points)
+      else {
         const titleWords = title.split(/\s+/);
         const matchingWords = queryWords.filter(qw => 
           titleWords.some(tw => tw.includes(qw) || qw.includes(tw))
         );
         score += Math.min(40, matchingWords.length * 15);
-      }
-      
-      // 2. Creator matching - weaker signal
-      if (creator && queryLower.length > 2) {
-        if (creator.includes(queryLower)) {
-          score += 20;
-        } else {
-          const creatorWords = creator.split(/\s+/);
-          const matchingCreatorWords = queryWords.filter(qw =>
-            creatorWords.some(tw => tw.includes(qw) || qw.includes(tw))
-          );
-          score += Math.min(15, matchingCreatorWords.length * 5);
-        }
-      }
-      
-      // 3. Description matching - weakest signal
-      if (description && queryLower.length > 2) {
-        if (description.includes(queryLower)) score += 10;
-      }
-      
-      // 4. Query intent - explicit type keywords in query
-      if (queryHasBook && item.type === 'book') score += 40;
-      if (queryHasMovie && item.type === 'movie') score += 40;
-      if (queryHasMusic && item.type === 'music') score += 40;
-      if (queryHasTv && item.type === 'tv') score += 40;
-      
-      // 5. Type filter boost - if caller passed a specific type
-      if (type && item.type === type) {
-        score += 25;
-      }
-      
-      // 6. Popularity/social proof for providers that have it
-      const popularity = (item as any).popularity;
-      if (typeof popularity === 'number' && popularity > 0) {
-        score += Math.min(25, popularity / 4);
-      }
-      
-      const voteCount = (item as any).vote_count;
-      if (typeof voteCount === 'number' && voteCount > 0) {
-        score += Math.min(20, voteCount / 100);
-      }
-      
-      // For books: ratings_count or edition_count indicates cultural significance
-      const ratingsCount = (item as any).ratings_count;
-      if (typeof ratingsCount === 'number' && ratingsCount > 0) {
-        score += Math.min(20, ratingsCount / 50);
-      }
-      
-      const editionCount = (item as any).edition_count;
-      if (typeof editionCount === 'number' && editionCount > 0) {
-        score += Math.min(15, editionCount / 10);
-      }
-      
-      // 7. CLASSIC BONUS - old content with high engagement = cultural classic
-      // This is OPPOSITE of recency bias - we WANT to boost classics like Anne of Green Gables
-      const releaseDate = (item as any).release_date;
-      if (releaseDate) {
-        const yearMatch = String(releaseDate).match(/^(\d{4})/);
-        if (yearMatch) {
-          const year = parseInt(yearMatch[1], 10);
-          const age = 2025 - year;
-          
-          // Old AND popular = classic (books from 1900s still popular today)
-          if (age > 50 && (voteCount > 100 || ratingsCount > 10 || editionCount > 20)) {
-            score += 25;  // Classic bonus
-          } else if (age > 30 && (voteCount > 500 || ratingsCount > 50 || editionCount > 50)) {
-            score += 15;  // Established classic
-          }
-        }
-      }
-      
-      // 8. Book bonus for exact/near-exact title matches
-      // Books are often the original source material
-      if (item.type === 'book' && (title === queryLower || title.includes(queryLower))) {
-        score += 10;
       }
       
       return { ...item, _score: score };
@@ -528,11 +442,8 @@ serve(async (req) => {
     // Sort by score descending (best matches first)
     scoredResults.sort((a, b) => b._score - a._score);
     
-    // Limit results to avoid massive responses
-    const trimmed = scoredResults.slice(0, 50);
-    
     // Remove internal score before returning
-    const results = trimmed.map(({ _score, ...item }) => item);
+    const results = scoredResults.map(({ _score, ...item }) => item);
 
     // Log final results
     console.log('Final results:', results.length, 'items');
