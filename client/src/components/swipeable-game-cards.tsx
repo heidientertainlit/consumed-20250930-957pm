@@ -10,11 +10,11 @@ import { cn } from '@/lib/utils';
 interface Game {
   id: string;
   question: string;
-  options: string[];
+  options: any[];
   type: 'vote' | 'trivia' | 'predict';
   points_reward: number;
   category?: string;
-  correct_answer?: string;
+  correct_answer?: any;
 }
 
 interface SwipeableGameCardsProps {
@@ -77,7 +77,10 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
       let isCorrect = false;
 
       if (gameType === 'trivia' && game.correct_answer) {
-        isCorrect = answer === game.correct_answer;
+        const correctAnswerText = typeof game.correct_answer === 'string' 
+          ? game.correct_answer 
+          : (game.correct_answer?.label || game.correct_answer?.text || game.correct_answer?.option || '');
+        isCorrect = answer === correctAnswerText;
         immediatePoints = isCorrect ? game.points_reward : 0;
       } else if (gameType === 'vote') {
         immediatePoints = game.points_reward;
@@ -256,7 +259,11 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
                   <span className="text-2xl">😅</span>
                 </div>
                 <p className="text-lg font-bold text-red-600 mb-1">Not quite!</p>
-                <p className="text-sm text-gray-600">The answer was: {currentGame.correct_answer}</p>
+                <p className="text-sm text-gray-600">The answer was: {
+                  typeof currentGame.correct_answer === 'string' 
+                    ? currentGame.correct_answer 
+                    : (currentGame.correct_answer?.label || currentGame.correct_answer?.text || 'See the correct answer')
+                }</p>
               </>
             )}
             <Button
@@ -274,27 +281,30 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
             </p>
 
             <div className="space-y-2 mb-4">
-              {currentGame.options.map((option, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedAnswer(option)}
-                  disabled={isSubmitting}
-                  className={cn(
-                    "w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm",
-                    selectedAnswer === option
-                      ? "border-purple-500 bg-purple-50 text-purple-700"
-                      : "border-gray-200 hover:border-gray-300 bg-white text-gray-700"
-                  )}
-                  data-testid={`option-${idx}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{option}</span>
-                    {selectedAnswer === option && (
-                      <Check size={16} className="text-purple-600" />
+              {currentGame.options.map((option: any, idx: number) => {
+                const optionText = typeof option === 'string' ? option : (option.label || option.text || option.option || String(option));
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedAnswer(optionText)}
+                    disabled={isSubmitting}
+                    className={cn(
+                      "w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm",
+                      selectedAnswer === optionText
+                        ? "border-purple-500 bg-purple-50 text-purple-700"
+                        : "border-gray-200 hover:border-gray-300 bg-white text-gray-700"
                     )}
-                  </div>
-                </button>
-              ))}
+                    data-testid={`option-${idx}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{optionText}</span>
+                      {selectedAnswer === optionText && (
+                        <Check size={16} className="text-purple-600" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="flex items-center justify-between">
