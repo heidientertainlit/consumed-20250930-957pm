@@ -108,15 +108,29 @@ serve(async (req) => {
         }
       }
 
+      // First, verify the post still exists before deletion
+      const { data: postBeforeDelete } = await serviceSupabase
+        .from('social_posts')
+        .select('id, user_id')
+        .eq('id', post_id)
+        .single();
+      
+      console.log('Post before delete:', postBeforeDelete);
+
+      if (!postBeforeDelete) {
+        console.log('Post already deleted or does not exist');
+        return new Response(JSON.stringify({ success: true, message: 'Post already deleted' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // Delete the post (cascading deletes will handle likes and comments)
-      console.log('Attempting to delete post:', post_id);
-      const { data: deletedData, error, count } = await serviceSupabase
+      console.log('Attempting to delete post:', post_id, 'owned by:', postBeforeDelete.user_id);
+      
+      const { error } = await serviceSupabase
         .from('social_posts')
         .delete()
-        .eq('id', post_id)
-        .select();
-
-      console.log('Delete result:', { deletedData, error, count });
+        .eq('id', post_id);
 
       if (error) {
         console.error('Delete error:', error);
@@ -126,12 +140,23 @@ serve(async (req) => {
         });
       }
 
-      if (!deletedData || deletedData.length === 0) {
-        console.warn('No rows deleted - post may not exist or RLS blocking');
+      // Verify deletion succeeded
+      const { data: postAfterDelete } = await serviceSupabase
+        .from('social_posts')
+        .select('id')
+        .eq('id', post_id)
+        .single();
+      
+      if (postAfterDelete) {
+        console.error('CRITICAL: Delete did not persist! Post still exists:', postAfterDelete);
+        return new Response(JSON.stringify({ error: 'Delete failed - post still exists' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
-      console.log('Post deleted successfully');
-      return new Response(JSON.stringify({ success: true, deleted: deletedData }), {
+      console.log('Post deleted successfully and verified');
+      return new Response(JSON.stringify({ success: true, deleted_post_id: post_id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
