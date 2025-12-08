@@ -208,7 +208,9 @@ function BackfillMediaTypesTool() {
   });
 
   const handleRun = () => {
-    backfillMutation.mutate({ dryRun, offset });
+    setOffset(0);
+    setResult(null);
+    backfillMutation.mutate({ dryRun, offset: 0 });
   };
 
   const handleContinue = () => {
@@ -232,6 +234,7 @@ function BackfillMediaTypesTool() {
               checked={dryRun}
               onChange={(e) => setDryRun(e.target.checked)}
               className="rounded"
+              data-testid="checkbox-backfill-dryrun"
             />
             Dry Run
           </label>
