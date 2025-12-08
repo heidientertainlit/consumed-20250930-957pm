@@ -980,28 +980,45 @@ export default function Feed() {
   // Delete post mutation
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      console.log('🗑️ Deleting post via edge function:', postId);
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const deleteUrl = `${baseUrl}/functions/v1/social-feed-delete`;
+      
+      console.log('🗑️ DELETE MUTATION STARTING');
+      console.log('🗑️ Post ID:', postId);
+      console.log('🗑️ VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+      console.log('🗑️ Full delete URL:', deleteUrl);
+      console.log('🗑️ Has access token:', !!session?.access_token);
+      
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      // Use edge function to handle poll/prediction cleanup properly
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-delete`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ post_id: postId }),
-      });
+      console.log('🗑️ Making fetch call now...');
+      
+      try {
+        const response = await fetch(deleteUrl, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ post_id: postId }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ Delete error:', errorData);
-        throw new Error(errorData.error || 'Failed to delete post');
+        console.log('🗑️ Response status:', response.status);
+        console.log('🗑️ Response ok:', response.ok);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('❌ Delete error response:', errorData);
+          throw new Error(errorData.error || 'Failed to delete post');
+        }
+
+        const result = await response.json();
+        console.log('✅ Delete success response:', result);
+        return result;
+      } catch (fetchError) {
+        console.error('❌ Fetch threw error:', fetchError);
+        throw fetchError;
       }
-
-      const result = await response.json();
-      console.log('✅ Post deleted successfully, result:', result);
-      return result;
     },
     onMutate: async (postId) => {
       // Optimistic update - immediately remove post from UI
@@ -1028,15 +1045,21 @@ export default function Feed() {
       return { previousPosts };
     },
     onError: (error, postId, context) => {
-      console.error('💥 Delete mutation error:', error);
+      console.error('💥 Delete mutation onError:', error);
+      console.error('💥 Post ID that failed:', postId);
       // Rollback on error
       if (context?.previousPosts) {
+        console.log('💥 Rolling back to previous posts');
         queryClient.setQueryData(["social-feed"], context.previousPosts);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Delete mutation onSuccess, data:', data);
       console.log('🔄 Invalidating feed query after delete');
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+    },
+    onSettled: (data, error) => {
+      console.log('🏁 Delete mutation settled:', { data, error: error?.message });
     },
   });
 
