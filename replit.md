@@ -45,6 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **AI Builder** (`/library-ai`): Allows customization of list organization and tracking preferences via a visual builder and AI chat.
 
 ### Feature Specifications
+- **Friend Profile Viewing**: Friends can view each other's Stats, DNA, and Collections tabs. When viewing a friend's Collections and clicking on a list, the URL includes `?user=<friend-id>` so the list-detail page shows the friend's items correctly.
 - **Media Tracking**: Simplified list-based system with privacy controls.
 - **AI-Powered Search**: Unified search at `/search` for conversations, AI recommendations, and media results.
 - **Personal System Lists**: 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) with privacy control.
