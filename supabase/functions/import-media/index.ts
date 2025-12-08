@@ -16,8 +16,28 @@ interface MediaItem {
   rating?: number;
 }
 
+// Cache for TMDB lookups to avoid duplicate API calls
+const mediaTypeCache: Record<string, 'movie' | 'tv'> = {};
+
+// Clean up title for TMDB search
+function cleanTitle(title: string): string {
+  return title
+    .replace(/:\s*(Season|Series|Part|Volume)\s*\d+.*/i, '')
+    .replace(/:\s*(Limited Series|Miniseries).*/i, '')
+    .replace(/\s*\(.*\)\s*$/, '') // Remove year in parentheses
+    .trim();
+}
+
 // TMDB API lookup to detect if a title is a movie or TV show
-async function detectMediaType(title: string): Promise<'movie' | 'tv'> {
+// With retry logic for rate limiting (429 responses)
+async function detectMediaType(title: string, retries = 2): Promise<'movie' | 'tv'> {
+  const cleanedTitle = cleanTitle(title);
+  
+  // Check cache first
+  if (mediaTypeCache[cleanedTitle]) {
+    return mediaTypeCache[cleanedTitle];
+  }
+  
   const tmdbKey = Deno.env.get('TMDB_API_KEY');
   if (!tmdbKey) {
     console.log('No TMDB_API_KEY, defaulting to tv');
@@ -25,15 +45,16 @@ async function detectMediaType(title: string): Promise<'movie' | 'tv'> {
   }
   
   try {
-    // Clean up title - Netflix often has "Season X" or "Episode X" in the title
-    const cleanTitle = title
-      .replace(/:\s*(Season|Series|Part|Volume)\s*\d+.*/i, '')
-      .replace(/:\s*(Limited Series|Miniseries).*/i, '')
-      .trim();
-    
     const response = await fetch(
-      `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(cleanTitle)}&page=1&include_adult=false`
+      `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(cleanedTitle)}&page=1&include_adult=false`
     );
+    
+    // Handle rate limiting with retry
+    if (response.status === 429 && retries > 0) {
+      console.log('TMDB rate limited, waiting 2s before retry...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return detectMediaType(title, retries - 1);
+    }
     
     if (response.ok) {
       const data = await response.json();
@@ -41,7 +62,9 @@ async function detectMediaType(title: string): Promise<'movie' | 'tv'> {
         // Get first result that's either movie or TV
         const match = data.results.find((r: any) => r.media_type === 'movie' || r.media_type === 'tv');
         if (match) {
-          return match.media_type as 'movie' | 'tv';
+          const mediaType = match.media_type as 'movie' | 'tv';
+          mediaTypeCache[cleanedTitle] = mediaType;
+          return mediaType;
         }
       }
     }
@@ -50,6 +73,7 @@ async function detectMediaType(title: string): Promise<'movie' | 'tv'> {
   }
   
   // Default to TV if we can't determine (Netflix has more TV content)
+  mediaTypeCache[cleanedTitle] = 'tv';
   return 'tv';
 }
 
@@ -69,8 +93,9 @@ async function parseNetflix(csvText: string): Promise<MediaItem[]> {
   
   console.log(`Netflix: Found ${titles.length} titles, detecting media types via TMDB...`);
   
-  // Process in batches to avoid rate limiting
-  const batchSize = 10;
+  // TMDB rate limit: 40 requests per 10 seconds (4/sec average)
+  // Process 3 at a time with 800ms delay = ~3.75 req/sec (safe margin)
+  const batchSize = 3;
   let movieCount = 0;
   let tvCount = 0;
   
@@ -90,9 +115,14 @@ async function parseNetflix(csvText: string): Promise<MediaItem[]> {
       });
     }
     
-    // Small delay between batches to be nice to TMDB API
+    // Delay between batches to stay under TMDB rate limit
     if (i + batchSize < titles.length) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+    
+    // Log progress for large imports
+    if ((i + batchSize) % 50 === 0) {
+      console.log(`Netflix: Processed ${i + batchSize}/${titles.length} titles...`);
     }
   }
   
