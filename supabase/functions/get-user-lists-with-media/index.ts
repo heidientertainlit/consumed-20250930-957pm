@@ -324,6 +324,9 @@ serve(async (req) => {
         userItems = items || [];
       }
       console.log("User items count:", userItems.length);
+      if (userItems.length > 0) {
+        console.log("Sample items list_ids:", userItems.slice(0, 5).map(i => ({ title: i.title, list_id: i.list_id })));
+      }
     }
 
     // Group items by list_id
@@ -333,6 +336,10 @@ serve(async (req) => {
       acc[listId].push(item);
       return acc;
     }, {});
+    
+    console.log("Items grouped by list_id keys:", Object.keys(itemsByListId));
+    console.log("System list IDs:", systemLists.map(l => l.id));
+    console.log("Custom list IDs:", customLists.map(l => l.id));
 
     // Convert system lists to expected format
     const listsWithItems = (systemLists || []).map(list => ({
