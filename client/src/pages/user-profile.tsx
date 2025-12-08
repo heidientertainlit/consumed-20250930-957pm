@@ -51,6 +51,9 @@ export default function UserProfile() {
     ? userParams.id 
     : user?.id;
   const isOwnProfile = meMatch || !userParams?.id || userParams.id === 'profile' || viewingUserId === user?.id;
+  
+  // Track if route is still resolving to prevent showing wrong profile
+  const isRouteResolving = location.startsWith('/user/') && !userMatch;
 
   // Store return URL for redirect after login
   useEffect(() => {
@@ -883,8 +886,9 @@ export default function UserProfile() {
   }, [viewingUserId]);
 
   // Fetch profile data - accessible to everyone (public profiles)
+  // Wait until route is resolved before fetching to prevent wrong data
   useEffect(() => {
-    if (session?.access_token && viewingUserId) {
+    if (session?.access_token && viewingUserId && !isRouteResolving) {
       // Pass viewingUserId explicitly to avoid stale closure issues
       fetchDnaProfile();
       fetchUserLists(viewingUserId);
@@ -900,7 +904,7 @@ export default function UserProfile() {
         checkFriendshipStatus();
       }
     }
-  }, [session?.access_token, viewingUserId]);
+  }, [session?.access_token, viewingUserId, isRouteResolving]);
 
   // Fetch DNA recommendations when DNA profile exists
   useEffect(() => {
@@ -2011,6 +2015,17 @@ export default function UserProfile() {
   // Calculate total items logged from the 'All' list (which contains all unique items)
   const totalItemsLogged = userLists.find(list => list.id === 'all')?.items?.length || 0;
 
+  // Show loading screen while route is resolving to prevent flash of wrong profile
+  if (isRouteResolving) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin text-purple-600 mx-auto mb-4" size={32} />
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

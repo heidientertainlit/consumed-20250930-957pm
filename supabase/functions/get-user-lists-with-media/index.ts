@@ -132,8 +132,8 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
       
-      // Check if they are friends
-      const { data: friendship, error: friendError } = await supabaseAdmin
+      // Check if they are friends (check both directions)
+      const { data: friendship1 } = await supabaseAdmin
         .from('friendships')
         .select('id')
         .eq('user_id', appUser.id)
@@ -141,7 +141,24 @@ serve(async (req) => {
         .eq('status', 'accepted')
         .maybeSingle();
       
-      if (friendship) {
+      const { data: friendship2 } = await supabaseAdmin
+        .from('friendships')
+        .select('id')
+        .eq('user_id', targetUserId)
+        .eq('friend_id', appUser.id)
+        .eq('status', 'accepted')
+        .maybeSingle();
+      
+      const areFriends = friendship1 || friendship2;
+      console.log('Friendship check:', { 
+        viewerId: appUser.id, 
+        targetId: targetUserId, 
+        friendship1: !!friendship1, 
+        friendship2: !!friendship2,
+        areFriends 
+      });
+      
+      if (areFriends) {
         console.log('Users are friends, using admin client to fetch lists');
         queryClient = supabaseAdmin;
       } else {
