@@ -317,15 +317,34 @@ serve(async (req) => {
     // 5. TOP CONSUMERS BY MEDIA TYPE
     // Calculate points from list_items (same logic as calculate-user-points)
     if (category === 'all' || category === 'consumption') {
-      // Get all list_items
-      const { data: listItems, error: listError } = await supabase
-        .from('list_items')
-        .select('user_id, media_type, notes, created_at');
+      // Get ALL list_items with pagination (Supabase defaults to 1000 row limit)
+      let allListItems: any[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
       
-      console.log('📊 list_items query:', {
-        count: listItems?.length || 0,
-        error: listError?.message
-      });
+      while (hasMore) {
+        const { data: pageItems, error: listError } = await supabase
+          .from('list_items')
+          .select('user_id, media_type, notes, created_at')
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        
+        if (listError) {
+          console.error('📊 list_items page error:', listError.message);
+          break;
+        }
+        
+        if (pageItems && pageItems.length > 0) {
+          allListItems = allListItems.concat(pageItems);
+          page++;
+          hasMore = pageItems.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      const listItems = allListItems;
+      console.log('📊 list_items total fetched:', listItems.length, 'pages:', page);
 
       // Point values per media type (same as calculate-user-points)
       const pointValues: Record<string, number> = {
