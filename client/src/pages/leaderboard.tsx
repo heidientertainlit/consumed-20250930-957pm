@@ -249,7 +249,7 @@ export default function Leaderboard() {
             Leaders
           </h1>
           <p className="text-base text-gray-600 max-w-xs mx-auto">
-            Most active fans and top performers
+            Most active fans and top contributors
           </p>
         </div>
 
