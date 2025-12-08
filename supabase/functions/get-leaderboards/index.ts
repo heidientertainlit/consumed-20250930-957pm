@@ -137,18 +137,60 @@ serve(async (req) => {
         }));
     };
 
-    // 1. OVERALL ENGAGEMENT - posts + likes received + comments received
+    // 1. OVERALL ENGAGEMENT - posts + likes received + comments received + likes given + comments given
     if (category === 'all' || category === 'overall') {
+      const engagementMap: Record<string, number> = {};
+      
+      // Posts created (10 points each + bonus for engagement received)
       const { data: posts } = await supabase
         .from('social_posts')
         .select('user_id, likes_count, comments_count, created_at')
         .gte('created_at', dateFilter || '1970-01-01');
 
-      const engagementMap: Record<string, number> = {};
       (posts || []).forEach((p: any) => {
         const userId = p.user_id;
         const score = 10 + (p.likes_count || 0) * 2 + (p.comments_count || 0) * 3;
         engagementMap[userId] = (engagementMap[userId] || 0) + score;
+      });
+
+      // Likes given (2 points each)
+      const { data: likesGiven } = await supabase
+        .from('social_post_likes')
+        .select('user_id, created_at')
+        .gte('created_at', dateFilter || '1970-01-01');
+      
+      (likesGiven || []).forEach((like: any) => {
+        engagementMap[like.user_id] = (engagementMap[like.user_id] || 0) + 2;
+      });
+
+      // Comments made (5 points each)
+      const { data: commentsMade } = await supabase
+        .from('social_post_comments')
+        .select('user_id, created_at')
+        .gte('created_at', dateFilter || '1970-01-01');
+      
+      (commentsMade || []).forEach((comment: any) => {
+        engagementMap[comment.user_id] = (engagementMap[comment.user_id] || 0) + 5;
+      });
+
+      // Prediction pool participation (from user_predictions)
+      const { data: allPredictions } = await supabase
+        .from('user_predictions')
+        .select('user_id, created_at')
+        .gte('created_at', dateFilter || '1970-01-01');
+      
+      (allPredictions || []).forEach((pred: any) => {
+        engagementMap[pred.user_id] = (engagementMap[pred.user_id] || 0) + 5;
+      });
+
+      // Rank creation (10 points each)
+      const { data: ranks } = await supabase
+        .from('ranks')
+        .select('user_id, created_at')
+        .gte('created_at', dateFilter || '1970-01-01');
+      
+      (ranks || []).forEach((rank: any) => {
+        engagementMap[rank.user_id] = (engagementMap[rank.user_id] || 0) + 10;
       });
 
       results.overall = formatEntries(
