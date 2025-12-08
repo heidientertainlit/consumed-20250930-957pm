@@ -51,17 +51,6 @@ export default function UserProfile() {
     ? userParams.id 
     : user?.id;
   const isOwnProfile = meMatch || !userParams?.id || userParams.id === 'profile' || viewingUserId === user?.id;
-  
-  // Debug: Log the profile being viewed
-  console.log('🔍 Profile Debug:', { 
-    userMatch,
-    meMatch,
-    paramsId: userParams?.id, 
-    viewingUserId, 
-    userId: user?.id, 
-    isOwnProfile,
-    currentLocation: location 
-  });
 
   // Store return URL for redirect after login
   useEffect(() => {
@@ -877,6 +866,19 @@ export default function UserProfile() {
     fetchUserProfile();
   }, [session?.access_token, viewingUserId]);
 
+  // Clear state when switching profiles to avoid showing stale data
+  useEffect(() => {
+    // Reset all profile-specific state when viewingUserId changes
+    setUserLists([]);
+    setUserRanks([]);
+    setUserStats(null);
+    setUserPoints(null);
+    setDnaProfile(null);
+    setDnaProfileStatus('no_profile');
+    setHighlights([]);
+    setFriendshipStatus('loading');
+  }, [viewingUserId]);
+
   // Fetch profile data - accessible to everyone (public profiles)
   useEffect(() => {
     if (session?.access_token && viewingUserId) {
@@ -989,7 +991,6 @@ export default function UserProfile() {
   const fetchUserLists = async () => {
     if (!session?.access_token || !viewingUserId) return;
 
-    console.log('📋 Fetching lists for user:', viewingUserId, 'isOwnProfile:', isOwnProfile);
     setIsLoadingLists(true);
     try {
       const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${viewingUserId}`, {
@@ -1004,7 +1005,7 @@ export default function UserProfile() {
         // Keep all lists including "All" for accurate item count calculation
         // Filter is only for display purposes in some sections
         setUserLists(data.lists || []);
-        console.log('📋 User lists loaded for', viewingUserId, ':', data.lists?.length, 'lists');
+        console.log('User lists loaded:', data.lists?.length);
       } else {
         console.error('Failed to fetch user lists');
         setUserLists([]);
