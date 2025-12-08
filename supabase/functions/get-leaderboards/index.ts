@@ -319,26 +319,64 @@ serve(async (req) => {
       // Get list items for consumption tracking
       let listQuery = supabase
         .from('list_items')
-        .select('user_id, media_type, created_at');
+        .select('user_id, media_type, type, created_at');
       
       if (dateFilter) {
         listQuery = listQuery.gte('created_at', dateFilter);
       }
       
-      const { data: listItems } = await listQuery;
+      const { data: listItems, error: listError } = await listQuery;
+      
+      console.log('📊 list_items query result:', {
+        count: listItems?.length || 0,
+        error: listError?.message,
+        sampleTypes: listItems?.slice(0, 10).map((i: any) => ({ media_type: i.media_type, type: i.type }))
+      });
+
+      // Map various media_type values to our categories
+      const normalizeMediaType = (mediaType: string | null, type: string | null): string => {
+        const mt = (mediaType || type || '').toLowerCase();
+        
+        // Books
+        if (mt.includes('book') || mt.includes('kindle') || mt.includes('audible') || mt.includes('audiobook')) {
+          return 'book';
+        }
+        // Movies
+        if (mt.includes('movie') || mt.includes('film')) {
+          return 'movie';
+        }
+        // TV Shows (including Netflix, streaming services)
+        if (mt.includes('tv') || mt.includes('show') || mt.includes('series') || mt.includes('netflix') || mt.includes('episode')) {
+          return 'tv';
+        }
+        // Music
+        if (mt.includes('music') || mt.includes('song') || mt.includes('album') || mt.includes('track') || mt.includes('spotify')) {
+          return 'music';
+        }
+        // Podcasts
+        if (mt.includes('podcast')) {
+          return 'podcast';
+        }
+        // Games
+        if (mt.includes('game') || mt.includes('gaming') || mt.includes('playstation') || mt.includes('xbox') || mt.includes('nintendo')) {
+          return 'game';
+        }
+        
+        return 'other';
+      };
 
       // Count by media type
       const consumptionMap: Record<string, Record<string, number>> = {};
       (listItems || []).forEach((item: any) => {
         if (!consumptionMap[item.user_id]) {
-          consumptionMap[item.user_id] = { book: 0, movie: 0, tv: 0, music: 0, podcast: 0, game: 0, total: 0 };
+          consumptionMap[item.user_id] = { book: 0, movie: 0, tv: 0, music: 0, podcast: 0, game: 0, other: 0, total: 0 };
         }
-        const mediaType = item.media_type || 'other';
-        if (consumptionMap[item.user_id][mediaType] !== undefined) {
-          consumptionMap[item.user_id][mediaType] += 1;
-        }
+        const normalizedType = normalizeMediaType(item.media_type, item.type);
+        consumptionMap[item.user_id][normalizedType] = (consumptionMap[item.user_id][normalizedType] || 0) + 1;
         consumptionMap[item.user_id].total += 1;
       });
+      
+      console.log('📊 consumptionMap users:', Object.keys(consumptionMap).length);
 
       // Books
       results.books = formatEntries(
