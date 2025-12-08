@@ -1,17 +1,25 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
   'Pragma': 'no-cache'
 };
 
+interface LeaderboardEntry {
+  user_id: string;
+  username: string;
+  display_name: string;
+  score: number;
+  rank: number;
+  detail?: string;
+}
+
 serve(async (req) => {
-  // Version logging to verify deployment
-  const BUILD_VERSION = '2025-10-27-poll-votes-fix';
+  const BUILD_VERSION = '2025-12-08-new-categories';
   console.info('🚀 get-leaderboards BUILD:', BUILD_VERSION);
   
   if (req.method === 'OPTIONS') {
@@ -20,21 +28,21 @@ serve(async (req) => {
 
   try {
     const { searchParams } = new URL(req.url);
-    const category = searchParams.get('category') || 'all_time';
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')) : 10;
+    const category = searchParams.get('category') || 'all';
+    const scope = searchParams.get('scope') || 'global';
+    const period = searchParams.get('period') || 'all_time';
+    const limit = parseInt(searchParams.get('limit') || '10');
 
-    // Use regular client for authentication
     const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '', 
       Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization') }
+          headers: { Authorization: req.headers.get('Authorization') || '' }
         }
       }
     );
 
-    // Get auth user
     const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -43,479 +51,343 @@ serve(async (req) => {
       });
     }
 
-    // Use service role client for leaderboard queries (bypass RLS to count all activity)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '', 
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get or create app user
-    let { data: appUser, error: appUserError } = await supabase
+    // Get current app user
+    let { data: appUser } = await supabase
       .from('users')
-      .select('id, email, user_name')
+      .select('id, email, user_name, display_name')
       .eq('email', user.email)
       .single();
 
-    if (appUserError && appUserError.code === 'PGRST116') {
-      // User doesn't exist, create them using service role client (bypass RLS)
-      console.log('Creating new user:', user.email);
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '', 
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
-      const { data: newUser, error: createError } = await supabaseAdmin
-        .from('users')
-        .insert({
-          id: user.id,
-          email: user.email,
-          user_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user',
-          first_name: user.user_metadata?.first_name || '',
-          last_name: user.user_metadata?.last_name || '',
-          display_name: user.user_metadata?.user_name || user.email.split('@')[0] || 'user'
-        })
-        .select('id, email, user_name')
-        .single();
-
-      if (createError) {
-        console.error('Failed to create user:', createError);
-        return new Response(JSON.stringify({ error: 'Failed to create user' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      appUser = newUser;
-    } else if (appUserError) {
-      console.error('App user error:', appUserError);
-      return new Response(JSON.stringify({ error: 'Database error' }), {
-        status: 500,
+    if (!appUser) {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Handle individual trivia challenge leaderboards
-    if (category.startsWith('trivia_challenge_')) {
-      const poolId = category.replace('trivia_challenge_', '');
-
-      // Get predictions for this specific challenge
-      const { data: predictions, error: predictionsError } = await supabase
-        .from('user_predictions')
-        .select('user_id, points_earned')
-        .eq('pool_id', poolId);
-
-      if (predictionsError) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch challenge predictions' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Get users for user names
-      const { data: users, error: usersError } = await supabase
-        .from('users')
-        .select('id, user_name');
-
-      if (usersError) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Aggregate points by user
-      const userMap = users.reduce((acc: any, user: any) => {
-        acc[user.id] = user.user_name;
-        return acc;
-      }, {});
-
-      const userPoints: { [key: string]: number } = {};
-
-      predictions.forEach((prediction: any) => {
-        const userId = prediction.user_id;
-        userPoints[userId] = (userPoints[userId] || 0) + prediction.points_earned;
-      });
-
-      // Convert to leaderboard format and sort
-      const leaderboard = Object.entries(userPoints)
-        .map(([userId, points]) => ({
-          user_id: userId,
-          user_name: userMap[userId] || 'Anonymous',
-          user_points: points as number,
-          score: points as number,
-          created_at: new Date().toISOString()
-        }))
-        .sort((a, b) => b.user_points - a.user_points)
-        .slice(0, limit);
-
-      return new Response(JSON.stringify(leaderboard), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    // Get friends list for scope filtering (bidirectional)
+    let friendIds: string[] = [];
+    if (scope === 'friends') {
+      // Get friends where current user initiated
+      const { data: outboundFriends } = await supabase
+        .from('friends')
+        .select('friend_id')
+        .eq('user_id', appUser.id)
+        .eq('status', 'accepted');
+      
+      // Get friends where other user initiated
+      const { data: inboundFriends } = await supabase
+        .from('friends')
+        .select('user_id')
+        .eq('friend_id', appUser.id)
+        .eq('status', 'accepted');
+      
+      const outboundIds = (outboundFriends || []).map(f => f.friend_id);
+      const inboundIds = (inboundFriends || []).map(f => f.user_id);
+      
+      // Combine and deduplicate
+      friendIds = [...new Set([...outboundIds, ...inboundIds, appUser.id])];
     }
 
-    // Handle game-specific categories
-    if (category === 'vote_leader' || category === 'predict_leader' || category === 'trivia_leader') {
-      // Determine game type filter
-      let gameType = '';
-      if (category === 'vote_leader') gameType = 'vote';
-      else if (category === 'predict_leader') gameType = 'predict';  
-      else if (category === 'trivia_leader') gameType = 'trivia';
-
-      // Get all predictions
-      const { data: predictions, error: predictionsError } = await supabase
-        .from('user_predictions')
-        .select('user_id, points_earned, pool_id');
-
-      if (predictionsError) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch predictions' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Get all games to filter by type
-      const { data: games, error: gamesError } = await supabase
-        .from('prediction_pools')
-        .select('id, type')
-        .eq('type', gameType);
-
-      if (gamesError) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch games' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Get all users for user names
-      const { data: users, error: usersError } = await supabase
-        .from('users')
-        .select('id, user_name');
-
-      if (usersError) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Filter predictions by game type and aggregate by user
-      const gameIds = games.map(g => g.id);
-      const userMap = users.reduce((acc: any, user: any) => {
-        acc[user.id] = user.user_name;
-        return acc;
-      }, {});
-
-      const userPoints: { [key: string]: number } = {};
-
-      predictions.forEach((prediction: any) => {
-        if (gameIds.includes(prediction.pool_id)) {
-          const userId = prediction.user_id;
-          // For predict games, show 0 points until they're resolved (all predictions are pending)
-          if (gameType === 'predict') {
-            userPoints[userId] = (userPoints[userId] || 0) + 0; // Always 0 for predict games
-          } else {
-            userPoints[userId] = (userPoints[userId] || 0) + prediction.points_earned;
-          }
-        }
-      });
-
-      // vote_leader points are already included in predictions array above
-      // (votes are stored as type='vote' in prediction_pools/user_predictions)
-
-      // Convert to leaderboard format
-      const leaderboard = Object.entries(userPoints)
-        .map(([userId, points]) => ({
-          user_id: userId,
-          user_name: userMap[userId] || 'Anonymous',
-          user_points: points as number,
-          score: points as number,
-          created_at: new Date().toISOString()
-        }))
-        .sort((a, b) => b.user_points - a.user_points)
-        .slice(0, limit);
-
-      return new Response(JSON.stringify(leaderboard), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Handle fan points category
-    if (category === 'fan_points') {
-      // Get all creator stats
-      const { data: creatorStats, error: statsError } = await supabase
-        .from('user_creator_stats')
-        .select('user_id, creator_name, fan_points, media_types');
-
-      if (statsError) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch creator stats' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Get all users for user names
-      const { data: users, error: usersError } = await supabase
-        .from('users')
-        .select('id, user_name');
-
-      if (usersError) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Determine role based on media types
-      const determineRole = (mediaTypes: string[]): string => {
-        if (mediaTypes.includes('movie')) return 'Director';
-        if (mediaTypes.includes('tv')) return 'Showrunner';
-        if (mediaTypes.includes('book')) return 'Author';
-        if (mediaTypes.includes('music')) return 'Artist';
-        if (mediaTypes.includes('podcast')) return 'Podcaster';
-        return 'Creator';
-      };
-
-      // Check if there's only one user (the current user)
-      const uniqueUserIds = new Set(creatorStats.map((s: any) => s.user_id));
-      const isSingleUser = uniqueUserIds.size === 1 && uniqueUserIds.has(user.id);
-
-      if (isSingleUser) {
-        // Single user: Show all their creators ranked by fan points
-        const userStats = creatorStats
-          .filter((stat: any) => {
-            const creatorName = stat.creator_name;
-            // Skip generic/unknown creator names
-            return creatorName && 
-              creatorName.toLowerCase() !== 'unknown' && 
-              creatorName.toLowerCase() !== 'tv show' &&
-              creatorName.toLowerCase() !== 'podcast' &&
-              creatorName.toLowerCase() !== 'game' &&
-              creatorName.toLowerCase() !== 'sports';
-          })
-          .map((stat: any) => ({
-            user_id: `${user.id}-${stat.creator_name}`, // Composite key
-            user_name: stat.creator_name,
-            user_points: stat.fan_points,
-            score: stat.fan_points,
-            created_at: new Date().toISOString(),
-            creator_name: stat.creator_name,
-            creator_role: determineRole(stat.media_types || [])
-          }))
-          .sort((a, b) => b.user_points - a.user_points)
-          .slice(0, limit);
-
-        return new Response(JSON.stringify(userStats), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Multi-user: Show users ranked by their top creator
-      const userMap = users.reduce((acc: any, user: any) => {
-        acc[user.id] = user.user_name;
-        return acc;
-      }, {});
-
-      const userMaxPoints: { [key: string]: { points: number; creator: string; mediaTypes: string[] } } = {};
-
-      creatorStats.forEach((stat: any) => {
-        const userId = stat.user_id;
-        const creatorName = stat.creator_name;
-
-        // Skip generic/unknown creator names
-        if (!creatorName || 
-            creatorName.toLowerCase() === 'unknown' || 
-            creatorName.toLowerCase() === 'tv show' ||
-            creatorName.toLowerCase() === 'podcast' ||
-            creatorName.toLowerCase() === 'game' ||
-            creatorName.toLowerCase() === 'sports') {
-          return;
-        }
-
-        if (!userMaxPoints[userId] || stat.fan_points > userMaxPoints[userId].points) {
-          userMaxPoints[userId] = {
-            points: stat.fan_points,
-            creator: stat.creator_name,
-            mediaTypes: stat.media_types || []
-          };
-        }
-      });
-
-      // Convert to leaderboard format - show users ranked by their top creator
-      const leaderboard = Object.entries(userMaxPoints)
-        .map(([userId, data]) => ({
-          user_id: userId,
-          user_name: userMap[userId] || 'Anonymous',
-          user_points: data.points,
-          score: data.points,
-          created_at: new Date().toISOString(),
-          creator_name: data.creator,
-          creator_role: determineRole(data.mediaTypes)
-        }))
-        .sort((a, b) => b.user_points - a.user_points)
-        .slice(0, limit);
-
-      return new Response(JSON.stringify(leaderboard), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Handle standard media-based categories
-    let dateFilter = '';
-    const now = new Date();
-
-    if (category === 'daily') {
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      dateFilter = yesterday.toISOString();
-    } else if (category === 'weekly') {
-      const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      dateFilter = lastWeek.toISOString();
-    }
-
-    // Get all users
-    const { data: users, error: usersError } = await supabase
+    // Get all users for name mapping
+    const { data: allUsers } = await supabase
       .from('users')
-      .select('id, user_name, email');
+      .select('id, user_name, display_name');
+    
+    const userMap: Record<string, { username: string; display_name: string }> = {};
+    (allUsers || []).forEach((u: any) => {
+      userMap[u.id] = { 
+        username: u.user_name || 'unknown', 
+        display_name: u.display_name || u.user_name || 'Unknown' 
+      };
+    });
 
-    if (usersError) {
-      return new Response(JSON.stringify({ error: 'Failed to fetch users' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    // Date filter for period
+    let dateFilter: string | null = null;
+    const now = new Date();
+    if (period === 'weekly') {
+      dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (period === 'monthly') {
+      dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
     }
 
-    // Calculate points for each user
-    const leaderboardData = [];
+    const results: Record<string, LeaderboardEntry[]> = {};
 
-    for (const user of users || []) {
+    // Helper to format leaderboard entries
+    const formatEntries = (entries: { user_id: string; score: number; detail?: string }[]): LeaderboardEntry[] => {
+      let filtered = entries;
+      if (scope === 'friends' && friendIds.length > 0) {
+        filtered = entries.filter(e => friendIds.includes(e.user_id));
+      }
+      return filtered
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit)
+        .map((e, i) => ({
+          user_id: e.user_id,
+          username: userMap[e.user_id]?.username || 'unknown',
+          display_name: userMap[e.user_id]?.display_name || 'Unknown',
+          score: e.score,
+          rank: i + 1,
+          detail: e.detail
+        }));
+    };
+
+    // 1. OVERALL ENGAGEMENT - posts + likes received + comments received
+    if (category === 'all' || category === 'overall') {
+      const { data: posts } = await supabase
+        .from('social_posts')
+        .select('user_id, likes_count, comments_count, created_at')
+        .gte('created_at', dateFilter || '1970-01-01');
+
+      const engagementMap: Record<string, number> = {};
+      (posts || []).forEach((p: any) => {
+        const userId = p.user_id;
+        const score = 10 + (p.likes_count || 0) * 2 + (p.comments_count || 0) * 3;
+        engagementMap[userId] = (engagementMap[userId] || 0) + score;
+      });
+
+      results.overall = formatEntries(
+        Object.entries(engagementMap).map(([user_id, score]) => ({ user_id, score }))
+      );
+    }
+
+    // 2. TRIVIA CHAMPIONS - users who win trivia games
+    if (category === 'all' || category === 'trivia') {
+      // Get trivia pools
+      const { data: triviaPools } = await supabase
+        .from('prediction_pools')
+        .select('id')
+        .eq('type', 'trivia');
+      
+      const triviaPoolIds = (triviaPools || []).map(p => p.id);
+
+      if (triviaPoolIds.length > 0) {
+        const { data: predictions } = await supabase
+          .from('user_predictions')
+          .select('user_id, points_earned, is_winner, pool_id, created_at')
+          .in('pool_id', triviaPoolIds)
+          .gte('created_at', dateFilter || '1970-01-01');
+
+        const triviaMap: Record<string, { wins: number; points: number }> = {};
+        (predictions || []).forEach((p: any) => {
+          if (!triviaMap[p.user_id]) {
+            triviaMap[p.user_id] = { wins: 0, points: 0 };
+          }
+          if (p.is_winner) triviaMap[p.user_id].wins += 1;
+          triviaMap[p.user_id].points += p.points_earned || 0;
+        });
+
+        results.trivia = formatEntries(
+          Object.entries(triviaMap).map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.points,
+            detail: `${data.wins} wins`
+          }))
+        );
+      } else {
+        results.trivia = [];
+      }
+    }
+
+    // 3. POLL MASTERS - users who participate in polls
+    if (category === 'all' || category === 'polls') {
+      const { data: pollPools } = await supabase
+        .from('prediction_pools')
+        .select('id')
+        .eq('type', 'vote');
+      
+      const pollPoolIds = (pollPools || []).map(p => p.id);
+
+      if (pollPoolIds.length > 0) {
+        const { data: votes } = await supabase
+          .from('user_predictions')
+          .select('user_id, points_earned, pool_id, created_at')
+          .in('pool_id', pollPoolIds)
+          .gte('created_at', dateFilter || '1970-01-01');
+
+        const pollMap: Record<string, { votes: number; points: number }> = {};
+        (votes || []).forEach((v: any) => {
+          if (!pollMap[v.user_id]) {
+            pollMap[v.user_id] = { votes: 0, points: 0 };
+          }
+          pollMap[v.user_id].votes += 1;
+          pollMap[v.user_id].points += v.points_earned || 0;
+        });
+
+        results.polls = formatEntries(
+          Object.entries(pollMap).map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.points,
+            detail: `${data.votes} votes`
+          }))
+        );
+      } else {
+        results.polls = [];
+      }
+    }
+
+    // 4. PREDICTION PROS - users with best prediction accuracy
+    if (category === 'all' || category === 'predictions') {
+      const { data: predictPools } = await supabase
+        .from('prediction_pools')
+        .select('id')
+        .eq('type', 'predict');
+      
+      const predictPoolIds = (predictPools || []).map(p => p.id);
+
+      if (predictPoolIds.length > 0) {
+        const { data: predictions } = await supabase
+          .from('user_predictions')
+          .select('user_id, points_earned, is_winner, pool_id, created_at')
+          .in('pool_id', predictPoolIds)
+          .gte('created_at', dateFilter || '1970-01-01');
+
+        const predictMap: Record<string, { correct: number; total: number; points: number }> = {};
+        (predictions || []).forEach((p: any) => {
+          if (!predictMap[p.user_id]) {
+            predictMap[p.user_id] = { correct: 0, total: 0, points: 0 };
+          }
+          predictMap[p.user_id].total += 1;
+          if (p.is_winner) predictMap[p.user_id].correct += 1;
+          predictMap[p.user_id].points += p.points_earned || 0;
+        });
+
+        results.predictions = formatEntries(
+          Object.entries(predictMap).map(([user_id, data]) => {
+            const accuracy = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+            return { 
+              user_id, 
+              score: data.points,
+              detail: `${accuracy}% accuracy (${data.correct}/${data.total})`
+            };
+          })
+        );
+      } else {
+        results.predictions = [];
+      }
+    }
+
+    // 5. TOP CONSUMERS BY MEDIA TYPE
+    if (category === 'all' || category === 'consumption') {
+      // Get list items for consumption tracking
       let listQuery = supabase
         .from('list_items')
-        .select('*')
-        .eq('user_id', user.id);
-
-      // Apply date filter if needed
+        .select('user_id, media_type, created_at');
+      
       if (dateFilter) {
         listQuery = listQuery.gte('created_at', dateFilter);
       }
-
+      
       const { data: listItems } = await listQuery;
 
-      // Get user's prediction points
-      let predictionQuery = supabase
-        .from('user_predictions')
-        .select('points_earned')
-        .eq('user_id', user.id);
-
-      // Apply date filter to predictions too
-      if (dateFilter) {
-        predictionQuery = predictionQuery.gte('created_at', dateFilter);
-      }
-
-      const { data: predictions } = await predictionQuery;
-
-      // All voting (polls, predictions, trivia) is now in user_predictions
-      // pollPoints are included in predictionPoints above
-      const pollPoints = 0; // Legacy variable, all points now in predictions
-
-      if (listItems) {
-        // Count items by media type
-        const books = listItems.filter(item => item.media_type === 'book');
-        const movies = listItems.filter(item => item.media_type === 'movie');
-        const tv = listItems.filter(item => item.media_type === 'tv');
-        const music = listItems.filter(item => item.media_type === 'music');
-        const podcasts = listItems.filter(item => item.media_type === 'podcast');
-        const games = listItems.filter(item => item.media_type === 'game');
-        const sports = listItems.filter(item => item.media_type === 'sports');
-
-        // Count items with reviews (notes field)
-        const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
-
-        // Calculate prediction points
-        const predictionPoints = (predictions || [])
-          .reduce((sum, pred) => sum + (pred.points_earned || 0), 0);
-
-        // Calculate category-specific scores
-        let categoryScore = 0;
-        let totalPoints = 0;
-
-        if (category === 'book_leader') {
-          categoryScore = books.length * 15;
-        } else if (category === 'movie_leader') {
-          categoryScore = movies.length * 8;
-        } else if (category === 'tv_leader') {
-          categoryScore = tv.length * 10;
-        } else if (category === 'music_leader') {
-          categoryScore = music.length * 1;
-        } else if (category === 'podcast_leader') {
-          categoryScore = podcasts.length * 3;
-        } else if (category === 'sports_leader') {
-          categoryScore = sports.length * 5;
-        } else if (category === 'critic_leader') {
-          categoryScore = reviews.length * 10;
-        } else if (category === 'superstar') {
-          // Superstar = users with highest total activity across all media types + predictions + polls
-          categoryScore = 
-            (books.length * 15) +      // Books: 15 pts each
-            (movies.length * 8) +      // Movies: 8 pts each
-            (tv.length * 10) +         // TV Shows: 10 pts each
-            (music.length * 1) +       // Music: 1 pt each
-            (podcasts.length * 3) +    // Podcasts: 3 pts each
-            (games.length * 5) +       // Games: 5 pts each
-            (sports.length * 5) +      // Sports: 5 pts each
-            (reviews.length * 10) +    // Reviews: 10 pts each
-            predictionPoints +         // Prediction points
-            pollPoints;                // Poll points
-        } else if (category === 'streaker') {
-          // Streaker = consistency (simplified as total items for now)
-          categoryScore = listItems.length * 20; // 20 points per consecutive day
-        } else if (category === 'friend_inviter') {
-          // Friend inviter = placeholder for future friend invitation system
-          // For now, users with more diverse content get points (encourages sharing)
-          const uniqueCreators = new Set(listItems.map(item => item.creator)).size;
-          categoryScore = uniqueCreators * 25; // 25 points per successful friend invite
-        } else {
-          // Calculate total points for all_time category including predictions and polls
-          totalPoints = 
-            (books.length * 15) +      // Books: 15 pts each
-            (movies.length * 8) +      // Movies: 8 pts each
-            (tv.length * 10) +         // TV Shows: 10 pts each
-            (music.length * 1) +       // Music: 1 pt each
-            (podcasts.length * 3) +    // Podcasts: 3 pts each
-            (games.length * 5) +       // Games: 5 pts each
-            (sports.length * 5) +      // Sports: 5 pts each
-            (reviews.length * 10) +    // Reviews: 10 pts each
-            predictionPoints +         // Prediction points
-            pollPoints;                // Poll points
-          categoryScore = totalPoints;
+      // Count by media type
+      const consumptionMap: Record<string, Record<string, number>> = {};
+      (listItems || []).forEach((item: any) => {
+        if (!consumptionMap[item.user_id]) {
+          consumptionMap[item.user_id] = { book: 0, movie: 0, tv: 0, music: 0, podcast: 0, game: 0, total: 0 };
         }
-
-        if (categoryScore > 0) {
-          leaderboardData.push({
-            user_id: user.id,
-            user_name: user.user_name,
-            user_points: categoryScore,
-            score: categoryScore, // For compatibility with frontend interface
-            created_at: new Date().toISOString(),
-            // Additional data for frontend display
-            total_items: listItems.length,
-            total_reviews: reviews.length,
-            prediction_points: predictionPoints,
-            total_predictions: (predictions || []).length
-          });
+        const mediaType = item.media_type || 'other';
+        if (consumptionMap[item.user_id][mediaType] !== undefined) {
+          consumptionMap[item.user_id][mediaType] += 1;
         }
-      }
+        consumptionMap[item.user_id].total += 1;
+      });
+
+      // Books
+      results.books = formatEntries(
+        Object.entries(consumptionMap)
+          .filter(([_, data]) => data.book > 0)
+          .map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.book,
+            detail: `${data.book} books`
+          }))
+      );
+
+      // Movies
+      results.movies = formatEntries(
+        Object.entries(consumptionMap)
+          .filter(([_, data]) => data.movie > 0)
+          .map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.movie,
+            detail: `${data.movie} movies`
+          }))
+      );
+
+      // TV Shows
+      results.tv = formatEntries(
+        Object.entries(consumptionMap)
+          .filter(([_, data]) => data.tv > 0)
+          .map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.tv,
+            detail: `${data.tv} shows`
+          }))
+      );
+
+      // Music
+      results.music = formatEntries(
+        Object.entries(consumptionMap)
+          .filter(([_, data]) => data.music > 0)
+          .map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.music,
+            detail: `${data.music} tracks`
+          }))
+      );
+
+      // Podcasts
+      results.podcasts = formatEntries(
+        Object.entries(consumptionMap)
+          .filter(([_, data]) => data.podcast > 0)
+          .map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.podcast,
+            detail: `${data.podcast} podcasts`
+          }))
+      );
+
+      // Games
+      results.games = formatEntries(
+        Object.entries(consumptionMap)
+          .filter(([_, data]) => data.game > 0)
+          .map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.game,
+            detail: `${data.game} games`
+          }))
+      );
+
+      // Total consumption
+      results.total_consumption = formatEntries(
+        Object.entries(consumptionMap)
+          .filter(([_, data]) => data.total > 0)
+          .map(([user_id, data]) => ({ 
+            user_id, 
+            score: data.total,
+            detail: `${data.total} items`
+          }))
+      );
     }
 
-    // Sort by points (descending) and limit results
-    const sortedLeaderboard = leaderboardData
-      .sort((a, b) => b.user_points - a.user_points)
-      .slice(0, limit);
-
-    return new Response(JSON.stringify(sortedLeaderboard), {
+    return new Response(JSON.stringify({
+      categories: results,
+      currentUserId: appUser.id,
+      scope,
+      period
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error('Get leaderboards error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500
     });

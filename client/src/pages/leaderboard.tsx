@@ -1,37 +1,54 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Flame, Target, Lightbulb, Heart, TrendingUp, Award, Tv, BookOpen, Film, Podcast, Share2 } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link } from "wouter";
 
 interface LeaderboardEntry {
   user_id: string;
   username: string;
-  display_name?: string;
+  display_name: string;
   score: number;
   rank: number;
-  posts_count?: number;
-  engagement_count?: number;
-  accuracy?: number;
-  helpful_count?: number;
+  detail?: string;
 }
 
-type CategoryType = 'consumption' | 'conversation' | 'call-it';
+interface LeaderboardData {
+  categories: {
+    overall?: LeaderboardEntry[];
+    trivia?: LeaderboardEntry[];
+    polls?: LeaderboardEntry[];
+    predictions?: LeaderboardEntry[];
+    books?: LeaderboardEntry[];
+    movies?: LeaderboardEntry[];
+    tv?: LeaderboardEntry[];
+    music?: LeaderboardEntry[];
+    podcasts?: LeaderboardEntry[];
+    games?: LeaderboardEntry[];
+    total_consumption?: LeaderboardEntry[];
+  };
+  currentUserId: string;
+  scope: string;
+  period: string;
+}
 
 export default function Leaderboard() {
   const { session, user } = useAuth();
   const { toast } = useToast();
+  const [scope, setScope] = useState<'global' | 'friends'>('global');
+  const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
 
-  // Fetch leaderboard data (global, weekly)
-  const { data: leaderboardData, isLoading } = useQuery({
-    queryKey: ['leaderboard', 'global'],
+  const { data: leaderboardData, isLoading } = useQuery<LeaderboardData>({
+    queryKey: ['leaderboard', scope, period],
     queryFn: async () => {
       if (!session?.access_token) return null;
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=weekly`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=${scope}&period=${period}`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -46,15 +63,15 @@ export default function Leaderboard() {
     enabled: !!session?.access_token,
   });
 
-  // Share rank mutation
   const shareRankMutation = useMutation({
     mutationFn: async ({ rank, categoryName }: { rank: number; categoryName: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      const shareText = `🔥 I'm #${rank} in ${categoryName} this month on Consumed.`;
+      const periodLabel = period === 'weekly' ? 'this week' : period === 'monthly' ? 'this month' : 'all time';
+      const shareText = `🏆 I'm #${rank} in ${categoryName} ${periodLabel} on Consumed!`;
       
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-update`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inline-post`,
         {
           method: 'POST',
           headers: {
@@ -63,6 +80,7 @@ export default function Leaderboard() {
           },
           body: JSON.stringify({
             content: shareText,
+            post_type: 'update',
           }),
         }
       );
@@ -85,238 +103,313 @@ export default function Leaderboard() {
     },
   });
 
-  const renderLeaderboardSection = (
-    title: string,
-    icon: any,
-    entries: LeaderboardEntry[],
-    subtitle: string,
-    scoreLabel: string,
-    categoryName: string
+  const currentUserId = leaderboardData?.currentUserId;
+
+  const renderLeaderboardList = (
+    entries: LeaderboardEntry[] | undefined,
+    categoryName: string,
+    emptyMessage: string
   ) => {
-    const Icon = icon;
-    
+    if (!entries || entries.length === 0) {
+      return (
+        <div className="p-8 text-center text-gray-500">
+          <p className="text-sm">{emptyMessage}</p>
+        </div>
+      );
+    }
+
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4">
-          <div className="flex items-center gap-2">
-            <Icon className="text-white" size={24} />
-            <div>
-              <h3 className="text-lg font-bold text-white">{title}</h3>
-              <p className="text-xs text-purple-100">{subtitle}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="divide-y divide-gray-100">
-          {entries && entries.length > 0 ? (
-            entries.slice(0, 10).map((entry, index) => {
-              const isCurrentUser = entry.user_id === user?.id;
-              const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-orange-400'];
-              
-              return (
-                <div
-                  key={entry.user_id}
-                  className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
-                >
-                  {/* Rank */}
-                  <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                    {index < 3 ? (
-                      <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                        {index + 1}
-                      </div>
-                    ) : (
-                      <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
-                    )}
+      <div className="divide-y divide-gray-100">
+        {entries.map((entry, index) => {
+          const isCurrentUser = entry.user_id === currentUserId;
+          const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
+          
+          return (
+            <div
+              key={entry.user_id}
+              className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
+              data-testid={`leaderboard-entry-${entry.user_id}`}
+            >
+              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                {index < 3 ? (
+                  <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                    {index + 1}
                   </div>
+                ) : (
+                  <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                )}
+              </div>
 
-                  {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
-                      {entry.display_name || entry.username}
-                      {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
-                    </p>
-                    <p className="text-xs text-gray-500">@{entry.username}</p>
-                  </div>
+              <Link 
+                href={`/user/${entry.user_id}`}
+                className="flex-1 min-w-0"
+              >
+                <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                  {entry.display_name}
+                  {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                </p>
+                <p className="text-xs text-gray-500">@{entry.username}</p>
+              </Link>
 
-                  {/* Score and Share Button */}
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <div className="text-right">
-                      <p className="font-bold text-lg text-purple-600">{entry.score}</p>
-                      <p className="text-xs text-gray-500">{scoreLabel}</p>
-                    </div>
-                    
-                    {isCurrentUser && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
-                        disabled={shareRankMutation.isPending}
-                        className="flex items-center gap-1.5"
-                        data-testid={`button-share-rank-${categoryName}`}
-                      >
-                        <Share2 size={14} />
-                        <span className="hidden sm:inline">Share</span>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="p-8 text-center text-gray-500">
-              <p className="text-sm">No data yet. Start engaging to see rankings!</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // Mock data for now - will be replaced with actual API data
-  const mockConsumptionLeaders: LeaderboardEntry[] = [
-    { user_id: '1', username: 'alexchen', display_name: 'Alex Chen', score: 247, rank: 1 },
-    { user_id: '2', username: 'miapatel', display_name: 'Mia Patel', score: 198, rank: 2 },
-    { user_id: '3', username: 'jordantaylor', display_name: 'Jordan Taylor', score: 156, rank: 3 },
-    { user_id: '4', username: 'sarahkim', display_name: 'Sarah Kim', score: 134, rank: 4 },
-    { user_id: '5', username: 'marcusjones', display_name: 'Marcus Jones', score: 112, rank: 5 },
-  ];
-
-  const mockConversationLeaders: LeaderboardEntry[] = [
-    { user_id: '2', username: 'miapatel', display_name: 'Mia Patel', score: 342, rank: 1 },
-    { user_id: '1', username: 'alexchen', display_name: 'Alex Chen', score: 289, rank: 2 },
-    { user_id: '4', username: 'sarahkim', display_name: 'Sarah Kim', score: 267, rank: 3 },
-    { user_id: '3', username: 'jordantaylor', display_name: 'Jordan Taylor', score: 203, rank: 4 },
-    { user_id: '6', username: 'emilyrodriguez', display_name: 'Emily Rodriguez', score: 178, rank: 5 },
-  ];
-
-  const mockCallItLeaders: LeaderboardEntry[] = [
-    { user_id: '3', username: 'jordantaylor', display_name: 'Jordan Taylor', score: 89, rank: 1 },
-    { user_id: '1', username: 'alexchen', display_name: 'Alex Chen', score: 76, rank: 2 },
-    { user_id: '5', username: 'marcusjones', display_name: 'Marcus Jones', score: 64, rank: 3 },
-    { user_id: '2', username: 'miapatel', display_name: 'Mia Patel', score: 58, rank: 4 },
-    { user_id: '7', username: 'davidlee', display_name: 'David Lee', score: 45, rank: 5 },
-  ];
-
-  // Render a leaderboard section
-  const renderLeaderboardCategory = (
-    title: string,
-    subtitle: string,
-    data: LeaderboardEntry[],
-    categoryName: string
-  ) => {
-    return (
-      <div className="mb-8">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-1">
-            {title}
-          </h2>
-          <p className="text-sm text-gray-600">
-            {subtitle}
-          </p>
-        </div>
-        
-        <div className="bg-white rounded-lg p-6">
-          <div className="space-y-4">
-            {data.map((entry, index) => {
-              const isCurrentUser = entry.user_id === user?.id;
-              
-              return (
-                <div
-                  key={entry.user_id}
-                  className="flex items-start gap-3 py-2"
-                >
-                  {/* Rank Number */}
-                  <div className="text-gray-400 text-sm font-medium pt-0.5 w-6">
-                    {index + 1}.
-                  </div>
-
-                  {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-semibold text-base ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
-                      {entry.display_name || entry.username}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      @{entry.username} • <span className="text-purple-400">{entry.score} pts</span>
-                    </p>
-                  </div>
-
-                  {/* Share Button (only for current user) */}
-                  {isCurrentUser && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
-                      disabled={shareRankMutation.isPending}
-                      className="text-gray-400 hover:text-purple-600"
-                      data-testid="button-share-rank"
-                    >
-                      <Share2 size={16} />
-                    </Button>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="text-right">
+                  <p className="font-bold text-lg text-purple-600">{entry.score}</p>
+                  {entry.detail && (
+                    <p className="text-xs text-gray-500">{entry.detail}</p>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
+                
+                {isCurrentUser && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
+                    disabled={shareRankMutation.isPending}
+                    className="flex items-center gap-1.5"
+                    data-testid={`button-share-rank-${categoryName}`}
+                  >
+                    <Share2 size={14} />
+                  </Button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
+
+  const renderCategoryCard = (
+    title: string,
+    Icon: any,
+    entries: LeaderboardEntry[] | undefined,
+    categoryName: string,
+    emptyMessage: string,
+    gradient: string = 'from-purple-600 to-blue-600'
+  ) => (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+      <div className={`bg-gradient-to-r ${gradient} p-4`}>
+        <div className="flex items-center gap-2">
+          <Icon className="text-white" size={20} />
+          <h3 className="text-base font-bold text-white">{title}</h3>
+        </div>
+      </div>
+      {renderLeaderboardList(entries, categoryName, emptyMessage)}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
       <Navigation />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Leaders
           </h1>
           <p className="text-base text-gray-600 max-w-xs mx-auto">
-            Most active fans and trending voices.
+            Most active fans and top performers
           </p>
         </div>
 
+        <div className="flex justify-center gap-2 mb-4">
+          <Button
+            size="sm"
+            variant={scope === 'global' ? 'default' : 'outline'}
+            onClick={() => setScope('global')}
+            className={scope === 'global' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            data-testid="button-scope-global"
+          >
+            <Globe size={14} className="mr-1" />
+            Global
+          </Button>
+          <Button
+            size="sm"
+            variant={scope === 'friends' ? 'default' : 'outline'}
+            onClick={() => setScope('friends')}
+            className={scope === 'friends' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            data-testid="button-scope-friends"
+          >
+            <Users size={14} className="mr-1" />
+            Friends
+          </Button>
+        </div>
+
+        <div className="flex justify-center gap-2 mb-6">
+          {(['weekly', 'monthly', 'all_time'] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                period === p 
+                  ? 'bg-purple-100 text-purple-700 font-medium' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              data-testid={`button-period-${p}`}
+            >
+              {p === 'weekly' ? 'This Week' : p === 'monthly' ? 'This Month' : 'All Time'}
+            </button>
+          ))}
+        </div>
+
         {isLoading ? (
-          <div className="bg-white rounded-lg p-6">
-            <div className="space-y-4">
-              {[1, 2, 3].map((n) => (
-                <div key={n} className="animate-pulse flex items-start gap-3">
-                  <div className="w-6 h-4 bg-gray-200 rounded"></div>
-                  <div className="flex-1">
-                    <div className="h-5 bg-gray-200 rounded w-1/3 mb-1"></div>
-                    <div className="h-4 bg-gray-100 rounded w-1/2"></div>
-                  </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="bg-white rounded-2xl p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-1"></div>
+                        <div className="h-3 bg-gray-100 rounded w-1/6"></div>
+                      </div>
+                      <div className="h-6 bg-gray-200 rounded w-12"></div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <>
-            {/* Consumption Leaders */}
-            {renderLeaderboardCategory(
-              'Consumption Leaders',
-              "Who's adding the most shows, books, movies, podcasts, and more.",
-              mockConsumptionLeaders,
-              'Consumption Leaders'
-            )}
+          <Tabs defaultValue="engagement" className="w-full">
+            <TabsList className="w-full mb-4 bg-white border border-gray-200 p-1 h-auto flex flex-wrap justify-center gap-1">
+              <TabsTrigger 
+                value="engagement" 
+                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                data-testid="tab-engagement"
+              >
+                <TrendingUp size={14} className="mr-1" />
+                Engagement
+              </TabsTrigger>
+              <TabsTrigger 
+                value="games" 
+                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                data-testid="tab-games"
+              >
+                <Target size={14} className="mr-1" />
+                Games
+              </TabsTrigger>
+              <TabsTrigger 
+                value="consumption" 
+                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                data-testid="tab-consumption"
+              >
+                <Star size={14} className="mr-1" />
+                Media
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Conversation Leaders */}
-            {renderLeaderboardCategory(
-              'Conversation Leaders',
-              "Friends whose posts and comments are fueling the conversation.",
-              mockConversationLeaders,
-              'Conversation Leaders'
-            )}
+            <TabsContent value="engagement">
+              {renderCategoryCard(
+                'Top Engagers',
+                TrendingUp,
+                leaderboardData?.categories?.overall,
+                'Top Engagers',
+                'Start posting and engaging to appear here!',
+                'from-purple-600 to-pink-600'
+              )}
+            </TabsContent>
 
-            {/* Call-It Leaders */}
-            {renderLeaderboardCategory(
-              'Call-It Leaders',
-              "Friends making the boldest calls—and getting them right.",
-              mockCallItLeaders,
-              'Call-It Leaders'
-            )}
-          </>
+            <TabsContent value="games">
+              {renderCategoryCard(
+                'Trivia Champions',
+                Brain,
+                leaderboardData?.categories?.trivia,
+                'Trivia',
+                'No trivia results yet. Play some trivia!',
+                'from-yellow-500 to-orange-500'
+              )}
+              
+              {renderCategoryCard(
+                'Poll Masters',
+                Target,
+                leaderboardData?.categories?.polls,
+                'Polls',
+                'No poll activity yet. Vote on some polls!',
+                'from-blue-500 to-cyan-500'
+              )}
+              
+              {renderCategoryCard(
+                'Prediction Pros',
+                Trophy,
+                leaderboardData?.categories?.predictions,
+                'Predictions',
+                'No predictions resolved yet. Make some predictions!',
+                'from-green-500 to-emerald-500'
+              )}
+            </TabsContent>
+
+            <TabsContent value="consumption">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {renderCategoryCard(
+                  'Bookworms',
+                  BookOpen,
+                  leaderboardData?.categories?.books,
+                  'Books',
+                  'No books tracked yet',
+                  'from-amber-600 to-yellow-500'
+                )}
+                
+                {renderCategoryCard(
+                  'Movie Buffs',
+                  Film,
+                  leaderboardData?.categories?.movies,
+                  'Movies',
+                  'No movies tracked yet',
+                  'from-red-500 to-pink-500'
+                )}
+                
+                {renderCategoryCard(
+                  'TV Marathoners',
+                  Tv,
+                  leaderboardData?.categories?.tv,
+                  'TV',
+                  'No TV shows tracked yet',
+                  'from-indigo-500 to-purple-500'
+                )}
+                
+                {renderCategoryCard(
+                  'Music Lovers',
+                  Music,
+                  leaderboardData?.categories?.music,
+                  'Music',
+                  'No music tracked yet',
+                  'from-pink-500 to-rose-500'
+                )}
+                
+                {renderCategoryCard(
+                  'Podcast Listeners',
+                  Headphones,
+                  leaderboardData?.categories?.podcasts,
+                  'Podcasts',
+                  'No podcasts tracked yet',
+                  'from-violet-500 to-purple-500'
+                )}
+                
+                {renderCategoryCard(
+                  'Gamers',
+                  Gamepad2,
+                  leaderboardData?.categories?.games,
+                  'Games',
+                  'No games tracked yet',
+                  'from-emerald-500 to-teal-500'
+                )}
+              </div>
+              
+              <div className="mt-4">
+                {renderCategoryCard(
+                  'Total Consumption Leaders',
+                  Star,
+                  leaderboardData?.categories?.total_consumption,
+                  'Total Consumption',
+                  'Track some media to appear here!',
+                  'from-purple-600 to-blue-600'
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </div>
