@@ -420,8 +420,33 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
   );
 }
 
+// Helper function to check if content is a leaderboard ranking post
+function isLeaderboardRankingPost(content: string): boolean {
+  return /I'm #\d+/.test(content) && /on Consumed/i.test(content);
+}
+
+// Helper function to render leaderboard ranking with link
+function renderLeaderboardRanking(content: string) {
+  return (
+    <>
+      <span>{renderMentions(content)}</span>
+      <a 
+        href="/leaderboard"
+        className="block text-purple-600 hover:text-purple-700 text-sm font-medium mt-1"
+      >
+        See who else is winning →
+      </a>
+    </>
+  );
+}
+
 // Helper function to render post content with star ratings
 function renderPostWithRating(content: string) {
+  // Check for leaderboard ranking posts first
+  if (isLeaderboardRankingPost(content)) {
+    return renderLeaderboardRanking(content);
+  }
+  
   // Match rating pattern at start: "4.5." or "5." or "10." etc
   const ratingMatch = content.match(/^\s*(\d{1,2}(?:\.\d{1,2})?)\s*[.:]\s*/);
   
