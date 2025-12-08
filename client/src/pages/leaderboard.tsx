@@ -42,6 +42,7 @@ export default function Leaderboard() {
   const [scope, setScope] = useState<'global' | 'friends'>('global');
   const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<string>('engagement');
 
   const toggleExpanded = (categoryName: string) => {
     setExpandedCategories(prev => {
@@ -314,7 +315,7 @@ export default function Leaderboard() {
             ))}
           </div>
         ) : (
-          <Tabs defaultValue="engagement" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full mb-4 bg-white border border-gray-200 p-1 h-auto flex flex-wrap justify-center gap-1">
               <TabsTrigger 
                 value="engagement" 
