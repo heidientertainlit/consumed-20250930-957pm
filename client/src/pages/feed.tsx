@@ -127,6 +127,8 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
   const limit = 15; // Posts per page
   const offset = pageParam * limit;
 
+  console.log('🔄 FETCHING FEED - page:', pageParam, 'offset:', offset);
+
   const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed?limit=${limit}&offset=${offset}`, {
     method: 'GET',
     headers: {
@@ -135,20 +137,28 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
     },
   });
 
+  console.log('🔄 Feed response status:', response.status);
+
   if (!response.ok) {
     throw new Error(`Failed to fetch social feed: ${response.statusText}`);
   }
 
   const data = await response.json();
   
+  console.log('🔄 Feed response data type:', typeof data);
+  console.log('🔄 Feed response is array:', Array.isArray(data));
+  console.log('🔄 Feed response has posts key:', data && 'posts' in data);
+  console.log('🔄 Feed response has currentUserId key:', data && 'currentUserId' in data);
+  
   // Handle new response format with currentUserId
-  if (data && typeof data === 'object' && 'posts' in data && 'currentUserId' in data) {
+  if (data && typeof data === 'object' && !Array.isArray(data) && 'posts' in data && 'currentUserId' in data) {
     currentAppUserId = data.currentUserId;
     console.log('📌 Current app user ID set to:', currentAppUserId);
     return data.posts;
   }
   
   // Fallback for old response format (array of posts)
+  console.log('⚠️ Using old response format (array)');
   return data;
 };
 
