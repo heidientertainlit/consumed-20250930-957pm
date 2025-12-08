@@ -16,23 +16,87 @@ interface MediaItem {
   rating?: number;
 }
 
-// Parse Netflix CSV format
-function parseNetflix(csvText: string): MediaItem[] {
+// TMDB API lookup to detect if a title is a movie or TV show
+async function detectMediaType(title: string): Promise<'movie' | 'tv'> {
+  const tmdbKey = Deno.env.get('TMDB_API_KEY');
+  if (!tmdbKey) {
+    console.log('No TMDB_API_KEY, defaulting to tv');
+    return 'tv';
+  }
+  
+  try {
+    // Clean up title - Netflix often has "Season X" or "Episode X" in the title
+    const cleanTitle = title
+      .replace(/:\s*(Season|Series|Part|Volume)\s*\d+.*/i, '')
+      .replace(/:\s*(Limited Series|Miniseries).*/i, '')
+      .trim();
+    
+    const response = await fetch(
+      `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(cleanTitle)}&page=1&include_adult=false`
+    );
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        // Get first result that's either movie or TV
+        const match = data.results.find((r: any) => r.media_type === 'movie' || r.media_type === 'tv');
+        if (match) {
+          return match.media_type as 'movie' | 'tv';
+        }
+      }
+    }
+  } catch (error) {
+    console.error('TMDB lookup error for:', title, error);
+  }
+  
+  // Default to TV if we can't determine (Netflix has more TV content)
+  return 'tv';
+}
+
+// Parse Netflix CSV format with TMDB lookup for media type detection
+async function parseNetflix(csvText: string): Promise<MediaItem[]> {
   const lines = csvText.split('\n').filter(line => line.trim());
   const items: MediaItem[] = [];
   
   // Skip header row, parse data
+  const titles: string[] = [];
   for (let i = 1; i < lines.length; i++) {
     const fields = lines[i].split(',').map(f => f.trim().replace(/^"|"$/g, ''));
     if (fields.length >= 1 && fields[0]) {
-      items.push({
-        title: fields[0],
-        mediaType: 'tv',
-        listType: 'finished'
-      });
+      titles.push(fields[0]);
     }
   }
   
+  console.log(`Netflix: Found ${titles.length} titles, detecting media types via TMDB...`);
+  
+  // Process in batches to avoid rate limiting
+  const batchSize = 10;
+  let movieCount = 0;
+  let tvCount = 0;
+  
+  for (let i = 0; i < titles.length; i += batchSize) {
+    const batch = titles.slice(i, i + batchSize);
+    const mediaTypes = await Promise.all(batch.map(title => detectMediaType(title)));
+    
+    for (let j = 0; j < batch.length; j++) {
+      const mediaType = mediaTypes[j];
+      if (mediaType === 'movie') movieCount++;
+      else tvCount++;
+      
+      items.push({
+        title: batch[j],
+        mediaType,
+        listType: 'finished'
+      });
+    }
+    
+    // Small delay between batches to be nice to TMDB API
+    if (i + batchSize < titles.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+  
+  console.log(`Netflix: Detected ${movieCount} movies and ${tvCount} TV shows`);
   return items;
 }
 
@@ -148,12 +212,12 @@ function parseLetterboxd(csvText: string): MediaItem[] {
   return items;
 }
 
-// Detect format and parse
-function parseImportFile(content: string, filename: string): MediaItem[] {
+// Detect format and parse (async to support Netflix TMDB lookups)
+async function parseImportFile(content: string, filename: string): Promise<MediaItem[]> {
   const lower = filename.toLowerCase();
   
   if (lower.includes('netflix')) {
-    return parseNetflix(content);
+    return await parseNetflix(content);
   } else if (lower.includes('goodreads')) {
     return parseGoodreads(content);
   } else if (lower.includes('letterboxd')) {
@@ -167,7 +231,8 @@ function parseImportFile(content: string, filename: string): MediaItem[] {
   } else if (firstLine.includes('name') && firstLine.includes('year')) {
     return parseLetterboxd(content);
   } else {
-    return parseNetflix(content);
+    // Default to Netflix parsing with TMDB detection
+    return await parseNetflix(content);
   }
 }
 
@@ -283,7 +348,7 @@ serve(async (req) => {
         
         // Parse all CSV files found in ZIP
         for (const csvContent of csvFiles) {
-          const items = parseImportFile(csvContent, file.name);
+          const items = await parseImportFile(csvContent, file.name);
           mediaItems.push(...items);
         }
       } catch (zipError) {
@@ -294,7 +359,7 @@ serve(async (req) => {
       // Handle CSV files
       const decoder = new TextDecoder('utf-8');
       const csvContent = decoder.decode(bytes);
-      mediaItems = parseImportFile(csvContent, file.name);
+      mediaItems = await parseImportFile(csvContent, file.name);
     }
 
     console.log('Import: Parsed items:', mediaItems.length);
