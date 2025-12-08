@@ -57,6 +57,23 @@ serve(async (req) => {
       });
     }
 
+    // Detect media type hints in query BEFORE stripping them
+    const queryHasBook = /\b(book|novel|read)\b/i.test(query);
+    const queryHasMovie = /\b(movie|film|watch)\b/i.test(query);
+    const queryHasMusic = /\b(song|album|music|listen)\b/i.test(query);
+    const queryHasTv = /\b(show|series|tv)\b/i.test(query);
+    
+    // Strip type keywords from query for cleaner API searches
+    // e.g., "anne of green gables book" → "anne of green gables"
+    const cleanedQuery = query
+      .replace(/\b(book|novel|read|movie|film|watch|song|album|music|listen|show|series|tv)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Use cleaned query for API calls, but keep original for logging
+    const searchQuery = cleanedQuery.length > 2 ? cleanedQuery : query;
+    console.log('Original query:', query, '| Cleaned query:', searchQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv });
+
     // Collect results by type first, then merge in desired order
     const bookResults: any[] = [];
     const movieTvResults: any[] = [];
@@ -77,7 +94,7 @@ serve(async (req) => {
           const tmdbKey = Deno.env.get('TMDB_API_KEY');
           if (tmdbKey) {
             const tmdbResponse = await fetchWithTimeout(
-              `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(query)}&page=1&include_adult=false`,
+              `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(searchQuery)}&page=1&include_adult=false`,
               {},
               4000
             );
@@ -115,7 +132,7 @@ serve(async (req) => {
         
         // Try Google Books first (more reliable)
         try {
-          const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`;
+          const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=5`;
           console.log('Fetching Google Books:', googleBooksUrl);
           const googleResponse = await fetchWithTimeout(googleBooksUrl, {}, 5000);
           console.log('Google Books response status:', googleResponse.status);
@@ -150,13 +167,13 @@ serve(async (req) => {
         if (!foundBooks) {
           try {
             let bookUrl;
-            if (query.toLowerCase().includes(' by ')) {
-              const parts = query.split(/\s+by\s+/i);
+            if (searchQuery.toLowerCase().includes(' by ')) {
+              const parts = searchQuery.split(/\s+by\s+/i);
               const title = parts[0].trim();
               const author = parts[1].trim();
               bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=5`;
             } else {
-              bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`;
+              bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=5`;
             }
             
             const bookResponse = await fetchWithTimeout(bookUrl, {}, 2000);
@@ -208,7 +225,7 @@ serve(async (req) => {
               const accessToken = authData.access_token;
               
               const spotifyResponse = await fetchWithTimeout(
-                `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=show&limit=10`,
+                `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=show&limit=10`,
                 { headers: { 'Authorization': `Bearer ${accessToken}` } },
                 3000
               );
@@ -260,7 +277,7 @@ serve(async (req) => {
               const accessToken = authData.access_token;
               
               const spotifyResponse = await fetchWithTimeout(
-                `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,track&limit=10`,
+                `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=album,track&limit=10`,
                 { headers: { 'Authorization': `Bearer ${accessToken}` } },
                 3000
               );
@@ -312,7 +329,7 @@ serve(async (req) => {
           const youtubeKey = Deno.env.get('YOUTUBE_API_KEY');
           if (youtubeKey) {
             const youtubeResponse = await fetchWithTimeout(
-              `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=5&key=${youtubeKey}&safeSearch=strict`,
+              `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&maxResults=5&key=${youtubeKey}&safeSearch=strict`,
               {},
               3000
             );
@@ -352,7 +369,7 @@ serve(async (req) => {
                 'Content-Type': 'application/json',
                 'Authorization': req.headers.get('Authorization') || ''
               },
-              body: JSON.stringify({ query })
+              body: JSON.stringify({ query: searchQuery })
             },
             3000
           );
@@ -380,7 +397,7 @@ serve(async (req) => {
                 'Content-Type': 'application/json',
                 'Authorization': req.headers.get('Authorization') || ''
               },
-              body: JSON.stringify({ query })
+              body: JSON.stringify({ query: searchQuery })
             },
             3000
           );
@@ -411,17 +428,14 @@ serve(async (req) => {
     ];
 
     // Score and sort by relevance to search query
-    const queryLower = query.toLowerCase().trim();
+    // Use cleaned query (without type keywords) for title matching
+    const queryLower = searchQuery.toLowerCase().trim();
     const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
     
     // Helper for safe string lowercasing
     const safeLower = (val: any) => (typeof val === 'string' ? val : '').toLowerCase();
     
-    // Check for explicit media type in query (e.g., "anne of green gables book")
-    const queryHasBook = /\b(book|novel|read)\b/i.test(query);
-    const queryHasMovie = /\b(movie|film|watch)\b/i.test(query);
-    const queryHasMusic = /\b(song|album|music|listen)\b/i.test(query);
-    const queryHasTv = /\b(show|series|tv)\b/i.test(query);
+    // queryHasBook, queryHasMovie, etc. were already detected at the top before stripping
     
     const scoredResults = allResults.map(item => {
       const title = safeLower(item.title);
