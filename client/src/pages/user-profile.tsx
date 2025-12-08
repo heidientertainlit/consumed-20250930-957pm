@@ -101,6 +101,9 @@ export default function UserProfile() {
   const [isLoadingRanks, setIsLoadingRanks] = useState(false);
   const [showCreateRankDialog, setShowCreateRankDialog] = useState(false);
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
+  
+  // Ref to track current fetch request to prevent stale data
+  const currentFetchUserIdRef = useRef<string | null>(null);
 
   // User stats states
   const [userStats, setUserStats] = useState<any>(null);
@@ -993,30 +996,42 @@ export default function UserProfile() {
     const userId = targetUserId || viewingUserId;
     if (!session?.access_token || !userId) return;
 
+    // Track which user we're fetching for to prevent stale data
+    currentFetchUserIdRef.current = userId;
+    console.log('🔄 FETCHING LISTS for userId:', userId);
     setIsLoadingLists(true);
     try {
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${userId}`, {
+      const url = `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${userId}`;
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
       });
 
+      // Check if this is still the current request before updating state
+      if (currentFetchUserIdRef.current !== userId) {
+        console.log('⏭️ Skipping stale lists response for', userId, '- current is', currentFetchUserIdRef.current);
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
-        // Keep all lists including "All" for accurate item count calculation
-        // Filter is only for display purposes in some sections
+        console.log('📋 Lists loaded for', userId, '- count:', data.lists?.length);
         setUserLists(data.lists || []);
-        console.log('User lists loaded for', userId, ':', data.lists?.length);
       } else {
         console.error('Failed to fetch user lists');
         setUserLists([]);
       }
     } catch (error) {
       console.error('Error fetching user lists:', error);
-      setUserLists([]);
+      if (currentFetchUserIdRef.current === userId) {
+        setUserLists([]);
+      }
     } finally {
-      setIsLoadingLists(false);
+      if (currentFetchUserIdRef.current === userId) {
+        setIsLoadingLists(false);
+      }
     }
   };
 
