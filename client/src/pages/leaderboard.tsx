@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2 } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,19 @@ export default function Leaderboard() {
   const { toast } = useToast();
   const [scope, setScope] = useState<'global' | 'friends'>('global');
   const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (categoryName: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryName)) {
+        newSet.delete(categoryName);
+      } else {
+        newSet.add(categoryName);
+      }
+      return newSet;
+    });
+  };
 
   const { data: leaderboardData, isLoading } = useQuery<LeaderboardData>({
     queryKey: ['leaderboard', scope, period],
@@ -108,7 +121,8 @@ export default function Leaderboard() {
   const renderLeaderboardList = (
     entries: LeaderboardEntry[] | undefined,
     categoryName: string,
-    emptyMessage: string
+    emptyMessage: string,
+    isExpanded: boolean
   ) => {
     if (!entries || entries.length === 0) {
       return (
@@ -118,63 +132,86 @@ export default function Leaderboard() {
       );
     }
 
+    const displayEntries = isExpanded ? entries.slice(0, 10) : entries.slice(0, 3);
+    const hasMore = entries.length > 3;
+
     return (
-      <div className="divide-y divide-gray-100">
-        {entries.map((entry, index) => {
-          const isCurrentUser = entry.user_id === currentUserId;
-          const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
-          
-          return (
-            <div
-              key={entry.user_id}
-              className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
-              data-testid={`leaderboard-entry-${entry.user_id}`}
-            >
-              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                {index < 3 ? (
-                  <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                    {index + 1}
-                  </div>
-                ) : (
-                  <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
-                )}
-              </div>
-
-              <Link 
-                href={`/user/${entry.user_id}`}
-                className="flex-1 min-w-0"
+      <div>
+        <div className="divide-y divide-gray-100">
+          {displayEntries.map((entry, index) => {
+            const isCurrentUser = entry.user_id === currentUserId;
+            const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
+            
+            return (
+              <div
+                key={entry.user_id}
+                className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
+                data-testid={`leaderboard-entry-${entry.user_id}`}
               >
-                <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
-                  {entry.display_name}
-                  {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
-                </p>
-                <p className="text-xs text-gray-500">@{entry.username}</p>
-              </Link>
-
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <div className="text-right">
-                  <p className="font-bold text-lg text-purple-600">{entry.score}</p>
-                  {entry.detail && (
-                    <p className="text-xs text-gray-500">{entry.detail}</p>
+                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                  {index < 3 ? (
+                    <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                      {index + 1}
+                    </div>
+                  ) : (
+                    <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
                   )}
                 </div>
-                
-                {isCurrentUser && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
-                    disabled={shareRankMutation.isPending}
-                    className="flex items-center gap-1.5"
-                    data-testid={`button-share-rank-${categoryName}`}
-                  >
-                    <Share2 size={14} />
-                  </Button>
-                )}
+
+                <Link 
+                  href={`/user/${entry.user_id}`}
+                  className="flex-1 min-w-0"
+                >
+                  <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                    {entry.display_name || entry.username}
+                    {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                  </p>
+                  <p className="text-xs text-gray-500">@{entry.username}</p>
+                </Link>
+
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-purple-600">{entry.score}</p>
+                    {entry.detail && (
+                      <p className="text-xs text-gray-500">{entry.detail}</p>
+                    )}
+                  </div>
+                  
+                  {isCurrentUser && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
+                      disabled={shareRankMutation.isPending}
+                      className="flex items-center gap-1.5"
+                      data-testid={`button-share-rank-${categoryName}`}
+                    >
+                      <Share2 size={14} />
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        
+        {hasMore && (
+          <button
+            onClick={() => toggleExpanded(categoryName)}
+            className="w-full py-3 flex items-center justify-center gap-1 text-sm text-purple-600 hover:bg-purple-50 transition-colors border-t border-gray-100"
+            data-testid={`button-show-more-${categoryName}`}
+          >
+            {isExpanded ? (
+              <>
+                Show Less <ChevronUp size={16} />
+              </>
+            ) : (
+              <>
+                Show More <ChevronDown size={16} />
+              </>
+            )}
+          </button>
+        )}
       </div>
     );
   };
@@ -186,17 +223,21 @@ export default function Leaderboard() {
     categoryName: string,
     emptyMessage: string,
     gradient: string = 'from-purple-600 to-blue-600'
-  ) => (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
-      <div className={`bg-gradient-to-r ${gradient} p-4`}>
-        <div className="flex items-center gap-2">
-          <Icon className="text-white" size={20} />
-          <h3 className="text-base font-bold text-white">{title}</h3>
+  ) => {
+    const isExpanded = expandedCategories.has(categoryName);
+    
+    return (
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+        <div className={`bg-gradient-to-r ${gradient} p-4`}>
+          <div className="flex items-center gap-2">
+            <Icon className="text-white" size={20} />
+            <h3 className="text-base font-bold text-white">{title}</h3>
+          </div>
         </div>
+        {renderLeaderboardList(entries, categoryName, emptyMessage, isExpanded)}
       </div>
-      {renderLeaderboardList(entries, categoryName, emptyMessage)}
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
