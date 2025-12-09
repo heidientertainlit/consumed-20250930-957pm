@@ -2692,11 +2692,9 @@ export default function Feed() {
                 <div ref={loadMoreRef} className="h-20" />
               )}
 
-              {/* End of Feed Indicator */}
+              {/* End of Feed - keep it clean, no message */}
               {!hasNextPage && filteredPosts.length > 0 && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">🎉 You've reached the end!</p>
-                </div>
+                <div className="h-8" />
               )}
 
             </div>
