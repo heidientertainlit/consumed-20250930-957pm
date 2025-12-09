@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Brain, Vote, Trophy, Gamepad2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Brain, Vote, Trophy, Gamepad2, X, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { Link } from 'wouter';
 import SwipeableGameCards from './swipeable-game-cards';
 
 interface Game {
@@ -50,7 +51,7 @@ export default function GameCarousel({ className }: GameCarouselProps) {
         .select('id, title, type, category, media_title')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
       if (error) throw new Error('Failed to fetch games');
       // Shuffle games for variety
       return shuffleArray((pools || []) as Game[], sessionSeed);
@@ -202,6 +203,22 @@ export default function GameCarousel({ className }: GameCarouselProps) {
               </button>
             );
           })}
+          
+          {/* Play more games link */}
+          <Link 
+            href="/play"
+            className="flex-shrink-0 w-28 group"
+            data-testid="link-play-more-games"
+          >
+            <div className="relative w-28 h-36 rounded-xl overflow-hidden mb-2 shadow-md group-hover:shadow-lg transition-shadow bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 group-hover:border-purple-400">
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+                <ArrowRight className="text-purple-600 mb-1 group-hover:translate-x-1 transition-transform" size={24} />
+                <span className="text-purple-600 text-xs font-semibold text-center">
+                  Play more games
+                </span>
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
 
