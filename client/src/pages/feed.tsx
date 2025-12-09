@@ -923,21 +923,28 @@ export default function Feed() {
       const previousLikedPosts = new Set(likedPosts);
 
       // Optimistically update posts - toggle like (handle infinite query structure)
+      // For grouped posts, check if any groupedActivity's postId matches
       queryClient.setQueryData(["social-feed"], (old: any) => {
         if (!old) return old;
         return {
           ...old,
           pages: old.pages.map((page: SocialPost[]) => 
-            page.map(post => 
-              post.id === postId 
-                ? { 
-                    ...post, 
-                    likes: wasLiked 
-                      ? Math.max((post.likes || 0) - 1, 0)  // Unlike: decrement (min 0)
-                      : (post.likes || 0) + 1                // Like: increment
-                  }
-                : post
-            )
+            page.map(post => {
+              // Check if this post matches the postId directly
+              const directMatch = post.id === postId;
+              // For grouped posts, check if any grouped activity has this postId
+              const groupedMatch = post.groupedActivities?.some((a: any) => a.postId === postId);
+              
+              if (directMatch || groupedMatch) {
+                return { 
+                  ...post, 
+                  likes: wasLiked 
+                    ? Math.max((post.likes || 0) - 1, 0)  // Unlike: decrement (min 0)
+                    : (post.likes || 0) + 1                // Like: increment
+                };
+              }
+              return post;
+            })
           )
         };
       });
