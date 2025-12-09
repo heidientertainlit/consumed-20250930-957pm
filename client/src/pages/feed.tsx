@@ -1737,6 +1737,8 @@ export default function Feed() {
                 // Filter out incorrectly formatted prediction posts
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((post: SocialPost, postIndex: number) => {
+                // Debug: Log all posts with their index
+                console.log('📝 Processing post:', { postIndex, id: post.id, type: post.type, title: post.mediaItems?.[0]?.title || post.content?.slice(0, 30) });
                 
                 // Debug: Log all post types to find rank_share
                 if ((post as any).rankId || post.type === 'rank_share' || (post as any).post_type === 'rank_share') {
