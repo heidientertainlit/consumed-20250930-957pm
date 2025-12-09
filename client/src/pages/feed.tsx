@@ -1259,6 +1259,7 @@ export default function Feed() {
 
 
   const handleLike = (postId: string) => {
+    console.log('🔴 handleLike called with postId:', postId, 'isValidUUID:', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId));
     const wasLiked = likedPosts.has(postId);
     likeMutation.mutate({ postId, wasLiked });
   };
