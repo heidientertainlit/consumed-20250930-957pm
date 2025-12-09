@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Trophy, ChevronLeft, ChevronRight, Gamepad2, Check, Star, Sparkles, X } from 'lucide-react';
+import { Brain, Vote, Trophy, ChevronLeft, ChevronRight, Gamepad2, Check, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -33,29 +33,12 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedGames, setSubmittedGames] = useState<Set<string>>(new Set());
-  const [answeredQuestions, setAnsweredQuestions] = useState<Map<string, Set<number>>>(new Map());
-  const [showResult, setShowResult] = useState<{ correct: boolean; points: number; correctAnswer?: string } | null>(null);
   const [triviaScore, setTriviaScore] = useState(0);
   const [triviaComplete, setTriviaComplete] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Auto-advance to next question after showing result
-  useEffect(() => {
-    if (showResult && currentGame?.type === 'trivia') {
-      autoAdvanceRef.current = setTimeout(() => {
-        handleNextQuestion();
-      }, 1500);
-      
-      return () => {
-        if (autoAdvanceRef.current) {
-          clearTimeout(autoAdvanceRef.current);
-        }
-      };
-    }
-  }, [showResult]);
 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['feed-games'],
@@ -154,7 +137,6 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
 
   const handlePrevGame = () => {
     setSelectedAnswer(null);
-    setShowResult(null);
     setCurrentQuestionIndex(0);
     setTriviaScore(0);
     setTriviaComplete(false);
@@ -163,34 +145,36 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
 
   const handleNextGame = () => {
     setSelectedAnswer(null);
-    setShowResult(null);
     setCurrentQuestionIndex(0);
     setTriviaScore(0);
     setTriviaComplete(false);
     setCurrentGameIndex((prev) => Math.min(availableGames.length - 1, prev + 1));
   };
 
-  const handleTriviaAnswer = () => {
+  const handleTriviaAnswer = async () => {
     if (!currentGame || !triviaQuestion || !selectedAnswer) return;
     
     const isCorrect = selectedAnswer === triviaQuestion.correct;
     const pointsPerQuestion = Math.floor(currentGame.points_reward / totalTriviaQuestions);
     const earnedPoints = isCorrect ? pointsPerQuestion : 0;
     
-    setShowResult({ 
-      correct: isCorrect, 
-      points: earnedPoints,
-      correctAnswer: triviaQuestion.correct
+    // Update score
+    const newScore = isCorrect ? triviaScore + earnedPoints : triviaScore;
+    if (isCorrect) {
+      setTriviaScore(newScore);
+    }
+    
+    // Show toast feedback
+    toast({
+      title: isCorrect ? "✓ Correct!" : "✗ Wrong",
+      description: isCorrect 
+        ? `+${earnedPoints} points` 
+        : `Answer: ${triviaQuestion.correct}`,
+      duration: 2000,
     });
     
-    if (isCorrect) {
-      setTriviaScore(prev => prev + earnedPoints);
-    }
-  };
-
-  const handleNextQuestion = async () => {
+    // Immediately go to next question
     setSelectedAnswer(null);
-    setShowResult(null);
     
     if (currentQuestionIndex < totalTriviaQuestions - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -200,12 +184,12 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
       setIsSubmitting(true);
       try {
         await submitAnswer.mutateAsync({
-          poolId: currentGame!.id,
-          answer: `Completed with score: ${triviaScore}`,
-          score: triviaScore,
-          game: currentGame!,
+          poolId: currentGame.id,
+          answer: `Completed with score: ${newScore}`,
+          score: newScore,
+          game: currentGame,
         });
-        setSubmittedGames(prev => new Set([...prev, currentGame!.id]));
+        setSubmittedGames(prev => new Set([...prev, currentGame.id]));
       } finally {
         setIsSubmitting(false);
       }
@@ -289,6 +273,18 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
 
   const Icon = getGameIcon(currentGame.type);
 
+  // Get next trivia game title for display
+  const getNextTriviaTitle = () => {
+    for (let i = currentGameIndex + 1; i < availableGames.length; i++) {
+      if (availableGames[i].type === 'trivia') {
+        return availableGames[i].title;
+      }
+    }
+    return null;
+  };
+  
+  const nextTriviaTitle = getNextTriviaTitle();
+
   // Trivia complete screen
   if (triviaComplete) {
     return (
@@ -305,28 +301,51 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
             </div>
             <Badge variant="secondary" className="bg-white/20 text-white border-0 text-xs">
               <Icon size={12} className="mr-1" />
-              {currentGame.title}
+              Complete!
             </Badge>
           </div>
         </div>
         
         <div className="p-6 text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Trophy className="text-yellow-500" size={40} />
+          <div className="w-16 h-16 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Trophy className="text-yellow-500" size={32} />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Trivia Complete!</h3>
-          <p className="text-gray-600 mb-2">{currentGame.title}</p>
-          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 mb-4">
-            <p className="text-3xl font-bold text-orange-600">{triviaScore}</p>
-            <p className="text-sm text-gray-500">points earned</p>
+          <h3 className="text-lg font-bold text-gray-900 mb-1">Trivia Complete!</h3>
+          <p className="text-sm text-gray-500 mb-3">{currentGame.title}</p>
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-3 mb-4">
+            <p className="text-2xl font-bold text-orange-600">{triviaScore}</p>
+            <p className="text-xs text-gray-500">points earned</p>
           </div>
-          <Button
-            onClick={handleFinishTrivia}
-            className="bg-purple-600 hover:bg-purple-700"
-            data-testid="button-next-trivia"
-          >
-            {currentGameIndex < availableGames.length - 1 ? 'Next Game' : 'Done'}
-          </Button>
+          
+          <div className="space-y-2">
+            {nextTriviaTitle ? (
+              <Button
+                onClick={handleFinishTrivia}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                data-testid="button-next-trivia"
+              >
+                <ChevronRight size={16} className="mr-1" />
+                Play: {nextTriviaTitle}
+              </Button>
+            ) : currentGameIndex < availableGames.length - 1 ? (
+              <Button
+                onClick={handleFinishTrivia}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                data-testid="button-next-game"
+              >
+                <ChevronRight size={16} className="mr-1" />
+                Next Game
+              </Button>
+            ) : null}
+            
+            <a 
+              href="/play" 
+              className="block w-full text-center py-2 text-sm text-purple-600 hover:text-purple-700 font-medium"
+              data-testid="link-find-more-trivia"
+            >
+              Find more trivia →
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -376,76 +395,50 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
               </div>
             </div>
 
-            {showResult ? (
-              <div className="text-center py-6">
-                {showResult.correct ? (
-                  <>
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
-                      <Sparkles className="text-green-600" size={32} />
-                    </div>
-                    <p className="text-xl font-bold text-green-600 mb-1">Correct!</p>
-                    <p className="text-sm text-gray-600">+{showResult.points} points</p>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <X className="text-red-500" size={32} />
-                    </div>
-                    <p className="text-xl font-bold text-red-600 mb-1">Not quite!</p>
-                    <p className="text-sm text-gray-600">
-                      Answer: <span className="font-medium">{showResult.correctAnswer}</span>
-                    </p>
-                  </>
-                )}
-              </div>
-            ) : (
-              <>
-                <p className="text-base font-medium text-gray-900 mb-4 leading-snug">
-                  {triviaQuestion.question}
-                </p>
+            <p className="text-base font-medium text-gray-900 mb-4 leading-snug">
+              {triviaQuestion.question}
+            </p>
 
-                <div className="space-y-2 mb-4">
-                  {triviaQuestion.options.map((option, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedAnswer(option)}
-                      disabled={isSubmitting}
-                      className={cn(
-                        "w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm",
-                        selectedAnswer === option
-                          ? "border-purple-500 bg-purple-50 text-purple-700"
-                          : "border-gray-200 hover:border-gray-300 bg-white text-gray-700"
-                      )}
-                      data-testid={`option-${idx}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{option}</span>
-                        {selectedAnswer === option && (
-                          <Check size={16} className="text-purple-600" />
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                    <span>Score: {triviaScore} pts</span>
+            <div className="space-y-2 mb-4">
+              {triviaQuestion.options.map((option, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedAnswer(option)}
+                  disabled={isSubmitting}
+                  className={cn(
+                    "w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm",
+                    selectedAnswer === option
+                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      : "border-gray-200 hover:border-gray-300 bg-white text-gray-700"
+                  )}
+                  data-testid={`option-${idx}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{option}</span>
+                    {selectedAnswer === option && (
+                      <Check size={16} className="text-purple-600" />
+                    )}
                   </div>
-                  
-                  <Button
-                    onClick={handleTriviaAnswer}
-                    disabled={!selectedAnswer || isSubmitting}
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700"
-                    data-testid="button-submit-answer"
-                  >
-                    Submit
-                  </Button>
-                </div>
-              </>
-            )}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Star size={12} className="text-yellow-500 fill-yellow-500" />
+                <span>Score: {triviaScore} pts</span>
+              </div>
+              
+              <Button
+                onClick={handleTriviaAnswer}
+                disabled={!selectedAnswer || isSubmitting}
+                size="sm"
+                className="bg-purple-600 hover:bg-purple-700"
+                data-testid="button-submit-answer"
+              >
+                Submit
+              </Button>
+            </div>
           </>
         )}
 
