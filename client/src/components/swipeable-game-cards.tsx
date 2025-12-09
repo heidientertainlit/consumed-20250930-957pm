@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 interface Game {
   id: string;
-  question: string;
+  title: string;
   options: any[];
   type: 'vote' | 'trivia' | 'predict';
   points_reward: number;
@@ -277,7 +277,7 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
         ) : (
           <>
             <p className="text-base font-medium text-gray-900 mb-4 leading-snug">
-              {currentGame.question}
+              {currentGame.title}
             </p>
 
             <div className="space-y-2 mb-4">
