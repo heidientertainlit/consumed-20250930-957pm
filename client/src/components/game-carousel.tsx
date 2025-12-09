@@ -73,13 +73,16 @@ export default function GameCarousel({ className }: GameCarouselProps) {
     },
   });
 
-  // Filter out games user already played, and filter out invalid/short titles
+  // Filter out games user already played and games with invalid/incomplete data
+  // MUST match SwipeableGameCards filtering to ensure clicked games are found
   const availableGames = games.filter((game) => {
     if (userPredictions[game.id]) return false;
+    // Ensure game has required fields
+    if (!game.id || !game.title || !game.type) return false;
     // Filter out games with invalid titles (too short, fragments, etc)
     const title = game.title?.trim() || '';
-    if (title.length < 8) return false; // Must be at least 8 chars
-    if (!title.includes(' ')) return false; // Must have at least 2 words
+    if (title.length < 8) return false;
+    if (!title.includes(' ')) return false;
     // Filter out question fragments that don't end properly
     if (title.toLowerCase().startsWith('does ') && !title.includes('?')) return false;
     if (title.toLowerCase().startsWith('will ') && !title.includes('?')) return false;

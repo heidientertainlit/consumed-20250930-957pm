@@ -72,9 +72,22 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
     },
   });
 
-  const availableGames = games.filter(
-    (game) => !userPredictions[game.id] && !submittedGames.has(game.id)
-  );
+  // Filter out games user already played and games with invalid/incomplete data
+  const availableGames = games.filter((game) => {
+    if (userPredictions[game.id] || submittedGames.has(game.id)) return false;
+    // Ensure game has required fields
+    if (!game.id || !game.title || !game.type) return false;
+    // Filter out games with invalid titles (too short, fragments, etc)
+    const title = game.title?.trim() || '';
+    if (title.length < 8) return false;
+    if (!title.includes(' ')) return false;
+    // Filter out question fragments that don't end properly
+    if (title.toLowerCase().startsWith('does ') && !title.includes('?')) return false;
+    if (title.toLowerCase().startsWith('will ') && !title.includes('?')) return false;
+    // Ensure options exist for vote/predict types
+    if ((game.type === 'vote' || game.type === 'predict') && (!game.options || game.options.length < 2)) return false;
+    return true;
+  });
 
   // Jump to the selected game when initialGameId is provided
   if (initialGameId && !initialIndexSet && availableGames.length > 0) {
@@ -127,6 +140,11 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
   });
 
   const currentGame = availableGames[currentGameIndex];
+
+  // Safety: if currentGameIndex is out of bounds, reset to 0
+  if (!currentGame && availableGames.length > 0 && currentGameIndex !== 0) {
+    setCurrentGameIndex(0);
+  }
 
   // For trivia games, get the current question from the nested structure
   const getCurrentTriviaQuestion = (): TriviaQuestion | null => {
