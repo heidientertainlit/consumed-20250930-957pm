@@ -164,10 +164,21 @@ serve(async (req) => {
 
       console.log('Prediction pools loaded:', predictionPoolMap.size);
 
-      // Helper function to ensure image URL is present
+      // Helper function to ensure image URL is present and properly formatted
       const ensureImageUrl = (imageUrl: string | null, externalId: string | null, externalSource: string | null): string => {
-        if (imageUrl) return imageUrl;
-        return '';
+        if (!imageUrl) return '';
+        
+        // If it's already a full URL, return as-is
+        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+          return imageUrl;
+        }
+        
+        // If it's a relative TMDB path (starts with /), convert to full URL
+        if (imageUrl.startsWith('/') && (externalSource === 'tmdb' || externalSource === 'movie' || externalSource === 'tv')) {
+          return `https://image.tmdb.org/t/p/w500${imageUrl}`;
+        }
+        
+        return imageUrl;
       };
 
       // Create mapping from pool_id to media data from associated social_posts
@@ -511,7 +522,10 @@ serve(async (req) => {
 
       console.log('DEBUG: Vote counts:', voteCounts);
 
-      // Group posts by media (media_external_id + media_external_source)
+      // DISABLED: Group posts by media - treating all posts individually for now
+      // TODO: Re-enable grouping when bugs are fixed
+      const ENABLE_MEDIA_GROUPING = false;
+      
       const mediaGroups = new Map<string, any[]>();
       const nonMediaPosts: any[] = [];
 
@@ -519,12 +533,17 @@ serve(async (req) => {
         const hasMedia = post.media_title && post.media_title.trim() !== '' && post.media_external_id;
         
         // rank_share posts need special handling - don't group them with media
-        if (hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia' && post.post_type !== 'rank_share') {
+        // When grouping is disabled, treat all media posts as single posts (groupPosts.length === 1 path)
+        if (ENABLE_MEDIA_GROUPING && hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia' && post.post_type !== 'rank_share') {
           const mediaKey = `${post.media_external_source}:${post.media_external_id}`;
           if (!mediaGroups.has(mediaKey)) {
             mediaGroups.set(mediaKey, []);
           }
           mediaGroups.get(mediaKey)!.push(post);
+        } else if (hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia' && post.post_type !== 'rank_share') {
+          // Grouping disabled - put each media post in its own group so it goes through the single-post path
+          const uniqueKey = `${post.media_external_source}:${post.media_external_id}:${post.id}`;
+          mediaGroups.set(uniqueKey, [post]);
         } else {
           nonMediaPosts.push(post);
         }
@@ -581,7 +600,7 @@ serve(async (req) => {
               title: post.media_title || '',
               creator: post.media_creator || '',
               mediaType: post.media_type || 'unknown',
-              imageUrl: post.image_url || '',
+              imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source),
               rating: post.rating,
               externalId: post.media_external_id || '',
               externalSource: post.media_external_source || ''
@@ -639,7 +658,7 @@ serve(async (req) => {
               title: firstPost.media_title || '',
               creator: firstPost.media_creator || '',
               mediaType: firstPost.media_type || 'unknown',
-              imageUrl: firstPost.image_url || '',
+              imageUrl: ensureImageUrl(firstPost.image_url, firstPost.media_external_id, firstPost.media_external_source),
               externalId: firstPost.media_external_id || '',
               externalSource: firstPost.media_external_source || ''
             }],
@@ -731,7 +750,7 @@ serve(async (req) => {
             title: post.media_title,
             creator: post.media_creator || '',
             mediaType: post.media_type || '',
-            imageUrl: post.image_url || '',
+            imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source),
             rating: post.rating,
             externalId: post.media_external_id || '',
             externalSource: post.media_external_source || '',
