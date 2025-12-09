@@ -527,6 +527,7 @@ export default function Feed() {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const likedPostsInitialized = useRef(false); // Track if we've done initial sync
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("");
@@ -759,15 +760,16 @@ export default function Feed() {
     }
   }, [feedError]);
 
-  // Initialize likedPosts from feed data
+  // Initialize likedPosts from feed data - only on first load
   useEffect(() => {
-    if (socialPosts) {
+    if (socialPosts && !likedPostsInitialized.current) {
       const likedIds = new Set(
         socialPosts
           .filter(post => post.likedByCurrentUser)
           .map(post => post.id)
       );
       setLikedPosts(likedIds);
+      likedPostsInitialized.current = true;
       console.log('✅ Initialized liked posts:', likedIds.size);
     }
   }, [socialPosts]);
@@ -966,10 +968,10 @@ export default function Feed() {
         setLikedPosts(context.previousLikedPosts);
       }
     },
-    onSettled: () => {
-      // Always refetch after mutation (success or error)
-      console.log('🔄 Refetching social feed after like mutation');
-      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+    onSuccess: () => {
+      console.log('✅ Like mutation succeeded - optimistic update is correct');
+      // Don't refetch immediately - let the optimistic update stand
+      // The next natural feed refresh will sync the data
     },
   });
 
