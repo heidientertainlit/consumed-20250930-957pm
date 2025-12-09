@@ -28,14 +28,16 @@ export default function PlayPollsPage() {
     setIsTrackModalOpen(true);
   };
 
-  // Fetch games directly from Supabase
+  // Fetch games directly from Supabase - only curated Consumed polls
   const { data: games = [], isLoading } = useQuery({
-    queryKey: ['/api/predictions/pools'],
+    queryKey: ['/api/predictions/polls'],
     queryFn: async () => {
       const { data: pools, error } = await supabase
         .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
+        .eq('type', 'vote')
+        .like('id', 'consumed-%')
         .order('created_at', { ascending: false });
       if (error) throw new Error('Failed to fetch games');
       return pools || [];

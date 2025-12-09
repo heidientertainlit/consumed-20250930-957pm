@@ -41,9 +41,9 @@ export default function PlayTriviaPage() {
     setIsTrackModalOpen(true);
   };
 
-  // Fetch games directly from Supabase
+  // Fetch trivia games directly from Supabase - only trivia type
   const { data: games = [], isLoading } = useQuery({
-    queryKey: ['/api/predictions/pools'],
+    queryKey: ['/api/predictions/trivia'],
     queryFn: async () => {
       const { createClient } = await import('@supabase/supabase-js');
       const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -53,6 +53,7 @@ export default function PlayTriviaPage() {
         .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
+        .eq('type', 'trivia')
         .order('created_at', { ascending: false });
       if (error) throw new Error('Failed to fetch games');
       return pools || [];

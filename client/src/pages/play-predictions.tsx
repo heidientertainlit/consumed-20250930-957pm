@@ -29,7 +29,7 @@ export default function PlayPredictionsPage() {
     setIsTrackModalOpen(true);
   };
 
-  // Fetch games directly from Supabase
+  // Fetch games directly from Supabase - only curated Consumed content
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['/api/predictions/pools'],
     queryFn: async () => {
@@ -37,6 +37,8 @@ export default function PlayPredictionsPage() {
         .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
+        .eq('type', 'predict')
+        .like('id', 'consumed-%')
         .order('created_at', { ascending: false });
       if (error) throw new Error('Failed to fetch games');
       return pools || [];
