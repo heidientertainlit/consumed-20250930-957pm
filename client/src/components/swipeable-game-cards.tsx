@@ -25,10 +25,12 @@ interface Game {
 
 interface SwipeableGameCardsProps {
   className?: string;
+  initialGameId?: string;
 }
 
-export default function SwipeableGameCards({ className }: SwipeableGameCardsProps) {
+export default function SwipeableGameCards({ className, initialGameId }: SwipeableGameCardsProps) {
   const [currentGameIndex, setCurrentGameIndex] = useState(0);
+  const [initialIndexSet, setInitialIndexSet] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,6 +75,15 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
   const availableGames = games.filter(
     (game) => !userPredictions[game.id] && !submittedGames.has(game.id)
   );
+
+  // Jump to the selected game when initialGameId is provided
+  if (initialGameId && !initialIndexSet && availableGames.length > 0) {
+    const targetIndex = availableGames.findIndex(g => g.id === initialGameId);
+    if (targetIndex !== -1 && targetIndex !== currentGameIndex) {
+      setCurrentGameIndex(targetIndex);
+    }
+    setInitialIndexSet(true);
+  }
 
   const submitAnswer = useMutation({
     mutationFn: async ({ poolId, answer, score, game }: { poolId: string; answer: string; score?: number; game: Game }) => {

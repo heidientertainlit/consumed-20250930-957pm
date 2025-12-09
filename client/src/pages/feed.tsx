@@ -1738,8 +1738,9 @@ export default function Feed() {
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((post: SocialPost, postIndex: number) => {
                 // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
-                const shouldShowGameCarousel = postIndex === 2; // After 3rd post
-                const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0;
+                // Show game carousel after 3rd post, then every 15 posts
+                const shouldShowGameCarousel = postIndex === 2 || (postIndex > 2 && (postIndex - 2) % 15 === 0);
+                const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0 && !shouldShowGameCarousel;
                 
                 // Rotate through different carousel types
                 const carouselTypes = [

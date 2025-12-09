@@ -19,8 +19,27 @@ interface GameCarouselProps {
   className?: string;
 }
 
+// Fisher-Yates shuffle with seed for consistent shuffling within session
+function shuffleArray<T>(array: T[], seed: number): T[] {
+  const shuffled = [...array];
+  let currentIndex = shuffled.length;
+  let seededRandom = () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  };
+  while (currentIndex > 0) {
+    const randomIndex = Math.floor(seededRandom() * currentIndex);
+    currentIndex--;
+    [shuffled[currentIndex], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[currentIndex]];
+  }
+  return shuffled;
+}
+
+// Use session-based seed for consistent shuffling within page session
+const sessionSeed = Math.floor(Date.now() / 60000); // Changes every minute
+
 export default function GameCarousel({ className }: GameCarouselProps) {
-  const [selectedGameIndex, setSelectedGameIndex] = useState<number | null>(null);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
 
   const { data: games = [], isLoading } = useQuery({
@@ -33,7 +52,8 @@ export default function GameCarousel({ className }: GameCarouselProps) {
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw new Error('Failed to fetch games');
-      return (pools || []) as Game[];
+      // Shuffle games for variety
+      return shuffleArray((pools || []) as Game[], sessionSeed);
     },
   });
 
@@ -161,7 +181,7 @@ export default function GameCarousel({ className }: GameCarouselProps) {
             return (
               <button
                 key={game.id}
-                onClick={() => setSelectedGameIndex(index)}
+                onClick={() => setSelectedGameId(game.id)}
                 className="flex-shrink-0 w-28 group"
                 data-testid={`game-card-${game.id}`}
               >
@@ -187,16 +207,16 @@ export default function GameCarousel({ className }: GameCarouselProps) {
         </div>
       </div>
 
-      <Dialog open={selectedGameIndex !== null} onOpenChange={(open) => !open && setSelectedGameIndex(null)}>
+      <Dialog open={selectedGameId !== null} onOpenChange={(open) => !open && setSelectedGameId(null)}>
         <DialogContent className="p-0 max-w-md border-0 bg-transparent shadow-none">
           <button
-            onClick={() => setSelectedGameIndex(null)}
+            onClick={() => setSelectedGameId(null)}
             className="absolute -top-10 right-0 text-white hover:text-gray-300 z-50"
             data-testid="button-close-game"
           >
             <X size={24} />
           </button>
-          <SwipeableGameCards />
+          <SwipeableGameCards initialGameId={selectedGameId || undefined} />
         </DialogContent>
       </Dialog>
     </>
