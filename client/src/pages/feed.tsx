@@ -1400,36 +1400,36 @@ export default function Feed() {
     });
   };
 
-  // Trending queries disabled - only showing Recommended for you
-  // const { data: trendingTVShows = [] } = useQuery({
-  //   queryKey: ['trending-tv-shows'],
-  //   queryFn: async () => {
-  //     try {
-  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
-  //         headers: {
-  //           'Authorization': `Bearer ${anonKey}`,
-  //           'Content-Type': 'application/json',
-  //         },
-  //       });
-  //       if (!response.ok) {
-  //         console.error('Failed to fetch trending TV shows');
-  //         return [];
-  //       }
-  //       const data = await response.json();
-  //       // Add externalId and externalSource for MediaCarousel compatibility
-  //       return data.map((item: any) => ({
-  //         ...item,
-  //         externalId: item.id,
-  //         externalSource: 'tmdb'
-  //       }));
-  //     } catch (error) {
-  //       console.error('Error fetching trending TV shows:', error);
-  //       return [];
-  //     }
-  //   },
-  //   staleTime: 1000 * 60 * 60, // Cache for 1 hour
-  // });
+  // Fetch trending TV shows
+  const { data: trendingTVShows = [] } = useQuery({
+    queryKey: ['trending-tv-shows'],
+    queryFn: async () => {
+      try {
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
+          headers: {
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          console.error('Failed to fetch trending TV shows');
+          return [];
+        }
+        const data = await response.json();
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'tmdb',
+          mediaType: 'tv'
+        }));
+      } catch (error) {
+        console.error('Error fetching trending TV shows:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60,
+  });
 
   // Fetch NY Times bestseller books
   const { data: bestsellerBooks = [] } = useQuery({
@@ -1491,33 +1491,33 @@ export default function Feed() {
   //   staleTime: 1000 * 60 * 60,
   // });
 
-  // const { data: trendingPodcasts = [] } = useQuery({
-  //   queryKey: ['trending-podcasts'],
-  //   queryFn: async () => {
-  //     try {
-  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-podcasts`, {
-  //         headers: {
-  //           'Authorization': `Bearer ${anonKey}`,
-  //           'Content-Type': 'application/json',
-  //         },
-  //       });
-  //       if (!response.ok) return [];
-  //       const data = await response.json();
-  //       // Add externalId and externalSource for MediaCarousel compatibility
-  //       return data.map((item: any) => ({
-  //         ...item,
-  //         externalId: item.id,
-  //         externalSource: 'spotify',
-  //         mediaType: 'podcast'
-  //       }));
-  //     } catch (error) {
-  //       console.error('Error fetching trending podcasts:', error);
-  //       return [];
-  //     }
-  //   },
-  //   staleTime: 1000 * 60 * 60,
-  // });
+  // Fetch trending podcasts
+  const { data: trendingPodcasts = [] } = useQuery({
+    queryKey: ['trending-podcasts'],
+    queryFn: async () => {
+      try {
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-podcasts`, {
+          headers: {
+            'Authorization': `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.map((item: any) => ({
+          ...item,
+          externalId: item.id,
+          externalSource: 'spotify',
+          mediaType: 'podcast'
+        }));
+      } catch (error) {
+        console.error('Error fetching trending podcasts:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60,
+  });
 
   // Fetch DNA-based personalized recommendations (cached, instant <1s load!)
   const fetchRecommendations = async () => {
@@ -1809,12 +1809,18 @@ export default function Feed() {
                   );
                 }
 
-                // Pattern: Show game carousel after first 3 posts, then recommended carousel every 10 posts
+                // Pattern: Show game carousel after first 3 posts, then rotating carousels every 10 posts
                 const shouldShowGameCarousel = postIndex === 2; // After 3rd post
                 const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0;
                 
-                // Only show Recommended for you carousel
-                const currentCarousel = { type: 'mixed', title: 'Recommended for you', items: recommendedContent };
+                // Rotate through different carousel types
+                const carouselTypes = [
+                  { type: 'tv', title: 'Trending in TV', items: trendingTVShows },
+                  { type: 'podcast', title: 'Trending in Podcasts', items: trendingPodcasts },
+                  { type: 'book', title: 'Trending in Books', items: bestsellerBooks },
+                ];
+                const carouselIndex = Math.floor((postIndex + 1) / 10) - 1;
+                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length] || carouselTypes[0];
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
@@ -1825,7 +1831,7 @@ export default function Feed() {
                       </div>
                     )}
 
-                    {/* Every 10 posts: Show Recommended Carousel */}
+                    {/* Every 10 posts: Show rotating trending carousels */}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
                       <div className="mb-4">
                         <MediaCarousel
