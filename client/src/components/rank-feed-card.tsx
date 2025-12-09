@@ -177,7 +177,7 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
               {author.profile_image_url ? (
                 <img src={author.profile_image_url} alt="" className="w-full h-full rounded-full object-cover" />
               ) : (
-                author.display_name?.charAt(0) || author.user_name.charAt(0).toUpperCase()
+                author.user_name.charAt(0).toUpperCase()
               )}
             </div>
           </Link>
@@ -185,10 +185,9 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
             <div className="flex items-center gap-2">
               <Link href={`/profile/${author.user_name}`}>
                 <span className="font-semibold text-gray-900 hover:underline cursor-pointer">
-                  {author.display_name || author.user_name}
+                  @{author.user_name}
                 </span>
               </Link>
-              <span className="text-gray-500 text-sm">@{author.user_name}</span>
               {createdAt && <span className="text-gray-400 text-sm">· {formatTimeAgo(createdAt)}</span>}
             </div>
             <p className="text-xs text-gray-500">shared a ranked list</p>
