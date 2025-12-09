@@ -284,12 +284,71 @@ serve(async (req) => {
       const uniqueListIds = [...new Set(listIds)];
       let listDataMap = new Map<string, { title: string; items: any[]; totalCount: number }>();
       
-      if (uniqueListIds.length > 0) {
+      // For added_to_list posts WITHOUT list_id, try to infer the list from content
+      // Content format: "Added X to Currently" or "Added X to Want To", etc.
+      const postsNeedingListLookup = posts?.filter(p => 
+        p.post_type === 'added_to_list' && !p.list_id && p.content
+      ) || [];
+      
+      const postToListIdMap = new Map<string, string>(); // post_id -> list_id
+      
+      if (postsNeedingListLookup.length > 0) {
+        console.log('Found posts needing list lookup:', postsNeedingListLookup.length);
+        
+        // Parse list names from content and group by user
+        const userListLookups: { [userId: string]: Set<string> } = {};
+        const postListNameMap: { [postId: string]: string } = {};
+        
+        for (const post of postsNeedingListLookup) {
+          // Match "to {ListName}" at the end of content
+          const match = post.content.match(/to\s+(Currently|Want To|Finished|Did Not Finish|Favorites)\s*$/i);
+          if (match) {
+            const listName = match[1];
+            if (!userListLookups[post.user_id]) {
+              userListLookups[post.user_id] = new Set();
+            }
+            userListLookups[post.user_id].add(listName);
+            postListNameMap[post.id] = listName;
+          }
+        }
+        
+        // Fetch lists for each user
+        for (const [userId, listNames] of Object.entries(userListLookups)) {
+          const { data: userLists } = await supabaseAdmin
+            .from('lists')
+            .select('id, title')
+            .eq('user_id', userId)
+            .in('title', Array.from(listNames));
+          
+          if (userLists) {
+            const listTitleToId = new Map(userLists.map(l => [l.title.toLowerCase(), l.id]));
+            
+            // Map posts to their list IDs
+            for (const post of postsNeedingListLookup.filter(p => p.user_id === userId)) {
+              const listName = postListNameMap[post.id];
+              if (listName) {
+                const listId = listTitleToId.get(listName.toLowerCase());
+                if (listId) {
+                  postToListIdMap.set(post.id, listId);
+                  uniqueListIds.push(listId);
+                }
+              }
+            }
+          }
+        }
+        
+        console.log('Inferred list IDs for posts:', postToListIdMap.size);
+      }
+      
+      // Deduplicate list IDs
+      const allListIds = [...new Set(uniqueListIds)];
+      
+      if (allListIds.length > 0) {
         // Fetch list titles
         const { data: lists, error: listsError } = await supabaseAdmin
           .from('lists')
           .select('id, title, user_id')
-          .in('id', uniqueListIds);
+          .in('id', allListIds);
         
         if (listsError) {
           console.error('Error fetching lists:', listsError);
@@ -299,7 +358,7 @@ serve(async (req) => {
         const { data: allListItems, error: itemsError } = await supabaseAdmin
           .from('list_items')
           .select('id, list_id, title, media_type, creator, image_url, external_id, external_source, created_at')
-          .in('list_id', uniqueListIds)
+          .in('list_id', allListIds)
           .order('created_at', { ascending: false });
         
         if (itemsError) {
@@ -476,8 +535,9 @@ serve(async (req) => {
           const post = groupPosts[0];
           const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
           
-          // Get list data for added_to_list posts
-          const listData = post.list_id ? listDataMap.get(post.list_id) : null;
+          // Get list data for added_to_list posts - use stored list_id or inferred from content
+          const effectiveListId = post.list_id || postToListIdMap.get(post.id);
+          const listData = effectiveListId ? listDataMap.get(effectiveListId) : null;
           
           groupedItems.push({
             id: post.id,
@@ -498,7 +558,7 @@ serve(async (req) => {
             rating: post.rating,
             progress: post.progress,
             containsSpoilers: post.contains_spoilers || false,
-            listId: post.list_id || null,
+            listId: effectiveListId || null,
             listData: listData ? {
               title: listData.title,
               items: listData.items.map(item => ({
@@ -624,8 +684,9 @@ serve(async (req) => {
           };
         }
         
-        // Get list data if post has list_id
-        const listData = post.list_id ? listDataMap.get(post.list_id) : null;
+        // Get list data if post has list_id - use stored list_id or inferred from content
+        const effectiveListId = post.list_id || postToListIdMap.get(post.id);
+        const listData = effectiveListId ? listDataMap.get(effectiveListId) : null;
         
         return {
           id: post.id,
@@ -647,7 +708,7 @@ serve(async (req) => {
           progress: post.progress,
           rankId: post.rank_id || null,
           rankData: rankData || null,
-          listId: post.list_id || null,
+          listId: effectiveListId || null,
           listData: listData ? {
             title: listData.title,
             items: listData.items.map(item => ({
