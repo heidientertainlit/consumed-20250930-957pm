@@ -204,20 +204,17 @@ export default function GameCarousel({ className }: GameCarouselProps) {
             );
           })}
           
-          {/* Play more games link */}
+        </div>
+        
+        {/* Play more games link below carousel */}
+        <div className="px-4 pb-4">
           <Link 
             href="/play"
-            className="flex-shrink-0 w-28 group"
+            className="flex items-center justify-center gap-2 text-purple-600 hover:text-purple-700 text-sm font-medium py-2"
             data-testid="link-play-more-games"
           >
-            <div className="relative w-28 h-36 rounded-xl overflow-hidden mb-2 shadow-md group-hover:shadow-lg transition-shadow bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 group-hover:border-purple-400">
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
-                <ArrowRight className="text-purple-600 mb-1 group-hover:translate-x-1 transition-transform" size={24} />
-                <span className="text-purple-600 text-xs font-semibold text-center">
-                  Play more games
-                </span>
-              </div>
-            </div>
+            <span>Play more games</span>
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>
