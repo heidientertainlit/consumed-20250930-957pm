@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { ArrowBigUp, ArrowBigDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic } from "lucide-react";
+import { ArrowBigUp, ArrowBigDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic, Heart, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { CommentsSection } from "@/components/comments-section";
 
 interface RankItemWithVotes {
   id: string;
@@ -37,6 +38,13 @@ interface RankFeedCardProps {
   };
   caption?: string;
   createdAt?: string;
+  postId?: string;
+  likesCount?: number;
+  commentsCount?: number;
+  isLiked?: boolean;
+  onLike?: (postId: string) => void;
+  onComment?: (postId: string, content: string) => void;
+  fetchComments?: (postId: string) => Promise<any[]>;
 }
 
 const getMediaIcon = (mediaType?: string) => {
