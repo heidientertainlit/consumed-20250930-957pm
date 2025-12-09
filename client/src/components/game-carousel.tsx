@@ -81,11 +81,13 @@ export default function GameCarousel({ className }: GameCarouselProps) {
     if (!game.id || !game.title || !game.type) return false;
     // Filter out games with invalid titles (too short, fragments, etc)
     const title = game.title?.trim() || '';
-    if (title.length < 8) return false;
+    if (title.length < 20) return false; // Must be descriptive
     if (!title.includes(' ')) return false;
     // Filter out question fragments that don't end properly
     if (title.toLowerCase().startsWith('does ') && !title.includes('?')) return false;
     if (title.toLowerCase().startsWith('will ') && !title.includes('?')) return false;
+    // Only show Consumed-curated content (IDs starting with 'consumed-' or trivia)
+    if (!game.id.startsWith('consumed-') && game.type !== 'trivia') return false;
     return true;
   });
 

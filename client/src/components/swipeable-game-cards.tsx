@@ -73,17 +73,20 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
   });
 
   // Filter out games user already played and games with invalid/incomplete data
+  // MUST match GameCarousel filtering to ensure clicked games are found
   const availableGames = games.filter((game) => {
     if (userPredictions[game.id] || submittedGames.has(game.id)) return false;
     // Ensure game has required fields
     if (!game.id || !game.title || !game.type) return false;
     // Filter out games with invalid titles (too short, fragments, etc)
     const title = game.title?.trim() || '';
-    if (title.length < 8) return false;
+    if (title.length < 20) return false; // Must be descriptive
     if (!title.includes(' ')) return false;
     // Filter out question fragments that don't end properly
     if (title.toLowerCase().startsWith('does ') && !title.includes('?')) return false;
     if (title.toLowerCase().startsWith('will ') && !title.includes('?')) return false;
+    // Only show Consumed-curated content (IDs starting with 'consumed-' or trivia)
+    if (!game.id.startsWith('consumed-') && game.type !== 'trivia') return false;
     // Ensure options exist for vote/predict types
     if ((game.type === 'vote' || game.type === 'predict') && (!game.options || game.options.length < 2)) return false;
     return true;
