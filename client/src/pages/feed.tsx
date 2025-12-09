@@ -5,7 +5,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
-import SwipeableGameCards from "@/components/swipeable-game-cards";
+import GameCarousel from "@/components/game-carousel";
 import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
@@ -1809,9 +1809,8 @@ export default function Feed() {
                   );
                 }
 
-                // Pattern: Every 5 posts, show a swipeable game card
-                // Every 10 posts (after 2nd game card), also show recommended carousel
-                const shouldShowGameCard = (postIndex + 1) % 5 === 0 && postIndex > 0;
+                // Pattern: Show game carousel after first 3 posts, then recommended carousel every 10 posts
+                const shouldShowGameCarousel = postIndex === 2; // After 3rd post
                 const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0;
                 
                 // Only show Recommended for you carousel
@@ -1819,10 +1818,10 @@ export default function Feed() {
 
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
-                    {/* Every 5 posts: Show Swipeable Game Cards */}
-                    {shouldShowGameCard && (
+                    {/* Show Game Carousel once near the top */}
+                    {shouldShowGameCarousel && (
                       <div className="mb-4">
-                        <SwipeableGameCards />
+                        <GameCarousel />
                       </div>
                     )}
 
