@@ -38,8 +38,24 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
   const [triviaScore, setTriviaScore] = useState(0);
   const [triviaComplete, setTriviaComplete] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Auto-advance to next question after showing result
+  useEffect(() => {
+    if (showResult && currentGame?.type === 'trivia') {
+      autoAdvanceRef.current = setTimeout(() => {
+        handleNextQuestion();
+      }, 1500);
+      
+      return () => {
+        if (autoAdvanceRef.current) {
+          clearTimeout(autoAdvanceRef.current);
+        }
+      };
+    }
+  }, [showResult]);
 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['feed-games'],
@@ -361,13 +377,13 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
             </div>
 
             {showResult ? (
-              <div className="text-center py-4">
+              <div className="text-center py-6">
                 {showResult.correct ? (
                   <>
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
                       <Sparkles className="text-green-600" size={32} />
                     </div>
-                    <p className="text-lg font-bold text-green-600 mb-1">Correct!</p>
+                    <p className="text-xl font-bold text-green-600 mb-1">Correct!</p>
                     <p className="text-sm text-gray-600">+{showResult.points} points</p>
                   </>
                 ) : (
@@ -375,19 +391,12 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <X className="text-red-500" size={32} />
                     </div>
-                    <p className="text-lg font-bold text-red-600 mb-1">Not quite!</p>
+                    <p className="text-xl font-bold text-red-600 mb-1">Not quite!</p>
                     <p className="text-sm text-gray-600">
-                      The answer was: <span className="font-medium">{showResult.correctAnswer}</span>
+                      Answer: <span className="font-medium">{showResult.correctAnswer}</span>
                     </p>
                   </>
                 )}
-                <Button
-                  onClick={handleNextQuestion}
-                  className="mt-4 bg-purple-600 hover:bg-purple-700"
-                  data-testid="button-next-question"
-                >
-                  {currentQuestionIndex < totalTriviaQuestions - 1 ? 'Next Question' : 'See Results'}
-                </Button>
               </div>
             ) : (
               <>
