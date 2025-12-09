@@ -381,11 +381,13 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
         {/* TRIVIA TYPE */}
         {currentGame.type === 'trivia' && triviaQuestion && (
           <>
+            {/* Game title - prominent */}
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{currentGame.title}</h2>
+            
             {/* Progress bar for trivia */}
-            <div className="mb-3">
+            <div className="mb-4">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>{currentGame.title}</span>
-                <span>Q{currentQuestionIndex + 1}/{totalTriviaQuestions}</span>
+                <span>Question {currentQuestionIndex + 1} of {totalTriviaQuestions}</span>
               </div>
               <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div 
@@ -395,7 +397,7 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
               </div>
             </div>
 
-            <p className="text-base font-medium text-gray-900 mb-4 leading-snug">
+            <p className="text-sm text-gray-700 mb-4 leading-snug">
               {triviaQuestion.question}
             </p>
 
@@ -454,9 +456,9 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
               <a
                 href="/play"
                 className="text-xs text-purple-600 hover:text-purple-700 font-medium"
-                data-testid="link-find-trivia"
+                data-testid="link-find-games"
               >
-                Find more trivia
+                Find more games
               </a>
             </div>
           </>
