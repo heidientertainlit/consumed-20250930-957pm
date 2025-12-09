@@ -885,12 +885,12 @@ export default function Feed() {
 
   // Like mutation with optimistic updates
   const likeMutation = useMutation({
-    mutationFn: async ({ postId }: { postId: string; wasLiked: boolean }) => {
-      console.log('❤️ Submitting like:', { postId });
+    mutationFn: async ({ postId, wasLiked }: { postId: string; wasLiked: boolean }) => {
+      console.log('❤️ Submitting like:', { postId, wasLiked, method: wasLiked ? 'DELETE' : 'POST' });
       if (!session?.access_token) throw new Error('Not authenticated');
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-like`, {
-        method: 'POST',
+        method: wasLiked ? 'DELETE' : 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
