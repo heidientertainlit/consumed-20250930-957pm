@@ -1737,23 +1737,43 @@ export default function Feed() {
                 // Filter out incorrectly formatted prediction posts
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((post: SocialPost, postIndex: number) => {
-                // Debug: Log all posts with their index
-                console.log('📝 Processing post:', { postIndex, id: post.id, type: post.type, title: post.mediaItems?.[0]?.title || post.content?.slice(0, 30) });
+                // Carousel logic FIRST - before any early returns
+                // Show game carousel after first 3 posts, then rotating carousels every 10 posts
+                const shouldShowGameCarousel = postIndex === 2; // After 3rd post
+                const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0;
                 
-                // Debug: Log all post types to find rank_share
-                if ((post as any).rankId || post.type === 'rank_share' || (post as any).post_type === 'rank_share') {
-                  console.log('🔍 Found potential rank post:', {
-                    id: post.id,
-                    type: post.type,
-                    rankId: (post as any).rankId,
-                    hasRankData: !!(post as any).rankData,
-                    rankDataItems: (post as any).rankData?.items?.length
-                  });
-                }
+                // Rotate through different carousel types
+                const carouselTypes = [
+                  { type: 'tv', title: 'Trending in TV', items: trendingTVShows },
+                  { type: 'podcast', title: 'Trending in Podcasts', items: trendingPodcasts },
+                  { type: 'book', title: 'Trending in Books', items: bestsellerBooks },
+                ];
+                const carouselIndex = Math.floor((postIndex + 1) / 10) - 1;
+                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length] || carouselTypes[0];
+                
+                // Carousel elements to prepend to any post type
+                const carouselElements = (
+                  <>
+                    {shouldShowGameCarousel && (
+                      <div className="mb-4">
+                        <GameCarousel />
+                      </div>
+                    )}
+                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
+                      <div className="mb-4">
+                        <MediaCarousel
+                          title={currentCarousel.title}
+                          mediaType={currentCarousel.type}
+                          items={currentCarousel.items}
+                          onItemClick={handleMediaClick}
+                        />
+                      </div>
+                    )}
+                  </>
+                );
                 
                 // Check if this item is a prediction from the API
                 if (post.type === 'prediction' && (post as any).question) {
-                  // Transform prediction post data for the card component
                   const predPost = post as any;
                   const predictionCardData = {
                     ...post,
@@ -1777,10 +1797,13 @@ export default function Feed() {
                   };
 
                   return (
-                    <div key={`prediction-${post.id}`} className="mb-4">
-                      <CollaborativePredictionCard 
-                        prediction={predictionCardData as any}
-                      />
+                    <div key={`prediction-${post.id}`}>
+                      {carouselElements}
+                      <div className="mb-4">
+                        <CollaborativePredictionCard 
+                          prediction={predictionCardData as any}
+                        />
+                      </div>
                     </div>
                   );
                 }
@@ -1788,66 +1811,29 @@ export default function Feed() {
                 // Check if this item is a rank_share post
                 if (post.type === 'rank_share' && (post as any).rankData) {
                   const rankPost = post as any;
-                  console.log('🏆 Rank share post:', {
-                    postId: post.id,
-                    rankData: rankPost.rankData,
-                    items: rankPost.rankData?.items,
-                    itemCount: rankPost.rankData?.items?.length
-                  });
                   return (
-                    <div key={`rank-${post.id}`} className="mb-4">
-                      <RankFeedCard
-                        rank={rankPost.rankData}
-                        author={{
-                          id: post.user?.id || '',
-                          user_name: post.user?.username || '',
-                          display_name: post.user?.displayName,
-                          profile_image_url: post.user?.avatar
-                        }}
-                        caption={post.content}
-                        createdAt={post.timestamp}
-                      />
+                    <div key={`rank-${post.id}`}>
+                      {carouselElements}
+                      <div className="mb-4">
+                        <RankFeedCard
+                          rank={rankPost.rankData}
+                          author={{
+                            id: post.user?.id || '',
+                            user_name: post.user?.username || '',
+                            display_name: post.user?.displayName,
+                            profile_image_url: post.user?.avatar
+                          }}
+                          caption={post.content}
+                          createdAt={post.timestamp}
+                        />
+                      </div>
                     </div>
                   );
                 }
 
-                // Pattern: Show game carousel after first 3 posts, then rotating carousels every 10 posts
-                const shouldShowGameCarousel = postIndex === 2; // After 3rd post
-                const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0;
-                
-                if (shouldShowGameCarousel) {
-                  console.log('🎮 Feed: Rendering GameCarousel at postIndex', postIndex);
-                }
-                
-                // Rotate through different carousel types
-                const carouselTypes = [
-                  { type: 'tv', title: 'Trending in TV', items: trendingTVShows },
-                  { type: 'podcast', title: 'Trending in Podcasts', items: trendingPodcasts },
-                  { type: 'book', title: 'Trending in Books', items: bestsellerBooks },
-                ];
-                const carouselIndex = Math.floor((postIndex + 1) / 10) - 1;
-                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length] || carouselTypes[0];
-
                 return (
                   <div key={`post-wrapper-${postIndex}`}>
-                    {/* Show Game Carousel once near the top */}
-                    {shouldShowGameCarousel && (
-                      <div className="mb-4">
-                        <GameCarousel />
-                      </div>
-                    )}
-
-                    {/* Every 10 posts: Show rotating trending carousels */}
-                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
-                      <div className="mb-4">
-                        <MediaCarousel
-                          title={currentCarousel.title}
-                          mediaType={currentCarousel.type}
-                          items={currentCarousel.items}
-                          onItemClick={handleMediaClick}
-                        />
-                      </div>
-                    )}
+                    {carouselElements}
 
                   {/* Original Post */}
                   <div 
