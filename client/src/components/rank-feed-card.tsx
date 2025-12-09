@@ -68,19 +68,26 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
   const [localItems, setLocalItems] = useState<RankItemWithVotes[]>(rank.items || []);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
   
   const isOwner = user?.id === rank.user_id;
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  // Use stable boolean for dependency to prevent infinite loops
+  const hasItems = !!(rank.items && rank.items.length > 0);
 
   useEffect(() => {
     const fetchItems = async () => {
-      if ((!rank.items || rank.items.length === 0) && rank.id && session?.access_token) {
+      if (!hasItems && !hasFetched && rank.id && session?.access_token) {
+        setHasFetched(true);
         setIsLoadingItems(true);
         try {
           const response = await fetch(`${supabaseUrl}/functions/v1/get-user-ranks?user_id=${rank.user_id}`, {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
+              'apikey': supabaseAnonKey,
             },
           });
           if (response.ok) {
@@ -98,7 +105,7 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
       }
     };
     fetchItems();
-  }, [rank.id, rank.user_id, rank.items, session?.access_token, supabaseUrl]);
+  }, [rank.id, rank.user_id, hasItems, hasFetched, session?.access_token, supabaseUrl, supabaseAnonKey]);
 
   const voteMutation = useMutation({
     mutationFn: async ({ rankItemId, direction }: { rankItemId: string; direction: 'up' | 'down' }) => {
@@ -107,6 +114,7 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token || ''}`,
+          "apikey": supabaseAnonKey,
         },
         body: JSON.stringify({ rankItemId, direction }),
       });
