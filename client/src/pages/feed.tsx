@@ -1813,6 +1813,10 @@ export default function Feed() {
                 const shouldShowGameCarousel = postIndex === 2; // After 3rd post
                 const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0;
                 
+                if (shouldShowGameCarousel) {
+                  console.log('🎮 Feed: Rendering GameCarousel at postIndex', postIndex);
+                }
+                
                 // Rotate through different carousel types
                 const carouselTypes = [
                   { type: 'tv', title: 'Trending in TV', items: trendingTVShows },

@@ -65,6 +65,14 @@ export default function GameCarousel({ className }: GameCarouselProps) {
     if (title.toLowerCase().startsWith('will ') && !title.includes('?')) return false;
     return true;
   });
+  
+  // Debug: log game carousel state
+  console.log('🎮 GameCarousel:', { 
+    isLoading, 
+    totalGames: games.length, 
+    availableGames: availableGames.length,
+    userPredictionsCount: Object.keys(userPredictions).length
+  });
 
   const getGameIcon = (type: string) => {
     switch (type) {
