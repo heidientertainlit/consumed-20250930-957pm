@@ -73,20 +73,13 @@ export default function GameCarousel({ className }: GameCarouselProps) {
     },
   });
 
-  // Filter out games user already played and games with invalid/incomplete data
+  // Filter to only show curated Consumed content
   // MUST match SwipeableGameCards filtering to ensure clicked games are found
   const availableGames = games.filter((game) => {
     if (userPredictions[game.id]) return false;
     // Ensure game has required fields
     if (!game.id || !game.title || !game.type) return false;
-    // Filter out games with invalid titles (too short, fragments, etc)
-    const title = game.title?.trim() || '';
-    if (title.length < 20) return false; // Must be descriptive
-    if (!title.includes(' ')) return false;
-    // Filter out question fragments that don't end properly
-    if (title.toLowerCase().startsWith('does ') && !title.includes('?')) return false;
-    if (title.toLowerCase().startsWith('will ') && !title.includes('?')) return false;
-    // Only show Consumed-curated content (IDs starting with 'consumed-' or trivia)
+    // Only show Consumed-curated content: official polls/predictions OR trivia
     if (!game.id.startsWith('consumed-') && game.type !== 'trivia') return false;
     return true;
   });
