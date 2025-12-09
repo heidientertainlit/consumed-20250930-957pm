@@ -439,6 +439,26 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
                 Submit
               </Button>
             </div>
+            
+            {/* Skip options */}
+            <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-gray-100">
+              {currentGameIndex < availableGames.length - 1 && (
+                <button
+                  onClick={handleNextGame}
+                  className="text-xs text-gray-500 hover:text-purple-600"
+                  data-testid="button-skip-game"
+                >
+                  Skip to next game
+                </button>
+              )}
+              <a
+                href="/play"
+                className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                data-testid="link-find-trivia"
+              >
+                Find more trivia
+              </a>
+            </div>
           </>
         )}
 
