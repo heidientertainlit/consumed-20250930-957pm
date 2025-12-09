@@ -1740,6 +1740,12 @@ export default function Feed() {
                 // Filter out incorrectly formatted prediction posts
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((post: SocialPost, postIndex: number) => {
+                // Calculate real post ID for grouped posts (for likes/comments)
+                const isGroupedPost = post.id.startsWith('grouped-') || (post as any).type === 'media_group';
+                const realPostId = isGroupedPost && post.groupedActivities?.[0]?.postId 
+                  ? post.groupedActivities[0].postId 
+                  : post.id;
+                
                 // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
                 // Show game carousel after 3rd post, then every 15 posts
                 const shouldShowGameCarousel = postIndex === 2 || (postIndex > 2 && (postIndex - 2) % 15 === 0);
@@ -2587,32 +2593,25 @@ export default function Feed() {
                   <div className="pt-2 border-t border-gray-100 mt-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-6">
-                        {/* Hide like button for grouped/virtual posts that don't exist in the database */}
-                        {!post.id.startsWith('grouped-') && (post as any).type !== 'media_group' ? (
-                          <button 
-                            onClick={() => handleLike(post.id)}
-                            disabled={likeMutation.isPending}
-                            className={`flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                              likedPosts.has(post.id) 
-                                ? 'text-red-500' 
-                                : 'text-gray-500 hover:text-red-500'
-                            }`}
-                            data-testid={`button-like-${post.id}`}
-                          >
-                            <Heart 
-                              size={18} 
-                              fill={likedPosts.has(post.id) ? 'currentColor' : 'none'}
-                            />
-                            <span className="text-sm">{post.likes}</span>
-                          </button>
-                        ) : (
-                          <span className="flex items-center space-x-2 text-gray-400">
-                            <Heart size={18} />
-                            <span className="text-sm">{post.likes || 0}</span>
-                          </span>
-                        )}
+                        {/* Like button - uses realPostId for grouped posts */}
                         <button 
-                          onClick={() => toggleComments(post.id)}
+                          onClick={() => handleLike(realPostId)}
+                          disabled={likeMutation.isPending}
+                          className={`flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            likedPosts.has(realPostId) 
+                              ? 'text-red-500' 
+                              : 'text-gray-500 hover:text-red-500'
+                          }`}
+                          data-testid={`button-like-${post.id}`}
+                        >
+                          <Heart 
+                            size={18} 
+                            fill={likedPosts.has(realPostId) ? 'currentColor' : 'none'}
+                          />
+                          <span className="text-sm">{post.likes}</span>
+                        </button>
+                        <button 
+                          onClick={() => toggleComments(realPostId)}
                           className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"
                         >
                           <MessageCircle size={18} />
@@ -2673,15 +2672,15 @@ export default function Feed() {
                       </div>
                     </div>
 
-                    {/* Comments Section */}
-                    {expandedComments.has(post.id) && (
+                    {/* Comments Section - uses realPostId for grouped posts */}
+                    {expandedComments.has(realPostId) && (
                       <CommentsSection 
-                        postId={post.id}
+                        postId={realPostId}
                         fetchComments={fetchComments}
                         session={session}
-                        commentInput={commentInputs[post.id] || ''}
-                        onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                        onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                        commentInput={commentInputs[realPostId] || ''}
+                        onCommentInputChange={(value) => handleCommentInputChange(realPostId, value)}
+                        onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(realPostId, parentCommentId, content)}
                         isSubmitting={commentMutation.isPending}
                         currentUserId={user?.id}
                         onDeleteComment={handleDeleteComment}
