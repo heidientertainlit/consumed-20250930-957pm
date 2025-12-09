@@ -1737,8 +1737,7 @@ export default function Feed() {
                 // Filter out incorrectly formatted prediction posts
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((post: SocialPost, postIndex: number) => {
-                // Carousel logic FIRST - before any early returns
-                // Show game carousel after first 3 posts, then rotating carousels every 10 posts
+                // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
                 const shouldShowGameCarousel = postIndex === 2; // After 3rd post
                 const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0;
                 
@@ -2241,21 +2240,6 @@ export default function Feed() {
                     const isAddedPost = contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating);
                     const hasListData = !!(post as any).listData;
                     const isListPost = post.type === 'added_to_list' || (isAddedPost && hasListData) || (post.type === 'rate-review' && hasListData);
-                    
-                    // Debug: log posts that should show compact format
-                    if (hasMediaItems && (isAddedPost || hasListData)) {
-                      console.log('🔍 Potential list post:', {
-                        id: post.id,
-                        type: post.type,
-                        hasContent: !!post.content,
-                        contentPreview: post.content?.slice(0, 30),
-                        isAddedPost,
-                        hasListData,
-                        isListPost,
-                        listTitle: (post as any).listData?.title,
-                        mediaTitle: post.mediaItems?.[0]?.title
-                      });
-                    }
                     
                     return isListPost && hasMediaItems ? (
                     <div className="mb-2">
