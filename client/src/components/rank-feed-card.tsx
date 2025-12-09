@@ -209,7 +209,6 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
       {/* Minimalist Rank List */}
       <div className="divide-y divide-gray-50">
         {displayItems.map((item) => {
-          const netScore = (item.up_vote_count || 0) - (item.down_vote_count || 0);
           const isClickable = item.external_id && item.external_source;
           const mediaUrl = isClickable ? `/media/${item.media_type}/${item.external_source}/${item.external_id}` : null;
           const mediaIcon = getMediaIcon(item.media_type);
@@ -258,38 +257,34 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
                 )}
               </div>
               
-              {/* Side-by-side Vote Arrows with Score */}
-              <div className="flex items-center gap-0.5">
+              {/* Side-by-side Vote Arrows with separate counts */}
+              <div className="flex items-center gap-1">
                 <button
                   onClick={(e) => { e.stopPropagation(); handleVote(item.id, 'up'); }}
                   disabled={voteMutation.isPending || isOwner}
-                  className={`p-0.5 transition-colors ${
+                  className={`flex items-center gap-0.5 p-0.5 transition-colors ${
                     item.user_vote === 'up' 
-                      ? 'text-blue-500' 
-                      : 'text-gray-300 hover:text-blue-500'
+                      ? 'text-green-500' 
+                      : 'text-gray-300 hover:text-green-500'
                   } ${isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-testid={`vote-up-${item.id}`}
                 >
-                  <ArrowBigUp size={20} fill={item.user_vote === 'up' ? 'currentColor' : 'none'} />
+                  <ArrowBigUp size={18} fill={item.user_vote === 'up' ? 'currentColor' : 'none'} />
+                  <span className="text-xs font-medium">{item.up_vote_count || 0}</span>
                 </button>
-                
-                <span className={`text-sm font-medium min-w-[24px] text-center ${
-                  item.user_vote ? 'text-blue-500' : 'text-gray-400'
-                }`}>
-                  {netScore}
-                </span>
                 
                 <button
                   onClick={(e) => { e.stopPropagation(); handleVote(item.id, 'down'); }}
                   disabled={voteMutation.isPending || isOwner}
-                  className={`p-0.5 transition-colors ${
+                  className={`flex items-center gap-0.5 p-0.5 transition-colors ${
                     item.user_vote === 'down' 
-                      ? 'text-blue-500' 
-                      : 'text-gray-300 hover:text-blue-500'
+                      ? 'text-red-500' 
+                      : 'text-gray-300 hover:text-red-500'
                   } ${isOwner ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-testid={`vote-down-${item.id}`}
                 >
-                  <ArrowBigDown size={20} fill={item.user_vote === 'down' ? 'currentColor' : 'none'} />
+                  <ArrowBigDown size={18} fill={item.user_vote === 'down' ? 'currentColor' : 'none'} />
+                  <span className="text-xs font-medium">{item.down_vote_count || 0}</span>
                 </button>
               </div>
             </div>
