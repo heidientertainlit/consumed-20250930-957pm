@@ -53,7 +53,18 @@ export default function GameCarousel({ className }: GameCarouselProps) {
     },
   });
 
-  const availableGames = games.filter((game) => !userPredictions[game.id]);
+  // Filter out games user already played, and filter out invalid/short titles
+  const availableGames = games.filter((game) => {
+    if (userPredictions[game.id]) return false;
+    // Filter out games with invalid titles (too short, fragments, etc)
+    const title = game.title?.trim() || '';
+    if (title.length < 8) return false; // Must be at least 8 chars
+    if (!title.includes(' ')) return false; // Must have at least 2 words
+    // Filter out question fragments that don't end properly
+    if (title.toLowerCase().startsWith('does ') && !title.includes('?')) return false;
+    if (title.toLowerCase().startsWith('will ') && !title.includes('?')) return false;
+    return true;
+  });
 
   const getGameIcon = (type: string) => {
     switch (type) {
@@ -116,7 +127,7 @@ export default function GameCarousel({ className }: GameCarouselProps) {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Gamepad2 className="text-purple-600" size={18} />
-              <span className="font-semibold text-gray-900">Quick Play</span>
+              <span className="font-semibold text-gray-900">Play</span>
               <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
                 {availableGames.length} games
               </Badge>

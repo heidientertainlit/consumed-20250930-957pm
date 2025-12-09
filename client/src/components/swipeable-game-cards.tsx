@@ -297,7 +297,7 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Gamepad2 className="text-white" size={18} />
-              <span className="text-white text-sm font-semibold">Quick Play</span>
+              <span className="text-white text-sm font-semibold">Play</span>
             </div>
             <Badge variant="secondary" className="bg-white/20 text-white border-0 text-xs">
               <Icon size={12} className="mr-1" />
@@ -362,7 +362,7 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Gamepad2 className="text-white" size={18} />
-            <span className="text-white text-sm font-semibold">Quick Play</span>
+            <span className="text-white text-sm font-semibold">Play</span>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-white/20 text-white border-0 text-xs">
