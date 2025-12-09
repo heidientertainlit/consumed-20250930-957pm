@@ -2263,24 +2263,26 @@ export default function Feed() {
                     <div className="mb-2">
                       <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex gap-3">
-                          {/* Poster on left */}
-                          <div 
-                            className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
-                            onClick={() => {
-                              const media = post.mediaItems[0];
-                              if (media.externalId && media.externalSource) {
-                                setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                              }
-                            }}
-                          >
-                            <img 
-                              src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
-                              alt={`${post.mediaItems[0].title} artwork`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                          {/* Poster on left - only show if single item */}
+                          {((post as any).listData?.items?.length || post.mediaItems.length) === 1 && (
+                            <div 
+                              className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
+                              onClick={() => {
+                                const media = post.mediaItems[0];
+                                if (media.externalId && media.externalSource) {
+                                  setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                }
+                              }}
+                            >
+                              <img 
+                                src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
+                                alt={`${post.mediaItems[0].title} artwork`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
                           
-                          {/* List items on right - use listData.items if available, otherwise use mediaItems as fallback */}
+                          {/* List items - use listData.items if available, otherwise use mediaItems as fallback */}
                           <div className="flex-1 min-w-0 space-y-1">
                             {((post as any).listData?.items || post.mediaItems).slice(0, 3).map((item: any, idx: number) => {
                               const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :
@@ -2454,24 +2456,26 @@ export default function Feed() {
                         {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && post.mediaItems && post.mediaItems.length > 0 ? (
                           <div className="bg-gray-50 rounded-lg p-3 mb-2">
                             <div className="flex gap-3">
-                              {/* Poster on left */}
-                              <div 
-                                className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
-                                onClick={() => {
-                                  const media = post.mediaItems[0];
-                                  if (media.externalId && media.externalSource) {
-                                    setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                                  }
-                                }}
-                              >
-                                <img 
-                                  src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
-                                  alt={`${post.mediaItems[0].title} artwork`}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
+                              {/* Poster on left - only show if single item */}
+                              {((post as any).listData?.items?.length || post.mediaItems.length) === 1 && (
+                                <div 
+                                  className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
+                                  onClick={() => {
+                                    const media = post.mediaItems[0];
+                                    if (media.externalId && media.externalSource) {
+                                      setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                    }
+                                  }}
+                                >
+                                  <img 
+                                    src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
+                                    alt={`${post.mediaItems[0].title} artwork`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
                               
-                              {/* List items on right - use listData.items if available, otherwise use mediaItems */}
+                              {/* List items - use listData.items if available, otherwise use mediaItems */}
                               <div className="flex-1 min-w-0 space-y-1">
                                 {((post as any).listData?.items || post.mediaItems).slice(0, 3).map((item: any, idx: number) => {
                                   const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :

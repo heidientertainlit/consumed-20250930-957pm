@@ -273,12 +273,12 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
                 )}
               </div>
               
-              {/* Side-by-side Vote Arrows with separate counts */}
-              <div className="flex items-center gap-1">
+              {/* Vote Arrows with total count in between */}
+              <div className="flex items-center gap-0.5">
                 <button
                   onClick={(e) => { e.stopPropagation(); handleVote(item.id, 'up'); }}
                   disabled={voteMutation.isPending || isOwner}
-                  className={`flex items-center gap-0.5 p-0.5 transition-colors ${
+                  className={`p-0.5 transition-colors ${
                     item.user_vote === 'up' 
                       ? 'text-green-500' 
                       : 'text-gray-300 hover:text-green-500'
@@ -286,13 +286,19 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
                   data-testid={`vote-up-${item.id}`}
                 >
                   <ArrowBigUp size={18} fill={item.user_vote === 'up' ? 'currentColor' : 'none'} />
-                  <span className="text-xs font-medium">{item.up_vote_count || 0}</span>
                 </button>
+                
+                <span className={`text-xs font-medium min-w-[20px] text-center ${
+                  ((item.up_vote_count || 0) - (item.down_vote_count || 0)) > 0 ? 'text-green-600' :
+                  ((item.up_vote_count || 0) - (item.down_vote_count || 0)) < 0 ? 'text-red-500' : 'text-gray-400'
+                }`}>
+                  {(item.up_vote_count || 0) - (item.down_vote_count || 0)}
+                </span>
                 
                 <button
                   onClick={(e) => { e.stopPropagation(); handleVote(item.id, 'down'); }}
                   disabled={voteMutation.isPending || isOwner}
-                  className={`flex items-center gap-0.5 p-0.5 transition-colors ${
+                  className={`p-0.5 transition-colors ${
                     item.user_vote === 'down' 
                       ? 'text-red-500' 
                       : 'text-gray-300 hover:text-red-500'
@@ -300,7 +306,6 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
                   data-testid={`vote-down-${item.id}`}
                 >
                   <ArrowBigDown size={18} fill={item.user_vote === 'down' ? 'currentColor' : 'none'} />
-                  <span className="text-xs font-medium">{item.down_vote_count || 0}</span>
                 </button>
               </div>
             </div>
