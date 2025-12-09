@@ -2587,22 +2587,30 @@ export default function Feed() {
                   <div className="pt-2 border-t border-gray-100 mt-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-6">
-                        <button 
-                          onClick={() => handleLike(post.id)}
-                          disabled={likeMutation.isPending}
-                          className={`flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                            likedPosts.has(post.id) 
-                              ? 'text-red-500' 
-                              : 'text-gray-500 hover:text-red-500'
-                          }`}
-                          data-testid={`button-like-${post.id}`}
-                        >
-                          <Heart 
-                            size={18} 
-                            fill={likedPosts.has(post.id) ? 'currentColor' : 'none'}
-                          />
-                          <span className="text-sm">{post.likes}</span>
-                        </button>
+                        {/* Hide like button for grouped/virtual posts that don't exist in the database */}
+                        {!post.id.startsWith('grouped-') && (post as any).type !== 'media_group' ? (
+                          <button 
+                            onClick={() => handleLike(post.id)}
+                            disabled={likeMutation.isPending}
+                            className={`flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              likedPosts.has(post.id) 
+                                ? 'text-red-500' 
+                                : 'text-gray-500 hover:text-red-500'
+                            }`}
+                            data-testid={`button-like-${post.id}`}
+                          >
+                            <Heart 
+                              size={18} 
+                              fill={likedPosts.has(post.id) ? 'currentColor' : 'none'}
+                            />
+                            <span className="text-sm">{post.likes}</span>
+                          </button>
+                        ) : (
+                          <span className="flex items-center space-x-2 text-gray-400">
+                            <Heart size={18} />
+                            <span className="text-sm">{post.likes || 0}</span>
+                          </span>
+                        )}
                         <button 
                           onClick={() => toggleComments(post.id)}
                           className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"
