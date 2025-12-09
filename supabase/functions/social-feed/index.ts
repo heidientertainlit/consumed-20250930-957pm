@@ -300,7 +300,8 @@ serve(async (req) => {
         const postListNameMap: { [postId: string]: string } = {};
         
         for (const post of postsNeedingListLookup) {
-          // Match "to {ListName}" at the end of content
+          // Match "to {ListName}" at the end of content - various formats:
+          // "Added X to Currently", "added to Currently", "to Currently"
           const match = post.content.match(/to\s+(Currently|Want To|Finished|Did Not Finish|Favorites)\s*$/i);
           if (match) {
             const listName = match[1];
@@ -309,6 +310,9 @@ serve(async (req) => {
             }
             userListLookups[post.user_id].add(listName);
             postListNameMap[post.id] = listName;
+            console.log('Matched list name from content:', { postId: post.id, content: post.content, listName });
+          } else {
+            console.log('No list match for content:', { postId: post.id, content: post.content });
           }
         }
         

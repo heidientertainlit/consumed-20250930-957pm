@@ -2243,6 +2243,7 @@ export default function Feed() {
 
                   {/* Media Cards */}
                   {/* List Preview Card for added_to_list posts - show compact format even without listData */}
+                  {post.type === 'added_to_list' && console.log('📋 added_to_list post:', { id: post.id, listId: (post as any).listId, hasListData: !!(post as any).listData, listDataItems: (post as any).listData?.items?.length, content: post.content?.slice(0, 50) })}
                   {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && post.mediaItems && post.mediaItems.length > 0 ? (
                     <div className="mb-2">
                       <div className="bg-gray-50 rounded-lg p-3">
@@ -2434,8 +2435,8 @@ export default function Feed() {
                           </div>
                         )}
                         
-                        {/* List Preview Card for posts with listData */}
-                        {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && (post as any).listData ? (
+                        {/* List Preview Card for posts - show compact format even without listData */}
+                        {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && post.mediaItems && post.mediaItems.length > 0 ? (
                           <div className="bg-gray-50 rounded-lg p-3 mb-2">
                             <div className="flex gap-3">
                               {/* Poster on left */}
@@ -2455,9 +2456,9 @@ export default function Feed() {
                                 />
                               </div>
                               
-                              {/* List items on right */}
+                              {/* List items on right - use listData.items if available, otherwise use mediaItems */}
                               <div className="flex-1 min-w-0 space-y-1">
-                                {(post as any).listData.items.slice(0, 3).map((item: any, idx: number) => {
+                                {((post as any).listData?.items || post.mediaItems).slice(0, 3).map((item: any, idx: number) => {
                                   const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :
                                     item.mediaType?.toLowerCase() === 'music' ? '🎵' :
                                     item.mediaType?.toLowerCase() === 'podcast' ? '🎧' :
@@ -2477,7 +2478,7 @@ export default function Feed() {
                                     </div>
                                   );
                                 })}
-                                {(post as any).listData.totalCount > 3 && (
+                                {(post as any).listData?.totalCount > 3 && (
                                   <Link
                                     href={`/user/${post.user?.id}?tab=lists`}
                                     className="text-xs text-purple-600 hover:text-purple-700 font-medium"
