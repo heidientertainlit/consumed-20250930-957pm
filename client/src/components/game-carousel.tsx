@@ -75,27 +75,11 @@ export default function GameCarousel({ className }: GameCarouselProps) {
 
   const getGradient = (type: string) => {
     switch (type) {
-      case 'trivia': return 'from-yellow-500 to-orange-500';
-      case 'vote': return 'from-blue-500 to-cyan-500';
-      case 'predict': return 'from-green-500 to-emerald-500';
-      default: return 'from-purple-500 to-pink-500';
+      case 'trivia': return 'from-purple-500 to-indigo-600';
+      case 'vote': return 'from-blue-500 to-purple-600';
+      case 'predict': return 'from-indigo-500 to-blue-600';
+      default: return 'from-purple-500 to-blue-600';
     }
-  };
-
-  const getGameImage = (game: Game) => {
-    if (game.category === 'movies' || game.title.toLowerCase().includes('movie')) {
-      return 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200&h=280&fit=crop';
-    }
-    if (game.category === 'tv' || game.title.toLowerCase().includes('tv')) {
-      return 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=200&h=280&fit=crop';
-    }
-    if (game.category === 'books' || game.title.toLowerCase().includes('book')) {
-      return 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=200&h=280&fit=crop';
-    }
-    if (game.category === 'music' || game.title.toLowerCase().includes('music')) {
-      return 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=200&h=280&fit=crop';
-    }
-    return 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=200&h=280&fit=crop';
   };
 
   const scroll = (direction: 'left' | 'right') => {
@@ -170,16 +154,10 @@ export default function GameCarousel({ className }: GameCarouselProps) {
                 className="flex-shrink-0 w-28 group"
                 data-testid={`game-card-${game.id}`}
               >
-                <div className="relative w-28 h-36 rounded-xl overflow-hidden mb-2 shadow-md group-hover:shadow-lg transition-shadow">
-                  <img
-                    src={getGameImage(game)}
-                    alt={game.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className={cn(
-                    "absolute inset-0 bg-gradient-to-t opacity-80",
-                    getGradient(game.type)
-                  )} />
+                <div className={cn(
+                  "relative w-28 h-36 rounded-xl overflow-hidden mb-2 shadow-md group-hover:shadow-lg transition-shadow bg-gradient-to-br",
+                  getGradient(game.type)
+                )}>
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
                     <Icon className="text-white mb-1" size={24} />
                     <span className="text-white text-xs font-semibold text-center line-clamp-2">
