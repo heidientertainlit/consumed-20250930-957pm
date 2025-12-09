@@ -32,6 +32,7 @@ import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
 import OnboardingPage from "./pages/onboarding";
 import NotFoundPage from "./pages/not-found";
+import About from "@/pages/about";
 
 function Router() {
   return (
@@ -44,6 +45,9 @@ function Router() {
         </Route>
         <Route path="/reset-password">
           <ResetPasswordPage />
+        </Route>
+        <Route path="/about">
+          <About />
         </Route>
         <Route path="/onboarding">
           <ProtectedRoute>

@@ -43,15 +43,12 @@ export default function FeedbackFooter() {
         <p className="text-gray-700 text-sm">
           👉{" "}
           <a
-            href="https://www.consumedapp.com/about"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/about"
             className="text-purple-700 font-semibold hover:text-purple-900 underline"
-            data-testid="founder-story-link"
+            data-testid="about-link"
           >
-            Learn more about Heidi's story
+            Read About Consumed
           </a>
-          .
         </p>
       </div>
     </div>
