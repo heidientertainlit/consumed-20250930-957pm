@@ -38,10 +38,10 @@ export default function PlayPredictionsPage() {
         .select('*')
         .eq('status', 'open')
         .eq('type', 'predict')
-        .ilike('id', 'consumed-prediction-%')
         .order('created_at', { ascending: false });
       if (error) throw new Error('Failed to fetch games');
-      return pools || [];
+      // Filter to only show curated Consumed predictions
+      return (pools || []).filter((p: any) => p.id?.startsWith('consumed-prediction-'));
     },
   });
 

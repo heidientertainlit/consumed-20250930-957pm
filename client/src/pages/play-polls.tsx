@@ -37,10 +37,10 @@ export default function PlayPollsPage() {
         .select('*')
         .eq('status', 'open')
         .eq('type', 'vote')
-        .ilike('id', 'consumed-poll-%')
         .order('created_at', { ascending: false });
       if (error) throw new Error('Failed to fetch games');
-      return pools || [];
+      // Filter to only show curated Consumed polls
+      return (pools || []).filter((p: any) => p.id?.startsWith('consumed-poll-'));
     },
   });
 
