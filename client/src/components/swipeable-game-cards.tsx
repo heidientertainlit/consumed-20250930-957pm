@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Trophy, ChevronLeft, ChevronRight, Gamepad2, Check, Star, Sparkles } from 'lucide-react';
+import { Brain, Vote, Trophy, ChevronLeft, ChevronRight, Gamepad2, Check, Star, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+
+interface TriviaQuestion {
+  question: string;
+  options: string[];
+  correct: string;
+}
 
 interface Game {
   id: string;
@@ -22,11 +28,15 @@ interface SwipeableGameCardsProps {
 }
 
 export default function SwipeableGameCards({ className }: SwipeableGameCardsProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentGameIndex, setCurrentGameIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedGames, setSubmittedGames] = useState<Set<string>>(new Set());
-  const [showResult, setShowResult] = useState<{ correct: boolean; points: number } | null>(null);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Map<string, Set<number>>>(new Map());
+  const [showResult, setShowResult] = useState<{ correct: boolean; points: number; correctAnswer?: string } | null>(null);
+  const [triviaScore, setTriviaScore] = useState(0);
+  const [triviaComplete, setTriviaComplete] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -66,25 +76,13 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
   );
 
   const submitAnswer = useMutation({
-    mutationFn: async ({ poolId, answer, game }: { poolId: string; answer: string; game: Game }) => {
+    mutationFn: async ({ poolId, answer, score, game }: { poolId: string; answer: string; score?: number; game: Game }) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         throw new Error('Must be logged in');
       }
 
-      const gameType = game.type;
-      let immediatePoints = 0;
-      let isCorrect = false;
-
-      if (gameType === 'trivia' && game.correct_answer) {
-        const correctAnswerText = typeof game.correct_answer === 'string' 
-          ? game.correct_answer 
-          : (game.correct_answer?.label || game.correct_answer?.text || game.correct_answer?.option || '');
-        isCorrect = answer === correctAnswerText;
-        immediatePoints = isCorrect ? game.points_reward : 0;
-      } else if (gameType === 'vote') {
-        immediatePoints = game.points_reward;
-      }
+      const pointsEarned = score ?? game.points_reward;
 
       const { error } = await supabase
         .from('user_predictions')
@@ -92,7 +90,7 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
           user_id: user.id,
           pool_id: poolId,
           prediction: answer,
-          points_earned: immediatePoints,
+          points_earned: pointsEarned,
           created_at: new Date().toISOString()
         });
 
@@ -103,25 +101,11 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
         throw new Error('Failed to submit');
       }
 
-      return { success: true, points: immediatePoints, isCorrect, gameType };
+      return { success: true, points: pointsEarned };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['feed-user-predictions'] });
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-      
-      if (data.gameType === 'trivia') {
-        setShowResult({ correct: data.isCorrect, points: data.points });
-      } else if (data.gameType === 'vote') {
-        toast({
-          title: "Vote submitted!",
-          description: `+${data.points} points`,
-        });
-      } else {
-        toast({
-          title: "Prediction submitted!",
-          description: "Points will be awarded when the result is known.",
-        });
-      }
     },
     onError: (error: any) => {
       toast({
@@ -132,21 +116,87 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
     },
   });
 
-  const currentGame = availableGames[currentIndex];
+  const currentGame = availableGames[currentGameIndex];
 
-  const handlePrev = () => {
-    setSelectedAnswer(null);
-    setShowResult(null);
-    setCurrentIndex((prev) => Math.max(0, prev - 1));
+  // For trivia games, get the current question from the nested structure
+  const getCurrentTriviaQuestion = (): TriviaQuestion | null => {
+    if (!currentGame || currentGame.type !== 'trivia') return null;
+    if (!Array.isArray(currentGame.options)) return null;
+    const questions = currentGame.options;
+    if (questions.length === 0 || currentQuestionIndex >= questions.length) return null;
+    const q = questions[currentQuestionIndex];
+    if (q && typeof q === 'object' && 'question' in q && 'options' in q && 'correct' in q) {
+      return q as TriviaQuestion;
+    }
+    return null;
   };
 
-  const handleNext = () => {
+  const triviaQuestion = getCurrentTriviaQuestion();
+  const totalTriviaQuestions = currentGame?.type === 'trivia' && Array.isArray(currentGame.options) 
+    ? currentGame.options.length 
+    : 0;
+
+  const handlePrevGame = () => {
     setSelectedAnswer(null);
     setShowResult(null);
-    setCurrentIndex((prev) => Math.min(availableGames.length - 1, prev + 1));
+    setCurrentQuestionIndex(0);
+    setTriviaScore(0);
+    setTriviaComplete(false);
+    setCurrentGameIndex((prev) => Math.max(0, prev - 1));
   };
 
-  const handleSubmit = async () => {
+  const handleNextGame = () => {
+    setSelectedAnswer(null);
+    setShowResult(null);
+    setCurrentQuestionIndex(0);
+    setTriviaScore(0);
+    setTriviaComplete(false);
+    setCurrentGameIndex((prev) => Math.min(availableGames.length - 1, prev + 1));
+  };
+
+  const handleTriviaAnswer = () => {
+    if (!currentGame || !triviaQuestion || !selectedAnswer) return;
+    
+    const isCorrect = selectedAnswer === triviaQuestion.correct;
+    const pointsPerQuestion = Math.floor(currentGame.points_reward / totalTriviaQuestions);
+    const earnedPoints = isCorrect ? pointsPerQuestion : 0;
+    
+    setShowResult({ 
+      correct: isCorrect, 
+      points: earnedPoints,
+      correctAnswer: triviaQuestion.correct
+    });
+    
+    if (isCorrect) {
+      setTriviaScore(prev => prev + earnedPoints);
+    }
+  };
+
+  const handleNextQuestion = async () => {
+    setSelectedAnswer(null);
+    setShowResult(null);
+    
+    if (currentQuestionIndex < totalTriviaQuestions - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      // Trivia complete - submit final score
+      setTriviaComplete(true);
+      setIsSubmitting(true);
+      try {
+        await submitAnswer.mutateAsync({
+          poolId: currentGame!.id,
+          answer: `Completed with score: ${triviaScore}`,
+          score: triviaScore,
+          game: currentGame!,
+        });
+        setSubmittedGames(prev => new Set([...prev, currentGame!.id]));
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleVoteSubmit = async () => {
     if (!currentGame || !selectedAnswer) return;
     
     setIsSubmitting(true);
@@ -157,17 +207,22 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
         game: currentGame,
       });
       setSubmittedGames(prev => new Set([...prev, currentGame.id]));
+      toast({
+        title: "Vote submitted!",
+        description: `+${currentGame.points_reward} points`,
+      });
+      // Move to next game
+      handleNextGame();
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleContinue = () => {
-    setSelectedAnswer(null);
-    setShowResult(null);
-    if (currentIndex < availableGames.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+  const handleFinishTrivia = () => {
+    setTriviaComplete(false);
+    setTriviaScore(0);
+    setCurrentQuestionIndex(0);
+    handleNextGame();
   };
 
   const getGameIcon = (type: string) => {
@@ -218,12 +273,56 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
 
   const Icon = getGameIcon(currentGame.type);
 
+  // Trivia complete screen
+  if (triviaComplete) {
+    return (
+      <div 
+        ref={containerRef}
+        className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)}
+        data-testid="swipeable-game-card"
+      >
+        <div className={cn("bg-gradient-to-r p-3", getGradient(currentGame.type))}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="text-white" size={18} />
+              <span className="text-white text-sm font-semibold">Quick Play</span>
+            </div>
+            <Badge variant="secondary" className="bg-white/20 text-white border-0 text-xs">
+              <Icon size={12} className="mr-1" />
+              {currentGame.title}
+            </Badge>
+          </div>
+        </div>
+        
+        <div className="p-6 text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Trophy className="text-yellow-500" size={40} />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Trivia Complete!</h3>
+          <p className="text-gray-600 mb-2">{currentGame.title}</p>
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 mb-4">
+            <p className="text-3xl font-bold text-orange-600">{triviaScore}</p>
+            <p className="text-sm text-gray-500">points earned</p>
+          </div>
+          <Button
+            onClick={handleFinishTrivia}
+            className="bg-purple-600 hover:bg-purple-700"
+            data-testid="button-next-trivia"
+          >
+            {currentGameIndex < availableGames.length - 1 ? 'Next Game' : 'Done'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       ref={containerRef}
       className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)}
       data-testid="swipeable-game-card"
     >
+      {/* Header */}
       <div className={cn("bg-gradient-to-r p-3", getGradient(currentGame.type))}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -236,45 +335,113 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
               {getGameLabel(currentGame.type)}
             </Badge>
             <span className="text-white/80 text-xs">
-              {currentIndex + 1}/{availableGames.length}
+              {currentGameIndex + 1}/{availableGames.length}
             </span>
           </div>
         </div>
       </div>
 
+      {/* Content */}
       <div className="p-4">
-        {showResult ? (
-          <div className="text-center py-4">
-            {showResult.correct ? (
-              <>
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="text-green-600" size={32} />
-                </div>
-                <p className="text-lg font-bold text-green-600 mb-1">Correct!</p>
-                <p className="text-sm text-gray-600">+{showResult.points} points</p>
-              </>
+        {/* TRIVIA TYPE */}
+        {currentGame.type === 'trivia' && triviaQuestion && (
+          <>
+            {/* Progress bar for trivia */}
+            <div className="mb-3">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>{currentGame.title}</span>
+                <span>Q{currentQuestionIndex + 1}/{totalTriviaQuestions}</span>
+              </div>
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-300"
+                  style={{ width: `${((currentQuestionIndex + 1) / totalTriviaQuestions) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {showResult ? (
+              <div className="text-center py-4">
+                {showResult.correct ? (
+                  <>
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Sparkles className="text-green-600" size={32} />
+                    </div>
+                    <p className="text-lg font-bold text-green-600 mb-1">Correct!</p>
+                    <p className="text-sm text-gray-600">+{showResult.points} points</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <X className="text-red-500" size={32} />
+                    </div>
+                    <p className="text-lg font-bold text-red-600 mb-1">Not quite!</p>
+                    <p className="text-sm text-gray-600">
+                      The answer was: <span className="font-medium">{showResult.correctAnswer}</span>
+                    </p>
+                  </>
+                )}
+                <Button
+                  onClick={handleNextQuestion}
+                  className="mt-4 bg-purple-600 hover:bg-purple-700"
+                  data-testid="button-next-question"
+                >
+                  {currentQuestionIndex < totalTriviaQuestions - 1 ? 'Next Question' : 'See Results'}
+                </Button>
+              </div>
             ) : (
               <>
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <span className="text-2xl">😅</span>
+                <p className="text-base font-medium text-gray-900 mb-4 leading-snug">
+                  {triviaQuestion.question}
+                </p>
+
+                <div className="space-y-2 mb-4">
+                  {triviaQuestion.options.map((option, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedAnswer(option)}
+                      disabled={isSubmitting}
+                      className={cn(
+                        "w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm",
+                        selectedAnswer === option
+                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                          : "border-gray-200 hover:border-gray-300 bg-white text-gray-700"
+                      )}
+                      data-testid={`option-${idx}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{option}</span>
+                        {selectedAnswer === option && (
+                          <Check size={16} className="text-purple-600" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <p className="text-lg font-bold text-red-600 mb-1">Not quite!</p>
-                <p className="text-sm text-gray-600">The answer was: {
-                  typeof currentGame.correct_answer === 'string' 
-                    ? currentGame.correct_answer 
-                    : (currentGame.correct_answer?.label || currentGame.correct_answer?.text || 'See the correct answer')
-                }</p>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Star size={12} className="text-yellow-500 fill-yellow-500" />
+                    <span>Score: {triviaScore} pts</span>
+                  </div>
+                  
+                  <Button
+                    onClick={handleTriviaAnswer}
+                    disabled={!selectedAnswer || isSubmitting}
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700"
+                    data-testid="button-submit-answer"
+                  >
+                    Submit
+                  </Button>
+                </div>
               </>
             )}
-            <Button
-              onClick={handleContinue}
-              className="mt-4 bg-purple-600 hover:bg-purple-700"
-              data-testid="button-continue-game"
-            >
-              {currentIndex < availableGames.length - 1 ? 'Next Game' : 'Done'}
-            </Button>
-          </div>
-        ) : (
+          </>
+        )}
+
+        {/* VOTE/POLL TYPE */}
+        {currentGame.type === 'vote' && (
           <>
             <p className="text-base font-medium text-gray-900 mb-4 leading-snug">
               {currentGame.title}
@@ -310,35 +477,85 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                <span>
-                  {currentGame.type === 'predict' 
-                    ? `Up to ${currentGame.points_reward} pts` 
-                    : `${currentGame.points_reward} pts`}
-                </span>
+                <span>{currentGame.points_reward} pts</span>
               </div>
               
               <Button
-                onClick={handleSubmit}
+                onClick={handleVoteSubmit}
                 disabled={!selectedAnswer || isSubmitting}
                 size="sm"
                 className="bg-purple-600 hover:bg-purple-700"
-                data-testid="button-submit-answer"
+                data-testid="button-submit-vote"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit'}
               </Button>
             </div>
           </>
         )}
+
+        {/* PREDICT TYPE */}
+        {currentGame.type === 'predict' && (
+          <>
+            <p className="text-base font-medium text-gray-900 mb-4 leading-snug">
+              {currentGame.title}
+            </p>
+
+            <div className="space-y-2 mb-4">
+              {currentGame.options.map((option: any, idx: number) => {
+                const optionText = typeof option === 'string' ? option : (option.label || option.text || option.option || String(option));
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedAnswer(optionText)}
+                    disabled={isSubmitting}
+                    className={cn(
+                      "w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm",
+                      selectedAnswer === optionText
+                        ? "border-purple-500 bg-purple-50 text-purple-700"
+                        : "border-gray-200 hover:border-gray-300 bg-white text-gray-700"
+                    )}
+                    data-testid={`option-${idx}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{optionText}</span>
+                      {selectedAnswer === optionText && (
+                        <Check size={16} className="text-purple-600" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Star size={12} className="text-yellow-500 fill-yellow-500" />
+                <span>Up to {currentGame.points_reward} pts</span>
+              </div>
+              
+              <Button
+                onClick={handleVoteSubmit}
+                disabled={!selectedAnswer || isSubmitting}
+                size="sm"
+                className="bg-purple-600 hover:bg-purple-700"
+                data-testid="button-submit-prediction"
+              >
+                {isSubmitting ? 'Submitting...' : 'Predict'}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
 
-      {availableGames.length > 1 && !showResult && (
+      {/* Navigation footer - only show when not in trivia question mode or showing result */}
+      {availableGames.length > 1 && currentGame.type !== 'trivia' && (
         <div className="flex items-center justify-between px-4 pb-3 pt-0 border-t border-gray-100">
           <button
-            onClick={handlePrev}
-            disabled={currentIndex === 0}
+            onClick={handlePrevGame}
+            disabled={currentGameIndex === 0}
             className={cn(
               "flex items-center gap-1 text-sm py-2",
-              currentIndex === 0 ? "text-gray-300" : "text-gray-600 hover:text-purple-600"
+              currentGameIndex === 0 ? "text-gray-300" : "text-gray-600 hover:text-purple-600"
             )}
             data-testid="button-prev-game"
           >
@@ -352,7 +569,7 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
                 key={idx}
                 className={cn(
                   "w-1.5 h-1.5 rounded-full transition-all",
-                  idx === currentIndex ? "bg-purple-600 w-3" : "bg-gray-300"
+                  idx === currentGameIndex ? "bg-purple-600 w-3" : "bg-gray-300"
                 )}
               />
             ))}
@@ -362,11 +579,11 @@ export default function SwipeableGameCards({ className }: SwipeableGameCardsProp
           </div>
           
           <button
-            onClick={handleNext}
-            disabled={currentIndex === availableGames.length - 1}
+            onClick={handleNextGame}
+            disabled={currentGameIndex === availableGames.length - 1}
             className={cn(
               "flex items-center gap-1 text-sm py-2",
-              currentIndex === availableGames.length - 1 ? "text-gray-300" : "text-gray-600 hover:text-purple-600"
+              currentGameIndex === availableGames.length - 1 ? "text-gray-300" : "text-gray-600 hover:text-purple-600"
             )}
             data-testid="button-next-game"
           >
