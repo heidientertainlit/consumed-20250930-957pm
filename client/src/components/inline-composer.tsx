@@ -523,6 +523,33 @@ export default function InlineComposer() {
           console.error('Error adding to list:', listError);
         }
       }
+      
+      // Auto-track media to "All" list when rating (if not already adding to a specific list)
+      if (postType === "rating" && selectedMedia && !addToList) {
+        try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+          await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              media: {
+                title: selectedMedia.title || "",
+                mediaType: selectedMedia.type || "movie",
+                creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
+                imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+                externalId: selectedMedia.external_id || selectedMedia.id || "",
+                externalSource: selectedMedia.external_source || selectedMedia.source || "tmdb",
+              },
+              listType: "All",
+            }),
+          });
+        } catch (trackError) {
+          console.error('Error auto-tracking rated media:', trackError);
+        }
+      }
 
       // Handle optional add to rank (only if media is selected)
       if (addToRank && selectedRankId && selectedMedia) {
