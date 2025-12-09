@@ -460,32 +460,6 @@ export default function PlayPage() {
           </p>
         </div>
 
-        {/* 🪙 Your Coins / Rewards Section */}
-        <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl p-4 mb-6 text-white shadow-md">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <Award className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <div className="text-xs font-medium opacity-90">Your Coins</div>
-                <div className="text-xl font-bold">{totalPoints}</div>
-              </div>
-            </div>
-            {userRank > 0 && (
-              <div className="text-right">
-                <div className="text-xs opacity-90">Global Rank</div>
-                <div className="text-lg font-bold">#{userRank}</div>
-                {userRank > 1 && leaderboardData[0] && (
-                  <div className="text-[10px] opacity-75 mt-0.5">
-                    {leaderboardData[0].total_points - totalPoints} pts to #1
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Quick Access to All Games */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h3 className="text-base font-semibold text-gray-900 mb-4">What would you like to do</h3>
