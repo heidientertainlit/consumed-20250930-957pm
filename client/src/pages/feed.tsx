@@ -657,8 +657,8 @@ export default function Feed() {
     enabled: !!session?.access_token,
     retry: false,
     getNextPageParam: (lastPage, allPages) => {
-      // If we got less than 15 posts, we've reached the end
-      if (lastPage.length < 15) return undefined;
+      // Only stop if we get zero posts - filtering may cause partial pages
+      if (lastPage.length === 0) return undefined;
       return allPages.length; // Return the next page number
     },
     initialPageParam: 0,
