@@ -2242,9 +2242,30 @@ export default function Feed() {
                   })()}
 
                   {/* Media Cards */}
-                  {/* List Preview Card for added_to_list posts - show compact format even without listData */}
-                  {post.type === 'added_to_list' && console.log('📋 added_to_list post:', { id: post.id, listId: (post as any).listId, hasListData: !!(post as any).listData, listDataItems: (post as any).listData?.items?.length, content: post.content?.slice(0, 50) })}
-                  {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && post.mediaItems && post.mediaItems.length > 0 ? (
+                  {/* List Preview Card for added_to_list posts - use content-based detection matching header logic */}
+                  {(() => {
+                    const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
+                    const contentLower = (post.content || '').toLowerCase();
+                    const isAddedPost = contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating);
+                    const hasListData = !!(post as any).listData;
+                    const isListPost = post.type === 'added_to_list' || (isAddedPost && hasListData) || (post.type === 'rate-review' && hasListData);
+                    
+                    // Debug: log posts that should show compact format
+                    if (hasMediaItems && (isAddedPost || hasListData)) {
+                      console.log('🔍 Potential list post:', {
+                        id: post.id,
+                        type: post.type,
+                        hasContent: !!post.content,
+                        contentPreview: post.content?.slice(0, 30),
+                        isAddedPost,
+                        hasListData,
+                        isListPost,
+                        listTitle: (post as any).listData?.title,
+                        mediaTitle: post.mediaItems?.[0]?.title
+                      });
+                    }
+                    
+                    return isListPost && hasMediaItems ? (
                     <div className="mb-2">
                       <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex gap-3">
@@ -2579,7 +2600,8 @@ export default function Feed() {
                         })()}
                       </div>
                     )
-                  )}
+                  );
+                  })()}
 
                   {/* Interaction Bar */}
                   <div className="pt-2 border-t border-gray-100 mt-2 space-y-2">
