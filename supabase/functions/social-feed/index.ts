@@ -526,10 +526,65 @@ serve(async (req) => {
       // TODO: Re-enable grouping when bugs are fixed
       const ENABLE_MEDIA_GROUPING = false;
       
+      // ENABLED: Consolidate added_to_list posts by user + list + time window
+      // This prevents duplicate posts when a user adds multiple items at once
+      const TIME_WINDOW_MS = 120000; // 2 minutes
+      const listAdditionGroups = new Map<string, any[]>();
+      
       const mediaGroups = new Map<string, any[]>();
       const nonMediaPosts: any[] = [];
 
+      // First pass: group added_to_list posts by user + list
       posts?.forEach(post => {
+        if (post.post_type === 'added_to_list' && post.list_id) {
+          const groupKey = `${post.user_id}:${post.list_id}`;
+          if (!listAdditionGroups.has(groupKey)) {
+            listAdditionGroups.set(groupKey, []);
+          }
+          listAdditionGroups.get(groupKey)!.push(post);
+        }
+      });
+      
+      // Find posts to consolidate (keep only the newest post per user+list+time window)
+      const postsToSkip = new Set<string>();
+      
+      listAdditionGroups.forEach((listPosts, groupKey) => {
+        if (listPosts.length > 1) {
+          // Sort by created_at ascending (oldest first)
+          listPosts.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          
+          // Sliding window: track start time and representative (newest in window)
+          let windowStart = new Date(listPosts[0].created_at).getTime();
+          let windowRepId = listPosts[0].id;
+          let windowRepTime = windowStart;
+          
+          for (let i = 1; i < listPosts.length; i++) {
+            const postTime = new Date(listPosts[i].created_at).getTime();
+            
+            if (postTime - windowStart <= TIME_WINDOW_MS) {
+              // Within same window - this post is newer, becomes representative
+              postsToSkip.add(windowRepId); // Skip previous representative
+              windowRepId = listPosts[i].id;
+              windowRepTime = postTime;
+            } else {
+              // New window - keep current representative, start new window
+              windowStart = postTime;
+              windowRepId = listPosts[i].id;
+              windowRepTime = postTime;
+            }
+          }
+          // The final windowRepId is kept (not added to postsToSkip)
+        }
+      });
+      
+      console.log('List consolidation: skipping', postsToSkip.size, 'duplicate posts');
+
+      posts?.forEach(post => {
+        // Skip posts that should be consolidated
+        if (postsToSkip.has(post.id)) {
+          return;
+        }
+        
         const hasMedia = post.media_title && post.media_title.trim() !== '' && post.media_external_id;
         
         // rank_share posts need special handling - don't group them with media
