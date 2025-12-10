@@ -207,7 +207,14 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Vote rank item error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error?.message || 'Unknown error',
+      debug: { 
+        errorType: typeof error,
+        errorString: String(error),
+        errorKeys: error ? Object.keys(error) : []
+      }
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
