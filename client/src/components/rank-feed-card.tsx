@@ -133,7 +133,7 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
       
       if (!response.ok) {
         const error = await response.json();
-        console.error('🗳️ Vote error:', error);
+        console.error('🗳️ Vote error:', error, 'debug:', error.debug);
         throw new Error(error.error || 'Failed to vote');
       }
 

@@ -84,14 +84,18 @@ serve(async (req) => {
     }
 
     // Get the rank item and associated rank
+    console.log('Looking for rank item:', rankItemId);
     const { data: rankItem, error: itemError } = await supabaseAdmin
       .from('rank_items')
       .select('id, rank_id, title, up_vote_count, down_vote_count')
       .eq('id', rankItemId)
       .single();
 
+    console.log('Rank item query result:', { rankItem, itemError });
+
     if (itemError || !rankItem) {
-      return new Response(JSON.stringify({ error: 'Rank item not found' }), {
+      console.error('Rank item not found. ID:', rankItemId, 'Error:', itemError);
+      return new Response(JSON.stringify({ error: 'Rank item not found', debug: { rankItemId, itemError: itemError?.message } }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
