@@ -298,7 +298,7 @@ serve(async (req) => {
       // For added_to_list posts WITHOUT list_id, try to infer the list from content
       // Content format: "Added X to Currently" or "Added X to Want To", etc.
       const postsNeedingListLookup = posts?.filter(p => 
-        p.post_type === 'added_to_list' && !p.list_id && p.content
+        p.post_type === 'add-to-list' && !p.list_id && p.content
       ) || [];
       
       const postToListIdMap = new Map<string, string>(); // post_id -> list_id
@@ -525,7 +525,7 @@ serve(async (req) => {
       // TODO: Re-enable grouping when bugs are fixed
       const ENABLE_MEDIA_GROUPING = false;
       
-      // ENABLED: Consolidate added_to_list posts by user + list + time window
+      // ENABLED: Consolidate posts with list_id by user + list + time window
       // This prevents duplicate posts when a user adds multiple items to the SAME list at once
       const TIME_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
       const listAdditionGroups = new Map<string, any[]>();
@@ -533,13 +533,15 @@ serve(async (req) => {
       const mediaGroups = new Map<string, any[]>();
       const nonMediaPosts: any[] = [];
 
-      // First pass: group ALL added_to_list posts by user only
-      // This consolidates all list additions from the same user within the time window
-      let addedToListCount = 0;
+      // First pass: group posts with list_id by user + list
+      // This consolidates all list additions from the same user to the same list within the time window
+      let listPostsCount = 0;
       posts?.forEach(post => {
-        if (post.post_type === 'added_to_list') {
-          addedToListCount++;
-          const groupKey = post.user_id; // Group by user only - simpler and always works
+        // Match posts with list_id OR 'add-to-list' type (covers both old and new posts)
+        if (post.list_id || post.post_type === 'add-to-list') {
+          listPostsCount++;
+          // Group by user_id + list_id for more precise consolidation
+          const groupKey = `${post.user_id}-${post.list_id || 'unknown'}`;
           if (!listAdditionGroups.has(groupKey)) {
             listAdditionGroups.set(groupKey, []);
           }
@@ -547,11 +549,11 @@ serve(async (req) => {
         }
       });
       
-      console.log('DEBUG CONSOLIDATION: found', addedToListCount, 'added_to_list posts, grouped into', listAdditionGroups.size, 'users');
+      console.log('DEBUG CONSOLIDATION: found', listPostsCount, 'list-related posts, grouped into', listAdditionGroups.size, 'user+list combinations');
       
       // Log each group's post count
-      listAdditionGroups.forEach((posts, userId) => {
-        console.log('DEBUG: User', userId, 'has', posts.length, 'added_to_list posts');
+      listAdditionGroups.forEach((posts, groupKey) => {
+        console.log('DEBUG: Group', groupKey, 'has', posts.length, 'posts');
       });
       
       // Find posts to consolidate (keep only the newest post per user+list+time window)
@@ -687,7 +689,7 @@ serve(async (req) => {
             
             if (post.post_type === 'finished') {
               activityText = 'finished it';
-            } else if (post.post_type === 'added_to_list') {
+            } else if (post.post_type === 'add-to-list') {
               activityText = 'added it to their list';
             } else if (post.post_type === 'rating') {
               // Handle fractional ratings safely
@@ -917,8 +919,8 @@ serve(async (req) => {
         posts: allItems, 
         currentUserId: appUser.id,
         _debug: {
-          addedToListPostsFound: addedToListCount,
-          usersWithListPosts: listAdditionGroups.size,
+          listPostsFound: listPostsCount,
+          groupCount: listAdditionGroups.size,
           postsSkipped: postsToSkip.size,
           skippedPostIds: Array.from(postsToSkip).slice(0, 5) // Only show first 5
         }
