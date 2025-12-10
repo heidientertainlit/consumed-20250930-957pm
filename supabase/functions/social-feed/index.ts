@@ -535,8 +535,10 @@ serve(async (req) => {
 
       // First pass: group ALL added_to_list posts by user only
       // This consolidates all list additions from the same user within the time window
+      let addedToListCount = 0;
       posts?.forEach(post => {
         if (post.post_type === 'added_to_list') {
+          addedToListCount++;
           const groupKey = post.user_id; // Group by user only - simpler and always works
           if (!listAdditionGroups.has(groupKey)) {
             listAdditionGroups.set(groupKey, []);
@@ -545,7 +547,12 @@ serve(async (req) => {
         }
       });
       
-      console.log('List addition groups found:', listAdditionGroups.size, 'users with added_to_list posts');
+      console.log('DEBUG CONSOLIDATION: found', addedToListCount, 'added_to_list posts, grouped into', listAdditionGroups.size, 'users');
+      
+      // Log each group's post count
+      listAdditionGroups.forEach((posts, userId) => {
+        console.log('DEBUG: User', userId, 'has', posts.length, 'added_to_list posts');
+      });
       
       // Find posts to consolidate (keep only the newest post per user+list+time window)
       const postsToSkip = new Set<string>();
@@ -579,7 +586,10 @@ serve(async (req) => {
         }
       });
       
-      console.log('List consolidation: skipping', postsToSkip.size, 'duplicate posts');
+      console.log('DEBUG CONSOLIDATION: skipping', postsToSkip.size, 'duplicate posts');
+      if (postsToSkip.size > 0) {
+        console.log('DEBUG: Posts being skipped:', Array.from(postsToSkip));
+      }
 
       posts?.forEach(post => {
         // Skip posts that should be consolidated
@@ -905,7 +915,13 @@ serve(async (req) => {
       // Return response with current user's app user ID for delete button matching
       return new Response(JSON.stringify({ 
         posts: allItems, 
-        currentUserId: appUser.id 
+        currentUserId: appUser.id,
+        _debug: {
+          addedToListPostsFound: addedToListCount,
+          usersWithListPosts: listAdditionGroups.size,
+          postsSkipped: postsToSkip.size,
+          skippedPostIds: Array.from(postsToSkip).slice(0, 5) // Only show first 5
+        }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
