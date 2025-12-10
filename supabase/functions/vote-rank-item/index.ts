@@ -83,11 +83,11 @@ serve(async (req) => {
       });
     }
 
-    // Get the rank item and associated rank
+    // Get the rank item (without vote count columns - they may not exist)
     console.log('Looking for rank item:', rankItemId);
     const { data: rankItem, error: itemError } = await supabaseAdmin
       .from('rank_items')
-      .select('id, rank_id, title, up_vote_count, down_vote_count')
+      .select('id, rank_id, title')
       .eq('id', rankItemId)
       .single();
 
@@ -131,9 +131,6 @@ serve(async (req) => {
       .maybeSingle();
 
     let voteAction = 'created';
-    let previousDirection: string | null = null;
-    let upDelta = 0;
-    let downDelta = 0;
 
     if (existingVote) {
       if (existingVote.direction === direction) {
@@ -144,11 +141,6 @@ serve(async (req) => {
           .eq('id', existingVote.id);
         
         voteAction = 'removed';
-        previousDirection = existingVote.direction;
-        
-        // Decrement the appropriate counter
-        if (direction === 'up') upDelta = -1;
-        else downDelta = -1;
       } else {
         // Different direction - update the vote
         await supabaseAdmin
@@ -157,16 +149,6 @@ serve(async (req) => {
           .eq('id', existingVote.id);
         
         voteAction = 'changed';
-        previousDirection = existingVote.direction;
-        
-        // Swap counters
-        if (direction === 'up') {
-          upDelta = 1;
-          downDelta = -1;
-        } else {
-          upDelta = -1;
-          downDelta = 1;
-        }
       }
     } else {
       // No existing vote - create new one
@@ -188,37 +170,34 @@ serve(async (req) => {
         }
         throw insertError;
       }
-      
-      // Increment the appropriate counter
-      if (direction === 'up') upDelta = 1;
-      else downDelta = 1;
     }
 
-    // Update cached counts using increment/decrement
-    const currentUpCount = rankItem.up_vote_count || 0;
-    const currentDownCount = rankItem.down_vote_count || 0;
-    const newUpCount = Math.max(0, currentUpCount + upDelta);
-    const newDownCount = Math.max(0, currentDownCount + downDelta);
+    // Count votes dynamically from rank_item_votes table
+    const { data: upVotes } = await supabaseAdmin
+      .from('rank_item_votes')
+      .select('id', { count: 'exact' })
+      .eq('rank_item_id', rankItemId)
+      .eq('direction', 'up');
+    
+    const { data: downVotes } = await supabaseAdmin
+      .from('rank_item_votes')
+      .select('id', { count: 'exact' })
+      .eq('rank_item_id', rankItemId)
+      .eq('direction', 'down');
 
-    await supabaseAdmin
-      .from('rank_items')
-      .update({ 
-        up_vote_count: newUpCount,
-        down_vote_count: newDownCount 
-      })
-      .eq('id', rankItemId);
-
+    const upVoteCount = upVotes?.length || 0;
+    const downVoteCount = downVotes?.length || 0;
     const userVote = voteAction === 'removed' ? null : direction;
 
-    console.log(`Vote ${voteAction} for rank item ${rankItemId}: up=${newUpCount}, down=${newDownCount}`);
+    console.log(`Vote ${voteAction} for rank item ${rankItemId}: up=${upVoteCount}, down=${downVoteCount}`);
 
     return new Response(JSON.stringify({
       success: true,
       data: {
         rankItemId,
-        upVoteCount: newUpCount,
-        downVoteCount: newDownCount,
-        netScore: newUpCount - newDownCount,
+        upVoteCount,
+        downVoteCount,
+        netScore: upVoteCount - downVoteCount,
         userVote,
         action: voteAction
       }
