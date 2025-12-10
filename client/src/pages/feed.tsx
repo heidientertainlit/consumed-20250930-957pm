@@ -155,10 +155,6 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
   if (data && typeof data === 'object' && !Array.isArray(data) && 'posts' in data && 'currentUserId' in data) {
     currentAppUserId = data.currentUserId;
     console.log('📌 Current app user ID set to:', currentAppUserId);
-    // Log debug info about list consolidation
-    if (data._debug) {
-      console.log('🔧 CONSOLIDATION DEBUG:', data._debug);
-    }
     return data.posts;
   }
   

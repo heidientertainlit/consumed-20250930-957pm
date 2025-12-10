@@ -918,12 +918,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         posts: allItems, 
         currentUserId: appUser.id,
-        _debug: {
-          listPostsFound: listPostsCount,
-          groupCount: listAdditionGroups.size,
-          postsSkipped: postsToSkip.size,
-          skippedPostIds: Array.from(postsToSkip).slice(0, 5) // Only show first 5
-        }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
