@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
@@ -554,8 +554,9 @@ export default function Feed() {
     return () => clearInterval(interval);
   }, []);
   
-  // Check for URL parameters to scroll to specific post/comment
-  const urlParams = new URLSearchParams(window.location.search);
+  // Check for URL parameters to scroll to specific post/comment (reactive to URL changes)
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
   const highlightPostId = urlParams.get('post');
   const highlightCommentId = urlParams.get('comment');
   
