@@ -19,7 +19,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '', 
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization') }
+          headers: { Authorization: req.headers.get('Authorization')! }
         }
       }
     );
@@ -29,79 +29,79 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    // Step 1: Get authenticated user
+    const { data: authData, error: userError } = await supabase.auth.getUser();
+    if (userError || !authData?.user) {
+      console.log('Auth error:', userError);
+      return new Response(JSON.stringify({ error: 'Unauthorized', step: 1, detail: userError?.message }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    const user = authData.user;
+    console.log('Step 1 passed: User authenticated:', user.id);
 
-    // Look up user by auth UID (id) first, then by email as fallback
-    let { data: appUser, error: appUserError } = await supabaseAdmin
+    // Step 2: Look up app user
+    let { data: appUser } = await supabaseAdmin
       .from('users')
       .select('id, email, user_name')
       .eq('id', user.id)
       .maybeSingle();
 
-    // If not found by ID, try by email
     if (!appUser) {
-      const { data: emailUser, error: emailError } = await supabaseAdmin
+      const { data: emailUser } = await supabaseAdmin
         .from('users')
         .select('id, email, user_name')
         .eq('email', user.email)
         .maybeSingle();
-      
-      if (emailUser) {
-        appUser = emailUser;
-      }
+      appUser = emailUser;
     }
 
     if (!appUser) {
-      return new Response(JSON.stringify({ 
-        error: 'User not found in database' 
-      }), {
+      return new Response(JSON.stringify({ error: 'User not found in database', step: 2 }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    console.log('Step 2 passed: App user found:', appUser.id);
 
+    // Step 3: Parse request body
     const requestBody = await req.json();
     const { rankItemId, direction } = requestBody;
+    console.log('Step 3: Request body:', { rankItemId, direction });
 
     if (!rankItemId) {
-      return new Response(JSON.stringify({ error: 'rankItemId is required' }), {
+      return new Response(JSON.stringify({ error: 'rankItemId is required', step: 3 }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     if (!direction || !['up', 'down'].includes(direction)) {
-      return new Response(JSON.stringify({ error: 'direction must be "up" or "down"' }), {
+      return new Response(JSON.stringify({ error: 'direction must be "up" or "down"', step: 3 }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Get the rank item (without vote count columns - they may not exist)
-    console.log('Looking for rank item:', rankItemId);
+    // Step 4: Get the rank item
+    console.log('Step 4: Looking for rank item:', rankItemId);
     const { data: rankItem, error: itemError } = await supabaseAdmin
       .from('rank_items')
       .select('id, rank_id, title')
       .eq('id', rankItemId)
       .single();
 
-    console.log('Rank item query result:', { rankItem, itemError });
-
     if (itemError || !rankItem) {
-      console.error('Rank item not found. ID:', rankItemId, 'Error:', itemError);
-      return new Response(JSON.stringify({ error: 'Rank item not found', debug: { rankItemId, itemError: itemError?.message } }), {
+      console.error('Step 4 failed: Rank item not found:', itemError);
+      return new Response(JSON.stringify({ error: 'Rank item not found', step: 4, detail: itemError?.message }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    console.log('Step 4 passed: Rank item found:', rankItem.title);
 
-    // Check if user owns the rank (can't vote on own rank)
+    // Step 5: Check if user owns the rank
     const { data: rank, error: rankError } = await supabaseAdmin
       .from('ranks')
       .select('id, user_id, visibility')
@@ -109,20 +109,23 @@ serve(async (req) => {
       .single();
 
     if (rankError || !rank) {
-      return new Response(JSON.stringify({ error: 'Rank not found' }), {
+      console.error('Step 5 failed: Rank not found:', rankError);
+      return new Response(JSON.stringify({ error: 'Rank not found', step: 5, detail: rankError?.message }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     if (rank.user_id === appUser.id) {
-      return new Response(JSON.stringify({ error: 'Cannot vote on your own rank' }), {
+      return new Response(JSON.stringify({ error: 'Cannot vote on your own rank', step: 5 }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    console.log('Step 5 passed: User can vote on this rank');
 
-    // Check for existing vote
+    // Step 6: Check for existing vote
+    console.log('Step 6: Checking for existing vote');
     const { data: existingVote, error: voteCheckError } = await supabaseAdmin
       .from('rank_item_votes')
       .select('id, direction')
@@ -130,24 +133,48 @@ serve(async (req) => {
       .eq('voter_id', appUser.id)
       .maybeSingle();
 
+    if (voteCheckError) {
+      console.error('Step 6 failed: Error checking vote:', voteCheckError);
+      return new Response(JSON.stringify({ error: 'Error checking vote', step: 6, detail: voteCheckError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    console.log('Step 6 passed: Existing vote:', existingVote);
+
     let voteAction = 'created';
 
+    // Step 7: Handle vote create/update/delete
     if (existingVote) {
       if (existingVote.direction === direction) {
         // Same direction - remove the vote (toggle off)
-        await supabaseAdmin
+        const { error: deleteError } = await supabaseAdmin
           .from('rank_item_votes')
           .delete()
           .eq('id', existingVote.id);
         
+        if (deleteError) {
+          console.error('Step 7 failed: Delete error:', deleteError);
+          return new Response(JSON.stringify({ error: 'Failed to remove vote', step: 7, detail: deleteError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
         voteAction = 'removed';
       } else {
         // Different direction - update the vote
-        await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
           .from('rank_item_votes')
           .update({ direction })
           .eq('id', existingVote.id);
         
+        if (updateError) {
+          console.error('Step 7 failed: Update error:', updateError);
+          return new Response(JSON.stringify({ error: 'Failed to update vote', step: 7, detail: updateError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
         voteAction = 'changed';
       }
     } else {
@@ -161,35 +188,39 @@ serve(async (req) => {
         });
 
       if (insertError) {
-        // Handle unique constraint violation (race condition)
+        console.error('Step 7 failed: Insert error:', insertError);
         if (insertError.code === '23505') {
-          return new Response(JSON.stringify({ error: 'Vote already recorded' }), {
+          return new Response(JSON.stringify({ error: 'Vote already recorded', step: 7 }), {
             status: 409,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
-        throw insertError;
+        return new Response(JSON.stringify({ error: 'Failed to create vote', step: 7, detail: insertError.message, code: insertError.code }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
     }
+    console.log('Step 7 passed: Vote action:', voteAction);
 
-    // Count votes dynamically from rank_item_votes table
-    const { data: upVotes } = await supabaseAdmin
+    // Step 8: Count votes
+    const { data: upVotes, count: upCount } = await supabaseAdmin
       .from('rank_item_votes')
-      .select('id', { count: 'exact' })
+      .select('id', { count: 'exact', head: false })
       .eq('rank_item_id', rankItemId)
       .eq('direction', 'up');
     
-    const { data: downVotes } = await supabaseAdmin
+    const { data: downVotes, count: downCount } = await supabaseAdmin
       .from('rank_item_votes')
-      .select('id', { count: 'exact' })
+      .select('id', { count: 'exact', head: false })
       .eq('rank_item_id', rankItemId)
       .eq('direction', 'down');
 
-    const upVoteCount = upVotes?.length || 0;
-    const downVoteCount = downVotes?.length || 0;
+    const upVoteCount = upCount ?? upVotes?.length ?? 0;
+    const downVoteCount = downCount ?? downVotes?.length ?? 0;
     const userVote = voteAction === 'removed' ? null : direction;
 
-    console.log(`Vote ${voteAction} for rank item ${rankItemId}: up=${upVoteCount}, down=${downVoteCount}`);
+    console.log(`Step 8 passed: Vote counts - up=${upVoteCount}, down=${downVoteCount}`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -205,15 +236,14 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Vote rank item error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
     return new Response(JSON.stringify({ 
-      error: error?.message || 'Unknown error',
-      debug: { 
-        errorType: typeof error,
-        errorString: String(error),
-        errorKeys: error ? Object.keys(error) : []
-      }
+      error: errorMessage || 'Unknown error',
+      stack: errorStack,
+      type: typeof error
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
