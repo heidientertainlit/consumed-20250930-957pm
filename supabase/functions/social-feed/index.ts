@@ -306,51 +306,48 @@ serve(async (req) => {
       if (postsNeedingListLookup.length > 0) {
         console.log('Found posts needing list lookup:', postsNeedingListLookup.length);
         
-        // Parse list names from content and group by user
-        const userListLookups: { [userId: string]: Set<string> } = {};
-        const postListNameMap: { [postId: string]: string } = {};
+        // Get unique user IDs that need list lookup
+        const usersNeedingLookup = [...new Set(postsNeedingListLookup.map(p => p.user_id))];
         
-        for (const post of postsNeedingListLookup) {
-          // Match list name from various content formats:
-          // "Added X to Currently", "added to Currently", "to Currently"
-          // "added to → Currently", "Joejoe added to → Currently"
-          // Arrow can be → or -> or just space
-          const match = post.content.match(/(?:to\s*(?:→|->)?\s*)(Currently|Want To|Finished|Did Not Finish|Favorites)\s*$/i);
-          if (match) {
-            const listName = match[1];
-            if (!userListLookups[post.user_id]) {
-              userListLookups[post.user_id] = new Set();
+        // Fetch ALL lists for these users
+        const { data: allUserLists } = await supabaseAdmin
+          .from('lists')
+          .select('id, title, user_id')
+          .in('user_id', usersNeedingLookup);
+        
+        // Build a map of user_id -> { listTitle -> listId }
+        const userListMap: { [userId: string]: Map<string, string> } = {};
+        if (allUserLists) {
+          for (const list of allUserLists) {
+            if (!userListMap[list.user_id]) {
+              userListMap[list.user_id] = new Map();
             }
-            userListLookups[post.user_id].add(listName);
-            postListNameMap[post.id] = listName;
-            console.log('Matched list name from content:', { postId: post.id, content: post.content, listName });
-          } else {
-            console.log('No list match for content:', { postId: post.id, content: post.content });
+            userListMap[list.user_id].set(list.title.toLowerCase(), list.id);
           }
         }
         
-        // Fetch lists for each user
-        for (const [userId, listNames] of Object.entries(userListLookups)) {
-          const { data: userLists } = await supabaseAdmin
-            .from('lists')
-            .select('id, title')
-            .eq('user_id', userId)
-            .in('title', Array.from(listNames));
+        console.log('Loaded lists for users:', Object.keys(userListMap).length);
+        
+        // Match posts to lists using flexible content parsing
+        for (const post of postsNeedingListLookup) {
+          const userLists = userListMap[post.user_id];
+          if (!userLists) continue;
           
-          if (userLists) {
-            const listTitleToId = new Map(userLists.map(l => [l.title.toLowerCase(), l.id]));
-            
-            // Map posts to their list IDs
-            for (const post of postsNeedingListLookup.filter(p => p.user_id === userId)) {
-              const listName = postListNameMap[post.id];
-              if (listName) {
-                const listId = listTitleToId.get(listName.toLowerCase());
-                if (listId) {
-                  postToListIdMap.set(post.id, listId);
-                  uniqueListIds.push(listId);
-                }
-              }
+          // Extract list name from content - match "to → ListName" or "to ListName" at end
+          // Use flexible regex that captures everything after "to" (with optional arrow)
+          const match = post.content.match(/(?:to\s*(?:→|->)?\s*)([^→]+?)\s*$/i);
+          if (match) {
+            const extractedName = match[1].trim();
+            const listId = userLists.get(extractedName.toLowerCase());
+            if (listId) {
+              postToListIdMap.set(post.id, listId);
+              uniqueListIds.push(listId);
+              console.log('Matched list from content:', { postId: post.id, listName: extractedName, listId });
+            } else {
+              console.log('No list found for name:', { postId: post.id, content: post.content, extractedName });
             }
+          } else {
+            console.log('No list match for content format:', { postId: post.id, content: post.content });
           }
         }
         
@@ -529,8 +526,8 @@ serve(async (req) => {
       const ENABLE_MEDIA_GROUPING = false;
       
       // ENABLED: Consolidate added_to_list posts by user + list + time window
-      // This prevents duplicate posts when a user adds multiple items at once
-      const TIME_WINDOW_MS = 120000; // 2 minutes
+      // This prevents duplicate posts when a user adds multiple items to the SAME list at once
+      const TIME_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
       const listAdditionGroups = new Map<string, any[]>();
       
       const mediaGroups = new Map<string, any[]>();
@@ -538,9 +535,11 @@ serve(async (req) => {
 
       // First pass: group added_to_list posts by user + list
       // Use stored list_id OR inferred list_id from postToListIdMap
+      // ONLY group posts that have a valid list_id - don't group unknown posts
       posts?.forEach(post => {
         if (post.post_type === 'added_to_list') {
           const effectiveListId = post.list_id || postToListIdMap.get(post.id);
+          // Only group posts with known list_id - posts without list_id stay separate
           if (effectiveListId) {
             const groupKey = `${post.user_id}:${effectiveListId}`;
             if (!listAdditionGroups.has(groupKey)) {

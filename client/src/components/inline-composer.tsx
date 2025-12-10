@@ -51,6 +51,7 @@ export default function InlineComposer() {
   const [addToRank, setAddToRank] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string>("");
   const [selectedRankId, setSelectedRankId] = useState<string>("");
+  const [postToFeed, setPostToFeed] = useState(true); // Toggle to skip feed post when adding to list
   
   // Common state
   const [containsSpoilers, setContainsSpoilers] = useState(false);
@@ -140,6 +141,7 @@ export default function InlineComposer() {
     setAddToRank(false);
     setSelectedListId("");
     setSelectedRankId("");
+    setPostToFeed(true);
     setContainsSpoilers(false);
   };
 
@@ -486,23 +488,11 @@ export default function InlineComposer() {
         };
       }
 
-      // Post to feed
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inline-post`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session?.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error("Failed to post");
-
-      // Handle optional add to list (only if media is selected)
+      // Handle add to list (if selected)
       if (addToList && selectedListId && selectedMedia) {
         try {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-          await fetch(`${supabaseUrl}/functions/v1/add-media-to-list`, {
+          const listResponse = await fetch(`${supabaseUrl}/functions/v1/add-media-to-list`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${session?.access_token}`,
@@ -516,13 +506,48 @@ export default function InlineComposer() {
               media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
               media_external_id: selectedMedia.external_id || selectedMedia.id || "",
               media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
-              skip_social_post: true, // Don't create another social_post - inline-post already created one
+              skip_social_post: !postToFeed, // Only create social post if postToFeed is true
             }),
           });
+          
+          if (!listResponse.ok) {
+            throw new Error('Failed to add to list');
+          }
+          
+          // If user doesn't want to post to feed, we're done
+          if (!postToFeed) {
+            toast({
+              title: "Added to list!",
+              description: "Media added without posting to feed.",
+            });
+            queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+            resetComposer();
+            setIsPosting(false);
+            return;
+          }
         } catch (listError) {
           console.error('Error adding to list:', listError);
+          toast({
+            title: "Failed to add to list",
+            description: "Please try again.",
+            variant: "destructive",
+          });
+          setIsPosting(false);
+          return;
         }
       }
+
+      // Post to feed (only if postToFeed is true or not adding to list)
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inline-post`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Failed to post");
       
       // Auto-track media to "All" list when rating (if not already adding to a specific list)
       if (postType === "rating" && selectedMedia && !addToList) {
@@ -589,8 +614,17 @@ export default function InlineComposer() {
 
   // Check if can post
   const canPost = () => {
+    // Special case: adding to list without posting to feed requires only media + list selection
+    if (addToList && selectedListId && selectedMedia && !postToFeed) {
+      return true;
+    }
+    
     switch (postType) {
       case "thought":
+        // If adding to list with feed post, allow just media selection
+        if (addToList && selectedListId && selectedMedia) {
+          return true;
+        }
         return selectedMedia && contentText.trim().length > 0;
       case "rating":
         return selectedMedia && (ratingValue > 0 || contentText.trim().length > 0);
@@ -832,11 +866,12 @@ export default function InlineComposer() {
 
                   {/* List dropdown when Add to List is selected */}
                   {addToList && (
-                    <div className="mt-3">
+                    <div className="mt-3 space-y-2">
                       <select
                         value={selectedListId}
                         onChange={(e) => setSelectedListId(e.target.value)}
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white text-gray-900"
+                        data-testid="select-list-dropdown"
                       >
                         <option value="">Select a list...</option>
                         {userLists.map((list: any) => (
@@ -845,6 +880,14 @@ export default function InlineComposer() {
                           </option>
                         ))}
                       </select>
+                      <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                        <Checkbox
+                          checked={postToFeed}
+                          onCheckedChange={(checked) => setPostToFeed(checked === true)}
+                          data-testid="checkbox-post-to-feed"
+                        />
+                        <span>Post to feed</span>
+                      </label>
                     </div>
                   )}
 
