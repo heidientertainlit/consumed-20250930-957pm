@@ -533,24 +533,19 @@ serve(async (req) => {
       const mediaGroups = new Map<string, any[]>();
       const nonMediaPosts: any[] = [];
 
-      // First pass: group added_to_list posts by user + list
-      // Use stored list_id OR inferred list_id from postToListIdMap
-      // ONLY group posts that have a valid list_id - don't group unknown posts
+      // First pass: group ALL added_to_list posts by user only
+      // This consolidates all list additions from the same user within the time window
       posts?.forEach(post => {
         if (post.post_type === 'added_to_list') {
-          const effectiveListId = post.list_id || postToListIdMap.get(post.id);
-          // Only group posts with known list_id - posts without list_id stay separate
-          if (effectiveListId) {
-            const groupKey = `${post.user_id}:${effectiveListId}`;
-            if (!listAdditionGroups.has(groupKey)) {
-              listAdditionGroups.set(groupKey, []);
-            }
-            listAdditionGroups.get(groupKey)!.push(post);
+          const groupKey = post.user_id; // Group by user only - simpler and always works
+          if (!listAdditionGroups.has(groupKey)) {
+            listAdditionGroups.set(groupKey, []);
           }
+          listAdditionGroups.get(groupKey)!.push(post);
         }
       });
       
-      console.log('List addition groups found:', listAdditionGroups.size);
+      console.log('List addition groups found:', listAdditionGroups.size, 'users with added_to_list posts');
       
       // Find posts to consolidate (keep only the newest post per user+list+time window)
       const postsToSkip = new Set<string>();
