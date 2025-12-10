@@ -117,6 +117,8 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
 
   const voteMutation = useMutation({
     mutationFn: async ({ rankItemId, direction }: { rankItemId: string; direction: 'up' | 'down' }) => {
+      console.log('🗳️ Voting:', { rankItemId, direction, hasToken: !!session?.access_token, hasApiKey: !!supabaseAnonKey });
+      
       const response = await fetch(`${supabaseUrl}/functions/v1/vote-rank-item`, {
         method: "POST",
         headers: {
@@ -127,12 +129,17 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
         body: JSON.stringify({ rankItemId, direction }),
       });
 
+      console.log('🗳️ Vote response status:', response.status);
+      
       if (!response.ok) {
         const error = await response.json();
+        console.error('🗳️ Vote error:', error);
         throw new Error(error.error || 'Failed to vote');
       }
 
-      return response.json();
+      const result = await response.json();
+      console.log('🗳️ Vote success:', result);
+      return result;
     },
     onSuccess: (data) => {
       setLocalItems(prev => prev.map(item => 
