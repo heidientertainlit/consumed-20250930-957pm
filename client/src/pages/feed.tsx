@@ -780,22 +780,42 @@ export default function Feed() {
       // Auto-expand comments for the highlighted post
       setExpandedComments(prev => new Set(prev).add(highlightPostId));
       
-      // Wait for comments to load and then scroll
-      setTimeout(() => {
+      // Retry scrolling until element is found (comments may take time to load)
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      const tryScroll = () => {
+        attempts++;
+        
         if (highlightCommentId) {
           // Scroll to specific comment
           const commentElement = document.getElementById(`comment-${highlightCommentId}`);
           if (commentElement) {
             commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add highlight effect
+            commentElement.classList.add('ring-2', 'ring-purple-500', 'ring-opacity-50');
+            setTimeout(() => {
+              commentElement.classList.remove('ring-2', 'ring-purple-500', 'ring-opacity-50');
+            }, 3000);
+            return; // Success
           }
         } else {
           // Just scroll to the post
           const postElement = document.getElementById(`post-${highlightPostId}`);
           if (postElement) {
             postElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return; // Success
           }
         }
-      }, 500); // Give time for comments to render
+        
+        // Retry if element not found yet
+        if (attempts < maxAttempts) {
+          setTimeout(tryScroll, 300);
+        }
+      };
+      
+      // Start trying after initial delay
+      setTimeout(tryScroll, 500);
     }
   }, [highlightPostId, highlightCommentId, socialPosts]);
 
