@@ -311,9 +311,11 @@ serve(async (req) => {
         const postListNameMap: { [postId: string]: string } = {};
         
         for (const post of postsNeedingListLookup) {
-          // Match "to {ListName}" at the end of content - various formats:
+          // Match list name from various content formats:
           // "Added X to Currently", "added to Currently", "to Currently"
-          const match = post.content.match(/to\s+(Currently|Want To|Finished|Did Not Finish|Favorites)\s*$/i);
+          // "added to → Currently", "Joejoe added to → Currently"
+          // Arrow can be → or -> or just space
+          const match = post.content.match(/(?:to\s*(?:→|->)?\s*)(Currently|Want To|Finished|Did Not Finish|Favorites)\s*$/i);
           if (match) {
             const listName = match[1];
             if (!userListLookups[post.user_id]) {
@@ -535,15 +537,21 @@ serve(async (req) => {
       const nonMediaPosts: any[] = [];
 
       // First pass: group added_to_list posts by user + list
+      // Use stored list_id OR inferred list_id from postToListIdMap
       posts?.forEach(post => {
-        if (post.post_type === 'added_to_list' && post.list_id) {
-          const groupKey = `${post.user_id}:${post.list_id}`;
-          if (!listAdditionGroups.has(groupKey)) {
-            listAdditionGroups.set(groupKey, []);
+        if (post.post_type === 'added_to_list') {
+          const effectiveListId = post.list_id || postToListIdMap.get(post.id);
+          if (effectiveListId) {
+            const groupKey = `${post.user_id}:${effectiveListId}`;
+            if (!listAdditionGroups.has(groupKey)) {
+              listAdditionGroups.set(groupKey, []);
+            }
+            listAdditionGroups.get(groupKey)!.push(post);
           }
-          listAdditionGroups.get(groupKey)!.push(post);
         }
       });
+      
+      console.log('List addition groups found:', listAdditionGroups.size);
       
       // Find posts to consolidate (keep only the newest post per user+list+time window)
       const postsToSkip = new Set<string>();
