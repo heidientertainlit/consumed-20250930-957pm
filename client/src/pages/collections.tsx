@@ -634,11 +634,11 @@ export default function CollectionsPage() {
                       <button
                         key={value}
                         onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
-                        className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-50 ${
-                          mediaHistoryType === value ? 'text-purple-600 font-medium' : 'text-gray-700'
+                        className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${
+                          mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
                         }`}
                       >
-                        {Icon && <Icon size={12} />}
+                        {Icon && <Icon size={12} className="text-gray-600" />}
                         {label}
                       </button>
                     ))}
@@ -665,8 +665,8 @@ export default function CollectionsPage() {
                   <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px] max-h-48 overflow-y-auto">
                     <button
                       onClick={() => { setMediaHistoryYear('all'); setOpenFilter(null); }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
-                        mediaHistoryYear === 'all' ? 'text-purple-600 font-medium' : 'text-gray-700'
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                        mediaHistoryYear === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
                       }`}
                     >
                       All Years
@@ -675,8 +675,8 @@ export default function CollectionsPage() {
                       <button
                         key={year}
                         onClick={() => { setMediaHistoryYear(year); setOpenFilter(null); }}
-                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
-                          mediaHistoryYear === year ? 'text-purple-600 font-medium' : 'text-gray-700'
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                          mediaHistoryYear === year ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
                         }`}
                       >
                         {year}
@@ -705,8 +705,8 @@ export default function CollectionsPage() {
                   <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px]">
                     <button
                       onClick={() => { setMediaHistoryRating('all'); setOpenFilter(null); }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
-                        mediaHistoryRating === 'all' ? 'text-purple-600 font-medium' : 'text-gray-700'
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                        mediaHistoryRating === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
                       }`}
                     >
                       All Ratings
@@ -715,8 +715,8 @@ export default function CollectionsPage() {
                       <button
                         key={rating}
                         onClick={() => { setMediaHistoryRating(rating.toString()); setOpenFilter(null); }}
-                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
-                          mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium' : 'text-gray-700'
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                          mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
                         }`}
                       >
                         {'⭐'.repeat(rating)}
@@ -726,14 +726,14 @@ export default function CollectionsPage() {
                 )}
               </div>
 
-              {/* Import Button */}
+              {/* Import Goodreads Button */}
               <button
                 onClick={() => setIsImportModalOpen(true)}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 flex items-center gap-1.5"
                 data-testid="button-import-history"
               >
-                <Upload size={12} />
-                Import
+                <BookOpen size={12} />
+                Import Goodreads
               </button>
             </div>
 
