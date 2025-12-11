@@ -386,7 +386,7 @@ export default function RankDetail() {
                               <GripVertical size={20} />
                             </div>
                             
-                            <div className="w-10 h-10 bg-purple-600 text-white rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0">
+                            <div className="w-7 h-7 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-medium text-sm flex-shrink-0">
                               {index + 1}
                             </div>
                             
