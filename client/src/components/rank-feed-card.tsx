@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { CommentsSection } from "@/components/comments-section";
+import CommentsSection from "@/components/comments-section";
 
 interface RankItemWithVotes {
   id: string;
@@ -43,8 +43,18 @@ interface RankFeedCardProps {
   commentsCount?: number;
   isLiked?: boolean;
   onLike?: (postId: string) => void;
-  onComment?: (postId: string, content: string) => void;
+  expandedComments?: boolean;
+  onToggleComments?: () => void;
+  // Comment props
   fetchComments?: (postId: string) => Promise<any[]>;
+  commentInput?: string;
+  onCommentInputChange?: (value: string) => void;
+  onSubmitComment?: (parentCommentId?: string, content?: string) => void;
+  isSubmitting?: boolean;
+  currentUserId?: string;
+  onDeleteComment?: (commentId: string, postId: string) => void;
+  onLikeComment?: (commentId: string) => void;
+  likedComments?: Set<string>;
 }
 
 const getMediaIcon = (mediaType?: string) => {
@@ -69,7 +79,28 @@ const getMediaIcon = (mediaType?: string) => {
   }
 };
 
-export default function RankFeedCard({ rank, author, caption, createdAt }: RankFeedCardProps) {
+export default function RankFeedCard({ 
+  rank, 
+  author, 
+  caption, 
+  createdAt, 
+  postId,
+  likesCount = 0,
+  commentsCount = 0,
+  isLiked = false,
+  onLike,
+  expandedComments,
+  onToggleComments,
+  fetchComments,
+  commentInput = '',
+  onCommentInputChange,
+  onSubmitComment,
+  isSubmitting = false,
+  currentUserId,
+  onDeleteComment,
+  onLikeComment,
+  likedComments = new Set()
+}: RankFeedCardProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -77,6 +108,8 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
+  const [localLikesCount, setLocalLikesCount] = useState(likesCount);
+  const [localIsLiked, setLocalIsLiked] = useState(isLiked);
   
   const isOwner = user?.id === rank.user_id;
 
@@ -324,6 +357,62 @@ export default function RankFeedCard({ rank, author, caption, createdAt }: RankF
             {showAll ? 'Show less' : `Show all ${localItems.length} items`}
           </span>
         </button>
+      )}
+
+      {/* Like & Comment Footer */}
+      {postId && (
+        <div className="px-4 py-3 border-t border-gray-100">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                if (!session?.access_token) {
+                  toast({ title: "Sign in to like", variant: "destructive" });
+                  return;
+                }
+                // Optimistic update
+                setLocalIsLiked(!localIsLiked);
+                setLocalLikesCount(prev => localIsLiked ? prev - 1 : prev + 1);
+                onLike?.(postId);
+              }}
+              className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors"
+              data-testid={`like-rank-${postId}`}
+            >
+              <Heart 
+                size={20} 
+                className={localIsLiked ? "text-red-500 fill-red-500" : ""} 
+              />
+              <span className="text-sm font-medium">{localLikesCount}</span>
+            </button>
+            
+            <button
+              onClick={() => onToggleComments?.()}
+              className="flex items-center gap-1.5 text-gray-500 hover:text-purple-500 transition-colors"
+              data-testid={`comment-rank-${postId}`}
+            >
+              <MessageCircle size={20} />
+              <span className="text-sm font-medium">{commentsCount}</span>
+            </button>
+          </div>
+          
+          {/* Comments Section */}
+          {expandedComments && fetchComments && onCommentInputChange && onSubmitComment && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <CommentsSection 
+                postId={postId}
+                fetchComments={fetchComments}
+                session={session}
+                commentInput={commentInput}
+                onCommentInputChange={onCommentInputChange}
+                onSubmitComment={onSubmitComment}
+                isSubmitting={isSubmitting}
+                currentUserId={currentUserId}
+                onDeleteComment={onDeleteComment}
+                onLikeComment={onLikeComment}
+                likedComments={likedComments}
+              />
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

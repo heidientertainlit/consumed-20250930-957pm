@@ -1863,7 +1863,7 @@ export default function Feed() {
                 if (post.type === 'rank_share' && (post as any).rankData) {
                   const rankPost = post as any;
                   return (
-                    <div key={`rank-${post.id}`}>
+                    <div key={`rank-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
                         <RankFeedCard
@@ -1876,6 +1876,30 @@ export default function Feed() {
                           }}
                           caption={post.content}
                           createdAt={post.timestamp}
+                          postId={post.id}
+                          likesCount={post.likes}
+                          commentsCount={post.comments}
+                          isLiked={likedPosts.has(post.id)}
+                          onLike={handleLike}
+                          expandedComments={expandedComments.has(post.id)}
+                          onToggleComments={() => setExpandedComments(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(post.id)) {
+                              newSet.delete(post.id);
+                            } else {
+                              newSet.add(post.id);
+                            }
+                            return newSet;
+                          })}
+                          fetchComments={fetchComments}
+                          commentInput={commentInputs[post.id] || ''}
+                          onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                          onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                          isSubmitting={commentMutation.isPending}
+                          currentUserId={user?.id}
+                          onDeleteComment={handleDeleteComment}
+                          onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                          likedComments={likedComments}
                         />
                       </div>
                     </div>
