@@ -3,7 +3,8 @@ import { useLocation, useParams, Link } from 'wouter';
 import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, MoreVertical, X, Share2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -284,23 +285,27 @@ export default function RankDetail() {
           </div>
 
           {/* Actions Row */}
-          <div className="flex items-center gap-2">
-            <Badge 
-              onClick={() => {
-                if (!privacyMutation.isPending) {
-                  privacyMutation.mutate(!isPublic);
-                }
-              }}
-              variant="secondary" 
-              className="cursor-pointer hover:bg-gray-200 text-xs px-3 py-1.5"
-              data-testid="toggle-rank-privacy"
-            >
-              {isPublic ? (
-                <><Globe size={12} className="mr-1 text-purple-600" /> Public</>
-              ) : (
-                <><Lock size={12} className="mr-1" /> Private</>
-              )}
-            </Badge>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="privacy-toggle"
+                checked={isPublic}
+                onCheckedChange={(checked) => {
+                  if (!privacyMutation.isPending) {
+                    privacyMutation.mutate(checked);
+                  }
+                }}
+                disabled={privacyMutation.isPending}
+                data-testid="toggle-rank-privacy"
+              />
+              <Label htmlFor="privacy-toggle" className="text-sm text-gray-600 flex items-center gap-1 cursor-pointer">
+                {isPublic ? (
+                  <><Globe size={14} className="text-purple-600" /> Public</>
+                ) : (
+                  <><Lock size={14} className="text-gray-500" /> Private</>
+                )}
+              </Label>
+            </div>
 
             <Button
               size="sm"
