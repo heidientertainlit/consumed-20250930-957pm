@@ -616,7 +616,7 @@ export default function CollectionsPage() {
                   placeholder="Search your history..."
                   value={mediaHistorySearch}
                   onChange={(e) => setMediaHistorySearch(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-white text-gray-900 border-gray-300"
                   data-testid="input-history-search"
                 />
               </div>
@@ -697,10 +697,10 @@ export default function CollectionsPage() {
             {/* Date filters */}
             <div className="flex gap-2 mb-4">
               <Select value={mediaHistoryYear} onValueChange={setMediaHistoryYear}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-32 bg-white text-gray-900 border-gray-300">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="all">All Years</SelectItem>
                   {years.map((year) => (
                     <SelectItem key={year} value={year}>{year}</SelectItem>
@@ -708,10 +708,10 @@ export default function CollectionsPage() {
                 </SelectContent>
               </Select>
               <Select value={mediaHistoryMonth} onValueChange={setMediaHistoryMonth}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-36 bg-white text-gray-900 border-gray-300">
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="all">All Months</SelectItem>
                   {months.map((month) => (
                     <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
