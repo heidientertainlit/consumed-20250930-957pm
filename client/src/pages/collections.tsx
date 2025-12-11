@@ -405,7 +405,7 @@ export default function CollectionsPage() {
             <div className="mb-4 flex justify-center">
               <Dialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 px-8 py-2 rounded-full" data-testid="button-create-list">
+                  <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 px-8 py-2 rounded-full" data-testid="button-create-list">
                     <Plus size={16} className="mr-2" />
                     Create List
                   </Button>
