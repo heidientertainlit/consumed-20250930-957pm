@@ -28,6 +28,7 @@ import AdminDashboard from "@/pages/admin";
 import CTVDemo from "@/pages/ctv";
 import CTVRoku from "@/pages/ctv-roku";
 import EngagePage from "@/pages/engage";
+import CollectionsPage from "@/pages/collections";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
 import OnboardingPage from "./pages/onboarding";
@@ -102,6 +103,11 @@ function Router() {
         <Route path="/play">
           <ProtectedRoute>
             <Play />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/collections">
+          <ProtectedRoute>
+            <CollectionsPage />
           </ProtectedRoute>
         </Route>
         <Route path="/play/trivia">
