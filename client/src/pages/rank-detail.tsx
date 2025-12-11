@@ -267,82 +267,84 @@ export default function RankDetail() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={() => {}} />
 
-      <div className="sticky top-16 z-40 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          {/* Title Row */}
-          <div className="flex items-center gap-3 mb-3">
-            <button
-              onClick={() => setLocation("/me?tab=collections")}
-              className="p-1.5 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-back"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-semibold text-gray-900">{rankData.title}</h1>
-              <p className="text-sm text-gray-500">{rankData.items?.length || 0} items</p>
+      <div className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          {/* Header Row */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <button
+                onClick={() => setLocation("/me?tab=collections")}
+                className="p-1 mt-1 text-gray-700 hover:text-black transition-colors"
+                data-testid="button-back"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div>
+                <h1 className="text-lg font-semibold text-gray-900">{rankData.title}</h1>
+                <p className="text-sm text-gray-500">{rankData.items?.length || 0} items</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => setIsTrackModalOpen(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-xs px-3"
+                data-testid="button-add-item"
+              >
+                <Plus size={14} className="mr-1" />
+                Add
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="px-2">
+                    <MoreVertical size={16} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
+                    disabled={shareRankMutation.isPending || !isPublic}
+                    data-testid="button-share-rank"
+                  >
+                    <Share2 size={14} className="mr-2" />
+                    {shareRankMutation.isPending ? 'Sharing...' : 'Share to Feed'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={handleDeleteRank}
+                    disabled={deleteRankMutation.isPending}
+                    className="text-red-600"
+                  >
+                    <Trash2 size={14} className="mr-2" />
+                    {deleteRankMutation.isPending ? 'Deleting...' : 'Delete Rank'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
-          {/* Actions Row */}
-          <div className="flex items-center gap-3 justify-end">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="privacy-toggle"
-                checked={isPublic}
-                onCheckedChange={(checked) => {
-                  if (!privacyMutation.isPending) {
-                    privacyMutation.mutate(checked);
-                  }
-                }}
-                disabled={privacyMutation.isPending}
-                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-purple-600"
-                data-testid="toggle-rank-privacy"
-              />
-              <Label htmlFor="privacy-toggle" className="text-sm text-gray-600 flex items-center gap-1 cursor-pointer">
-                {isPublic ? (
-                  <><Globe size={14} className="text-purple-600" /> Public</>
-                ) : (
-                  <><Lock size={14} className="text-gray-500" /> Private</>
-                )}
-              </Label>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={() => setIsTrackModalOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-xs px-4 py-1.5"
-              data-testid="button-add-item"
-            >
-              <Plus size={14} className="mr-1" />
-              Add
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline" className="px-2">
-                  <MoreVertical size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem 
-                  onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
-                  disabled={shareRankMutation.isPending || !isPublic}
-                  data-testid="button-share-rank"
-                >
-                  <Share2 size={14} className="mr-2" />
-                  {shareRankMutation.isPending ? 'Sharing...' : 'Share to Feed'}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleDeleteRank}
-                  disabled={deleteRankMutation.isPending}
-                  className="text-red-600"
-                >
-                  <Trash2 size={14} className="mr-2" />
-                  {deleteRankMutation.isPending ? 'Deleting...' : 'Delete Rank'}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Privacy Toggle Row */}
+          <div className="flex items-center gap-2 mt-3 ml-8">
+            <Switch
+              id="privacy-toggle"
+              checked={isPublic}
+              onCheckedChange={(checked) => {
+                if (!privacyMutation.isPending) {
+                  privacyMutation.mutate(checked);
+                }
+              }}
+              disabled={privacyMutation.isPending}
+              className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-purple-600"
+              data-testid="toggle-rank-privacy"
+            />
+            <Label htmlFor="privacy-toggle" className="text-sm text-gray-600 flex items-center gap-1 cursor-pointer">
+              {isPublic ? (
+                <><Globe size={14} className="text-purple-600" /> Public</>
+              ) : (
+                <><Lock size={14} className="text-gray-500" /> Private</>
+              )}
+            </Label>
           </div>
         </div>
       </div>
