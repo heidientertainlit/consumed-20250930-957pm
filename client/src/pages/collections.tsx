@@ -813,7 +813,7 @@ export default function CollectionsPage() {
         <DialogContent className="bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between text-gray-900">
-              Import Media History
+              Import Goodreads
               <Button
                 variant="ghost"
                 size="sm"
@@ -826,7 +826,7 @@ export default function CollectionsPage() {
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <p className="text-sm text-gray-600">
-              Upload a CSV or ZIP file with your viewing history from Netflix, Goodreads, or other services.
+              Upload your Goodreads export file to import your reading history.
             </p>
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
               <input
@@ -841,7 +841,7 @@ export default function CollectionsPage() {
                 <p className="text-sm text-gray-600">
                   {importFile ? importFile.name : 'Click to select a file'}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">CSV or ZIP files supported</p>
+                <p className="text-xs text-gray-400 mt-1">CSV files supported</p>
               </label>
             </div>
             <Button
@@ -859,6 +859,9 @@ export default function CollectionsPage() {
                 'Import'
               )}
             </Button>
+            <p className="text-xs text-gray-500 text-center">
+              Want to import from other services? Email <a href="mailto:heidi@consumedapp.com" className="text-purple-600 hover:underline">heidi@consumedapp.com</a> and we'll do it for you!
+            </p>
           </div>
         </DialogContent>
       </Dialog>
