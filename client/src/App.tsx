@@ -154,6 +154,11 @@ function Router() {
             <CreatorProfile />
           </ProtectedRoute>
         </Route>
+        <Route path="/creator-profile">
+          <ProtectedRoute>
+            <CreatorProfile />
+          </ProtectedRoute>
+        </Route>
         <Route path="/me">
           <ProtectedRoute>
             <UserProfile />
