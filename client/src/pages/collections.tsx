@@ -402,10 +402,10 @@ export default function CollectionsPage() {
 
           {/* Lists Tab */}
           <TabsContent value="lists">
-            <div className="mb-4 flex justify-end">
+            <div className="mb-4 flex justify-center">
               <Dialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700" data-testid="button-create-list">
+                  <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 px-8 py-2 rounded-full" data-testid="button-create-list">
                     <Plus size={16} className="mr-2" />
                     Create List
                   </Button>
