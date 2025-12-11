@@ -36,7 +36,8 @@ import {
   ChevronRight,
   Calendar,
   HelpCircle,
-  X
+  X,
+  Share2
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -498,7 +499,20 @@ export default function CollectionsPage() {
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="text-gray-400" size={20} />
+                      <div className="flex items-center gap-2">
+                        <Share2 
+                          className="text-gray-400 hover:text-purple-600" 
+                          size={18}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                            const url = `${window.location.origin}/list/${listSlug}`;
+                            navigator.clipboard.writeText(url);
+                            toast({ title: "Link copied!" });
+                          }}
+                        />
+                        <ChevronRight className="text-gray-400" size={20} />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -596,7 +610,19 @@ export default function CollectionsPage() {
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="text-gray-400" size={20} />
+                      <div className="flex items-center gap-2">
+                        <Share2 
+                          className="text-gray-400 hover:text-purple-600" 
+                          size={18}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const url = `${window.location.origin}/rank/${rank.id}`;
+                            navigator.clipboard.writeText(url);
+                            toast({ title: "Link copied!" });
+                          }}
+                        />
+                        <ChevronRight className="text-gray-400" size={20} />
+                      </div>
                     </div>
                   </div>
                 ))}
