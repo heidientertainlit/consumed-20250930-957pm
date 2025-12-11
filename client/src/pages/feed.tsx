@@ -800,13 +800,24 @@ export default function Feed() {
             setTimeout(() => {
               commentElement.style.backgroundColor = 'transparent';
             }, 2500);
+            // Clear URL params to prevent re-triggering
+            window.history.replaceState({}, '', '/activity');
             return; // Success
           }
         } else {
-          // Just scroll to the post
+          // Just scroll to the post (for likes)
           const postElement = document.getElementById(`post-${highlightPostId}`);
           if (postElement) {
-            postElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add subtle highlight effect with smooth fade
+            postElement.style.transition = 'background-color 0.5s ease-in-out';
+            postElement.style.backgroundColor = 'rgba(147, 51, 234, 0.1)';
+            postElement.style.borderRadius = '12px';
+            setTimeout(() => {
+              postElement.style.backgroundColor = 'transparent';
+            }, 2500);
+            // Clear URL params to prevent re-triggering
+            window.history.replaceState({}, '', '/activity');
             return; // Success
           }
         }
