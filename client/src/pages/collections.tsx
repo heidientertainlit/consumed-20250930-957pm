@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -37,7 +37,7 @@ import {
   HelpCircle,
   X
 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import FeedbackFooter from "@/components/feedback-footer";
 
@@ -48,15 +48,11 @@ export default function CollectionsPage() {
   const [activeTab, setActiveTab] = useState<'lists' | 'ranks' | 'history'>('lists');
   
   // Lists state
-  const [userLists, setUserLists] = useState<any[]>([]);
-  const [isLoadingLists, setIsLoadingLists] = useState(true);
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [newListName, setNewListName] = useState("");
   const [newListVisibility, setNewListVisibility] = useState("private");
   
   // Ranks state
-  const [userRanks, setUserRanks] = useState<any[]>([]);
-  const [isLoadingRanks, setIsLoadingRanks] = useState(true);
   const [isCreateRankOpen, setIsCreateRankOpen] = useState(false);
   const [newRankName, setNewRankName] = useState("");
   const [newRankVisibility, setNewRankVisibility] = useState("private");
@@ -74,12 +70,12 @@ export default function CollectionsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Fetch user lists
-  const fetchUserLists = async () => {
-    if (!session?.access_token || !user?.id) return;
-    
-    setIsLoadingLists(true);
-    try {
+  // Fetch user lists with caching
+  const { data: listsData, isLoading: isLoadingLists } = useQuery({
+    queryKey: ['user-lists', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token || !user?.id) return { lists: [] };
+      
       const response = await fetch(
         `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${user.id}`,
         {
@@ -91,22 +87,21 @@ export default function CollectionsPage() {
       );
       
       if (response.ok) {
-        const data = await response.json();
-        setUserLists(data.lists || []);
+        return response.json();
       }
-    } catch (error) {
-      console.error('Error fetching lists:', error);
-    } finally {
-      setIsLoadingLists(false);
-    }
-  };
+      return { lists: [] };
+    },
+    enabled: !!session?.access_token && !!user?.id,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
 
-  // Fetch user ranks
-  const fetchUserRanks = async () => {
-    if (!session?.access_token || !user?.id) return;
-    
-    setIsLoadingRanks(true);
-    try {
+  // Fetch user ranks with caching
+  const { data: ranksData, isLoading: isLoadingRanks } = useQuery({
+    queryKey: ['user-ranks', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token || !user?.id) return { ranks: [] };
+      
       const response = await fetch(
         `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks?user_id=${user.id}`,
         {
@@ -118,22 +113,17 @@ export default function CollectionsPage() {
       );
       
       if (response.ok) {
-        const data = await response.json();
-        setUserRanks(data.ranks || []);
+        return response.json();
       }
-    } catch (error) {
-      console.error('Error fetching ranks:', error);
-    } finally {
-      setIsLoadingRanks(false);
-    }
-  };
+      return { ranks: [] };
+    },
+    enabled: !!session?.access_token && !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    if (session?.access_token && user?.id) {
-      fetchUserLists();
-      fetchUserRanks();
-    }
-  }, [session?.access_token, user?.id]);
+  const userLists = listsData?.lists || [];
+  const userRanks = ranksData?.ranks || [];
 
   // Create list mutation
   const createListMutation = useMutation({
@@ -163,7 +153,7 @@ export default function CollectionsPage() {
       toast({ title: "List created!", description: `"${newListName}" has been created.` });
       setNewListName("");
       setIsCreateListOpen(false);
-      fetchUserLists();
+      queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to create list", variant: "destructive" });
@@ -198,15 +188,15 @@ export default function CollectionsPage() {
       toast({ title: "Rank created!", description: `"${newRankName}" has been created.` });
       setNewRankName("");
       setIsCreateRankOpen(false);
-      fetchUserRanks();
+      queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to create rank", variant: "destructive" });
     },
   });
 
-  // Get all media items from lists for history
-  const getAllMediaItems = () => {
+  // Get all media items from lists for history (memoized)
+  const allMediaItems = useMemo(() => {
     const allItems: any[] = [];
     userLists.forEach(list => {
       if (list.items && Array.isArray(list.items)) {
@@ -222,13 +212,22 @@ export default function CollectionsPage() {
     return allItems.sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-  };
+  }, [userLists]);
 
-  // Filter media history
-  const getFilteredMediaHistory = () => {
-    const allItems = getAllMediaItems();
-    
-    return allItems.filter(item => {
+  // Get media type counts (memoized)
+  const mediaTypeCounts = useMemo(() => {
+    const counts: any = { movie: 0, tv: 0, book: 0, music: 0, podcast: 0, game: 0 };
+    allMediaItems.forEach(item => {
+      if (counts.hasOwnProperty(item.media_type)) {
+        counts[item.media_type]++;
+      }
+    });
+    return counts;
+  }, [allMediaItems]);
+
+  // Filter media history (memoized)
+  const filteredMediaHistory = useMemo(() => {
+    return allMediaItems.filter(item => {
       if (mediaHistorySearch.trim()) {
         const searchLower = mediaHistorySearch.toLowerCase();
         const matchesSearch = 
@@ -261,22 +260,7 @@ export default function CollectionsPage() {
       
       return true;
     });
-  };
-
-  // Get media type counts
-  const getMediaTypeCounts = () => {
-    const allItems = getAllMediaItems();
-    const counts: any = { movie: 0, tv: 0, book: 0, music: 0, podcast: 0, game: 0 };
-    allItems.forEach(item => {
-      if (counts.hasOwnProperty(item.media_type)) {
-        counts[item.media_type]++;
-      }
-    });
-    return counts;
-  };
-
-  const mediaTypeCounts = getMediaTypeCounts();
-  const filteredMediaHistory = getFilteredMediaHistory();
+  }, [allMediaItems, mediaHistorySearch, mediaHistoryType, mediaHistoryYear, mediaHistoryMonth]);
 
   // Handle file import
   const handleFileImport = async () => {
@@ -308,7 +292,7 @@ export default function CollectionsPage() {
         });
         setImportFile(null);
         setIsImportModalOpen(false);
-        fetchUserLists();
+        queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       } else {
         throw new Error('Import failed');
       }
