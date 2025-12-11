@@ -288,6 +288,18 @@ export default function RankDetail() {
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
+                variant="outline"
+                onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
+                disabled={shareRankMutation.isPending || !isPublic}
+                className="text-xs px-3 border-purple-300 text-purple-600 hover:bg-purple-50"
+                data-testid="button-share-rank-main"
+              >
+                <Share2 size={14} className="mr-1" />
+                {shareRankMutation.isPending ? 'Sharing...' : 'Share'}
+              </Button>
+
+              <Button
+                size="sm"
                 onClick={() => setIsTrackModalOpen(true)}
                 className="bg-purple-600 hover:bg-purple-700 text-xs px-3"
                 data-testid="button-add-item"
