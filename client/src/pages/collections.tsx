@@ -62,6 +62,8 @@ export default function CollectionsPage() {
   const [mediaHistoryType, setMediaHistoryType] = useState("all");
   const [mediaHistoryYear, setMediaHistoryYear] = useState("all");
   const [mediaHistoryMonth, setMediaHistoryMonth] = useState("all");
+  const [mediaHistoryRating, setMediaHistoryRating] = useState("all");
+  const [openFilter, setOpenFilter] = useState<'type' | 'year' | 'rating' | null>(null);
   
   // Import modal state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -258,9 +260,24 @@ export default function CollectionsPage() {
         if (itemMonth !== parseInt(mediaHistoryMonth)) return false;
       }
       
+      if (mediaHistoryRating !== 'all') {
+        const itemRating = Math.floor(item.rating || 0);
+        if (itemRating !== parseInt(mediaHistoryRating)) return false;
+      }
+      
       return true;
     });
-  }, [allMediaItems, mediaHistorySearch, mediaHistoryType, mediaHistoryYear, mediaHistoryMonth]);
+  }, [allMediaItems, mediaHistorySearch, mediaHistoryType, mediaHistoryYear, mediaHistoryMonth, mediaHistoryRating]);
+
+  // Get filter display labels
+  const getTypeLabel = () => {
+    const labels: any = { all: 'Media Type', movies: 'Movies', tv: 'TV', books: 'Books', music: 'Music', podcasts: 'Podcasts', games: 'Games' };
+    return labels[mediaHistoryType] || 'Media Type';
+  };
+  
+  const getYearLabel = () => mediaHistoryYear === 'all' ? 'Year' : mediaHistoryYear;
+  
+  const getRatingLabel = () => mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}★`;
 
   // Handle file import
   const handleFileImport = async () => {
@@ -588,120 +605,148 @@ export default function CollectionsPage() {
 
           {/* History Tab */}
           <TabsContent value="history">
-            <div className="mb-4 flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <Input
-                  placeholder="Search your history..."
-                  value={mediaHistorySearch}
-                  onChange={(e) => setMediaHistorySearch(e.target.value)}
-                  className="pl-10 bg-white text-gray-900 border-gray-300"
-                  data-testid="input-history-search"
-                />
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsImportModalOpen(true)}
-                className="border-purple-300 text-purple-600"
-                data-testid="button-import-history"
-              >
-                <Upload size={16} className="mr-2" />
-                Import
-              </Button>
-            </div>
-
-            {/* Filters - compact stacked pills */}
-            <div className="bg-white rounded-xl border border-gray-200 p-3 mb-4 space-y-2">
-              {/* Media type row */}
-              <div className="flex flex-wrap gap-1.5">
+            {/* Filter buttons row */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {/* Media Type Filter */}
+              <div className="relative">
                 <button
-                  onClick={() => setMediaHistoryType('all')}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                    mediaHistoryType === 'all'
+                  onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                    mediaHistoryType !== 'all'
                       ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   }`}
-                  data-testid="filter-all"
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setMediaHistoryType('movies')}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
-                    mediaHistoryType === 'movies'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="filter-movies"
+                  data-testid="filter-type-button"
                 >
                   <Film size={12} />
-                  Movies {mediaTypeCounts.movie > 0 && `(${mediaTypeCounts.movie})`}
+                  {getTypeLabel()}
+                  <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
                 </button>
-                <button
-                  onClick={() => setMediaHistoryType('tv')}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
-                    mediaHistoryType === 'tv'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="filter-tv"
-                >
-                  <Tv size={12} />
-                  TV {mediaTypeCounts.tv > 0 && `(${mediaTypeCounts.tv})`}
-                </button>
-                <button
-                  onClick={() => setMediaHistoryType('books')}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
-                    mediaHistoryType === 'books'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="filter-books"
-                >
-                  <BookOpen size={12} />
-                  Books {mediaTypeCounts.book > 0 && `(${mediaTypeCounts.book})`}
-                </button>
-                <button
-                  onClick={() => setMediaHistoryType('music')}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
-                    mediaHistoryType === 'music'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="filter-music"
-                >
-                  <Music size={12} />
-                  Music {mediaTypeCounts.music > 0 && `(${mediaTypeCounts.music})`}
-                </button>
+                {openFilter === 'type' && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
+                    {[
+                      { value: 'all', label: 'All Types' },
+                      { value: 'movies', label: 'Movies', icon: Film },
+                      { value: 'tv', label: 'TV', icon: Tv },
+                      { value: 'books', label: 'Books', icon: BookOpen },
+                      { value: 'music', label: 'Music', icon: Music },
+                    ].map(({ value, label, icon: Icon }) => (
+                      <button
+                        key={value}
+                        onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
+                        className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-50 ${
+                          mediaHistoryType === value ? 'text-purple-600 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        {Icon && <Icon size={12} />}
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              
-              {/* Date filters row */}
-              <div className="flex flex-wrap gap-1.5">
+
+              {/* Year Filter */}
+              <div className="relative">
                 <button
-                  onClick={() => setMediaHistoryYear('all')}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
-                    mediaHistoryYear === 'all'
+                  onClick={() => setOpenFilter(openFilter === 'year' ? null : 'year')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                    mediaHistoryYear !== 'all'
                       ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   }`}
+                  data-testid="filter-year-button"
                 >
                   <Calendar size={12} />
-                  All Years
+                  {getYearLabel()}
+                  <ChevronRight size={12} className={`transition-transform ${openFilter === 'year' ? 'rotate-90' : ''}`} />
                 </button>
-                {years.slice(0, 5).map((year) => (
-                  <button
-                    key={year}
-                    onClick={() => setMediaHistoryYear(year)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                      mediaHistoryYear === year
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {year}
-                  </button>
-                ))}
+                {openFilter === 'year' && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px] max-h-48 overflow-y-auto">
+                    <button
+                      onClick={() => { setMediaHistoryYear('all'); setOpenFilter(null); }}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
+                        mediaHistoryYear === 'all' ? 'text-purple-600 font-medium' : 'text-gray-700'
+                      }`}
+                    >
+                      All Years
+                    </button>
+                    {years.map((year) => (
+                      <button
+                        key={year}
+                        onClick={() => { setMediaHistoryYear(year); setOpenFilter(null); }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
+                          mediaHistoryYear === year ? 'text-purple-600 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* Rating Filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setOpenFilter(openFilter === 'rating' ? null : 'rating')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                    mediaHistoryRating !== 'all'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                  }`}
+                  data-testid="filter-rating-button"
+                >
+                  ⭐
+                  {getRatingLabel()}
+                  <ChevronRight size={12} className={`transition-transform ${openFilter === 'rating' ? 'rotate-90' : ''}`} />
+                </button>
+                {openFilter === 'rating' && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px]">
+                    <button
+                      onClick={() => { setMediaHistoryRating('all'); setOpenFilter(null); }}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
+                        mediaHistoryRating === 'all' ? 'text-purple-600 font-medium' : 'text-gray-700'
+                      }`}
+                    >
+                      All Ratings
+                    </button>
+                    {[5, 4, 3, 2, 1].map((rating) => (
+                      <button
+                        key={rating}
+                        onClick={() => { setMediaHistoryRating(rating.toString()); setOpenFilter(null); }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
+                          mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        {'⭐'.repeat(rating)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Import Button */}
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center gap-1.5"
+                data-testid="button-import-history"
+              >
+                <Upload size={12} />
+                Import
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <Input
+                placeholder="Search media history..."
+                value={mediaHistorySearch}
+                onChange={(e) => setMediaHistorySearch(e.target.value)}
+                className="pl-10 bg-white text-gray-900 border-gray-300"
+                data-testid="input-history-search"
+              />
             </div>
 
             {isLoadingLists ? (
