@@ -793,11 +793,13 @@ export default function Feed() {
           const commentElement = document.getElementById(`comment-${highlightCommentId}`);
           if (commentElement) {
             commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Add highlight effect
-            commentElement.classList.add('ring-2', 'ring-purple-500', 'ring-opacity-50');
+            // Add subtle highlight effect with smooth fade
+            commentElement.style.transition = 'background-color 0.5s ease-in-out';
+            commentElement.style.backgroundColor = 'rgba(147, 51, 234, 0.15)';
+            commentElement.style.borderRadius = '8px';
             setTimeout(() => {
-              commentElement.classList.remove('ring-2', 'ring-purple-500', 'ring-opacity-50');
-            }, 3000);
+              commentElement.style.backgroundColor = 'transparent';
+            }, 2500);
             return; // Success
           }
         } else {
