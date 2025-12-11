@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
 import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, MoreVertical, X, Share2 } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -178,6 +179,47 @@ export default function RankDetail() {
     }
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (items: { id: string; position: number }[]) => {
+      const updates = items.map(item => 
+        supabase
+          .from('rank_items')
+          .update({ position: item.position })
+          .eq('id', item.id)
+      );
+      
+      const results = await Promise.all(updates);
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) throw new Error('Failed to update positions');
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rank-detail', id] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Reorder Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination || !rankData?.items) return;
+    
+    const items = Array.from(rankData.items);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    const updatedItems = items.map((item, index) => ({
+      id: item.id,
+      position: index + 1
+    }));
+    
+    reorderMutation.mutate(updatedItems);
+  };
+
   const handleDeleteRank = () => {
     if (!rankData?.id) return;
     if (confirm(`Are you sure you want to delete "${rankData.title}"? This action cannot be undone.`)) {
@@ -301,59 +343,84 @@ export default function RankDetail() {
 
       <div className="max-w-4xl mx-auto px-4 py-4">
         {rankData.items && rankData.items.length > 0 ? (
-          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-15 gap-1">
-            {rankData.items.map((item: RankItem, index: number) => {
-              const isClickable = item.external_id && item.external_source;
-              const mediaUrl = isClickable ? `/media/${item.media_type}/${item.external_source}/${item.external_id}` : null;
-              
-              return (
-                <div 
-                  key={item.id} 
-                  className="bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all relative group overflow-hidden"
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="rank-items">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="space-y-2"
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveItem(item.id)}
-                    className="absolute top-0.5 right-0.5 z-10 bg-black/60 hover:bg-red-600 text-white p-1 h-auto opacity-0 group-hover:opacity-100 transition-opacity rounded"
-                    data-testid={`button-remove-${item.id}`}
-                  >
-                    <X size={12} />
-                  </Button>
-
-                  <div className="absolute top-0.5 left-0.5 z-10 bg-purple-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                    {index + 1}
-                  </div>
-
-                  {isClickable ? (
-                    <Link href={mediaUrl!}>
-                      <div className="aspect-[2/3] relative">
-                        <img
-                          src={item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop"}
-                          alt={item.title}
-                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                        />
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="aspect-[2/3] relative">
-                      <img
-                        src={item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop"}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <h3 className="font-semibold text-xs text-white line-clamp-2 leading-tight">
-                      {item.title}
-                    </h3>
-                  </div>
+                  {rankData.items.map((item: RankItem, index: number) => {
+                    const isClickable = item.external_id && item.external_source;
+                    const mediaUrl = isClickable ? `/media/${item.media_type}/${item.external_source}/${item.external_id}` : null;
+                    
+                    return (
+                      <Draggable key={item.id} draggableId={item.id} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`bg-white rounded-xl border ${snapshot.isDragging ? 'border-purple-400 shadow-lg' : 'border-gray-200'} p-3 flex items-center gap-3 group`}
+                          >
+                            <div
+                              {...provided.dragHandleProps}
+                              className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+                            >
+                              <GripVertical size={20} />
+                            </div>
+                            
+                            <div className="w-10 h-10 bg-purple-600 text-white rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0">
+                              {index + 1}
+                            </div>
+                            
+                            <div className="w-12 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                              <img
+                                src={item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=120&fit=crop"}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              {isClickable ? (
+                                <Link href={mediaUrl!}>
+                                  <h3 className="font-semibold text-gray-900 hover:text-purple-600 truncate cursor-pointer">
+                                    {item.title}
+                                  </h3>
+                                </Link>
+                              ) : (
+                                <h3 className="font-semibold text-gray-900 truncate">
+                                  {item.title}
+                                </h3>
+                              )}
+                              {item.creator && (
+                                <p className="text-sm text-gray-500 truncate">{item.creator}</p>
+                              )}
+                              {item.media_type && (
+                                <p className="text-xs text-gray-400 capitalize">{item.media_type}</p>
+                              )}
+                            </div>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem(item.id)}
+                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                              data-testid={`button-remove-${item.id}`}
+                            >
+                              <X size={18} />
+                            </Button>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         ) : (
           <div className="bg-white rounded-xl p-12 text-center border border-gray-200">
             <Trophy className="text-gray-300 mx-auto mb-3" size={48} />
