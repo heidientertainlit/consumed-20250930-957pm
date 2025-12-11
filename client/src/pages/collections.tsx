@@ -24,6 +24,7 @@ import {
   Search, 
   Lock, 
   Users, 
+  Globe,
   Film, 
   Tv, 
   BookOpen, 
@@ -584,8 +585,8 @@ export default function CollectionsPage() {
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-gray-900">{rank.title}</h3>
                             {rank.visibility && (
-                              <Badge variant="outline" className="text-xs">
-                                {rank.visibility === 'private' ? <Lock size={10} className="mr-1" /> : <Users size={10} className="mr-1" />}
+                              <Badge variant="outline" className={`text-xs ${rank.visibility === 'private' ? 'bg-gray-100 text-gray-600 border-gray-300' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
+                                {rank.visibility === 'private' ? <Lock size={10} className="mr-1" /> : <Globe size={10} className="mr-1" />}
                                 {rank.visibility}
                               </Badge>
                             )}

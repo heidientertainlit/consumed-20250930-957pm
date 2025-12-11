@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
-import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, MoreVertical, X, Share2 } from 'lucide-react';
+import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, MoreVertical, X, Share2, Link2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -332,6 +332,16 @@ export default function RankDetail() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      const url = `${window.location.origin}/rank/${rankData.id}`;
+                      navigator.clipboard.writeText(url);
+                      toast({ title: "Link copied!", description: "Share this link with anyone" });
+                    }}
+                  >
+                    <Link2 size={14} className="mr-2" />
+                    Copy Link
+                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={handleDeleteRank}
                     disabled={deleteRankMutation.isPending}
