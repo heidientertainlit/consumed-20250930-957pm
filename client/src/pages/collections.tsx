@@ -366,10 +366,10 @@ export default function CollectionsPage() {
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-3xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             My Collections
           </h1>
-          <p className="text-sm text-gray-600">Your lists, ranks, and media history</p>
+          <p className="text-base text-gray-600">Your lists, ranks, and media history</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
