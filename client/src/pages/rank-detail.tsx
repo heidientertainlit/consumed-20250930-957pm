@@ -267,62 +267,71 @@ export default function RankDetail() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={() => {}} />
 
-      <div className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          {/* Header Row */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
+      <div className="sticky top-16 z-40 bg-gray-50 border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          {/* Single Row Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
                 onClick={() => setLocation("/me?tab=collections")}
-                className="p-1 mt-1 text-gray-700 hover:text-black transition-colors"
+                className="p-1.5 -ml-1.5 text-gray-600 hover:text-gray-900 transition-colors"
                 data-testid="button-back"
               >
                 <ArrowLeft size={20} />
               </button>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">{rankData.title}</h1>
-                <p className="text-sm text-gray-500">{rankData.items?.length || 0} items</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-base font-medium text-gray-900 truncate">{rankData.title}</h1>
+                  <span 
+                    onClick={() => {
+                      if (!privacyMutation.isPending) {
+                        privacyMutation.mutate(!isPublic);
+                      }
+                    }}
+                    className={`text-xs px-2 py-0.5 rounded-full cursor-pointer transition-colors ${
+                      isPublic 
+                        ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    }`}
+                    data-testid="toggle-rank-privacy"
+                  >
+                    {isPublic ? 'Public' : 'Private'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">{rankData.items?.length || 0} items</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Button
-                size="sm"
-                variant="outline"
+                size="icon"
+                variant="ghost"
                 onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
                 disabled={shareRankMutation.isPending || !isPublic}
-                className="text-xs px-3 border-purple-300 text-purple-600 hover:bg-purple-50"
+                className="h-8 w-8 text-gray-600 hover:text-purple-600 hover:bg-purple-50"
                 data-testid="button-share-rank-main"
+                title={isPublic ? "Share to Feed" : "Set to Public to share"}
               >
-                <Share2 size={14} className="mr-1" />
-                {shareRankMutation.isPending ? 'Sharing...' : 'Share'}
+                <Share2 size={18} />
               </Button>
 
               <Button
-                size="sm"
+                size="icon"
                 onClick={() => setIsTrackModalOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-xs px-3"
+                className="h-8 w-8 bg-purple-600 hover:bg-purple-700"
                 data-testid="button-add-item"
+                title="Add item"
               >
-                <Plus size={14} className="mr-1" />
-                Add
+                <Plus size={18} />
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="px-2">
-                    <MoreVertical size={16} />
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-600">
+                    <MoreVertical size={18} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem 
-                    onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
-                    disabled={shareRankMutation.isPending || !isPublic}
-                    data-testid="button-share-rank"
-                  >
-                    <Share2 size={14} className="mr-2" />
-                    {shareRankMutation.isPending ? 'Sharing...' : 'Share to Feed'}
-                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={handleDeleteRank}
                     disabled={deleteRankMutation.isPending}
@@ -334,29 +343,6 @@ export default function RankDetail() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </div>
-
-          {/* Privacy Toggle Row */}
-          <div className="flex items-center gap-2 mt-3 ml-8">
-            <Switch
-              id="privacy-toggle"
-              checked={isPublic}
-              onCheckedChange={(checked) => {
-                if (!privacyMutation.isPending) {
-                  privacyMutation.mutate(checked);
-                }
-              }}
-              disabled={privacyMutation.isPending}
-              className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-purple-600"
-              data-testid="toggle-rank-privacy"
-            />
-            <Label htmlFor="privacy-toggle" className="text-sm text-gray-600 flex items-center gap-1 cursor-pointer">
-              {isPublic ? (
-                <><Globe size={14} className="text-purple-600" /> Public</>
-              ) : (
-                <><Lock size={14} className="text-gray-500" /> Private</>
-              )}
-            </Label>
           </div>
         </div>
       </div>
