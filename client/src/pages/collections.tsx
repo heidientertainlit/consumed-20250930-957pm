@@ -610,93 +610,98 @@ export default function CollectionsPage() {
               </Button>
             </div>
 
-            {/* Media type filters */}
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-              <button
-                onClick={() => setMediaHistoryType('all')}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                  mediaHistoryType === 'all'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                data-testid="filter-all"
-              >
-                All
-              </button>
-              <button
-                onClick={() => setMediaHistoryType('movies')}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
-                  mediaHistoryType === 'movies'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                data-testid="filter-movies"
-              >
-                <Film size={14} />
-                Movies {mediaTypeCounts.movie > 0 && `(${mediaTypeCounts.movie})`}
-              </button>
-              <button
-                onClick={() => setMediaHistoryType('tv')}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
-                  mediaHistoryType === 'tv'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                data-testid="filter-tv"
-              >
-                <Tv size={14} />
-                TV {mediaTypeCounts.tv > 0 && `(${mediaTypeCounts.tv})`}
-              </button>
-              <button
-                onClick={() => setMediaHistoryType('books')}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
-                  mediaHistoryType === 'books'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                data-testid="filter-books"
-              >
-                <BookOpen size={14} />
-                Books {mediaTypeCounts.book > 0 && `(${mediaTypeCounts.book})`}
-              </button>
-              <button
-                onClick={() => setMediaHistoryType('music')}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1 ${
-                  mediaHistoryType === 'music'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                data-testid="filter-music"
-              >
-                <Music size={14} />
-                Music {mediaTypeCounts.music > 0 && `(${mediaTypeCounts.music})`}
-              </button>
-            </div>
-
-            {/* Date filters */}
-            <div className="flex gap-2 mb-4">
-              <Select value={mediaHistoryYear} onValueChange={setMediaHistoryYear}>
-                <SelectTrigger className="w-32 bg-white text-gray-900 border-gray-300">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200">
-                  <SelectItem value="all" className="text-gray-900">All Years</SelectItem>
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year} className="text-gray-900">{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={mediaHistoryMonth} onValueChange={setMediaHistoryMonth}>
-                <SelectTrigger className="w-36 bg-white text-gray-900 border-gray-300">
-                  <SelectValue placeholder="Month" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200">
-                  <SelectItem value="all" className="text-gray-900">All Months</SelectItem>
-                  {months.map((month) => (
-                    <SelectItem key={month.value} value={month.value} className="text-gray-900">{month.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Filters - compact stacked pills */}
+            <div className="bg-white rounded-xl border border-gray-200 p-3 mb-4 space-y-2">
+              {/* Media type row */}
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setMediaHistoryType('all')}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                    mediaHistoryType === 'all'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-all"
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('movies')}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'movies'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-movies"
+                >
+                  <Film size={12} />
+                  Movies {mediaTypeCounts.movie > 0 && `(${mediaTypeCounts.movie})`}
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('tv')}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'tv'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-tv"
+                >
+                  <Tv size={12} />
+                  TV {mediaTypeCounts.tv > 0 && `(${mediaTypeCounts.tv})`}
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('books')}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'books'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-books"
+                >
+                  <BookOpen size={12} />
+                  Books {mediaTypeCounts.book > 0 && `(${mediaTypeCounts.book})`}
+                </button>
+                <button
+                  onClick={() => setMediaHistoryType('music')}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryType === 'music'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="filter-music"
+                >
+                  <Music size={12} />
+                  Music {mediaTypeCounts.music > 0 && `(${mediaTypeCounts.music})`}
+                </button>
+              </div>
+              
+              {/* Date filters row */}
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setMediaHistoryYear('all')}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                    mediaHistoryYear === 'all'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Calendar size={12} />
+                  All Years
+                </button>
+                {years.slice(0, 5).map((year) => (
+                  <button
+                    key={year}
+                    onClick={() => setMediaHistoryYear(year)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                      mediaHistoryYear === year
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {isLoadingLists ? (
