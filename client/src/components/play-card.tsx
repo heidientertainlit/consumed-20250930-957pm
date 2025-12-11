@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Brain, Vote, TrendingUp, Users, Trophy } from "lucide-react";
+import { Star, Brain, Vote, TrendingUp, Users, Trophy, Share2 } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { copyLink } from "@/lib/share";
+import { useToast } from "@/hooks/use-toast";
 
 interface PlayCardProps {
   game: any;
@@ -28,6 +30,22 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleShare = async () => {
+    try {
+      await copyLink({ kind: 'game', id: game.id });
+      toast({
+        title: "Link copied!",
+        description: "Share with friends to play together",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Fetch vote results after submission for polls
   const { data: pollResults, isLoading: isPollResultsLoading, error: pollResultsError } = useQuery({
@@ -345,6 +363,14 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
                 </div>
               )}
             </div>
+            <button
+              onClick={handleShare}
+              className="p-1.5 rounded-full hover:bg-purple-100 transition-colors"
+              data-testid="share-game-compact-button"
+              title="Invite friends to play"
+            >
+              <Share2 size={14} className="text-purple-600" />
+            </button>
           </div>
 
           {/* Question */}
@@ -543,9 +569,19 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
               {getGameType()}
             </Badge>
           </div>
-          <div className="flex items-center space-x-1">
-            <Star size={12} className="text-purple-600" />
-            <span className="text-xs font-semibold text-purple-600">{game.points_reward || game.points || 10}pts</span>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
+              <Star size={12} className="text-purple-600" />
+              <span className="text-xs font-semibold text-purple-600">{game.points_reward || game.points || 10}pts</span>
+            </div>
+            <button
+              onClick={handleShare}
+              className="p-1 rounded-full hover:bg-purple-100 transition-colors"
+              data-testid="share-game-button"
+              title="Invite friends to play"
+            >
+              <Share2 size={14} className="text-purple-600" />
+            </button>
           </div>
         </div>
         
