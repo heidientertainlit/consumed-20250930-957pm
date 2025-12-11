@@ -296,6 +296,7 @@ export default function RankDetail() {
                   }
                 }}
                 disabled={privacyMutation.isPending}
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-purple-600"
                 data-testid="toggle-rank-privacy"
               />
               <Label htmlFor="privacy-toggle" className="text-sm text-gray-600 flex items-center gap-1 cursor-pointer">
