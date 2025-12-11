@@ -828,6 +828,9 @@ export default function CollectionsPage() {
             <p className="text-sm text-gray-600">
               Upload your Goodreads export file to import your reading history.
             </p>
+            <p className="text-sm text-gray-500 bg-purple-50 rounded-lg px-3 py-2">
+              Want to import from other services? Email <a href="mailto:heidi@consumedapp.com" className="text-purple-600 font-medium hover:underline">heidi@consumedapp.com</a> and we'll do it for you!
+            </p>
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
               <input
                 type="file"
@@ -859,9 +862,6 @@ export default function CollectionsPage() {
                 'Import'
               )}
             </Button>
-            <p className="text-xs text-gray-500 text-center">
-              Want to import from other services? Email <a href="mailto:heidi@consumedapp.com" className="text-purple-600 hover:underline">heidi@consumedapp.com</a> and we'll do it for you!
-            </p>
           </div>
         </DialogContent>
       </Dialog>
