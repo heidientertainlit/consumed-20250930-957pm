@@ -373,7 +373,7 @@ export default function CollectionsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="w-full mb-6 bg-white border border-gray-200 p-1 h-auto">
+          <TabsList className="w-full mb-3 bg-white border border-gray-200 p-1 h-auto">
             <TabsTrigger 
               value="lists" 
               className="flex-1 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
