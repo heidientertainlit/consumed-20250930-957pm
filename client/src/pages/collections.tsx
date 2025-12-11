@@ -824,7 +824,7 @@ export default function CollectionsPage() {
               </Button>
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-4">
+          <div className="space-y-4">
             <p className="text-sm text-gray-600">
               Upload your Goodreads export file to import your reading history.
             </p>
