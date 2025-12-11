@@ -285,7 +285,7 @@ export default function RankDetail() {
           </div>
 
           {/* Actions Row */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 justify-end">
             <div className="flex items-center gap-2">
               <Switch
                 id="privacy-toggle"
