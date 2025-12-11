@@ -513,13 +513,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
 
           <Link
-            href="/leaderboard"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/leaderboard" ? "bg-white/20" : ""}`}
+            href="/play"
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/play" || location.startsWith("/play/") ? "bg-white/20" : ""}`}
           >
             <div className="h-6 w-6 flex items-center justify-center">
-              <Trophy className="text-white" size={24} />
+              <Gamepad2 className="text-white" size={24} />
             </div>
-            <span className="text-xs font-medium text-white whitespace-nowrap">Leaders</span>
+            <span className="text-xs font-medium text-white whitespace-nowrap">Play</span>
           </Link>
 
           <Link

@@ -9,7 +9,7 @@ Preferred communication style: Simple, everyday language.
 ### Design Preferences
 - **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
 - **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
-- **Navigation**: Bottom navigation includes 4 items: Feed, Search (AI-powered), Leaderboard, and Me. Friends functionality moved to profile page. Discover, Track, and Play pages exist as backpages (accessible at `/discover`, `/track`, and `/play`) but are not shown in navigation.
+- **Navigation**: Bottom navigation includes 3 items: Activity, Play, and Me. Play page combines game tiles (Predictions, Polls, Trivia, Leaderboard) with embedded leaderboard content below. Leaderboard exists as backpage at `/leaderboard`. Discover and Track pages also exist as backpages (accessible at `/discover`, `/track`). Creator profile at `/creator-profile` shows Follow/Inner Circle buttons and external links.
 - **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends, Collections, History) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), Friends (friend management - only visible on own profile), Collections (Lists + Ranks), and History (media history with imports). Section pills highlight active section and enable tab-based navigation.
 - **Collections System**: Collections tab contains sub-navigation for Lists (existing media tracking lists) and Ranks (ranked lists like "Top 10 90s Movies"). Ranks feature supports drag-and-drop ordering, position-based ranking, and collaboration.
 - **Search Page**: AI-powered search at `/search` with unified results showing Conversations (posts/predictions/polls/reviews), AI Recommendations, and Media Results. Uses custom AI icon in navigation.
@@ -18,7 +18,7 @@ Preferred communication style: Simple, everyday language.
 
 ### UI/UX Decisions
 - **Mobile-first design** with a **dark gradient theme**.
-- **Bottom Navigation**: Feed, Search (AI-powered), Leaderboard, Me.
+- **Bottom Navigation**: Activity, Play, Me.
 - **Top Navigation**: Search (🔍), Notifications, Profile.
 - **Profile Section Navigation**: Sticky pills for Stats, DNA, Friends, Collections, History.
 - **Component Library**: shadcn/ui (Radix UI, Tailwind CSS).

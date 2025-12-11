@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle, Medal, Award } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle, Medal, Award, Globe, TrendingUp, BookOpen, Headphones, Share2, ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -16,6 +17,7 @@ import { copyLink } from "@/lib/share";
 import { TriviaGameModal } from "@/components/trivia-game-modal";
 import { PredictionGameModal } from "@/components/prediction-game-modal";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 // All game data now comes from the database via API
 
@@ -197,6 +199,15 @@ function useLeaderboardData() {
   });
 }
 
+interface LeaderboardEntry {
+  user_id: string;
+  username: string;
+  display_name: string;
+  score: number;
+  rank: number;
+  detail?: string;
+}
+
 export default function PlayPage() {
   const [, setLocation] = useLocation();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
@@ -206,6 +217,89 @@ export default function PlayPage() {
   const { data: leaderboardData = [] } = useLeaderboardData();
   const submitPrediction = useSubmitPrediction();
   const { toast } = useToast();
+  const { session, user } = useAuth();
+  
+  // Leaderboard state
+  const [leaderboardScope, setLeaderboardScope] = useState<'global' | 'friends'>('global');
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
+  const [leaderboardActiveTab, setLeaderboardActiveTab] = useState<string>('engagement');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (categoryName: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryName)) {
+        newSet.delete(categoryName);
+      } else {
+        newSet.add(categoryName);
+      }
+      return newSet;
+    });
+  };
+
+  // Leaderboard data query
+  const { data: leaderboardFullData, isLoading: isLeaderboardLoading } = useQuery<any>({
+    queryKey: ['leaderboard', leaderboardScope, leaderboardPeriod],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=${leaderboardScope}&period=${leaderboardPeriod}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch leaderboard');
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+  });
+
+  const shareRankMutation = useMutation({
+    mutationFn: async ({ rank, categoryName }: { rank: number; categoryName: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const periodLabel = leaderboardPeriod === 'weekly' ? 'this week' : leaderboardPeriod === 'monthly' ? 'this month' : 'all time';
+      const shareText = `🏆 I'm #${rank} in ${categoryName} ${periodLabel} on Consumed!`;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inline-post`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: shareText,
+            post_type: 'update',
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to share rank');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rank shared!",
+        description: "Your leaderboard rank has been posted to your feed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to share",
+        description: "Could not share your rank. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const currentUserId = leaderboardFullData?.currentUserId;
   
   // Get current user
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -431,6 +525,142 @@ export default function PlayPage() {
     : null;
   const totalPoints = userEntry?.total_points || leaderboardData?.currentUser?.total_points || 0;
 
+  // Leaderboard render functions
+  const renderLeaderboardList = (
+    entries: LeaderboardEntry[] | undefined,
+    categoryName: string,
+    emptyMessage: string,
+    isExpanded: boolean,
+    hideDetails: boolean = false
+  ) => {
+    if (!entries || entries.length === 0) {
+      return (
+        <div className="p-8 text-center text-gray-500">
+          <p className="text-sm">{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    const displayEntries = isExpanded ? entries.slice(0, 10) : entries.slice(0, 3);
+    const hasMore = entries.length > 3;
+
+    return (
+      <div>
+        <div className="divide-y divide-gray-100">
+          {displayEntries.map((entry, index) => {
+            const isCurrentUser = entry.user_id === currentUserId;
+            const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
+            
+            return (
+              <div
+                key={entry.user_id}
+                className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
+                data-testid={`leaderboard-entry-${entry.user_id}`}
+              >
+                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                  {index < 3 ? (
+                    <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                      {index + 1}
+                    </div>
+                  ) : (
+                    <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                  )}
+                </div>
+
+                <Link 
+                  href={`/user/${entry.user_id}`}
+                  className="flex-1 min-w-0"
+                >
+                  <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                    {entry.display_name || entry.username}
+                    {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                  </p>
+                  <p className="text-xs text-gray-500">@{entry.username}</p>
+                </Link>
+
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-purple-600">{entry.score}</p>
+                    {!hideDetails && entry.detail && (
+                      <p className="text-xs text-gray-500">{entry.detail}</p>
+                    )}
+                  </div>
+                  
+                  {isCurrentUser && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
+                      disabled={shareRankMutation.isPending}
+                      className="flex items-center gap-1.5"
+                      data-testid={`button-share-rank-${categoryName}`}
+                    >
+                      <Share2 size={14} />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        {hasMore && (
+          <button
+            onClick={() => toggleExpanded(categoryName)}
+            className="w-full py-3 flex items-center justify-center gap-1 text-sm text-purple-600 hover:bg-purple-50 transition-colors border-t border-gray-100"
+            data-testid={`button-show-more-${categoryName}`}
+          >
+            {isExpanded ? (
+              <>
+                Show Less <ChevronUp size={16} />
+              </>
+            ) : (
+              <>
+                Show More <ChevronDown size={16} />
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const renderCategoryCard = (
+    title: string,
+    Icon: any,
+    entries: LeaderboardEntry[] | undefined,
+    categoryName: string,
+    emptyMessage: string,
+    gradient: string = 'from-purple-600 to-blue-600',
+    actionLink?: { label: string; href: string },
+    hideDetails: boolean = false
+  ) => {
+    const isExpanded = expandedCategories.has(categoryName);
+    
+    return (
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+        <div className={`bg-gradient-to-r ${gradient} p-4`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon className="text-white" size={20} />
+              <h3 className="text-base font-bold text-white">{title}</h3>
+            </div>
+            {actionLink && (
+              <Link 
+                href={actionLink.href}
+                className="text-white/90 hover:text-white text-sm font-medium flex items-center gap-1"
+                data-testid={`link-${categoryName.toLowerCase().replace(/\s/g, '-')}-action`}
+              >
+                {actionLink.label} →
+              </Link>
+            )}
+          </div>
+        </div>
+        {renderLeaderboardList(entries, categoryName, emptyMessage, isExpanded, hideDetails)}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
@@ -501,6 +731,168 @@ export default function PlayPage() {
               </button>
             </Link>
           </div>
+        </div>
+
+        {/* Leaders Section */}
+        <div className="mb-6">
+          <div className="mb-4 text-center">
+            <h2 className="text-xl font-semibold text-black mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Leaders
+            </h2>
+            <p className="text-sm text-gray-600">
+              Most active fans and top contributors
+            </p>
+          </div>
+
+          <div className="flex justify-center gap-2 mb-4">
+            <Button
+              size="sm"
+              variant={leaderboardScope === 'global' ? 'default' : 'outline'}
+              onClick={() => setLeaderboardScope('global')}
+              className={leaderboardScope === 'global' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+              data-testid="button-scope-global"
+            >
+              <Globe size={14} className="mr-1" />
+              Global
+            </Button>
+            <Button
+              size="sm"
+              variant={leaderboardScope === 'friends' ? 'default' : 'outline'}
+              onClick={() => setLeaderboardScope('friends')}
+              className={leaderboardScope === 'friends' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+              data-testid="button-scope-friends"
+            >
+              <Users size={14} className="mr-1" />
+              Friends
+            </Button>
+          </div>
+
+          <div className="flex justify-center gap-2 mb-6">
+            {(['weekly', 'monthly', 'all_time'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setLeaderboardPeriod(p)}
+                className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                  leaderboardPeriod === p 
+                    ? 'bg-purple-100 text-purple-700 font-medium' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                data-testid={`button-period-${p}`}
+              >
+                {p === 'weekly' ? 'This Week' : p === 'monthly' ? 'This Month' : 'All Time'}
+              </button>
+            ))}
+          </div>
+
+          {isLeaderboardLoading ? (
+            <div className="space-y-4">
+              {[1, 2].map((n) => (
+                <div key={n} className="bg-white rounded-2xl p-6 animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-200 rounded w-1/4 mb-1"></div>
+                          <div className="h-3 bg-gray-100 rounded w-1/6"></div>
+                        </div>
+                        <div className="h-6 bg-gray-200 rounded w-12"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Tabs value={leaderboardActiveTab} onValueChange={setLeaderboardActiveTab} className="w-full">
+              <TabsList className="w-full mb-4 bg-white border border-gray-200 p-1 h-auto flex flex-wrap justify-center gap-1">
+                <TabsTrigger 
+                  value="engagement" 
+                  className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                  data-testid="tab-engagement"
+                >
+                  <TrendingUp size={14} className="mr-1" />
+                  Engagers
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="games" 
+                  className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                  data-testid="tab-games"
+                >
+                  <Target size={14} className="mr-1" />
+                  Games
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="consumption" 
+                  className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
+                  data-testid="tab-consumption"
+                >
+                  <Star size={14} className="mr-1" />
+                  Media
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="engagement">
+                {renderCategoryCard(
+                  'Top Engagers',
+                  TrendingUp,
+                  leaderboardFullData?.categories?.overall,
+                  'Top Engagers',
+                  'Start posting and engaging to appear here!',
+                  'from-purple-600 to-pink-600'
+                )}
+              </TabsContent>
+
+              <TabsContent value="games">
+                {renderCategoryCard(
+                  'Trivia Champions',
+                  Brain,
+                  leaderboardFullData?.categories?.trivia,
+                  'Trivia',
+                  'No trivia results yet. Play some trivia!',
+                  'from-yellow-500 to-orange-500',
+                  { label: 'Play Trivia', href: '/play/trivia' },
+                  true
+                )}
+                
+                {renderCategoryCard(
+                  'Poll Masters',
+                  Target,
+                  leaderboardFullData?.categories?.polls,
+                  'Polls',
+                  'No poll activity yet. Vote on some polls!',
+                  'from-blue-500 to-cyan-500',
+                  { label: 'Do Polls', href: '/play/polls' },
+                  true
+                )}
+                
+                {renderCategoryCard(
+                  'Prediction Pros',
+                  Trophy,
+                  leaderboardFullData?.categories?.predictions,
+                  'Predictions',
+                  'No predictions resolved yet. Make some predictions!',
+                  'from-green-500 to-emerald-500',
+                  { label: 'Do Predictions', href: '/play/predictions' },
+                  true
+                )}
+              </TabsContent>
+
+              <TabsContent value="consumption">
+                <div className="mb-4">
+                  {renderCategoryCard(
+                    'Total Consumption Leaders',
+                    Star,
+                    leaderboardFullData?.categories?.total_consumption,
+                    'Total Consumption',
+                    'Track some media to appear here!',
+                    'from-purple-600 to-blue-600'
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
 
         {/* 🔮 Predictions in Progress */}
