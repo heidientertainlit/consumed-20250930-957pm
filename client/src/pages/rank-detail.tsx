@@ -268,75 +268,75 @@ export default function RankDetail() {
 
       <div className="sticky top-16 z-40 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <button
-                onClick={() => setLocation("/me?tab=collections")}
-                className="p-1.5 text-gray-700 hover:text-black transition-colors"
-                data-testid="button-back"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 truncate">{rankData.title}</h1>
-                <p className="text-xs text-gray-500">{rankData.items?.length || 0} items</p>
-              </div>
+          {/* Title Row */}
+          <div className="flex items-center gap-3 mb-3">
+            <button
+              onClick={() => setLocation("/me?tab=collections")}
+              className="p-1.5 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-back"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-gray-900">{rankData.title}</h1>
+              <p className="text-sm text-gray-500">{rankData.items?.length || 0} items</p>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <Badge 
-                onClick={() => {
-                  if (!privacyMutation.isPending) {
-                    privacyMutation.mutate(!isPublic);
-                  }
-                }}
-                variant="secondary" 
-                className="cursor-pointer hover:bg-gray-200 text-xs px-2 py-1"
-                data-testid="toggle-rank-privacy"
-              >
-                {isPublic ? (
-                  <><Globe size={12} className="mr-1 text-purple-600" /> Public</>
-                ) : (
-                  <><Lock size={12} className="mr-1" /> Private</>
-                )}
-              </Badge>
+          {/* Actions Row */}
+          <div className="flex items-center gap-2">
+            <Badge 
+              onClick={() => {
+                if (!privacyMutation.isPending) {
+                  privacyMutation.mutate(!isPublic);
+                }
+              }}
+              variant="secondary" 
+              className="cursor-pointer hover:bg-gray-200 text-xs px-3 py-1.5"
+              data-testid="toggle-rank-privacy"
+            >
+              {isPublic ? (
+                <><Globe size={12} className="mr-1 text-purple-600" /> Public</>
+              ) : (
+                <><Lock size={12} className="mr-1" /> Private</>
+              )}
+            </Badge>
 
-              <Button
-                size="sm"
-                onClick={() => setIsTrackModalOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-xs px-3 py-1.5"
-                data-testid="button-add-item"
-              >
-                <Plus size={14} className="mr-1" />
-                Add
-              </Button>
+            <Button
+              size="sm"
+              onClick={() => setIsTrackModalOpen(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-xs px-4 py-1.5"
+              data-testid="button-add-item"
+            >
+              <Plus size={14} className="mr-1" />
+              Add
+            </Button>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="px-2">
-                    <MoreVertical size={16} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem 
-                    onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
-                    disabled={shareRankMutation.isPending || !isPublic}
-                    data-testid="button-share-rank"
-                  >
-                    <Share2 size={14} className="mr-2" />
-                    {shareRankMutation.isPending ? 'Sharing...' : 'Share to Feed'}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleDeleteRank}
-                    disabled={deleteRankMutation.isPending}
-                    className="text-red-600"
-                  >
-                    <Trash2 size={14} className="mr-2" />
-                    {deleteRankMutation.isPending ? 'Deleting...' : 'Delete Rank'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" className="px-2">
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem 
+                  onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
+                  disabled={shareRankMutation.isPending || !isPublic}
+                  data-testid="button-share-rank"
+                >
+                  <Share2 size={14} className="mr-2" />
+                  {shareRankMutation.isPending ? 'Sharing...' : 'Share to Feed'}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleDeleteRank}
+                  disabled={deleteRankMutation.isPending}
+                  className="text-red-600"
+                >
+                  <Trash2 size={14} className="mr-2" />
+                  {deleteRankMutation.isPending ? 'Deleting...' : 'Delete Rank'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
