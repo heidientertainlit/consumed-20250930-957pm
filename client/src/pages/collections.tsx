@@ -413,25 +413,26 @@ export default function CollectionsPage() {
                     Create List
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="bg-white">
                   <DialogHeader>
-                    <DialogTitle>Create New List</DialogTitle>
+                    <DialogTitle className="text-gray-900">Create New List</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
                     <Input
                       placeholder="List name"
                       value={newListName}
                       onChange={(e) => setNewListName(e.target.value)}
+                      className="bg-white text-gray-900 border-gray-300"
                       data-testid="input-list-name"
                     />
                     <Select value={newListVisibility} onValueChange={setNewListVisibility}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white text-gray-900 border-gray-300">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="private">Private</SelectItem>
-                        <SelectItem value="friends">Friends Only</SelectItem>
-                        <SelectItem value="public">Public</SelectItem>
+                      <SelectContent className="bg-white border border-gray-200">
+                        <SelectItem value="private" className="text-gray-900">Private</SelectItem>
+                        <SelectItem value="friends" className="text-gray-900">Friends Only</SelectItem>
+                        <SelectItem value="public" className="text-gray-900">Public</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button 
@@ -520,25 +521,26 @@ export default function CollectionsPage() {
                     Create Rank
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="bg-white">
                   <DialogHeader>
-                    <DialogTitle>Create New Rank</DialogTitle>
+                    <DialogTitle className="text-gray-900">Create New Rank</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
                     <Input
                       placeholder="Rank name (e.g. Top 10 90s Movies)"
                       value={newRankName}
                       onChange={(e) => setNewRankName(e.target.value)}
+                      className="bg-white text-gray-900 border-gray-300"
                       data-testid="input-rank-name"
                     />
                     <Select value={newRankVisibility} onValueChange={setNewRankVisibility}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white text-gray-900 border-gray-300">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="private">Private</SelectItem>
-                        <SelectItem value="friends">Friends Only</SelectItem>
-                        <SelectItem value="public">Public</SelectItem>
+                      <SelectContent className="bg-white border border-gray-200">
+                        <SelectItem value="private" className="text-gray-900">Private</SelectItem>
+                        <SelectItem value="friends" className="text-gray-900">Friends Only</SelectItem>
+                        <SelectItem value="public" className="text-gray-900">Public</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button 
@@ -700,10 +702,10 @@ export default function CollectionsPage() {
                 <SelectTrigger className="w-32 bg-white text-gray-900 border-gray-300">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="all">All Years</SelectItem>
+                <SelectContent className="bg-white border border-gray-200">
+                  <SelectItem value="all" className="text-gray-900">All Years</SelectItem>
                   {years.map((year) => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                    <SelectItem key={year} value={year} className="text-gray-900">{year}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -711,10 +713,10 @@ export default function CollectionsPage() {
                 <SelectTrigger className="w-36 bg-white text-gray-900 border-gray-300">
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="all">All Months</SelectItem>
+                <SelectContent className="bg-white border border-gray-200">
+                  <SelectItem value="all" className="text-gray-900">All Months</SelectItem>
                   {months.map((month) => (
-                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                    <SelectItem key={month.value} value={month.value} className="text-gray-900">{month.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -781,14 +783,15 @@ export default function CollectionsPage() {
 
       {/* Import Modal */}
       <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="flex items-center justify-between text-gray-900">
               Import Media History
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsImportHelpOpen(true)}
+                className="text-gray-600 hover:text-gray-900"
               >
                 <HelpCircle size={16} />
               </Button>
@@ -835,21 +838,21 @@ export default function CollectionsPage() {
 
       {/* Import Help Modal */}
       <Dialog open={isImportHelpOpen} onOpenChange={setIsImportHelpOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white">
           <DialogHeader>
-            <DialogTitle>How to Export Your Data</DialogTitle>
+            <DialogTitle className="text-gray-900">How to Export Your Data</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-4 text-sm">
             <div>
-              <h4 className="font-semibold mb-1">Netflix</h4>
+              <h4 className="font-semibold mb-1 text-gray-900">Netflix</h4>
               <p className="text-gray-600">Go to Account → Profile → Viewing Activity → Download all</p>
             </div>
             <div>
-              <h4 className="font-semibold mb-1">Goodreads</h4>
+              <h4 className="font-semibold mb-1 text-gray-900">Goodreads</h4>
               <p className="text-gray-600">Go to My Books → Import and export → Export Library</p>
             </div>
             <div>
-              <h4 className="font-semibold mb-1">Spotify</h4>
+              <h4 className="font-semibold mb-1 text-gray-900">Spotify</h4>
               <p className="text-gray-600">Go to Privacy settings → Download your data</p>
             </div>
           </div>
