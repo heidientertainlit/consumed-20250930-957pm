@@ -605,6 +605,16 @@ export default function CollectionsPage() {
 
           {/* History Tab */}
           <TabsContent value="history">
+            {/* Import Media History Button */}
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="w-full mb-4 px-4 py-3 rounded-xl border-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center gap-2 font-medium"
+              data-testid="button-import-history"
+            >
+              <Upload size={18} />
+              Import Media History
+            </button>
+
             {/* Filter buttons row */}
             <div className="flex flex-wrap gap-2 mb-3">
               {/* Media Type Filter */}
@@ -725,16 +735,6 @@ export default function CollectionsPage() {
                   </div>
                 )}
               </div>
-
-              {/* Import Goodreads Button */}
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 flex items-center gap-1.5"
-                data-testid="button-import-history"
-              >
-                <BookOpen size={12} />
-                Import Goodreads
-              </button>
             </div>
 
             {/* Search Bar */}
