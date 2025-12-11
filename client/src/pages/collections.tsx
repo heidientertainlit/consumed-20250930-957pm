@@ -596,15 +596,7 @@ export default function CollectionsPage() {
                           <Trophy className="text-yellow-600" size={18} />
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-gray-900">{rank.title}</h3>
-                            {rank.visibility && (
-                              <Badge variant="outline" className={`text-xs ${rank.visibility === 'private' ? 'bg-gray-100 text-gray-600 border-gray-300' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
-                                {rank.visibility === 'private' ? <Lock size={10} className="mr-1" /> : <Globe size={10} className="mr-1" />}
-                                {rank.visibility}
-                              </Badge>
-                            )}
-                          </div>
+                          <h3 className="font-semibold text-gray-900">{rank.title}</h3>
                           <p className="text-sm text-gray-500">
                             {rank.items?.length || 0} {rank.items?.length === 1 ? 'item' : 'items'}
                           </p>
