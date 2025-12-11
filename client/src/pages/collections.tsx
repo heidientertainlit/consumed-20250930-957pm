@@ -37,7 +37,8 @@ import {
   Calendar,
   HelpCircle,
   X,
-  Share2
+  Share2,
+  Search
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -53,6 +54,7 @@ export default function CollectionsPage() {
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [newListName, setNewListName] = useState("");
   const [newListVisibility, setNewListVisibility] = useState("private");
+  const [listSearch, setListSearch] = useState("");
   
   // Ranks state
   const [isCreateRankOpen, setIsCreateRankOpen] = useState(false);
@@ -445,6 +447,19 @@ export default function CollectionsPage() {
               </Dialog>
             </div>
 
+            {/* Search Lists */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search lists..."
+                value={listSearch}
+                onChange={(e) => setListSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                data-testid="input-search-lists"
+              />
+            </div>
+
             {isLoadingLists ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((n) => (
@@ -462,7 +477,11 @@ export default function CollectionsPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {userLists.map((list: any) => (
+                {userLists
+                  .filter((list: any) => 
+                    list.title.toLowerCase().includes(listSearch.toLowerCase())
+                  )
+                  .map((list: any) => (
                   <div
                     key={list.id}
                     className="bg-white border border-gray-200 rounded-xl hover:border-purple-300 transition-colors cursor-pointer"
