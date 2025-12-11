@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,13 @@ export default function ListDetail() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isCollaboratorsDialogOpen, setIsCollaboratorsDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [ratingFilter, setRatingFilter] = useState("all");
+  const [openFilter, setOpenFilter] = useState<'type' | 'year' | 'rating' | null>(null);
 
   const queryClient = useQueryClient();
   const { session } = useAuth();
@@ -644,30 +651,176 @@ export default function ListDetail() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-4">
         
-        {/* View Toggle */}
-        <div className="flex justify-end mb-3">
-          <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white">
+        {/* Search Bar */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search in list..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+            data-testid="input-search-list"
+          />
+        </div>
+
+        {/* Filters Row */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {/* Media Type Filter */}
+          <div className="relative">
             <button
-              onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-purple-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-              data-testid="button-view-list"
+              onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                typeFilter !== 'all'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              }`}
+              data-testid="filter-type-button"
             >
-              <List size={16} />
+              <Film size={12} />
+              {typeFilter === 'all' ? 'Type' : typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1)}
+              <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
             </button>
+            {openFilter === 'type' && (
+              <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
+                {[
+                  { value: 'all', label: 'All Types' },
+                  { value: 'movie', label: 'Movies', icon: Film },
+                  { value: 'tv', label: 'TV Shows', icon: Tv },
+                  { value: 'book', label: 'Books', icon: BookOpen },
+                  { value: 'music', label: 'Music', icon: Music },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => { setTypeFilter(option.value); setOpenFilter(null); }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${typeFilter === option.value ? 'text-purple-600 bg-purple-50' : 'text-gray-700'}`}
+                  >
+                    {option.icon && <option.icon size={14} />}
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Year Filter */}
+          <div className="relative">
             <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-purple-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-              data-testid="button-view-grid"
+              onClick={() => setOpenFilter(openFilter === 'year' ? null : 'year')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                yearFilter !== 'all'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              }`}
+              data-testid="filter-year-button"
             >
-              <LayoutGrid size={16} />
+              Year: {yearFilter === 'all' ? 'All' : yearFilter}
+              <ChevronRight size={12} className={`transition-transform ${openFilter === 'year' ? 'rotate-90' : ''}`} />
             </button>
+            {openFilter === 'year' && (
+              <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px] max-h-48 overflow-y-auto">
+                <button
+                  onClick={() => { setYearFilter('all'); setOpenFilter(null); }}
+                  className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${yearFilter === 'all' ? 'text-purple-600 bg-purple-50' : 'text-gray-700'}`}
+                >
+                  All Years
+                </button>
+                {Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - i).toString()).map((year) => (
+                  <button
+                    key={year}
+                    onClick={() => { setYearFilter(year); setOpenFilter(null); }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${yearFilter === year ? 'text-purple-600 bg-purple-50' : 'text-gray-700'}`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Rating Filter */}
+          <div className="relative">
+            <button
+              onClick={() => setOpenFilter(openFilter === 'rating' ? null : 'rating')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                ratingFilter !== 'all'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              }`}
+              data-testid="filter-rating-button"
+            >
+              <Star size={12} />
+              {ratingFilter === 'all' ? 'Rating' : `${ratingFilter}+ stars`}
+              <ChevronRight size={12} className={`transition-transform ${openFilter === 'rating' ? 'rotate-90' : ''}`} />
+            </button>
+            {openFilter === 'rating' && (
+              <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
+                <button
+                  onClick={() => { setRatingFilter('all'); setOpenFilter(null); }}
+                  className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${ratingFilter === 'all' ? 'text-purple-600 bg-purple-50' : 'text-gray-700'}`}
+                >
+                  All Ratings
+                </button>
+                {['5', '4', '3', '2', '1'].map((rating) => (
+                  <button
+                    key={rating}
+                    onClick={() => { setRatingFilter(rating); setOpenFilter(null); }}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-1 ${ratingFilter === rating ? 'text-purple-600 bg-purple-50' : 'text-gray-700'}`}
+                  >
+                    {rating}+ <Star size={12} className="text-yellow-500 fill-yellow-500" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* View Toggle - moved to end of filters */}
+          <div className="ml-auto">
+            <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-purple-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                data-testid="button-view-list"
+              >
+                <List size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-purple-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                data-testid="button-view-grid"
+              >
+                <LayoutGrid size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* List View - Minimalist */}
         {viewMode === 'list' && (
           <div className="space-y-2">
-            {(listData?.items || []).map((item: any) => {
+            {(listData?.items || [])
+              .filter((item: any) => {
+                // Search filter
+                if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+                    !item.creator?.toLowerCase().includes(searchQuery.toLowerCase())) {
+                  return false;
+                }
+                // Type filter
+                if (typeFilter !== 'all' && item.type?.toLowerCase() !== typeFilter.toLowerCase()) {
+                  return false;
+                }
+                // Year filter - check addedDate year
+                if (yearFilter !== 'all') {
+                  const itemYear = item.addedDate ? new Date(item.addedDate).getFullYear().toString() : null;
+                  if (itemYear !== yearFilter) return false;
+                }
+                // Rating filter
+                if (ratingFilter !== 'all' && item.rating) {
+                  if (item.rating < parseInt(ratingFilter)) return false;
+                }
+                return true;
+              })
+              .map((item: any) => {
               const isClickable = item.external_id && item.external_source;
               const mediaUrl = isClickable ? `/media/${item.type?.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
               
@@ -732,7 +885,29 @@ export default function ListDetail() {
         {/* Grid View - Posters */}
         {viewMode === 'grid' && (
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-            {(listData?.items || []).map((item: any) => {
+            {(listData?.items || [])
+              .filter((item: any) => {
+                // Search filter
+                if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+                    !item.creator?.toLowerCase().includes(searchQuery.toLowerCase())) {
+                  return false;
+                }
+                // Type filter
+                if (typeFilter !== 'all' && item.type?.toLowerCase() !== typeFilter.toLowerCase()) {
+                  return false;
+                }
+                // Year filter - check addedDate year
+                if (yearFilter !== 'all') {
+                  const itemYear = item.addedDate ? new Date(item.addedDate).getFullYear().toString() : null;
+                  if (itemYear !== yearFilter) return false;
+                }
+                // Rating filter
+                if (ratingFilter !== 'all' && item.rating) {
+                  if (item.rating < parseInt(ratingFilter)) return false;
+                }
+                return true;
+              })
+              .map((item: any) => {
               const isClickable = item.external_id && item.external_source;
               const mediaUrl = isClickable ? `/media/${item.type?.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
               
