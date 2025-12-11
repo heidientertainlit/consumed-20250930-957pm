@@ -37,8 +37,7 @@ import {
   Calendar,
   HelpCircle,
   X,
-  Share2,
-  Search
+  Share2
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
