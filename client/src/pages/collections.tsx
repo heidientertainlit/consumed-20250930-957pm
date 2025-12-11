@@ -325,14 +325,7 @@ export default function CollectionsPage() {
   };
 
   const getDisplayTitle = (title: string) => {
-    const titleMap: any = {
-      'Currently': 'Currently Watching/Reading',
-      'Want to Watch': 'Want to Watch',
-      'Completed': 'Finished',
-      'Did Not Finish': 'Did Not Finish',
-      'Favorites': 'Favorites',
-    };
-    return titleMap[title] || title;
+    return title;
   };
 
   const getMediaIcon = (type: string) => {
