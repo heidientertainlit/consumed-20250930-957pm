@@ -390,23 +390,29 @@ export default function RankDetail() {
                               {index + 1}
                             </div>
                             
-                            <div className="w-12 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                              <img
-                                src={item.image_url || "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=120&fit=crop"}
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
+                            {item.image_url ? (
+                              <div className="w-12 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                                <img
+                                  src={item.image_url}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-12 h-16 rounded-lg flex-shrink-0 bg-gradient-to-br from-purple-100 to-purple-50 flex items-center justify-center">
+                                <Trophy size={20} className="text-purple-300" />
+                              </div>
+                            )}
                             
                             <div className="flex-1 min-w-0">
                               {isClickable ? (
                                 <Link href={mediaUrl!}>
-                                  <h3 className="font-semibold text-gray-900 hover:text-purple-600 truncate cursor-pointer">
+                                  <h3 className="font-medium text-gray-900 hover:text-purple-600 truncate cursor-pointer">
                                     {item.title}
                                   </h3>
                                 </Link>
                               ) : (
-                                <h3 className="font-semibold text-gray-900 truncate">
+                                <h3 className="font-medium text-gray-900 truncate">
                                   {item.title}
                                 </h3>
                               )}
