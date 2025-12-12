@@ -60,7 +60,7 @@ export default function Track() {
     }
 
     const listId = listName.toLowerCase().replace(/\s+/g, '-');
-    const shareUrl = `${window.location.origin}/list/${listId}?user=${session.user.id}`;
+    const shareUrl = `${import.meta.env.VITE_APP_URL || window.location.origin}/list/${listId}?user=${session.user.id}`;
 
     if (navigator.share) {
       // Use native sharing if available (mobile)

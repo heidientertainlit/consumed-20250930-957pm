@@ -334,7 +334,7 @@ export default function RankDetail() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem 
                     onClick={() => {
-                      const url = `${window.location.origin}/rank/${rankData.id}`;
+                      const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rankData.id}`;
                       navigator.clipboard.writeText(url);
                       toast({ title: "Link copied!", description: "Share this link with anyone" });
                     }}

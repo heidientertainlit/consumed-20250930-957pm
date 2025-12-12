@@ -16,7 +16,7 @@ export default function ListShareModal({ isOpen, onClose, listName, listItems, l
   const [copied, setCopied] = useState(false);
   
   // Use the new URL format
-  const shareUrl = listId ? urlFor('list', listId) : `${window.location.origin}/list/${listName.toLowerCase().replace(/\s+/g, '-')}`;
+  const shareUrl = listId ? urlFor('list', listId) : `${import.meta.env.VITE_APP_URL || window.location.origin}/list/${listName.toLowerCase().replace(/\s+/g, '-')}`;
   
   const handleCopyLink = async () => {
     try {

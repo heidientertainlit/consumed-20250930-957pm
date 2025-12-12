@@ -524,7 +524,7 @@ export default function CollectionsPage() {
                           onClick={(e) => {
                             e.stopPropagation();
                             const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                            const url = `${window.location.origin}/list/${listSlug}`;
+                            const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/list/${listSlug}`;
                             navigator.clipboard.writeText(url);
                             toast({ title: "Link copied!" });
                           }}
@@ -626,7 +626,7 @@ export default function CollectionsPage() {
                           size={18}
                           onClick={(e) => {
                             e.stopPropagation();
-                            const url = `${window.location.origin}/rank/${rank.id}`;
+                            const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rank.id}`;
                             navigator.clipboard.writeText(url);
                             toast({ title: "Link copied!" });
                           }}
