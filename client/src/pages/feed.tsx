@@ -15,7 +15,7 @@ import CollaborativePredictionCard from "@/components/collaborative-prediction-c
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import RankFeedCard from "@/components/rank-feed-card";
-import ActivityCarouselCard, { GroupedUserActivity, ActivitySlide } from "@/components/activity-carousel-card";
+import ConsolidatedActivityCard, { ConsolidatedActivity } from "@/components/consolidated-activity-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -670,13 +670,78 @@ export default function Feed() {
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
 
-  // Group same-user activities within 3-hour windows into carousel cards
+  // Group same-user activities within 3-hour windows into consolidated cards BY ACTIVITY TYPE
   const TIME_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
   
-  const groupUserActivities = (posts: SocialPost[]): (SocialPost | GroupedUserActivity)[] => {
+  type ActivityType = 'list_adds' | 'ratings' | 'finished' | 'games';
+
+  // Helper function to create a consolidated card (must be defined before groupUserActivities)
+  const createConsolidatedCard = (posts: SocialPost[], activityType: ActivityType): ConsolidatedActivity | null => {
+    if (!posts.length || !posts[0].user) return null;
+    
+    const user = posts[0].user;
+    
+    // Track unique media items by ID to avoid double counting
+    const uniqueMediaMap = new Map<string, any>();
+    const uniqueLists = new Set<string>();
+    const listNames: string[] = [];
+    
+    // Collect all unique items with their ratings
+    posts.forEach(p => {
+      const listId = (p as any).listId;
+      if (listId) {
+        uniqueLists.add(listId);
+        const listData = (p as any).listData;
+        if (listData?.title && !listNames.includes(listData.title)) {
+          listNames.push(listData.title);
+        }
+      }
+      
+      (p.mediaItems || []).forEach(m => {
+        const itemKey = `${m.externalSource}-${m.externalId}`;
+        if (!uniqueMediaMap.has(itemKey)) {
+          // Preserve per-item rating if available
+          const itemWithRating = { 
+            ...m, 
+            rating: m.rating || (activityType === 'ratings' ? p.rating : undefined) 
+          };
+          uniqueMediaMap.set(itemKey, itemWithRating);
+        }
+      });
+    });
+    
+    const items = Array.from(uniqueMediaMap.values());
+    if (items.length === 0) return null;
+    
+    // Sum up engagement counts from all posts
+    const totalLikes = posts.reduce((sum, p) => sum + (p.likes || 0), 0);
+    const totalComments = posts.reduce((sum, p) => sum + (p.comments || 0), 0);
+    
+    return {
+      id: `consolidated-${activityType}-${user.id}-${posts[0].timestamp}`,
+      type: activityType,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        avatar: user.avatar
+      },
+      timestamp: posts[0].timestamp,
+      items,
+      totalItems: items.length,
+      totalLists: uniqueLists.size,
+      listNames,
+      likes: totalLikes,
+      comments: totalComments,
+      likedByCurrentUser: posts.some(p => p.likedByCurrentUser),
+      originalPostIds: posts.map(p => p.id)
+    };
+  };
+  
+  const groupUserActivities = (posts: SocialPost[]): (SocialPost | ConsolidatedActivity)[] => {
     if (!posts || posts.length === 0) return [];
     
-    // Separate posts by type - don't group predictions, polls, trivia, ranks, hot takes
+    // Separate posts by groupability
     const groupablePosts: SocialPost[] = [];
     const ungroupablePosts: SocialPost[] = [];
     
@@ -697,69 +762,79 @@ export default function Feed() {
       }
     });
     
-    // Group groupable posts by user
-    const userGroups = new Map<string, SocialPost[]>();
+    // Group posts by user + activity type
+    const userTypeGroups = new Map<string, SocialPost[]>();
+    
+    const getActivityType = (post: SocialPost): ActivityType => {
+      const postType = post.type?.toLowerCase() || '';
+      if (postType === 'rating' || (post.rating && post.rating > 0)) return 'ratings';
+      if (postType === 'finished') return 'finished';
+      return 'list_adds';
+    };
+    
     groupablePosts.forEach(post => {
       if (!post.user?.id) return;
-      const userId = post.user.id;
-      if (!userGroups.has(userId)) {
-        userGroups.set(userId, []);
+      const activityType = getActivityType(post);
+      const key = `${post.user.id}-${activityType}`;
+      if (!userTypeGroups.has(key)) {
+        userTypeGroups.set(key, []);
       }
-      userGroups.get(userId)!.push(post);
+      userTypeGroups.get(key)!.push(post);
     });
     
-    // Process each user's posts into time windows
-    const groupedActivities: GroupedUserActivity[] = [];
+    // Process each user+type group into time windows
+    const consolidatedCards: ConsolidatedActivity[] = [];
     const postsToRemove = new Set<string>();
     
-    userGroups.forEach((userPosts, userId) => {
-      if (userPosts.length < 2) return; // Don't group single posts
+    userTypeGroups.forEach((typePosts, key) => {
+      if (typePosts.length < 2) return; // Don't consolidate single posts
+      
+      const activityType = key.split('-').pop() as ActivityType;
       
       // Sort by timestamp descending (newest first)
-      userPosts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      typePosts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       
       // Find posts within 3-hour windows
-      let windowStart = new Date(userPosts[0].timestamp).getTime();
-      let windowPosts: SocialPost[] = [userPosts[0]];
+      let windowStart = new Date(typePosts[0].timestamp).getTime();
+      let windowPosts: SocialPost[] = [typePosts[0]];
       
-      for (let i = 1; i < userPosts.length; i++) {
-        const postTime = new Date(userPosts[i].timestamp).getTime();
+      for (let i = 1; i < typePosts.length; i++) {
+        const postTime = new Date(typePosts[i].timestamp).getTime();
         
         if (windowStart - postTime <= TIME_WINDOW_MS) {
-          // Within window
-          windowPosts.push(userPosts[i]);
+          windowPosts.push(typePosts[i]);
         } else {
           // Outside window - process current window and start new one
           if (windowPosts.length >= 2) {
-            const grouped = createGroupedActivity(windowPosts);
-            if (grouped) {
-              groupedActivities.push(grouped);
+            const card = createConsolidatedCard(windowPosts, activityType);
+            if (card) {
+              consolidatedCards.push(card);
               windowPosts.forEach(p => postsToRemove.add(p.id));
             }
           }
           windowStart = postTime;
-          windowPosts = [userPosts[i]];
+          windowPosts = [typePosts[i]];
         }
       }
       
       // Process final window
       if (windowPosts.length >= 2) {
-        const grouped = createGroupedActivity(windowPosts);
-        if (grouped) {
-          groupedActivities.push(grouped);
+        const card = createConsolidatedCard(windowPosts, activityType);
+        if (card) {
+          consolidatedCards.push(card);
           windowPosts.forEach(p => postsToRemove.add(p.id));
         }
       }
     });
     
-    // Remove grouped posts from original list
+    // Remove consolidated posts from original list
     const remainingGroupable = groupablePosts.filter(p => !postsToRemove.has(p.id));
     
     // Combine all posts and sort by timestamp
-    const allItems: (SocialPost | GroupedUserActivity)[] = [
+    const allItems: (SocialPost | ConsolidatedActivity)[] = [
       ...ungroupablePosts,
       ...remainingGroupable,
-      ...groupedActivities
+      ...consolidatedCards
     ];
     
     // Sort by timestamp (newest first)
@@ -772,131 +847,13 @@ export default function Feed() {
     return allItems;
   };
   
-  const createGroupedActivity = (posts: SocialPost[]): GroupedUserActivity | null => {
-    if (!posts.length || !posts[0].user) return null;
-    
-    const user = posts[0].user;
-    
-    // Track unique media items by ID to avoid double counting
-    const uniqueMediaMap = new Map<string, any>();
-    const uniqueLists = new Set<string>();
-    
-    // Create slides with priority: ratings > finished > list adds
-    const slides: ActivitySlide[] = [];
-    
-    // Group by activity type
-    const ratingPosts = posts.filter(p => p.type === 'rating' || (p.rating && p.rating > 0));
-    const finishedPosts = posts.filter(p => p.type === 'finished' && !ratingPosts.includes(p));
-    const listAddPosts = posts.filter(p => p.type === 'add-to-list' && !ratingPosts.includes(p) && !finishedPosts.includes(p));
-    
-    // Add rating slides first (highest priority) - preserve per-item ratings
-    if (ratingPosts.length > 0) {
-      const ratingItems: any[] = [];
-      ratingPosts.forEach(p => {
-        (p.mediaItems || []).forEach(m => {
-          const itemKey = `${m.externalSource}-${m.externalId}`;
-          if (!uniqueMediaMap.has(itemKey)) {
-            const itemWithRating = { ...m, rating: m.rating || p.rating };
-            ratingItems.push(itemWithRating);
-            uniqueMediaMap.set(itemKey, itemWithRating);
-          }
-        });
-      });
-      if (ratingItems.length > 0) {
-        slides.push({
-          type: 'rating',
-          items: ratingItems,
-          rating: ratingItems[0]?.rating
-        });
-      }
-    }
-    
-    // Add finished slides
-    if (finishedPosts.length > 0) {
-      const finishedItems: any[] = [];
-      finishedPosts.forEach(p => {
-        (p.mediaItems || []).forEach(m => {
-          const itemKey = `${m.externalSource}-${m.externalId}`;
-          if (!uniqueMediaMap.has(itemKey)) {
-            finishedItems.push(m);
-            uniqueMediaMap.set(itemKey, m);
-          }
-        });
-      });
-      if (finishedItems.length > 0) {
-        slides.push({
-          type: 'finished',
-          items: finishedItems
-        });
-      }
-    }
-    
-    // Group list adds by list name (if available) 
-    if (listAddPosts.length > 0) {
-      // Group by list
-      const byList = new Map<string, SocialPost[]>();
-      listAddPosts.forEach(p => {
-        const listId = (p as any).listId || 'default';
-        uniqueLists.add(listId);
-        if (!byList.has(listId)) byList.set(listId, []);
-        byList.get(listId)!.push(p);
-      });
-      
-      byList.forEach((listPosts, listId) => {
-        const listData = (listPosts[0] as any).listData;
-        const listItems: any[] = [];
-        listPosts.forEach(p => {
-          (p.mediaItems || []).forEach(m => {
-            const itemKey = `${m.externalSource}-${m.externalId}`;
-            if (!uniqueMediaMap.has(itemKey)) {
-              listItems.push(m);
-              uniqueMediaMap.set(itemKey, m);
-            }
-          });
-        });
-        if (listItems.length > 0) {
-          slides.push({
-            type: 'list_add',
-            items: listItems,
-            listName: listData?.title || 'list',
-            listId: listId !== 'default' ? listId : undefined
-          });
-        }
-      });
-    }
-    
-    if (slides.length === 0) return null;
-    
-    // Sum up engagement counts from all posts
-    const totalLikes = posts.reduce((sum, p) => sum + (p.likes || 0), 0);
-    const totalComments = posts.reduce((sum, p) => sum + (p.comments || 0), 0);
-    
-    return {
-      id: `grouped-${user.id}-${posts[0].timestamp}`,
-      user: {
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName,
-        avatar: user.avatar
-      },
-      timestamp: posts[0].timestamp,
-      totalItems: uniqueMediaMap.size,
-      totalLists: Math.max(uniqueLists.size, 1),
-      slides,
-      likes: totalLikes,
-      comments: totalComments,
-      likedByCurrentUser: posts.some(p => p.likedByCurrentUser),
-      originalPostIds: posts.map(p => p.id)
-    };
-  };
-  
   // Apply grouping to social posts
   const processedPosts = groupUserActivities(socialPosts);
 
   // Filter posts by detailed filters and feed filter
   const filteredPosts = processedPosts.filter(item => {
-    // Skip GroupedUserActivity items from filtering (they're already processed)
-    if ('slides' in item) return true;
+    // Skip ConsolidatedActivity items from filtering (they're already processed)
+    if ('originalPostIds' in item) return true;
     
     const post = item as SocialPost;
     // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
@@ -2006,23 +1963,24 @@ export default function Feed() {
               <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
 
               
-              {filteredPosts.filter((item: SocialPost | GroupedUserActivity) => {
+              {filteredPosts.filter((item: SocialPost | ConsolidatedActivity) => {
                 // Filter out incorrectly formatted prediction posts
-                if ('slides' in item) return true; // Keep grouped activities
+                if ('originalPostIds' in item) return true; // Keep consolidated activities
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
-              }).map((item: SocialPost | GroupedUserActivity, postIndex: number) => {
-                // Handle GroupedUserActivity carousel cards
-                if ('slides' in item) {
-                  const groupedActivity = item as GroupedUserActivity;
+              }).map((item: SocialPost | ConsolidatedActivity, postIndex: number) => {
+                // Handle ConsolidatedActivity cards (per activity type)
+                if ('originalPostIds' in item && 'type' in item && ['list_adds', 'ratings', 'finished', 'games'].includes((item as any).type)) {
+                  const consolidated = item as ConsolidatedActivity;
                   return (
-                    <ActivityCarouselCard
-                      key={groupedActivity.id}
-                      activity={groupedActivity}
-                      onLike={(postId) => handleLike(postId)}
-                      onComment={(postId) => toggleComments(postId)}
-                      isLiked={groupedActivity.originalPostIds.some(id => likedPosts.has(id))}
-                    />
+                    <div key={consolidated.id} className="mb-4">
+                      <ConsolidatedActivityCard
+                        activity={consolidated}
+                        onLike={(postId) => handleLike(postId)}
+                        onComment={(postId) => toggleComments(postId)}
+                        isLiked={consolidated.originalPostIds.some(id => likedPosts.has(id))}
+                      />
+                    </div>
                   );
                 }
                 
