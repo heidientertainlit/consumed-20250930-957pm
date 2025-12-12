@@ -686,15 +686,25 @@ export default function Feed() {
     const uniqueLists = new Set<string>();
     const listNames: string[] = [];
     
+    // For list adds, group items BY LIST for carousel display
+    const listGroups = new Map<string, { listId: string; listName: string; items: any[] }>();
+    
     // Collect all unique items with their ratings
     posts.forEach(p => {
-      const listId = (p as any).listId;
-      if (listId) {
+      const listId = (p as any).listId || 'default';
+      const listData = (p as any).listData;
+      const listName = listData?.title || 'List';
+      
+      if (listId !== 'default') {
         uniqueLists.add(listId);
-        const listData = (p as any).listData;
-        if (listData?.title && !listNames.includes(listData.title)) {
-          listNames.push(listData.title);
+        if (!listNames.includes(listName)) {
+          listNames.push(listName);
         }
+      }
+      
+      // Initialize list group if needed
+      if (!listGroups.has(listId)) {
+        listGroups.set(listId, { listId, listName, items: [] });
       }
       
       (p.mediaItems || []).forEach(m => {
@@ -706,6 +716,11 @@ export default function Feed() {
             rating: m.rating || (activityType === 'ratings' ? p.rating : undefined) 
           };
           uniqueMediaMap.set(itemKey, itemWithRating);
+          
+          // Add to list group for carousel
+          if (activityType === 'list_adds') {
+            listGroups.get(listId)!.items.push(itemWithRating);
+          }
         }
       });
     });
@@ -716,6 +731,11 @@ export default function Feed() {
     // Sum up engagement counts from all posts
     const totalLikes = posts.reduce((sum, p) => sum + (p.likes || 0), 0);
     const totalComments = posts.reduce((sum, p) => sum + (p.comments || 0), 0);
+    
+    // Build lists array for carousel (only for list_adds with multiple lists)
+    const lists = activityType === 'list_adds' && listGroups.size > 1
+      ? Array.from(listGroups.values()).filter(lg => lg.items.length > 0)
+      : undefined;
     
     return {
       id: `consolidated-${activityType}-${user.id}-${posts[0].timestamp}`,
@@ -731,6 +751,7 @@ export default function Feed() {
       totalItems: items.length,
       totalLists: uniqueLists.size,
       listNames,
+      lists, // Array of {listId, listName, items[]} for carousel
       likes: totalLikes,
       comments: totalComments,
       likedByCurrentUser: posts.some(p => p.likedByCurrentUser),

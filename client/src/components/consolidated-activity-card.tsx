@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { Heart, MessageCircle, ChevronRight, Star, Plus, CheckCircle, Layers } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -11,6 +12,12 @@ interface MediaItem {
   rating?: number;
   externalId: string;
   externalSource: string;
+}
+
+interface ListGroup {
+  listId: string;
+  listName: string;
+  items: MediaItem[];
 }
 
 export interface ConsolidatedActivity {
@@ -27,6 +34,7 @@ export interface ConsolidatedActivity {
   totalItems: number;
   totalLists?: number;
   listNames?: string[];
+  lists?: ListGroup[];
   likes: number;
   comments: number;
   likedByCurrentUser?: boolean;
@@ -47,6 +55,17 @@ export default function ConsolidatedActivityCard({
   onComment,
   isLiked 
 }: ConsolidatedActivityCardProps) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Check if we have multiple lists for carousel
+  const hasCarousel = activity.lists && activity.lists.length > 1;
+  const slides = activity.lists || [{ listId: 'default', listName: activity.listNames?.[0] || 'List', items: activity.items }];
+
+  const nextSlide = () => {
+    if (hasCarousel) {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }
+  };
 
   const getActivityIcon = () => {
     switch (activity.type) {
@@ -101,6 +120,7 @@ export default function ConsolidatedActivityCard({
   };
 
   const isConsolidated = activity.totalItems > 1 || (activity.totalLists && activity.totalLists > 1);
+  const currentListData = slides[currentSlide];
 
   return (
     <div 
@@ -139,7 +159,7 @@ export default function ConsolidatedActivityCard({
             </div>
           </Link>
           
-          {/* Consolidated Badge */}
+          {/* Grouped Badge */}
           {isConsolidated && (
             <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-full shrink-0">
               <Layers className="w-3 h-3 text-purple-500" />
@@ -149,22 +169,37 @@ export default function ConsolidatedActivityCard({
         </div>
       </div>
 
-      {/* Content Preview */}
-      <div className="px-4 pb-3">
+      {/* Content - Carousel for multiple lists */}
+      <div className="px-4 pb-3 relative">
         <div className="bg-gray-50 rounded-xl p-3">
-          {/* Activity Type Header */}
-          <div className="flex items-center gap-2 mb-2">
-            {getActivityIcon()}
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              {activity.type === 'list_adds' ? 'Added to Lists' : 
-               activity.type === 'ratings' ? 'Rated' :
-               activity.type === 'finished' ? 'Finished' : 'Activity'}
-            </span>
+          {/* List Header with swipe indicator */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              {getActivityIcon()}
+              <span className="text-sm font-medium text-gray-700">
+                {activity.type === 'list_adds' 
+                  ? `Added to ${currentListData.listName}`
+                  : activity.type === 'ratings' ? 'Rated'
+                  : activity.type === 'finished' ? 'Finished' 
+                  : 'Activity'}
+              </span>
+            </div>
+            
+            {/* Carousel indicator & next button */}
+            {hasCarousel && (
+              <button 
+                onClick={nextSlide}
+                className="flex items-center gap-1 text-purple-600 hover:text-purple-700 transition-colors"
+              >
+                <span className="text-xs font-medium">{currentSlide + 1}/{slides.length}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
-          {/* Media Items Preview */}
+          {/* Media Items for current list */}
           <div className="space-y-1.5">
-            {activity.items.slice(0, 3).map((item, idx) => (
+            {currentListData.items.slice(0, 3).map((item, idx) => (
               <Link 
                 key={item.id || idx} 
                 href={`/media/${item.externalSource}/${item.externalId}`}
@@ -194,14 +229,28 @@ export default function ConsolidatedActivityCard({
             ))}
           </div>
 
-          {/* See More */}
-          {activity.items.length > 3 && (
+          {/* See More for current list */}
+          {currentListData.items.length > 3 && (
             <div className="flex items-center justify-end gap-1 mt-2 text-sm font-medium text-purple-600">
-              <span>+{activity.items.length - 3} more</span>
-              <ChevronRight className="w-4 h-4" />
+              <span>+{currentListData.items.length - 3} more in this list</span>
             </div>
           )}
         </div>
+
+        {/* Carousel Dots */}
+        {hasCarousel && (
+          <div className="flex justify-center gap-1.5 mt-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  idx === currentSlide ? 'bg-purple-500' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Footer - Likes & Comments */}
