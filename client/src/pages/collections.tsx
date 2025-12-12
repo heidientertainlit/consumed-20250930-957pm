@@ -216,7 +216,7 @@ export default function CollectionsPage() {
       }
     });
     return allItems.sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      new Date(b.added_at || b.created_at).getTime() - new Date(a.added_at || a.created_at).getTime()
     );
   }, [userLists]);
 
@@ -255,17 +255,17 @@ export default function CollectionsPage() {
       }
       
       if (mediaHistoryYear !== 'all') {
-        const itemYear = new Date(item.created_at).getFullYear();
+        const itemYear = new Date(item.added_at || item.created_at).getFullYear();
         if (itemYear.toString() !== mediaHistoryYear) return false;
       }
       
       if (mediaHistoryMonth !== 'all') {
-        const itemMonth = new Date(item.created_at).getMonth();
+        const itemMonth = new Date(item.added_at || item.created_at).getMonth();
         if (itemMonth !== parseInt(mediaHistoryMonth)) return false;
       }
       
       if (mediaHistoryRating !== 'all') {
-        const itemRating = Math.floor(item.user_rating || 0);
+        const itemRating = Math.floor(item.rating || item.user_rating || 0);
         if (itemRating < parseInt(mediaHistoryRating)) return false;
       }
       
@@ -851,7 +851,7 @@ export default function CollectionsPage() {
                           <span>{item.listName}</span>
                         </div>
                         <p className="text-xs text-gray-400">
-                          {new Date(item.created_at).toLocaleDateString()}
+                          {new Date(item.added_at || item.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
