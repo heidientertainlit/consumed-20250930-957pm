@@ -201,21 +201,40 @@ export default function CollectionsPage() {
     },
   });
 
-  // Get all media items from lists for history (memoized)
+  // Get all media items from lists for history (memoized and deduplicated)
   const allMediaItems = useMemo(() => {
     const allItems: any[] = [];
+    const seenItems = new Map<string, any>();
+    
     userLists.forEach(list => {
       if (list.items && Array.isArray(list.items)) {
         list.items.forEach((item: any) => {
-          allItems.push({
+          // Create unique key using external_id+source or title+type
+          const uniqueKey = item.external_id && item.external_source
+            ? `${item.external_source}-${item.external_id}`
+            : `${item.title}-${item.media_type}`.toLowerCase();
+          
+          const itemWithList = {
             ...item,
             listName: list.title,
             listId: list.id,
-          });
+          };
+          
+          // Keep the most recent entry (by created_at) for each unique media
+          if (!seenItems.has(uniqueKey)) {
+            seenItems.set(uniqueKey, itemWithList);
+          } else {
+            const existing = seenItems.get(uniqueKey);
+            if (new Date(item.created_at) > new Date(existing.created_at)) {
+              seenItems.set(uniqueKey, itemWithList);
+            }
+          }
         });
       }
     });
-    return allItems.sort((a, b) => 
+    
+    // Convert map to array and sort by date
+    return Array.from(seenItems.values()).sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   }, [userLists]);
