@@ -280,8 +280,7 @@ export default function CollectionsPage() {
       }
       
       if (mediaHistoryRating !== 'all') {
-        // Note: rating column doesn't exist in production yet
-        const itemRating = Math.floor(item.rating || 0);
+        const itemRating = Math.floor(item.user_rating || 0);
         if (itemRating < parseInt(mediaHistoryRating)) return false;
       }
       

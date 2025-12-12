@@ -324,6 +324,33 @@ serve(async (req) => {
         userItems = items || [];
       }
       console.log("User items count:", userItems.length);
+      
+      // Fetch user's ratings from media_ratings table
+      const { data: ratings, error: ratingsError } = await queryClient
+        .from('media_ratings')
+        .select('media_external_id, media_external_source, rating')
+        .eq('user_id', targetUserId);
+      
+      if (!ratingsError && ratings) {
+        // Create a lookup map for ratings by external_id + external_source
+        const ratingsMap = new Map();
+        ratings.forEach((r: any) => {
+          const key = `${r.media_external_source}-${r.media_external_id}`;
+          ratingsMap.set(key, r.rating);
+        });
+        
+        // Attach ratings to items
+        userItems = userItems.map((item: any) => {
+          if (item.external_id && item.external_source) {
+            const key = `${item.external_source}-${item.external_id}`;
+            const rating = ratingsMap.get(key);
+            return { ...item, user_rating: rating || null };
+          }
+          return { ...item, user_rating: null };
+        });
+        
+        console.log("Attached ratings to items, ratings count:", ratings.length);
+      }
     }
 
     // Group items by list_id
