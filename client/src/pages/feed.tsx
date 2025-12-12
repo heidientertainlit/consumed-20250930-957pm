@@ -764,8 +764,8 @@ export default function Feed() {
     
     // Sort by timestamp (newest first)
     allItems.sort((a, b) => {
-      const timeA = new Date('timestamp' in a ? a.timestamp : a.timestamp).getTime();
-      const timeB = new Date('timestamp' in b ? b.timestamp : b.timestamp).getTime();
+      const timeA = new Date((a as any).timestamp).getTime();
+      const timeB = new Date((b as any).timestamp).getTime();
       return timeB - timeA;
     });
     
@@ -776,35 +776,59 @@ export default function Feed() {
     if (!posts.length || !posts[0].user) return null;
     
     const user = posts[0].user;
-    const allMediaItems = posts.flatMap(p => p.mediaItems || []);
-    const uniqueLists = new Set(posts.map(p => (p as any).listId).filter(Boolean));
+    
+    // Track unique media items by ID to avoid double counting
+    const uniqueMediaMap = new Map<string, any>();
+    const uniqueLists = new Set<string>();
     
     // Create slides with priority: ratings > finished > list adds
     const slides: ActivitySlide[] = [];
     
     // Group by activity type
     const ratingPosts = posts.filter(p => p.type === 'rating' || (p.rating && p.rating > 0));
-    const finishedPosts = posts.filter(p => p.type === 'finished');
+    const finishedPosts = posts.filter(p => p.type === 'finished' && !ratingPosts.includes(p));
     const listAddPosts = posts.filter(p => p.type === 'add-to-list' && !ratingPosts.includes(p) && !finishedPosts.includes(p));
     
-    // Add rating slides first (highest priority)
+    // Add rating slides first (highest priority) - preserve per-item ratings
     if (ratingPosts.length > 0) {
-      const ratingItems = ratingPosts.flatMap(p => 
-        (p.mediaItems || []).map(m => ({ ...m, rating: p.rating }))
-      );
-      slides.push({
-        type: 'rating',
-        items: ratingItems,
-        rating: ratingPosts[0].rating
+      const ratingItems: any[] = [];
+      ratingPosts.forEach(p => {
+        (p.mediaItems || []).forEach(m => {
+          const itemKey = `${m.externalSource}-${m.externalId}`;
+          if (!uniqueMediaMap.has(itemKey)) {
+            const itemWithRating = { ...m, rating: m.rating || p.rating };
+            ratingItems.push(itemWithRating);
+            uniqueMediaMap.set(itemKey, itemWithRating);
+          }
+        });
       });
+      if (ratingItems.length > 0) {
+        slides.push({
+          type: 'rating',
+          items: ratingItems,
+          rating: ratingItems[0]?.rating
+        });
+      }
     }
     
     // Add finished slides
     if (finishedPosts.length > 0) {
-      slides.push({
-        type: 'finished',
-        items: finishedPosts.flatMap(p => p.mediaItems || [])
+      const finishedItems: any[] = [];
+      finishedPosts.forEach(p => {
+        (p.mediaItems || []).forEach(m => {
+          const itemKey = `${m.externalSource}-${m.externalId}`;
+          if (!uniqueMediaMap.has(itemKey)) {
+            finishedItems.push(m);
+            uniqueMediaMap.set(itemKey, m);
+          }
+        });
       });
+      if (finishedItems.length > 0) {
+        slides.push({
+          type: 'finished',
+          items: finishedItems
+        });
+      }
     }
     
     // Group list adds by list name (if available) 
@@ -813,22 +837,39 @@ export default function Feed() {
       const byList = new Map<string, SocialPost[]>();
       listAddPosts.forEach(p => {
         const listId = (p as any).listId || 'default';
+        uniqueLists.add(listId);
         if (!byList.has(listId)) byList.set(listId, []);
         byList.get(listId)!.push(p);
       });
       
       byList.forEach((listPosts, listId) => {
         const listData = (listPosts[0] as any).listData;
-        slides.push({
-          type: 'list_add',
-          items: listPosts.flatMap(p => p.mediaItems || []),
-          listName: listData?.title || 'list',
-          listId: listId !== 'default' ? listId : undefined
+        const listItems: any[] = [];
+        listPosts.forEach(p => {
+          (p.mediaItems || []).forEach(m => {
+            const itemKey = `${m.externalSource}-${m.externalId}`;
+            if (!uniqueMediaMap.has(itemKey)) {
+              listItems.push(m);
+              uniqueMediaMap.set(itemKey, m);
+            }
+          });
         });
+        if (listItems.length > 0) {
+          slides.push({
+            type: 'list_add',
+            items: listItems,
+            listName: listData?.title || 'list',
+            listId: listId !== 'default' ? listId : undefined
+          });
+        }
       });
     }
     
     if (slides.length === 0) return null;
+    
+    // Sum up engagement counts from all posts
+    const totalLikes = posts.reduce((sum, p) => sum + (p.likes || 0), 0);
+    const totalComments = posts.reduce((sum, p) => sum + (p.comments || 0), 0);
     
     return {
       id: `grouped-${user.id}-${posts[0].timestamp}`,
@@ -839,11 +880,11 @@ export default function Feed() {
         avatar: user.avatar
       },
       timestamp: posts[0].timestamp,
-      totalItems: allMediaItems.length,
-      totalLists: uniqueLists.size || 1,
+      totalItems: uniqueMediaMap.size,
+      totalLists: Math.max(uniqueLists.size, 1),
       slides,
-      likes: posts.reduce((sum, p) => sum + (p.likes || 0), 0),
-      comments: posts.reduce((sum, p) => sum + (p.comments || 0), 0),
+      likes: totalLikes,
+      comments: totalComments,
       likedByCurrentUser: posts.some(p => p.likedByCurrentUser),
       originalPostIds: posts.map(p => p.id)
     };
