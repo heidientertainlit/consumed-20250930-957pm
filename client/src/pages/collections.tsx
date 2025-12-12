@@ -284,8 +284,8 @@ export default function CollectionsPage() {
       }
       
       if (mediaHistoryRating !== 'all') {
-        const itemRating = Math.floor(item.rating || 0);
-        if (itemRating !== parseInt(mediaHistoryRating)) return false;
+        const itemRating = Math.floor(item.user_rating || 0);
+        if (itemRating < parseInt(mediaHistoryRating)) return false;
       }
       
       return true;

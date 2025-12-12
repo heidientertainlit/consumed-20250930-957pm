@@ -313,7 +313,7 @@ serve(async (req) => {
     if (targetUserId) {
       const { data: items, error: itemsError } = await queryClient
         .from('list_items')
-        .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id, external_id, external_source, progress, total, progress_mode')
+        .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id, external_id, external_source, progress, total, progress_mode, user_rating')
         .eq('user_id', targetUserId)
         .order('created_at', { ascending: false });
       
