@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3 } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2 } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -2918,9 +2918,23 @@ export default function UserProfile() {
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               {/* Section Header */}
-              {!isOwnProfile && (
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Public Collections</h2>
-              )}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {isOwnProfile ? 'Your Collections' : 'Public Collections'}
+                </h2>
+                {isOwnProfile && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setLocation('/collections')}
+                    className="text-purple-600 border-purple-200 hover:bg-purple-50 text-xs px-3 py-1.5 h-8"
+                    data-testid="button-edit-collections"
+                  >
+                    <Edit2 size={14} className="mr-1" />
+                    Edit Collections
+                  </Button>
+                )}
+              </div>
               {/* Sub-navigation: Lists vs Ranks */}
               <div className="flex items-center gap-2 mb-6">
                 <button
@@ -2947,18 +2961,6 @@ export default function UserProfile() {
                   <Trophy size={16} />
                   Ranks
                 </button>
-                <div className="flex-1" />
-                {isOwnProfile && (
-                  <Button
-                    size="sm"
-                    onClick={() => collectionsSubTab === 'lists' ? setShowCreateListDialog(true) : setShowCreateRankDialog(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs px-3 py-1.5 h-8"
-                    data-testid={collectionsSubTab === 'lists' ? 'button-create-list' : 'button-create-rank'}
-                  >
-                    <Plus size={14} className="mr-1" />
-                    {collectionsSubTab === 'lists' ? 'List' : 'Rank'}
-                  </Button>
-                )}
               </div>
 
               {/* Lists Sub-Tab Content */}
