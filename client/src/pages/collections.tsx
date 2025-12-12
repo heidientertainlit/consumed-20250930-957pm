@@ -59,6 +59,7 @@ export default function CollectionsPage() {
   const [isCreateRankOpen, setIsCreateRankOpen] = useState(false);
   const [newRankName, setNewRankName] = useState("");
   const [newRankVisibility, setNewRankVisibility] = useState("private");
+  const [rankSearch, setRankSearch] = useState("");
   
   // History state
   const [mediaHistorySearch, setMediaHistorySearch] = useState("");
@@ -540,10 +541,10 @@ export default function CollectionsPage() {
 
           {/* Ranks Tab */}
           <TabsContent value="ranks">
-            <div className="mb-4 flex justify-end">
+            <div className="mb-4 flex justify-center">
               <Dialog open={isCreateRankOpen} onOpenChange={setIsCreateRankOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700" data-testid="button-create-rank">
+                  <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 px-8 py-2 rounded-full" data-testid="button-create-rank">
                     <Plus size={16} className="mr-2" />
                     Create Rank
                   </Button>
@@ -584,6 +585,19 @@ export default function CollectionsPage() {
               </Dialog>
             </div>
 
+            {/* Search Ranks */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search ranks..."
+                value={rankSearch}
+                onChange={(e) => setRankSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                data-testid="input-search-ranks"
+              />
+            </div>
+
             {isLoadingRanks ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((n) => (
@@ -601,7 +615,11 @@ export default function CollectionsPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {userRanks.map((rank: any) => (
+                {userRanks
+                  .filter((rank: any) => 
+                    rank.title.toLowerCase().includes(rankSearch.toLowerCase())
+                  )
+                  .map((rank: any) => (
                   <div
                     key={rank.id}
                     className="bg-white border border-gray-200 rounded-xl hover:border-purple-300 transition-colors cursor-pointer"
