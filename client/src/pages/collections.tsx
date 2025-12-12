@@ -203,7 +203,6 @@ export default function CollectionsPage() {
 
   // Get all media items from lists for history (memoized and deduplicated)
   const allMediaItems = useMemo(() => {
-    const allItems: any[] = [];
     const seenItems = new Map<string, any>();
     
     userLists.forEach(list => {
@@ -212,7 +211,7 @@ export default function CollectionsPage() {
           // Create unique key using external_id+source or title+type
           const uniqueKey = item.external_id && item.external_source
             ? `${item.external_source}-${item.external_id}`
-            : `${item.title}-${item.media_type}`.toLowerCase();
+            : `${(item.title || '')}-${(item.media_type || '')}`.toLowerCase();
           
           const itemWithList = {
             ...item,
