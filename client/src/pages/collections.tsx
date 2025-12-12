@@ -201,21 +201,36 @@ export default function CollectionsPage() {
     },
   });
 
-  // Get all media items from lists for history (memoized)
+  // Get all media items from lists for history (memoized and deduplicated)
   const allMediaItems = useMemo(() => {
-    const allItems: any[] = [];
-    userLists.forEach(list => {
-      if (list.items && Array.isArray(list.items)) {
-        list.items.forEach((item: any) => {
-          allItems.push({
-            ...item,
-            listName: list.title,
-            listId: list.id,
+    const seenItems = new Map<string, any>();
+    
+    // Skip the "All" list since it duplicates items from other lists
+    userLists
+      .filter(list => list.id !== 'all' && list.title !== 'All')
+      .forEach(list => {
+        if (list.items && Array.isArray(list.items)) {
+          list.items.forEach((item: any) => {
+            // Create unique key using external_id+source or item id
+            const uniqueKey = item.external_id && item.external_source
+              ? `${item.external_source}-${item.external_id}`
+              : item.id || `${item.title}-${item.media_type}`;
+            
+            const itemWithList = {
+              ...item,
+              listName: list.title,
+              listId: list.id,
+            };
+            
+            // Keep only first occurrence (most recent due to sort order from API)
+            if (!seenItems.has(uniqueKey)) {
+              seenItems.set(uniqueKey, itemWithList);
+            }
           });
-        });
-      }
-    });
-    return allItems.sort((a, b) => 
+        }
+      });
+    
+    return Array.from(seenItems.values()).sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   }, [userLists]);
