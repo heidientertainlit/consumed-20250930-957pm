@@ -2917,6 +2917,10 @@ export default function UserProfile() {
         {activeSection === 'collections' && (isOwnProfile || friendshipStatus === 'friends') && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              {/* Section Header */}
+              {!isOwnProfile && (
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Public Collections</h2>
+              )}
               {/* Sub-navigation: Lists vs Ranks */}
               <div className="flex items-center gap-2 mb-6">
                 <button
