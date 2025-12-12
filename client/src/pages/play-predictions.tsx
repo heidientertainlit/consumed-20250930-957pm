@@ -270,7 +270,7 @@ export default function PlayPredictionsPage() {
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
                         <Star size={14} className="text-purple-600" />
-                        <span className="font-medium text-purple-600">{game.points || 10} pts</span>
+                        <span className="font-medium text-purple-600">You Earn: {game.points || 10} pts</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Users size={14} />

@@ -51,12 +51,13 @@ CREATE POLICY "Only service role can manage badges" ON badges
 CREATE POLICY "Only service role can grant badges" ON user_badges
   FOR ALL USING (auth.role() = 'service_role');
 
--- Seed the OG badge
+-- Seed the initial badges
 INSERT INTO badges (slug, name, emoji, description, badge_type, theme_color) VALUES
   ('og', 'OG', '🏆', 'Original supporter - with us from the beginning', 'status', '#d97706'),
-  ('beta-tester', 'Beta Tester', '🧪', 'Helped test the app during beta', 'status', '#8b5cf6'),
-  ('top-predictor', 'Top Predictor', '🎯', 'Consistently makes accurate predictions', 'achievement', '#10b981'),
-  ('conversation-starter', 'Conversation Starter', '💬', 'Sparks great discussions', 'community', '#3b82f6');
+  ('streak-star', 'Streak Star', '🔥', 'Logged activity for 7+ days in a row', 'achievement', '#ef4444'),
+  ('leaderboard-legend', 'Leaderboard Legend', '👑', 'Held #1 spot on a leaderboard for 7+ days', 'achievement', '#eab308'),
+  ('prediction-pro', 'Prediction Pro', '🎯', 'Correctly predicted 10+ outcomes', 'achievement', '#10b981'),
+  ('trivia-titan', 'Trivia Titan', '🧠', 'Won 25+ trivia games or hit 90%+ accuracy', 'achievement', '#8b5cf6');
 
 -- Query to find all users with a specific badge (for email campaigns):
 -- SELECT u.email, u.id, ub.awarded_at 
