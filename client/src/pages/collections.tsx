@@ -76,7 +76,60 @@ export default function CollectionsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Fetch user lists with caching
+  // Fast metadata query - try lightweight endpoint first, fallback to full endpoint
+  const { data: listsMetadata, isLoading: isLoadingMetadata } = useQuery({
+    queryKey: ['user-lists-metadata', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token || !user?.id) return { lists: [] };
+      
+      // Try the fast metadata endpoint first
+      try {
+        const metadataResponse = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-metadata?user_id=${user.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (metadataResponse.ok) {
+          return metadataResponse.json();
+        }
+      } catch (e) {
+        // Metadata endpoint not deployed yet, fall through to full endpoint
+      }
+      
+      // Fallback to full endpoint if metadata endpoint fails
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${user.id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Transform full data to metadata format
+        return {
+          lists: (data.lists || []).map((list: any) => ({
+            ...list,
+            item_count: list.items?.length || 0
+          }))
+        };
+      }
+      return { lists: [] };
+    },
+    enabled: !!session?.access_token && !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // Full items query - only loads when History tab is active (lazy load)
   const { data: listsData, isLoading: isLoadingLists } = useQuery({
     queryKey: ['user-lists', user?.id],
     queryFn: async () => {
@@ -97,9 +150,9 @@ export default function CollectionsPage() {
       }
       return { lists: [] };
     },
-    enabled: !!session?.access_token && !!user?.id,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    enabled: !!session?.access_token && !!user?.id && activeTab === 'history',
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Fetch user ranks with caching
@@ -128,7 +181,9 @@ export default function CollectionsPage() {
     gcTime: 10 * 60 * 1000,
   });
 
-  const userLists = listsData?.lists || [];
+  // Use metadata for Lists tab (fast), full data for History tab
+  const userListsMetadata = listsMetadata?.lists || [];
+  const userListsFull = listsData?.lists || [];
   const userRanks = ranksData?.ranks || [];
 
   // Create list mutation
@@ -159,6 +214,7 @@ export default function CollectionsPage() {
       toast({ title: "List created!", description: `"${newListName}" has been created.` });
       setNewListName("");
       setIsCreateListOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
     },
     onError: () => {
@@ -206,7 +262,7 @@ export default function CollectionsPage() {
     const seenItems = new Map<string, any>();
     
     // Skip the "All" list since it duplicates items from other lists
-    userLists
+    userListsFull
       .filter(list => list.id !== 'all' && list.title !== 'All')
       .forEach(list => {
         if (list.items && Array.isArray(list.items)) {
@@ -233,7 +289,7 @@ export default function CollectionsPage() {
     return Array.from(seenItems.values()).sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-  }, [userLists]);
+  }, [userListsFull]);
 
   // Get media type counts (memoized)
   const mediaTypeCounts = useMemo(() => {
@@ -328,6 +384,7 @@ export default function CollectionsPage() {
         });
         setImportFile(null);
         setIsImportModalOpen(false);
+        queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
         queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       } else {
         throw new Error('Import failed');
@@ -475,7 +532,7 @@ export default function CollectionsPage() {
               />
             </div>
 
-            {isLoadingLists ? (
+            {isLoadingMetadata ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((n) => (
                   <div key={n} className="bg-white rounded-xl p-4 animate-pulse">
@@ -484,7 +541,7 @@ export default function CollectionsPage() {
                   </div>
                 ))}
               </div>
-            ) : userLists.length === 0 ? (
+            ) : userListsMetadata.length === 0 ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
                 <List className="mx-auto mb-3 text-gray-300" size={48} />
                 <p className="text-gray-600">No lists yet</p>
@@ -492,7 +549,7 @@ export default function CollectionsPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {userLists
+                {userListsMetadata
                   .filter((list: any) => 
                     list.title.toLowerCase().includes(listSearch.toLowerCase())
                   )
@@ -529,7 +586,7 @@ export default function CollectionsPage() {
                             )}
                           </div>
                           <p className="text-sm text-gray-500">
-                            {list.items?.length || 0} {list.items?.length === 1 ? 'item' : 'items'}
+                            {list.item_count ?? list.items?.length ?? 0} {(list.item_count ?? list.items?.length ?? 0) === 1 ? 'item' : 'items'}
                           </p>
                         </div>
                       </div>
