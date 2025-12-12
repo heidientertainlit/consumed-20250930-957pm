@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Heart, MessageCircle, ChevronRight, Star, Plus, CheckCircle, Gamepad2, Layers } from "lucide-react";
+import { Heart, MessageCircle, ChevronRight, Star, Plus, CheckCircle, Layers } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface MediaItem {
@@ -51,15 +51,13 @@ export default function ConsolidatedActivityCard({
   const getActivityIcon = () => {
     switch (activity.type) {
       case 'ratings':
-        return <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />;
+        return <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />;
       case 'finished':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
+        return <CheckCircle className="w-3.5 h-3.5 text-green-500" />;
       case 'list_adds':
-        return <Plus className="w-4 h-4 text-white" />;
-      case 'games':
-        return <Gamepad2 className="w-4 h-4 text-white" />;
+        return <Plus className="w-3.5 h-3.5 text-purple-500" />;
       default:
-        return <Layers className="w-4 h-4 text-white" />;
+        return <Layers className="w-3.5 h-3.5 text-purple-500" />;
     }
   };
 
@@ -106,66 +104,61 @@ export default function ConsolidatedActivityCard({
 
   return (
     <div 
-      className={`rounded-2xl overflow-hidden shadow-sm ${
+      className={`rounded-2xl overflow-hidden shadow-sm bg-white border ${
         isConsolidated 
-          ? 'bg-gradient-to-br from-purple-600 via-purple-500 to-violet-500 text-white' 
-          : 'bg-white border border-gray-200'
+          ? 'border-purple-200 ring-1 ring-purple-100' 
+          : 'border-gray-200'
       }`} 
       data-testid={`consolidated-activity-${activity.id}`}
     >
       {/* Header */}
       <div className="p-4 pb-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-2">
           <Link href={`/profile/${activity.user.username}`}>
             <div className="flex items-center gap-3 cursor-pointer">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                isConsolidated 
-                  ? 'bg-white/20 text-white' 
-                  : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
-              }`}>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
                 {activity.user.avatar ? (
                   <img src={activity.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                 ) : (
                   activity.user.displayName?.[0]?.toUpperCase() || activity.user.username?.[0]?.toUpperCase() || '?'
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className={`font-semibold ${isConsolidated ? 'text-white' : 'text-gray-900'}`}>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="font-semibold text-gray-900">
                     {activity.user.displayName || activity.user.username}
                   </span>
-                  <span className={isConsolidated ? 'text-white/80' : 'text-gray-500'}>
+                  <span className="text-gray-500 text-sm">
                     {getSummaryText()}
                   </span>
                 </div>
-                <div className={`flex items-center gap-2 text-xs ${isConsolidated ? 'text-white/60' : 'text-gray-400'}`}>
-                  {isConsolidated && (
-                    <>
-                      <Layers className="w-3 h-3" />
-                      <span>Consolidated</span>
-                      <span>•</span>
-                    </>
-                  )}
-                  <span>{formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}</span>
+                <div className="text-xs text-gray-400">
+                  {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                 </div>
               </div>
             </div>
           </Link>
+          
+          {/* Consolidated Badge */}
+          {isConsolidated && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-full shrink-0">
+              <Layers className="w-3 h-3 text-purple-500" />
+              <span className="text-xs font-medium text-purple-600">Grouped</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content Preview */}
       <div className="px-4 pb-3">
-        <div className={`rounded-xl p-3 ${isConsolidated ? 'bg-white/10' : 'bg-gray-50'}`}>
-          {/* Activity Type Badge */}
+        <div className="bg-gray-50 rounded-xl p-3">
+          {/* Activity Type Header */}
           <div className="flex items-center gap-2 mb-2">
             {getActivityIcon()}
-            <span className={`text-xs font-medium uppercase tracking-wide ${
-              isConsolidated ? 'text-white/70' : 'text-gray-500'
-            }`}>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               {activity.type === 'list_adds' ? 'Added to Lists' : 
-               activity.type === 'ratings' ? 'Ratings' :
-               activity.type === 'finished' ? 'Finished' : 'Games'}
+               activity.type === 'ratings' ? 'Rated' :
+               activity.type === 'finished' ? 'Finished' : 'Activity'}
             </span>
           </div>
 
@@ -176,24 +169,22 @@ export default function ConsolidatedActivityCard({
                 key={item.id || idx} 
                 href={`/media/${item.externalSource}/${item.externalId}`}
               >
-                <div className={`flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer ${
-                  isConsolidated ? 'hover:bg-white/10' : 'hover:bg-gray-100'
-                }`}>
+                <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                   <span className="text-lg">{getMediaTypeIcon(item.mediaType)}</span>
                   <div className="flex-1 min-w-0">
-                    <div className={`font-medium truncate text-sm ${isConsolidated ? 'text-white' : 'text-gray-900'}`}>
+                    <div className="font-medium text-gray-900 truncate text-sm">
                       {item.title}
                     </div>
                     {item.creator && (
-                      <div className={`text-xs truncate ${isConsolidated ? 'text-white/60' : 'text-gray-500'}`}>
+                      <div className="text-xs text-gray-500 truncate">
                         {item.creator}
                       </div>
                     )}
                   </div>
                   {item.rating && activity.type === 'ratings' && (
                     <div className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                      <span className={`text-xs font-medium ${isConsolidated ? 'text-white' : 'text-gray-900'}`}>
+                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      <span className="text-xs font-medium text-gray-900">
                         {item.rating}
                       </span>
                     </div>
@@ -205,9 +196,7 @@ export default function ConsolidatedActivityCard({
 
           {/* See More */}
           {activity.items.length > 3 && (
-            <div className={`flex items-center justify-end gap-1 mt-2 text-sm font-medium ${
-              isConsolidated ? 'text-white/80' : 'text-purple-600'
-            }`}>
+            <div className="flex items-center justify-end gap-1 mt-2 text-sm font-medium text-purple-600">
               <span>+{activity.items.length - 3} more</span>
               <ChevronRight className="w-4 h-4" />
             </div>
@@ -216,29 +205,19 @@ export default function ConsolidatedActivityCard({
       </div>
 
       {/* Footer - Likes & Comments */}
-      <div className={`px-4 py-3 flex items-center justify-between ${
-        isConsolidated ? 'border-t border-white/10' : 'border-t border-gray-100'
-      }`}>
+      <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={() => onLike(activity.originalPostIds[0])}
-            className={`flex items-center gap-1.5 transition-colors ${
-              isConsolidated 
-                ? 'text-white/70 hover:text-white' 
-                : 'text-gray-500 hover:text-red-500'
-            }`}
+            className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors"
             data-testid="like-button"
           >
-            <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-400 text-red-400' : ''}`} />
+            <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
             <span className="text-sm">{activity.likes}</span>
           </button>
           <button
             onClick={() => onComment(activity.originalPostIds[0])}
-            className={`flex items-center gap-1.5 transition-colors ${
-              isConsolidated 
-                ? 'text-white/70 hover:text-white' 
-                : 'text-gray-500 hover:text-purple-500'
-            }`}
+            className="flex items-center gap-1.5 text-gray-500 hover:text-purple-500 transition-colors"
             data-testid="comment-button"
           >
             <MessageCircle className="w-5 h-5" />
