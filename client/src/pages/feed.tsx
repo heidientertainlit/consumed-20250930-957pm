@@ -15,6 +15,7 @@ import CollaborativePredictionCard from "@/components/collaborative-prediction-c
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import RankFeedCard from "@/components/rank-feed-card";
+import ActivityCarouselCard, { GroupedUserActivity, ActivitySlide } from "@/components/activity-carousel-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -669,8 +670,194 @@ export default function Feed() {
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
 
+  // Group same-user activities within 3-hour windows into carousel cards
+  const TIME_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+  
+  const groupUserActivities = (posts: SocialPost[]): (SocialPost | GroupedUserActivity)[] => {
+    if (!posts || posts.length === 0) return [];
+    
+    // Separate posts by type - don't group predictions, polls, trivia, ranks, hot takes
+    const groupablePosts: SocialPost[] = [];
+    const ungroupablePosts: SocialPost[] = [];
+    
+    posts.forEach(post => {
+      const postType = post.type?.toLowerCase() || '';
+      const isGroupable = (
+        postType === 'add-to-list' || 
+        postType === 'rating' || 
+        postType === 'finished' || 
+        postType === 'progress' ||
+        postType === 'update'
+      ) && post.mediaItems && post.mediaItems.length > 0;
+      
+      if (isGroupable) {
+        groupablePosts.push(post);
+      } else {
+        ungroupablePosts.push(post);
+      }
+    });
+    
+    // Group groupable posts by user
+    const userGroups = new Map<string, SocialPost[]>();
+    groupablePosts.forEach(post => {
+      if (!post.user?.id) return;
+      const userId = post.user.id;
+      if (!userGroups.has(userId)) {
+        userGroups.set(userId, []);
+      }
+      userGroups.get(userId)!.push(post);
+    });
+    
+    // Process each user's posts into time windows
+    const groupedActivities: GroupedUserActivity[] = [];
+    const postsToRemove = new Set<string>();
+    
+    userGroups.forEach((userPosts, userId) => {
+      if (userPosts.length < 2) return; // Don't group single posts
+      
+      // Sort by timestamp descending (newest first)
+      userPosts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      // Find posts within 3-hour windows
+      let windowStart = new Date(userPosts[0].timestamp).getTime();
+      let windowPosts: SocialPost[] = [userPosts[0]];
+      
+      for (let i = 1; i < userPosts.length; i++) {
+        const postTime = new Date(userPosts[i].timestamp).getTime();
+        
+        if (windowStart - postTime <= TIME_WINDOW_MS) {
+          // Within window
+          windowPosts.push(userPosts[i]);
+        } else {
+          // Outside window - process current window and start new one
+          if (windowPosts.length >= 2) {
+            const grouped = createGroupedActivity(windowPosts);
+            if (grouped) {
+              groupedActivities.push(grouped);
+              windowPosts.forEach(p => postsToRemove.add(p.id));
+            }
+          }
+          windowStart = postTime;
+          windowPosts = [userPosts[i]];
+        }
+      }
+      
+      // Process final window
+      if (windowPosts.length >= 2) {
+        const grouped = createGroupedActivity(windowPosts);
+        if (grouped) {
+          groupedActivities.push(grouped);
+          windowPosts.forEach(p => postsToRemove.add(p.id));
+        }
+      }
+    });
+    
+    // Remove grouped posts from original list
+    const remainingGroupable = groupablePosts.filter(p => !postsToRemove.has(p.id));
+    
+    // Combine all posts and sort by timestamp
+    const allItems: (SocialPost | GroupedUserActivity)[] = [
+      ...ungroupablePosts,
+      ...remainingGroupable,
+      ...groupedActivities
+    ];
+    
+    // Sort by timestamp (newest first)
+    allItems.sort((a, b) => {
+      const timeA = new Date('timestamp' in a ? a.timestamp : a.timestamp).getTime();
+      const timeB = new Date('timestamp' in b ? b.timestamp : b.timestamp).getTime();
+      return timeB - timeA;
+    });
+    
+    return allItems;
+  };
+  
+  const createGroupedActivity = (posts: SocialPost[]): GroupedUserActivity | null => {
+    if (!posts.length || !posts[0].user) return null;
+    
+    const user = posts[0].user;
+    const allMediaItems = posts.flatMap(p => p.mediaItems || []);
+    const uniqueLists = new Set(posts.map(p => (p as any).listId).filter(Boolean));
+    
+    // Create slides with priority: ratings > finished > list adds
+    const slides: ActivitySlide[] = [];
+    
+    // Group by activity type
+    const ratingPosts = posts.filter(p => p.type === 'rating' || (p.rating && p.rating > 0));
+    const finishedPosts = posts.filter(p => p.type === 'finished');
+    const listAddPosts = posts.filter(p => p.type === 'add-to-list' && !ratingPosts.includes(p) && !finishedPosts.includes(p));
+    
+    // Add rating slides first (highest priority)
+    if (ratingPosts.length > 0) {
+      const ratingItems = ratingPosts.flatMap(p => 
+        (p.mediaItems || []).map(m => ({ ...m, rating: p.rating }))
+      );
+      slides.push({
+        type: 'rating',
+        items: ratingItems,
+        rating: ratingPosts[0].rating
+      });
+    }
+    
+    // Add finished slides
+    if (finishedPosts.length > 0) {
+      slides.push({
+        type: 'finished',
+        items: finishedPosts.flatMap(p => p.mediaItems || [])
+      });
+    }
+    
+    // Group list adds by list name (if available) 
+    if (listAddPosts.length > 0) {
+      // Group by list
+      const byList = new Map<string, SocialPost[]>();
+      listAddPosts.forEach(p => {
+        const listId = (p as any).listId || 'default';
+        if (!byList.has(listId)) byList.set(listId, []);
+        byList.get(listId)!.push(p);
+      });
+      
+      byList.forEach((listPosts, listId) => {
+        const listData = (listPosts[0] as any).listData;
+        slides.push({
+          type: 'list_add',
+          items: listPosts.flatMap(p => p.mediaItems || []),
+          listName: listData?.title || 'list',
+          listId: listId !== 'default' ? listId : undefined
+        });
+      });
+    }
+    
+    if (slides.length === 0) return null;
+    
+    return {
+      id: `grouped-${user.id}-${posts[0].timestamp}`,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        avatar: user.avatar
+      },
+      timestamp: posts[0].timestamp,
+      totalItems: allMediaItems.length,
+      totalLists: uniqueLists.size || 1,
+      slides,
+      likes: posts.reduce((sum, p) => sum + (p.likes || 0), 0),
+      comments: posts.reduce((sum, p) => sum + (p.comments || 0), 0),
+      likedByCurrentUser: posts.some(p => p.likedByCurrentUser),
+      originalPostIds: posts.map(p => p.id)
+    };
+  };
+  
+  // Apply grouping to social posts
+  const processedPosts = groupUserActivities(socialPosts);
+
   // Filter posts by detailed filters and feed filter
-  const filteredPosts = socialPosts.filter(post => {
+  const filteredPosts = processedPosts.filter(item => {
+    // Skip GroupedUserActivity items from filtering (they're already processed)
+    if ('slides' in item) return true;
+    
+    const post = item as SocialPost;
     // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
     if (feedFilter === 'friends') {
       // Show only posts from friends (not own posts)
@@ -1701,9 +1888,9 @@ export default function Feed() {
             <div className="space-y-4 pb-24">
               {/* Quick Glimpse - Scrolling ticker */}
               {(() => {
-                // Extract friend activities from recent posts with media
+                // Extract friend activities from recent posts with media (only regular posts, not grouped)
                 const friendActivities = filteredPosts
-                  .filter((p: SocialPost) => p.user && p.user.id !== user?.id && p.mediaItems && p.mediaItems.length > 0)
+                  .filter((item): item is SocialPost => !('slides' in item) && !!(item as SocialPost).user && (item as SocialPost).user!.id !== user?.id && !!(item as SocialPost).mediaItems && (item as SocialPost).mediaItems.length > 0)
                   .slice(0, 6)
                   .map((p: SocialPost) => {
                     // Build action text based on rating
@@ -1778,10 +1965,28 @@ export default function Feed() {
               <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
 
               
-              {filteredPosts.filter((post: SocialPost) => {
+              {filteredPosts.filter((item: SocialPost | GroupedUserActivity) => {
                 // Filter out incorrectly formatted prediction posts
+                if ('slides' in item) return true; // Keep grouped activities
+                const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
-              }).map((post: SocialPost, postIndex: number) => {
+              }).map((item: SocialPost | GroupedUserActivity, postIndex: number) => {
+                // Handle GroupedUserActivity carousel cards
+                if ('slides' in item) {
+                  const groupedActivity = item as GroupedUserActivity;
+                  return (
+                    <ActivityCarouselCard
+                      key={groupedActivity.id}
+                      activity={groupedActivity}
+                      onLike={(postId) => handleLike(postId)}
+                      onComment={(postId) => toggleComments(postId)}
+                      isLiked={groupedActivity.originalPostIds.some(id => likedPosts.has(id))}
+                    />
+                  );
+                }
+                
+                const post = item as SocialPost;
+                
                 // Calculate real post ID for grouped posts (for likes/comments)
                 const isGroupedPost = post.id.startsWith('grouped-') || (post as any).type === 'media_group';
                 const realPostId = isGroupedPost && post.groupedActivities?.[0]?.postId 
