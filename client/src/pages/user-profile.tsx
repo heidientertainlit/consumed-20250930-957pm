@@ -145,6 +145,10 @@ export default function UserProfile() {
   const [highlights, setHighlights] = useState<any[]>([]);
   const [isLoadingHighlights, setIsLoadingHighlights] = useState(false);
 
+  // Badges state
+  const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [isLoadingBadges, setIsLoadingBadges] = useState(false);
+
   // DNA Recommendations state
   const [dnaRecommendations, setDnaRecommendations] = useState<any[]>([]);
   const [isDnaRecsLoading, setIsDnaRecsLoading] = useState(false);
@@ -199,6 +203,40 @@ export default function UserProfile() {
       setHighlights([]);
     } finally {
       setIsLoadingHighlights(false);
+    }
+  };
+
+  // Fetch user badges
+  const fetchBadges = async () => {
+    if (!viewingUserId) return;
+
+    setIsLoadingBadges(true);
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-badges?user_id=${viewingUserId}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserBadges(data.badges || []);
+      } else {
+        console.error('Failed to fetch badges');
+        setUserBadges([]);
+      }
+    } catch (error) {
+      console.error('Error fetching badges:', error);
+      setUserBadges([]);
+    } finally {
+      setIsLoadingBadges(false);
     }
   };
 
@@ -883,6 +921,7 @@ export default function UserProfile() {
     setDnaProfile(null);
     setDnaProfileStatus('no_profile');
     setHighlights([]);
+    setUserBadges([]);
     setFriendshipStatus('loading');
   }, [viewingUserId]);
 
@@ -898,6 +937,7 @@ export default function UserProfile() {
       fetchUserPoints();
       fetchUserPredictions();
       fetchHighlights();
+      fetchBadges();
       if (isOwnProfile) {
         fetchFollowedCreators();
       }
@@ -2103,11 +2143,25 @@ export default function UserProfile() {
                     )}
 
                     {/* Badges */}
-                    <div className="flex items-center space-x-2">
-                      <Medal className="text-amber-500" size={18} />
-                      <span className="text-sm text-gray-600">Badges:</span>
-                      <span className="text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">🏆 OG</span>
-                    </div>
+                    {userBadges.length > 0 && (
+                      <div className="flex items-center space-x-2 flex-wrap gap-1">
+                        <Medal className="text-amber-500" size={18} />
+                        <span className="text-sm text-gray-600">Badges:</span>
+                        {userBadges.map((badge: any) => (
+                          <span 
+                            key={badge.id}
+                            className="text-sm font-medium px-2 py-0.5 rounded-full"
+                            style={{ 
+                              backgroundColor: `${badge.theme_color}15`,
+                              color: badge.theme_color 
+                            }}
+                            title={badge.description}
+                          >
+                            {badge.emoji} {badge.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
