@@ -2101,6 +2101,13 @@ export default function UserProfile() {
                         <span className="text-sm font-medium text-gray-800">{mostlyIntoTypes.join(', ')}</span>
                       </div>
                     )}
+
+                    {/* Badges */}
+                    <div className="flex items-center space-x-2">
+                      <Medal className="text-amber-500" size={18} />
+                      <span className="text-sm text-gray-600">Badges:</span>
+                      <span className="text-sm font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">🏆 OG</span>
+                    </div>
                   </div>
                 </div>
 
