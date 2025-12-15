@@ -150,7 +150,9 @@ export default function PointsBreakdown() {
               const categoryPoints = points[key as keyof PointsData] || 0;
               const categoryCount = counts[key as keyof CountsData] || 0;
               
-              if (categoryPoints === 0 && categoryCount === 0) return null;
+              // Always show friends and referrals so users know they exist
+              const alwaysShow = key === 'friends' || key === 'referrals';
+              if (!alwaysShow && categoryPoints === 0 && categoryCount === 0) return null;
 
               const getCountLabel = () => {
                 if (key === 'friends') return categoryCount === 1 ? 'friend' : 'friends';
