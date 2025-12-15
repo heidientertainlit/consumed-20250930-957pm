@@ -16,7 +16,9 @@ import {
   ChevronLeft,
   Award,
   Zap,
-  BarChart3
+  BarChart3,
+  Users,
+  Gift
 } from "lucide-react";
 
 interface PointsData {
@@ -31,6 +33,8 @@ interface PointsData {
   predictions: number;
   trivia: number;
   polls: number;
+  friends: number;
+  referrals: number;
 }
 
 interface CountsData {
@@ -44,20 +48,24 @@ interface CountsData {
   predictions: number;
   trivia: number;
   polls: number;
+  friends: number;
+  referrals: number;
   total: number;
 }
 
 const CATEGORY_CONFIG = [
-  { key: 'books', label: 'Books', icon: BookOpen, color: 'text-amber-600', bgColor: 'bg-amber-50', pointsPer: 15 },
-  { key: 'tv', label: 'TV Shows', icon: Tv, color: 'text-blue-600', bgColor: 'bg-blue-50', pointsPer: 10 },
-  { key: 'movies', label: 'Movies', icon: Film, color: 'text-purple-600', bgColor: 'bg-purple-50', pointsPer: 8 },
-  { key: 'games', label: 'Games', icon: Gamepad2, color: 'text-green-600', bgColor: 'bg-green-50', pointsPer: 5 },
-  { key: 'podcasts', label: 'Podcasts', icon: Mic, color: 'text-pink-600', bgColor: 'bg-pink-50', pointsPer: 3 },
-  { key: 'music', label: 'Music', icon: Music, color: 'text-indigo-600', bgColor: 'bg-indigo-50', pointsPer: 1 },
-  { key: 'reviews', label: 'Reviews', icon: MessageSquare, color: 'text-orange-600', bgColor: 'bg-orange-50', pointsPer: 10 },
-  { key: 'predictions', label: 'Predictions', icon: Target, color: 'text-red-600', bgColor: 'bg-red-50', pointsPer: null },
-  { key: 'trivia', label: 'Trivia', icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', pointsPer: null },
-  { key: 'polls', label: 'Polls', icon: BarChart3, color: 'text-cyan-600', bgColor: 'bg-cyan-50', pointsPer: null },
+  { key: 'books', label: 'Books', icon: BookOpen, color: 'text-amber-600', bgColor: 'bg-amber-50', pointsPer: 15, description: null },
+  { key: 'tv', label: 'TV Shows', icon: Tv, color: 'text-blue-600', bgColor: 'bg-blue-50', pointsPer: 10, description: null },
+  { key: 'movies', label: 'Movies', icon: Film, color: 'text-purple-600', bgColor: 'bg-purple-50', pointsPer: 8, description: null },
+  { key: 'games', label: 'Games', icon: Gamepad2, color: 'text-green-600', bgColor: 'bg-green-50', pointsPer: 5, description: null },
+  { key: 'podcasts', label: 'Podcasts', icon: Mic, color: 'text-pink-600', bgColor: 'bg-pink-50', pointsPer: 3, description: null },
+  { key: 'music', label: 'Music', icon: Music, color: 'text-indigo-600', bgColor: 'bg-indigo-50', pointsPer: 1, description: null },
+  { key: 'reviews', label: 'Reviews', icon: MessageSquare, color: 'text-orange-600', bgColor: 'bg-orange-50', pointsPer: 10, description: null },
+  { key: 'predictions', label: 'Predictions', icon: Target, color: 'text-red-600', bgColor: 'bg-red-50', pointsPer: null, description: null },
+  { key: 'trivia', label: 'Trivia', icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', pointsPer: null, description: null },
+  { key: 'polls', label: 'Polls', icon: BarChart3, color: 'text-cyan-600', bgColor: 'bg-cyan-50', pointsPer: null, description: null },
+  { key: 'friends', label: 'Friends Added', icon: Users, color: 'text-teal-600', bgColor: 'bg-teal-50', pointsPer: 5, description: 'Earn points for each friend connection. Building your network is rewarded!' },
+  { key: 'referrals', label: 'Referrals', icon: Gift, color: 'text-rose-600', bgColor: 'bg-rose-50', pointsPer: 25, description: 'Earn 25 points when someone you invite makes their first post or logs media.' },
 ];
 
 export default function PointsBreakdown() {
@@ -138,37 +146,48 @@ export default function PointsBreakdown() {
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-gray-800 px-1">Points by Category</h2>
             
-            {CATEGORY_CONFIG.map(({ key, label, icon: Icon, color, bgColor, pointsPer }) => {
+            {CATEGORY_CONFIG.map(({ key, label, icon: Icon, color, bgColor, pointsPer, description }) => {
               const categoryPoints = points[key as keyof PointsData] || 0;
               const categoryCount = counts[key as keyof CountsData] || 0;
               
               if (categoryPoints === 0 && categoryCount === 0) return null;
 
+              const getCountLabel = () => {
+                if (key === 'friends') return categoryCount === 1 ? 'friend' : 'friends';
+                if (key === 'referrals') return categoryCount === 1 ? 'referral' : 'referrals';
+                return categoryCount === 1 ? 'item' : 'items';
+              };
+
               return (
                 <div 
                   key={key}
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-4"
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
                   data-testid={`points-category-${key}`}
                 >
-                  <div className={`w-12 h-12 rounded-xl ${bgColor} flex items-center justify-center flex-shrink-0`}>
-                    <Icon className={`h-6 w-6 ${color}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900">{label}</span>
-                      <span className="font-bold text-gray-900">{categoryPoints.toLocaleString()} pts</span>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl ${bgColor} flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`h-6 w-6 ${color}`} />
                     </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-sm text-gray-500">
-                        {categoryCount} {categoryCount === 1 ? 'item' : 'items'}
-                      </span>
-                      {pointsPer && (
-                        <span className="text-xs text-gray-400">
-                          {pointsPer} pts each
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-900">{label}</span>
+                        <span className="font-bold text-gray-900">{categoryPoints.toLocaleString()} pts</span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-sm text-gray-500">
+                          {categoryCount} {getCountLabel()}
                         </span>
-                      )}
+                        {pointsPer && (
+                          <span className="text-xs text-gray-400">
+                            {pointsPer} pts each
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  {description && (
+                    <p className="text-xs text-gray-500 mt-3 pl-16">{description}</p>
+                  )}
                 </div>
               );
             })}
@@ -182,7 +201,8 @@ export default function PointsBreakdown() {
                     <li>• Log books for the most points (15 pts each)</li>
                     <li>• Write reviews for bonus points (+10 pts)</li>
                     <li>• Make predictions and play trivia</li>
-                    <li>• Track all your entertainment!</li>
+                    <li>• Add friends to grow your network (+5 pts each)</li>
+                    <li>• Invite friends and earn 25 pts when they post!</li>
                   </ul>
                 </div>
               </div>

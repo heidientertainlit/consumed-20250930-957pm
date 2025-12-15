@@ -9,6 +9,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   points: integer("points").notNull().default(0),
   totalWinnings: integer("total_winnings").notNull().default(0),
+  referredBy: varchar("referred_by"),
+  referralRewarded: boolean("referral_rewarded").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
