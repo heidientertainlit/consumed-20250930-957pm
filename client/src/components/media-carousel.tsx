@@ -1,4 +1,4 @@
-import { Plus, Star, Film, Tv, Music, Book, Mic } from "lucide-react";
+import { Plus, Star, Film, Tv, Music, Book, Mic, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -95,6 +95,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
   const [showListMenu, setShowListMenu] = useState(false);
   const [listMenuPos, setListMenuPos] = useState({ top: 0, left: 0 });
   const [ratingMenuPos, setRatingMenuPos] = useState({ top: 0, left: 0 });
+  const [showAddSuccess, setShowAddSuccess] = useState(false);
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const ratingButtonRef = useRef<HTMLButtonElement>(null);
   const { session } = useAuth();
@@ -262,6 +263,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      // Show success checkmark briefly
+      setShowAddSuccess(true);
+      setTimeout(() => setShowAddSuccess(false), 1500);
     },
   });
   
@@ -410,13 +414,23 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             ref={addButtonRef}
             onClick={(e) => {
               e.stopPropagation();
-              setShowListMenu(!showListMenu);
+              if (!showAddSuccess) {
+                setShowListMenu(!showListMenu);
+              }
             }}
-            className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
+            className={`h-6 w-6 rounded-full backdrop-blur-sm shadow-md flex items-center justify-center transition-all duration-300 ${
+              showAddSuccess 
+                ? 'bg-green-500 text-white scale-110' 
+                : 'bg-black/80 hover:bg-black text-white'
+            }`}
             data-testid={`add-to-list-${item.id}`}
-            disabled={addToListMutation.isPending}
+            disabled={addToListMutation.isPending || showAddSuccess}
           >
-            <Plus className="h-3 w-3" />
+            {showAddSuccess ? (
+              <Check className="h-3 w-3" />
+            ) : (
+              <Plus className="h-3 w-3" />
+            )}
           </button>
           
           {/* List Menu - Bottom Sheet on Mobile, Dropdown on Desktop */}
