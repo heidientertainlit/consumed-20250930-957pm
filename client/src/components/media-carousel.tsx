@@ -392,7 +392,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
     <div className="group relative overflow-visible">
       {/* Poster */}
       <div
-        className="relative aspect-[2/3] rounded-lg overflow-hidden"
+        className="relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onClick={handlePosterClick}
@@ -429,124 +429,6 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             }}
           />
         )}
-        
-        {/* Action buttons - always visible, bottom right */}
-        <div className="absolute bottom-1.5 right-1.5 flex gap-1 z-10 pointer-events-auto">
-          {/* Add to List Button */}
-          <button
-            ref={addButtonRef}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowListMenu(!showListMenu);
-            }}
-            className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
-            data-testid={`add-to-list-${item.id}`}
-            disabled={addToListMutation.isPending}
-          >
-            <Plus className="h-3 w-3" />
-          </button>
-          
-          {/* List Menu - Portal */}
-          {showListMenu && createPortal(
-            <div 
-              className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50"
-              style={{
-                top: `${listMenuPos.top}px`,
-                left: `${listMenuPos.left}px`,
-                transform: 'translate(-50%, -100%)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-                {['Want To', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
-                  <button
-                    key={listTitle}
-                    onClick={() => {
-                      handleAddToList(listTitle, false);
-                      setShowListMenu(false);
-                    }}
-                    disabled={addToListMutation.isPending}
-                    className="px-2 py-1 text-white text-xs hover:bg-gray-700 rounded transition-colors text-left"
-                  >
-                    {listTitle}
-                  </button>
-                ))}
-                
-                {/* Custom Lists */}
-                {lists.filter((list: any) => list.isCustom).length > 0 && (
-                  <>
-                    <div className="border-t border-gray-600 my-1" />
-                    {lists
-                      .filter((list: any) => list.isCustom)
-                      .map((list: any) => (
-                        <button
-                          key={list.id}
-                          onClick={() => {
-                            handleAddToList(list.id, true);
-                            setShowListMenu(false);
-                          }}
-                          disabled={addToListMutation.isPending}
-                          className="px-2 py-1 text-white text-xs hover:bg-gray-700 rounded transition-colors text-left"
-                        >
-                          {list.title}
-                        </button>
-                      ))}
-                  </>
-                )}
-              </div>
-            , document.body)}
-          
-          {/* Rating Button */}
-          <button
-            ref={ratingButtonRef}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowRatingStars(!showRatingStars);
-            }}
-            className="h-6 w-6 rounded-full bg-black/80 hover:bg-black backdrop-blur-sm text-white shadow-md flex items-center justify-center transition-colors"
-            data-testid={`rate-${item.id}`}
-          >
-            <Star className="h-3 w-3" />
-          </button>
-          
-          {/* Star Rating Menu - Portal */}
-          {showRatingStars && createPortal(
-            <div 
-              className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50"
-              style={{
-                top: `${ratingMenuPos.top}px`,
-                left: `${ratingMenuPos.left}px`,
-                transform: 'translate(-50%, -100%)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-                {[5, 4, 3, 2, 1].map((stars) => (
-                  <button
-                    key={stars}
-                    type="button"
-                    onClick={() => {
-                      handleRateClick(stars);
-                      setShowRatingStars(false);
-                    }}
-                    onMouseEnter={() => setHoveredStar(stars)}
-                    onMouseLeave={() => setHoveredStar(null)}
-                    disabled={rateMutation.isPending}
-                    className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
-                    data-testid={`star-${stars}`}
-                  >
-                    <Star 
-                      className={`h-4 w-4 transition-all ${
-                        hoveredStar === stars
-                          ? 'text-yellow-400 fill-yellow-400'
-                          : 'text-gray-400'
-                      }`}
-                    />
-                    <span className="text-white text-xs font-medium">{stars}</span>
-                  </button>
-                ))}
-              </div>
-            , document.body)}
-        </div>
-
       </div>
 
       {/* Title */}
@@ -560,6 +442,123 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
         {item.author && (
           <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{item.author}</p>
         )}
+      </div>
+      
+      {/* Action buttons - below title, always visible */}
+      <div className="flex gap-1 mt-1.5 justify-center">
+        {/* Add to List Button */}
+        <button
+          ref={addButtonRef}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowListMenu(!showListMenu);
+          }}
+          className="h-7 w-7 rounded-full bg-gray-800 hover:bg-purple-600 text-white shadow-md flex items-center justify-center transition-colors border border-gray-700"
+          data-testid={`add-to-list-${item.id}`}
+          disabled={addToListMutation.isPending}
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+        
+        {/* List Menu - Portal */}
+        {showListMenu && createPortal(
+          <div 
+            className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50"
+            style={{
+              top: `${listMenuPos.top}px`,
+              left: `${listMenuPos.left}px`,
+              transform: 'translate(-50%, -100%)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+              {['Want To', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
+                <button
+                  key={listTitle}
+                  onClick={() => {
+                    handleAddToList(listTitle, false);
+                    setShowListMenu(false);
+                  }}
+                  disabled={addToListMutation.isPending}
+                  className="px-2 py-1 text-white text-xs hover:bg-gray-700 rounded transition-colors text-left"
+                >
+                  {listTitle}
+                </button>
+              ))}
+              
+              {/* Custom Lists */}
+              {lists.filter((list: any) => list.isCustom).length > 0 && (
+                <>
+                  <div className="border-t border-gray-600 my-1" />
+                  {lists
+                    .filter((list: any) => list.isCustom)
+                    .map((list: any) => (
+                      <button
+                        key={list.id}
+                        onClick={() => {
+                          handleAddToList(list.id, true);
+                          setShowListMenu(false);
+                        }}
+                        disabled={addToListMutation.isPending}
+                        className="px-2 py-1 text-white text-xs hover:bg-gray-700 rounded transition-colors text-left"
+                      >
+                        {list.title}
+                      </button>
+                    ))}
+                </>
+              )}
+            </div>
+          , document.body)}
+        
+        {/* Rating Button */}
+        <button
+          ref={ratingButtonRef}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowRatingStars(!showRatingStars);
+          }}
+          className="h-7 w-7 rounded-full bg-gray-800 hover:bg-purple-600 text-white shadow-md flex items-center justify-center transition-colors border border-gray-700"
+          data-testid={`rate-${item.id}`}
+        >
+          <Star className="h-3.5 w-3.5" />
+        </button>
+        
+        {/* Star Rating Menu - Portal */}
+        {showRatingStars && createPortal(
+          <div 
+            className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5 z-50"
+            style={{
+              top: `${ratingMenuPos.top}px`,
+              left: `${ratingMenuPos.left}px`,
+              transform: 'translate(-50%, -100%)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+              {[5, 4, 3, 2, 1].map((stars) => (
+                <button
+                  key={stars}
+                  type="button"
+                  onClick={() => {
+                    handleRateClick(stars);
+                    setShowRatingStars(false);
+                  }}
+                  onMouseEnter={() => setHoveredStar(stars)}
+                  onMouseLeave={() => setHoveredStar(null)}
+                  disabled={rateMutation.isPending}
+                  className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
+                  data-testid={`star-${stars}`}
+                >
+                  <Star 
+                    className={`h-4 w-4 transition-all ${
+                      hoveredStar === stars
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-gray-400'
+                    }`}
+                  />
+                  <span className="text-white text-xs font-medium">{stars}</span>
+                </button>
+              ))}
+            </div>
+          , document.body)}
       </div>
       
     </div>
