@@ -105,6 +105,26 @@ serve(async (req) => {
     // Count items with reviews (notes field)
     const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
 
+    // Count accepted friendships (5 pts per friend)
+    const { data: friendships } = await supabase
+      .from('friendships')
+      .select('id')
+      .eq('user_id', targetUserId)
+      .eq('status', 'accepted');
+    
+    const friendCount = friendships?.length || 0;
+    const friendPoints = friendCount * 5;
+
+    // Count successful referrals (25 pts per referral that made first action)
+    const { data: referrals } = await supabase
+      .from('users')
+      .select('id')
+      .eq('referred_by', targetUserId)
+      .eq('referral_rewarded', true);
+    
+    const referralCount = referrals?.length || 0;
+    const referralPoints = referralCount * 25;
+
     // Get user's prediction/trivia/poll points with pool type info
     const { data: userPredictions } = await supabase
       .from('user_predictions')
@@ -145,7 +165,7 @@ serve(async (req) => {
     const gamePoints = games.length * 5;
     const reviewPoints = reviews.length * 10;
 
-    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints;
+    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints + friendPoints + referralPoints;
 
     // Calculate global rank by counting users with more points
     // Use service role for cross-user queries
@@ -213,7 +233,9 @@ serve(async (req) => {
       { user_id: appUser.id, category: 'reviews', points: reviewPoints },
       { user_id: appUser.id, category: 'predictions', points: predictionPoints },
       { user_id: appUser.id, category: 'trivia', points: triviaPoints },
-      { user_id: appUser.id, category: 'polls', points: pollPoints }
+      { user_id: appUser.id, category: 'polls', points: pollPoints },
+      { user_id: appUser.id, category: 'friends', points: friendPoints },
+      { user_id: appUser.id, category: 'referrals', points: referralPoints }
     ];
 
     // First try to create the user_points table if it doesn't exist (this might fail, that's ok)
@@ -244,7 +266,9 @@ serve(async (req) => {
         reviews: reviewPoints,
         predictions: predictionPoints,
         trivia: triviaPoints,
-        polls: pollPoints
+        polls: pollPoints,
+        friends: friendPoints,
+        referrals: referralPoints
       },
       counts: {
         books: books.length,
@@ -257,6 +281,8 @@ serve(async (req) => {
         predictions: predictionCount,
         trivia: triviaCount,
         polls: pollCount,
+        friends: friendCount,
+        referrals: referralCount,
         total: listItems.length
       },
       rank: {
