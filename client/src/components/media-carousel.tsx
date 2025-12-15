@@ -457,9 +457,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               
               {/* Bottom Sheet (Mobile) / Dropdown (Desktop) */}
               <div 
-                className="fixed z-50 bg-black/95 backdrop-blur-md shadow-2xl border border-white/20 flex flex-col gap-0 text-sm
-                  max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:rounded-t-2xl max-sm:p-4 max-sm:pb-8 max-sm:max-h-[70vh] max-sm:overflow-y-auto
-                  sm:rounded-lg sm:p-1.5 sm:min-w-max"
+                className="fixed z-50 bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 backdrop-blur-md shadow-2xl border border-purple-500/30 flex flex-col gap-1 text-sm
+                  max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:rounded-t-3xl max-sm:p-5 max-sm:pb-10 max-sm:max-h-[80vh] max-sm:overflow-y-auto
+                  sm:rounded-lg sm:p-2 sm:min-w-max sm:bg-gradient-to-br sm:from-purple-900/95 sm:via-purple-800/95 sm:to-indigo-900/95"
                 style={{
                   ...(window.innerWidth >= 640 ? {
                     top: `${listMenuPos.top}px`,
@@ -470,12 +470,12 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Drag handle for mobile */}
-                <div className="sm:hidden flex justify-center mb-3">
-                  <div className="w-10 h-1 bg-gray-500 rounded-full" />
+                <div className="sm:hidden flex justify-center mb-4">
+                  <div className="w-12 h-1.5 bg-white/40 rounded-full" />
                 </div>
                 
                 {/* Title for mobile */}
-                <p className="sm:hidden text-white font-semibold text-base mb-2 px-1">Add to List</p>
+                <p className="sm:hidden text-white font-bold text-lg mb-3 px-1">Add to List</p>
                 
                 {['Want To', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
                   <button
@@ -485,7 +485,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                       setShowListMenu(false);
                     }}
                     disabled={addToListMutation.isPending}
-                    className="px-3 py-3 sm:py-1.5 text-white text-base sm:text-xs hover:bg-gray-700 rounded transition-colors text-left"
+                    className="px-4 py-3.5 sm:py-2 text-white text-base sm:text-sm font-medium hover:bg-white/20 rounded-xl sm:rounded-lg transition-all text-left active:scale-[0.98]"
                   >
                     {listTitle}
                   </button>
@@ -494,8 +494,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                 {/* Custom Lists */}
                 {lists.filter((list: any) => list.isCustom).length > 0 && (
                   <>
-                    <div className="border-t border-gray-600 my-2 sm:my-1" />
-                    <p className="sm:hidden text-gray-400 text-sm mb-1 px-1">Your Lists</p>
+                    <div className="border-t border-white/20 my-3 sm:my-2" />
+                    <p className="sm:hidden text-white/70 text-sm font-semibold mb-2 px-1 uppercase tracking-wide">Your Lists</p>
                     {lists
                       .filter((list: any) => list.isCustom)
                       .map((list: any) => (
@@ -506,7 +506,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                             setShowListMenu(false);
                           }}
                           disabled={addToListMutation.isPending}
-                          className="px-3 py-3 sm:py-1.5 text-white text-base sm:text-xs hover:bg-gray-700 rounded transition-colors text-left truncate"
+                          className="px-4 py-3.5 sm:py-2 text-white text-base sm:text-sm font-medium hover:bg-white/20 rounded-xl sm:rounded-lg transition-all text-left active:scale-[0.98]"
                         >
                           {list.title}
                         </button>
