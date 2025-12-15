@@ -14,7 +14,9 @@ import {
   MessageSquare, 
   Target, 
   ChevronLeft,
-  Award
+  Award,
+  Zap,
+  BarChart3
 } from "lucide-react";
 
 interface PointsData {
@@ -27,6 +29,7 @@ interface PointsData {
   games: number;
   reviews: number;
   predictions: number;
+  trivia: number;
   polls: number;
 }
 
@@ -39,6 +42,8 @@ interface CountsData {
   games: number;
   reviews: number;
   predictions: number;
+  trivia: number;
+  polls: number;
   total: number;
 }
 
@@ -50,7 +55,9 @@ const CATEGORY_CONFIG = [
   { key: 'podcasts', label: 'Podcasts', icon: Mic, color: 'text-pink-600', bgColor: 'bg-pink-50', pointsPer: 3 },
   { key: 'music', label: 'Music', icon: Music, color: 'text-indigo-600', bgColor: 'bg-indigo-50', pointsPer: 1 },
   { key: 'reviews', label: 'Reviews', icon: MessageSquare, color: 'text-orange-600', bgColor: 'bg-orange-50', pointsPer: 10 },
-  { key: 'predictions', label: 'Predictions & Trivia', icon: Target, color: 'text-red-600', bgColor: 'bg-red-50', pointsPer: null },
+  { key: 'predictions', label: 'Predictions', icon: Target, color: 'text-red-600', bgColor: 'bg-red-50', pointsPer: null },
+  { key: 'trivia', label: 'Trivia', icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', pointsPer: null },
+  { key: 'polls', label: 'Polls', icon: BarChart3, color: 'text-cyan-600', bgColor: 'bg-cyan-50', pointsPer: null },
 ];
 
 export default function PointsBreakdown() {

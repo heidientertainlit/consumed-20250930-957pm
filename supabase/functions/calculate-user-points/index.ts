@@ -105,18 +105,36 @@ serve(async (req) => {
     // Count items with reviews (notes field)
     const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
 
-    // Get user's prediction/trivia/poll points (all in user_predictions now)
-    const { data: predictions } = await supabase
+    // Get user's prediction/trivia/poll points with pool type info
+    const { data: userPredictions } = await supabase
       .from('user_predictions')
-      .select('points_earned')
+      .select('points_earned, pool_id, prediction_pools(type)')
       .eq('user_id', targetUserId);
 
-    const predictionPoints = (predictions || [])
-      .reduce((sum, pred) => sum + (pred.points_earned || 0), 0);
+    // Separate points by pool type
+    let predictionPoints = 0;
+    let triviaPoints = 0;
+    let pollPoints = 0;
+    let predictionCount = 0;
+    let triviaCount = 0;
+    let pollCount = 0;
 
-    // Poll points are now included in user_predictions (consolidated system)
-    // No need to query poll_responses separately
-    const pollPoints = 0; // Legacy variable, kept for backwards compatibility
+    (userPredictions || []).forEach((pred: any) => {
+      const poolType = pred.prediction_pools?.type || 'predict';
+      const pts = pred.points_earned || 0;
+      
+      if (poolType === 'trivia') {
+        triviaPoints += pts;
+        triviaCount++;
+      } else if (poolType === 'vote') {
+        pollPoints += pts;
+        pollCount++;
+      } else {
+        // 'predict', 'weekly', 'awards', 'bracket' all count as predictions
+        predictionPoints += pts;
+        predictionCount++;
+      }
+    });
 
     // Calculate totals
     const bookPoints = books.length * 15;
@@ -127,7 +145,7 @@ serve(async (req) => {
     const gamePoints = games.length * 5;
     const reviewPoints = reviews.length * 10;
 
-    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + pollPoints;
+    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints;
 
     // Calculate global rank by counting users with more points
     // Use service role for cross-user queries
@@ -194,6 +212,7 @@ serve(async (req) => {
       { user_id: appUser.id, category: 'games', points: gamePoints },
       { user_id: appUser.id, category: 'reviews', points: reviewPoints },
       { user_id: appUser.id, category: 'predictions', points: predictionPoints },
+      { user_id: appUser.id, category: 'trivia', points: triviaPoints },
       { user_id: appUser.id, category: 'polls', points: pollPoints }
     ];
 
@@ -224,6 +243,7 @@ serve(async (req) => {
         games: gamePoints,
         reviews: reviewPoints,
         predictions: predictionPoints,
+        trivia: triviaPoints,
         polls: pollPoints
       },
       counts: {
@@ -234,8 +254,9 @@ serve(async (req) => {
         podcasts: podcasts.length,
         games: games.length,
         reviews: reviews.length,
-        predictions: predictions?.length || 0,
-        polls: 0, // Poll votes now counted in predictions
+        predictions: predictionCount,
+        trivia: triviaCount,
+        polls: pollCount,
         total: listItems.length
       },
       rank: {
