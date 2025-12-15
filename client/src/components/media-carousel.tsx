@@ -446,21 +446,37 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
             <Plus className="h-3 w-3" />
           </button>
           
-          {/* List Menu - Portal */}
+          {/* List Menu - Bottom Sheet on Mobile, Dropdown on Desktop */}
           {showListMenu && createPortal(
-            <div 
-              className="fixed bg-black/95 backdrop-blur-md rounded-lg p-2 shadow-2xl border border-white/20 flex flex-col gap-0 text-sm z-50 max-sm:left-2 max-sm:right-2 max-sm:w-auto max-sm:max-w-[calc(100vw-1rem)] sm:min-w-max overflow-y-auto overflow-x-hidden max-h-[70vh]"
-              style={{
-                top: `${Math.min(listMenuPos.top, window.innerHeight - 200)}px`,
-                ...(window.innerWidth >= 640 ? {
-                  left: `${listMenuPos.left}px`,
-                  transform: 'translate(-50%, -100%)',
-                } : {
-                  transform: 'translateY(-100%)',
-                }),
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
+            <>
+              {/* Backdrop */}
+              <div 
+                className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+                onClick={() => setShowListMenu(false)}
+              />
+              
+              {/* Bottom Sheet (Mobile) / Dropdown (Desktop) */}
+              <div 
+                className="fixed z-50 bg-black/95 backdrop-blur-md shadow-2xl border border-white/20 flex flex-col gap-0 text-sm
+                  max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:rounded-t-2xl max-sm:p-4 max-sm:pb-8 max-sm:max-h-[70vh] max-sm:overflow-y-auto
+                  sm:rounded-lg sm:p-1.5 sm:min-w-max"
+                style={{
+                  ...(window.innerWidth >= 640 ? {
+                    top: `${listMenuPos.top}px`,
+                    left: `${listMenuPos.left}px`,
+                    transform: 'translate(-50%, -100%)',
+                  } : {}),
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Drag handle for mobile */}
+                <div className="sm:hidden flex justify-center mb-3">
+                  <div className="w-10 h-1 bg-gray-500 rounded-full" />
+                </div>
+                
+                {/* Title for mobile */}
+                <p className="sm:hidden text-white font-semibold text-base mb-2 px-1">Add to List</p>
+                
                 {['Want To', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
                   <button
                     key={listTitle}
@@ -469,7 +485,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                       setShowListMenu(false);
                     }}
                     disabled={addToListMutation.isPending}
-                    className="px-3 py-2 text-white text-sm hover:bg-gray-700 rounded transition-colors text-left whitespace-nowrap"
+                    className="px-3 py-3 sm:py-1.5 text-white text-base sm:text-xs hover:bg-gray-700 rounded transition-colors text-left"
                   >
                     {listTitle}
                   </button>
@@ -478,7 +494,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                 {/* Custom Lists */}
                 {lists.filter((list: any) => list.isCustom).length > 0 && (
                   <>
-                    <div className="border-t border-gray-600 my-1" />
+                    <div className="border-t border-gray-600 my-2 sm:my-1" />
+                    <p className="sm:hidden text-gray-400 text-sm mb-1 px-1">Your Lists</p>
                     {lists
                       .filter((list: any) => list.isCustom)
                       .map((list: any) => (
@@ -489,7 +506,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                             setShowListMenu(false);
                           }}
                           disabled={addToListMutation.isPending}
-                          className="px-3 py-2 text-white text-sm hover:bg-gray-700 rounded transition-colors text-left truncate"
+                          className="px-3 py-3 sm:py-1.5 text-white text-base sm:text-xs hover:bg-gray-700 rounded transition-colors text-left truncate"
                         >
                           {list.title}
                         </button>
@@ -497,6 +514,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                   </>
                 )}
               </div>
+            </>
             , document.body)}
           
           {/* Rating Button */}
