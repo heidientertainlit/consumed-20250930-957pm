@@ -2103,18 +2103,22 @@ export default function UserProfile() {
 
                   {/* Stats Grid - Consistent styling */}
                   <div className="flex flex-col gap-y-2 mt-1">
-                    {/* Total Points */}
+                    {/* Total Points - Clickable to see breakdown */}
                     {isLoadingPoints ? (
                       <div className="flex items-center space-x-2">
                         <Trophy className="text-amber-500" size={18} />
                         <span className="text-sm text-gray-500">Loading points...</span>
                       </div>
                     ) : userPoints ? (
-                      <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setLocation('/points')}
+                        className="flex items-center space-x-2 hover:bg-gray-100 -ml-2 px-2 py-1 rounded-lg transition-colors group"
+                        data-testid="points-breakdown-link"
+                      >
                         <Trophy className="text-amber-500" size={18} />
                         <span className="text-base font-bold text-gray-800">{userPoints.all_time || 0}</span>
-                        <span className="text-sm text-gray-600">total points</span>
-                      </div>
+                        <span className="text-sm text-gray-600 group-hover:text-purple-600">total points →</span>
+                      </button>
                     ) : null}
 
                     {/* Global Rank */}

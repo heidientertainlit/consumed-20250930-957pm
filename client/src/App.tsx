@@ -34,6 +34,7 @@ import ResetPasswordPage from "./pages/reset-password";
 import OnboardingPage from "./pages/onboarding";
 import NotFoundPage from "./pages/not-found";
 import About from "@/pages/about";
+import PointsBreakdown from "@/pages/points-breakdown";
 
 function Router() {
   return (
@@ -168,6 +169,11 @@ function Router() {
         <Route path="/me">
           <ProtectedRoute>
             <UserProfile />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/points">
+          <ProtectedRoute>
+            <PointsBreakdown />
           </ProtectedRoute>
         </Route>
         <Route path="/user/:id">
