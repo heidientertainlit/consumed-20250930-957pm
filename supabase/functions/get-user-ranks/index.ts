@@ -90,27 +90,45 @@ serve(async (req) => {
         return { ...rank, items: [] };
       }
 
-      // Fetch current user's votes for these items
+      // Fetch all votes for these items to get accurate counts
       let userVotes: Record<string, string> = {};
-      if (appUser?.id && items && items.length > 0) {
+      let voteCounts: Record<string, { up: number; down: number }> = {};
+      
+      if (items && items.length > 0) {
         const itemIds = items.map(item => item.id);
-        const { data: votes } = await supabaseAdmin
+        
+        // Get all votes for these items
+        const { data: allVotes } = await supabaseAdmin
           .from('rank_item_votes')
-          .select('rank_item_id, direction')
-          .eq('voter_id', appUser.id)
+          .select('rank_item_id, voter_id, direction')
           .in('rank_item_id', itemIds);
         
-        if (votes) {
-          userVotes = votes.reduce((acc: Record<string, string>, vote: any) => {
-            acc[vote.rank_item_id] = vote.direction;
-            return acc;
-          }, {});
+        if (allVotes) {
+          // Count votes per item and track user's vote
+          allVotes.forEach((vote: any) => {
+            // Initialize if needed
+            if (!voteCounts[vote.rank_item_id]) {
+              voteCounts[vote.rank_item_id] = { up: 0, down: 0 };
+            }
+            // Count the vote
+            if (vote.direction === 'up') {
+              voteCounts[vote.rank_item_id].up++;
+            } else if (vote.direction === 'down') {
+              voteCounts[vote.rank_item_id].down++;
+            }
+            // Track current user's vote
+            if (appUser?.id && vote.voter_id === appUser.id) {
+              userVotes[vote.rank_item_id] = vote.direction;
+            }
+          });
         }
       }
 
-      // Add user_vote to each item
+      // Add user_vote and accurate counts to each item
       const itemsWithVotes = (items || []).map(item => ({
         ...item,
+        up_vote_count: voteCounts[item.id]?.up || 0,
+        down_vote_count: voteCounts[item.id]?.down || 0,
         user_vote: userVotes[item.id] || null
       }));
 

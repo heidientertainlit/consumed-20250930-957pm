@@ -203,7 +203,7 @@ serve(async (req) => {
     }
     console.log('Step 7 passed: Vote action:', voteAction);
 
-    // Step 8: Count votes
+    // Step 8: Count votes and update cached counts
     const { data: upVotes, count: upCount } = await supabaseAdmin
       .from('rank_item_votes')
       .select('id', { count: 'exact', head: false })
@@ -219,6 +219,20 @@ serve(async (req) => {
     const upVoteCount = upCount ?? upVotes?.length ?? 0;
     const downVoteCount = downCount ?? downVotes?.length ?? 0;
     const userVote = voteAction === 'removed' ? null : direction;
+
+    // Update cached vote counts in rank_items table for efficient reads
+    const { error: updateCountsError } = await supabaseAdmin
+      .from('rank_items')
+      .update({ 
+        up_vote_count: upVoteCount, 
+        down_vote_count: downVoteCount 
+      })
+      .eq('id', rankItemId);
+    
+    if (updateCountsError) {
+      console.error('Warning: Failed to update cached vote counts:', updateCountsError);
+      // Don't fail the request, vote was still recorded
+    }
 
     console.log(`Step 8 passed: Vote counts - up=${upVoteCount}, down=${downVoteCount}`);
 
