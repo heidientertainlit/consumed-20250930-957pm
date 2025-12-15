@@ -449,11 +449,15 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
           {/* List Menu - Portal */}
           {showListMenu && createPortal(
             <div 
-              className="fixed bg-black/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0 min-w-max text-sm z-50"
+              className="fixed bg-black/95 backdrop-blur-md rounded-lg p-2 shadow-2xl border border-white/20 flex flex-col gap-0 text-sm z-50 max-sm:left-2 max-sm:right-2 max-sm:w-auto max-sm:max-w-[calc(100vw-1rem)] sm:min-w-max overflow-y-auto overflow-x-hidden max-h-[70vh]"
               style={{
-                top: `${listMenuPos.top}px`,
-                left: `${listMenuPos.left}px`,
-                transform: 'translate(-50%, -100%)',
+                top: `${Math.min(listMenuPos.top, window.innerHeight - 200)}px`,
+                ...(window.innerWidth >= 640 ? {
+                  left: `${listMenuPos.left}px`,
+                  transform: 'translate(-50%, -100%)',
+                } : {
+                  transform: 'translateY(-100%)',
+                }),
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -465,7 +469,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                       setShowListMenu(false);
                     }}
                     disabled={addToListMutation.isPending}
-                    className="px-2 py-1 text-white text-xs hover:bg-gray-700 rounded transition-colors text-left"
+                    className="px-3 py-2 text-white text-sm hover:bg-gray-700 rounded transition-colors text-left whitespace-nowrap"
                   >
                     {listTitle}
                   </button>
@@ -485,7 +489,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                             setShowListMenu(false);
                           }}
                           disabled={addToListMutation.isPending}
-                          className="px-2 py-1 text-white text-xs hover:bg-gray-700 rounded transition-colors text-left"
+                          className="px-3 py-2 text-white text-sm hover:bg-gray-700 rounded transition-colors text-left truncate"
                         >
                           {list.title}
                         </button>
