@@ -68,7 +68,7 @@ const CATEGORY_CONFIG = [
   { key: 'trivia', label: 'Trivia', icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', pointsPer: null, description: null },
   { key: 'polls', label: 'Polls', icon: BarChart3, color: 'text-cyan-600', bgColor: 'bg-cyan-50', pointsPer: null, description: null },
   { key: 'friends', label: 'Friends Added', icon: Users, color: 'text-teal-600', bgColor: 'bg-teal-50', pointsPer: 5, description: 'Earn points for each friend connection. Building your network is rewarded!' },
-  { key: 'referrals', label: 'Referrals', icon: Gift, color: 'text-rose-600', bgColor: 'bg-rose-50', pointsPer: 25, description: 'Earn 25 points when someone you invite makes their first post or logs media.' },
+  { key: 'referrals', label: 'Referrals', icon: Gift, color: 'text-rose-600', bgColor: 'bg-rose-50', pointsPer: 25, description: 'Earn 25 points when someone you invite does their first activity (logs media or posts).' },
   { key: 'engagement', label: 'Engagement', icon: TrendingUp, color: 'text-violet-600', bgColor: 'bg-violet-50', pointsPer: null, description: 'Posts (10pts), likes given (2pts), comments (5pts), predictions (5pts), ranks (10pts), plus bonus for likes/comments you receive!' },
 ];
 
@@ -209,7 +209,7 @@ export default function PointsBreakdown() {
                     <li>• Write reviews for bonus points (+10 pts)</li>
                     <li>• Make predictions and play trivia</li>
                     <li>• Add friends to grow your network (+5 pts each)</li>
-                    <li>• Invite friends and earn 25 pts when they post!</li>
+                    <li>• Invite friends and earn 25 pts when they engage!</li>
                   </ul>
                 </div>
               </div>
