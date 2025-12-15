@@ -233,6 +233,29 @@ serve(async (req) => {
         }
         console.log('Social post created for prediction:', post);
 
+        // Check if this is user's first post and award referral bonus
+        try {
+          const { data: fullUser } = await adminClient
+            .from('users')
+            .select('referred_by, referral_rewarded')
+            .eq('id', appUser.id)
+            .single();
+
+          if (fullUser?.referred_by && !fullUser?.referral_rewarded) {
+            const { count } = await adminClient
+              .from('social_posts')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', appUser.id);
+
+            if (count === 1) {
+              console.log('First post! Awarding referral bonus to:', fullUser.referred_by);
+              await adminClient.from('users').update({ referral_rewarded: true }).eq('id', appUser.id);
+            }
+          }
+        } catch (referralError) {
+          console.error('Referral check error (non-fatal):', referralError);
+        }
+
         return new Response(JSON.stringify({ pool, post }), {
           status: 201,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -316,6 +339,29 @@ serve(async (req) => {
         }
         console.log('Social post created for poll:', post);
 
+        // Check if this is user's first post and award referral bonus
+        try {
+          const { data: fullUser } = await adminClient
+            .from('users')
+            .select('referred_by, referral_rewarded')
+            .eq('id', appUser.id)
+            .single();
+
+          if (fullUser?.referred_by && !fullUser?.referral_rewarded) {
+            const { count } = await adminClient
+              .from('social_posts')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', appUser.id);
+
+            if (count === 1) {
+              console.log('First post! Awarding referral bonus to:', fullUser.referred_by);
+              await adminClient.from('users').update({ referral_rewarded: true }).eq('id', appUser.id);
+            }
+          }
+        } catch (referralError) {
+          console.error('Referral check error (non-fatal):', referralError);
+        }
+
         return new Response(JSON.stringify({ pool, post }), {
           status: 201,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -360,6 +406,29 @@ serve(async (req) => {
         });
       }
       console.log('Post created:', post);
+
+      // Check if this is user's first post and award referral bonus
+      try {
+        const { data: fullUser } = await adminClient
+          .from('users')
+          .select('referred_by, referral_rewarded')
+          .eq('id', appUser.id)
+          .single();
+
+        if (fullUser?.referred_by && !fullUser?.referral_rewarded) {
+          const { count } = await adminClient
+            .from('social_posts')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', appUser.id);
+
+          if (count === 1) {
+            console.log('First post! Awarding referral bonus to:', fullUser.referred_by);
+            await adminClient.from('users').update({ referral_rewarded: true }).eq('id', appUser.id);
+          }
+        }
+      } catch (referralError) {
+        console.error('Referral check error (non-fatal):', referralError);
+      }
 
       return new Response(JSON.stringify(post), {
         status: 201,

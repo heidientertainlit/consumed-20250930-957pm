@@ -306,6 +306,45 @@ serve(async (req) => {
       }
     }
 
+    // Check if this is user's first item and award referral bonus to referrer
+    try {
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      // Get full user record to check referral status
+      const { data: fullUser } = await supabaseAdmin
+        .from('users')
+        .select('referred_by, referral_rewarded')
+        .eq('id', appUser.id)
+        .single();
+
+      // If user was referred and hasn't been marked as rewarded yet
+      if (fullUser?.referred_by && !fullUser?.referral_rewarded) {
+        // Count user's total items to see if this is their first
+        const { count } = await supabaseAdmin
+          .from('list_items')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', appUser.id);
+
+        // If this is their first item (count is 1 after insert)
+        if (count === 1) {
+          console.log('First item logged! Awarding referral bonus to:', fullUser.referred_by);
+          
+          // Mark the referral as rewarded
+          await supabaseAdmin
+            .from('users')
+            .update({ referral_rewarded: true })
+            .eq('id', appUser.id);
+          
+          console.log('Referral reward marked for user:', appUser.id);
+        }
+      }
+    } catch (referralError) {
+      console.error('Referral check error (non-fatal):', referralError);
+    }
+
     return new Response(JSON.stringify({
       success: true,
       data: mediaItem,
