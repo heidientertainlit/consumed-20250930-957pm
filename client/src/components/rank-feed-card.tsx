@@ -1,5 +1,21 @@
 import { useState, useEffect } from "react";
-import { ArrowBigUp, ArrowBigDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic, Heart, MessageCircle } from "lucide-react";
+import { ArrowBigUp, ArrowBigDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic, Heart, MessageCircle, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -112,6 +128,7 @@ export default function RankFeedCard({
   const [localIsLiked, setLocalIsLiked] = useState(isLiked);
   
   const isOwner = user?.id === rank.user_id;
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -201,6 +218,47 @@ export default function RankFeedCard({
     voteMutation.mutate({ rankItemId: itemId, direction });
   };
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`${supabaseUrl}/functions/v1/delete-rank`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || ''}`,
+          "apikey": supabaseAnonKey,
+        },
+        body: JSON.stringify({ rankId: rank.id }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete rank');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rank Deleted",
+        description: `"${rank.title}" has been deleted`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    },
+  });
+
+  const handleDelete = () => {
+    setShowDeleteDialog(false);
+    deleteMutation.mutate();
+  };
+
   const formatTimeAgo = (dateString?: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -242,8 +300,53 @@ export default function RankFeedCard({
             <p className="text-xs text-gray-500">shared a ranked list</p>
           </div>
           <Trophy className="text-purple-500" size={20} />
+          
+          {isOwner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                  data-testid={`rank-menu-${rank.id}`}
+                >
+                  <MoreHorizontal size={18} className="text-gray-500" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem 
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-red-600 focus:text-red-600"
+                  data-testid={`delete-rank-${rank.id}`}
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  Delete Rank
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this rank?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{rank.title}" and all its items. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="confirm-delete-rank"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Rank Title */}
       <Link href={`/rank/${rank.id}`}>
