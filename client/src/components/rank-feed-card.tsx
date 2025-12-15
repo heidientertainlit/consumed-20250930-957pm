@@ -238,10 +238,6 @@ export default function RankFeedCard({
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Rank Deleted",
-        description: `"${rank.title}" has been deleted`,
-      });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
     },

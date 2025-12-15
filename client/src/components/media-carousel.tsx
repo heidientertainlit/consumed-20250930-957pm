@@ -260,24 +260,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       const result = await response.json();
       return result;
     },
-    onSuccess: (result) => {
-      // Check if this was a duplicate (already in list)
-      const isDuplicate = result?.message === 'Item already in list';
-      
-      toast({
-        title: isDuplicate ? "Already in list!" : "Added to list!",
-        description: isDuplicate 
-          ? `${item.title} is already in this list.`
-          : `${item.title} has been added to your list.`,
-      });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to add item to list. Please try again.",
-        variant: "destructive",
-      });
     },
   });
   
@@ -322,19 +306,8 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       }
       return response.json();
     },
-    onSuccess: (_, ratingValue) => {
-      toast({
-        title: "Rating submitted!",
-        description: `You rated ${item.title} ${ratingValue} stars.`,
-      });
+    onSuccess: () => {
       setShowRatingStars(false);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to submit rating. Please try again.",
-        variant: "destructive",
-      });
     },
   });
   

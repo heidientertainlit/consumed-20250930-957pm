@@ -253,10 +253,6 @@ export default function ListDetail() {
 
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: "Link Copied!",
-        description: "Share this with your friends to show your list",
-      });
     } catch (error) {
       console.error('Error sharing list:', error);
       toast({
@@ -293,18 +289,7 @@ export default function ListDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      toast({
-        title: "Item Removed",
-        description: "Item has been removed from your list",
-      });
     },
-    onError: (error) => {
-      toast({
-        title: "Delete Failed", 
-        description: error.message,
-        variant: "destructive"
-      });
-    }
   });
 
   const handleRemoveItem = (itemId: string) => {
@@ -331,20 +316,9 @@ export default function ListDetail() {
 
       return { success: true, list: data, message: `List is now ${isPublic ? 'public' : 'private'}` };
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      toast({
-        title: "Privacy Updated",
-        description: data.message || `List privacy updated successfully`,
-      });
     },
-    onError: (error) => {
-      toast({
-        title: "Update Failed", 
-        description: error.message,
-        variant: "destructive"
-      });
-    }
   });
 
   const handlePrivacyToggle = () => {
@@ -490,21 +464,10 @@ export default function ListDetail() {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      toast({
-        title: "List Deleted",
-        description: data.message || "Your custom list has been deleted",
-      });
       setLocation('/track');
     },
-    onError: (error) => {
-      toast({
-        title: "Delete Failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
   });
 
   const handleDeleteList = () => {

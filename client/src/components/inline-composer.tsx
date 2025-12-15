@@ -276,16 +276,7 @@ export default function InlineComposer() {
         throw new Error(errorData.error || errorData.message || 'Failed to add to list');
       }
 
-      const result = await response.json();
-      const isDuplicate = result?.message === 'Item already in list';
-
-      toast({
-        title: isDuplicate ? "Already in list!" : "Tracked!",
-        description: isDuplicate 
-          ? `${media.title} is already in this list.`
-          : `${media.title} added to ${list.title}`,
-      });
-
+      await response.json();
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
     } catch (error) {
       console.error("Track error:", error);
@@ -323,12 +314,6 @@ export default function InlineComposer() {
       if (!response.ok) {
         throw new Error('Failed to add to rank');
       }
-
-      const rank = userRanks.find((r: any) => r.id === rankId);
-      toast({
-        title: "Added to Rank!",
-        description: `${media.title} added to ${rank?.title || 'rank'}`,
-      });
 
       queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
     } catch (error) {
@@ -517,10 +502,6 @@ export default function InlineComposer() {
           
           // If user doesn't want to post to feed, we're done
           if (!postToFeed) {
-            toast({
-              title: "Added to list!",
-              description: "Media added without posting to feed.",
-            });
             queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
             resetComposer();
             setIsPosting(false);
@@ -581,11 +562,6 @@ export default function InlineComposer() {
       if (addToRank && selectedRankId && selectedMedia) {
         await handleAddToRank(selectedMedia, selectedRankId);
       }
-
-      toast({
-        title: "Posted!",
-        description: "Your update has been shared.",
-      });
 
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
