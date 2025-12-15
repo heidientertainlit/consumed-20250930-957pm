@@ -106,13 +106,20 @@ serve(async (req) => {
     const reviews = listItems.filter(item => item.notes && item.notes.trim().length > 0);
 
     // Count accepted friendships (5 pts per friend)
-    const { data: friendships } = await supabase
+    // User can appear in either user_id or friend_id column
+    const { data: friendshipsAsUser } = await supabase
       .from('friendships')
       .select('id')
       .eq('user_id', targetUserId)
       .eq('status', 'accepted');
     
-    const friendCount = friendships?.length || 0;
+    const { data: friendshipsAsFriend } = await supabase
+      .from('friendships')
+      .select('id')
+      .eq('friend_id', targetUserId)
+      .eq('status', 'accepted');
+    
+    const friendCount = (friendshipsAsUser?.length || 0) + (friendshipsAsFriend?.length || 0);
     const friendPoints = friendCount * 5;
 
     // Count successful referrals (25 pts per referral that made first action)
