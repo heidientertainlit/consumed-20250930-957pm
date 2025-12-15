@@ -18,7 +18,8 @@ import {
   Zap,
   BarChart3,
   Users,
-  Gift
+  Gift,
+  TrendingUp
 } from "lucide-react";
 
 interface PointsData {
@@ -35,6 +36,7 @@ interface PointsData {
   polls: number;
   friends: number;
   referrals: number;
+  engagement: number;
 }
 
 interface CountsData {
@@ -50,6 +52,7 @@ interface CountsData {
   polls: number;
   friends: number;
   referrals: number;
+  engagement: number;
   total: number;
 }
 
@@ -66,6 +69,7 @@ const CATEGORY_CONFIG = [
   { key: 'polls', label: 'Polls', icon: BarChart3, color: 'text-cyan-600', bgColor: 'bg-cyan-50', pointsPer: null, description: null },
   { key: 'friends', label: 'Friends Added', icon: Users, color: 'text-teal-600', bgColor: 'bg-teal-50', pointsPer: 5, description: 'Earn points for each friend connection. Building your network is rewarded!' },
   { key: 'referrals', label: 'Referrals', icon: Gift, color: 'text-rose-600', bgColor: 'bg-rose-50', pointsPer: 25, description: 'Earn 25 points when someone you invite makes their first post or logs media.' },
+  { key: 'engagement', label: 'Engagement', icon: TrendingUp, color: 'text-violet-600', bgColor: 'bg-violet-50', pointsPer: null, description: 'Posts (10pts), likes given (2pts), comments (5pts), predictions (5pts), ranks (10pts), plus bonus for likes/comments you receive!' },
 ];
 
 export default function PointsBreakdown() {
@@ -150,13 +154,14 @@ export default function PointsBreakdown() {
               const categoryPoints = points[key as keyof PointsData] || 0;
               const categoryCount = counts[key as keyof CountsData] || 0;
               
-              // Always show friends and referrals so users know they exist
-              const alwaysShow = key === 'friends' || key === 'referrals';
+              // Always show friends, referrals, and engagement so users know they exist
+              const alwaysShow = key === 'friends' || key === 'referrals' || key === 'engagement';
               if (!alwaysShow && categoryPoints === 0 && categoryCount === 0) return null;
 
               const getCountLabel = () => {
                 if (key === 'friends') return categoryCount === 1 ? 'friend' : 'friends';
                 if (key === 'referrals') return categoryCount === 1 ? 'referral' : 'referrals';
+                if (key === 'engagement') return 'total score';
                 return categoryCount === 1 ? 'item' : 'items';
               };
 

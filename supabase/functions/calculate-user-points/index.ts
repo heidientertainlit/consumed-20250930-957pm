@@ -132,6 +132,67 @@ serve(async (req) => {
     const referralCount = referrals?.length || 0;
     const referralPoints = referralCount * 25;
 
+    // Calculate engagement points
+    let engagementPoints = 0;
+    let engagementBreakdown = {
+      posts: 0,
+      likesReceived: 0,
+      commentsReceived: 0,
+      likesGiven: 0,
+      commentsMade: 0,
+      predictionsParticipated: 0,
+      ranksCreated: 0
+    };
+
+    // Posts created (10 pts each + bonus for engagement received)
+    const { data: posts } = await supabase
+      .from('social_posts')
+      .select('id, likes_count, comments_count')
+      .eq('user_id', targetUserId);
+    
+    (posts || []).forEach((p: any) => {
+      engagementBreakdown.posts += 10;
+      engagementBreakdown.likesReceived += (p.likes_count || 0) * 2;
+      engagementBreakdown.commentsReceived += (p.comments_count || 0) * 3;
+    });
+
+    // Likes given (2 pts each)
+    const { data: likesGiven } = await supabase
+      .from('social_post_likes')
+      .select('id')
+      .eq('user_id', targetUserId);
+    
+    engagementBreakdown.likesGiven = (likesGiven?.length || 0) * 2;
+
+    // Comments made (5 pts each)
+    const { data: commentsMade } = await supabase
+      .from('social_post_comments')
+      .select('id')
+      .eq('user_id', targetUserId);
+    
+    engagementBreakdown.commentsMade = (commentsMade?.length || 0) * 5;
+
+    // Predictions participated (5 pts each)
+    const { data: predictionsParticipated } = await supabase
+      .from('user_predictions')
+      .select('id')
+      .eq('user_id', targetUserId);
+    
+    engagementBreakdown.predictionsParticipated = (predictionsParticipated?.length || 0) * 5;
+
+    // Ranks created (10 pts each)
+    const { data: ranksCreated } = await supabase
+      .from('ranks')
+      .select('id')
+      .eq('user_id', targetUserId);
+    
+    engagementBreakdown.ranksCreated = (ranksCreated?.length || 0) * 10;
+
+    engagementPoints = engagementBreakdown.posts + engagementBreakdown.likesReceived + 
+      engagementBreakdown.commentsReceived + engagementBreakdown.likesGiven + 
+      engagementBreakdown.commentsMade + engagementBreakdown.predictionsParticipated + 
+      engagementBreakdown.ranksCreated;
+
     // Get user's prediction/trivia/poll points with pool type info
     const { data: userPredictions } = await supabase
       .from('user_predictions')
@@ -172,7 +233,7 @@ serve(async (req) => {
     const gamePoints = games.length * 5;
     const reviewPoints = reviews.length * 10;
 
-    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints + friendPoints + referralPoints;
+    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints + friendPoints + referralPoints + engagementPoints;
 
     // Calculate global rank by counting users with more points
     // Use service role for cross-user queries
@@ -242,7 +303,8 @@ serve(async (req) => {
       { user_id: appUser.id, category: 'trivia', points: triviaPoints },
       { user_id: appUser.id, category: 'polls', points: pollPoints },
       { user_id: appUser.id, category: 'friends', points: friendPoints },
-      { user_id: appUser.id, category: 'referrals', points: referralPoints }
+      { user_id: appUser.id, category: 'referrals', points: referralPoints },
+      { user_id: appUser.id, category: 'engagement', points: engagementPoints }
     ];
 
     // First try to create the user_points table if it doesn't exist (this might fail, that's ok)
@@ -275,7 +337,8 @@ serve(async (req) => {
         trivia: triviaPoints,
         polls: pollPoints,
         friends: friendPoints,
-        referrals: referralPoints
+        referrals: referralPoints,
+        engagement: engagementPoints
       },
       counts: {
         books: books.length,
@@ -290,8 +353,10 @@ serve(async (req) => {
         polls: pollCount,
         friends: friendCount,
         referrals: referralCount,
+        engagement: 1,
         total: listItems.length
       },
+      engagementBreakdown,
       rank: {
         global: globalRank,
         total_users: totalUsersWithPoints
