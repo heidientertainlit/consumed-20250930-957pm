@@ -422,7 +422,7 @@ export default function RankFeedCard({
                   data-testid={`vote-up-${item.id}`}
                 >
                   <ArrowBigUp size={18} fill={item.user_vote === 'up' ? 'currentColor' : 'none'} />
-                  <span className="text-xs font-medium">{item.up_vote_count || 0}</span>
+                  <span className="text-xs font-medium">+{item.up_vote_count || 0}</span>
                 </button>
                 
                 <button
@@ -436,7 +436,7 @@ export default function RankFeedCard({
                   data-testid={`vote-down-${item.id}`}
                 >
                   <ArrowBigDown size={18} fill={item.user_vote === 'down' ? 'currentColor' : 'none'} />
-                  <span className="text-xs font-medium">{item.down_vote_count || 0}</span>
+                  <span className="text-xs font-medium">-{item.down_vote_count || 0}</span>
                 </button>
               </div>
             </div>
