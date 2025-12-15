@@ -430,9 +430,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               
               {/* Bottom Sheet (Mobile) / Dropdown (Desktop) */}
               <div 
-                className="fixed z-50 bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 backdrop-blur-md shadow-2xl border border-purple-500/30 flex flex-col gap-1 text-sm
+                className="fixed z-50 bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 backdrop-blur-md shadow-2xl border border-purple-500/30 flex flex-col gap-1 text-sm
                   max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:rounded-t-3xl max-sm:p-5 max-sm:pb-10 max-sm:max-h-[80vh] max-sm:overflow-y-auto
-                  sm:rounded-lg sm:p-2 sm:min-w-max sm:bg-gradient-to-br sm:from-purple-900/95 sm:via-purple-800/95 sm:to-indigo-900/95"
+                  sm:rounded-lg sm:p-2 sm:min-w-max sm:bg-gradient-to-br sm:from-purple-950/95 sm:via-purple-900/95 sm:to-indigo-950/95"
                 style={{
                   ...(window.innerWidth >= 640 ? {
                     top: `${listMenuPos.top}px`,
