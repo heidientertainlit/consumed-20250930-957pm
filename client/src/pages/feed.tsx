@@ -1548,6 +1548,8 @@ export default function Feed() {
       },
       likesCount: comment.likesCount || 0,
       likedByCurrentUser: comment.isLiked || false,
+      upVoteCount: comment.upVoteCount || 0,
+      downVoteCount: comment.downVoteCount || 0,
       voteScore: comment.voteScore || 0,
       currentUserVote: comment.currentUserVote || null,
       replies: comment.replies?.map(transformComment) || [] // Recursively transform replies

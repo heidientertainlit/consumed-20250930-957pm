@@ -18,7 +18,9 @@ interface Comment {
   };
   likesCount?: number;
   likedByCurrentUser?: boolean;
-  voteScore?: number; // upvotes - downvotes
+  voteScore?: number; // upvotes - downvotes (legacy)
+  upVoteCount?: number; // separate upvote count
+  downVoteCount?: number; // separate downvote count
   currentUserVote?: 'up' | 'down' | null; // user's current vote
   replies?: Comment[]; // Nested replies
 }
@@ -164,9 +166,7 @@ function CommentItem({
                     size={18} 
                     fill={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'currentColor' : 'none'} 
                   />
-                  <span className="text-xs font-medium">
-                    {Math.max(0, comment.voteScore || 0)}
-                  </span>
+                  <span className="text-xs font-medium">+{comment.upVoteCount || 0}</span>
                 </button>
                 <button
                   onClick={() => onVoteComment(comment.id, 'down')}
@@ -182,6 +182,7 @@ function CommentItem({
                     size={18} 
                     fill={(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'currentColor' : 'none'} 
                   />
+                  <span className="text-xs font-medium">-{comment.downVoteCount || 0}</span>
                 </button>
               </div>
             )}

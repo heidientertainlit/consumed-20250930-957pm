@@ -119,11 +119,16 @@ serve(async (req) => {
           console.log('social_comment_votes table not found, skipping vote data');
         }
 
-        // Compute vote score for each comment and track user's vote
-        const voteScoreMap: Record<string, number> = {};
+        // Compute vote counts for each comment and track user's vote
+        const upVoteMap: Record<string, number> = {};
+        const downVoteMap: Record<string, number> = {};
         const userVoteMap: Record<string, string> = {};
         allVotes.forEach(vote => {
-          voteScoreMap[vote.comment_id] = (voteScoreMap[vote.comment_id] || 0) + vote.vote_type;
+          if (vote.vote_type === 1) {
+            upVoteMap[vote.comment_id] = (upVoteMap[vote.comment_id] || 0) + 1;
+          } else if (vote.vote_type === -1) {
+            downVoteMap[vote.comment_id] = (downVoteMap[vote.comment_id] || 0) + 1;
+          }
           if (vote.user_id === user.id) {
             userVoteMap[vote.comment_id] = vote.vote_type === 1 ? 'up' : 'down';
           }
@@ -156,14 +161,18 @@ serve(async (req) => {
             ...comment,
             likesCount: likeCountMap[comment.id] || 0,
             isLiked: userLikedSet.has(comment.id),
-            voteScore: voteScoreMap[comment.id] || 0,
+            upVoteCount: upVoteMap[comment.id] || 0,
+            downVoteCount: downVoteMap[comment.id] || 0,
+            voteScore: (upVoteMap[comment.id] || 0) - (downVoteMap[comment.id] || 0),
             currentUserVote: userVoteMap[comment.id] || null
           }));
         } else {
           // Add vote metadata only
           transformedComments = transformedComments.map(comment => ({
             ...comment,
-            voteScore: voteScoreMap[comment.id] || 0,
+            upVoteCount: upVoteMap[comment.id] || 0,
+            downVoteCount: downVoteMap[comment.id] || 0,
+            voteScore: (upVoteMap[comment.id] || 0) - (downVoteMap[comment.id] || 0),
             currentUserVote: userVoteMap[comment.id] || null
           }));
         }
