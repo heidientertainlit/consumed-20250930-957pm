@@ -114,11 +114,6 @@ serve(async (req) => {
       const downvoteCount = downvotes?.length || 0;
       const voteScore = upvoteCount - downvoteCount;
 
-      await serviceSupabase
-        .from('social_post_comments')
-        .update({ vote_score: voteScore })
-        .eq('id', comment_id);
-
       return new Response(JSON.stringify({ 
         success: true, 
         upvotes: upvoteCount,
@@ -169,11 +164,6 @@ serve(async (req) => {
       const upvoteCount = upvotes?.length || 0;
       const downvoteCount = downvotes?.length || 0;
       const voteScore = upvoteCount - downvoteCount;
-
-      await serviceSupabase
-        .from('social_post_comments')
-        .update({ vote_score: voteScore })
-        .eq('id', comment_id);
 
       return new Response(JSON.stringify({ 
         success: true, 

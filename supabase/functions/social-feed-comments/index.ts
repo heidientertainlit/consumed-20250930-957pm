@@ -85,7 +85,6 @@ serve(async (req) => {
           created_at,
           user_id,
           parent_comment_id,
-          vote_score,
           users!inner(user_name, email)
         `)
         .eq('social_post_id', post_id)
@@ -107,16 +106,27 @@ serve(async (req) => {
       if (comments && comments.length > 0) {
         const commentIds = comments.map(c => c.id);
         
-        // Get user's votes on comments
-        const { data: userVotes } = await serviceSupabase
-          .from('social_comment_votes')
-          .select('comment_id, vote_type')
-          .eq('user_id', user.id)
-          .in('comment_id', commentIds);
+        // Get all votes on these comments to compute vote scores (gracefully handle if table doesn't exist)
+        let allVotes: any[] = [];
+        try {
+          const { data: votesData } = await serviceSupabase
+            .from('social_comment_votes')
+            .select('comment_id, vote_type, user_id')
+            .in('comment_id', commentIds);
+          allVotes = votesData || [];
+        } catch (e) {
+          // Table might not exist yet, continue without votes
+          console.log('social_comment_votes table not found, skipping vote data');
+        }
 
+        // Compute vote score for each comment and track user's vote
+        const voteScoreMap: Record<string, number> = {};
         const userVoteMap: Record<string, string> = {};
-        userVotes?.forEach(vote => {
-          userVoteMap[vote.comment_id] = vote.vote_type === 1 ? 'up' : 'down';
+        allVotes.forEach(vote => {
+          voteScoreMap[vote.comment_id] = (voteScoreMap[vote.comment_id] || 0) + vote.vote_type;
+          if (vote.user_id === user.id) {
+            userVoteMap[vote.comment_id] = vote.vote_type === 1 ? 'up' : 'down';
+          }
         });
 
         // Include like metadata if requested
@@ -146,14 +156,14 @@ serve(async (req) => {
             ...comment,
             likesCount: likeCountMap[comment.id] || 0,
             isLiked: userLikedSet.has(comment.id),
-            voteScore: comment.vote_score || 0,
+            voteScore: voteScoreMap[comment.id] || 0,
             currentUserVote: userVoteMap[comment.id] || null
           }));
         } else {
           // Add vote metadata only
           transformedComments = transformedComments.map(comment => ({
             ...comment,
-            voteScore: comment.vote_score || 0,
+            voteScore: voteScoreMap[comment.id] || 0,
             currentUserVote: userVoteMap[comment.id] || null
           }));
         }
