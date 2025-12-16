@@ -770,10 +770,10 @@ export default function InlineComposer() {
                     </button>
                   </div>
                   
-                  {/* Episode Selector for TV Shows */}
+                  {/* Episode Selector for TV Shows - Optional */}
                   {selectedMedia.type === 'tv' && (
                     <div className="mt-3 space-y-2">
-                      <p className="text-xs font-medium text-gray-600">Which episode are you on?</p>
+                      <p className="text-xs font-medium text-gray-600">Which episode are you on? <span className="text-gray-400 font-normal">(optional)</span></p>
                       <div className="flex flex-col sm:flex-row gap-2">
                         {/* Season Selector */}
                         <select
