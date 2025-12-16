@@ -496,7 +496,7 @@ export default function AwardsPredictions() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-end justify-center"
             onClick={() => setShowBallotModal(false)}
           >
             <motion.div
@@ -549,7 +549,7 @@ export default function AwardsPredictions() {
               </div>
               
               {/* Modal Footer */}
-              <div className="sticky bottom-0 bg-gray-900 px-6 py-4 border-t border-gray-800 space-y-3">
+              <div className="sticky bottom-0 bg-gray-900 px-6 pt-4 pb-6 border-t border-gray-800 space-y-3">
                 <div className="flex items-center justify-between text-sm text-gray-400">
                   <span>{picksCount} of {totalCategories} categories picked</span>
                   <span className="text-amber-400">
