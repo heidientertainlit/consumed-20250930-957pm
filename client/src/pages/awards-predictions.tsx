@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Check, X, ChevronDown, ChevronUp, Share2, 
   Users, TrendingUp, Info, ExternalLink, ArrowLeft,
-  Sparkles, Lock, Clock
+  Sparkles, Lock, Clock, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -15,10 +15,19 @@ import Navigation from "@/components/navigation";
 interface Nominee {
   id: string;
   name: string;
-  title: string; // Movie/Show name
+  title: string;
+  subtitle?: string;
   posterUrl: string;
   tmdbPopularity: number;
-  tmdbId: string;
+  tmdbId?: string;
+}
+
+interface CategoryInsight {
+  mostPicked: string;
+  percentage: number;
+  trending: number;
+  friendsPicked: number;
+  totalPicks?: number;
 }
 
 interface Category {
@@ -26,24 +35,22 @@ interface Category {
   name: string;
   shortName: string;
   nominees: Nominee[];
-  userPick?: string; // nominee id
-  insight?: {
-    mostPicked: string;
-    percentage: number;
-    trending: number;
-    friendsPicked: number;
-  };
-  winner?: string; // nominee id (after show)
+  insight?: CategoryInsight | null;
+  winner?: string;
 }
 
 interface AwardsEvent {
   id: string;
+  slug: string;
   name: string;
   year: number;
-  bannerUrl: string;
+  bannerUrl?: string;
   status: 'open' | 'locked' | 'completed';
   deadline?: string;
+  ceremonyDate?: string;
+  pointsPerCorrect?: number;
   categories: Category[];
+  userPicks: Record<string, string>;
 }
 
 interface BallotPick {
@@ -53,6 +60,8 @@ interface BallotPick {
   categoryName: string;
 }
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
 export default function AwardsPredictions() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -61,8 +70,7 @@ export default function AwardsPredictions() {
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [showBallotModal, setShowBallotModal] = useState(false);
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
-  const [userPicks, setUserPicks] = useState<Map<string, string>>(new Map());
-  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [localPicks, setLocalPicks] = useState<Map<string, string>>(new Map());
   const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,103 +83,113 @@ export default function AwardsPredictions() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Mock data for Golden Globes 2026 - would come from API
-  const mockEvent: AwardsEvent = {
-    id: "golden-globes-2026",
-    name: "2026 Golden Globe Predictions",
-    year: 2026,
-    bannerUrl: "",
-    status: "open",
-    deadline: "2026-01-05T20:00:00Z",
-    categories: [
-      {
-        id: "best-picture-drama",
-        name: "Best Motion Picture – Drama",
-        shortName: "Picture (Drama)",
-        nominees: [
-          { id: "1", name: "Oppenheimer", title: "Oppenheimer", posterUrl: "https://image.tmdb.org/t/p/w300/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", tmdbPopularity: 156.2, tmdbId: "872585" },
-          { id: "2", name: "Killers of the Flower Moon", title: "Killers of the Flower Moon", posterUrl: "https://image.tmdb.org/t/p/w300/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg", tmdbPopularity: 89.4, tmdbId: "466420" },
-          { id: "3", name: "The Holdovers", title: "The Holdovers", posterUrl: "https://image.tmdb.org/t/p/w300/VHSzNBTwxV8vh7wylo7O9CLdac.jpg", tmdbPopularity: 45.2, tmdbId: "840430" },
-          { id: "4", name: "Past Lives", title: "Past Lives", posterUrl: "https://image.tmdb.org/t/p/w300/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg", tmdbPopularity: 38.1, tmdbId: "666277" },
-          { id: "5", name: "Anatomy of a Fall", title: "Anatomy of a Fall", posterUrl: "https://image.tmdb.org/t/p/w300/kQs6keheMwCxJxrzV83VUwFtHkB.jpg", tmdbPopularity: 34.7, tmdbId: "915935" },
-        ],
-        insight: { mostPicked: "Oppenheimer", percentage: 68, trending: 12, friendsPicked: 5 }
-      },
-      {
-        id: "best-actress-drama",
-        name: "Best Actress in a Motion Picture – Drama",
-        shortName: "Actress (Drama)",
-        nominees: [
-          { id: "6", name: "Lily Gladstone", title: "Killers of the Flower Moon", posterUrl: "https://image.tmdb.org/t/p/w300/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg", tmdbPopularity: 82.3, tmdbId: "466420" },
-          { id: "7", name: "Emma Stone", title: "Poor Things", posterUrl: "https://image.tmdb.org/t/p/w300/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg", tmdbPopularity: 94.5, tmdbId: "792307" },
-          { id: "8", name: "Greta Lee", title: "Past Lives", posterUrl: "https://image.tmdb.org/t/p/w300/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg", tmdbPopularity: 28.4, tmdbId: "666277" },
-          { id: "9", name: "Carey Mulligan", title: "Maestro", posterUrl: "https://image.tmdb.org/t/p/w300/wJEFJ8LkSJnJDEpDzW4eWmvbMuE.jpg", tmdbPopularity: 42.1, tmdbId: "595586" },
-          { id: "10", name: "Sandra Hüller", title: "Anatomy of a Fall", posterUrl: "https://image.tmdb.org/t/p/w300/kQs6keheMwCxJxrzV83VUwFtHkB.jpg", tmdbPopularity: 31.8, tmdbId: "915935" },
-        ],
-        insight: { mostPicked: "Lily Gladstone", percentage: 62, trending: 14, friendsPicked: 3 }
-      },
-      {
-        id: "best-actor-drama",
-        name: "Best Actor in a Motion Picture – Drama",
-        shortName: "Actor (Drama)",
-        nominees: [
-          { id: "11", name: "Cillian Murphy", title: "Oppenheimer", posterUrl: "https://image.tmdb.org/t/p/w300/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", tmdbPopularity: 145.6, tmdbId: "872585" },
-          { id: "12", name: "Bradley Cooper", title: "Maestro", posterUrl: "https://image.tmdb.org/t/p/w300/wJEFJ8LkSJnJDEpDzW4eWmvbMuE.jpg", tmdbPopularity: 78.2, tmdbId: "595586" },
-          { id: "13", name: "Leonardo DiCaprio", title: "Killers of the Flower Moon", posterUrl: "https://image.tmdb.org/t/p/w300/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg", tmdbPopularity: 112.4, tmdbId: "466420" },
-          { id: "14", name: "Colman Domingo", title: "Rustin", posterUrl: "https://image.tmdb.org/t/p/w300/vAg7heJCvBb2fzF8ZZXL1hHOlx9.jpg", tmdbPopularity: 24.3, tmdbId: "1009372" },
-          { id: "15", name: "Andrew Scott", title: "All of Us Strangers", posterUrl: "https://image.tmdb.org/t/p/w300/xrObLZqz9xNHLR3CQqhVFG6lGvo.jpg", tmdbPopularity: 35.7, tmdbId: "840326" },
-        ],
-        insight: { mostPicked: "Cillian Murphy", percentage: 72, trending: 8, friendsPicked: 4 }
-      },
-      {
-        id: "best-director",
-        name: "Best Director",
-        shortName: "Director",
-        nominees: [
-          { id: "16", name: "Christopher Nolan", title: "Oppenheimer", posterUrl: "https://image.tmdb.org/t/p/w300/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", tmdbPopularity: 156.2, tmdbId: "872585" },
-          { id: "17", name: "Martin Scorsese", title: "Killers of the Flower Moon", posterUrl: "https://image.tmdb.org/t/p/w300/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg", tmdbPopularity: 89.4, tmdbId: "466420" },
-          { id: "18", name: "Yorgos Lanthimos", title: "Poor Things", posterUrl: "https://image.tmdb.org/t/p/w300/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg", tmdbPopularity: 94.5, tmdbId: "792307" },
-          { id: "19", name: "Greta Gerwig", title: "Barbie", posterUrl: "https://image.tmdb.org/t/p/w300/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg", tmdbPopularity: 134.8, tmdbId: "346698" },
-          { id: "20", name: "Celine Song", title: "Past Lives", posterUrl: "https://image.tmdb.org/t/p/w300/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg", tmdbPopularity: 38.1, tmdbId: "666277" },
-        ],
-        insight: { mostPicked: "Christopher Nolan", percentage: 58, trending: 5, friendsPicked: 6 }
-      },
-      {
-        id: "best-picture-comedy",
-        name: "Best Motion Picture – Musical/Comedy",
-        shortName: "Picture (Comedy)",
-        nominees: [
-          { id: "21", name: "Barbie", title: "Barbie", posterUrl: "https://image.tmdb.org/t/p/w300/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg", tmdbPopularity: 134.8, tmdbId: "346698" },
-          { id: "22", name: "Poor Things", title: "Poor Things", posterUrl: "https://image.tmdb.org/t/p/w300/kCGlIMHnOm8JPXq3rXM6c5wMxcT.jpg", tmdbPopularity: 94.5, tmdbId: "792307" },
-          { id: "23", name: "American Fiction", title: "American Fiction", posterUrl: "https://image.tmdb.org/t/p/w300/46sp1Z9b2PPTgCRAtpKUVHcX9ta.jpg", tmdbPopularity: 52.3, tmdbId: "904765" },
-          { id: "24", name: "May December", title: "May December", posterUrl: "https://image.tmdb.org/t/p/w300/xxbZxLnpmPMd5bWC1nCiuV9P5Uu.jpg", tmdbPopularity: 41.2, tmdbId: "878883" },
-          { id: "25", name: "The Holdovers", title: "The Holdovers", posterUrl: "https://image.tmdb.org/t/p/w300/VHSzNBTwxV8vh7wylo7O9CLdac.jpg", tmdbPopularity: 45.2, tmdbId: "840430" },
-        ],
-        insight: { mostPicked: "Barbie", percentage: 55, trending: 3, friendsPicked: 7 }
-      },
-    ]
-  };
+  // Fetch event data from Supabase edge function
+  const { data: event, isLoading, error } = useQuery<AwardsEvent>({
+    queryKey: ['awards-event', 'golden-globes-2026', session?.user?.id],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        slug: 'golden-globes-2026'
+      });
+      if (session?.user?.id) {
+        params.append('user_id', session.user.id);
+      }
+      
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/awards-event?${params}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token || ''}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch awards event');
+      }
+      
+      return response.json();
+    },
+    enabled: true, // Always fetch, even without session (for public viewing)
+  });
 
-  const event = mockEvent;
-  const totalCategories = event.categories.length;
-  const picksCount = userPicks.size;
+  // Initialize local picks from server data
+  useEffect(() => {
+    if (event?.userPicks) {
+      setLocalPicks(new Map(Object.entries(event.userPicks)));
+    }
+  }, [event?.userPicks]);
+
+  // Mutation for saving picks
+  const savePick = useMutation({
+    mutationFn: async ({ categoryId, nomineeId }: { categoryId: string; nomineeId: string }) => {
+      if (!session?.user?.id) {
+        throw new Error('Must be logged in to make picks');
+      }
+      
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/awards-pick`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            user_id: session.user.id,
+            category_id: categoryId,
+            nominee_id: nomineeId
+          })
+        }
+      );
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save pick');
+      }
+      
+      return response.json();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const totalCategories = event?.categories?.length || 0;
+  const picksCount = localPicks.size;
 
   // Set initial active category
   useEffect(() => {
-    if (event.categories.length > 0 && !activeCategory) {
+    if (event?.categories?.length && !activeCategory) {
       setActiveCategory(event.categories[0].id);
     }
-  }, [event.categories, activeCategory]);
+  }, [event?.categories, activeCategory]);
 
   const handlePick = (categoryId: string, nomineeId: string) => {
-    if (event.status === 'locked' || event.status === 'completed') return;
+    if (!event || event.status !== 'open') return;
     
-    setUserPicks(prev => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to make predictions",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Optimistic update
+    setLocalPicks(prev => {
       const newPicks = new Map(prev);
       if (newPicks.get(categoryId) === nomineeId) {
         newPicks.delete(categoryId);
       } else {
         newPicks.set(categoryId, nomineeId);
+        // Save to server
+        savePick.mutate({ categoryId, nomineeId });
       }
       return newPicks;
     });
@@ -179,12 +197,13 @@ export default function AwardsPredictions() {
 
   const switchToCategory = (categoryId: string) => {
     setActiveCategory(categoryId);
-    // No scroll needed - we just switch which category is displayed
   };
 
   const getBallotPicks = (): BallotPick[] => {
+    if (!event) return [];
+    
     const picks: BallotPick[] = [];
-    userPicks.forEach((nomineeId, categoryId) => {
+    localPicks.forEach((nomineeId, categoryId) => {
       const category = event.categories.find(c => c.id === categoryId);
       const nominee = category?.nominees.find(n => n.id === nomineeId);
       if (category && nominee) {
@@ -200,12 +219,14 @@ export default function AwardsPredictions() {
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/awards/${event.id}/ballot?user=${session?.user?.id}`;
-    const shareText = `Check out my ${event.name} predictions! 🏆`;
+    if (!event) return;
+    
+    const shareUrl = `${window.location.origin}/awards/${event.slug}/ballot?user=${session?.user?.id}`;
+    const shareText = `Check out my ${event.year} ${event.name} predictions! 🏆`;
     
     if (navigator.share) {
       try {
-        await navigator.share({ title: event.name, text: shareText, url: shareUrl });
+        await navigator.share({ title: `${event.name} ${event.year}`, text: shareText, url: shareUrl });
       } catch (err) {
         console.log('Share cancelled');
       }
@@ -216,9 +237,37 @@ export default function AwardsPredictions() {
   };
 
   const handleSubmitBallot = () => {
-    toast({ title: "Ballot submitted!", description: `${picksCount} predictions locked in` });
+    toast({ title: "Ballot saved!", description: `${picksCount} predictions locked in` });
     setShowBallotModal(false);
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-10 h-10 text-amber-400 animate-spin mb-4" />
+          <p className="text-gray-400">Loading predictions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !event) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white flex items-center justify-center">
+        <div className="text-center px-4">
+          <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Awards Not Found</h1>
+          <p className="text-gray-400 mb-6">The awards event could not be loaded.</p>
+          <Button onClick={() => navigate('/play')} variant="outline">
+            Back to Play
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-24">
@@ -231,6 +280,7 @@ export default function AwardsPredictions() {
           <button 
             onClick={() => navigate('/play')}
             className="flex items-center text-gray-400 hover:text-white mb-4 transition-colors"
+            data-testid="button-back-play"
           >
             <ArrowLeft size={20} className="mr-2" />
             Back to Play
@@ -240,7 +290,7 @@ export default function AwardsPredictions() {
             <Trophy className="w-10 h-10 text-amber-400" />
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-200 via-amber-400 to-amber-300 bg-clip-text text-transparent">
-                {event.name}
+                {event.year} {event.name} Predictions
               </h1>
               <p className="text-gray-400 text-sm">
                 Make your picks. See how your predictions stack up.
@@ -283,7 +333,7 @@ export default function AwardsPredictions() {
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex px-4 py-3 space-x-2 min-w-max">
             {event.categories.map(category => {
-              const hasPick = userPicks.has(category.id);
+              const hasPick = localPicks.has(category.id);
               const isActive = activeCategory === category.id;
               
               return (
@@ -313,7 +363,7 @@ export default function AwardsPredictions() {
       {/* Active Category Panel - Only shows one category at a time */}
       <div className="px-4 py-6">
         {event.categories.filter(c => c.id === activeCategory).map(category => {
-          const userPickId = userPicks.get(category.id);
+          const userPickId = localPicks.get(category.id);
           const isInsightExpanded = expandedInsight === category.id;
           
           return (
@@ -406,7 +456,7 @@ export default function AwardsPredictions() {
                         {nominee.posterUrl ? (
                           <img 
                             src={nominee.posterUrl} 
-                            alt={nominee.title}
+                            alt={nominee.title || nominee.name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -419,7 +469,12 @@ export default function AwardsPredictions() {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-white text-lg">{nominee.name}</h3>
-                        <p className="text-gray-400 text-sm truncate">{nominee.title}</p>
+                        {nominee.title && (
+                          <p className="text-gray-400 text-sm truncate">{nominee.title}</p>
+                        )}
+                        {nominee.subtitle && (
+                          <p className="text-gray-500 text-xs">{nominee.subtitle}</p>
+                        )}
                         
                         {/* Buzz Score */}
                         <div className="flex items-center mt-2 text-sm">
@@ -442,7 +497,7 @@ export default function AwardsPredictions() {
                             {userWasCorrect ? (
                               <>
                                 <Check size={16} className="mr-1" />
-                                You got this right! (+120 pts)
+                                You got this right! (+{event.pointsPerCorrect || 20} pts)
                               </>
                             ) : (
                               <>
@@ -509,7 +564,7 @@ export default function AwardsPredictions() {
               <div className="sticky top-0 bg-gray-900 px-6 py-4 border-b border-gray-800 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white flex items-center">
                   <Trophy size={24} className="mr-2 text-amber-400" />
-                  My {event.year} Golden Globe Ballot
+                  My {event.year} {event.name} Ballot
                 </h2>
                 <button onClick={() => setShowBallotModal(false)} className="text-gray-400 hover:text-white">
                   <X size={24} />
@@ -548,21 +603,34 @@ export default function AwardsPredictions() {
               
               {/* Modal Footer */}
               <div className="sticky bottom-0 bg-gray-900 px-6 py-4 border-t border-gray-800 space-y-3">
-                <Button 
-                  onClick={handleShare}
-                  variant="outline"
-                  className="w-full border-gray-600 text-white hover:bg-gray-800"
-                >
-                  <Share2 size={18} className="mr-2" />
-                  Share My Ballot
-                </Button>
-                <Button 
-                  onClick={handleSubmitBallot}
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
-                  disabled={picksCount === 0}
-                >
-                  Submit Predictions
-                </Button>
+                <div className="flex items-center justify-between text-sm text-gray-400">
+                  <span>{picksCount} of {totalCategories} categories picked</span>
+                  <span className="text-amber-400">
+                    Potential: +{picksCount * (event.pointsPerCorrect || 20)} pts
+                  </span>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={handleShare}
+                    variant="outline"
+                    className="flex-1 border-gray-600"
+                    disabled={picksCount === 0}
+                    data-testid="button-share-ballot"
+                  >
+                    <Share2 size={18} className="mr-2" />
+                    Share
+                  </Button>
+                  <Button
+                    onClick={handleSubmitBallot}
+                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-semibold"
+                    disabled={picksCount === 0}
+                    data-testid="button-submit-ballot"
+                  >
+                    <Check size={18} className="mr-2" />
+                    Save Ballot
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

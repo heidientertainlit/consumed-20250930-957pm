@@ -1,75 +1,103 @@
 import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Trophy, Share2, ArrowLeft, Check, X, User } from "lucide-react";
+import { Trophy, Share2, ArrowLeft, Check, X, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 interface BallotPick {
   categoryId: string;
   categoryName: string;
-  nomineeId: string;
-  nomineeName: string;
-  movieTitle: string;
-  isCorrect?: boolean;
-  isWinner?: boolean;
+  categoryShortName: string;
+  pick: {
+    id: string;
+    name: string;
+    title?: string;
+    posterUrl?: string;
+    isCorrect?: boolean;
+    pointsEarned?: number;
+  } | null;
+  winner?: {
+    id: string;
+    name: string;
+    title?: string;
+    posterUrl?: string;
+  } | null;
 }
 
-interface SharedBallot {
-  eventName: string;
-  eventYear: number;
-  userName: string;
-  userAvatar?: string;
-  picks: BallotPick[];
-  createdAt: string;
-  totalCorrect?: number;
-  totalPicks?: number;
-  status: 'open' | 'completed';
+interface BallotData {
+  event: {
+    id: string;
+    name: string;
+    year: number;
+    status: 'open' | 'locked' | 'completed';
+  };
+  user: {
+    id: string;
+    displayName: string;
+    username: string;
+    avatarUrl?: string;
+  } | null;
+  ballot: BallotPick[];
+  stats: {
+    totalCategories: number;
+    picksMade: number;
+    correctPicks: number;
+    totalPoints: number;
+  };
 }
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export default function AwardsBallotShare() {
   const [, params] = useRoute("/awards/:eventId/ballot");
   const { toast } = useToast();
-  const [ballot, setBallot] = useState<SharedBallot | null>(null);
-  const [loading, setLoading] = useState(true);
 
   // Get user ID from query params
   const urlParams = new URLSearchParams(window.location.search);
   const userId = urlParams.get('user');
+  const eventSlug = params?.eventId || 'golden-globes-2026';
 
-  useEffect(() => {
-    // Mock ballot data - would fetch from API based on eventId and userId
-    const mockBallot: SharedBallot = {
-      eventName: "2026 Golden Globe Predictions",
-      eventYear: 2026,
-      userName: "MovieFan123",
-      picks: [
-        { categoryId: "best-picture-drama", categoryName: "Best Picture (Drama)", nomineeId: "1", nomineeName: "Oppenheimer", movieTitle: "Oppenheimer", isWinner: true, isCorrect: true },
-        { categoryId: "best-actress-drama", categoryName: "Best Actress (Drama)", nomineeId: "6", nomineeName: "Lily Gladstone", movieTitle: "Killers of the Flower Moon", isWinner: true, isCorrect: true },
-        { categoryId: "best-actor-drama", categoryName: "Best Actor (Drama)", nomineeId: "11", nomineeName: "Cillian Murphy", movieTitle: "Oppenheimer", isWinner: true, isCorrect: true },
-        { categoryId: "best-director", categoryName: "Best Director", nomineeId: "16", nomineeName: "Christopher Nolan", movieTitle: "Oppenheimer", isWinner: true, isCorrect: true },
-        { categoryId: "best-picture-comedy", categoryName: "Best Picture (Comedy)", nomineeId: "21", nomineeName: "Barbie", movieTitle: "Barbie", isWinner: false, isCorrect: false },
-      ],
-      createdAt: new Date().toISOString(),
-      totalCorrect: 4,
-      totalPicks: 5,
-      status: 'completed'
-    };
-
-    // Simulate loading
-    setTimeout(() => {
-      setBallot(mockBallot);
-      setLoading(false);
-    }, 500);
-  }, [params?.eventId, userId]);
+  // Fetch ballot data from Supabase edge function
+  const { data: ballotData, isLoading, error } = useQuery<BallotData>({
+    queryKey: ['awards-ballot', eventSlug, userId],
+    queryFn: async () => {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/awards-ballot?event=${eventSlug}&user_id=${userId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch ballot');
+      }
+      
+      return response.json();
+    },
+    enabled: !!userId,
+  });
 
   const handleShare = async () => {
     const shareUrl = window.location.href;
-    const shareText = ballot ? `Check out my ${ballot.eventName} predictions! 🏆` : 'Check out my awards predictions!';
+    const shareText = ballotData 
+      ? `Check out my ${ballotData.event.year} ${ballotData.event.name} predictions! 🏆` 
+      : 'Check out my awards predictions!';
     
     if (navigator.share) {
       try {
-        await navigator.share({ title: ballot?.eventName || 'Awards Predictions', text: shareText, url: shareUrl });
+        await navigator.share({ 
+          title: ballotData ? `${ballotData.event.year} ${ballotData.event.name}` : 'Awards Predictions', 
+          text: shareText, 
+          url: shareUrl 
+        });
       } catch (err) {
         console.log('Share cancelled');
       }
@@ -79,30 +107,39 @@ export default function AwardsBallotShare() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
-      </div>
-    );
-  }
-
-  if (!ballot) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex items-center justify-center text-white">
-        <div className="text-center">
-          <Trophy size={48} className="mx-auto mb-4 text-gray-600" />
-          <h1 className="text-xl font-bold mb-2">Ballot Not Found</h1>
-          <p className="text-gray-400">This prediction ballot doesn't exist or has been removed.</p>
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-10 h-10 text-amber-400 animate-spin mb-4" />
+          <p className="text-gray-400">Loading ballot...</p>
         </div>
       </div>
     );
   }
 
-  const correctPercentage = ballot.totalPicks ? Math.round((ballot.totalCorrect || 0) / ballot.totalPicks * 100) : 0;
+  if (error || !ballotData || !userId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black flex items-center justify-center text-white">
+        <div className="text-center px-4">
+          <Trophy size={48} className="mx-auto mb-4 text-gray-600" />
+          <h1 className="text-xl font-bold mb-2">Ballot Not Found</h1>
+          <p className="text-gray-400 mb-6">This prediction ballot doesn't exist or has been removed.</p>
+          <Button onClick={() => window.location.href = '/play/awards'} variant="outline">
+            Make Your Own Predictions
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const { event, user, ballot, stats } = ballotData;
+  const correctPercentage = stats.picksMade > 0 
+    ? Math.round((stats.correctPicks / stats.picksMade) * 100) 
+    : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-32">
       {/* Hero Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/30 via-transparent to-purple-900/20" />
@@ -122,6 +159,7 @@ export default function AwardsBallotShare() {
               variant="outline"
               size="sm"
               className="border-gray-600 text-white hover:bg-gray-800"
+              data-testid="button-share"
             >
               <Share2 size={16} className="mr-2" />
               Share
@@ -130,32 +168,71 @@ export default function AwardsBallotShare() {
 
           {/* User Info */}
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-              {ballot.userAvatar ? (
-                <img src={ballot.userAvatar} alt={ballot.userName} className="w-full h-full rounded-full object-cover" />
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center overflow-hidden">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
               ) : (
                 <User size={24} className="text-white" />
               )}
             </div>
             <div>
-              <h2 className="font-semibold text-lg">{ballot.userName}'s Ballot</h2>
-              <p className="text-gray-400 text-sm">{ballot.eventName}</p>
+              <h2 className="font-semibold text-lg">{user?.displayName || user?.username || 'Anonymous'}'s Ballot</h2>
+              <p className="text-gray-400 text-sm">{event.year} {event.name}</p>
             </div>
           </div>
 
           {/* Results Summary (if completed) */}
-          {ballot.status === 'completed' && (
+          {event.status === 'completed' && (
             <div className="bg-gradient-to-r from-amber-900/40 to-amber-800/30 rounded-xl p-4 border border-amber-500/30">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-amber-400 text-sm font-medium">Final Score</p>
                   <p className="text-2xl font-bold text-white">
-                    {ballot.totalCorrect} / {ballot.totalPicks} Correct
+                    {stats.correctPicks} / {stats.picksMade} Correct
                   </p>
+                  <p className="text-amber-400 text-sm">+{stats.totalPoints} points earned</p>
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-amber-400">{correctPercentage}%</p>
                   <p className="text-gray-400 text-sm">Accuracy</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Progress (if open) */}
+          {event.status === 'open' && (
+            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Predictions Made</p>
+                  <p className="text-xl font-bold text-white">{stats.picksMade} / {stats.totalCategories}</p>
+                </div>
+                <div className="w-16 h-16 relative">
+                  <svg className="w-full h-full transform -rotate-90">
+                    <circle
+                      cx="32"
+                      cy="32"
+                      r="28"
+                      stroke="currentColor"
+                      strokeWidth="6"
+                      fill="none"
+                      className="text-gray-700"
+                    />
+                    <circle
+                      cx="32"
+                      cy="32"
+                      r="28"
+                      stroke="currentColor"
+                      strokeWidth="6"
+                      fill="none"
+                      strokeDasharray={`${(stats.picksMade / stats.totalCategories) * 176} 176`}
+                      className="text-amber-500"
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-amber-400">
+                    {Math.round((stats.picksMade / stats.totalCategories) * 100)}%
+                  </span>
                 </div>
               </div>
             </div>
@@ -167,43 +244,72 @@ export default function AwardsBallotShare() {
       <div className="px-4 py-6">
         <h3 className="text-lg font-semibold mb-4">Predictions</h3>
         <div className="space-y-3">
-          {ballot.picks.map((pick, index) => (
+          {ballot.filter(b => b.pick).map((item, index) => (
             <motion.div
-              key={pick.categoryId}
+              key={item.categoryId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               className={`relative rounded-xl p-4 ${
-                ballot.status === 'completed'
-                  ? pick.isCorrect
+                event.status === 'completed'
+                  ? item.pick?.isCorrect
                     ? 'bg-green-900/20 border border-green-500/30'
                     : 'bg-red-900/20 border border-red-500/30'
                   : 'bg-gray-800/50 border border-gray-700'
               }`}
+              data-testid={`ballot-pick-${item.categoryId}`}
             >
               {/* Result Icon */}
-              {ballot.status === 'completed' && (
+              {event.status === 'completed' && (
                 <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center ${
-                  pick.isCorrect ? 'bg-green-500' : 'bg-red-500'
+                  item.pick?.isCorrect ? 'bg-green-500' : 'bg-red-500'
                 }`}>
-                  {pick.isCorrect ? <Check size={14} className="text-white" /> : <X size={14} className="text-white" />}
+                  {item.pick?.isCorrect ? <Check size={14} className="text-white" /> : <X size={14} className="text-white" />}
                 </div>
               )}
 
               {/* Winner Badge */}
-              {pick.isWinner && (
+              {item.winner && item.pick?.id === item.winner.id && (
                 <div className="absolute -top-2 left-4 bg-gradient-to-r from-amber-400 to-amber-500 text-black px-2 py-0.5 rounded text-xs font-bold flex items-center">
                   <Trophy size={10} className="mr-1" />
                   WINNER
                 </div>
               )}
 
-              <p className="text-gray-400 text-xs mb-1">{pick.categoryName}</p>
-              <p className="font-semibold text-white">{pick.nomineeName}</p>
-              <p className="text-gray-500 text-sm">{pick.movieTitle}</p>
+              <div className="flex items-start">
+                {/* Poster thumbnail */}
+                {item.pick?.posterUrl && (
+                  <div className="w-12 h-16 rounded-lg overflow-hidden mr-3 flex-shrink-0">
+                    <img 
+                      src={item.pick.posterUrl} 
+                      alt={item.pick.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-400 text-xs mb-1">{item.categoryShortName}</p>
+                  <p className="font-semibold text-white">{item.pick?.name}</p>
+                  {item.pick?.title && (
+                    <p className="text-gray-500 text-sm truncate">{item.pick.title}</p>
+                  )}
+                  {event.status === 'completed' && item.pick?.pointsEarned && item.pick.pointsEarned > 0 && (
+                    <p className="text-green-400 text-xs mt-1">+{item.pick.pointsEarned} points</p>
+                  )}
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
+
+        {/* Empty picks message */}
+        {ballot.filter(b => b.pick).length === 0 && (
+          <div className="text-center py-8">
+            <Trophy size={48} className="mx-auto mb-4 text-gray-600" />
+            <p className="text-gray-400">No predictions made yet</p>
+          </div>
+        )}
       </div>
 
       {/* CTA Footer */}
@@ -212,8 +318,9 @@ export default function AwardsBallotShare() {
           <p className="text-white font-semibold mb-2">Make Your Own Predictions!</p>
           <p className="text-purple-200 text-sm mb-3">Join consumed and compete with friends</p>
           <Button 
-            onClick={() => window.location.href = '/login'}
+            onClick={() => window.location.href = '/play/awards'}
             className="bg-white text-purple-700 hover:bg-gray-100 font-semibold"
+            data-testid="button-make-predictions"
           >
             Get Started Free
           </Button>
