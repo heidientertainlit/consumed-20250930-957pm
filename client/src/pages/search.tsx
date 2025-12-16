@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 interface Recommendation {
   title: string;
   type: string;
+  media_subtype?: string; // album, song, series, episode
   description: string;
   searchTerm?: string;
   poster_url?: string;
@@ -23,6 +24,7 @@ interface DirectResult {
   id: string;
   title: string;
   type: string;
+  media_subtype?: string; // album, song, series, episode
   description?: string;
   year?: number;
   rating?: number;

@@ -16,6 +16,7 @@ interface Friend {
 interface MediaItem {
   title: string;
   type: string;
+  media_subtype?: string; // album, song, series, episode
   creator: string;
   image: string;
   external_id: string;
