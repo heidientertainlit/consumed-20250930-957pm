@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus, Plus, User, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -65,6 +65,9 @@ export default function InlineComposer() {
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
+  
+  // Cache for episode data to avoid re-fetching
+  const episodeCache = useRef<Record<string, any[]>>({});
 
   // Fetch user's lists (for optional add to list)
   const { data: userListsData } = useQuery<any>({
@@ -207,6 +210,15 @@ export default function InlineComposer() {
   };
   
   const fetchEpisodes = async (externalId: string, seasonNum: number) => {
+    const cacheKey = `${externalId}-${seasonNum}`;
+    
+    // Check cache first (includes empty arrays for seasons with no episodes)
+    if (cacheKey in episodeCache.current) {
+      setEpisodes(episodeCache.current[cacheKey]);
+      setIsLoadingEpisodes(false);
+      return;
+    }
+    
     setIsLoadingEpisodes(true);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -220,9 +232,10 @@ export default function InlineComposer() {
       );
       if (response.ok) {
         const data = await response.json();
-        if (data.episodes && data.episodes.length > 0) {
-          setEpisodes(data.episodes);
-        }
+        const episodeList = data.episodes || [];
+        // Cache the result (including empty arrays)
+        episodeCache.current[cacheKey] = episodeList;
+        setEpisodes(episodeList);
       }
     } catch (error) {
       console.error('Error fetching episodes:', error);
@@ -761,7 +774,7 @@ export default function InlineComposer() {
                   {selectedMedia.type === 'tv' && (
                     <div className="mt-3 space-y-2">
                       <p className="text-xs font-medium text-gray-600">Which episode are you on?</p>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         {/* Season Selector */}
                         <select
                           value={selectedSeason || ''}
@@ -770,7 +783,7 @@ export default function InlineComposer() {
                             setSelectedEpisode(null);
                             setSelectedEpisodeTitle("");
                           }}
-                          className="flex-1 text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          className="w-full sm:flex-1 text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                           data-testid="select-season"
                         >
                           <option value="">Select Season</option>
@@ -795,7 +808,7 @@ export default function InlineComposer() {
                             setSelectedEpisodeTitle(ep?.name || "");
                           }}
                           disabled={!selectedSeason}
-                          className="flex-1 text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-100 disabled:text-gray-400"
+                          className="w-full sm:flex-1 text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-100 disabled:text-gray-400"
                           data-testid="select-episode"
                         >
                           <option value="">Select Episode</option>
@@ -804,7 +817,7 @@ export default function InlineComposer() {
                           ) : (
                             episodes.map((ep) => (
                               <option key={ep.episodeNumber} value={ep.episodeNumber}>
-                                E{ep.episodeNumber}: {ep.name?.substring(0, 20)}{ep.name?.length > 20 ? '...' : ''}
+                                E{ep.episodeNumber}: {ep.name?.substring(0, 15)}{ep.name?.length > 15 ? '...' : ''}
                               </option>
                             ))
                           )}
@@ -976,7 +989,8 @@ export default function InlineComposer() {
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-900 text-sm truncate">{media.title}</p>
                                 <p className="text-xs text-gray-500 truncate">
-                                  {media.type} {media.creator || media.author || media.artist ? `• ${media.creator || media.author || media.artist}` : ''}
+                                  {media.type === 'music' && media.media_subtype ? media.media_subtype : media.type}
+                                  {media.creator || media.author || media.artist ? ` • ${media.creator || media.author || media.artist}` : ''}
                                 </p>
                               </div>
                             </button>
