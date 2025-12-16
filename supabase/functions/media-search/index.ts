@@ -419,11 +419,20 @@ serve(async (req) => {
     // Wait for all searches to complete (with individual timeouts)
     await Promise.allSettled(searchPromises);
 
+    // Deduplicate music results by title + creator (same song can appear as single and album track)
+    const seenMusic = new Set<string>();
+    const dedupedMusic = musicResults.filter(item => {
+      const key = `${item.title?.toLowerCase()}-${item.creator?.toLowerCase()}-${item.media_subtype}`;
+      if (seenMusic.has(key)) return false;
+      seenMusic.add(key);
+      return true;
+    });
+    
     // Combine all results
     const allResults = [
       ...movieTvResults,
       ...bookResults,
-      ...musicResults,
+      ...dedupedMusic,
       ...podcastResults,
       ...youtubeResults,
       ...gamingResults,
