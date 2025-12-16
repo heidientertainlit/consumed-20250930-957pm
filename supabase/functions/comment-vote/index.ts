@@ -54,12 +54,21 @@ serve(async (req) => {
         });
       }
 
+      // Ensure comment_id is an integer
+      const commentIdInt = parseInt(String(comment_id), 10);
+      if (isNaN(commentIdInt)) {
+        return new Response(JSON.stringify({ error: 'Invalid comment_id' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       const vote_type = direction === 'up' ? 1 : -1;
 
       const { data: existingVote } = await serviceSupabase
         .from('social_comment_votes')
         .select('id, vote_type')
-        .eq('comment_id', comment_id)
+        .eq('comment_id', commentIdInt)
         .eq('user_id', user.id)
         .single();
 
@@ -85,7 +94,7 @@ serve(async (req) => {
         const { error: insertError } = await serviceSupabase
           .from('social_comment_votes')
           .insert({
-            comment_id,
+            comment_id: commentIdInt,
             user_id: user.id,
             vote_type
           });
@@ -101,13 +110,13 @@ serve(async (req) => {
       const { data: upvotes } = await serviceSupabase
         .from('social_comment_votes')
         .select('id')
-        .eq('comment_id', comment_id)
+        .eq('comment_id', commentIdInt)
         .eq('vote_type', 1);
 
       const { data: downvotes } = await serviceSupabase
         .from('social_comment_votes')
         .select('id')
-        .eq('comment_id', comment_id)
+        .eq('comment_id', commentIdInt)
         .eq('vote_type', -1);
 
       const upvoteCount = upvotes?.length || 0;
@@ -136,10 +145,19 @@ serve(async (req) => {
         });
       }
 
+      // Ensure comment_id is an integer
+      const deleteCommentIdInt = parseInt(String(comment_id), 10);
+      if (isNaN(deleteCommentIdInt)) {
+        return new Response(JSON.stringify({ error: 'Invalid comment_id' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       const { error: deleteError } = await serviceSupabase
         .from('social_comment_votes')
         .delete()
-        .eq('comment_id', comment_id)
+        .eq('comment_id', deleteCommentIdInt)
         .eq('user_id', user.id);
 
       if (deleteError) {
@@ -152,13 +170,13 @@ serve(async (req) => {
       const { data: upvotes } = await serviceSupabase
         .from('social_comment_votes')
         .select('id')
-        .eq('comment_id', comment_id)
+        .eq('comment_id', deleteCommentIdInt)
         .eq('vote_type', 1);
 
       const { data: downvotes } = await serviceSupabase
         .from('social_comment_votes')
         .select('id')
-        .eq('comment_id', comment_id)
+        .eq('comment_id', deleteCommentIdInt)
         .eq('vote_type', -1);
 
       const upvoteCount = upvotes?.length || 0;
