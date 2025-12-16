@@ -75,7 +75,7 @@ serve(async (req) => {
     // Parse request
     const requestBody = await req.json();
     const { media, rating, review, customListId } = requestBody;
-    const { title, mediaType, creator, imageUrl, externalId, externalSource } = media || {};
+    const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource } = media || {};
 
     if (!customListId) {
       return new Response(JSON.stringify({
@@ -112,7 +112,8 @@ serve(async (req) => {
         user_id: appUser.id,
         title: title || 'Untitled',
         type: mediaType || 'mixed',
-        media_type: mediaType || 'mixed', 
+        media_type: mediaType || 'mixed',
+        media_subtype: mediaSubtype || null, // album, song, series, episode
         creator: creator || '',
         image_url: imageUrl || null,
         notes: review || null,

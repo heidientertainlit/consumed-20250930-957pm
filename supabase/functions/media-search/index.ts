@@ -105,6 +105,7 @@ serve(async (req) => {
                   movieTvResults.push({
                     title: item.title || item.name,
                     type: item.media_type === 'movie' ? 'movie' : 'tv',
+                    media_subtype: item.media_type === 'tv' ? 'series' : null, // series for tv shows
                     creator: item.media_type === 'movie' ? 'Unknown' : 'TV Show',
                     poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
                     external_id: item.id?.toString(),
@@ -290,11 +291,12 @@ serve(async (req) => {
                     musicResults.push({
                       title: album.name,
                       type: 'music',
+                      media_subtype: 'album',
                       creator: album.artists?.[0]?.name || 'Unknown Artist',
                       poster_url: album.images?.[0]?.url || '',
                       external_id: album.id,
                       external_source: 'spotify',
-                      description: `ALBUM • ${album.total_tracks || 0} tracks • ${album.release_date?.substring(0, 4) || 'Unknown year'}`
+                      description: `Album • ${album.total_tracks || 0} tracks • ${album.release_date?.substring(0, 4) || 'Unknown year'}`
                     });
                   }
                 });
@@ -304,11 +306,12 @@ serve(async (req) => {
                     musicResults.push({
                       title: track.name,
                       type: 'music',
+                      media_subtype: 'song',
                       creator: track.artists?.[0]?.name || 'Unknown Artist',
                       poster_url: track.album?.images?.[0]?.url || '',
                       external_id: track.id,
                       external_source: 'spotify',
-                      description: `TRACK • ${track.album?.name || 'Unknown Album'}`
+                      description: `Song • ${track.album?.name || 'Unknown Album'}`
                     });
                   }
                 });

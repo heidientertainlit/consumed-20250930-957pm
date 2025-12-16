@@ -20,6 +20,7 @@ interface MediaItem {
   rating?: number;
   year?: string;
   mediaType?: string;
+  mediaSubtype?: string; // album, song, series, episode
   platform?: string; // e.g., "netflix", "disney", "hulu", "prime", "max", "peacock", "apple"
   author?: string; // For books and podcasts
   externalId?: string; // For DNA recommendations
@@ -214,6 +215,7 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       const mediaData = {
         title: item.title,
         mediaType: item.mediaType || 'movie',
+        mediaSubtype: item.mediaSubtype || null, // album, song, series, episode
         creator: item.author || '',
         imageUrl: item.imageUrl,
         externalId,
