@@ -35,7 +35,11 @@ Preferred communication style: Simple, everyday language.
 - **Notification System**: Real-time unified system.
 - **Leaderboard System**: Engagement-focused with 5 categories (Fan Leaders, Conversation Starters, Top Predictors, Trivia Champs, Most Helpful) using 'Your Circle' (friends) and Global tabs.
 - **Unified Voting System**: Supports polls, predictions, and trivia.
-- **User Points System**: Aggregates points for user activities.
+- **User Points System**: Comprehensive points system with standardized values:
+  - **Media Logging**: Books (15), TV (10), Movies (8), Games (5), Podcasts (3), Music (1), Reviews (+10)
+  - **Games**: Predictions (+20 correct/-20 wrong), Trivia (10 per correct), Polls (2 participation)
+  - **Social**: Friends (5 each), Referrals (25 when invited user does first activity)
+  - **Engagement**: Posts (10), Likes given (2), Comments (5), Predictions voted (5), Ranks (10), plus bonus for likes/comments received
 - **Smart Recommendations**: GPT-4o powered with caching for instant loading.
 - **Creator Follow System**: Enables users to follow creators and receive updates.
 - **Spoiler Protection**: Blurs spoiler content until revealed.

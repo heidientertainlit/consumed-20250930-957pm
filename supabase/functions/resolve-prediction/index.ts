@@ -118,13 +118,13 @@ serve(async (req) => {
       });
     }
 
-    // Award points: +20 for correct, -5 for incorrect
+    // Award points: +20 for correct, -20 for incorrect
     const updates = [];
     const statsUpdates = new Map(); // Track stats per user
 
     for (const pred of userPredictions || []) {
       const isCorrect = pred.prediction === winning_option;
-      const pointsAwarded = isCorrect ? 20 : -5;
+      const pointsAwarded = isCorrect ? 20 : -20;
 
       // Update user_predictions with points and winner status
       updates.push(
@@ -164,7 +164,7 @@ serve(async (req) => {
       if (existingStats) {
         const newTotalWins = (existingStats.total_wins || 0) + stats.wins;
         const newTotalPredictions = (existingStats.total_predictions || 0) + stats.total;
-        const newTotalPoints = (existingStats.total_points || 0) + (stats.wins * 20 - (stats.total - stats.wins) * 5);
+        const newTotalPoints = (existingStats.total_points || 0) + (stats.wins * 20 - (stats.total - stats.wins) * 20);
         const winPercentage = newTotalPredictions > 0 ? (newTotalWins / newTotalPredictions) * 100 : 0;
 
         // Update streak
@@ -190,7 +190,7 @@ serve(async (req) => {
           .eq('user_id', userId);
       } else {
         // Create new stats entry
-        const totalPoints = stats.wins * 20 - (stats.total - stats.wins) * 5;
+        const totalPoints = stats.wins * 20 - (stats.total - stats.wins) * 20;
         const winPercentage = stats.total > 0 ? (stats.wins / stats.total) * 100 : 0;
 
         await supabaseAdmin

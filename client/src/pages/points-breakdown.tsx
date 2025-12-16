@@ -64,9 +64,9 @@ const CATEGORY_CONFIG = [
   { key: 'podcasts', label: 'Podcasts', icon: Mic, color: 'text-pink-600', bgColor: 'bg-pink-50', pointsPer: 3, description: null },
   { key: 'music', label: 'Music', icon: Music, color: 'text-indigo-600', bgColor: 'bg-indigo-50', pointsPer: 1, description: null },
   { key: 'reviews', label: 'Reviews', icon: MessageSquare, color: 'text-orange-600', bgColor: 'bg-orange-50', pointsPer: 10, description: null },
-  { key: 'predictions', label: 'Predictions', icon: Target, color: 'text-red-600', bgColor: 'bg-red-50', pointsPer: null, description: null },
-  { key: 'trivia', label: 'Trivia', icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', pointsPer: null, description: null },
-  { key: 'polls', label: 'Polls', icon: BarChart3, color: 'text-cyan-600', bgColor: 'bg-cyan-50', pointsPer: null, description: null },
+  { key: 'predictions', label: 'Predictions', icon: Target, color: 'text-red-600', bgColor: 'bg-red-50', pointsPer: null, description: '+20 pts when correct, -20 pts when wrong. High risk, high reward!' },
+  { key: 'trivia', label: 'Trivia', icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', pointsPer: 10, description: '10 pts for each correct answer.' },
+  { key: 'polls', label: 'Polls', icon: BarChart3, color: 'text-cyan-600', bgColor: 'bg-cyan-50', pointsPer: 2, description: '2 pts for participating in polls.' },
   { key: 'friends', label: 'Friends Added', icon: Users, color: 'text-teal-600', bgColor: 'bg-teal-50', pointsPer: 5, description: 'Earn points for each friend connection. Building your network is rewarded!' },
   { key: 'referrals', label: 'Referrals', icon: Gift, color: 'text-rose-600', bgColor: 'bg-rose-50', pointsPer: 25, description: 'Earn 25 points when someone you invite does their first activity (logs media or posts).' },
   { key: 'engagement', label: 'Engagement', icon: TrendingUp, color: 'text-violet-600', bgColor: 'bg-violet-50', pointsPer: null, description: 'Posts (10pts), likes given (2pts), comments (5pts), predictions (5pts), ranks (10pts), plus bonus for likes/comments you receive!' },
@@ -207,7 +207,8 @@ export default function PointsBreakdown() {
                   <ul className="text-sm text-purple-700 mt-2 space-y-1">
                     <li>• Log books for the most points (15 pts each)</li>
                     <li>• Write reviews for bonus points (+10 pts)</li>
-                    <li>• Make predictions and play trivia</li>
+                    <li>• Play trivia for 10 pts per correct answer</li>
+                    <li>• Make predictions: +20 if right, -20 if wrong!</li>
                     <li>• Add friends to grow your network (+5 pts each)</li>
                     <li>• Invite friends and earn 25 pts when they engage!</li>
                   </ul>

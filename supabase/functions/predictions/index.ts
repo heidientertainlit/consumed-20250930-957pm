@@ -207,13 +207,16 @@ serve(async (req) => {
         });
       }
 
-      // Calculate points based on game type
-      let pointsEarned = pool.points_reward;
+      // Calculate points based on game type with STANDARDIZED values
+      // Trivia: 10 pts correct, 0 wrong
+      // Polls: 2 pts participation
+      // Predictions: 0 at voting time, resolved to +20/-20 later
+      let pointsEarned = 0;
       
       if (pool.type === 'trivia') {
-        // For long-form trivia, use the score passed from frontend
+        // For long-form trivia, use the score passed from frontend (10 pts per correct answer)
         if (score !== undefined) {
-          pointsEarned = score;
+          pointsEarned = score * 10; // 10 pts per correct answer
         } 
         // For quick trivia (2 options), check if answer is correct
         else if (Array.isArray(pool.options) && pool.options.length === 2 && typeof pool.options[0] === 'string') {
@@ -223,9 +226,20 @@ serve(async (req) => {
             console.warn(`No correct_answer set for trivia pool ${pool_id}`);
             pointsEarned = 0;
           } else {
-            pointsEarned = prediction === correctAnswer ? pool.points_reward : 0;
+            pointsEarned = prediction === correctAnswer ? 10 : 0; // Standardized: 10 pts correct
           }
+        } else {
+          // Default trivia with correct_answer check
+          const correctAnswer = pool.correct_answer;
+          pointsEarned = prediction === correctAnswer ? 10 : 0;
         }
+      } else if (pool.type === 'vote') {
+        // Polls: 2 pts for participation
+        pointsEarned = 2;
+      } else {
+        // Predictions (predict, weekly, awards, bracket): 0 at voting time
+        // Points will be awarded when pool is resolved (+20 correct, -20 wrong)
+        pointsEarned = 0;
       }
 
       console.log('DEBUG /predict: About to upsert', { user_id: appUser.id, pool_id, prediction, pointsEarned });
