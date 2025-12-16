@@ -80,11 +80,15 @@ serve(async (req) => {
     const { 
       list_id, 
       media_title, 
-      media_type, 
+      media_type,
+      media_subtype,
       media_creator, 
       media_image_url,
       media_external_id,
       media_external_source,
+      season_number,
+      episode_number,
+      episode_title,
       rating,
       review,
       skip_social_post
@@ -169,11 +173,15 @@ serve(async (req) => {
         user_id: appUser?.id,
         title: media_title || 'Untitled',
         media_type: media_type || 'mixed',
+        media_subtype: media_subtype || null,
         creator: media_creator || '',
         image_url: media_image_url || null,
         notes: review || null,
         external_id: media_external_id || null,
-        external_source: media_external_source || 'tmdb'
+        external_source: media_external_source || 'tmdb',
+        season_number: season_number || null,
+        episode_number: episode_number || null,
+        episode_title: episode_title || null
       })
       .select()
       .single();

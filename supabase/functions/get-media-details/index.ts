@@ -17,6 +17,7 @@ serve(async (req) => {
     const source = searchParams.get('source');
     const externalId = searchParams.get('external_id');
     const mediaType = searchParams.get('media_type'); // Get media type from params
+    const seasonNumber = searchParams.get('season'); // Optional: fetch specific season episodes
 
     if (!source || !externalId) {
       return new Response(JSON.stringify({ error: 'Missing source or external_id' }), {
@@ -57,6 +58,27 @@ serve(async (req) => {
       if (response.ok) {
         const data = await response.json();
         const isMovie = !!data.title;
+        
+        // If it's a TV show and we want a specific season's episodes
+        let episodes = null;
+        if (!isMovie && seasonNumber) {
+          const seasonResponse = await fetch(
+            `https://api.themoviedb.org/3/tv/${externalId}/season/${seasonNumber}?api_key=${tmdbKey}`
+          );
+          if (seasonResponse.ok) {
+            const seasonData = await seasonResponse.json();
+            episodes = seasonData.episodes?.map((ep: any) => ({
+              id: ep.id,
+              episodeNumber: ep.episode_number,
+              name: ep.name,
+              overview: ep.overview,
+              airDate: ep.air_date,
+              stillPath: ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : null,
+              runtime: ep.runtime
+            })) || [];
+          }
+        }
+        
         mediaDetails = {
           title: data.title || data.name,
           type: isMovie ? 'Movie' : 'TV Show',
@@ -70,6 +92,15 @@ serve(async (req) => {
           category: data.genres?.[0]?.name || 'Unknown',
           language: 'English',
           totalEpisodes: data.number_of_episodes || (isMovie ? 1 : 0),
+          totalSeasons: data.number_of_seasons || 0,
+          seasons: !isMovie ? data.seasons?.filter((s: any) => s.season_number > 0).map((s: any) => ({
+            seasonNumber: s.season_number,
+            name: s.name,
+            episodeCount: s.episode_count,
+            airDate: s.air_date,
+            poster: s.poster_path ? `https://image.tmdb.org/t/p/w185${s.poster_path}` : null
+          })) : null,
+          episodes: episodes,
           subscribers: data.popularity ? `${Math.floor(data.popularity)}K` : '0',
           averageLength: `${data.runtime || data.episode_run_time?.[0] || 45} min`,
           genres: data.genres?.map((g: any) => g.name) || [],

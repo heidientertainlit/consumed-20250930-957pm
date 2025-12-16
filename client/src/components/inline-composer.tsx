@@ -56,6 +56,15 @@ export default function InlineComposer() {
   // Common state
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  
+  // Episode tracking state for TV shows
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
+  const [selectedEpisodeTitle, setSelectedEpisodeTitle] = useState<string>("");
+  const [seasons, setSeasons] = useState<any[]>([]);
+  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
+  const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
 
   // Fetch user's lists (for optional add to list)
   const { data: userListsData } = useQuery<any>({
@@ -143,6 +152,83 @@ export default function InlineComposer() {
     setSelectedRankId("");
     setPostToFeed(true);
     setContainsSpoilers(false);
+    setSelectedSeason(null);
+    setSelectedEpisode(null);
+    setSelectedEpisodeTitle("");
+    setSeasons([]);
+    setEpisodes([]);
+  };
+  
+  // Fetch seasons when a TV show is selected
+  useEffect(() => {
+    if (selectedMedia && selectedMedia.type === 'tv' && selectedMedia.external_id) {
+      fetchSeasons(selectedMedia.external_id);
+    } else {
+      setSeasons([]);
+      setEpisodes([]);
+      setSelectedSeason(null);
+      setSelectedEpisode(null);
+    }
+  }, [selectedMedia]);
+  
+  // Fetch episodes when a season is selected
+  useEffect(() => {
+    if (selectedMedia && selectedMedia.type === 'tv' && selectedMedia.external_id && selectedSeason) {
+      fetchEpisodes(selectedMedia.external_id, selectedSeason);
+    } else {
+      setEpisodes([]);
+      setSelectedEpisode(null);
+    }
+  }, [selectedSeason]);
+  
+  const fetchSeasons = async (externalId: string) => {
+    setIsLoadingSeasons(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/get-media-details?source=tmdb&external_id=${externalId}&media_type=tv`,
+        {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.seasons && data.seasons.length > 0) {
+          setSeasons(data.seasons);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching seasons:', error);
+    } finally {
+      setIsLoadingSeasons(false);
+    }
+  };
+  
+  const fetchEpisodes = async (externalId: string, seasonNum: number) => {
+    setIsLoadingEpisodes(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/get-media-details?source=tmdb&external_id=${externalId}&media_type=tv&season=${seasonNum}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.episodes && data.episodes.length > 0) {
+          setEpisodes(data.episodes);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching episodes:', error);
+    } finally {
+      setIsLoadingEpisodes(false);
+    }
   };
 
   // PRESERVED: handleMediaSearch - calls media-search edge function
@@ -488,10 +574,14 @@ export default function InlineComposer() {
               list_id: selectedListId,
               media_title: selectedMedia.title || "",
               media_type: selectedMedia.type || "movie",
+              media_subtype: selectedMedia.type === 'tv' && selectedEpisode ? 'episode' : (selectedMedia.type === 'tv' ? 'series' : null),
               media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
               media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
               media_external_id: selectedMedia.external_id || selectedMedia.id || "",
               media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
+              season_number: selectedSeason || null,
+              episode_number: selectedEpisode || null,
+              episode_title: selectedEpisodeTitle || null,
               skip_social_post: true, // Always skip - inline-post handles all social posts to prevent duplicates
             }),
           });
@@ -642,25 +732,86 @@ export default function InlineComposer() {
               
               {/* Selected Media - inside card if attached */}
               {selectedMedia && (
-                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
-                  {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image) && (
-                    <img
-                      src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image}
-                      alt={selectedMedia.title}
-                      className="w-10 h-14 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 text-sm truncate">{selectedMedia.title}</p>
-                    <p className="text-xs text-gray-500 capitalize">{selectedMedia.type}</p>
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-3">
+                    {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image) && (
+                      <img
+                        src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image}
+                        alt={selectedMedia.title}
+                        className="w-10 h-14 object-cover rounded"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm truncate">{selectedMedia.title}</p>
+                      <p className="text-xs text-gray-500 capitalize">
+                        {selectedMedia.type}
+                        {selectedSeason && selectedEpisode && ` • S${selectedSeason}E${selectedEpisode}`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedMedia(null)}
+                      className="text-gray-400 hover:text-red-500 p-1"
+                      data-testid="button-remove-media"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setSelectedMedia(null)}
-                    className="text-gray-400 hover:text-red-500 p-1"
-                    data-testid="button-remove-media"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  
+                  {/* Episode Selector for TV Shows */}
+                  {selectedMedia.type === 'tv' && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-medium text-gray-600">Which episode are you on?</p>
+                      <div className="flex gap-2">
+                        {/* Season Selector */}
+                        <select
+                          value={selectedSeason || ''}
+                          onChange={(e) => {
+                            setSelectedSeason(e.target.value ? Number(e.target.value) : null);
+                            setSelectedEpisode(null);
+                            setSelectedEpisodeTitle("");
+                          }}
+                          className="flex-1 text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          data-testid="select-season"
+                        >
+                          <option value="">Select Season</option>
+                          {isLoadingSeasons ? (
+                            <option disabled>Loading...</option>
+                          ) : (
+                            seasons.map((season) => (
+                              <option key={season.seasonNumber} value={season.seasonNumber}>
+                                Season {season.seasonNumber} ({season.episodeCount} eps)
+                              </option>
+                            ))
+                          )}
+                        </select>
+                        
+                        {/* Episode Selector */}
+                        <select
+                          value={selectedEpisode || ''}
+                          onChange={(e) => {
+                            const epNum = e.target.value ? Number(e.target.value) : null;
+                            setSelectedEpisode(epNum);
+                            const ep = episodes.find(ep => ep.episodeNumber === epNum);
+                            setSelectedEpisodeTitle(ep?.name || "");
+                          }}
+                          disabled={!selectedSeason}
+                          className="flex-1 text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-100 disabled:text-gray-400"
+                          data-testid="select-episode"
+                        >
+                          <option value="">Select Episode</option>
+                          {isLoadingEpisodes ? (
+                            <option disabled>Loading...</option>
+                          ) : (
+                            episodes.map((ep) => (
+                              <option key={ep.episodeNumber} value={ep.episodeNumber}>
+                                E{ep.episodeNumber}: {ep.name?.substring(0, 20)}{ep.name?.length > 20 ? '...' : ''}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
