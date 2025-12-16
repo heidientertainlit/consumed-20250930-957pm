@@ -105,7 +105,8 @@ export default function Search() {
         return data.map((item: any) => ({
           ...item,
           externalId: item.id,
-          externalSource: 'tmdb'
+          externalSource: 'tmdb',
+          mediaSubtype: 'series'
         }));
       } catch (error) {
         console.error('Error fetching Netflix TV shows:', error);
@@ -134,7 +135,8 @@ export default function Search() {
         return data.map((item: any) => ({
           ...item,
           externalId: item.id,
-          externalSource: 'tmdb'
+          externalSource: 'tmdb',
+          mediaSubtype: 'series'
         }));
       } catch (error) {
         console.error('Error fetching HBO TV shows:', error);
@@ -236,7 +238,8 @@ export default function Search() {
         return data.map((item: any) => ({
           ...item,
           externalId: item.id,
-          externalSource: 'tmdb'
+          externalSource: 'tmdb',
+          mediaSubtype: 'series'
         }));
       } catch (error) {
         console.error('Error fetching trending TV shows:', error);
@@ -317,7 +320,8 @@ export default function Search() {
         return data.map((item: any) => ({
           ...item,
           externalId: item.id,
-          externalSource: 'spotify'
+          externalSource: 'spotify',
+          mediaSubtype: 'show' // podcasts are shows
         }));
       } catch (error) {
         console.error('Error fetching trending podcasts:', error);
@@ -351,6 +355,7 @@ export default function Search() {
           rating: rec.confidence,
           year: rec.year,
           mediaType: rec.media_type,
+          mediaSubtype: rec.media_subtype || (rec.media_type === 'tv' ? 'series' : rec.media_type === 'music' ? 'album' : null),
           externalId: rec.external_id,
           externalSource: rec.external_source,
           type: rec.media_type
