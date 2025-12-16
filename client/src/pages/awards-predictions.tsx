@@ -177,9 +177,9 @@ export default function AwardsPredictions() {
     });
   };
 
-  const scrollToCategory = (categoryId: string) => {
+  const switchToCategory = (categoryId: string) => {
     setActiveCategory(categoryId);
-    categoryRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // No scroll needed - we just switch which category is displayed
   };
 
   const getBallotPicks = (): BallotPick[] => {
@@ -265,7 +265,7 @@ export default function AwardsPredictions() {
           )}
           
           <Button 
-            onClick={() => scrollToCategory(event.categories[0]?.id)}
+            onClick={() => switchToCategory(event.categories[0]?.id)}
             className="mt-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold px-8"
             data-testid="button-start-ballot"
           >
@@ -289,7 +289,7 @@ export default function AwardsPredictions() {
               return (
                 <button
                   key={category.id}
-                  onClick={() => scrollToCategory(category.id)}
+                  onClick={() => switchToCategory(category.id)}
                   className={`relative flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                     isActive 
                       ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black' 
@@ -310,17 +310,19 @@ export default function AwardsPredictions() {
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="px-4 py-6 space-y-10">
-        {event.categories.map(category => {
+      {/* Active Category Panel - Only shows one category at a time */}
+      <div className="px-4 py-6">
+        {event.categories.filter(c => c.id === activeCategory).map(category => {
           const userPickId = userPicks.get(category.id);
           const isInsightExpanded = expandedInsight === category.id;
           
           return (
-            <div 
+            <motion.div 
               key={category.id}
-              ref={el => categoryRefs.current[category.id] = el}
-              className="scroll-mt-20"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
             >
               {/* Category Title */}
               <h2 className="text-xl font-bold text-white mb-4">{category.name}</h2>
@@ -468,7 +470,7 @@ export default function AwardsPredictions() {
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -532,7 +534,7 @@ export default function AwardsPredictions() {
                         <button 
                           onClick={() => {
                             setShowBallotModal(false);
-                            scrollToCategory(pick.categoryId);
+                            switchToCategory(pick.categoryId);
                           }}
                           className="text-amber-400 text-sm hover:underline"
                         >
