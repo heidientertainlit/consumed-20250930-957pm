@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Send, User, Trash2, MessageCircle, ChevronUp, ChevronDown } from "lucide-react";
+import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
@@ -149,7 +149,7 @@ function CommentItem({
           <div className="flex items-center space-x-3">
             {/* Upvote/Downvote Buttons */}
             {onVoteComment && (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-0.5">
                 <button
                   onClick={() => onVoteComment(comment.id, 'up')}
                   className={`p-0.5 rounded transition-colors ${
@@ -160,13 +160,16 @@ function CommentItem({
                   data-testid={`button-upvote-comment-${comment.id}`}
                   title="Upvote"
                 >
-                  <ChevronUp size={16} />
+                  <ArrowBigUp 
+                    size={18} 
+                    fill={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'currentColor' : 'none'} 
+                  />
                 </button>
-                <span className={`text-xs font-medium min-w-[20px] text-center ${
+                <span className={`text-xs font-medium min-w-[16px] text-center ${
                   (comment.voteScore || 0) > 0 ? 'text-green-600' : 
                   (comment.voteScore || 0) < 0 ? 'text-red-500' : 'text-gray-500'
                 }`}>
-                  {(comment.voteScore || 0) > 0 ? '+' : ''}{comment.voteScore || 0}
+                  {comment.voteScore || 0}
                 </span>
                 <button
                   onClick={() => onVoteComment(comment.id, 'down')}
@@ -178,7 +181,10 @@ function CommentItem({
                   data-testid={`button-downvote-comment-${comment.id}`}
                   title="Downvote"
                 >
-                  <ChevronDown size={16} />
+                  <ArrowBigDown 
+                    size={18} 
+                    fill={(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'currentColor' : 'none'} 
+                  />
                 </button>
               </div>
             )}
