@@ -1448,10 +1448,12 @@ export default function Feed() {
   // Comment vote mutation (upvote/downvote)
   const commentVoteMutation = useMutation({
     mutationFn: async ({ commentId, direction }: { commentId: string; direction: 'up' | 'down' }) => {
+      console.log('🗳️ Comment vote called:', { commentId, direction });
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const currentVote = commentVotes.get(commentId);
       const isRemoving = currentVote === direction;
+      console.log('🗳️ Vote details:', { currentVote, isRemoving, method: isRemoving ? 'DELETE' : 'POST' });
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/comment-vote`, {
         method: isRemoving ? 'DELETE' : 'POST',
@@ -1462,11 +1464,15 @@ export default function Feed() {
         body: JSON.stringify({ comment_id: commentId, direction }),
       });
 
+      console.log('🗳️ Vote response status:', response.status);
       if (!response.ok) {
         const errorText = await response.text();
+        console.log('🗳️ Vote error:', errorText);
         throw new Error(errorText || 'Failed to vote on comment');
       }
-      return await response.json();
+      const result = await response.json();
+      console.log('🗳️ Vote success:', result);
+      return result;
     },
     onMutate: async ({ commentId, direction }) => {
       const previousVote = commentVotes.get(commentId);
