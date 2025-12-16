@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Check, X, ChevronDown, ChevronUp, Share2, 
-  Users, TrendingUp, Info, ExternalLink, ArrowLeft,
+  Users, TrendingUp, Info, ArrowLeft,
   Sparkles, Lock, Clock, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,28 +15,20 @@ import Navigation from "@/components/navigation";
 interface Nominee {
   id: string;
   name: string;
-  title: string;
-  subtitle?: string;
-  posterUrl: string;
-  tmdbPopularity: number;
-  tmdbId?: string;
-}
-
-interface CategoryInsight {
-  mostPicked: string;
-  percentage: number;
-  trending: number;
-  friendsPicked: number;
-  totalPicks?: number;
+  title: string | null;
+  subtitle?: string | null;
+  poster_url: string | null;
+  tmdb_popularity: number;
+  display_order: number;
 }
 
 interface Category {
   id: string;
   name: string;
-  shortName: string;
+  short_name: string;
+  display_order: number;
+  winner_nominee_id: string | null;
   nominees: Nominee[];
-  insight?: CategoryInsight | null;
-  winner?: string;
 }
 
 interface AwardsEvent {
@@ -44,23 +36,17 @@ interface AwardsEvent {
   slug: string;
   name: string;
   year: number;
-  bannerUrl?: string;
   status: 'open' | 'locked' | 'completed';
-  deadline?: string;
-  ceremonyDate?: string;
-  pointsPerCorrect?: number;
+  deadline: string | null;
+  ceremony_date: string | null;
+  points_per_correct: number;
   categories: Category[];
-  userPicks: Record<string, string>;
 }
 
-interface BallotPick {
-  categoryId: string;
-  nomineeId: string;
-  nomineeName: string;
-  categoryName: string;
+interface UserPick {
+  category_id: string;
+  nominee_id: string;
 }
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export default function AwardsPredictions() {
   const [, navigate] = useLocation();
@@ -69,7 +55,6 @@ export default function AwardsPredictions() {
   const [session, setSession] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [showBallotModal, setShowBallotModal] = useState(false);
-  const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
   const [localPicks, setLocalPicks] = useState<Map<string, string>>(new Map());
   const tabsRef = useRef<HTMLDivElement>(null);
 
@@ -83,42 +68,93 @@ export default function AwardsPredictions() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch event data from Supabase edge function
+  // Fetch event data directly from Supabase
   const { data: event, isLoading, error } = useQuery<AwardsEvent>({
-    queryKey: ['awards-event', 'golden-globes-2026', session?.user?.id],
+    queryKey: ['awards-event', 'golden-globes-2026'],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        slug: 'golden-globes-2026'
-      });
-      if (session?.user?.id) {
-        params.append('user_id', session.user.id);
-      }
+      // Fetch the event
+      const { data: eventData, error: eventError } = await supabase
+        .from('awards_events')
+        .select('*')
+        .eq('slug', 'golden-globes-2026')
+        .single();
       
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/awards-event?${params}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token || ''}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      if (eventError) throw eventError;
+      if (!eventData) throw new Error('Event not found');
+
+      // Fetch categories for this event
+      const { data: categoriesData, error: catError } = await supabase
+        .from('awards_categories')
+        .select('*')
+        .eq('event_id', eventData.id)
+        .order('display_order');
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch awards event');
-      }
+      if (catError) throw catError;
+
+      // Fetch all nominees for these categories
+      const categoryIds = categoriesData?.map(c => c.id) || [];
+      const { data: nomineesData, error: nomError } = await supabase
+        .from('awards_nominees')
+        .select('*')
+        .in('category_id', categoryIds)
+        .order('display_order');
       
-      return response.json();
+      if (nomError) throw nomError;
+
+      // Group nominees by category
+      const nomineesByCategory = (nomineesData || []).reduce((acc, nom) => {
+        if (!acc[nom.category_id]) acc[nom.category_id] = [];
+        acc[nom.category_id].push(nom);
+        return acc;
+      }, {} as Record<string, Nominee[]>);
+
+      // Build the full event object
+      const categories: Category[] = (categoriesData || []).map(cat => ({
+        ...cat,
+        nominees: nomineesByCategory[cat.id] || []
+      }));
+
+      return {
+        ...eventData,
+        categories
+      } as AwardsEvent;
     },
-    enabled: true, // Always fetch, even without session (for public viewing)
   });
 
-  // Initialize local picks from server data
+  // Fetch user picks
+  const { data: userPicks } = useQuery<UserPick[]>({
+    queryKey: ['awards-picks', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('awards_picks')
+        .select('category_id, nominee_id')
+        .eq('user_id', session.user.id);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!session?.user?.id,
+  });
+
+  // Initialize local picks from fetched data
   useEffect(() => {
-    if (event?.userPicks) {
-      setLocalPicks(new Map(Object.entries(event.userPicks)));
+    if (userPicks) {
+      const picksMap = new Map<string, string>();
+      userPicks.forEach(pick => {
+        picksMap.set(pick.category_id, pick.nominee_id);
+      });
+      setLocalPicks(picksMap);
     }
-  }, [event?.userPicks]);
+  }, [userPicks]);
+
+  // Set initial active category
+  useEffect(() => {
+    if (event?.categories?.length && !activeCategory) {
+      setActiveCategory(event.categories[0].id);
+    }
+  }, [event?.categories, activeCategory]);
 
   // Mutation for saving picks
   const savePick = useMutation({
@@ -127,28 +163,21 @@ export default function AwardsPredictions() {
         throw new Error('Must be logged in to make picks');
       }
       
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/awards-pick`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            user_id: session.user.id,
-            category_id: categoryId,
-            nominee_id: nomineeId
-          })
-        }
-      );
+      const { error } = await supabase
+        .from('awards_picks')
+        .upsert({
+          user_id: session.user.id,
+          category_id: categoryId,
+          nominee_id: nomineeId,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,category_id'
+        });
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to save pick');
-      }
-      
-      return response.json();
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['awards-picks'] });
     },
     onError: (error: Error) => {
       toast({
@@ -161,13 +190,6 @@ export default function AwardsPredictions() {
 
   const totalCategories = event?.categories?.length || 0;
   const picksCount = localPicks.size;
-
-  // Set initial active category
-  useEffect(() => {
-    if (event?.categories?.length && !activeCategory) {
-      setActiveCategory(event.categories[0].id);
-    }
-  }, [event?.categories, activeCategory]);
 
   const handlePick = (categoryId: string, nomineeId: string) => {
     if (!event || event.status !== 'open') return;
@@ -185,7 +207,8 @@ export default function AwardsPredictions() {
     setLocalPicks(prev => {
       const newPicks = new Map(prev);
       if (newPicks.get(categoryId) === nomineeId) {
-        newPicks.delete(categoryId);
+        // Toggle off - but we don't support deleting picks yet
+        return prev;
       } else {
         newPicks.set(categoryId, nomineeId);
         // Save to server
@@ -199,10 +222,10 @@ export default function AwardsPredictions() {
     setActiveCategory(categoryId);
   };
 
-  const getBallotPicks = (): BallotPick[] => {
+  const getBallotPicks = () => {
     if (!event) return [];
     
-    const picks: BallotPick[] = [];
+    const picks: { categoryId: string; nomineeId: string; nomineeName: string; categoryName: string }[] = [];
     localPicks.forEach((nomineeId, categoryId) => {
       const category = event.categories.find(c => c.id === categoryId);
       const nominee = category?.nominees.find(n => n.id === nomineeId);
@@ -211,7 +234,7 @@ export default function AwardsPredictions() {
           categoryId,
           nomineeId,
           nomineeName: nominee.name,
-          categoryName: category.shortName
+          categoryName: category.short_name
         });
       }
     });
@@ -222,7 +245,7 @@ export default function AwardsPredictions() {
     if (!event) return;
     
     const shareUrl = `${window.location.origin}/awards/${event.slug}/ballot?user=${session?.user?.id}`;
-    const shareText = `Check out my ${event.year} ${event.name} predictions! 🏆`;
+    const shareText = `Check out my ${event.year} ${event.name} predictions!`;
     
     if (navigator.share) {
       try {
@@ -234,11 +257,6 @@ export default function AwardsPredictions() {
       navigator.clipboard.writeText(shareUrl);
       toast({ title: "Link copied!", description: "Share your ballot with friends" });
     }
-  };
-
-  const handleSubmitBallot = () => {
-    toast({ title: "Ballot saved!", description: `${picksCount} predictions locked in` });
-    setShowBallotModal(false);
   };
 
   // Loading state
@@ -260,11 +278,12 @@ export default function AwardsPredictions() {
         <div className="text-center px-4">
           <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Awards Not Found</h1>
-          <p className="text-gray-400 mb-6">The awards event could not be loaded.</p>
+          <p className="text-gray-400 mb-6">The awards event could not be loaded. Make sure the database is set up.</p>
           <Button onClick={() => navigate('/play')} variant="outline">
             Back to Play
           </Button>
         </div>
+        <Navigation />
       </div>
     );
   }
@@ -313,15 +332,6 @@ export default function AwardsPredictions() {
               Predictions are locked. Results coming soon!
             </div>
           )}
-          
-          <Button 
-            onClick={() => switchToCategory(event.categories[0]?.id)}
-            className="mt-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold px-8"
-            data-testid="button-start-ballot"
-          >
-            <Sparkles className="mr-2" size={18} />
-            Start My Ballot
-          </Button>
         </div>
       </div>
 
@@ -347,7 +357,7 @@ export default function AwardsPredictions() {
                   }`}
                   data-testid={`tab-category-${category.id}`}
                 >
-                  {category.shortName}
+                  {category.short_name}
                   {hasPick && (
                     <span className="ml-2 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
                       <Check size={10} className="text-white" />
@@ -360,11 +370,10 @@ export default function AwardsPredictions() {
         </div>
       </div>
 
-      {/* Active Category Panel - Only shows one category at a time */}
+      {/* Active Category Panel */}
       <div className="px-4 py-6">
         {event.categories.filter(c => c.id === activeCategory).map(category => {
           const userPickId = localPicks.get(category.id);
-          const isInsightExpanded = expandedInsight === category.id;
           
           return (
             <motion.div 
@@ -376,60 +385,13 @@ export default function AwardsPredictions() {
             >
               {/* Category Title */}
               <h2 className="text-xl font-bold text-white mb-4">{category.name}</h2>
-              
-              {/* Insight Panel */}
-              {category.insight && (
-                <div className="mb-4">
-                  <button
-                    onClick={() => setExpandedInsight(isInsightExpanded ? null : category.id)}
-                    className="flex items-center justify-between w-full bg-gray-800/50 rounded-lg px-4 py-3 text-left"
-                    data-testid={`button-insight-${category.id}`}
-                  >
-                    <div className="flex items-center text-amber-400">
-                      <Sparkles size={16} className="mr-2" />
-                      <span className="text-sm font-medium">Category Insight</span>
-                    </div>
-                    {isInsightExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                  </button>
-                  
-                  <AnimatePresence>
-                    {isInsightExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="bg-gray-800/30 rounded-b-lg px-4 py-3 space-y-2 text-sm">
-                          <div className="flex items-center text-gray-300">
-                            <Trophy size={14} className="mr-2 text-amber-400" />
-                            <span>Most picked: <span className="text-white font-medium">{category.insight.mostPicked}</span></span>
-                          </div>
-                          <div className="flex items-center text-gray-300">
-                            <Users size={14} className="mr-2 text-blue-400" />
-                            <span><span className="text-white font-medium">{category.insight.percentage}%</span> of users chose this nominee</span>
-                          </div>
-                          <div className="flex items-center text-gray-300">
-                            <TrendingUp size={14} className="mr-2 text-green-400" />
-                            <span>Trending <span className="text-green-400">↑ {category.insight.trending}%</span> in the last 48 hours</span>
-                          </div>
-                          <div className="flex items-center text-gray-300">
-                            <Users size={14} className="mr-2 text-purple-400" />
-                            <span><span className="text-white font-medium">{category.insight.friendsPicked}</span> of your friends picked this</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
 
               {/* Nominee Cards */}
               <div className="space-y-3">
                 {category.nominees.map(nominee => {
                   const isPicked = userPickId === nominee.id;
-                  const isWinner = event.status === 'completed' && category.winner === nominee.id;
-                  const userWasCorrect = event.status === 'completed' && userPickId === category.winner;
+                  const isWinner = event.status === 'completed' && category.winner_nominee_id === nominee.id;
+                  const userWasCorrect = event.status === 'completed' && userPickId === category.winner_nominee_id;
                   
                   return (
                     <motion.div
@@ -452,15 +414,15 @@ export default function AwardsPredictions() {
                       )}
                       
                       {/* Poster */}
-                      <div className="w-16 h-24 rounded-lg overflow-hidden shadow-lg flex-shrink-0 mr-4">
-                        {nominee.posterUrl ? (
+                      <div className="w-16 h-24 rounded-lg overflow-hidden shadow-lg flex-shrink-0 mr-4 bg-gray-700">
+                        {nominee.poster_url ? (
                           <img 
-                            src={nominee.posterUrl} 
+                            src={nominee.poster_url} 
                             alt={nominee.title || nominee.name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                          <div className="w-full h-full flex items-center justify-center">
                             <Trophy size={24} className="text-gray-500" />
                           </div>
                         )}
@@ -476,28 +438,13 @@ export default function AwardsPredictions() {
                           <p className="text-gray-500 text-xs">{nominee.subtitle}</p>
                         )}
                         
-                        {/* Buzz Score */}
-                        <div className="flex items-center mt-2 text-sm">
-                          <span className="text-amber-400 font-medium">
-                            Buzz Score: {Math.round(nominee.tmdbPopularity)}
-                          </span>
-                          <button 
-                            onClick={(e) => e.stopPropagation()}
-                            className="ml-1 text-gray-500 hover:text-gray-300"
-                            title="Based on TMDB's global popularity metric"
-                          >
-                            <Info size={14} />
-                          </button>
-                          <span className="text-gray-500 text-xs ml-1">(TMDB)</span>
-                        </div>
-                        
                         {/* Result indicator */}
                         {event.status === 'completed' && isPicked && (
                           <div className={`mt-2 flex items-center text-sm ${userWasCorrect ? 'text-green-400' : 'text-red-400'}`}>
                             {userWasCorrect ? (
                               <>
                                 <Check size={16} className="mr-1" />
-                                You got this right! (+{event.pointsPerCorrect || 20} pts)
+                                You got this right! (+{event.points_per_correct} pts)
                               </>
                             ) : (
                               <>
@@ -606,7 +553,7 @@ export default function AwardsPredictions() {
                 <div className="flex items-center justify-between text-sm text-gray-400">
                   <span>{picksCount} of {totalCategories} categories picked</span>
                   <span className="text-amber-400">
-                    Potential: +{picksCount * (event.pointsPerCorrect || 20)} pts
+                    Potential: +{picksCount * event.points_per_correct} pts
                   </span>
                 </div>
                 
@@ -622,13 +569,12 @@ export default function AwardsPredictions() {
                     Share
                   </Button>
                   <Button
-                    onClick={handleSubmitBallot}
+                    onClick={() => setShowBallotModal(false)}
                     className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-semibold"
-                    disabled={picksCount === 0}
-                    data-testid="button-submit-ballot"
+                    data-testid="button-done-ballot"
                   >
                     <Check size={18} className="mr-2" />
-                    Save Ballot
+                    Done
                   </Button>
                 </div>
               </div>
