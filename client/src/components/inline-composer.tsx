@@ -705,7 +705,8 @@ export default function InlineComposer() {
         if (addToList && selectedListId && selectedMedia) {
           return true;
         }
-        return selectedMedia && contentText.trim().length > 0;
+        // Allow posting with just text (no media required)
+        return contentText.trim().length > 0;
       case "rating":
         return selectedMedia && (ratingValue > 0 || contentText.trim().length > 0);
       case "prediction":
