@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Send, User, Trash2, Heart, MessageCircle, Star } from "lucide-react";
+import { Send, User, Trash2, MessageCircle, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
@@ -18,6 +18,8 @@ interface Comment {
   };
   likesCount?: number;
   likedByCurrentUser?: boolean;
+  voteScore?: number; // upvotes - downvotes
+  currentUserVote?: 'up' | 'down' | null; // user's current vote
   replies?: Comment[]; // Nested replies
 }
 
@@ -32,7 +34,9 @@ interface CommentsSectionProps {
   currentUserId?: string;
   onDeleteComment?: (commentId: string, postId: string) => void;
   onLikeComment?: (commentId: string) => void;
+  onVoteComment?: (commentId: string, direction: 'up' | 'down') => void;
   likedComments?: Set<string>;
+  commentVotes?: Map<string, 'up' | 'down'>; // Track user's votes per comment
 }
 
 interface CommentItemProps {
@@ -41,7 +45,9 @@ interface CommentItemProps {
   currentUserId?: string;
   onDeleteComment?: (commentId: string, postId: string) => void;
   onLikeComment?: (commentId: string) => void;
+  onVoteComment?: (commentId: string, direction: 'up' | 'down') => void;
   likedComments: Set<string>;
+  commentVotes: Map<string, 'up' | 'down'>;
   commentLikesEnabled: boolean;
   postId: string;
   onSubmitReply: (parentCommentId: string, content: string) => void;
@@ -55,7 +61,9 @@ function CommentItem({
   currentUserId,
   onDeleteComment,
   onLikeComment,
+  onVoteComment,
   likedComments,
+  commentVotes,
   commentLikesEnabled,
   postId,
   onSubmitReply,
@@ -139,26 +147,40 @@ function CommentItem({
           
           {/* Action buttons */}
           <div className="flex items-center space-x-3">
-            {/* Comment Like Button */}
-            {commentLikesEnabled && onLikeComment && (
-              <button
-                onClick={() => onLikeComment(comment.id)}
-                className={`flex items-center space-x-1 transition-colors ${
-                  comment.likedByCurrentUser || likedComments.has(comment.id)
-                    ? 'text-red-500' 
-                    : 'text-gray-400 hover:text-red-400'
-                }`}
-                data-testid={`button-like-comment-${comment.id}`}
-                title="Like comment"
-              >
-                <Heart 
-                  size={14} 
-                  className={comment.likedByCurrentUser || likedComments.has(comment.id) ? 'fill-current' : ''} 
-                />
-                {(comment.likesCount || 0) > 0 && (
-                  <span className="text-xs">{comment.likesCount}</span>
-                )}
-              </button>
+            {/* Upvote/Downvote Buttons */}
+            {onVoteComment && (
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => onVoteComment(comment.id, 'up')}
+                  className={`p-0.5 rounded transition-colors ${
+                    (comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up')
+                      ? 'text-green-500' 
+                      : 'text-gray-400 hover:text-green-500'
+                  }`}
+                  data-testid={`button-upvote-comment-${comment.id}`}
+                  title="Upvote"
+                >
+                  <ChevronUp size={16} />
+                </button>
+                <span className={`text-xs font-medium min-w-[20px] text-center ${
+                  (comment.voteScore || 0) > 0 ? 'text-green-600' : 
+                  (comment.voteScore || 0) < 0 ? 'text-red-500' : 'text-gray-500'
+                }`}>
+                  {(comment.voteScore || 0) > 0 ? '+' : ''}{comment.voteScore || 0}
+                </span>
+                <button
+                  onClick={() => onVoteComment(comment.id, 'down')}
+                  className={`p-0.5 rounded transition-colors ${
+                    (comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down')
+                      ? 'text-red-500' 
+                      : 'text-gray-400 hover:text-red-500'
+                  }`}
+                  data-testid={`button-downvote-comment-${comment.id}`}
+                  title="Downvote"
+                >
+                  <ChevronDown size={16} />
+                </button>
+              </div>
             )}
             
             {/* Reply Button */}
@@ -238,7 +260,9 @@ function CommentItem({
               currentUserId={currentUserId}
               onDeleteComment={onDeleteComment}
               onLikeComment={onLikeComment}
+              onVoteComment={onVoteComment}
               likedComments={likedComments}
+              commentVotes={commentVotes}
               commentLikesEnabled={commentLikesEnabled}
               postId={postId}
               onSubmitReply={onSubmitReply}
@@ -263,7 +287,9 @@ export default function CommentsSection({
   currentUserId,
   onDeleteComment,
   onLikeComment,
+  onVoteComment,
   likedComments = new Set(),
+  commentVotes = new Map(),
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
@@ -333,7 +359,9 @@ export default function CommentsSection({
               currentUserId={currentUserId}
               onDeleteComment={onDeleteComment}
               onLikeComment={onLikeComment}
+              onVoteComment={onVoteComment}
               likedComments={likedComments}
+              commentVotes={commentVotes}
               commentLikesEnabled={commentLikesEnabled}
               postId={postId}
               onSubmitReply={handleSubmitReply}

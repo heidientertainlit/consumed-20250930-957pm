@@ -85,6 +85,7 @@ serve(async (req) => {
           created_at,
           user_id,
           parent_comment_id,
+          vote_score,
           users!inner(user_name, email)
         `)
         .eq('social_post_id', post_id)
@@ -102,36 +103,60 @@ serve(async (req) => {
         username: comment.users?.user_name || comment.users?.email?.split('@')[0]
       })) || [];
 
-      // Include like metadata if requested
-      if (includeMeta && comments && comments.length > 0) {
+      // Always include vote metadata for comments
+      if (comments && comments.length > 0) {
         const commentIds = comments.map(c => c.id);
         
-        // Get like counts for each comment
-        const { data: likeCounts } = await serviceSupabase
-          .from('social_comment_likes')
-          .select('comment_id')
-          .in('comment_id', commentIds);
-
-        const likeCountMap: Record<number, number> = {};
-        likeCounts?.forEach(like => {
-          likeCountMap[like.comment_id] = (likeCountMap[like.comment_id] || 0) + 1;
-        });
-
-        // Check which comments current user has liked
-        const { data: userLikes } = await serviceSupabase
-          .from('social_comment_likes')
-          .select('comment_id')
+        // Get user's votes on comments
+        const { data: userVotes } = await serviceSupabase
+          .from('social_comment_votes')
+          .select('comment_id, vote_type')
           .eq('user_id', user.id)
           .in('comment_id', commentIds);
 
-        const userLikedSet = new Set(userLikes?.map(l => l.comment_id));
+        const userVoteMap: Record<string, string> = {};
+        userVotes?.forEach(vote => {
+          userVoteMap[vote.comment_id] = vote.vote_type === 1 ? 'up' : 'down';
+        });
 
-        // Add metadata to each comment
-        transformedComments = transformedComments.map(comment => ({
-          ...comment,
-          likesCount: likeCountMap[comment.id] || 0,
-          isLiked: userLikedSet.has(comment.id)
-        }));
+        // Include like metadata if requested
+        if (includeMeta) {
+          // Get like counts for each comment
+          const { data: likeCounts } = await serviceSupabase
+            .from('social_comment_likes')
+            .select('comment_id')
+            .in('comment_id', commentIds);
+
+          const likeCountMap: Record<number, number> = {};
+          likeCounts?.forEach(like => {
+            likeCountMap[like.comment_id] = (likeCountMap[like.comment_id] || 0) + 1;
+          });
+
+          // Check which comments current user has liked
+          const { data: userLikes } = await serviceSupabase
+            .from('social_comment_likes')
+            .select('comment_id')
+            .eq('user_id', user.id)
+            .in('comment_id', commentIds);
+
+          const userLikedSet = new Set(userLikes?.map(l => l.comment_id));
+
+          // Add all metadata to each comment
+          transformedComments = transformedComments.map(comment => ({
+            ...comment,
+            likesCount: likeCountMap[comment.id] || 0,
+            isLiked: userLikedSet.has(comment.id),
+            voteScore: comment.vote_score || 0,
+            currentUserVote: userVoteMap[comment.id] || null
+          }));
+        } else {
+          // Add vote metadata only
+          transformedComments = transformedComments.map(comment => ({
+            ...comment,
+            voteScore: comment.vote_score || 0,
+            currentUserVote: userVoteMap[comment.id] || null
+          }));
+        }
       }
 
       // Build nested tree structure
@@ -194,6 +219,8 @@ serve(async (req) => {
         username: comment.users?.user_name || comment.users?.email?.split('@')[0],
         likesCount: 0,
         isLiked: false,
+        voteScore: 0,
+        currentUserVote: null,
         replies: []
       };
 

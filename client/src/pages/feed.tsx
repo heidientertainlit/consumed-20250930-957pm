@@ -530,6 +530,7 @@ export default function Feed() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const likedPostsInitialized = useRef(false); // Track if we've done initial sync
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
+  const [commentVotes, setCommentVotes] = useState<Map<string, 'up' | 'down'>>(new Map()); // Track user's comment votes
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
@@ -1444,6 +1445,64 @@ export default function Feed() {
     },
   });
 
+  // Comment vote mutation (upvote/downvote)
+  const commentVoteMutation = useMutation({
+    mutationFn: async ({ commentId, direction }: { commentId: string; direction: 'up' | 'down' }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const currentVote = commentVotes.get(commentId);
+      const isRemoving = currentVote === direction;
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/comment-vote`, {
+        method: isRemoving ? 'DELETE' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment_id: commentId, direction }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to vote on comment');
+      }
+      return await response.json();
+    },
+    onMutate: async ({ commentId, direction }) => {
+      const previousVote = commentVotes.get(commentId);
+      
+      // Optimistic update
+      setCommentVotes(prev => {
+        const newMap = new Map(prev);
+        if (previousVote === direction) {
+          // Clicking same direction removes vote
+          newMap.delete(commentId);
+        } else {
+          newMap.set(commentId, direction);
+        }
+        return newMap;
+      });
+      
+      return { previousVote };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["post-comments"] });
+    },
+    onError: (error, { commentId }, context) => {
+      console.error('Comment vote error:', error);
+      // Revert optimistic update
+      setCommentVotes(prev => {
+        const newMap = new Map(prev);
+        if (context?.previousVote) {
+          newMap.set(commentId, context.previousVote);
+        } else {
+          newMap.delete(commentId);
+        }
+        return newMap;
+      });
+    },
+  });
+
   // Fetch comments query with recursive transformation for nested replies
   const fetchComments = async (postId: string) => {
     if (!session?.access_token) throw new Error('Not authenticated');
@@ -1532,6 +1591,10 @@ export default function Feed() {
     if (!commentLikesEnabled) return; // Safety check
     const wasLiked = likedComments.has(commentId);
     commentLikeMutation.mutate({ commentId, wasLiked });
+  };
+
+  const handleVoteComment = (commentId: string, direction: 'up' | 'down') => {
+    commentVoteMutation.mutate({ commentId, direction });
   };
 
   const hasRating = (content: string): boolean => {
@@ -2124,7 +2187,9 @@ export default function Feed() {
                           currentUserId={user?.id}
                           onDeleteComment={handleDeleteComment}
                           onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                          onVoteComment={handleVoteComment}
                           likedComments={likedComments}
+                          commentVotes={commentVotes}
                         />
                       </div>
                     </div>
@@ -2962,7 +3027,9 @@ export default function Feed() {
                         currentUserId={user?.id}
                         onDeleteComment={handleDeleteComment}
                         onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                        onVoteComment={handleVoteComment}
                         likedComments={likedComments}
+                        commentVotes={commentVotes}
                       />
                     )}
                   </div>
