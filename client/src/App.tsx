@@ -35,6 +35,8 @@ import OnboardingPage from "./pages/onboarding";
 import NotFoundPage from "./pages/not-found";
 import About from "@/pages/about";
 import PointsBreakdown from "@/pages/points-breakdown";
+import AwardsPredictions from "@/pages/awards-predictions";
+import AwardsBallotShare from "@/pages/awards-ballot-share";
 
 function Router() {
   return (
@@ -125,6 +127,19 @@ function Router() {
           <ProtectedRoute>
             <PlayPredictions />
           </ProtectedRoute>
+        </Route>
+        <Route path="/play/awards">
+          <ProtectedRoute>
+            <AwardsPredictions />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/awards/:eventId">
+          <ProtectedRoute>
+            <AwardsPredictions />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/awards/:eventId/ballot">
+          <AwardsBallotShare />
         </Route>
         <Route path="/play/high-stakes">
           <ProtectedRoute>
