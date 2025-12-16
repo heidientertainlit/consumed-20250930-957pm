@@ -147,12 +147,12 @@ function CommentItem({
           
           {/* Action buttons */}
           <div className="flex items-center space-x-3">
-            {/* Upvote/Downvote Buttons */}
+            {/* Upvote/Downvote Buttons - Rank style with separate counts */}
             {onVoteComment && (
-              <div className="flex items-center space-x-0.5">
+              <div className="flex items-center space-x-1">
                 <button
                   onClick={() => onVoteComment(comment.id, 'up')}
-                  className={`p-0.5 rounded transition-colors ${
+                  className={`flex items-center space-x-0.5 p-0.5 rounded transition-colors ${
                     (comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up')
                       ? 'text-green-500' 
                       : 'text-gray-400 hover:text-green-500'
@@ -164,16 +164,13 @@ function CommentItem({
                     size={18} 
                     fill={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'currentColor' : 'none'} 
                   />
+                  <span className="text-xs font-medium">
+                    {Math.max(0, comment.voteScore || 0)}
+                  </span>
                 </button>
-                <span className={`text-xs font-medium min-w-[16px] text-center ${
-                  (comment.voteScore || 0) > 0 ? 'text-green-600' : 
-                  (comment.voteScore || 0) < 0 ? 'text-red-500' : 'text-gray-500'
-                }`}>
-                  {comment.voteScore || 0}
-                </span>
                 <button
                   onClick={() => onVoteComment(comment.id, 'down')}
-                  className={`p-0.5 rounded transition-colors ${
+                  className={`flex items-center space-x-0.5 p-0.5 rounded transition-colors ${
                     (comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down')
                       ? 'text-red-500' 
                       : 'text-gray-400 hover:text-red-500'

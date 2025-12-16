@@ -1542,6 +1542,8 @@ export default function Feed() {
       },
       likesCount: comment.likesCount || 0,
       likedByCurrentUser: comment.isLiked || false,
+      voteScore: comment.voteScore || 0,
+      currentUserVote: comment.currentUserVote || null,
       replies: comment.replies?.map(transformComment) || [] // Recursively transform replies
     });
 
