@@ -727,7 +727,7 @@ export default function PlayPage() {
                 data-testid="browse-awards"
               >
                 <Award className="text-amber-600" size={24} />
-                <span className="text-xs font-medium text-amber-600">Awards</span>
+                <span className="text-[10px] font-medium text-amber-600 text-center leading-tight">Awards<br/>Ballots</span>
               </button>
             </Link>
             <Link href="/leaderboard">
