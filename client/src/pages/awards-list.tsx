@@ -41,7 +41,10 @@ export default function AwardsList() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, hasNominees: boolean = true) => {
+    if (status === 'locked' && !hasNominees) {
+      return <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full">Coming Soon</span>;
+    }
     switch (status) {
       case 'open':
         return <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Open</span>;
@@ -52,6 +55,10 @@ export default function AwardsList() {
       default:
         return null;
     }
+  };
+
+  const isComingSoon = (event: AwardsEvent) => {
+    return event.status === 'locked';
   };
 
   return (
@@ -83,44 +90,61 @@ export default function AwardsList() {
           </div>
         ) : events && events.length > 0 ? (
           <div className="space-y-4">
-            {events.map((event, index) => (
-              <motion.button
+            {events.map((event, index) => {
+              const comingSoon = isComingSoon(event);
+              return (
+              <motion.div
                 key={event.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                onClick={() => navigate(`/play/awards/${event.slug}`)}
-                className="w-full bg-gradient-to-r from-gray-800/80 to-gray-900/80 border border-gray-700/50 rounded-2xl p-5 text-left hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 transition-all group"
+                onClick={() => !comingSoon && navigate(`/play/awards/${event.slug}`)}
+                className={`w-full rounded-2xl p-5 text-left transition-all ${
+                  comingSoon 
+                    ? 'bg-gray-800/40 border border-gray-700/30 cursor-default opacity-70' 
+                    : 'bg-gradient-to-r from-gray-800/80 to-gray-900/80 border border-gray-700/50 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 cursor-pointer group'
+                }`}
                 data-testid={`button-awards-${event.slug}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0">
-                      <Award size={28} className="text-black" />
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      comingSoon 
+                        ? 'bg-gradient-to-br from-gray-600 to-gray-700' 
+                        : 'bg-gradient-to-br from-amber-500 to-amber-600'
+                    }`}>
+                      <Award size={28} className={comingSoon ? 'text-gray-400' : 'text-black'} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-semibold text-white group-hover:text-amber-400 transition-colors">
+                        <h3 className={`text-lg font-semibold transition-colors ${
+                          comingSoon ? 'text-gray-400' : 'text-white group-hover:text-amber-400'
+                        }`}>
                           {event.name} {event.year}
                         </h3>
-                        {getStatusBadge(event.status)}
+                        {getStatusBadge(event.status, !comingSoon)}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-400">
                         <span className="flex items-center">
                           <Calendar size={14} className="mr-1" />
                           {formatDate(event.ceremony_date)}
                         </span>
-                        <span className="flex items-center">
-                          <Sparkles size={14} className="mr-1" />
-                          +{event.points_per_correct} pts/correct
-                        </span>
+                        {!comingSoon && (
+                          <span className="flex items-center">
+                            <Sparkles size={14} className="mr-1" />
+                            +{event.points_per_correct} pts/correct
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                  <ChevronRight size={24} className="text-gray-500 group-hover:text-amber-400 transition-colors" />
+                  {!comingSoon && (
+                    <ChevronRight size={24} className="text-gray-500 group-hover:text-amber-400 transition-colors" />
+                  )}
                 </div>
-              </motion.button>
-            ))}
+              </motion.div>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12 bg-gray-800/50 rounded-2xl border border-gray-700">
