@@ -1,6 +1,7 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -118,6 +119,131 @@ export default function Leaderboard() {
   });
 
   const currentUserId = leaderboardData?.currentUserId;
+
+  // Fetch awards events and their leaderboards
+  interface AwardsEvent {
+    id: string;
+    name: string;
+    year: number;
+    slug: string;
+    status: string;
+  }
+
+  interface AwardsLeaderEntry {
+    user_id: string;
+    display_name: string;
+    username: string;
+    picks_count: number;
+    correct_count: number;
+  }
+
+  const { data: awardsEvents } = useQuery<AwardsEvent[]>({
+    queryKey: ['awards-events-leaderboard'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('awards_events')
+        .select('id, name, year, slug, status')
+        .in('status', ['open', 'locked', 'resolved'])
+        .order('year', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const [expandedAwards, setExpandedAwards] = useState<Set<string>>(new Set());
+
+  const toggleAwardsExpanded = (eventId: string) => {
+    setExpandedAwards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+      } else {
+        newSet.add(eventId);
+      }
+      return newSet;
+    });
+  };
+
+  // Fetch leaderboard for expanded awards
+  const { data: awardsLeaderboards } = useQuery<Record<string, AwardsLeaderEntry[]>>({
+    queryKey: ['awards-leaderboards', Array.from(expandedAwards), scope],
+    queryFn: async () => {
+      if (expandedAwards.size === 0) return {};
+      
+      const results: Record<string, AwardsLeaderEntry[]> = {};
+      
+      for (const eventId of expandedAwards) {
+        // Get categories for this event
+        const { data: categories } = await supabase
+          .from('awards_categories')
+          .select('id')
+          .eq('event_id', eventId);
+        
+        if (!categories?.length) continue;
+        
+        const categoryIds = categories.map(c => c.id);
+        
+        // Get all picks for these categories
+        const { data: picks } = await supabase
+          .from('awards_picks')
+          .select('user_id, category_id, nominee_id')
+          .in('category_id', categoryIds);
+        
+        if (!picks?.length) continue;
+        
+        // Count picks per user
+        const userPickCounts: Record<string, number> = {};
+        picks.forEach(p => {
+          userPickCounts[p.user_id] = (userPickCounts[p.user_id] || 0) + 1;
+        });
+        
+        const userIds = Object.keys(userPickCounts);
+        
+        // Get user profiles
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, username')
+          .in('id', userIds);
+        
+        // If friends scope, filter to friends only
+        let filteredUserIds = userIds;
+        if (scope === 'friends' && session?.user?.id) {
+          const { data: friendships } = await supabase
+            .from('friendships')
+            .select('friend_id, user_id')
+            .or(`user_id.eq.${session.user.id},friend_id.eq.${session.user.id}`)
+            .eq('status', 'accepted');
+          
+          const friendIds = (friendships || []).map(f => 
+            f.user_id === session.user.id ? f.friend_id : f.user_id
+          );
+          // Include self
+          friendIds.push(session.user.id);
+          filteredUserIds = userIds.filter(id => friendIds.includes(id));
+        }
+        
+        const entries: AwardsLeaderEntry[] = filteredUserIds
+          .map(userId => {
+            const profile = profiles?.find(p => p.id === userId);
+            return {
+              user_id: userId,
+              display_name: profile?.display_name || 'Anonymous',
+              username: profile?.username || 'anonymous',
+              picks_count: userPickCounts[userId] || 0,
+              correct_count: 0, // TODO: Calculate after results
+            };
+          })
+          .sort((a, b) => b.picks_count - a.picks_count)
+          .slice(0, 10);
+        
+        results[eventId] = entries;
+      }
+      
+      return results;
+    },
+    enabled: expandedAwards.size > 0,
+  });
 
   const renderLeaderboardList = (
     entries: LeaderboardEntry[] | undefined,
@@ -401,6 +527,119 @@ export default function Leaderboard() {
                 { label: 'Do Predictions', href: '/play/predictions' },
                 true
               )}
+
+              {/* Awards Section */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+                <div className="bg-gradient-to-r from-amber-500 to-yellow-500 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Award className="text-white" size={20} />
+                      <h3 className="text-base font-bold text-white">Awards</h3>
+                    </div>
+                    <Link 
+                      href="/play/awards"
+                      className="text-white/90 hover:text-white text-sm font-medium flex items-center gap-1"
+                      data-testid="link-awards-action"
+                    >
+                      All Awards →
+                    </Link>
+                  </div>
+                </div>
+                
+                {awardsEvents && awardsEvents.length > 0 ? (
+                  <div className="divide-y divide-gray-100">
+                    {awardsEvents.map(event => {
+                      const isExpanded = expandedAwards.has(event.id);
+                      const leaders = awardsLeaderboards?.[event.id] || [];
+                      
+                      return (
+                        <div key={event.id}>
+                          <button
+                            onClick={() => toggleAwardsExpanded(event.id)}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                            data-testid={`button-expand-${event.slug}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Trophy size={18} className="text-amber-500" />
+                              <span className="font-medium text-gray-900">{event.year} {event.name}</span>
+                              {event.status === 'open' && (
+                                <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Open</span>
+                              )}
+                              {event.status === 'locked' && (
+                                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">Locked</span>
+                              )}
+                            </div>
+                            {isExpanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+                          </button>
+                          
+                          {isExpanded && (
+                            <div className="bg-gray-50 border-t border-gray-100">
+                              {leaders.length > 0 ? (
+                                <div className="divide-y divide-gray-100">
+                                  {leaders.map((entry, index) => {
+                                    const isCurrentUser = entry.user_id === currentUserId;
+                                    const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
+                                    
+                                    return (
+                                      <div
+                                        key={entry.user_id}
+                                        className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : ''}`}
+                                      >
+                                        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                                          {index < 3 ? (
+                                            <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                                              {index + 1}
+                                            </div>
+                                          ) : (
+                                            <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                                          )}
+                                        </div>
+                                        
+                                        <Link 
+                                          href={`/user/${entry.user_id}`}
+                                          className="flex-1 min-w-0"
+                                        >
+                                          <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                                            {entry.display_name}
+                                            {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                                          </p>
+                                          <p className="text-xs text-gray-500">@{entry.username}</p>
+                                        </Link>
+                                        
+                                        <div className="text-right">
+                                          <p className="font-bold text-amber-600">{entry.picks_count} picks</p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="p-6 text-center text-gray-500 text-sm">
+                                  No ballots submitted yet. Be the first!
+                                </div>
+                              )}
+                              
+                              <div className="p-3 border-t border-gray-100 bg-white">
+                                <Link 
+                                  href={`/play/awards/${event.slug}`}
+                                  className="w-full block text-center py-2 text-sm text-amber-600 hover:text-amber-700 font-medium"
+                                  data-testid={`link-make-picks-${event.slug}`}
+                                >
+                                  Make Your Picks →
+                                </Link>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-gray-500">
+                    <p className="text-sm">No awards events available yet.</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="consumption">
