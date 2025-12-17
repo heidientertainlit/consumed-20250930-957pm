@@ -42,6 +42,7 @@ import OnboardingPage from "./pages/onboarding";
 import NotFoundPage from "./pages/not-found";
 import About from "@/pages/about";
 import PointsBreakdown from "@/pages/points-breakdown";
+import AwardsList from "@/pages/awards-list";
 import AwardsPredictions from "@/pages/awards-predictions";
 import AwardsBallotShare from "@/pages/awards-ballot-share";
 
@@ -136,6 +137,11 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/play/awards">
+          <ProtectedRoute>
+            <AwardsList />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/play/awards/:slug">
           <ProtectedRoute>
             <AwardsPredictions />
           </ProtectedRoute>

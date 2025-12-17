@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Check, X, ChevronDown, ChevronUp, Share2, 
@@ -50,6 +50,8 @@ interface UserPick {
 
 export default function AwardsPredictions() {
   const [, navigate] = useLocation();
+  const [matchPlay, paramsPlay] = useRoute('/play/awards/:slug');
+  const [matchAwards, paramsAwards] = useRoute('/awards/:eventId');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [session, setSession] = useState<any>(null);
@@ -57,6 +59,8 @@ export default function AwardsPredictions() {
   const [showBallotModal, setShowBallotModal] = useState(false);
   const [localPicks, setLocalPicks] = useState<Map<string, string>>(new Map());
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  const eventSlug = paramsPlay?.slug || paramsAwards?.eventId || 'golden-globes-2026';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,13 +74,13 @@ export default function AwardsPredictions() {
 
   // Fetch event data directly from Supabase
   const { data: event, isLoading, error } = useQuery<AwardsEvent>({
-    queryKey: ['awards-event', 'golden-globes-2026'],
+    queryKey: ['awards-event', eventSlug],
     queryFn: async () => {
       // Fetch the event
       const { data: eventData, error: eventError } = await supabase
         .from('awards_events')
         .select('*')
-        .eq('slug', 'golden-globes-2026')
+        .eq('slug', eventSlug)
         .single();
       
       if (eventError) throw eventError;
@@ -279,8 +283,8 @@ export default function AwardsPredictions() {
           <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Awards Not Found</h1>
           <p className="text-gray-400 mb-6">The awards event could not be loaded. Make sure the database is set up.</p>
-          <Button onClick={() => navigate('/play')} variant="outline">
-            Back to Play
+          <Button onClick={() => navigate('/play/awards')} variant="outline">
+            Back to Awards
           </Button>
         </div>
         <Navigation />
@@ -297,12 +301,12 @@ export default function AwardsPredictions() {
         
         <div className="relative px-4 pt-12 pb-8">
           <button 
-            onClick={() => navigate('/play')}
+            onClick={() => navigate('/play/awards')}
             className="flex items-center text-gray-400 hover:text-white mb-4 transition-colors"
-            data-testid="button-back-play"
+            data-testid="button-back-awards"
           >
             <ArrowLeft size={20} className="mr-2" />
-            Back to Play
+            Back to Awards
           </button>
           
           <div className="flex items-center space-x-3 mb-3">
