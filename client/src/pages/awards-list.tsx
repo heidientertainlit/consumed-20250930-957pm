@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Trophy, ArrowLeft, Calendar, Users, ChevronRight, Award, Sparkles } from "lucide-react";
+import { Trophy, ArrowLeft, Calendar, Clock, ChevronRight, Award, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navigation from "@/components/navigation";
 
@@ -124,10 +124,16 @@ export default function AwardsList() {
                         </h3>
                         {getStatusBadge(event.status, !comingSoon)}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-400">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">
+                        {!comingSoon && event.deadline && (
+                          <span className="flex items-center">
+                            <Clock size={14} className="mr-1 text-amber-400" />
+                            Due: {formatDate(event.deadline)}
+                          </span>
+                        )}
                         <span className="flex items-center">
                           <Calendar size={14} className="mr-1" />
-                          {formatDate(event.ceremony_date)}
+                          Airs: {formatDate(event.ceremony_date)}
                         </span>
                         {!comingSoon && (
                           <span className="flex items-center">
