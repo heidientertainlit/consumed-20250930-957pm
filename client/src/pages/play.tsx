@@ -693,7 +693,7 @@ export default function PlayPage() {
         {/* Quick Access to All Games */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h3 className="text-base font-semibold text-gray-900 mb-4">What would you like to do</h3>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <Link href="/play/predictions">
               <button
                 className="flex flex-col items-center gap-2 p-4 rounded-xl bg-red-50 hover:bg-red-100 transition-colors w-full"
@@ -727,19 +727,19 @@ export default function PlayPage() {
                 data-testid="browse-awards"
               >
                 <Award className="text-amber-600" size={24} />
-                <span className="text-[10px] font-medium text-amber-600 text-center leading-tight">Awards<br/>Ballots</span>
-              </button>
-            </Link>
-            <Link href="/leaderboard">
-              <button
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors w-full"
-                data-testid="browse-leaderboard"
-              >
-                <Trophy className="text-amber-600" size={24} />
-                <span className="text-xs font-medium text-amber-600">Leaderboard</span>
+                <span className="text-xs font-medium text-amber-600">Awards Ballots</span>
               </button>
             </Link>
           </div>
+          <Link href="/leaderboard">
+            <button
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition-colors"
+              data-testid="browse-leaderboard"
+            >
+              <Trophy className="text-white" size={20} />
+              <span className="text-sm font-semibold text-white">View Leaderboard</span>
+            </button>
+          </Link>
         </div>
 
         {/* Leaders Section */}
