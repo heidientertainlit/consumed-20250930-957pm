@@ -142,6 +142,78 @@ export default function AwardsPredictions() {
     enabled: !!session?.user?.id,
   });
 
+  // Fetch participants (users who have submitted ballots)
+  interface Participant {
+    user_id: string;
+    picks_count: number;
+    display_name: string | null;
+    avatar_url: string | null;
+    is_friend: boolean;
+  }
+  
+  const { data: participants } = useQuery<{ friends: Participant[]; totalCount: number }>({
+    queryKey: ['awards-participants', event?.id],
+    queryFn: async () => {
+      if (!event?.id) return { friends: [], totalCount: 0 };
+      
+      const categoryIds = event.categories.map(c => c.id);
+      
+      // Get all users who have made picks for this event's categories
+      const { data: picksData, error: picksError } = await supabase
+        .from('awards_picks')
+        .select('user_id')
+        .in('category_id', categoryIds);
+      
+      if (picksError) throw picksError;
+      
+      // Count unique users and their picks
+      const userPickCounts = (picksData || []).reduce((acc, pick) => {
+        acc[pick.user_id] = (acc[pick.user_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const uniqueUserIds = Object.keys(userPickCounts);
+      const totalCount = uniqueUserIds.length;
+      
+      if (totalCount === 0) return { friends: [], totalCount: 0 };
+      
+      // Get user profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', uniqueUserIds.slice(0, 20)); // Limit to first 20
+      
+      if (profilesError) throw profilesError;
+      
+      // Get current user's friends
+      let friendIds: string[] = [];
+      if (session?.user?.id) {
+        const { data: friendships } = await supabase
+          .from('friendships')
+          .select('friend_id, user_id')
+          .or(`user_id.eq.${session.user.id},friend_id.eq.${session.user.id}`)
+          .eq('status', 'accepted');
+        
+        friendIds = (friendships || []).map(f => 
+          f.user_id === session.user.id ? f.friend_id : f.user_id
+        );
+      }
+      
+      const friends: Participant[] = (profiles || [])
+        .filter(p => friendIds.includes(p.id))
+        .map(p => ({
+          user_id: p.id,
+          picks_count: userPickCounts[p.id] || 0,
+          display_name: p.display_name,
+          avatar_url: p.avatar_url,
+          is_friend: true
+        }));
+      
+      return { friends, totalCount };
+    },
+    enabled: !!event?.id,
+  });
+
   // Initialize local picks from fetched data
   useEffect(() => {
     if (userPicks) {
@@ -336,6 +408,56 @@ export default function AwardsPredictions() {
               Predictions are locked. Results coming soon!
             </div>
           )}
+
+          {/* Who's Playing Section */}
+          <div className="mt-6 bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-white flex items-center">
+                <Users size={16} className="mr-2 text-purple-400" />
+                Who's Playing
+              </h3>
+              <button
+                onClick={() => navigate(`/play/awards/${eventSlug}/leaderboard`)}
+                className="text-xs text-purple-400 hover:text-purple-300 flex items-center"
+                data-testid="button-see-leaderboard"
+              >
+                See Leaderboard
+                <TrendingUp size={14} className="ml-1" />
+              </button>
+            </div>
+            
+            {participants?.friends && participants.friends.length > 0 ? (
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex -space-x-2">
+                  {participants.friends.slice(0, 5).map((friend, i) => (
+                    <div
+                      key={friend.user_id}
+                      className="w-8 h-8 rounded-full border-2 border-gray-800 overflow-hidden bg-purple-600 flex items-center justify-center"
+                      title={friend.display_name || 'Friend'}
+                    >
+                      {friend.avatar_url ? (
+                        <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-white font-medium">
+                          {(friend.display_name || '?')[0].toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {participants.friends.length > 5 && (
+                    <div className="w-8 h-8 rounded-full border-2 border-gray-800 bg-gray-700 flex items-center justify-center">
+                      <span className="text-xs text-gray-300">+{participants.friends.length - 5}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+            
+            <p className="text-xs text-gray-400">
+              {participants?.friends?.length || 0} friend{(participants?.friends?.length || 0) !== 1 ? 's' : ''} playing
+              {participants?.totalCount ? ` • ${participants.totalCount} total ballot${participants.totalCount !== 1 ? 's' : ''}` : ''}
+            </p>
+          </div>
         </div>
       </div>
 
