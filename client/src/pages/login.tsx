@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,6 +140,30 @@ export default function LoginPage() {
     } else {
       // Set flag for route guard to redirect to onboarding
       sessionStorage.setItem('pendingOnboarding', 'true');
+      
+      // Check if there's a referrer and send friend request
+      const referrerId = localStorage.getItem('consumed_referrer');
+      if (referrerId && data?.user?.id) {
+        try {
+          // Get a fresh session for the new user
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData?.session?.access_token) {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-friendships`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${sessionData.session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ action: 'sendRequest', friendId: referrerId }),
+            });
+            console.log('Auto-sent friend request to referrer:', referrerId);
+          }
+        } catch (err) {
+          console.error('Failed to auto-send friend request:', err);
+        }
+        localStorage.removeItem('consumed_referrer');
+      }
+      
       setJustSignedUp(true);
       setSubmitting(false);
     }

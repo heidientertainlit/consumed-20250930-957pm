@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Helmet } from "react-helmet";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function InvitePage() {
   const { userId } = useParams<{ userId: string }>();
@@ -27,10 +28,17 @@ export default function InvitePage() {
   });
 
   useEffect(() => {
+    if (userId) {
+      localStorage.setItem('consumed_referrer', userId);
+      console.log('Stored referrer:', userId);
+    }
+  }, [userId]);
+
+  useEffect(() => {
     if (profile?.id) {
       const timer = setTimeout(() => {
-        navigate(`/user/${profile.id}`);
-      }, 1500);
+        navigate('/login');
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [profile?.id, navigate]);
@@ -75,9 +83,19 @@ export default function InvitePage() {
                 <span className="font-semibold text-purple-400">{displayName}</span> wants to see what you're watching, reading, and listening to
               </p>
               <p className="text-gray-400 text-sm mb-4">
-                Redirecting you to their profile...
+                Sign up to connect with {displayName} and share your entertainment!
               </p>
-              <Loader2 className="w-6 h-6 animate-spin text-purple-400 mx-auto" />
+              <Button
+                onClick={() => navigate('/login')}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3"
+                data-testid="button-join-now"
+              >
+                Join Now
+              </Button>
+              <p className="text-gray-500 text-xs mt-3">
+                <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
+                Or wait to be redirected...
+              </p>
             </div>
           )}
         </div>
