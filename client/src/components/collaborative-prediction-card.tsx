@@ -421,8 +421,18 @@ export default function CollaborativePredictionCard({
   
   return (
     <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border border-gray-200'} shadow-sm rounded-2xl p-4`}>
-      {/* Header: Username action + Media Title */}
+      {/* Header: Avatar + Username action + Media Title */}
       <div className="flex items-start gap-3 mb-2">
+        {/* Avatar */}
+        {!isConsumedPrediction && (
+          <button
+            onClick={() => setLocation(`/profile/${creator.username}`)}
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0 hover:opacity-90 transition-opacity"
+            data-testid="avatar-prediction-creator"
+          >
+            <span className="text-sm">{creator.username?.[0]?.toUpperCase() || '?'}</span>
+          </button>
+        )}
         <div className="flex-1 min-w-0">
           {/* Username posted a poll/prediction about [Media Title] */}
           <p className="text-sm text-gray-700 mb-1">
@@ -435,7 +445,7 @@ export default function CollaborativePredictionCard({
                   className="text-purple-600 font-semibold hover:text-purple-800 transition-colors"
                   data-testid="link-prediction-creator"
                 >
-                  @{creator.username}
+                  {creator.username}
                 </button>
                 <span className="text-gray-500"> posted a {isPoll ? 'poll' : 'prediction'}{actualMediaTitle ? ' about ' : ''}</span>
                 {actualMediaTitle && (
