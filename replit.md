@@ -72,6 +72,52 @@ Preferred communication style: Simple, everyday language.
 - **Edge Functions**: Adhere to schema, handle user auto-creation, accept `user_id` for profile viewing.
 - **Privacy Toggle System**: Controls list visibility.
 
+## SQL Templates
+
+### Adding a Trivia Challenge
+Required fields for `prediction_pools` table when `type='trivia'`:
+
+```sql
+INSERT INTO prediction_pools (
+  id,
+  title,
+  description,
+  type,
+  category,
+  icon,
+  points_reward,
+  status,
+  origin_type,
+  options
+) VALUES (
+  'consumed-trivia-[slug]',           -- id: must start with 'consumed-trivia-' for platform content
+  '[Challenge Title]',                 -- title: display name
+  '[Description text]',                -- description: subtitle/description
+  'trivia',                            -- type: always 'trivia' for trivia challenges
+  '[Category]',                        -- category: Movies, TV, Music, Books, Podcasts, Sports, Pop Culture
+  '[emoji]',                           -- icon: emoji like 🎬 📺 🎵 📚 🎙️ 🏆
+  [points],                            -- points_reward: integer (e.g., 100)
+  'open',                              -- status: 'open' for active
+  'consumed',                          -- origin_type: 'consumed' for platform content
+  '[
+    {
+      "question": "Question text?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": "Correct Option"
+    }
+  ]'::jsonb                            -- options: JSONB array of question objects
+);
+```
+
+**Category Icons:**
+- Movies: 🎬
+- TV: 📺
+- Music: 🎵
+- Books: 📚
+- Podcasts: 🎙️
+- Sports: 🏆
+- Pop Culture: 🌟
+
 ## External Dependencies
 
 -   **Database & Backend**: Supabase (PostgreSQL + Edge Functions)
