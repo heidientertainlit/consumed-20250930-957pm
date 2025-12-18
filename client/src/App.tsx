@@ -1,4 +1,6 @@
 import { Switch, Route, useLocation } from "wouter";
+import { useEffect } from "react";
+import { sessionTracker } from "./lib/sessionTracker";
 
 // Simple redirect component for wouter
 function RedirectTo({ to }: { to: string }) {
@@ -6,6 +8,19 @@ function RedirectTo({ to }: { to: string }) {
   setLocation(to, { replace: true });
   return null;
 }
+
+// Track page views on route changes
+function PageTracker({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    // Track page view when location changes
+    sessionTracker.trackPageView(location);
+  }, [location]);
+
+  return <>{children}</>;
+}
+
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -51,7 +66,8 @@ import PublicProfilePage from "@/pages/public-profile";
 function Router() {
   return (
     <AuthProvider>
-      <Switch>
+      <PageTracker>
+        <Switch>
         <Route path="/login">
           <PublicOnlyRoute>
             <LoginPage />
@@ -239,8 +255,9 @@ function Router() {
             <EngagePage />
           </ProtectedRoute>
         </Route>
-        <Route component={NotFoundPage} />
-      </Switch>
+          <Route component={NotFoundPage} />
+        </Switch>
+      </PageTracker>
     </AuthProvider>
   );
 }
