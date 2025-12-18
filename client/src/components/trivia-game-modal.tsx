@@ -38,6 +38,19 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
   const { session } = useAuth();
   const queryClient = useQueryClient();
 
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentQuestion(0);
+      setSelectedAnswer("");
+      setUserAnswers([]);
+      setScore(0);
+      setIsComplete(false);
+      setShowCelebration(null);
+      setHasSharedToFeed(false);
+    }
+  }, [isOpen]);
+
   // Cleanup celebration timer on unmount
   useEffect(() => {
     return () => {
@@ -185,7 +198,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
   if (isComplete) {
     return (
       <>
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
           <DialogContent className="max-w-lg bg-white border-gray-200 text-gray-800">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-gray-900 text-center">
@@ -258,8 +271,8 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-lg bg-white border-gray-200 text-gray-800" onEscapeKeyDown={onClose} onInteractOutside={onClose}>
+      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="max-w-lg bg-white border-gray-200 text-gray-800">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-gray-900">{title}</DialogTitle>
             <div className="flex items-center justify-between mt-3">
