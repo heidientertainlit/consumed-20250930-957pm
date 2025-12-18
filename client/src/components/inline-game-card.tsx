@@ -81,8 +81,19 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     return true;
   });
 
-  const effectiveIndex = (gameIndex + currentGameOffset) % Math.max(availableGames.length, 1);
-  const currentGame = availableGames[effectiveIndex];
+  // Separate polls and trivia for alternating display
+  const polls = availableGames.filter(g => g.type === 'vote');
+  const trivia = availableGames.filter(g => g.type === 'trivia');
+  
+  // Alternate: even gameIndex = poll, odd gameIndex = trivia
+  const shouldShowTrivia = (gameIndex + currentGameOffset) % 2 === 1;
+  const targetList = shouldShowTrivia ? trivia : polls;
+  // Fallback to the other type if preferred type is empty
+  const fallbackList = shouldShowTrivia ? polls : trivia;
+  const activeList = targetList.length > 0 ? targetList : fallbackList;
+  
+  const effectiveIndex = Math.floor((gameIndex + currentGameOffset) / 2) % Math.max(activeList.length, 1);
+  const currentGame = activeList[effectiveIndex];
 
   const submitAnswer = useMutation({
     mutationFn: async ({ poolId, answer, score, game }: { poolId: string; answer: string; score?: number; game: Game }) => {
