@@ -339,12 +339,14 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
               </Badge>
             </div>
           </div>
-          {/* Category pills row */}
+          {/* Category pills row - supports comma-separated categories */}
           {currentGame.category && (
             <div className="px-5 pt-4 flex flex-wrap gap-2">
-              <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
-                {currentGame.category}
-              </Badge>
+              {currentGame.category.split(',').map((cat: string, idx: number) => (
+                <Badge key={idx} className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
+                  {cat.trim()}
+                </Badge>
+              ))}
             </div>
           )}
           <div className="p-5 pt-3">
