@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Sparkles, ArrowRight, Trophy } from 'lucide-react';
+import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -295,13 +295,19 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
       // Trivia without valid questions - skip to next game
       return null;
     }
+    const isQuickTrivia = totalTriviaQuestions === 1;
+    const TriviaTypeIcon = isQuickTrivia ? Zap : Trophy;
+    
     return (
       <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-card">
         <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Icon className="text-white" size={20} />
-              <span className="text-white font-semibold">{currentGame.title}</span>
+              <TriviaTypeIcon className="text-white" size={16} />
+              <span className="text-white font-semibold">
+                {isQuickTrivia ? 'Quick Trivia' : 'Challenge'}
+              </span>
             </div>
             <Badge className="bg-white/20 text-white border-0">
               {triviaQuestionIndex + 1}/{totalTriviaQuestions}
