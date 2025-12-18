@@ -27,6 +27,13 @@ export default function PlayTriviaPage() {
   const [celebrationTimer, setCelebrationTimer] = useState<NodeJS.Timeout | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [triviaType, setTriviaType] = useState<'all' | 'challenges' | 'quick'>('all');
+
+  const triviaTypeFilters = [
+    { id: 'all', label: 'All' },
+    { id: 'challenges', label: 'Challenges (10 Q)' },
+    { id: 'quick', label: 'Quick Trivia (1 Q)' },
+  ];
 
   const categoryFilters = [
     { id: 'all', label: 'All', icon: '🎯' },
@@ -227,8 +234,21 @@ export default function PlayTriviaPage() {
       filtered = filtered.filter((game: any) => game.category === selectedCategory);
     }
     
+    // Apply trivia type filter (challenges = 10 questions, quick = 1 question)
+    if (triviaType === 'challenges') {
+      filtered = filtered.filter((game: any) => {
+        const questionCount = Array.isArray(game.options) ? game.options.length : 0;
+        return questionCount >= 10;
+      });
+    } else if (triviaType === 'quick') {
+      filtered = filtered.filter((game: any) => {
+        const questionCount = Array.isArray(game.options) ? game.options.length : 0;
+        return questionCount === 1;
+      });
+    }
+    
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory]);
+  }, [processedGames, searchQuery, selectedCategory, triviaType]);
   
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
@@ -291,6 +311,24 @@ export default function PlayTriviaPage() {
               className="pl-10 bg-white border-gray-200 rounded-xl"
               data-testid="trivia-search-input"
             />
+          </div>
+
+          {/* Trivia Type Filter */}
+          <div className="flex gap-2 justify-center mb-3">
+            {triviaTypeFilters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setTriviaType(filter.id as 'all' | 'challenges' | 'quick')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  triviaType === filter.id
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+                data-testid={`type-filter-${filter.id}`}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
 
           {/* Category Filter Pills */}
@@ -488,17 +526,17 @@ export default function PlayTriviaPage() {
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Brain className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery || selectedCategory ? 'No matching trivia found' : 'No trivia games available'}
+              {searchQuery || selectedCategory || triviaType !== 'all' ? 'No matching trivia found' : 'No trivia games available'}
             </h3>
             <p className="text-gray-600">
-              {searchQuery || selectedCategory 
-                ? 'Try a different search term or category filter' 
+              {searchQuery || selectedCategory || triviaType !== 'all'
+                ? 'Try a different search term or filter' 
                 : 'Check back soon for new trivia!'}
             </p>
-            {(searchQuery || selectedCategory) && (
+            {(searchQuery || selectedCategory || triviaType !== 'all') && (
               <Button
                 variant="outline"
-                onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
+                onClick={() => { setSearchQuery(''); setSelectedCategory(null); setTriviaType('all'); }}
                 className="mt-4"
                 data-testid="clear-filters"
               >
