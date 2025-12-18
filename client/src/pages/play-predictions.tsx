@@ -372,21 +372,12 @@ export default function PlayPredictionsPage() {
               {lowStakesGames.map((game: any) => (
                 <Card key={game.id} className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
                   <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <div className="text-2xl">{game.icon}</div>
                         <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase">
                           Predict
                         </Badge>
-                        {game.isConsumed ? (
-                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium">
-                            🏆 Consumed
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium">
-                            👥 Community
-                          </Badge>
-                        )}
                       </div>
                       <Button
                         variant="outline"
@@ -398,6 +389,17 @@ export default function PlayPredictionsPage() {
                         <UserPlus size={14} className="mr-1" />
                         Invite to Play
                       </Button>
+                    </div>
+                    <div className="mb-2">
+                      {game.isConsumed ? (
+                        <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium">
+                          🏆 Consumed
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium">
+                          👥 Community
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Show media title if available, otherwise show title */}
@@ -486,21 +488,12 @@ export default function PlayPredictionsPage() {
               {highStakesGames.map((game: any) => (
                 <Card key={game.id} className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 shadow-sm rounded-2xl overflow-hidden">
                   <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <Star className="text-amber-600" size={24} />
                         <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium uppercase">
                           High Stakes
                         </Badge>
-                        {game.isConsumed ? (
-                          <Badge className="bg-amber-200 text-amber-800 hover:bg-amber-200 text-xs font-medium">
-                            🏆 Consumed
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium">
-                            👥 Community
-                          </Badge>
-                        )}
                       </div>
                       <Button
                         variant="outline"
@@ -512,6 +505,17 @@ export default function PlayPredictionsPage() {
                         <UserPlus size={14} className="mr-1" />
                         Invite to Play
                       </Button>
+                    </div>
+                    <div className="mb-2">
+                      {game.isConsumed ? (
+                        <Badge className="bg-amber-200 text-amber-800 hover:bg-amber-200 text-xs font-medium">
+                          🏆 Consumed
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium">
+                          👥 Community
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Show media title if available, otherwise show title */}
