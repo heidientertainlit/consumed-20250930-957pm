@@ -1,9 +1,17 @@
 import { supabase } from './supabase';
 
+interface PageView {
+  page: string;
+  enteredAt: number;
+  scrollDepth: number;
+}
+
 class SessionTracker {
   private sessionId: string | null = null;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   private userId: string | null = null;
+  private currentPage: PageView | null = null;
+  private pageViews: Array<{ page: string; duration: number; scrollDepth: number }> = [];
 
   async startSession(userId: string) {
     if (this.sessionId && this.userId === userId) {
@@ -133,9 +141,125 @@ class SessionTracker {
     // Send final heartbeat on page unload
     // The session will be marked as ended based on last_heartbeat
     if (this.sessionId && this.userId) {
+      this.finishCurrentPage();
       this.sendHeartbeat();
     }
   };
+
+  // Track when user navigates to a new page
+  trackPageView(page: string) {
+    if (!this.sessionId || !this.userId) return;
+
+    // Finish tracking the previous page
+    this.finishCurrentPage();
+
+    // Start tracking new page
+    this.currentPage = {
+      page,
+      enteredAt: Date.now(),
+      scrollDepth: 0,
+    };
+
+    // Track scroll depth
+    this.setupScrollTracking();
+
+    console.log('📊 Page view:', page);
+  }
+
+  private finishCurrentPage() {
+    if (this.currentPage) {
+      const duration = Math.round((Date.now() - this.currentPage.enteredAt) / 1000);
+      
+      // Only track if user spent at least 1 second on page
+      if (duration >= 1) {
+        this.pageViews.push({
+          page: this.currentPage.page,
+          duration,
+          scrollDepth: this.currentPage.scrollDepth,
+        });
+      }
+      
+      this.currentPage = null;
+    }
+  }
+
+  private setupScrollTracking() {
+    const updateScrollDepth = () => {
+      if (!this.currentPage) return;
+      
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 100;
+      
+      this.currentPage.scrollDepth = Math.max(this.currentPage.scrollDepth, scrollPercent);
+    };
+
+    // Update on scroll (throttled via passive listener)
+    window.addEventListener('scroll', updateScrollDepth, { passive: true });
+  }
+
+  // Track specific user actions/events
+  trackEvent(eventName: string, properties?: Record<string, any>) {
+    if (!this.sessionId || !this.userId) return;
+
+    // Log event for debugging
+    console.log('📊 Event:', eventName, properties);
+
+    // Send event to database asynchronously
+    this.sendEvent(eventName, properties);
+  }
+
+  private async sendEvent(eventName: string, properties?: Record<string, any>) {
+    if (!this.sessionId || !this.userId) return;
+
+    try {
+      await supabase
+        .from('user_events')
+        .insert({
+          user_id: this.userId,
+          session_id: this.sessionId,
+          event_name: eventName,
+          properties: properties || {},
+          created_at: new Date().toISOString(),
+        });
+    } catch (error) {
+      // Silent fail for events - don't interrupt user experience
+      console.error('Failed to send event:', error);
+    }
+  }
+
+  // Get page views for current session (for heartbeat)
+  private getAndClearPageViews() {
+    const views = [...this.pageViews];
+    this.pageViews = [];
+    return views;
+  }
+
+  // Enhanced heartbeat that includes page view data
+  private async sendHeartbeatWithPageViews() {
+    if (!this.sessionId || !this.userId) return;
+
+    // Include current page in the data
+    this.finishCurrentPage();
+    const pageViews = this.getAndClearPageViews();
+
+    try {
+      const { error } = await supabase
+        .from('user_sessions')
+        .update({
+          last_heartbeat: new Date().toISOString(),
+          page_views: pageViews.length > 0 ? pageViews : undefined,
+        })
+        .eq('session_id', this.sessionId)
+        .eq('user_id', this.userId);
+
+      if (error) {
+        console.error('Failed to send heartbeat:', error);
+      }
+    } catch (error) {
+      console.error('Error sending heartbeat:', error);
+    }
+  }
 }
 
 // Export singleton instance
