@@ -402,14 +402,22 @@ export default function PlayPredictionsPage() {
                       )}
                     </div>
 
-                    {/* Show media title if available, otherwise show title */}
+                    {/* Show media title for context, then the question */}
                     {game.media_title && game.media_title !== game.title ? (
                       <>
                         <div className="text-sm font-medium text-purple-600 mb-1">{game.media_title}</div>
                         <CardTitle className="text-xl font-bold text-gray-900 mb-2">{game.title}</CardTitle>
                       </>
+                    ) : game.category ? (
+                      <>
+                        <div className="text-sm font-medium text-purple-600 mb-1">{game.category}</div>
+                        <CardTitle className="text-xl font-bold text-gray-900 mb-2">{game.title}</CardTitle>
+                      </>
                     ) : (
-                      <CardTitle className="text-xl font-bold text-gray-900 mb-2 mt-2">{game.title}</CardTitle>
+                      <>
+                        <div className="text-sm font-medium text-gray-400 mb-1 italic">General Prediction</div>
+                        <CardTitle className="text-xl font-bold text-gray-900 mb-2">{game.title}</CardTitle>
+                      </>
                     )}
                     {/* Only show description if different from title */}
                     {game.description && game.description !== game.title && (
@@ -518,14 +526,22 @@ export default function PlayPredictionsPage() {
                       )}
                     </div>
 
-                    {/* Show media title if available, otherwise show title */}
+                    {/* Show media title for context, then the question */}
                     {game.media_title && game.media_title !== game.title ? (
                       <>
                         <div className="text-sm font-medium text-amber-600 mb-1">{game.media_title}</div>
                         <CardTitle className="text-xl font-bold text-amber-900 mb-2">{game.title}</CardTitle>
                       </>
+                    ) : game.category ? (
+                      <>
+                        <div className="text-sm font-medium text-amber-600 mb-1">{game.category}</div>
+                        <CardTitle className="text-xl font-bold text-amber-900 mb-2">{game.title}</CardTitle>
+                      </>
                     ) : (
-                      <CardTitle className="text-xl font-bold text-amber-900 mb-2 mt-2">{game.title}</CardTitle>
+                      <>
+                        <div className="text-sm font-medium text-amber-500 mb-1 italic">General Prediction</div>
+                        <CardTitle className="text-xl font-bold text-amber-900 mb-2">{game.title}</CardTitle>
+                      </>
                     )}
                     {/* Only show description if different from title */}
                     {game.description && game.description !== game.title && (
