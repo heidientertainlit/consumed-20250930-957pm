@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Brain, Star, Users, UserPlus, ChevronLeft, Search } from 'lucide-react';
+import { Brain, Star, Users, UserPlus, ChevronLeft, Search, SlidersHorizontal } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
@@ -28,6 +28,7 @@ export default function PlayTriviaPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [triviaType, setTriviaType] = useState<'all' | 'challenges' | 'quick'>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const triviaTypeFilters = [
     { id: 'all', label: 'All' },
@@ -299,63 +300,82 @@ export default function PlayTriviaPage() {
             Test your knowledge against friends on different entertainment topics
           </p>
 
-          {/* Search Input */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              type="text"
-              placeholder="Search trivia (e.g., Harry Potter, Friends, Taylor Swift...)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white border-gray-200 rounded-xl"
-              data-testid="trivia-search-input"
-            />
+          {/* Search and Filter Row */}
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                type="text"
+                placeholder="Search trivia..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-white border-gray-200 rounded-xl"
+                data-testid="trivia-search-input"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+                showFilters || triviaType !== 'all' || selectedCategory
+                  ? 'bg-purple-50 border-purple-300 text-purple-700'
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+              data-testid="filter-toggle"
+            >
+              <SlidersHorizontal size={18} />
+              <span className="text-sm font-medium">Filter</span>
+              {(triviaType !== 'all' || selectedCategory) && (
+                <span className="w-2 h-2 bg-purple-600 rounded-full" />
+              )}
+            </button>
           </div>
 
-          {/* Combined Filters */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-            {/* Type Filter Row */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-500 w-12">Type:</span>
-              <div className="flex gap-2 flex-wrap">
-                {triviaTypeFilters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    onClick={() => setTriviaType(filter.id as 'all' | 'challenges' | 'quick')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      triviaType === filter.id
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid={`type-filter-${filter.id}`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
+          {/* Filter Panel (Collapsible) */}
+          {showFilters && (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4 mb-4">
+              {/* Type Filter Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-600 w-12">Type:</span>
+                <div className="flex gap-2 flex-wrap">
+                  {triviaTypeFilters.map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setTriviaType(filter.id as 'all' | 'challenges' | 'quick')}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        triviaType === filter.id
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      data-testid={`type-filter-${filter.id}`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Category Filter Row */}
-            <div className="flex items-start gap-2">
-              <span className="text-xs font-medium text-gray-500 w-12 pt-1.5">Topic:</span>
-              <div className="flex flex-wrap gap-2">
-                {categoryFilters.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      selectedCategory === cat.id
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid={`filter-${cat.id}`}
-                  >
-                    {cat.icon} {cat.label}
-                  </button>
-                ))}
+              {/* Category Filter Row */}
+              <div className="flex items-start gap-3">
+                <span className="text-sm font-medium text-gray-600 w-12 pt-2">Topic:</span>
+                <div className="flex flex-wrap gap-2">
+                  {categoryFilters.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        selectedCategory === cat.id
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      data-testid={`filter-${cat.id}`}
+                    >
+                      {cat.icon} {cat.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Trivia Games Section */}
