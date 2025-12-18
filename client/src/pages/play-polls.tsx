@@ -29,6 +29,9 @@ export default function PlayPollsPage() {
     { id: 'Movies', label: 'Movies', icon: '🎬' },
     { id: 'TV', label: 'TV', icon: '📺' },
     { id: 'Music', label: 'Music', icon: '🎵' },
+    { id: 'Books', label: 'Books', icon: '📚' },
+    { id: 'Sports', label: 'Sports', icon: '🏆' },
+    { id: 'Podcasts', label: 'Podcasts', icon: '🎙️' },
     { id: 'Pop Culture', label: 'Pop Culture', icon: '⭐' },
   ];
 
