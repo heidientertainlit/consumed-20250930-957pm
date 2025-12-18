@@ -12,6 +12,7 @@ class SessionTracker {
   private userId: string | null = null;
   private currentPage: PageView | null = null;
   private pageViews: Array<{ page: string; duration: number; scrollDepth: number }> = [];
+  private scrollHandler: (() => void) | null = null;
 
   async startSession(userId: string) {
     if (this.sessionId && this.userId === userId) {
@@ -166,6 +167,12 @@ class SessionTracker {
   }
 
   private finishCurrentPage() {
+    // Remove scroll listener first
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler);
+      this.scrollHandler = null;
+    }
+
     if (this.currentPage) {
       const duration = Math.round((Date.now() - this.currentPage.enteredAt) / 1000);
       
@@ -182,8 +189,27 @@ class SessionTracker {
     }
   }
 
+  // Capture current page data without clearing it (for heartbeats)
+  private captureCurrentPageData(): { page: string; duration: number; scrollDepth: number } | null {
+    if (!this.currentPage) return null;
+    
+    const duration = Math.round((Date.now() - this.currentPage.enteredAt) / 1000);
+    if (duration < 1) return null;
+    
+    return {
+      page: this.currentPage.page,
+      duration,
+      scrollDepth: this.currentPage.scrollDepth,
+    };
+  }
+
   private setupScrollTracking() {
-    const updateScrollDepth = () => {
+    // Remove existing listener if any
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler);
+    }
+
+    this.scrollHandler = () => {
       if (!this.currentPage) return;
       
       const scrollTop = window.scrollY;
@@ -194,7 +220,7 @@ class SessionTracker {
     };
 
     // Update on scroll (throttled via passive listener)
-    window.addEventListener('scroll', updateScrollDepth, { passive: true });
+    window.addEventListener('scroll', this.scrollHandler, { passive: true });
   }
 
   // Track specific user actions/events
