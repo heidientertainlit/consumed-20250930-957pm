@@ -48,7 +48,7 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     queryFn: async () => {
       const { data: pools, error } = await supabase
         .from('prediction_pools')
-        .select('*, tags')
+        .select('*')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
         .limit(50);
