@@ -403,9 +403,14 @@ export default function PlayPredictionsPage() {
                     </div>
 
                     {/* Show media title for context, then the question */}
-                    {game.media_title && game.media_title !== game.title ? (
+                    {game.media_title ? (
                       <>
                         <div className="text-sm font-medium text-purple-600 mb-1">{game.media_title}</div>
+                        <CardTitle className="text-xl font-bold text-gray-900 mb-2">{game.title}</CardTitle>
+                      </>
+                    ) : game.description && game.description !== game.title ? (
+                      <>
+                        <div className="text-sm font-medium text-purple-600 mb-1">{game.description}</div>
                         <CardTitle className="text-xl font-bold text-gray-900 mb-2">{game.title}</CardTitle>
                       </>
                     ) : game.category ? (
@@ -419,8 +424,8 @@ export default function PlayPredictionsPage() {
                         <CardTitle className="text-xl font-bold text-gray-900 mb-2">{game.title}</CardTitle>
                       </>
                     )}
-                    {/* Only show description if different from title */}
-                    {game.description && game.description !== game.title && (
+                    {/* Only show description if different from title AND not already used as context label */}
+                    {game.description && game.description !== game.title && game.media_title && (
                       <p className="text-gray-600 text-sm mb-4">{game.description}</p>
                     )}
 
