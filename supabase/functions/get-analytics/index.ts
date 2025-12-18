@@ -117,6 +117,112 @@ Deno.serve(async (req) => {
         result = { lists: listsData?.[0] || {} };
         break;
 
+      case 'behavior':
+        // Fetch behavioral analytics from user_sessions and user_events
+        const [pageTimeResult, eventCountsResult, recentSessionsResult] = await Promise.all([
+          // Get average time spent per page (from sessions with page_views data)
+          supabaseAdmin
+            .from('user_sessions')
+            .select('page_views')
+            .not('page_views', 'is', null)
+            .limit(500),
+          // Get event counts by type
+          supabaseAdmin
+            .from('user_events')
+            .select('event_name')
+            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+          // Get recent session stats
+          supabaseAdmin
+            .from('user_sessions')
+            .select('started_at, ended_at, last_heartbeat')
+            .gte('started_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+            .order('started_at', { ascending: false })
+            .limit(1000)
+        ]);
+
+        // Process page time data
+        const pageTimeMap: Record<string, { totalDuration: number; count: number; avgScrollDepth: number }> = {};
+        if (pageTimeResult.data) {
+          for (const session of pageTimeResult.data) {
+            const views = session.page_views as Array<{ page: string; duration: number; scrollDepth: number }> | null;
+            if (views) {
+              for (const view of views) {
+                if (!pageTimeMap[view.page]) {
+                  pageTimeMap[view.page] = { totalDuration: 0, count: 0, avgScrollDepth: 0 };
+                }
+                pageTimeMap[view.page].totalDuration += view.duration;
+                pageTimeMap[view.page].count += 1;
+                pageTimeMap[view.page].avgScrollDepth += view.scrollDepth || 0;
+              }
+            }
+          }
+        }
+
+        const pageTimeData = Object.entries(pageTimeMap)
+          .map(([page, stats]) => ({
+            page,
+            avgDuration: Math.round(stats.totalDuration / stats.count),
+            visits: stats.count,
+            avgScrollDepth: Math.round(stats.avgScrollDepth / stats.count),
+          }))
+          .sort((a, b) => b.visits - a.visits)
+          .slice(0, 15);
+
+        // Process event counts
+        const eventCountMap: Record<string, number> = {};
+        if (eventCountsResult.data) {
+          for (const event of eventCountsResult.data) {
+            eventCountMap[event.event_name] = (eventCountMap[event.event_name] || 0) + 1;
+          }
+        }
+
+        const eventCounts = Object.entries(eventCountMap)
+          .map(([event, count]) => ({ event, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 20);
+
+        // Process session data
+        const sessionStats = {
+          totalSessions: recentSessionsResult.data?.length || 0,
+          avgSessionDuration: 0,
+          sessionsWithHeartbeat: 0,
+        };
+
+        if (recentSessionsResult.data) {
+          let totalDuration = 0;
+          let countWithDuration = 0;
+          for (const session of recentSessionsResult.data) {
+            if (session.last_heartbeat) {
+              sessionStats.sessionsWithHeartbeat++;
+            }
+            if (session.ended_at && session.started_at) {
+              const duration = new Date(session.ended_at).getTime() - new Date(session.started_at).getTime();
+              if (duration > 0 && duration < 2 * 60 * 60 * 1000) { // Less than 2 hours
+                totalDuration += duration;
+                countWithDuration++;
+              }
+            } else if (session.last_heartbeat && session.started_at) {
+              const duration = new Date(session.last_heartbeat).getTime() - new Date(session.started_at).getTime();
+              if (duration > 0 && duration < 2 * 60 * 60 * 1000) {
+                totalDuration += duration;
+                countWithDuration++;
+              }
+            }
+          }
+          if (countWithDuration > 0) {
+            sessionStats.avgSessionDuration = Math.round(totalDuration / countWithDuration / 1000 / 60); // in minutes
+          }
+        }
+
+        result = {
+          behavior: {
+            pageTime: pageTimeData,
+            eventCounts,
+            sessionStats,
+          }
+        };
+        break;
+
       case 'partnerships':
         // Fetch all partnership insights
         const [

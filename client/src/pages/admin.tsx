@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Activity, Target, Zap, Heart } from 'lucide-react';
+import { TrendingUp, Users, Activity, Target, Zap, Heart, Eye, MousePointer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardSummary {
@@ -38,6 +38,24 @@ interface SessionData {
   total_time_spent_hours: number;
   avg_sessions_per_user: number;
   avg_daily_time_per_user_minutes: number;
+}
+
+interface BehaviorData {
+  pageTime: Array<{
+    page: string;
+    avgDuration: number;
+    visits: number;
+    avgScrollDepth: number;
+  }>;
+  eventCounts: Array<{
+    event: string;
+    count: number;
+  }>;
+  sessionStats: {
+    totalSessions: number;
+    avgSessionDuration: number;
+    sessionsWithHeartbeat: number;
+  };
 }
 
 interface AnalyticsData {
@@ -300,6 +318,25 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
+  // Behavior analytics query
+  const { data: behaviorData, isLoading: behaviorLoading } = useQuery<{ behavior: BehaviorData }>({
+    queryKey: ['admin-behavior'],
+    enabled: !!session,
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-analytics?metric=behavior`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch behavior metrics');
+      return await response.json();
+    },
+    refetchInterval: 60000,
+  });
+
   if (partnershipsError) {
     console.error('[PARTNERSHIPS] Query error:', partnershipsError);
   }
@@ -526,6 +563,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="engagement" data-testid="tab-engagement">Engagement</TabsTrigger>
             <TabsTrigger value="activation" data-testid="tab-activation">Activation</TabsTrigger>
             <TabsTrigger value="partnerships" data-testid="tab-partnerships">Partnership Insights</TabsTrigger>
+            <TabsTrigger value="behavior" data-testid="tab-behavior">Behavior</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -1064,6 +1102,205 @@ export default function AdminDashboard() {
                           </div>
                         )) || <p className="text-gray-400">No data available</p>}
                       </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
+          </TabsContent>
+
+          {/* Behavior Tab */}
+          <TabsContent value="behavior" className="space-y-4">
+            {behaviorLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-64" />
+                ))}
+              </div>
+            ) : (
+              <>
+                {/* Session Stats Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500/30 text-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Activity size={18} />
+                        Sessions (7d)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold" data-testid="metric-behavior-sessions">
+                        {behaviorData?.behavior?.sessionStats?.totalSessions?.toLocaleString() || 0}
+                      </div>
+                      <p className="text-sm text-blue-100 mt-1">
+                        {behaviorData?.behavior?.sessionStats?.sessionsWithHeartbeat || 0} with active heartbeat
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-purple-600 to-purple-700 border-purple-500/30 text-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Eye size={18} />
+                        Avg Session Duration
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold" data-testid="metric-behavior-duration">
+                        {behaviorData?.behavior?.sessionStats?.avgSessionDuration || 0} min
+                      </div>
+                      <p className="text-sm text-purple-100 mt-1">
+                        Average time per session
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-emerald-600 to-emerald-700 border-emerald-500/30 text-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <MousePointer size={18} />
+                        Events Tracked
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold" data-testid="metric-behavior-events">
+                        {behaviorData?.behavior?.eventCounts?.reduce((sum, e) => sum + e.count, 0)?.toLocaleString() || 0}
+                      </div>
+                      <p className="text-sm text-emerald-100 mt-1">
+                        Last 7 days
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Page Time Distribution */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30">
+                    <CardHeader>
+                      <CardTitle className="text-white">Where Users Spend Time</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Average time per page (seconds)
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {behaviorData?.behavior?.pageTime && behaviorData.behavior.pageTime.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart 
+                            data={behaviorData.behavior.pageTime}
+                            layout="vertical"
+                            margin={{ left: 80 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
+                            <XAxis type="number" stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />
+                            <YAxis 
+                              type="category" 
+                              dataKey="page" 
+                              stroke="#9ca3af" 
+                              tick={{ fill: '#9ca3af', fontSize: 11 }}
+                              width={80}
+                            />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #6b7280' }}
+                              labelStyle={{ color: '#f3f4f6' }}
+                              formatter={(value: number, name: string) => {
+                                if (name === 'avgDuration') return [`${value}s`, 'Avg Time'];
+                                if (name === 'visits') return [value, 'Visits'];
+                                return [value, name];
+                              }}
+                            />
+                            <Bar dataKey="avgDuration" fill="#9333ea" name="avgDuration" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-64 text-gray-400">
+                          <div className="text-center">
+                            <Eye className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                            <p>No page view data yet</p>
+                            <p className="text-sm">Data will appear as users browse the app</p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Page Visit Counts */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30">
+                    <CardHeader>
+                      <CardTitle className="text-white">Most Visited Pages</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Number of page visits
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {behaviorData?.behavior?.pageTime && behaviorData.behavior.pageTime.length > 0 ? (
+                        <div className="space-y-3 max-h-72 overflow-y-auto">
+                          {behaviorData.behavior.pageTime.map((page, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-sm border-b border-gray-700 pb-2">
+                              <div className="text-white font-medium truncate max-w-[200px]" title={page.page}>
+                                {page.page}
+                              </div>
+                              <div className="flex gap-4 text-right">
+                                <div>
+                                  <span className="text-purple-400 font-semibold">{page.visits}</span>
+                                  <span className="text-gray-400 text-xs ml-1">visits</span>
+                                </div>
+                                <div>
+                                  <span className="text-blue-400 font-semibold">{page.avgScrollDepth}%</span>
+                                  <span className="text-gray-400 text-xs ml-1">scroll</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-64 text-gray-400">
+                          <div className="text-center">
+                            <MousePointer className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                            <p>No visit data yet</p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Event Distribution */}
+                  <Card className="bg-gray-900/50 backdrop-blur-sm border-purple-500/30 lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="text-white">Feature Usage (Events)</CardTitle>
+                      <CardDescription className="text-gray-400">
+                        What actions users take most often
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {behaviorData?.behavior?.eventCounts && behaviorData.behavior.eventCounts.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={behaviorData.behavior.eventCounts.slice(0, 10)}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
+                            <XAxis 
+                              dataKey="event" 
+                              stroke="#9ca3af" 
+                              tick={{ fill: '#9ca3af', fontSize: 10 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={80}
+                            />
+                            <YAxis stroke="#9ca3af" tick={{ fill: '#9ca3af' }} />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #6b7280' }}
+                              labelStyle={{ color: '#f3f4f6' }}
+                            />
+                            <Bar dataKey="count" fill="#10b981" name="Count" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-64 text-gray-400">
+                          <div className="text-center">
+                            <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                            <p>No event data yet</p>
+                            <p className="text-sm">Events will be tracked as users interact with features</p>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>

@@ -67,9 +67,9 @@ class SessionTracker {
       clearInterval(this.heartbeatInterval);
     }
 
-    // Send heartbeat every 30 seconds
+    // Send heartbeat with page views every 30 seconds
     this.heartbeatInterval = setInterval(() => {
-      this.sendHeartbeat();
+      this.sendHeartbeatWithPageViews();
     }, 30000);
   }
 
@@ -131,18 +131,17 @@ class SessionTracker {
 
   private handleVisibilityChange = () => {
     if (document.visibilityState === 'hidden' && this.sessionId && this.userId) {
-      // Send final heartbeat when page becomes hidden
+      // Send final heartbeat with page views when page becomes hidden
       // This catches most tab closes/navigations
-      this.sendHeartbeat();
+      this.sendHeartbeatWithPageViews();
     }
   };
 
   private handleBeforeUnload = () => {
-    // Send final heartbeat on page unload
+    // Send final heartbeat with page views on page unload
     // The session will be marked as ended based on last_heartbeat
     if (this.sessionId && this.userId) {
-      this.finishCurrentPage();
-      this.sendHeartbeat();
+      this.sendHeartbeatWithPageViews();
     }
   };
 
