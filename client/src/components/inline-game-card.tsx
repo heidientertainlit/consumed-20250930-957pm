@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -257,36 +258,39 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
 
   const Icon = getGameIcon(currentGame.type);
 
-  if (showCompleted) {
-    return (
-      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-game-completed">
-        <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
-          <div className="flex items-center gap-2">
-            <Trophy className="text-white" size={20} />
-            <span className="text-white font-semibold">Nice work!</span>
+  // Completion popup dialog
+  const CompletionDialog = () => (
+    <Dialog open={showCompleted} onOpenChange={(open) => !open && handlePlayAnother()}>
+      <DialogContent className="sm:max-w-md text-center border-0 bg-white rounded-3xl p-8">
+        <div className="flex flex-col items-center gap-4">
+          <div className="text-5xl">🎉</div>
+          <div className="space-y-2">
+            <p className="text-2xl font-bold text-gray-900">
+              Nice work!
+            </p>
+            <p className="text-lg text-purple-600 font-semibold">
+              +{lastEarnedPoints} points earned
+            </p>
+            <p className="text-gray-500 text-sm">
+              Keep playing to climb the leaderboard
+            </p>
           </div>
+          <Button
+            onClick={handlePlayAnother}
+            className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-8 py-3 mt-2"
+            data-testid="button-play-another"
+          >
+            Play Another
+            <ArrowRight className="ml-2" size={16} />
+          </Button>
         </div>
-        <div className="p-5 text-center">
-          <div className="text-3xl mb-2">🎉</div>
-          <p className="text-lg font-semibold text-gray-900 mb-1">
-            You earned {lastEarnedPoints} points!
-          </p>
-          <p className="text-gray-600 text-sm mb-4">
-            Keep playing to climb the leaderboard
-          </p>
-          {availableGames.length > 1 && (
-            <Button
-              onClick={handlePlayAnother}
-              className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
-              data-testid="button-play-another"
-            >
-              Play Another
-              <ArrowRight className="ml-2" size={16} />
-            </Button>
-          )}
-        </div>
-      </div>
-    );
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (showCompleted && availableGames.length <= 1) {
+    // No more games available, just show the popup and then nothing
+    return <CompletionDialog />;
   }
 
   // For trivia games, we must have a valid question - if not, skip rendering
@@ -299,102 +303,108 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     const TriviaTypeIcon = isQuickTrivia ? Zap : Trophy;
     
     return (
-      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-card">
-        <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Icon className="text-white" size={20} />
-              <TriviaTypeIcon className="text-white" size={16} />
-              <span className="text-white font-semibold">
-                {isQuickTrivia ? 'Quick Trivia' : 'Challenge'}
-              </span>
+      <>
+        <CompletionDialog />
+        <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-card">
+          <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Icon className="text-white" size={20} />
+                <TriviaTypeIcon className="text-white" size={16} />
+                <span className="text-white font-semibold">
+                  {isQuickTrivia ? 'Quick Trivia' : 'Challenge'}
+                </span>
+              </div>
+              <Badge className="bg-white/20 text-white border-0">
+                {triviaQuestionIndex + 1}/{totalTriviaQuestions}
+              </Badge>
             </div>
-            <Badge className="bg-white/20 text-white border-0">
-              {triviaQuestionIndex + 1}/{totalTriviaQuestions}
-            </Badge>
+          </div>
+          <div className="p-5">
+            <p className="text-lg font-semibold text-gray-900 mb-4">{triviaQuestion.question}</p>
+            <div className="flex flex-col gap-2 mb-4">
+              {triviaQuestion.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedAnswer(option)}
+                  disabled={isSubmitting}
+                  className={cn(
+                    "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
+                    selectedAnswer === option
+                      ? "border-purple-500 bg-purple-600 text-white"
+                      : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
+                  )}
+                  data-testid={`trivia-option-${index}`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            <Button
+              onClick={handleTriviaAnswer}
+              disabled={!selectedAnswer || isSubmitting}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
+              data-testid="button-submit-trivia"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Answer'}
+            </Button>
+            <div className="mt-3 text-center text-sm text-gray-500">
+              Score: {triviaScore} pts • Earn up to {currentGame.points_reward} pts
+            </div>
           </div>
         </div>
-        <div className="p-5">
-          <p className="text-lg font-semibold text-gray-900 mb-4">{triviaQuestion.question}</p>
-          <div className="flex flex-col gap-2 mb-4">
-            {triviaQuestion.options.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedAnswer(option)}
-                disabled={isSubmitting}
-                className={cn(
-                  "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
-                  selectedAnswer === option
-                    ? "border-purple-500 bg-purple-600 text-white"
-                    : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
-                )}
-                data-testid={`trivia-option-${index}`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          <Button
-            onClick={handleTriviaAnswer}
-            disabled={!selectedAnswer || isSubmitting}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
-            data-testid="button-submit-trivia"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Answer'}
-          </Button>
-          <div className="mt-3 text-center text-sm text-gray-500">
-            Score: {triviaScore} pts • Earn up to {currentGame.points_reward} pts
-          </div>
-        </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-poll-card">
-      <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Icon className="text-white" size={20} />
-            <span className="text-white font-semibold">{getGameLabel(currentGame.type)}</span>
+    <>
+      <CompletionDialog />
+      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-poll-card">
+        <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon className="text-white" size={20} />
+              <span className="text-white font-semibold">{getGameLabel(currentGame.type)}</span>
+            </div>
+            <Badge className="bg-white/20 text-white border-0">
+              +{currentGame.points_reward} pts
+            </Badge>
           </div>
-          <Badge className="bg-white/20 text-white border-0">
-            +{currentGame.points_reward} pts
-          </Badge>
+        </div>
+        <div className="p-5">
+          <p className="text-lg font-semibold text-gray-900 mb-4">{currentGame.title}</p>
+          <div className="flex flex-col gap-2 mb-4">
+            {(currentGame.options || []).map((option: any, index: number) => {
+              const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
+              return (
+                <button
+                  key={index}
+                  onClick={() => setSelectedAnswer(optionText)}
+                  disabled={isSubmitting}
+                  className={cn(
+                    "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
+                    selectedAnswer === optionText
+                      ? "border-purple-500 bg-purple-600 text-white"
+                      : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
+                  )}
+                  data-testid={`poll-option-${index}`}
+                >
+                  {optionText}
+                </button>
+              );
+            })}
+          </div>
+          <Button
+            onClick={handleVoteSubmit}
+            disabled={!selectedAnswer || isSubmitting}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
+            data-testid="button-submit-poll"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Vote'}
+          </Button>
         </div>
       </div>
-      <div className="p-5">
-        <p className="text-lg font-semibold text-gray-900 mb-4">{currentGame.title}</p>
-        <div className="flex flex-col gap-2 mb-4">
-          {(currentGame.options || []).map((option: any, index: number) => {
-            const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
-            return (
-              <button
-                key={index}
-                onClick={() => setSelectedAnswer(optionText)}
-                disabled={isSubmitting}
-                className={cn(
-                  "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
-                  selectedAnswer === optionText
-                    ? "border-purple-500 bg-purple-600 text-white"
-                    : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
-                )}
-                data-testid={`poll-option-${index}`}
-              >
-                {optionText}
-              </button>
-            );
-          })}
-        </div>
-        <Button
-          onClick={handleVoteSubmit}
-          disabled={!selectedAnswer || isSubmitting}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
-          data-testid="button-submit-poll"
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Vote'}
-        </Button>
-      </div>
-    </div>
+    </>
   );
 }
