@@ -338,9 +338,6 @@ export default function PlayPollsPage() {
                     </div>
 
                     <CardTitle className="text-xl font-bold text-gray-900 mb-2 mt-2">{game.title}</CardTitle>
-                    {game.description && game.description !== game.title && (
-                      <p className="text-gray-600 text-sm mb-4">{game.description}</p>
-                    )}
 
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
@@ -364,21 +361,21 @@ export default function PlayPollsPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="grid grid-cols-2 gap-3">
-                          {(game.options || []).slice(0, 2).map((option: any, index: number) => {
+                        <div className="flex flex-col gap-2">
+                          {(game.options || []).map((option: any, index: number) => {
                             const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
                             return (
                               <button
                                 key={index}
                                 onClick={() => handleOptionSelect(game.id, optionText)}
-                                className={`p-4 text-left rounded-lg border-2 transition-all ${
+                                className={`w-full px-4 py-3 text-center rounded-full border-2 transition-all text-sm font-medium ${
                                   selectedAnswers[game.id] === optionText
-                                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                    ? 'border-purple-500 bg-purple-600 text-white'
+                                    : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
                                 data-testid={`option-${game.id}-${index}`}
                               >
-                                <div className="text-sm font-medium text-gray-900">{optionText}</div>
+                                {optionText}
                               </button>
                             );
                           })}
@@ -386,7 +383,7 @@ export default function PlayPollsPage() {
                         <Button
                           onClick={() => handleSubmitAnswer(game)}
                           disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
-                          className="w-full bg-gray-500 hover:bg-gray-600 text-white disabled:opacity-50 rounded-xl py-6"
+                          className="w-full bg-gray-500 hover:bg-gray-600 text-white disabled:opacity-50 rounded-full py-4"
                           data-testid={`submit-${game.id}`}
                         >
                           {submitPrediction.isPending ? 'Submitting...' : 'Submit'}
