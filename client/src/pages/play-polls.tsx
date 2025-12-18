@@ -4,7 +4,8 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Vote, Star, Users, UserPlus, ChevronLeft } from 'lucide-react';
+import { Vote, Star, Users, UserPlus, ChevronLeft, Search, SlidersHorizontal } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import FeedbackFooter from '@/components/feedback-footer';
@@ -20,6 +21,16 @@ export default function PlayPollsPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
   const [selectedPoll, setSelectedPoll] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const categoryFilters = [
+    { id: 'Movies', label: 'Movies', icon: '🎬' },
+    { id: 'TV', label: 'TV', icon: '📺' },
+    { id: 'Music', label: 'Music', icon: '🎵' },
+    { id: 'Pop Culture', label: 'Pop Culture', icon: '⭐' },
+  ];
 
   // Extract game ID from URL hash if present (format: /play/polls#game-id)
   const gameIdFromUrl = window.location.hash.replace('#', '');
@@ -176,8 +187,27 @@ export default function PlayPollsPage() {
     };
   });
 
-  // Filter for poll/vote games only
-  const pollGames = processedGames.filter((game: any) => game.type === 'vote');
+  // Filter for poll/vote games with search and category
+  const pollGames = React.useMemo(() => {
+    let filtered = processedGames.filter((game: any) => game.type === 'vote');
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((game: any) => {
+        const titleMatch = game.title?.toLowerCase().includes(query);
+        const descMatch = game.description?.toLowerCase().includes(query);
+        return titleMatch || descMatch;
+      });
+    }
+    
+    // Apply category filter
+    if (selectedCategory) {
+      filtered = filtered.filter((game: any) => game.category === selectedCategory);
+    }
+    
+    return filtered;
+  }, [processedGames, searchQuery, selectedCategory]);
 
   // Auto-open poll if gameId is in URL hash
   React.useEffect(() => {
@@ -217,14 +247,69 @@ export default function PlayPollsPage() {
           <span className="ml-1">Back to Play</span>
         </button>
 
-        <div className="text-center mb-8">
+        <div className="mb-6">
           <div className="flex items-center justify-center space-x-2 mb-3">
             <Vote className="text-blue-600" size={32} />
-            <h1 className="text-3xl font-semibold text-black">Polls</h1>
+            <h1 className="text-3xl font-semibold text-black" data-testid="polls-title">Polls</h1>
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-center mb-6">
             Vote on trending topics and see how your opinions compare to others
           </p>
+
+          {/* Search and Filter Row */}
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                type="text"
+                placeholder="Search polls..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-white border-gray-200 rounded-xl"
+                data-testid="polls-search-input"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+                showFilters || selectedCategory
+                  ? 'bg-blue-50 border-blue-300 text-blue-700'
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+              data-testid="filter-toggle"
+            >
+              <SlidersHorizontal size={18} />
+              <span className="text-sm font-medium">Filter</span>
+              {selectedCategory && (
+                <span className="w-2 h-2 bg-blue-600 rounded-full" />
+              )}
+            </button>
+          </div>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <span className="text-sm font-medium text-gray-600 w-12 pt-2">Topic:</span>
+                <div className="flex flex-wrap gap-2">
+                  {categoryFilters.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        selectedCategory === cat.id
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      data-testid={`filter-${cat.id}`}
+                    >
+                      {cat.icon} {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Polls Section */}
@@ -318,8 +403,24 @@ export default function PlayPollsPage() {
         {pollGames.length === 0 && (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Vote className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No polls available</h3>
-            <p className="text-gray-600">Check back soon for new polls!</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchQuery || selectedCategory ? 'No matching polls found' : 'No polls available'}
+            </h3>
+            <p className="text-gray-600">
+              {searchQuery || selectedCategory 
+                ? 'Try a different search term or filter' 
+                : 'Check back soon for new polls!'}
+            </p>
+            {(searchQuery || selectedCategory) && (
+              <Button
+                variant="outline"
+                onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
+                className="mt-4"
+                data-testid="clear-filters"
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
         )}
       </div>
