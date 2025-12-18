@@ -6,6 +6,7 @@ import ConsumptionTracker from "@/components/consumption-tracker";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
+import InlineGameCard from "@/components/inline-game-card";
 import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
@@ -2087,9 +2088,11 @@ export default function Feed() {
                   : post.id;
                 
                 // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
-                // Show game carousel after 3rd post, then every 5 posts
-                const shouldShowGameCarousel = postIndex === 2 || (postIndex > 2 && (postIndex - 2) % 5 === 0);
-                const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0 && !shouldShowGameCarousel;
+                // Show inline game card every 8 posts (starting at 3rd)
+                const shouldShowInlineGame = postIndex === 2 || (postIndex > 2 && (postIndex - 2) % 8 === 0);
+                // Show game carousel every 20 posts (less frequent, for discovery)
+                const shouldShowGameCarousel = postIndex === 19 || (postIndex > 19 && (postIndex - 19) % 20 === 0);
+                const shouldShowMediaCarousel = (postIndex + 1) % 15 === 0 && postIndex > 0 && !shouldShowGameCarousel && !shouldShowInlineGame;
                 
                 // Rotate through different carousel types
                 const carouselTypes = [
@@ -2097,12 +2100,20 @@ export default function Feed() {
                   { type: 'podcast', title: 'Trending in Podcasts', items: trendingPodcasts },
                   { type: 'book', title: 'Trending in Books', items: bestsellerBooks },
                 ];
-                const carouselIndex = Math.floor((postIndex + 1) / 10) - 1;
+                const carouselIndex = Math.floor((postIndex + 1) / 15) - 1;
                 const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length] || carouselTypes[0];
+                
+                // Calculate which game to show for this inline card position
+                const inlineGameIndex = shouldShowInlineGame ? Math.floor(postIndex / 8) : 0;
                 
                 // Carousel elements to prepend to any post type
                 const carouselElements = (
                   <>
+                    {shouldShowInlineGame && (
+                      <div className="mb-4">
+                        <InlineGameCard gameIndex={inlineGameIndex} />
+                      </div>
+                    )}
                     {shouldShowGameCarousel && (
                       <div className="mb-4">
                         <GameCarousel />

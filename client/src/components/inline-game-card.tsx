@@ -1,0 +1,373 @@
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Brain, Vote, Sparkles, ArrowRight, Trophy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
+
+interface TriviaQuestion {
+  question: string;
+  options: string[];
+  correct: string;
+}
+
+interface Game {
+  id: string;
+  title: string;
+  options: any[];
+  type: 'vote' | 'trivia' | 'predict';
+  points_reward: number;
+  category?: string;
+}
+
+interface InlineGameCardProps {
+  className?: string;
+  gameIndex?: number;
+}
+
+export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameCardProps) {
+  const [currentGameOffset, setCurrentGameOffset] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedGames, setSubmittedGames] = useState<Set<string>>(new Set());
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [lastEarnedPoints, setLastEarnedPoints] = useState(0);
+  const [triviaQuestionIndex, setTriviaQuestionIndex] = useState(0);
+  const [triviaScore, setTriviaScore] = useState(0);
+  const [triviaComplete, setTriviaComplete] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: games = [], isLoading } = useQuery({
+    queryKey: ['inline-games'],
+    queryFn: async () => {
+      const { data: pools, error } = await supabase
+        .from('prediction_pools')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw new Error('Failed to fetch games');
+      return (pools || []).filter((game: any) => {
+        if (!game.id || !game.title || !game.type) return false;
+        if (game.type === 'predict') return false;
+        if (!game.id.startsWith('consumed-')) return false;
+        return true;
+      }) as Game[];
+    },
+  });
+
+  const { data: userPredictions = {} } = useQuery({
+    queryKey: ['inline-user-predictions'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return {};
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .select('pool_id, prediction')
+        .eq('user_id', user.id);
+      if (error) return {};
+      const predictions: Record<string, string> = {};
+      data?.forEach((pred) => { predictions[pred.pool_id] = pred.prediction; });
+      return predictions;
+    },
+  });
+
+  const availableGames = games.filter((game) => {
+    if (userPredictions[game.id] || submittedGames.has(game.id)) return false;
+    if (game.type === 'vote' && (!game.options || game.options.length < 2)) return false;
+    return true;
+  });
+
+  const effectiveIndex = (gameIndex + currentGameOffset) % Math.max(availableGames.length, 1);
+  const currentGame = availableGames[effectiveIndex];
+
+  const submitAnswer = useMutation({
+    mutationFn: async ({ poolId, answer, score, game }: { poolId: string; answer: string; score?: number; game: Game }) => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('Must be logged in');
+
+      const pointsEarned = score ?? game.points_reward;
+
+      const { error } = await supabase
+        .from('user_predictions')
+        .insert({
+          user_id: user.id,
+          pool_id: poolId,
+          prediction: answer,
+          points_earned: pointsEarned,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      return { pointsEarned };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inline-user-predictions'] });
+      queryClient.invalidateQueries({ queryKey: ['feed-user-predictions'] });
+    },
+  });
+
+  const handleVoteSubmit = async () => {
+    if (!currentGame || !selectedAnswer) return;
+    
+    setIsSubmitting(true);
+    try {
+      await submitAnswer.mutateAsync({
+        poolId: currentGame.id,
+        answer: selectedAnswer,
+        game: currentGame,
+      });
+      setSubmittedGames(prev => new Set([...prev, currentGame.id]));
+      setLastEarnedPoints(currentGame.points_reward);
+      setShowCompleted(true);
+      setSelectedAnswer(null);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getCurrentTriviaQuestion = (): TriviaQuestion | null => {
+    if (!currentGame || currentGame.type !== 'trivia') return null;
+    if (!Array.isArray(currentGame.options)) return null;
+    const q = currentGame.options[triviaQuestionIndex];
+    if (q && typeof q === 'object' && 'question' in q && 'options' in q && 'correct' in q) {
+      return q as TriviaQuestion;
+    }
+    return null;
+  };
+
+  const triviaQuestion = getCurrentTriviaQuestion();
+  const totalTriviaQuestions = currentGame?.type === 'trivia' && Array.isArray(currentGame.options) 
+    ? currentGame.options.length 
+    : 0;
+
+  const handleTriviaAnswer = async () => {
+    if (!currentGame || !triviaQuestion || !selectedAnswer) return;
+    
+    const isCorrect = selectedAnswer === triviaQuestion.correct;
+    const pointsPerQuestion = Math.floor(currentGame.points_reward / totalTriviaQuestions);
+    const earnedPoints = isCorrect ? pointsPerQuestion : 0;
+    
+    const newScore = isCorrect ? triviaScore + earnedPoints : triviaScore;
+    if (isCorrect) {
+      setTriviaScore(newScore);
+    }
+    
+    toast({
+      title: isCorrect ? "✓ Correct!" : "✗ Wrong",
+      description: isCorrect 
+        ? `+${earnedPoints} points` 
+        : `Answer: ${triviaQuestion.correct}`,
+      duration: 2000,
+    });
+    
+    setSelectedAnswer(null);
+    
+    if (triviaQuestionIndex < totalTriviaQuestions - 1) {
+      setTriviaQuestionIndex(prev => prev + 1);
+    } else {
+      setTriviaComplete(true);
+      setIsSubmitting(true);
+      try {
+        await submitAnswer.mutateAsync({
+          poolId: currentGame.id,
+          answer: `Completed with score: ${newScore}`,
+          score: newScore,
+          game: currentGame,
+        });
+        setSubmittedGames(prev => new Set([...prev, currentGame.id]));
+        setLastEarnedPoints(newScore);
+        setShowCompleted(true);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handlePlayAnother = () => {
+    setShowCompleted(false);
+    setCurrentGameOffset(prev => prev + 1);
+    setTriviaQuestionIndex(0);
+    setTriviaScore(0);
+    setTriviaComplete(false);
+  };
+
+  const getGameIcon = (type: string) => {
+    switch (type) {
+      case 'trivia': return Brain;
+      case 'vote': return Vote;
+      default: return Sparkles;
+    }
+  };
+
+  const getGameLabel = (type: string) => {
+    switch (type) {
+      case 'trivia': return 'Trivia';
+      case 'vote': return 'Poll';
+      default: return 'Game';
+    }
+  };
+
+  const getGradient = (type: string) => {
+    switch (type) {
+      case 'trivia': return 'from-purple-600 to-indigo-600';
+      case 'vote': return 'from-blue-600 to-purple-600';
+      default: return 'from-purple-600 to-pink-600';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm p-6", className)}>
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-3" />
+          <div className="h-6 bg-gray-200 rounded w-3/4 mb-4" />
+          <div className="space-y-2">
+            <div className="h-12 bg-gray-200 rounded-full" />
+            <div className="h-12 bg-gray-200 rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentGame || availableGames.length === 0) {
+    return null;
+  }
+
+  const Icon = getGameIcon(currentGame.type);
+
+  if (showCompleted) {
+    return (
+      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-game-completed">
+        <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
+          <div className="flex items-center gap-2">
+            <Trophy className="text-white" size={20} />
+            <span className="text-white font-semibold">Nice work!</span>
+          </div>
+        </div>
+        <div className="p-5 text-center">
+          <div className="text-3xl mb-2">🎉</div>
+          <p className="text-lg font-semibold text-gray-900 mb-1">
+            You earned {lastEarnedPoints} points!
+          </p>
+          <p className="text-gray-600 text-sm mb-4">
+            Keep playing to climb the leaderboard
+          </p>
+          {availableGames.length > 1 && (
+            <Button
+              onClick={handlePlayAnother}
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
+              data-testid="button-play-another"
+            >
+              Play Another
+              <ArrowRight className="ml-2" size={16} />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (currentGame.type === 'trivia' && triviaQuestion) {
+    return (
+      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-card">
+        <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon className="text-white" size={20} />
+              <span className="text-white font-semibold">{currentGame.title}</span>
+            </div>
+            <Badge className="bg-white/20 text-white border-0">
+              {triviaQuestionIndex + 1}/{totalTriviaQuestions}
+            </Badge>
+          </div>
+        </div>
+        <div className="p-5">
+          <p className="text-lg font-semibold text-gray-900 mb-4">{triviaQuestion.question}</p>
+          <div className="flex flex-col gap-2 mb-4">
+            {triviaQuestion.options.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => setSelectedAnswer(option)}
+                disabled={isSubmitting}
+                className={cn(
+                  "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
+                  selectedAnswer === option
+                    ? "border-purple-500 bg-purple-600 text-white"
+                    : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
+                )}
+                data-testid={`trivia-option-${index}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <Button
+            onClick={handleTriviaAnswer}
+            disabled={!selectedAnswer || isSubmitting}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
+            data-testid="button-submit-trivia"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Answer'}
+          </Button>
+          <div className="mt-3 text-center text-sm text-gray-500">
+            Score: {triviaScore} pts • Earn up to {currentGame.points_reward} pts
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-poll-card">
+      <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Icon className="text-white" size={20} />
+            <span className="text-white font-semibold">{getGameLabel(currentGame.type)}</span>
+          </div>
+          <Badge className="bg-white/20 text-white border-0">
+            +{currentGame.points_reward} pts
+          </Badge>
+        </div>
+      </div>
+      <div className="p-5">
+        <p className="text-lg font-semibold text-gray-900 mb-4">{currentGame.title}</p>
+        <div className="flex flex-col gap-2 mb-4">
+          {(currentGame.options || []).map((option: any, index: number) => {
+            const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
+            return (
+              <button
+                key={index}
+                onClick={() => setSelectedAnswer(optionText)}
+                disabled={isSubmitting}
+                className={cn(
+                  "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
+                  selectedAnswer === optionText
+                    ? "border-purple-500 bg-purple-600 text-white"
+                    : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
+                )}
+                data-testid={`poll-option-${index}`}
+              >
+                {optionText}
+              </button>
+            );
+          })}
+        </div>
+        <Button
+          onClick={handleVoteSubmit}
+          disabled={!selectedAnswer || isSubmitting}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
+          data-testid="button-submit-poll"
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit Vote'}
+        </Button>
+      </div>
+    </div>
+  );
+}
