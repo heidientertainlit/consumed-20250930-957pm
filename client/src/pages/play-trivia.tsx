@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Brain, Star, Users, UserPlus, ChevronLeft, Search, SlidersHorizontal } from 'lucide-react';
+import { Brain, Star, Users, UserPlus, ChevronLeft, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
@@ -28,7 +29,20 @@ export default function PlayTriviaPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [triviaType, setTriviaType] = useState<'all' | 'challenges' | 'quick'>('all');
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  const genreFilters = [
+    { id: 'True Crime', label: 'True Crime' },
+    { id: 'Comedy', label: 'Comedy' },
+    { id: 'Drama', label: 'Drama' },
+    { id: 'Sci-Fi', label: 'Sci-Fi' },
+    { id: 'Fantasy', label: 'Fantasy' },
+    { id: 'Horror', label: 'Horror' },
+    { id: 'Romance', label: 'Romance' },
+    { id: 'Action', label: 'Action' },
+    { id: 'Documentary', label: 'Documentary' },
+  ];
 
   const triviaTypeFilters = [
     { id: 'all', label: 'All' },
@@ -247,8 +261,16 @@ export default function PlayTriviaPage() {
       });
     }
     
+    // Apply genre filter (tags array)
+    if (selectedGenre) {
+      filtered = filtered.filter((game: any) => {
+        const tags = game.tags || [];
+        return tags.includes(selectedGenre);
+      });
+    }
+    
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory, triviaType]);
+  }, [processedGames, searchQuery, selectedCategory, triviaType, selectedGenre]);
   
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
@@ -316,7 +338,7 @@ export default function PlayTriviaPage() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-                showFilters || triviaType !== 'all' || selectedCategory
+                showFilters || triviaType !== 'all' || selectedCategory || selectedGenre
                   ? 'bg-purple-50 border-purple-300 text-purple-700'
                   : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
@@ -324,7 +346,7 @@ export default function PlayTriviaPage() {
             >
               <SlidersHorizontal size={18} />
               <span className="text-sm font-medium">Filter</span>
-              {(triviaType !== 'all' || selectedCategory) && (
+              {(triviaType !== 'all' || selectedCategory || selectedGenre) && (
                 <span className="w-2 h-2 bg-purple-600 rounded-full" />
               )}
             </button>
@@ -373,6 +395,36 @@ export default function PlayTriviaPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Genre Filter Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-600 w-12">Genre:</span>
+                <Select 
+                  value={selectedGenre || 'all'} 
+                  onValueChange={(value) => setSelectedGenre(value === 'all' ? null : value)}
+                >
+                  <SelectTrigger className="w-48 bg-white" data-testid="genre-filter-dropdown">
+                    <SelectValue placeholder="All Genres" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Genres</SelectItem>
+                    {genreFilters.map((genre) => (
+                      <SelectItem key={genre.id} value={genre.id}>
+                        {genre.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedGenre && (
+                  <button
+                    onClick={() => setSelectedGenre(null)}
+                    className="text-xs text-purple-600 hover:text-purple-800"
+                    data-testid="clear-genre-filter"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
           )}
