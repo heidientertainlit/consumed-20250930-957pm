@@ -62,6 +62,9 @@ function Router() {
         <Route path="/about">
           <About />
         </Route>
+        <Route path="/invite/:userId">
+          <InvitePage />
+        </Route>
         <Route path="/onboarding">
           <ProtectedRoute>
             <OnboardingPage />

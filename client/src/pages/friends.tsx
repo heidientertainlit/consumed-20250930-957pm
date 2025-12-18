@@ -221,23 +221,41 @@ export default function FriendsPage() {
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-black mb-2">Friends</h1>
           <p className="text-gray-600">Connect with other entertainment fans</p>
-          
-          {/* Invite Friends Button */}
-          <Button
-            onClick={async () => {
-              if (!user?.id) return;
-              await copyLink({ kind: 'profile', id: user.id });
-              toast({
-                title: "Invite Link Copied!",
-                description: "Share this link to invite friends to find you on consumed",
-              });
-            }}
-            className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-full"
-            data-testid="button-invite-friends"
-          >
-            <Share2 size={16} className="mr-2" />
-            Invite Friends
-          </Button>
+        </div>
+
+        {/* Prominent Invite Card */}
+        <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 rounded-2xl p-6 mb-6 text-white shadow-lg">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h2 className="text-xl font-bold mb-2">Invite Your Friends</h2>
+              <p className="text-white/90 text-sm mb-4">
+                Share your link and let friends see what you're watching, reading, and listening to
+              </p>
+              <Button
+                onClick={async () => {
+                  if (!user?.id) return;
+                  const inviteUrl = `${import.meta.env.VITE_APP_URL || window.location.origin}/invite/${user.id}`;
+                  try {
+                    await navigator.clipboard.writeText(inviteUrl);
+                    toast({
+                      title: "Invite Link Copied!",
+                      description: "Share this link to invite friends to consumed",
+                    });
+                  } catch (err) {
+                    console.error('Failed to copy:', err);
+                  }
+                }}
+                className="bg-white text-purple-700 hover:bg-gray-100 font-semibold px-6 py-2 rounded-full shadow-md"
+                data-testid="button-invite-friends"
+              >
+                <Share2 size={16} className="mr-2" />
+                Copy Invite Link
+              </Button>
+            </div>
+            <div className="hidden sm:block text-6xl opacity-30 ml-4">
+              👋
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}
