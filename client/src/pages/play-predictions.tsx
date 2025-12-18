@@ -25,8 +25,7 @@ export default function PlayPredictionsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [sourceFilter, setSourceFilter] = useState<'all' | 'consumed' | 'community'>('consumed');
-
+  
   const categoryFilters = [
     { id: 'Movies', label: 'Movies', icon: '🎬' },
     { id: 'TV', label: 'TV', icon: '📺' },
@@ -35,11 +34,6 @@ export default function PlayPredictionsPage() {
     { id: 'Awards', label: 'Awards', icon: '🏅' },
   ];
 
-  const sourceFilters = [
-    { id: 'all', label: 'All' },
-    { id: 'consumed', label: '🏆 Consumed' },
-    { id: 'community', label: '👥 Community' },
-  ];
 
   // Extract game ID from URL hash if present (format: /play/predictions#game-id)
   const gameIdFromUrl = window.location.hash.replace('#', '');
@@ -207,16 +201,10 @@ export default function PlayPredictionsPage() {
     };
   });
 
-  // Filter for prediction games with search, category, and source
+  // Filter for prediction games with search and category (only consumed predictions)
   const predictionGames = React.useMemo(() => {
-    let filtered = processedGames.filter((game: any) => game.type === 'predict');
-    
-    // Apply source filter (consumed vs community)
-    if (sourceFilter === 'consumed') {
-      filtered = filtered.filter((game: any) => game.isConsumed);
-    } else if (sourceFilter === 'community') {
-      filtered = filtered.filter((game: any) => !game.isConsumed);
-    }
+    // Only show consumed predictions
+    let filtered = processedGames.filter((game: any) => game.type === 'predict' && game.isConsumed);
     
     // Apply search filter
     if (searchQuery.trim()) {
@@ -235,7 +223,7 @@ export default function PlayPredictionsPage() {
     }
     
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory, sourceFilter]);
+  }, [processedGames, searchQuery, selectedCategory]);
   
   const lowStakesGames = predictionGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = predictionGames.filter((game: any) => game.isHighStakes);
@@ -303,7 +291,7 @@ export default function PlayPredictionsPage() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-                showFilters || selectedCategory || sourceFilter !== 'all'
+                showFilters || selectedCategory
                   ? 'bg-green-50 border-green-300 text-green-700'
                   : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
@@ -311,7 +299,7 @@ export default function PlayPredictionsPage() {
             >
               <SlidersHorizontal size={18} />
               <span className="text-sm font-medium">Filter</span>
-              {(selectedCategory || sourceFilter !== 'all') && (
+              {selectedCategory && (
                 <span className="w-2 h-2 bg-green-600 rounded-full" />
               )}
             </button>
@@ -319,28 +307,7 @@ export default function PlayPredictionsPage() {
 
           {/* Filter Panel */}
           {showFilters && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 space-y-4">
-              {/* Source Filter Row */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-600 w-14">Source:</span>
-                <div className="flex gap-2 flex-wrap">
-                  {sourceFilters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      onClick={() => setSourceFilter(filter.id as 'all' | 'consumed' | 'community')}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        sourceFilter === filter.id
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      data-testid={`source-filter-${filter.id}`}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
+            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
               {/* Topic Filter Row */}
               <div className="flex items-start gap-3">
                 <span className="text-sm font-medium text-gray-600 w-14 pt-2">Topic:</span>
@@ -585,17 +552,17 @@ export default function PlayPredictionsPage() {
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Trophy className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery || selectedCategory || sourceFilter !== 'all' ? 'No matching predictions found' : 'No predictions available'}
+              {searchQuery || selectedCategory ? 'No matching predictions found' : 'No predictions available'}
             </h3>
             <p className="text-gray-600">
-              {searchQuery || selectedCategory || sourceFilter !== 'all'
+              {searchQuery || selectedCategory
                 ? 'Try a different search term or filter' 
                 : 'Check back soon for new prediction games!'}
             </p>
-            {(searchQuery || selectedCategory || sourceFilter !== 'all') && (
+            {(searchQuery || selectedCategory) && (
               <Button
                 variant="outline"
-                onClick={() => { setSearchQuery(''); setSelectedCategory(null); setSourceFilter('all'); }}
+                onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
                 className="mt-4"
                 data-testid="clear-filters"
               >
