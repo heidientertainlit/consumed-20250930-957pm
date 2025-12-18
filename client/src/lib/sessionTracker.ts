@@ -98,11 +98,16 @@ class SessionTracker {
     if (!this.sessionId || !this.userId) return;
 
     try {
-      // Update session with end time
+      // First, flush all page views before ending session
+      this.finishCurrentPage();
+      const allPageViews = [...this.pageViews];
+      
+      // Update session with end time and final page views
       const { error } = await supabase
         .from('user_sessions')
         .update({
           ended_at: new Date().toISOString(),
+          page_views: allPageViews.length > 0 ? allPageViews : undefined,
         })
         .eq('session_id', this.sessionId)
         .eq('user_id', this.userId);
@@ -121,12 +126,21 @@ class SessionTracker {
         this.heartbeatInterval = null;
       }
 
+      // Remove scroll listener
+      if (this.scrollHandler) {
+        window.removeEventListener('scroll', this.scrollHandler);
+        this.scrollHandler = null;
+      }
+
       // Remove event listeners
       window.removeEventListener('visibilitychange', this.handleVisibilityChange);
       window.removeEventListener('beforeunload', this.handleBeforeUnload);
 
+      // Clear state
       this.sessionId = null;
       this.userId = null;
+      this.currentPage = null;
+      this.pageViews = [];
     }
   }
 
@@ -253,27 +267,26 @@ class SessionTracker {
     }
   }
 
-  // Get page views for current session (for heartbeat)
-  private getAndClearPageViews() {
-    const views = [...this.pageViews];
-    this.pageViews = [];
-    return views;
-  }
-
   // Enhanced heartbeat that includes page view data
+  // Sends ALL accumulated page views to preserve full session history
   private async sendHeartbeatWithPageViews() {
     if (!this.sessionId || !this.userId) return;
 
-    // Include current page in the data
-    this.finishCurrentPage();
-    const pageViews = this.getAndClearPageViews();
+    // Include current page data without finishing it (so we keep tracking)
+    const currentPageData = this.captureCurrentPageData();
+    
+    // Combine all completed page views with current page snapshot
+    // This preserves the full history with each heartbeat
+    const allPageViews = currentPageData 
+      ? [...this.pageViews, currentPageData]
+      : [...this.pageViews];
 
     try {
       const { error } = await supabase
         .from('user_sessions')
         .update({
           last_heartbeat: new Date().toISOString(),
-          page_views: pageViews.length > 0 ? pageViews : undefined,
+          page_views: allPageViews.length > 0 ? allPageViews : undefined,
         })
         .eq('session_id', this.sessionId)
         .eq('user_id', this.userId);
@@ -284,6 +297,11 @@ class SessionTracker {
     } catch (error) {
       console.error('Error sending heartbeat:', error);
     }
+  }
+
+  // Check if session is active
+  isSessionActive(): boolean {
+    return this.sessionId !== null && this.userId !== null;
   }
 }
 

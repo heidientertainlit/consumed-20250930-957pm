@@ -43,7 +43,7 @@ Preferred communication style: Simple, everyday language.
 - **Smart Recommendations**: GPT-4o powered with caching for instant loading.
 - **Creator Follow System**: Enables users to follow creators and receive updates.
 - **Spoiler Protection**: Blurs spoiler content until revealed.
-- **Session Tracking & Analytics**: Monitors user engagement and churn.
+- **Session Tracking & Analytics**: Monitors user engagement and churn. Includes behavioral analytics tracking page views, scroll depth, session duration, and user events. Data powers the "Behavior" tab in admin dashboard.
 - **Consumed vs User-Generated Content**: Differentiates platform-curated content with a "🏆 Consumed" badge from user-generated content.
 - **Prediction Resolution**: Supports timed and open-ended predictions with a scoring system and creator/crowd-resolve mechanisms.
 - **AI Builder** (`/library-ai`): Allows customization of list organization and tracking preferences via a visual builder and AI chat.
@@ -64,7 +64,7 @@ Preferred communication style: Simple, everyday language.
 - **Media Item Pages**: Provides dynamic links to platforms for media consumption.
 - **Polls/Surveys System**: Real-time voting, duplicate vote prevention, and points rewards.
 - **Discover Page**: AI-powered recommendations and trending content carousels.
-- **Analytics Dashboard**: Admin dashboard at `/admin` for comprehensive engagement metrics and partnership insights.
+- **Analytics Dashboard**: Admin dashboard at `/admin` for comprehensive engagement metrics, partnership insights, and behavioral analytics. Includes tabs for Overview, Retention, Engagement, Activation, Partnership Insights, and Behavior (page time, feature usage, session stats).
 
 ### System Design Choices
 - **Database Schema**: Strict naming conventions, synced dev/prod schemas.
