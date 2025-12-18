@@ -417,7 +417,7 @@ export default function AwardsPredictions() {
                 Who's Playing
               </h3>
               <button
-                onClick={() => navigate('/leaderboard')}
+                onClick={() => navigate('/leaderboard?tab=games')}
                 className="text-xs text-purple-400 hover:text-purple-300 flex items-center"
                 data-testid="button-see-leaderboard"
               >

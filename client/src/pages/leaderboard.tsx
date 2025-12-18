@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 
 interface LeaderboardEntry {
   user_id: string;
@@ -40,10 +40,16 @@ interface LeaderboardData {
 export default function Leaderboard() {
   const { session, user } = useAuth();
   const { toast } = useToast();
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
+  const tabParam = urlParams.get('tab');
+  
   const [scope, setScope] = useState<'global' | 'friends'>('global');
   const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState<string>('engagement');
+  const [activeTab, setActiveTab] = useState<string>(
+    tabParam === 'games' || tabParam === 'consumption' ? tabParam : 'engagement'
+  );
 
   const toggleExpanded = (categoryName: string) => {
     setExpandedCategories(prev => {
