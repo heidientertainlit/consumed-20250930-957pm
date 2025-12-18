@@ -36,6 +36,7 @@ export default function PlayTriviaPage() {
     { id: 'Books', label: 'Books', icon: '📚' },
     { id: 'Games', label: 'Sports', icon: '🎮' },
     { id: 'Podcasts', label: 'Podcasts', icon: '🎙️' },
+    { id: 'Pop Culture', label: 'Pop Culture', icon: '⭐' },
   ];
 
   // Cleanup celebration timer on unmount
