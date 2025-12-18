@@ -31,8 +31,8 @@ export default function PlayTriviaPage() {
 
   const triviaTypeFilters = [
     { id: 'all', label: 'All' },
-    { id: 'challenges', label: 'Challenges (10 Q)' },
-    { id: 'quick', label: 'Quick Trivia (1 Q)' },
+    { id: 'challenges', label: 'Challenges' },
+    { id: 'quick', label: 'Quick Trivia' },
   ];
 
   const categoryFilters = [
