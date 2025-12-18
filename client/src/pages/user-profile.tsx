@@ -1843,9 +1843,9 @@ export default function UserProfile() {
         ctx.textAlign = 'center';
         ctx.fillText('Discover yours', canvas.width / 2, 1680);
 
-        // Bottom text: "app.consumedapp.com" (BELOW the white box)
+        // Bottom text: "consumedapp.com" (BELOW the white box)
         ctx.font = 'bold 38px Poppins, sans-serif';
-        ctx.fillText('app.consumedapp.com', canvas.width / 2, 1750);
+        ctx.fillText('consumedapp.com', canvas.width / 2, 1750);
 
         // Bottom text: "@consumedapp" 
         ctx.font = 'bold 38px Poppins, sans-serif';
