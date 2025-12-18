@@ -45,6 +45,7 @@ import PointsBreakdown from "@/pages/points-breakdown";
 import AwardsList from "@/pages/awards-list";
 import AwardsPredictions from "@/pages/awards-predictions";
 import AwardsBallotShare from "@/pages/awards-ballot-share";
+import InvitePage from "@/pages/invite";
 
 function Router() {
   return (
