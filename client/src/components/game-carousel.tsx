@@ -74,14 +74,15 @@ export default function GameCarousel({ className }: GameCarouselProps) {
     },
   });
 
-  // Filter to only show curated Consumed content
+  // Filter to only show curated Consumed polls and trivia (no predictions for now)
   // MUST match SwipeableGameCards filtering to ensure clicked games are found
   const availableGames = games.filter((game) => {
     if (userPredictions[game.id]) return false;
     // Ensure game has required fields
     if (!game.id || !game.title || !game.type) return false;
-    // Only show Consumed-curated content: official polls/predictions OR trivia
-    if (!game.id.startsWith('consumed-') && game.type !== 'trivia') return false;
+    // Only show Consumed polls and trivia (exclude predictions for now)
+    if (game.type === 'predict') return false;
+    if (!game.id.startsWith('consumed-')) return false;
     return true;
   });
 

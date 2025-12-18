@@ -72,16 +72,17 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
     },
   });
 
-  // Filter to only show curated Consumed content
+  // Filter to only show curated Consumed polls and trivia (no predictions for now)
   // MUST match GameCarousel filtering to ensure clicked games are found
   const availableGames = games.filter((game) => {
     if (userPredictions[game.id] || submittedGames.has(game.id)) return false;
     // Ensure game has required fields
     if (!game.id || !game.title || !game.type) return false;
-    // Only show Consumed-curated content: official polls/predictions OR trivia
-    if (!game.id.startsWith('consumed-') && game.type !== 'trivia') return false;
-    // Ensure options exist for vote/predict types
-    if ((game.type === 'vote' || game.type === 'predict') && (!game.options || game.options.length < 2)) return false;
+    // Only show Consumed polls and trivia (exclude predictions for now)
+    if (game.type === 'predict') return false;
+    if (!game.id.startsWith('consumed-')) return false;
+    // Ensure options exist for vote types
+    if (game.type === 'vote' && (!game.options || game.options.length < 2)) return false;
     return true;
   });
 

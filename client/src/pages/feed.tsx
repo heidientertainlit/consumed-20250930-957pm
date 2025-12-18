@@ -2087,8 +2087,8 @@ export default function Feed() {
                   : post.id;
                 
                 // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
-                // Show game carousel after 3rd post, then every 15 posts
-                const shouldShowGameCarousel = postIndex === 2 || (postIndex > 2 && (postIndex - 2) % 15 === 0);
+                // Show game carousel after 3rd post, then every 5 posts
+                const shouldShowGameCarousel = postIndex === 2 || (postIndex > 2 && (postIndex - 2) % 5 === 0);
                 const shouldShowMediaCarousel = (postIndex + 1) % 10 === 0 && postIndex > 0 && !shouldShowGameCarousel;
                 
                 // Rotate through different carousel types
