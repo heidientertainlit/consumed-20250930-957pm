@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Star, Users, UserPlus, ChevronLeft } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Brain, Star, Users, UserPlus, ChevronLeft, Search } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
@@ -24,6 +25,18 @@ export default function PlayTriviaPage() {
   const [submissionResults, setSubmissionResults] = useState<Record<string, { correct: boolean; points: number }>>({});
   const [showCelebration, setShowCelebration] = useState<{ points: number } | null>(null);
   const [celebrationTimer, setCelebrationTimer] = useState<NodeJS.Timeout | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const categoryFilters = [
+    { id: 'all', label: 'All', icon: '🎯' },
+    { id: 'Movies', label: 'Movies', icon: '🎬' },
+    { id: 'TV', label: 'TV', icon: '📺' },
+    { id: 'Music', label: 'Music', icon: '🎵' },
+    { id: 'Books', label: 'Books', icon: '📚' },
+    { id: 'Games', label: 'Sports', icon: '🎮' },
+    { id: 'Podcasts', label: 'Podcasts', icon: '🎙️' },
+  ];
 
   // Cleanup celebration timer on unmount
   React.useEffect(() => {
@@ -190,8 +203,32 @@ export default function PlayTriviaPage() {
     };
   });
 
-  // Filter for trivia games only
-  const triviaGames = processedGames.filter((game: any) => game.type === 'trivia');
+  // Filter for trivia games only with search and category
+  const triviaGames = useMemo(() => {
+    let filtered = processedGames.filter((game: any) => game.type === 'trivia');
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((game: any) => {
+        const titleMatch = game.title?.toLowerCase().includes(query);
+        const descMatch = game.description?.toLowerCase().includes(query);
+        // Also search in questions if available
+        const questionsMatch = Array.isArray(game.options) && game.options.some((opt: any) => 
+          typeof opt === 'object' && opt.question?.toLowerCase().includes(query)
+        );
+        return titleMatch || descMatch || questionsMatch;
+      });
+    }
+    
+    // Apply category filter
+    if (selectedCategory && selectedCategory !== 'all') {
+      filtered = filtered.filter((game: any) => game.category === selectedCategory);
+    }
+    
+    return filtered;
+  }, [processedGames, searchQuery, selectedCategory]);
+  
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
 
@@ -233,14 +270,45 @@ export default function PlayTriviaPage() {
           <span className="ml-1">Back to Play</span>
         </button>
 
-        <div className="text-center mb-8">
+        <div className="mb-6">
           <div className="flex items-center justify-center space-x-2 mb-3">
             <Brain className="text-purple-600" size={32} />
-            <h1 className="text-3xl font-semibold text-black">Trivia Challenges</h1>
+            <h1 className="text-3xl font-semibold text-black" data-testid="trivia-title">Trivia</h1>
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-center mb-6">
             Test your knowledge against friends on different entertainment topics
           </p>
+
+          {/* Search Input */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Input
+              type="text"
+              placeholder="Search trivia (e.g., Harry Potter, Friends, Taylor Swift...)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white border-gray-200 rounded-xl"
+              data-testid="trivia-search-input"
+            />
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex flex-wrap gap-2 justify-center">
+            {categoryFilters.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id === 'all' ? null : cat.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  (cat.id === 'all' && !selectedCategory) || selectedCategory === cat.id
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                data-testid={`filter-${cat.id}`}
+              >
+                {cat.icon} {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Trivia Games Section */}
@@ -418,8 +486,24 @@ export default function PlayTriviaPage() {
         {triviaGames.length === 0 && (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Brain className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No trivia games available</h3>
-            <p className="text-gray-600">Check back soon for new challenges!</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchQuery || selectedCategory ? 'No matching trivia found' : 'No trivia games available'}
+            </h3>
+            <p className="text-gray-600">
+              {searchQuery || selectedCategory 
+                ? 'Try a different search term or category filter' 
+                : 'Check back soon for new trivia!'}
+            </p>
+            {(searchQuery || selectedCategory) && (
+              <Button
+                variant="outline"
+                onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
+                className="mt-4"
+                data-testid="clear-filters"
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
         )}
       </div>
