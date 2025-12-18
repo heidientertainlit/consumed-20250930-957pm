@@ -250,7 +250,7 @@ export default function EdnaSharePage() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-blue-100 text-sm" data-testid="text-footer">
-            app.consumedapp.com
+            consumedapp.com
           </p>
         </div>
       </div>
