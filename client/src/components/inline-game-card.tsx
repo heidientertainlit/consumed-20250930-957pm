@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -279,7 +279,8 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
   // Completion popup dialog
   const CompletionDialog = () => (
     <Dialog open={showCompleted} onOpenChange={(open) => !open && handlePlayAnother()}>
-      <DialogContent className="sm:max-w-md text-center border-0 bg-white rounded-3xl p-8">
+      <DialogContent className="sm:max-w-md text-center border-0 bg-white rounded-3xl p-8" aria-describedby={undefined}>
+        <DialogTitle className="sr-only">Game Completed</DialogTitle>
         <div className="flex flex-col items-center gap-4">
           <div className="text-5xl">🎉</div>
           <div className="space-y-2">
@@ -332,18 +333,21 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
                 <span className="text-white font-semibold">
                   {isQuickTrivia ? 'Quick Trivia' : 'Trivia Challenge'}
                 </span>
-                {currentGame.category && (
-                  <Badge className="bg-white/30 text-white border-0 text-xs">
-                    {currentGame.category}
-                  </Badge>
-                )}
               </div>
               <Badge className="bg-white/20 text-white border-0">
                 {triviaQuestionIndex + 1}/{totalTriviaQuestions}
               </Badge>
             </div>
           </div>
-          <div className="p-5">
+          {/* Category pills row */}
+          {currentGame.category && (
+            <div className="px-5 pt-4 flex flex-wrap gap-2">
+              <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
+                {currentGame.category}
+              </Badge>
+            </div>
+          )}
+          <div className="p-5 pt-3">
             <p className="text-lg font-semibold text-gray-900 mb-4">{triviaQuestion.question}</p>
             <div className="flex flex-col gap-2 mb-4">
               {triviaQuestion.options.map((option, index) => (
