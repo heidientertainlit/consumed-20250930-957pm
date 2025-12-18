@@ -120,6 +120,22 @@ export default function EdnaSharePage() {
           <p className="text-blue-100 text-lg" data-testid="text-page-subtitle">by consumed</p>
         </div>
 
+        {/* Top CTA Card */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20">
+          <div className="text-center">
+            <p className="text-white text-lg mb-3" data-testid="text-top-cta">
+              Try consumed and get your own Entertainment DNA
+            </p>
+            <Button
+              onClick={() => window.location.href = '/login'}
+              className="bg-white text-purple-700 hover:bg-gray-100 font-semibold px-8 py-3 text-lg shadow-lg"
+              data-testid="button-get-started-top"
+            >
+              Get Started Free
+            </Button>
+          </div>
+        </div>
+
         {/* DNA Card */}
         <div className="bg-white rounded-3xl p-8 shadow-2xl">
           {/* DNA Label */}
