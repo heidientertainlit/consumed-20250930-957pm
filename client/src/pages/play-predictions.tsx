@@ -25,7 +25,7 @@ export default function PlayPredictionsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [sourceFilter, setSourceFilter] = useState<'all' | 'consumed' | 'community'>('all');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'consumed' | 'community'>('consumed');
 
   const categoryFilters = [
     { id: 'Movies', label: 'Movies', icon: '🎬' },
