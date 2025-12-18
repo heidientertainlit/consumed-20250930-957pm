@@ -56,7 +56,9 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
       return (pools || []).filter((game: any) => {
         if (!game.id || !game.title || !game.type) return false;
         if (game.type === 'predict') return false;
-        if (!game.id.startsWith('consumed-')) return false;
+        // Include Consumed platform content (consumed-*) and legacy trivia (trivia-*)
+        const isConsumedContent = game.id.startsWith('consumed-') || game.id.startsWith('trivia-');
+        if (!isConsumedContent) return false;
         return true;
       }) as Game[];
     },

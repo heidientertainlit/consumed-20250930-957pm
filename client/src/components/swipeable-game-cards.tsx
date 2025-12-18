@@ -20,6 +20,7 @@ interface Game {
   type: 'vote' | 'trivia' | 'predict';
   points_reward: number;
   category?: string;
+  tags?: string[];
   correct_answer?: any;
 }
 
@@ -80,7 +81,9 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
     if (!game.id || !game.title || !game.type) return false;
     // Only show Consumed polls and trivia (exclude predictions for now)
     if (game.type === 'predict') return false;
-    if (!game.id.startsWith('consumed-')) return false;
+    // Include Consumed platform content (consumed-*) and legacy trivia (trivia-*)
+    const isConsumedContent = game.id.startsWith('consumed-') || game.id.startsWith('trivia-');
+    if (!isConsumedContent) return false;
     // Ensure options exist for vote types
     if (game.type === 'vote' && (!game.options || game.options.length < 2)) return false;
     return true;
@@ -410,6 +413,22 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
             {/* Game title - prominent */}
             <h2 className="text-xl font-bold text-gray-900 mb-2">{currentGame.title}</h2>
             
+            {/* Category and tags pills */}
+            {(currentGame.category || (currentGame.tags && currentGame.tags.length > 0)) && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {currentGame.category && (
+                  <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
+                    {currentGame.category}
+                  </Badge>
+                )}
+                {currentGame.tags?.map((tag: string, idx: number) => (
+                  <Badge key={idx} className="bg-blue-100 text-blue-700 border-0 text-xs px-3 py-1">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
             {/* Progress bar for trivia */}
             <div className="mb-4">
               <div className="flex justify-between text-xs text-gray-500 mb-1">

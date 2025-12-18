@@ -13,6 +13,7 @@ interface Game {
   title: string;
   type: 'vote' | 'trivia' | 'predict';
   category?: string;
+  tags?: string[];
   media_title?: string;
 }
 
@@ -82,7 +83,9 @@ export default function GameCarousel({ className }: GameCarouselProps) {
     if (!game.id || !game.title || !game.type) return false;
     // Only show Consumed polls and trivia (exclude predictions for now)
     if (game.type === 'predict') return false;
-    if (!game.id.startsWith('consumed-')) return false;
+    // Include Consumed platform content (consumed-*) and legacy trivia (trivia-*)
+    const isConsumedContent = game.id.startsWith('consumed-') || game.id.startsWith('trivia-');
+    if (!isConsumedContent) return false;
     return true;
   });
 
