@@ -48,11 +48,14 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     queryFn: async () => {
       const { data: pools, error } = await supabase
         .from('prediction_pools')
-        .select('*')
+        .select('*, tags')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw new Error('Failed to fetch games');
+      // Debug: Log trivia games with tags
+      const triviGames = (pools || []).filter((g: any) => g.type === 'trivia');
+      console.log('🎮 Trivia games with tags:', triviGames.map((g: any) => ({ id: g.id, tags: g.tags, category: g.category })));
       return (pools || []).filter((game: any) => {
         if (!game.id || !game.title || !game.type) return false;
         if (game.type === 'predict') return false;

@@ -49,7 +49,7 @@ export default function GameCarousel({ className }: GameCarouselProps) {
     queryFn: async () => {
       const { data: pools, error } = await supabase
         .from('prediction_pools')
-        .select('id, title, type, category, media_title')
+        .select('id, title, type, category, tags, media_title')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
         .limit(50);

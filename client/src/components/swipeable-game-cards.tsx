@@ -48,7 +48,7 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
     queryFn: async () => {
       const { data: pools, error } = await supabase
         .from('prediction_pools')
-        .select('*')
+        .select('*, tags')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
         .limit(20);
