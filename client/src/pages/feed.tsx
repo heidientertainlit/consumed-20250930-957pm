@@ -1922,7 +1922,7 @@ export default function Feed() {
           {/* Tagline */}
           <div className="text-center mb-6">
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">What's everyone consuming?</h1>
-            <p className="text-gray-400 text-sm mt-2">See what everyone is watching, reading, and listening to.</p>
+            <p className="text-gray-400 text-sm mt-2">See what everyone is watching, reading, and listening to. Add yours.</p>
           </div>
           
           {/* Inline Composer - Always Visible */}
