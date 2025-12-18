@@ -136,8 +136,13 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
       });
       setSubmittedGames(prev => new Set([...prev, currentGame.id]));
       setLastEarnedPoints(currentGame.points_reward);
+      // Show completion dialog and advance to next game immediately
+      // so the next game appears behind the dialog
       setShowCompleted(true);
-      setSelectedAnswer(null);
+      setTimeout(() => {
+        setCurrentGameOffset(prev => prev + 1);
+        setSelectedAnswer(null);
+      }, 100);
     } finally {
       setIsSubmitting(false);
     }
@@ -198,19 +203,32 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
         });
         setSubmittedGames(prev => new Set([...prev, currentGame.id]));
         setLastEarnedPoints(newScore);
+        // Show completion dialog and advance to next game immediately
+        // so the next game appears behind the dialog
         setShowCompleted(true);
+        setTimeout(() => {
+          setCurrentGameOffset(prev => prev + 1);
+          setTriviaQuestionIndex(0);
+          setTriviaScore(0);
+          setTriviaComplete(false);
+          setSelectedAnswer(null);
+        }, 100);
       } finally {
         setIsSubmitting(false);
       }
     }
   };
 
-  const handlePlayAnother = () => {
-    setShowCompleted(false);
+  const advanceToNextGame = () => {
     setCurrentGameOffset(prev => prev + 1);
     setTriviaQuestionIndex(0);
     setTriviaScore(0);
     setTriviaComplete(false);
+    setSelectedAnswer(null);
+  };
+
+  const handlePlayAnother = () => {
+    setShowCompleted(false);
   };
 
   const getGameIcon = (type: string) => {
@@ -280,7 +298,7 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
             className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-8 py-3 mt-2"
             data-testid="button-play-another"
           >
-            Play Another
+            See Other Games
             <ArrowRight className="ml-2" size={16} />
           </Button>
         </div>
@@ -312,8 +330,13 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
                 <Icon className="text-white" size={20} />
                 <TriviaTypeIcon className="text-white" size={16} />
                 <span className="text-white font-semibold">
-                  {isQuickTrivia ? 'Quick Trivia' : 'Challenge'}
+                  {isQuickTrivia ? 'Quick Trivia' : 'Trivia Challenge'}
                 </span>
+                {currentGame.category && (
+                  <Badge className="bg-white/30 text-white border-0 text-xs">
+                    {currentGame.category}
+                  </Badge>
+                )}
               </div>
               <Badge className="bg-white/20 text-white border-0">
                 {triviaQuestionIndex + 1}/{totalTriviaQuestions}
