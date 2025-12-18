@@ -2088,8 +2088,8 @@ export default function Feed() {
                   : post.id;
                 
                 // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
-                // Show inline game card every 8 posts (starting at 3rd)
-                const shouldShowInlineGame = postIndex === 2 || (postIndex > 2 && (postIndex - 2) % 8 === 0);
+                // Show inline game card every 4 posts (starting at 3rd)
+                const shouldShowInlineGame = postIndex === 2 || (postIndex > 2 && (postIndex - 2) % 4 === 0);
                 // Show game carousel every 20 posts (less frequent, for discovery)
                 const shouldShowGameCarousel = postIndex === 19 || (postIndex > 19 && (postIndex - 19) % 20 === 0);
                 const shouldShowMediaCarousel = (postIndex + 1) % 15 === 0 && postIndex > 0 && !shouldShowGameCarousel && !shouldShowInlineGame;
@@ -2104,7 +2104,7 @@ export default function Feed() {
                 const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length] || carouselTypes[0];
                 
                 // Calculate which game to show for this inline card position
-                const inlineGameIndex = shouldShowInlineGame ? Math.floor(postIndex / 8) : 0;
+                const inlineGameIndex = shouldShowInlineGame ? Math.floor(postIndex / 4) : 0;
                 
                 // Carousel elements to prepend to any post type
                 const carouselElements = (
