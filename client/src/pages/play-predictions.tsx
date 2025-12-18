@@ -25,6 +25,7 @@ export default function PlayPredictionsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'consumed' | 'community'>('all');
 
   const categoryFilters = [
     { id: 'Movies', label: 'Movies', icon: '🎬' },
@@ -34,6 +35,12 @@ export default function PlayPredictionsPage() {
     { id: 'Awards', label: 'Awards', icon: '🏅' },
   ];
 
+  const sourceFilters = [
+    { id: 'all', label: 'All' },
+    { id: 'consumed', label: '🏆 Consumed' },
+    { id: 'community', label: '👥 Community' },
+  ];
+
   // Extract game ID from URL hash if present (format: /play/predictions#game-id)
   const gameIdFromUrl = window.location.hash.replace('#', '');
 
@@ -41,7 +48,7 @@ export default function PlayPredictionsPage() {
     setIsTrackModalOpen(true);
   };
 
-  // Fetch games directly from Supabase - only curated Consumed predictions
+  // Fetch games directly from Supabase - all predictions
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['/api/predictions/pools'],
     queryFn: async () => {
@@ -52,8 +59,11 @@ export default function PlayPredictionsPage() {
         .eq('type', 'predict')
         .order('created_at', { ascending: false });
       if (error) throw new Error('Failed to fetch games');
-      // Filter to only show curated Consumed predictions
-      return (pools || []).filter((p: any) => p.id?.startsWith('consumed-prediction-'));
+      // Return all predictions, mark which are consumed vs community
+      return (pools || []).map((p: any) => ({
+        ...p,
+        isConsumed: p.id?.startsWith('consumed-prediction-') || p.id?.startsWith('consumed-'),
+      }));
     },
   });
 
@@ -197,9 +207,16 @@ export default function PlayPredictionsPage() {
     };
   });
 
-  // Filter for prediction games with search and category
+  // Filter for prediction games with search, category, and source
   const predictionGames = React.useMemo(() => {
     let filtered = processedGames.filter((game: any) => game.type === 'predict');
+    
+    // Apply source filter (consumed vs community)
+    if (sourceFilter === 'consumed') {
+      filtered = filtered.filter((game: any) => game.isConsumed);
+    } else if (sourceFilter === 'community') {
+      filtered = filtered.filter((game: any) => !game.isConsumed);
+    }
     
     // Apply search filter
     if (searchQuery.trim()) {
@@ -207,7 +224,8 @@ export default function PlayPredictionsPage() {
       filtered = filtered.filter((game: any) => {
         const titleMatch = game.title?.toLowerCase().includes(query);
         const descMatch = game.description?.toLowerCase().includes(query);
-        return titleMatch || descMatch;
+        const mediaMatch = game.media_title?.toLowerCase().includes(query);
+        return titleMatch || descMatch || mediaMatch;
       });
     }
     
@@ -217,7 +235,7 @@ export default function PlayPredictionsPage() {
     }
     
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory]);
+  }, [processedGames, searchQuery, selectedCategory, sourceFilter]);
   
   const lowStakesGames = predictionGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = predictionGames.filter((game: any) => game.isHighStakes);
@@ -285,7 +303,7 @@ export default function PlayPredictionsPage() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-                showFilters || selectedCategory
+                showFilters || selectedCategory || sourceFilter !== 'all'
                   ? 'bg-green-50 border-green-300 text-green-700'
                   : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
@@ -293,7 +311,7 @@ export default function PlayPredictionsPage() {
             >
               <SlidersHorizontal size={18} />
               <span className="text-sm font-medium">Filter</span>
-              {selectedCategory && (
+              {(selectedCategory || sourceFilter !== 'all') && (
                 <span className="w-2 h-2 bg-green-600 rounded-full" />
               )}
             </button>
@@ -301,9 +319,31 @@ export default function PlayPredictionsPage() {
 
           {/* Filter Panel */}
           {showFilters && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 space-y-4">
+              {/* Source Filter Row */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-600 w-14">Source:</span>
+                <div className="flex gap-2 flex-wrap">
+                  {sourceFilters.map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setSourceFilter(filter.id as 'all' | 'consumed' | 'community')}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        sourceFilter === filter.id
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      data-testid={`source-filter-${filter.id}`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Topic Filter Row */}
               <div className="flex items-start gap-3">
-                <span className="text-sm font-medium text-gray-600 w-12 pt-2">Topic:</span>
+                <span className="text-sm font-medium text-gray-600 w-14 pt-2">Topic:</span>
                 <div className="flex flex-wrap gap-2">
                   {categoryFilters.map((cat) => (
                     <button
@@ -338,6 +378,15 @@ export default function PlayPredictionsPage() {
                         <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase">
                           Predict
                         </Badge>
+                        {game.isConsumed ? (
+                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium">
+                            🏆 Consumed
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium">
+                            👥 Community
+                          </Badge>
+                        )}
                       </div>
                       <Button
                         variant="outline"
@@ -351,8 +400,19 @@ export default function PlayPredictionsPage() {
                       </Button>
                     </div>
 
-                    <CardTitle className="text-xl font-bold text-gray-900 mb-2 mt-2">{game.title}</CardTitle>
-                    <p className="text-gray-600 text-sm mb-4">{game.description}</p>
+                    {/* Show media title if available, otherwise show title */}
+                    {game.media_title && game.media_title !== game.title ? (
+                      <>
+                        <div className="text-sm font-medium text-purple-600 mb-1">{game.media_title}</div>
+                        <CardTitle className="text-xl font-bold text-gray-900 mb-2">{game.title}</CardTitle>
+                      </>
+                    ) : (
+                      <CardTitle className="text-xl font-bold text-gray-900 mb-2 mt-2">{game.title}</CardTitle>
+                    )}
+                    {/* Only show description if different from title */}
+                    {game.description && game.description !== game.title && (
+                      <p className="text-gray-600 text-sm mb-4">{game.description}</p>
+                    )}
 
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
@@ -430,8 +490,17 @@ export default function PlayPredictionsPage() {
                       <div className="flex items-center space-x-2">
                         <Star className="text-amber-600" size={24} />
                         <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium uppercase">
-                          High Stakes Prediction
+                          High Stakes
                         </Badge>
+                        {game.isConsumed ? (
+                          <Badge className="bg-amber-200 text-amber-800 hover:bg-amber-200 text-xs font-medium">
+                            🏆 Consumed
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium">
+                            👥 Community
+                          </Badge>
+                        )}
                       </div>
                       <Button
                         variant="outline"
@@ -445,8 +514,19 @@ export default function PlayPredictionsPage() {
                       </Button>
                     </div>
 
-                    <CardTitle className="text-xl font-bold text-amber-900 mb-2 mt-2">{game.title}</CardTitle>
-                    <p className="text-amber-800 text-sm mb-4">{game.description}</p>
+                    {/* Show media title if available, otherwise show title */}
+                    {game.media_title && game.media_title !== game.title ? (
+                      <>
+                        <div className="text-sm font-medium text-amber-600 mb-1">{game.media_title}</div>
+                        <CardTitle className="text-xl font-bold text-amber-900 mb-2">{game.title}</CardTitle>
+                      </>
+                    ) : (
+                      <CardTitle className="text-xl font-bold text-amber-900 mb-2 mt-2">{game.title}</CardTitle>
+                    )}
+                    {/* Only show description if different from title */}
+                    {game.description && game.description !== game.title && (
+                      <p className="text-amber-800 text-sm mb-4">{game.description}</p>
+                    )}
 
                     <div className="flex items-center space-x-4 text-sm text-amber-900">
                       <div className="flex items-center space-x-1">
@@ -480,17 +560,17 @@ export default function PlayPredictionsPage() {
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Trophy className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery || selectedCategory ? 'No matching predictions found' : 'No predictions available'}
+              {searchQuery || selectedCategory || sourceFilter !== 'all' ? 'No matching predictions found' : 'No predictions available'}
             </h3>
             <p className="text-gray-600">
-              {searchQuery || selectedCategory 
+              {searchQuery || selectedCategory || sourceFilter !== 'all'
                 ? 'Try a different search term or filter' 
                 : 'Check back soon for new prediction games!'}
             </p>
-            {(searchQuery || selectedCategory) && (
+            {(searchQuery || selectedCategory || sourceFilter !== 'all') && (
               <Button
                 variant="outline"
-                onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
+                onClick={() => { setSearchQuery(''); setSelectedCategory(null); setSourceFilter('all'); }}
                 className="mt-4"
                 data-testid="clear-filters"
               >
