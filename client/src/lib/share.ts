@@ -21,7 +21,7 @@ export function urlFor(kind: ShareKind, arg: any) {
   if (kind === 'edna') return `${BASE}${ednaPath(arg)}`;
   if (kind === 'profile') {
     const id = typeof arg === 'string' ? arg : arg?.id;
-    return `${BASE}/user/${id}`;
+    return `${BASE}/u/${id}`;
   }
   if (kind === 'prediction' || kind === 'game') {
     const id = typeof arg === 'string' ? arg : arg?.id;
