@@ -148,6 +148,7 @@ export const predictionPools = pgTable("prediction_pools", {
   mediaExternalSource: varchar("media_external_source"), // Media source (tmdb, spotify, etc)
   resolvedAt: timestamp("resolved_at"), // when prediction was resolved
   resolvedBy: text("resolved_by"), // 'creator', 'crowd', or 'system'
+  tags: text("tags").array(), // Genre/topic tags like "True Crime", "Comedy", "Documentary"
   createdAt: timestamp("created_at"),
 });
 

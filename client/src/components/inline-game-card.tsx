@@ -22,6 +22,7 @@ interface Game {
   type: 'vote' | 'trivia' | 'predict';
   points_reward: number;
   category?: string;
+  tags?: string[];
 }
 
 interface InlineGameCardProps {
@@ -339,12 +340,17 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
               </Badge>
             </div>
           </div>
-          {/* Category pills row - supports comma-separated categories */}
-          {currentGame.category && (
+          {/* Category and tags pills row */}
+          {(currentGame.category || (currentGame.tags && currentGame.tags.length > 0)) && (
             <div className="px-5 pt-4 flex flex-wrap gap-2">
-              {currentGame.category.split(',').map((cat: string, idx: number) => (
-                <Badge key={idx} className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
-                  {cat.trim()}
+              {currentGame.category && (
+                <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
+                  {currentGame.category}
+                </Badge>
+              )}
+              {currentGame.tags?.map((tag: string, idx: number) => (
+                <Badge key={idx} className="bg-blue-100 text-blue-700 border-0 text-xs px-3 py-1">
+                  {tag}
                 </Badge>
               ))}
             </div>
