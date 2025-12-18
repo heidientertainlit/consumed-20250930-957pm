@@ -36,7 +36,6 @@ export default function PlayTriviaPage() {
   ];
 
   const categoryFilters = [
-    { id: 'all', label: 'All', icon: '🎯' },
     { id: 'Movies', label: 'Movies', icon: '🎬' },
     { id: 'TV', label: 'TV', icon: '📺' },
     { id: 'Music', label: 'Music', icon: '🎵' },
@@ -313,40 +312,49 @@ export default function PlayTriviaPage() {
             />
           </div>
 
-          {/* Trivia Type Filter */}
-          <div className="flex gap-2 justify-center mb-3">
-            {triviaTypeFilters.map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setTriviaType(filter.id as 'all' | 'challenges' | 'quick')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  triviaType === filter.id
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-                data-testid={`type-filter-${filter.id}`}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
+          {/* Combined Filters */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+            {/* Type Filter Row */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500 w-12">Type:</span>
+              <div className="flex gap-2 flex-wrap">
+                {triviaTypeFilters.map((filter) => (
+                  <button
+                    key={filter.id}
+                    onClick={() => setTriviaType(filter.id as 'all' | 'challenges' | 'quick')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      triviaType === filter.id
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid={`type-filter-${filter.id}`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex flex-wrap gap-2 justify-center">
-            {categoryFilters.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id === 'all' ? null : cat.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  (cat.id === 'all' && !selectedCategory) || selectedCategory === cat.id
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                data-testid={`filter-${cat.id}`}
-              >
-                {cat.icon} {cat.label}
-              </button>
-            ))}
+            {/* Category Filter Row */}
+            <div className="flex items-start gap-2">
+              <span className="text-xs font-medium text-gray-500 w-12 pt-1.5">Topic:</span>
+              <div className="flex flex-wrap gap-2">
+                {categoryFilters.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      selectedCategory === cat.id
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid={`filter-${cat.id}`}
+                  >
+                    {cat.icon} {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
