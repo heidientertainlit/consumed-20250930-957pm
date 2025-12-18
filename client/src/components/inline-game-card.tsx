@@ -11,6 +11,7 @@ interface TriviaQuestion {
   question: string;
   options: string[];
   correct: string;
+  answer?: string;
 }
 
 interface Game {
@@ -145,8 +146,12 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     if (!currentGame || currentGame.type !== 'trivia') return null;
     if (!Array.isArray(currentGame.options)) return null;
     const q = currentGame.options[triviaQuestionIndex];
-    if (q && typeof q === 'object' && 'question' in q && 'options' in q && 'correct' in q) {
-      return q as TriviaQuestion;
+    if (q && typeof q === 'object' && 'question' in q && 'options' in q) {
+      // Handle both 'correct' and 'answer' field names
+      const correctAnswer = q.correct || q.answer;
+      if (correctAnswer) {
+        return { ...q, correct: correctAnswer } as TriviaQuestion;
+      }
     }
     return null;
   };
@@ -284,7 +289,12 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     );
   }
 
-  if (currentGame.type === 'trivia' && triviaQuestion) {
+  // For trivia games, we must have a valid question - if not, skip rendering
+  if (currentGame.type === 'trivia') {
+    if (!triviaQuestion) {
+      // Trivia without valid questions - skip to next game
+      return null;
+    }
     return (
       <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-card">
         <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
