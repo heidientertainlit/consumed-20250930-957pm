@@ -2236,8 +2236,12 @@ export default function Feed() {
                     {post.user ? (
                     <div className="flex items-center space-x-2 mb-3">
                       <Link href={`/user/${post.user.id}`}>
-                        <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
-                          <User size={18} className="text-gray-600" />
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer hover:opacity-90 transition-opacity">
+                          {post.user.avatar ? (
+                            <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                          ) : (
+                            <span className="text-sm">{post.user.displayName?.[0]?.toUpperCase() || post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                          )}
                         </div>
                       </Link>
                       <div className="flex-1">
@@ -2389,8 +2393,12 @@ export default function Feed() {
                           {displayUser ? (
                             <>
                               <Link href={`/user/${displayUser.userId}`}>
-                                <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
-                                  <User size={18} className="text-gray-600" />
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer hover:opacity-90 transition-opacity">
+                                  {displayUser.avatar ? (
+                                    <img src={displayUser.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                  ) : (
+                                    <span className="text-sm">{displayUser.displayName?.[0]?.toUpperCase() || displayUser.username?.[0]?.toUpperCase() || '?'}</span>
+                                  )}
                                 </div>
                               </Link>
                               <div className="flex-1">
