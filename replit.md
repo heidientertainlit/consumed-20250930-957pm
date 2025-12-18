@@ -118,6 +118,40 @@ INSERT INTO prediction_pools (
 - Sports: 🏆
 - Pop Culture: 🌟
 
+### Adding a Poll
+Required fields for `prediction_pools` table when `type='vote'`:
+
+```sql
+INSERT INTO prediction_pools (
+  id,
+  title,
+  description,
+  type,
+  category,
+  icon,
+  points_reward,
+  status,
+  origin_type,
+  options
+) VALUES (
+  'consumed-poll-[slug]',              -- id: must start with 'consumed-poll-' for platform content
+  '[Poll Question]',                   -- title: the question being asked
+  '[Optional description]',            -- description: subtitle (can be empty string '')
+  'vote',                              -- type: always 'vote' for polls
+  '[Category]',                        -- category: Movies, TV, Music, Books, Podcasts, Sports, Pop Culture
+  '[emoji]',                           -- icon: emoji like 🎬 📺 🎵 📚 🎙️ 🏆
+  2,                                   -- points_reward: 2 for polls (per points system)
+  'open',                              -- status: 'open' for active
+  'consumed',                          -- origin_type: 'consumed' for platform content
+  '["Option 1", "Option 2", "Option 3"]'::jsonb  -- options: JSONB array of answer choices
+);
+```
+
+**Points Reference:**
+- Trivia: 10 per correct answer (or custom)
+- Polls: 2 points participation
+- Predictions: +20 correct / -20 wrong
+
 ## External Dependencies
 
 -   **Database & Backend**: Supabase (PostgreSQL + Edge Functions)
