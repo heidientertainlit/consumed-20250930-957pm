@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -22,7 +22,9 @@ import {
   ChevronLeft,
   List,
   Trophy,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  Check
 } from "lucide-react";
 
 interface QuickAddModalProps {
@@ -49,6 +51,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   const [reviewText, setReviewText] = useState("");
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
+  const [isRankDrawerOpen, setIsRankDrawerOpen] = useState(false);
 
   const { data: listsData } = useQuery({
     queryKey: ['user-lists-metadata', user?.id],
@@ -152,6 +156,20 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     setSelectedRankId("");
     setReviewText("");
     setContainsSpoilers(false);
+    setIsListDrawerOpen(false);
+    setIsRankDrawerOpen(false);
+  };
+  
+  const getSelectedListName = () => {
+    if (!selectedListId || selectedListId === "none") return "Select a list...";
+    const list = userLists.find((l: any) => l.id === selectedListId);
+    return list?.title || "Select a list...";
+  };
+  
+  const getSelectedRankName = () => {
+    if (!selectedRankId || selectedRankId === "none") return "Select a rank...";
+    const rank = userRanks.find((r: any) => r.id === selectedRankId);
+    return rank?.title || "Select a rank...";
   };
 
   const handleMediaSearch = async (query: string) => {
@@ -336,6 +354,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-white max-w-md mx-auto p-0 overflow-hidden max-h-[85vh] flex flex-col">
         {stage === "search" ? (
@@ -455,19 +474,17 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   <List size={14} className="inline mr-1" />
                   Add to List (optional)
                 </label>
-                <Select value={selectedListId} onValueChange={setSelectedListId}>
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select a list..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="none">None</SelectItem>
-                    {userLists.map((list: any) => (
-                      <SelectItem key={list.id} value={list.id}>
-                        {list.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <button
+                  type="button"
+                  onClick={() => setIsListDrawerOpen(true)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-left hover:border-purple-300 transition-colors"
+                  data-testid="select-list-trigger"
+                >
+                  <span className={selectedListId && selectedListId !== "none" ? "text-gray-900" : "text-gray-400"}>
+                    {getSelectedListName()}
+                  </span>
+                  <ChevronDown size={16} className="text-gray-400" />
+                </button>
               </div>
 
               <div>
@@ -475,19 +492,17 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   <Trophy size={14} className="inline mr-1" />
                   Add to Rank (optional)
                 </label>
-                <Select value={selectedRankId} onValueChange={setSelectedRankId}>
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select a rank..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="none">None</SelectItem>
-                    {userRanks.map((rank: any) => (
-                      <SelectItem key={rank.id} value={rank.id}>
-                        {rank.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <button
+                  type="button"
+                  onClick={() => setIsRankDrawerOpen(true)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-left hover:border-purple-300 transition-colors"
+                  data-testid="select-rank-trigger"
+                >
+                  <span className={selectedRankId && selectedRankId !== "none" ? "text-gray-900" : "text-gray-400"}>
+                    {getSelectedRankName()}
+                  </span>
+                  <ChevronDown size={16} className="text-gray-400" />
+                </button>
               </div>
 
               <div>
@@ -532,7 +547,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                     Adding...
                   </>
                 ) : (
-                  'Add to Collection'
+                  'Add to Collections'
                 )}
               </Button>
             </div>
@@ -540,5 +555,92 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         )}
       </DialogContent>
     </Dialog>
+
+    {/* List Selection Drawer */}
+    <Drawer open={isListDrawerOpen} onOpenChange={setIsListDrawerOpen}>
+      <DrawerContent className="bg-white">
+        <DrawerHeader className="text-left">
+          <DrawerTitle className="text-gray-900">Select a List</DrawerTitle>
+        </DrawerHeader>
+        <div className="px-4 pb-6 max-h-[60vh] overflow-y-auto">
+          <button
+            onClick={() => {
+              setSelectedListId("none");
+              setIsListDrawerOpen(false);
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            data-testid="list-option-none"
+          >
+            <span className="text-gray-900">None</span>
+            {(!selectedListId || selectedListId === "none") && (
+              <Check size={18} className="text-purple-600" />
+            )}
+          </button>
+          {userLists.map((list: any) => (
+            <button
+              key={list.id}
+              onClick={() => {
+                setSelectedListId(list.id);
+                setIsListDrawerOpen(false);
+              }}
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              data-testid={`list-option-${list.id}`}
+            >
+              <div className="flex items-center gap-3">
+                <List size={16} className="text-purple-600" />
+                <span className="text-gray-900">{list.title}</span>
+              </div>
+              {selectedListId === list.id && (
+                <Check size={18} className="text-purple-600" />
+              )}
+            </button>
+          ))}
+        </div>
+      </DrawerContent>
+    </Drawer>
+
+    {/* Rank Selection Drawer */}
+    <Drawer open={isRankDrawerOpen} onOpenChange={setIsRankDrawerOpen}>
+      <DrawerContent className="bg-white">
+        <DrawerHeader className="text-left">
+          <DrawerTitle className="text-gray-900">Select a Rank</DrawerTitle>
+        </DrawerHeader>
+        <div className="px-4 pb-6 max-h-[60vh] overflow-y-auto">
+          <button
+            onClick={() => {
+              setSelectedRankId("none");
+              setIsRankDrawerOpen(false);
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            data-testid="rank-option-none"
+          >
+            <span className="text-gray-900">None</span>
+            {(!selectedRankId || selectedRankId === "none") && (
+              <Check size={18} className="text-purple-600" />
+            )}
+          </button>
+          {userRanks.map((rank: any) => (
+            <button
+              key={rank.id}
+              onClick={() => {
+                setSelectedRankId(rank.id);
+                setIsRankDrawerOpen(false);
+              }}
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              data-testid={`rank-option-${rank.id}`}
+            >
+              <div className="flex items-center gap-3">
+                <Trophy size={16} className="text-yellow-600" />
+                <span className="text-gray-900">{rank.title}</span>
+              </div>
+              {selectedRankId === rank.id && (
+                <Check size={18} className="text-purple-600" />
+              )}
+            </button>
+          ))}
+        </div>
+      </DrawerContent>
+    </Drawer>
+    </>
   );
 }
