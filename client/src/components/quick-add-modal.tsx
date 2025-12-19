@@ -247,6 +247,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         externalSource,
       };
       
+      console.log('🎯 QuickAdd: Adding media', { mediaData, selectedListId, rating, selectedRankId });
+      
       // Step 1: Track media to history (always happens)
       // Use track-media for default "Finished" list, or add-to-custom-list for specific lists
       if (selectedListId && selectedListId !== "none") {
@@ -269,7 +271,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           console.error('Failed to add to list:', errorData);
-          throw new Error('Failed to add media to list');
+          // Don't throw - try to continue with rating/rank if list fails
         }
       } else {
         // No list selected - add to "Finished" as default to track consumption
@@ -291,7 +293,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           console.error('Failed to track media:', errorData);
-          throw new Error('Failed to track media');
+          // Don't throw - try to continue with rating if track fails
         }
       }
       
@@ -366,22 +368,28 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         );
       }
       
+      // Build success message based on what was done
+      let successMessage = `${selectedMedia.title} has been added`;
+      if (rating > 0) successMessage += ` with ${rating}/5 rating`;
+      if (selectedRankId && selectedRankId !== "none") successMessage += ` to your rank`;
+      
       toast({
         title: "Added!",
-        description: `${selectedMedia.title} has been added to your collection`,
+        description: successMessage,
       });
       
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['media-ratings'] });
       
       onClose();
     } catch (error) {
       console.error("Error adding media:", error);
       toast({
         title: "Error",
-        description: "Failed to add media. Please try again.",
+        description: "There was an issue adding this media. Some features may not have been applied.",
         variant: "destructive",
       });
     } finally {
@@ -434,7 +442,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   return (
     <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white max-w-[calc(100%-32px)] sm:max-w-md mx-4 p-0 overflow-hidden max-h-[80vh] flex flex-col rounded-xl border border-gray-100 shadow-xl">
+      <DialogContent className="bg-white w-[calc(100%-32px)] max-w-md p-0 overflow-hidden max-h-[80vh] flex flex-col rounded-xl border border-gray-100 shadow-xl left-1/2 -translate-x-1/2">
         {stage === "search" ? (
           <>
             <div className="p-4 pb-3">
