@@ -55,8 +55,29 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     queryKey: ['user-lists-metadata', user?.id],
     queryFn: async () => {
       if (!session?.access_token || !user?.id) return { lists: [] };
+      
+      // Try the fast metadata endpoint first
+      try {
+        const metadataResponse = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-metadata?user_id=${user.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (metadataResponse.ok) {
+          return metadataResponse.json();
+        }
+      } catch (e) {
+        // Metadata endpoint not deployed yet, fall through to full endpoint
+      }
+      
+      // Fallback to full endpoint if metadata endpoint fails
       const response = await fetch(
-        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-metadata?user_id=${user.id}`,
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${user.id}`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -64,7 +85,17 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
           },
         }
       );
-      if (response.ok) return response.json();
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Transform full data to metadata format
+        return {
+          lists: (data.lists || []).map((list: any) => ({
+            ...list,
+            item_count: list.items?.length || 0
+          }))
+        };
+      }
       return { lists: [] };
     },
     enabled: !!session?.access_token && !!user?.id,
