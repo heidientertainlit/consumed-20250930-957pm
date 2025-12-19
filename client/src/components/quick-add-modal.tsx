@@ -11,7 +11,6 @@ import { queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
   Search, 
-  X, 
   Star, 
   Film, 
   Tv, 
@@ -344,9 +343,6 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Quick Add</h2>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                  <X size={20} />
-                </button>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -421,9 +417,6 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   <ChevronLeft size={20} />
                 </button>
                 <h2 className="text-lg font-semibold text-gray-900 flex-1">Add Details</h2>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                  <X size={20} />
-                </button>
               </div>
             </div>
             
