@@ -24,7 +24,8 @@ import {
   Trophy,
   AlertTriangle,
   ChevronDown,
-  Check
+  Check,
+  X
 } from "lucide-react";
 
 interface QuickAddModalProps {
@@ -240,10 +241,9 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       const mediaData = {
         title: selectedMedia.title,
         mediaType: selectedMedia.type || 'movie',
-        mediaSubtype: selectedMedia.media_subtype || null,
         creator: selectedMedia.creator || selectedMedia.artist || '',
         imageUrl: selectedMedia.image_url || selectedMedia.poster_path,
-        externalId,
+        externalId: String(externalId),
         externalSource,
       };
       
@@ -434,24 +434,28 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   return (
     <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white max-w-md mx-auto p-0 overflow-hidden max-h-[85vh] flex flex-col">
+      <DialogContent className="bg-white max-w-md mx-auto p-0 overflow-hidden max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 shadow-lg">
         {stage === "search" ? (
           <>
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Quick Add</h2>
-              </div>
+            <div className="p-4 pb-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <Input
                   type="text"
-                  placeholder="Search movies, TV, books, music..."
+                  placeholder="Search movies, shows, books, music"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-gray-50 border-gray-200"
+                  className="pl-3 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm placeholder:text-gray-400 focus:border-gray-300 focus:ring-0"
                   autoFocus
                   data-testid="quick-add-search"
                 />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
             </div>
             
