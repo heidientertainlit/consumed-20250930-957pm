@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Brain, Star, Users, UserPlus, ChevronLeft, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Brain, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
@@ -30,7 +29,7 @@ export default function PlayTriviaPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [triviaType, setTriviaType] = useState<'all' | 'challenges' | 'quick'>('all');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [expandedFilter, setExpandedFilter] = useState<'type' | 'topic' | 'genre' | null>(null);
 
   const genreFilters = [
     { id: 'True Crime', label: 'True Crime' },
@@ -322,51 +321,50 @@ export default function PlayTriviaPage() {
             Test your knowledge against friends on different entertainment topics
           </p>
 
-          {/* Search and Filter Row */}
-          <div className="flex gap-2 mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                type="text"
-                placeholder="Search trivia..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white border-gray-200 rounded-xl"
-                data-testid="trivia-search-input"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-                showFilters || triviaType !== 'all' || selectedCategory || selectedGenre
-                  ? 'bg-purple-50 border-purple-300 text-purple-700'
-                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
-              data-testid="filter-toggle"
-            >
-              <SlidersHorizontal size={18} />
-              <span className="text-sm font-medium">Filter</span>
-              {(triviaType !== 'all' || selectedCategory || selectedGenre) && (
-                <span className="w-2 h-2 bg-purple-600 rounded-full" />
-              )}
-            </button>
+          {/* Search Row */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Input
+              type="text"
+              placeholder="Search trivia..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white border-gray-200 rounded-xl"
+              data-testid="trivia-search-input"
+            />
           </div>
 
-          {/* Filter Panel (Collapsible) */}
-          {showFilters && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4 mb-4">
-              {/* Type Filter Row */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-600 w-12">Type:</span>
-                <div className="flex gap-2 flex-wrap">
+          {/* Filter Dropdowns Row */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {/* Type Filter Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setExpandedFilter(expandedFilter === 'type' ? null : 'type')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                  triviaType !== 'all'
+                    ? 'bg-purple-50 border-purple-300 text-purple-700'
+                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+                data-testid="type-filter-toggle"
+              >
+                <span className="text-sm font-medium">
+                  Type{triviaType !== 'all' ? `: ${triviaType === 'challenges' ? 'Challenges' : 'Quick'}` : ''}
+                </span>
+                <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'type' ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedFilter === 'type' && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[140px]">
                   {triviaTypeFilters.map((filter) => (
                     <button
                       key={filter.id}
-                      onClick={() => setTriviaType(filter.id as 'all' | 'challenges' | 'quick')}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      onClick={() => {
+                        setTriviaType(filter.id as 'all' | 'challenges' | 'quick');
+                        setExpandedFilter(null);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
                         triviaType === filter.id
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-purple-100 text-purple-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
                       }`}
                       data-testid={`type-filter-${filter.id}`}
                     >
@@ -374,20 +372,52 @@ export default function PlayTriviaPage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* Category Filter Row */}
-              <div className="flex items-start gap-3">
-                <span className="text-sm font-medium text-gray-600 w-12 pt-2">Topic:</span>
-                <div className="flex flex-wrap gap-2">
+            {/* Topic Filter Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                  selectedCategory
+                    ? 'bg-purple-50 border-purple-300 text-purple-700'
+                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+                data-testid="topic-filter-toggle"
+              >
+                <span className="text-sm font-medium">
+                  Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}
+                </span>
+                <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedFilter === 'topic' && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
+                  <button
+                    onClick={() => {
+                      setSelectedCategory(null);
+                      setExpandedFilter(null);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                      !selectedCategory
+                        ? 'bg-purple-100 text-purple-700 font-medium'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    data-testid="filter-all-topics"
+                  >
+                    All Topics
+                  </button>
                   {categoryFilters.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                        setExpandedFilter(null);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
                         selectedCategory === cat.id
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-purple-100 text-purple-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
                       }`}
                       data-testid={`filter-${cat.id}`}
                     >
@@ -395,39 +425,62 @@ export default function PlayTriviaPage() {
                     </button>
                   ))}
                 </div>
-              </div>
-
-              {/* Genre Filter Row */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-600 w-12">Genre:</span>
-                <Select 
-                  value={selectedGenre || 'all'} 
-                  onValueChange={(value) => setSelectedGenre(value === 'all' ? null : value)}
-                >
-                  <SelectTrigger className="w-48 bg-white" data-testid="genre-filter-dropdown">
-                    <SelectValue placeholder="All Genres" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Genres</SelectItem>
-                    {genreFilters.map((genre) => (
-                      <SelectItem key={genre.id} value={genre.id}>
-                        {genre.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedGenre && (
-                  <button
-                    onClick={() => setSelectedGenre(null)}
-                    className="text-xs text-purple-600 hover:text-purple-800"
-                    data-testid="clear-genre-filter"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
+              )}
             </div>
-          )}
+
+            {/* Genre Filter Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                  selectedGenre
+                    ? 'bg-purple-50 border-purple-300 text-purple-700'
+                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+                data-testid="genre-filter-toggle"
+              >
+                <span className="text-sm font-medium">
+                  Genre{selectedGenre ? `: ${selectedGenre}` : ''}
+                </span>
+                <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedFilter === 'genre' && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[150px]">
+                  <button
+                    onClick={() => {
+                      setSelectedGenre(null);
+                      setExpandedFilter(null);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                      !selectedGenre
+                        ? 'bg-purple-100 text-purple-700 font-medium'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    data-testid="genre-filter-all"
+                  >
+                    All Genres
+                  </button>
+                  {genreFilters.map((genre) => (
+                    <button
+                      key={genre.id}
+                      onClick={() => {
+                        setSelectedGenre(genre.id);
+                        setExpandedFilter(null);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                        selectedGenre === genre.id
+                          ? 'bg-purple-100 text-purple-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      data-testid={`genre-filter-${genre.id}`}
+                    >
+                      {genre.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Trivia Games Section */}
