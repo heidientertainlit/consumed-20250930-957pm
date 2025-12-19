@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MediaCarousel from "@/components/media-carousel";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 interface Recommendation {
   title: string;
@@ -43,6 +46,13 @@ interface ConversationResult {
   engagement_count?: number;
 }
 
+interface UserResult {
+  id: string;
+  user_name: string;
+  display_name?: string;
+  email?: string;
+}
+
 interface SearchResult {
   type: 'conversational' | 'direct' | 'error';
   explanation?: string;
@@ -71,11 +81,15 @@ function deduplicateMediaItems<T extends { id: string; externalId?: string; exte
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [quickSearchQuery, setQuickSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMediaFilter, setSelectedMediaFilter] = useState<string>("all");
-  const { session } = useAuth();
+  const [activeTab, setActiveTab] = useState<"ai" | "quick">("quick");
+  const { session, user } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const mediaFilters = [
     { id: "all", label: "All" },
@@ -366,6 +380,72 @@ export default function Search() {
       }
     },
     staleTime: 1000 * 60 * 60 * 6,
+  });
+
+  // Quick search - media results
+  const { data: quickMediaResults = [], isLoading: isLoadingMedia } = useQuery({
+    queryKey: ['quick-media-search', quickSearchQuery],
+    queryFn: async () => {
+      if (!quickSearchQuery.trim() || !session?.access_token) return [];
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: quickSearchQuery })
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.results || [];
+    },
+    enabled: !!quickSearchQuery.trim() && !!session?.access_token,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Quick search - user results
+  const { data: quickUserResults = [], isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['quick-user-search', quickSearchQuery],
+    queryFn: async () => {
+      if (!quickSearchQuery.trim() || !session?.access_token) return [];
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'searchUsers', query: quickSearchQuery })
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.users || [];
+    },
+    enabled: !!quickSearchQuery.trim() && !!session?.access_token,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Send friend request mutation
+  const sendFriendRequestMutation = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'sendRequest', targetUserId })
+      });
+      if (!response.ok) throw new Error('Failed to send friend request');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Friend request sent!" });
+      queryClient.invalidateQueries({ queryKey: ['quick-user-search'] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Could not send friend request", variant: "destructive" });
+    },
   });
 
   const handleSearch = async () => {

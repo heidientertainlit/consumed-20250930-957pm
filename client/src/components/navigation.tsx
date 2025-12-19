@@ -480,13 +480,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                   )}
                 </div>
               ) : (
-                <button
-                  onClick={handleSearchToggle}
+                <Link
+                  href="/search"
                   className="hover:opacity-70 transition-opacity"
                   data-testid="search-button"
                 >
                   <Search className="text-white" size={20} />
-                </button>
+                </Link>
               )}
             </div>
             
