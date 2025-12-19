@@ -225,46 +225,99 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       
-      const payload: any = {
+      // Determine external source based on media type
+      let externalSource = selectedMedia.source || selectedMedia.external_source || 'tmdb';
+      const externalId = selectedMedia.external_id || selectedMedia.id;
+      
+      if (!selectedMedia.source && !selectedMedia.external_source) {
+        if (selectedMedia.type === 'book') {
+          externalSource = 'openlibrary';
+        } else if (selectedMedia.type === 'podcast' || selectedMedia.type === 'music') {
+          externalSource = 'spotify';
+        }
+      }
+      
+      const mediaData = {
         title: selectedMedia.title,
-        media_type: selectedMedia.type,
-        external_id: selectedMedia.external_id || selectedMedia.id,
-        external_source: selectedMedia.source || 'tmdb',
-        image_url: selectedMedia.image_url || selectedMedia.poster_path,
-        creator: selectedMedia.creator || selectedMedia.artist,
+        mediaType: selectedMedia.type || 'movie',
+        mediaSubtype: selectedMedia.media_subtype || null,
+        creator: selectedMedia.creator || selectedMedia.artist || '',
+        imageUrl: selectedMedia.image_url || selectedMedia.poster_path,
+        externalId,
+        externalSource,
       };
       
-      if (rating > 0) {
-        payload.user_rating = rating;
-      }
-      
-      // Only add list_id if a real list is selected (not "none" or empty)
+      // Step 1: Track media to history (always happens)
+      // Use track-media for default "Finished" list, or add-to-custom-list for specific lists
       if (selectedListId && selectedListId !== "none") {
-        payload.list_id = selectedListId;
-      }
-      
-      if (reviewText.trim()) {
-        payload.review = reviewText.trim();
-        payload.contains_spoilers = containsSpoilers;
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/add-media-to-list`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
+        // Add to specific custom list
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/add-to-custom-list`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              media: mediaData,
+              customListId: selectedListId,
+            }),
+          }
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Failed to add to list:', errorData);
+          throw new Error('Failed to add media to list');
         }
-      );
-      
-      if (!response.ok) {
-        throw new Error('Failed to add media');
+      } else {
+        // No list selected - add to "Finished" as default to track consumption
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/track-media`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              media: mediaData,
+              listType: 'Finished',
+            }),
+          }
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Failed to track media:', errorData);
+          throw new Error('Failed to track media');
+        }
       }
       
-      // Only add to rank if a real rank is selected (not "none" or empty)
+      // Step 2: Add rating if provided
+      if (rating > 0) {
+        await fetch(
+          `${supabaseUrl}/functions/v1/rate-media`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              media_external_id: externalId,
+              media_external_source: externalSource,
+              media_title: selectedMedia.title,
+              media_type: selectedMedia.type || 'movie',
+              media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
+              rating: rating,
+            }),
+          }
+        );
+      }
+      
+      // Step 3: Add to rank if selected
       if (selectedRankId && selectedRankId !== "none") {
         await fetch(
           `${supabaseUrl}/functions/v1/manage-ranks`,
@@ -280,10 +333,34 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               item: {
                 title: selectedMedia.title,
                 media_type: selectedMedia.type,
-                external_id: selectedMedia.external_id || selectedMedia.id,
-                external_source: selectedMedia.source || 'tmdb',
+                external_id: externalId,
+                external_source: externalSource,
                 image_url: selectedMedia.image_url || selectedMedia.poster_path,
               },
+            }),
+          }
+        );
+      }
+      
+      // Step 4: Post review if provided
+      if (reviewText.trim()) {
+        await fetch(
+          `${supabaseUrl}/functions/v1/create-activity-post`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: reviewText.trim(),
+              content_type: 'review',
+              media_title: selectedMedia.title,
+              media_type: selectedMedia.type,
+              media_external_id: externalId,
+              media_external_source: externalSource,
+              media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
+              contains_spoilers: containsSpoilers,
             }),
           }
         );
@@ -297,6 +374,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
       
       onClose();
     } catch (error) {
