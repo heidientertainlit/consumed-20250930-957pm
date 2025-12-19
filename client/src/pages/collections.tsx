@@ -42,6 +42,7 @@ import {
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import FeedbackFooter from "@/components/feedback-footer";
+import { QuickAddModal } from "@/components/quick-add-modal";
 
 export default function CollectionsPage() {
   const { user, session } = useAuth();
@@ -75,6 +76,9 @@ export default function CollectionsPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // Quick add modal state
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   // Fast metadata query - try lightweight endpoint first, fallback to full endpoint
   const { data: listsMetadata, isLoading: isLoadingMetadata } = useQuery({
@@ -1015,6 +1019,22 @@ export default function CollectionsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Floating Action Button - Quick Add */}
+      <button
+        onClick={() => setIsQuickAddOpen(true)}
+        className="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shadow-lg flex items-center justify-center text-white hover:from-purple-700 hover:to-blue-700 transition-all hover:scale-105 z-40"
+        data-testid="fab-quick-add"
+        aria-label="Quick add media"
+      >
+        <Plus size={24} />
+      </button>
+
+      {/* Quick Add Modal */}
+      <QuickAddModal 
+        isOpen={isQuickAddOpen} 
+        onClose={() => setIsQuickAddOpen(false)} 
+      />
 
       <FeedbackFooter />
     </div>
