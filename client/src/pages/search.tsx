@@ -521,104 +521,273 @@ export default function Search() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Header */}
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-semibold text-black mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Ask Anything
+        <div className="mb-4 text-center">
+          <h1 className="text-3xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Search
           </h1>
-          <p className="text-base text-gray-600 max-w-xs mx-auto">
-            Ask for recommendations or see what people are saying about what you're consuming.
+          <p className="text-base text-gray-600 max-w-md mx-auto">
+            Find friends, media, and get AI-powered recommendations
           </p>
         </div>
 
-        {/* Search Section */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200">
-          <div className="p-6">
-            <div className="flex gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white flex-shrink-0">
-                <Sparkles size={20} />
-              </div>
-              <div className="flex-1">
-                <Textarea
-                  placeholder="Ask anything… from recs to what people are saying."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey && !isSearching) {
-                      e.preventDefault();
-                      handleSearch();
-                    }
-                  }}
-                  disabled={isSearching}
-                  className="border-none p-0 text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-base placeholder:text-gray-400 min-h-[100px]"
-                  data-testid="search-input"
+        {/* Tabs for Quick Search vs AI Search */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "ai" | "quick")} className="w-full">
+          <TabsList className="w-full mb-4 bg-white border border-gray-200 p-1 h-auto">
+            <TabsTrigger 
+              value="quick" 
+              className="flex-1 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+              data-testid="tab-quick-search"
+            >
+              <SearchIcon size={16} className="mr-2" />
+              Quick Search
+            </TabsTrigger>
+            <TabsTrigger 
+              value="ai" 
+              className="flex-1 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+              data-testid="tab-ai-search"
+            >
+              <Sparkles size={16} className="mr-2" />
+              AI Search
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Quick Search Tab */}
+          <TabsContent value="quick">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6">
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Input
+                  type="text"
+                  placeholder="Search for friends, movies, TV shows, books, music..."
+                  value={quickSearchQuery}
+                  onChange={(e) => setQuickSearchQuery(e.target.value)}
+                  className="pl-10 bg-gray-50 border-gray-200 rounded-xl"
+                  autoFocus
+                  data-testid="quick-search-input"
                 />
               </div>
             </div>
-          </div>
-          
-          <div className="px-6 pb-4 border-t border-gray-100 pt-4 flex justify-end">
-            <Button
-              onClick={handleSearch}
-              disabled={isSearching || !searchQuery.trim()}
-              className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium disabled:opacity-50"
-              data-testid="search-submit"
-            >
-              {isSearching ? (
-                <>
-                  <Loader2 className="animate-spin mr-2" size={16} />
-                  Searching...
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} className="mr-2" />
-                  Search
-                </>
-              )}
-            </Button>
-          </div>
-          
-          {/* Try Asking Examples */}
-          {!searchResults && !isSearching && (
-            <div className="px-6 pb-4">
-              <p className="text-gray-600 text-sm font-medium mb-3">Try asking:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[
-                  "Shows like The Bear",
-                  "What are people saying about Bridgerton?",
-                  "Movies for a rainy Sunday",
-                  "Did my friends like Project Hail Mary?",
-                  "Hot takes on DWTS finale"
-                ].map((example) => (
-                  <button
-                    key={example}
-                    onClick={() => {
-                      setSearchQuery(example);
-                      setTimeout(() => handleSearch(), 100);
-                    }}
-                    className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 text-sm transition-colors"
-                    data-testid={`example-query-${example.substring(0, 10)}`}
-                  >
-                    "{example}"
-                  </button>
-                ))}
+
+            {/* Quick Search Results */}
+            {quickSearchQuery.trim() && (
+              <div className="space-y-6">
+                {/* Loading */}
+                {(isLoadingMedia || isLoadingUsers) && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="animate-spin text-purple-600" size={24} />
+                    <span className="ml-2 text-gray-600">Searching...</span>
+                  </div>
+                )}
+
+                {/* User Results */}
+                {!isLoadingUsers && quickUserResults.length > 0 && (
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Users size={16} className="text-purple-600" />
+                        People
+                      </h3>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {quickUserResults.slice(0, 5).map((userResult: UserResult) => (
+                        <div
+                          key={userResult.id}
+                          className="flex items-center justify-between gap-3 p-4 hover:bg-gray-50"
+                          data-testid={`user-result-${userResult.id}`}
+                        >
+                          <div
+                            onClick={() => setLocation(`/user/${userResult.id}`)}
+                            className="flex items-center gap-3 flex-1 cursor-pointer"
+                          >
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                              {userResult.display_name?.[0] || userResult.user_name[0]}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900 truncate">
+                                {userResult.display_name || userResult.user_name}
+                              </p>
+                              <p className="text-sm text-gray-500 truncate">@{userResult.user_name}</p>
+                            </div>
+                          </div>
+                          {userResult.id !== user?.id && (
+                            <Button
+                              onClick={() => sendFriendRequestMutation.mutate(userResult.id)}
+                              size="sm"
+                              variant="outline"
+                              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                              disabled={sendFriendRequestMutation.isPending}
+                              data-testid={`add-friend-${userResult.id}`}
+                            >
+                              <Plus size={14} className="mr-1" />
+                              Add
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Media Results */}
+                {!isLoadingMedia && quickMediaResults.length > 0 && (
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Film size={16} className="text-purple-600" />
+                        Media
+                      </h3>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {quickMediaResults.slice(0, 8).map((result: any, idx: number) => (
+                        <div
+                          key={`${result.external_id || result.id}-${idx}`}
+                          onClick={() => {
+                            const type = result.type || 'movie';
+                            const source = result.source || result.external_source || 'tmdb';
+                            const id = result.external_id || result.id;
+                            if (type && source && id) {
+                              setLocation(`/media/${type}/${source}/${id}`);
+                            }
+                          }}
+                          className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer"
+                          data-testid={`media-result-${idx}`}
+                        >
+                          {(result.image_url || result.poster_path || result.image) ? (
+                            <img
+                              src={result.image_url || result.poster_path || result.image}
+                              alt={result.title}
+                              className="w-12 h-16 object-cover rounded-lg flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              {getMediaIcon(result.type || 'movie')}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate">{result.title}</p>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <span className="capitalize">{result.type}</span>
+                              {result.year && <span>• {result.year}</span>}
+                            </div>
+                            {result.creator && (
+                              <p className="text-xs text-gray-400 truncate">{result.creator}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No Results */}
+                {!isLoadingMedia && !isLoadingUsers && quickMediaResults.length === 0 && quickUserResults.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <SearchIcon size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>No results found for "{quickSearchQuery}"</p>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-          
-          {/* Loading State Message */}
-          {isSearching && (
-            <div className="px-6 pb-4">
-              <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <Loader2 className="animate-spin text-purple-600" size={20} />
-                <div>
-                  <p className="text-purple-900 font-semibold">AI is analyzing your request...</p>
-                  <p className="text-purple-700 text-sm">This may take 10-30 seconds</p>
+            )}
+
+            {/* Empty state */}
+            {!quickSearchQuery.trim() && (
+              <div className="text-center py-8 text-gray-400">
+                <SearchIcon size={32} className="mx-auto mb-2 opacity-50" />
+                <p>Search for friends, movies, TV shows, books, and music</p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* AI Search Tab */}
+          <TabsContent value="ai">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200">
+              <div className="p-6">
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white flex-shrink-0">
+                    <Sparkles size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <Textarea
+                      placeholder="Ask anything… from recs to what people are saying."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && !isSearching) {
+                          e.preventDefault();
+                          handleSearch();
+                        }
+                      }}
+                      disabled={isSearching}
+                      className="border-none p-0 text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-base placeholder:text-gray-400 min-h-[100px]"
+                      data-testid="ai-search-input"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+              
+              <div className="px-6 pb-4 border-t border-gray-100 pt-4 flex justify-end">
+                <Button
+                  onClick={handleSearch}
+                  disabled={isSearching || !searchQuery.trim()}
+                  className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium disabled:opacity-50"
+                  data-testid="ai-search-submit"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} className="mr-2" />
+                      Search
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {/* Try Asking Examples */}
+              {!searchResults && !isSearching && (
+                <div className="px-6 pb-4">
+                  <p className="text-gray-600 text-sm font-medium mb-3">Try asking:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {[
+                      "Shows like The Bear",
+                      "What are people saying about Bridgerton?",
+                      "Movies for a rainy Sunday",
+                      "Did my friends like Project Hail Mary?",
+                      "Hot takes on DWTS finale"
+                    ].map((example) => (
+                      <button
+                        key={example}
+                        onClick={() => {
+                          setSearchQuery(example);
+                          setTimeout(() => handleSearch(), 100);
+                        }}
+                        className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 text-sm transition-colors"
+                        data-testid={`example-query-${example.substring(0, 10)}`}
+                      >
+                        "{example}"
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Loading State Message */}
+              {isSearching && (
+                <div className="px-6 pb-4">
+                  <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <Loader2 className="animate-spin text-purple-600" size={20} />
+                    <div>
+                      <p className="text-purple-900 font-semibold">AI is analyzing your request...</p>
+                      <p className="text-purple-700 text-sm">This may take 10-30 seconds</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
         {/* Search Results - Simplified Two Section Layout */}
         {searchResults && (
@@ -754,7 +923,9 @@ export default function Search() {
               })()}
             </div>
           )}
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Media Type Filters - Only show when no search results */}
         {!searchResults && (
