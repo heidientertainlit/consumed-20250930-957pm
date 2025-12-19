@@ -444,7 +444,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   placeholder="Search movies, shows, books, music"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-3 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:border-gray-300 focus:ring-0 focus:outline-none"
+                  className="pl-3 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:border-gray-200 focus:ring-0 focus:outline-none outline-none ring-0 shadow-none"
                   autoFocus
                   data-testid="quick-add-search"
                 />
