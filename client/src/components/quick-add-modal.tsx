@@ -434,7 +434,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   return (
     <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white max-w-md mx-auto p-0 overflow-hidden max-h-[85vh] flex flex-col rounded-2xl border border-gray-200 shadow-lg">
+      <DialogContent className="bg-white max-w-[calc(100%-32px)] sm:max-w-md mx-4 p-0 overflow-hidden max-h-[80vh] flex flex-col rounded-xl border border-gray-100 shadow-xl">
         {stage === "search" ? (
           <>
             <div className="p-4 pb-3">
@@ -444,7 +444,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   placeholder="Search movies, shows, books, music"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-3 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm placeholder:text-gray-400 focus:border-gray-300 focus:ring-0"
+                  className="pl-3 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:border-gray-300 focus:ring-0 focus:outline-none"
                   autoFocus
                   data-testid="quick-add-search"
                 />
