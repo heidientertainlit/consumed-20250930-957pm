@@ -113,10 +113,7 @@ serve(async (req) => {
         title: title || 'Untitled',
         type: mediaType || 'mixed',
         media_type: mediaType || 'mixed',
-        media_subtype: mediaSubtype || null, // album, song, series, episode
-        season_number: seasonNumber || null,
-        episode_number: episodeNumber || null,
-        episode_title: episodeTitle || null,
+        media_subtype: mediaSubtype || null,
         creator: creator || '',
         image_url: imageUrl || null,
         notes: review || null,

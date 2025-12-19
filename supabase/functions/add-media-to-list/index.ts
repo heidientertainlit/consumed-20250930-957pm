@@ -178,10 +178,7 @@ serve(async (req) => {
         image_url: media_image_url || null,
         notes: review || null,
         external_id: media_external_id || null,
-        external_source: media_external_source || 'tmdb',
-        season_number: season_number || null,
-        episode_number: episode_number || null,
-        episode_title: episode_title || null
+        external_source: media_external_source || 'tmdb'
       })
       .select()
       .single();
