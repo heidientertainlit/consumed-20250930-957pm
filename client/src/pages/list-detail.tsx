@@ -530,7 +530,7 @@ export default function ListDetail() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <button
-                onClick={() => setLocation("/me?tab=collections")}
+                onClick={() => setLocation("/collections")}
                 className="p-1.5 text-gray-700 hover:text-black transition-colors"
                 data-testid="button-back"
                 aria-label="Back"
