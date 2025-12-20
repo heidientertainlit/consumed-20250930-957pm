@@ -168,19 +168,16 @@ serve(async (req) => {
       targetList = systemList;
     }
 
-    // Insert the media item with correct Supabase column names
+    // Insert the media item with core columns only (avoid schema cache issues)
     const { data: mediaItem, error: mediaError } = await supabase
       .from('list_items')
       .insert({
         list_id: targetList?.id || null,
         user_id: appUser.id,
         title: title || 'Untitled',
-        type: mediaType || 'mixed',
         media_type: mediaType || 'mixed',
-        media_subtype: mediaSubtype || null,
         creator: creator || '',
         image_url: imageUrl || null,
-        notes: review || null,
         external_id: externalId || null,
         external_source: externalSource || null
       })

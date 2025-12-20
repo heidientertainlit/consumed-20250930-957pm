@@ -173,10 +173,8 @@ serve(async (req) => {
         user_id: appUser?.id,
         title: media_title || 'Untitled',
         media_type: media_type || 'mixed',
-        media_subtype: media_subtype || null,
         creator: media_creator || '',
         image_url: media_image_url || null,
-        notes: review || null,
         external_id: media_external_id || null,
         external_source: media_external_source || 'tmdb'
       })

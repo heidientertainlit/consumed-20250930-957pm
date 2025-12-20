@@ -285,7 +285,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             },
             body: JSON.stringify({
               media: mediaData,
-              listType: 'Finished',
+              listType: 'finished',
             }),
           }
         );
