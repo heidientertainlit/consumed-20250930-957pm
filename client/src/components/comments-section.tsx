@@ -146,44 +146,66 @@ function CommentItem({
   const displayPoster = mediaData?.poster_url;
   const displayType = mediaData?.type;
 
-  // Recs mode: Render as recommendation card
+  // Recs mode: Render as recommendation card - compact style matching search results
   if (isRecsMode && depth === 0) {
     return (
       <div className="relative" id={`comment-${comment.id}`}>
-        <div className="bg-white border border-purple-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow">
-          {/* Recommendation header with poster or icon */}
-          <div className="flex items-start gap-3">
+        <div className="bg-white border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition-colors">
+          {/* Compact recommendation row */}
+          <div className="flex items-center gap-3">
             {displayPoster ? (
               <img 
                 src={displayPoster} 
                 alt={displayTitle}
-                className="w-12 h-16 rounded-lg object-cover flex-shrink-0 shadow-sm"
+                className="w-10 h-14 rounded object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-12 h-16 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 text-xl">
+              <div className="w-10 h-14 bg-purple-100 rounded flex items-center justify-center flex-shrink-0 text-lg">
                 {recEmoji}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              {/* Title - the recommendation content */}
-              <p className="font-semibold text-gray-900 text-base break-words">{renderMentions(displayTitle)}</p>
+              {/* Title */}
+              <p className="font-medium text-gray-900 text-sm truncate">{renderMentions(displayTitle)}</p>
               {/* Type and creator */}
-              {(displayType || displayCreator) && (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {displayType && <span className="capitalize">{displayType}</span>}
-                  {displayType && displayCreator && ' • '}
-                  {displayCreator}
-                </p>
-              )}
-              {/* Added by */}
-              <p className="text-xs text-gray-400 mt-1">
-                Added by <Link href={`/user/${comment.user.id}`} className="text-purple-600 hover:underline">@{comment.user.username || comment.user.displayName}</Link>
+              <p className="text-xs text-gray-500 truncate">
+                {displayType && <span className="capitalize">{displayType}</span>}
+                {displayType && displayCreator && ' • '}
+                {displayCreator}
               </p>
             </div>
+            {/* Compact vote buttons */}
+            {onVoteComment && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => onVoteComment(comment.id, 'up')}
+                  className="p-1 transition-colors"
+                  data-testid={`button-upvote-comment-${comment.id}`}
+                >
+                  <ArrowBigUp 
+                    size={16} 
+                    className={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'text-green-500 fill-green-500' : 'text-gray-400 hover:text-green-500'}
+                  />
+                </button>
+                <span className="text-xs text-gray-500 min-w-[20px] text-center">
+                  {(comment.upVoteCount || 0) - (comment.downVoteCount || 0)}
+                </span>
+                <button
+                  onClick={() => onVoteComment(comment.id, 'down')}
+                  className="p-1 transition-colors"
+                  data-testid={`button-downvote-comment-${comment.id}`}
+                >
+                  <ArrowBigDown 
+                    size={16} 
+                    className={(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'}
+                  />
+                </button>
+              </div>
+            )}
             {currentUserId === comment.user.id && onDeleteComment && (
               <button
                 onClick={() => onDeleteComment(comment.id, postId)}
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-gray-300 hover:text-red-500 transition-colors p-1"
                 data-testid={`button-delete-comment-${comment.id}`}
                 title="Delete"
               >
@@ -192,78 +214,6 @@ function CommentItem({
             )}
           </div>
           
-          {/* Action buttons */}
-          <div className="flex items-center gap-4 mt-3 pt-2 border-t border-gray-100">
-            {onVoteComment && (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => onVoteComment(comment.id, 'up')}
-                  className="flex items-center gap-0.5 transition-colors"
-                  data-testid={`button-upvote-comment-${comment.id}`}
-                >
-                  <ArrowBigUp 
-                    size={18} 
-                    className={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'text-green-500 fill-green-500' : 'text-gray-400 hover:text-green-500'}
-                  />
-                  <span className={`text-sm font-medium ${(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'text-green-500' : 'text-gray-500'}`}>
-                    +{comment.upVoteCount || 0}
-                  </span>
-                </button>
-                <button
-                  onClick={() => onVoteComment(comment.id, 'down')}
-                  className="flex items-center gap-0.5 transition-colors"
-                  data-testid={`button-downvote-comment-${comment.id}`}
-                >
-                  <ArrowBigDown 
-                    size={18} 
-                    className={(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'}
-                  />
-                  <span className={`text-sm font-medium ${(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'text-red-500' : 'text-gray-500'}`}>
-                    -{comment.downVoteCount || 0}
-                  </span>
-                </button>
-              </div>
-            )}
-            <button
-              onClick={() => setShowReplyInput(!showReplyInput)}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-600 transition-colors"
-              data-testid={`button-reply-comment-${comment.id}`}
-            >
-              <MessageCircle size={14} />
-              <span>Reply</span>
-            </button>
-            {hasReplies && (
-              <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="text-xs text-gray-500 hover:text-gray-700"
-                data-testid={`button-toggle-replies-${comment.id}`}
-              >
-                {isCollapsed ? `Show ${comment.replies?.length} ${comment.replies?.length === 1 ? 'reply' : 'replies'}` : 'Hide replies'}
-              </button>
-            )}
-          </div>
-
-          {/* Reply Input */}
-          {showReplyInput && (
-            <form onSubmit={handleSubmitReply} className="mt-3 flex items-center gap-2">
-              <MentionInput
-                placeholder="Write a reply..."
-                value={replyContent}
-                onChange={setReplyContent}
-                className="bg-gray-50 text-black placeholder:text-gray-500 text-sm"
-                disabled={isSubmitting}
-                autoFocus
-                session={session}
-                testId={`input-reply-${comment.id}`}
-              />
-              <Button type="submit" size="sm" disabled={!replyContent.trim() || isSubmitting} className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1">
-                <Send size={14} />
-              </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => { setShowReplyInput(false); setReplyContent(""); }} className="px-3 py-1">
-                Cancel
-              </Button>
-            </form>
-          )}
         </div>
 
         {/* Nested Replies */}
