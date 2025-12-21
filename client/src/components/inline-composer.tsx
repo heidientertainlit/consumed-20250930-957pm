@@ -469,8 +469,8 @@ export default function InlineComposer() {
           setIsPosting(false);
           return;
         }
-        // Generate content based on what's available
-        const content = contentText.trim() || (selectedMedia ? `Shared ${selectedMedia.title}` : '');
+        // Use text if provided, otherwise empty (media will be displayed)
+        const content = contentText.trim() || '';
         payload = {
           content: content,
           type: "thought",

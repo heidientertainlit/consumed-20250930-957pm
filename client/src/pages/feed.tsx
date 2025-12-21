@@ -2473,8 +2473,8 @@ export default function Feed() {
                                         )}
                                       </p>
                                     );
-                                  } else if (post.content && hasMediaItems) {
-                                    // Post with content about media (thoughts about a specific title)
+                                  } else if (hasMediaItems) {
+                                    // Post with media - just say "added [title]" regardless of whether there's content
                                     return (
                                       <p className="text-sm">
                                         <Link 
@@ -2484,7 +2484,7 @@ export default function Feed() {
                                         >
                                           {displayUser.username}
                                         </Link>
-                                        <span className="text-gray-500"> added thoughts about {post.mediaItems[0].title}</span>
+                                        <span className="text-gray-500"> added {post.mediaItems[0].title}</span>
                                       </p>
                                     );
                                   } else if (post.content && !hasMediaItems) {
@@ -2556,7 +2556,7 @@ export default function Feed() {
                     if (!post.content) return null;
                     const contentLower = post.content.toLowerCase();
                     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
-                    const isAddedOrRatedPost = (contentLower.startsWith('added ') || contentLower.startsWith('rated ')) && hasMediaItems;
+                    const isAddedOrRatedPost = (contentLower.startsWith('added ') || contentLower.startsWith('rated ') || contentLower.startsWith('shared ')) && hasMediaItems;
                     
                     if (isAddedOrRatedPost) {
                       return post.rating && post.rating > 0 ? (
