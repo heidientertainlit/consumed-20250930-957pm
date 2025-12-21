@@ -407,15 +407,16 @@ serve(async (req) => {
       }
       console.log('Post created:', post);
 
-      // Award points for posts (10 points for standard engagement)
+      // Award points for reviews only (10 points for reviews, no points for regular posts)
       try {
-        const pointsReason = (type === 'rate-review' && rating) ? 'review' : 'post';
-        await adminClient.rpc('add_user_points', {
-          p_user_id: appUser.id,
-          p_points: 10,
-          p_reason: pointsReason
-        });
-        console.log('Awarded 10 points for', pointsReason);
+        if (type === 'rate-review' && rating) {
+          await adminClient.rpc('add_user_points', {
+            p_user_id: appUser.id,
+            p_points: 10,
+            p_reason: 'review'
+          });
+          console.log('Awarded 10 points for review');
+        }
       } catch (pointsError) {
         console.error('Points award error (non-fatal):', pointsError);
       }

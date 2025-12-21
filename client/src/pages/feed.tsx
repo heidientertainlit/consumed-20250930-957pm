@@ -2434,22 +2434,6 @@ export default function Feed() {
                           {/* Request Content */}
                           <p className="text-lg font-medium text-gray-900 mb-4">{post.content}</p>
                           
-                          {/* Suggest Rec Button */}
-                          <button
-                            onClick={() => {
-                              setExpandedComments(prev => {
-                                const newSet = new Set(prev);
-                                newSet.add(post.id);
-                                return newSet;
-                              });
-                            }}
-                            className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all"
-                            data-testid={`button-suggest-rec-${post.id}`}
-                          >
-                            <span>💬</span>
-                            <span>Suggest a Rec</span>
-                          </button>
-                          
                           {/* Standard post actions */}
                           <div className="flex items-center justify-between mt-4 pt-3 border-t border-green-200">
                             <div className="flex items-center gap-4">
@@ -2476,6 +2460,25 @@ export default function Feed() {
                               </button>
                             </div>
                             <span className="text-xs text-gray-400">{post.timestamp ? new Date(post.timestamp).toLocaleDateString() : 'Today'}</span>
+                          </div>
+                          
+                          {/* Comments always visible for Ask for Recs */}
+                          <div className="mt-4 pt-3 border-t border-green-200">
+                            <CommentsSection 
+                              postId={post.id}
+                              fetchComments={fetchComments}
+                              session={session}
+                              commentInput={commentInputs[post.id] || ''}
+                              onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                              onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                              isSubmitting={commentMutation.isPending}
+                              currentUserId={user?.id}
+                              onDeleteComment={handleDeleteComment}
+                              onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                              onVoteComment={handleVoteComment}
+                              likedComments={likedComments}
+                              commentVotes={commentVotes}
+                            />
                           </div>
                         </div>
                       </div>
