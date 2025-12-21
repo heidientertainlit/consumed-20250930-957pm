@@ -2388,7 +2388,6 @@ export default function Feed() {
                 // Check if this item is an ask_for_recs post
                 if (post.type === 'ask_for_recs') {
                   const recCategory = (post as any).recCategory;
-                  console.log('🎯 Ask for Recs post:', post.id, 'recCategory:', recCategory);
                   const categoryLabels: Record<string, string> = {
                     movies: 'movies', tv: 'TV shows', books: 'books', music: 'music', 
                     podcasts: 'podcasts', games: 'games'
@@ -2396,6 +2395,7 @@ export default function Feed() {
                   const categoryText = recCategory && categoryLabels[recCategory] 
                     ? categoryLabels[recCategory] 
                     : 'anything';
+                  const isOwnPost = user?.id && post.user?.id === user.id;
                   
                   return (
                     <div key={`ask-recs-${post.id}`} id={`post-${post.id}`}>
@@ -2403,10 +2403,19 @@ export default function Feed() {
                       <div className="mb-4">
                         <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
                           {/* Purpose Strip - Dark purple gradient with category in text */}
-                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5">
+                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5 flex items-center justify-between">
                             <p className="text-sm text-white font-medium">
-                              💡 Asking for {categoryText} recommendations 👇
+                              💡 Asking for recommendations for {categoryText} 👇
                             </p>
+                            {isOwnPost && (
+                              <button
+                                onClick={() => handleDeletePost(post.id)}
+                                className="text-white/70 hover:text-white transition-colors"
+                                data-testid={`button-delete-ask-recs-${post.id}`}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                           
                           {/* Card body */}
