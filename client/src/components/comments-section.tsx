@@ -206,27 +206,29 @@ function CommentItem({
                 </button>
               </div>
             )}
-            {/* Reply button */}
-            <button
-              onClick={() => setShowReplyInput(!showReplyInput)}
-              className="text-gray-300 hover:text-purple-500 transition-colors p-1"
-              data-testid={`button-reply-comment-${comment.id}`}
-              title="Reply"
-            >
-              <MessageCircle size={14} />
-            </button>
-            {/* Expand replies chevron - next to comment bubble */}
-            {hasReplies && (
+            {/* Reply button + chevron grouped together */}
+            <div className="flex items-center">
               <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="text-gray-400 hover:text-purple-500 transition-colors p-1 flex items-center gap-0.5"
-                data-testid={`button-expand-replies-${comment.id}`}
-                title={isCollapsed ? 'Show replies' : 'Hide replies'}
+                onClick={() => setShowReplyInput(!showReplyInput)}
+                className="text-gray-300 hover:text-purple-500 transition-colors p-1"
+                data-testid={`button-reply-comment-${comment.id}`}
+                title="Reply"
               >
-                <span className="text-xs">{replyCount}</span>
-                {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                <MessageCircle size={14} />
               </button>
-            )}
+              {/* Expand replies chevron - tight next to comment bubble */}
+              {hasReplies && (
+                <button
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                  className="text-gray-400 hover:text-purple-500 transition-colors pr-1 flex items-center gap-0.5"
+                  data-testid={`button-expand-replies-${comment.id}`}
+                  title={isCollapsed ? 'Show replies' : 'Hide replies'}
+                >
+                  <span className="text-xs">{replyCount}</span>
+                  {isCollapsed ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+                </button>
+              )}
+            </div>
             {currentUserId === comment.user.id && onDeleteComment && (
               <button
                 onClick={() => onDeleteComment(comment.id, postId)}
