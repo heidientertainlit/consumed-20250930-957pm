@@ -2403,40 +2403,42 @@ export default function Feed() {
                       <div className="mb-4">
                         <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
                           {/* Purpose Strip - Dark purple gradient with category in text */}
-                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5 flex items-center justify-between">
+                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5">
                             <p className="text-sm text-white font-medium">
                               💡 Asking for recommendations for {categoryText} 👇
                             </p>
-                            {isOwnPost && (
-                              <button
-                                onClick={() => handleDeletePost(post.id)}
-                                className="text-white/70 hover:text-white transition-colors"
-                                data-testid={`button-delete-ask-recs-${post.id}`}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
                           </div>
                           
                           {/* Card body */}
                           <div className="p-4">
-                            {/* User info */}
+                            {/* User info with trash icon */}
                             {post.user && (
-                              <div className="flex items-center gap-2 mb-3">
-                                <Link href={`/user/${post.user.id}`}>
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
-                                    {post.user.avatar ? (
-                                      <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                                    ) : (
-                                      <span className="text-xs">{post.user.displayName?.[0]?.toUpperCase() || post.user.username?.[0]?.toUpperCase() || '?'}</span>
-                                    )}
-                                  </div>
-                                </Link>
-                                <Link href={`/user/${post.user.id}`}>
-                                  <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
-                                    {post.user.displayName || post.user.username}
-                                  </span>
-                                </Link>
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Link href={`/user/${post.user.id}`}>
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                                      {post.user.avatar ? (
+                                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                      ) : (
+                                        <span className="text-xs">{post.user.displayName?.[0]?.toUpperCase() || post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                                      )}
+                                    </div>
+                                  </Link>
+                                  <Link href={`/user/${post.user.id}`}>
+                                    <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
+                                      {post.user.displayName || post.user.username}
+                                    </span>
+                                  </Link>
+                                </div>
+                                {isOwnPost && (
+                                  <button
+                                    onClick={() => handleDeletePost(post.id)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                    data-testid={`button-delete-ask-recs-${post.id}`}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
                               </div>
                             )}
                             
@@ -2468,7 +2470,7 @@ export default function Feed() {
                                   <span>{post.comments || 0}</span>
                                 </button>
                               </div>
-                              <span className="text-xs text-gray-500">{post.timestamp ? new Date(post.timestamp).toLocaleDateString() : 'Today'}</span>
+                              <span className="text-xs text-gray-500">Today</span>
                             </div>
                           
                             {/* Recommendations section - always visible */}
