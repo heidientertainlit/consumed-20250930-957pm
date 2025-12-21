@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Heart, MessageCircle, ChevronRight, Star, Plus, CheckCircle, Layers } from "lucide-react";
+import { Heart, MessageCircle, ChevronRight, Star, Plus, CheckCircle, Layers, MoreHorizontal, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface MediaItem {
   id: string;
@@ -46,16 +52,22 @@ interface ConsolidatedActivityCardProps {
   activity: ConsolidatedActivity;
   onLike: (postId: string) => void;
   onComment: (postId: string) => void;
+  onDelete?: (postIds: string[]) => void;
   isLiked: boolean;
+  currentUserId?: string | null;
 }
 
 export default function ConsolidatedActivityCard({ 
   activity, 
   onLike, 
   onComment,
-  isLiked 
+  onDelete,
+  isLiked,
+  currentUserId
 }: ConsolidatedActivityCardProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const isOwner = currentUserId && activity.user.id === currentUserId;
   
   // Check if we have multiple lists for carousel
   const hasCarousel = activity.lists && activity.lists.length > 1;
@@ -159,13 +171,43 @@ export default function ConsolidatedActivityCard({
             </div>
           </Link>
           
-          {/* Grouped Badge */}
-          {isConsolidated && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-full shrink-0">
-              <Layers className="w-3 h-3 text-purple-500" />
-              <span className="text-xs font-medium text-purple-600">Grouped</span>
-            </div>
-          )}
+          {/* Grouped Badge & Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {isConsolidated && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-full">
+                <Layers className="w-3 h-3 text-purple-500" />
+                <span className="text-xs font-medium text-purple-600">Grouped</span>
+              </div>
+            )}
+            
+            {/* Delete Menu - Only show for owner */}
+            {isOwner && onDelete && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button 
+                    className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-100"
+                    data-testid={`button-more-options-${activity.id}`}
+                  >
+                    <MoreHorizontal size={16} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (confirm('Are you sure you want to delete this grouped activity? This will delete all posts in this group.')) {
+                        onDelete(activity.originalPostIds);
+                      }
+                    }}
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    data-testid={`button-delete-grouped-${activity.id}`}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </div>
 

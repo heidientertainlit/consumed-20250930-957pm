@@ -2073,7 +2073,11 @@ export default function Feed() {
                         activity={consolidated}
                         onLike={(postId) => handleLike(postId)}
                         onComment={(postId) => toggleComments(postId)}
+                        onDelete={(postIds) => {
+                          postIds.forEach(postId => deletePostMutation.mutate(postId));
+                        }}
                         isLiked={consolidated.originalPostIds.some(id => likedPosts.has(id))}
+                        currentUserId={currentAppUserId}
                       />
                     </div>
                   );
