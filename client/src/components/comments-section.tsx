@@ -480,7 +480,7 @@ export default function CommentsSection({
   const commentCount = comments?.length || 0;
 
   // Handle media rec submission
-  const handleMediaRecSubmit = (media: { title: string; type: string; creator: string; image: string; external_id?: string; external_source?: string }) => {
+  const handleMediaRecSubmit = (media: { title: string; type: string; creator: string; poster_url: string; external_id?: string; external_source?: string }) => {
     // Submit the media title as the comment content
     onSubmitComment(undefined, media.title);
   };

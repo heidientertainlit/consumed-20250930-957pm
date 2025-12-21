@@ -7,7 +7,7 @@ interface MediaResult {
   title: string;
   type: string;
   creator: string;
-  image: string;
+  poster_url: string;
   external_id?: string;
   external_source?: string;
   description?: string;
@@ -180,9 +180,9 @@ export default function MediaRecInput({
       {/* Selected media preview */}
       {selectedMedia && (
         <div className="mt-2 p-2 bg-purple-50 border border-purple-200 rounded-lg flex items-center gap-2">
-          {selectedMedia.image ? (
+          {selectedMedia.poster_url ? (
             <img 
-              src={selectedMedia.image} 
+              src={selectedMedia.poster_url} 
               alt={selectedMedia.title} 
               className="w-10 h-10 rounded object-cover"
             />
@@ -217,9 +217,9 @@ export default function MediaRecInput({
               className="w-full p-2 flex items-center gap-3 hover:bg-purple-50 transition-colors text-left"
               data-testid={`button-select-media-${idx}`}
             >
-              {result.image ? (
+              {result.poster_url ? (
                 <img 
-                  src={result.image} 
+                  src={result.poster_url} 
                   alt={result.title} 
                   className="w-10 h-14 rounded object-cover flex-shrink-0"
                 />
