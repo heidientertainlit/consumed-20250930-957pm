@@ -2405,7 +2405,7 @@ export default function Feed() {
                           {/* Purpose Strip - Dark purple gradient with category in text */}
                           <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5">
                             <p className="text-sm text-white font-medium">
-                              💡 Asking for recommendations for {categoryText} 👇
+                              Asking for recommendations for {categoryText} 👇
                             </p>
                           </div>
                           
