@@ -137,10 +137,17 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
     }
   });
 
+  // Helper to get correct answer (database uses 'answer', interface expects 'correct')
+  const getCorrectAnswer = (question: any): string => {
+    return question.correct || question.answer || '';
+  };
+
   const handleNext = () => {
     if (!selectedAnswer) return;
 
-    const isCorrect = selectedAnswer === questions[currentQuestion].correct;
+    // Handle both 'correct' and 'answer' field names (database uses 'answer')
+    const correctAnswer = getCorrectAnswer(questions[currentQuestion]);
+    const isCorrect = selectedAnswer === correctAnswer;
     const newAnswers = [...userAnswers, selectedAnswer];
     setUserAnswers(newAnswers);
     
