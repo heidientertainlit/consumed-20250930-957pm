@@ -127,7 +127,8 @@ serve(async (req) => {
           contains_spoilers,
           prediction_pool_id,
           list_id,
-          rank_id
+          rank_id,
+          rec_category
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -664,6 +665,7 @@ serve(async (req) => {
               })),
               totalCount: listData.totalCount
             } : null,
+            recCategory: post.rec_category || null,
             mediaItems: [{
               id: `${post.media_external_source}-${post.media_external_id}`,
               title: post.media_title || '',
@@ -814,6 +816,7 @@ serve(async (req) => {
             })),
             totalCount: listData.totalCount
           } : null,
+          recCategory: post.rec_category || null,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
