@@ -2389,35 +2389,24 @@ export default function Feed() {
                 if (post.type === 'ask_for_recs') {
                   const recCategory = (post as any).recCategory;
                   console.log('🎯 Ask for Recs post:', post.id, 'recCategory:', recCategory);
-                  const categoryEmojis: Record<string, string> = {
-                    movies: '🎬', tv: '📺', books: '📚', music: '🎵', 
-                    podcasts: '🎙️', games: '🎮'
-                  };
                   const categoryLabels: Record<string, string> = {
-                    movies: 'Movies', tv: 'TV', books: 'Books', music: 'Music', 
-                    podcasts: 'Podcasts', games: 'Games'
+                    movies: 'movies', tv: 'TV shows', books: 'books', music: 'music', 
+                    podcasts: 'podcasts', games: 'games'
                   };
-                  const hasCategoryPill = recCategory && categoryLabels[recCategory];
+                  const categoryText = recCategory && categoryLabels[recCategory] 
+                    ? categoryLabels[recCategory] 
+                    : 'anything';
                   
                   return (
                     <div key={`ask-recs-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
                         <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-                          {/* Purpose Strip - Dark purple gradient */}
-                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5 flex items-center justify-between">
+                          {/* Purpose Strip - Dark purple gradient with category in text */}
+                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5">
                             <p className="text-sm text-white font-medium">
-                              💡 Asking for recommendations 👇
+                              💡 Asking for {categoryText} recommendations 👇
                             </p>
-                            {hasCategoryPill ? (
-                              <span className="text-xs bg-white/20 text-white px-2.5 py-1 rounded-full font-medium">
-                                {categoryEmojis[recCategory]} {categoryLabels[recCategory]}
-                              </span>
-                            ) : (
-                              <span className="text-xs bg-white/20 text-white px-2.5 py-1 rounded-full font-medium">
-                                ✨ Anything
-                              </span>
-                            )}
                           </div>
                           
                           {/* Card body */}
