@@ -2397,25 +2397,23 @@ export default function Feed() {
                     <div key={`ask-recs-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
-                        <div className="rounded-2xl border border-purple-200 p-4 shadow-sm bg-gradient-to-br from-purple-50 via-indigo-50 to-purple-100">
+                        <div className="rounded-2xl border border-purple-700 p-4 shadow-lg bg-gradient-to-br from-purple-700 via-indigo-700 to-purple-800">
                           {/* Ask for Recs Header */}
                           <div className="flex items-center gap-2 mb-3">
-                            <div className="flex items-center gap-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-2.5 py-1 rounded-full text-xs font-bold">
+                            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-bold border border-white/30">
                               <span>💡</span>
                               <span>ASKING FOR RECS</span>
                             </div>
-                            {recCategory && (
-                              <span className="text-sm bg-white/70 px-2 py-0.5 rounded-full">
-                                {categoryEmoji[recCategory] || '✨'} {recCategory || 'Anything'}
-                              </span>
-                            )}
+                            <span className="text-sm bg-white/20 backdrop-blur-sm text-white px-2.5 py-1 rounded-full border border-white/30">
+                              {categoryEmoji[recCategory] || '✨'} {recCategory ? recCategory.charAt(0).toUpperCase() + recCategory.slice(1) : 'Anything'}
+                            </span>
                           </div>
                           
                           {/* User info */}
                           {post.user && (
                             <div className="flex items-center gap-2 mb-3">
                               <Link href={`/user/${post.user.id}`}>
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                                <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white font-semibold cursor-pointer">
                                   {post.user.avatar ? (
                                     <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                                   ) : (
@@ -2424,7 +2422,7 @@ export default function Feed() {
                                 </div>
                               </Link>
                               <Link href={`/user/${post.user.id}`}>
-                                <span className="text-sm font-semibold text-gray-800 hover:text-purple-600 cursor-pointer">
+                                <span className="text-sm font-semibold text-white hover:text-purple-200 cursor-pointer">
                                   {post.user.displayName || post.user.username}
                                 </span>
                               </Link>
@@ -2432,14 +2430,14 @@ export default function Feed() {
                           )}
                           
                           {/* Request Content */}
-                          <p className="text-lg font-medium text-gray-900 mb-4">{post.content}</p>
+                          <p className="text-lg font-medium text-white mb-4">{post.content}</p>
                           
                           {/* Standard post actions */}
-                          <div className="flex items-center justify-between pt-3 border-t border-purple-200">
+                          <div className="flex items-center justify-between pt-3 border-t border-white/20">
                             <div className="flex items-center gap-4">
                               <button
                                 onClick={() => handleLike(post.id)}
-                                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-400' : 'text-white/70 hover:text-red-400'}`}
                                 data-testid={`button-like-${post.id}`}
                               >
                                 <Heart size={18} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
@@ -2452,18 +2450,18 @@ export default function Feed() {
                                   else newSet.add(post.id);
                                   return newSet;
                                 })}
-                                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600"
+                                className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white"
                                 data-testid={`button-comments-${post.id}`}
                               >
                                 <MessageCircle size={18} />
                                 <span>{post.comments || 0}</span>
                               </button>
                             </div>
-                            <span className="text-xs text-gray-400">{post.timestamp ? new Date(post.timestamp).toLocaleDateString() : 'Today'}</span>
+                            <span className="text-xs text-white/60">{post.timestamp ? new Date(post.timestamp).toLocaleDateString() : 'Today'}</span>
                           </div>
                           
                           {/* Comments always visible for Ask for Recs */}
-                          <div className="mt-4 pt-3 border-t border-purple-200">
+                          <div className="mt-4 pt-3 border-t border-white/20 bg-white rounded-xl p-3 -mx-1">
                             <CommentsSection 
                               postId={post.id}
                               fetchComments={fetchComments}
