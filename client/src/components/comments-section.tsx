@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown } from "lucide-react";
@@ -53,6 +53,8 @@ interface CommentsSectionProps {
   // Ask for Recs mode
   isRecsMode?: boolean;
   recCategory?: string;
+  // Control add rec input from parent
+  forceShowAddInput?: boolean;
 }
 
 interface CommentItemProps {
@@ -150,7 +152,7 @@ function CommentItem({
   if (isRecsMode && depth === 0) {
     return (
       <div className="relative" id={`comment-${comment.id}`}>
-        <div className="bg-white border border-gray-200 rounded-lg p-2 hover:bg-gray-50 transition-colors">
+        <div className="bg-white border border-gray-200 rounded-lg p-2 hover:bg-gray-50/50 transition-colors">
           {/* Compact recommendation row */}
           <div className="flex items-center gap-3">
             {displayPoster ? (
@@ -245,7 +247,7 @@ function CommentItem({
 
         {/* Nested Replies */}
         {!isCollapsed && comment.replies && comment.replies.length > 0 && (
-          <div className="mt-2 ml-6 space-y-2 border-l-2 border-purple-100 pl-3">
+          <div className="mt-1.5 ml-4 space-y-1.5 border-l-2 border-purple-100 pl-2">
             {comment.replies.map((reply) => (
               <CommentItem
                 key={reply.id}
@@ -468,12 +470,18 @@ export default function CommentsSection({
   commentVotes = new Map(),
   isRecsMode = false,
   recCategory,
+  forceShowAddInput = false,
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
   
-  // For recs mode: collapse the add input by default
-  const [showAddRecInput, setShowAddRecInput] = useState(false);
+  // For recs mode: collapse the add input by default, but allow parent to force it open
+  const [showAddRecInput, setShowAddRecInput] = useState(forceShowAddInput);
+  
+  // Sync with parent control
+  useEffect(() => {
+    if (forceShowAddInput) setShowAddRecInput(true);
+  }, [forceShowAddInput]);
   
   const { data: comments, isLoading } = useQuery({
     queryKey: ["post-comments", postId],
@@ -519,11 +527,11 @@ export default function CommentsSection({
   };
 
   return (
-    <div className={`rounded-lg p-4 space-y-3 ${isRecsMode ? 'bg-gray-50' : 'bg-gray-50'}`}>
+    <div className={`rounded-lg ${isRecsMode ? 'p-3 space-y-2 bg-gray-50' : 'p-4 space-y-3 bg-gray-50'}`}>
       {/* Top-level Comment Input */}
       {isRecsMode ? (
         showAddRecInput ? (
-          <div className="space-y-2">
+          <div className="space-y-1">
             <MediaRecInput
               placeholder={`Search for a ${categoryLabel}...`}
               onSubmit={handleMediaRecSubmit}
@@ -541,7 +549,7 @@ export default function CommentsSection({
         ) : (
           <button
             onClick={() => setShowAddRecInput(true)}
-            className="w-full py-2 px-3 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg border border-dashed border-purple-300 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-1.5 px-3 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg border border-dashed border-purple-300 transition-colors flex items-center justify-center gap-2"
             data-testid="button-add-rec"
           >
             <span>+ Add a {categoryLabel}</span>

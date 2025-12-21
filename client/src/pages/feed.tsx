@@ -527,6 +527,7 @@ export default function Feed() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [expandedAddRecInput, setExpandedAddRecInput] = useState<Set<string>>(new Set()); // Track recs posts with add input expanded
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const likedPostsInitialized = useRef(false); // Track if we've done initial sync
@@ -2457,12 +2458,14 @@ export default function Feed() {
                                   <span>{post.likes || 0}</span>
                                 </button>
                                 <button
-                                  onClick={() => setExpandedComments(prev => {
-                                    const newSet = new Set(prev);
-                                    if (newSet.has(post.id)) newSet.delete(post.id);
-                                    else newSet.add(post.id);
-                                    return newSet;
-                                  })}
+                                  onClick={() => {
+                                    // For recs posts, clicking comment icon expands the add rec input
+                                    setExpandedAddRecInput(prev => {
+                                      const newSet = new Set(prev);
+                                      newSet.add(post.id);
+                                      return newSet;
+                                    });
+                                  }}
                                   className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600"
                                   data-testid={`button-comments-${post.id}`}
                                 >
@@ -2474,7 +2477,7 @@ export default function Feed() {
                             </div>
                           
                             {/* Recommendations section - always visible */}
-                            <div className="mt-4 pt-3 border-t border-gray-200">
+                            <div className="mt-3 pt-3 border-t border-gray-200">
                               <CommentsSection 
                                 postId={post.id}
                                 fetchComments={fetchComments}
@@ -2491,6 +2494,7 @@ export default function Feed() {
                                 commentVotes={commentVotes}
                                 isRecsMode={true}
                                 recCategory={recCategory}
+                                forceShowAddInput={expandedAddRecInput.has(post.id)}
                               />
                             </div>
                           </div>
