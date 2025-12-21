@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus, Plus, User, ChevronDown } from "lucide-react";
+import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus, Plus, User, ChevronDown, Flame, HelpCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 
 type ComposerStage = "open" | "media-search";
-type PostType = "thought" | "rating" | "prediction" | "poll";
+type PostType = "thought" | "rating" | "prediction" | "poll" | "hot_take" | "ask_for_recs";
 
 export default function InlineComposer() {
   const { session, user } = useAuth();
@@ -45,6 +45,9 @@ export default function InlineComposer() {
   
   // Poll-specific state
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  
+  // Ask for Recs-specific state
+  const [recCategory, setRecCategory] = useState<string>(""); // 'movies', 'tv', 'books', 'music', 'podcasts', 'games', or '' for anything
   
   // Optional actions - Add to list / Add to rank
   const [addToList, setAddToList] = useState(false);
@@ -149,6 +152,7 @@ export default function InlineComposer() {
     setPredictionOptions(["", ""]);
     setCreatorPrediction("");
     setPollOptions(["", ""]);
+    setRecCategory("");
     setAddToList(false);
     setAddToRank(false);
     setSelectedListId("");
@@ -572,6 +576,48 @@ export default function InlineComposer() {
             media_external_source: selectedMedia.external_source || selectedMedia.source,
           }),
         };
+      } else if (postType === "hot_take") {
+        if (!contentText.trim()) {
+          toast({
+            title: "Hot Take Required",
+            description: "Please drop your spicy take.",
+            variant: "destructive",
+          });
+          setIsPosting(false);
+          return;
+        }
+        payload = {
+          content: contentText.trim(),
+          type: "hot_take",
+          visibility: "public",
+          contains_spoilers: containsSpoilers,
+          // Media is optional for hot takes
+          ...(selectedMedia && {
+            media_title: selectedMedia.title,
+            media_type: selectedMedia.type,
+            media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
+            media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
+            media_external_id: selectedMedia.external_id || selectedMedia.id,
+            media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+          }),
+        };
+      } else if (postType === "ask_for_recs") {
+        if (!contentText.trim()) {
+          toast({
+            title: "Request Required",
+            description: "Please describe what you're looking for.",
+            variant: "destructive",
+          });
+          setIsPosting(false);
+          return;
+        }
+        payload = {
+          content: contentText.trim(),
+          type: "ask_for_recs",
+          visibility: "public",
+          contains_spoilers: false,
+          rec_category: recCategory || null, // 'movies', 'tv', etc. or null for anything
+        };
       }
 
       // Handle add to list (if selected)
@@ -689,6 +735,8 @@ export default function InlineComposer() {
       case "rating": return "Share your thoughts (optional)...";
       case "prediction": return "What do you predict will happen?";
       case "poll": return "Ask your friends a question...";
+      case "hot_take": return "Drop your spiciest take...";
+      case "ask_for_recs": return "What are you looking for?";
       default: return "Share what you're consuming...";
     }
   };
@@ -717,6 +765,12 @@ export default function InlineComposer() {
         // Polls can be posted without media
         const filledOptions = pollOptions.filter(opt => opt.trim());
         return contentText.trim().length > 0 && filledOptions.length >= 2;
+      case "hot_take":
+        // Hot takes just need content
+        return contentText.trim().length > 0;
+      case "ask_for_recs":
+        // Ask for recs just needs content (category is optional)
+        return contentText.trim().length > 0;
       default:
         return false;
     }
@@ -827,6 +881,91 @@ export default function InlineComposer() {
                       </div>
                     </div>
                   )}
+                  
+                  {/* Add to List / Add to Rank Options - shown when media is selected */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-xs font-medium text-gray-600 mb-2">Save to:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {/* Add to List Toggle */}
+                      <button
+                        onClick={() => setAddToList(!addToList)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          addToList
+                            ? "bg-green-100 text-green-700 border border-green-300"
+                            : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
+                        }`}
+                        data-testid="button-toggle-add-to-list"
+                      >
+                        <ListPlus className="w-3.5 h-3.5" />
+                        <span>Add to List</span>
+                      </button>
+                      
+                      {/* Add to Rank Toggle */}
+                      <button
+                        onClick={() => setAddToRank(!addToRank)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          addToRank
+                            ? "bg-orange-100 text-orange-700 border border-orange-300"
+                            : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
+                        }`}
+                        data-testid="button-toggle-add-to-rank"
+                      >
+                        <span className="text-xs">🔢</span>
+                        <span>Add to Rank</span>
+                      </button>
+                    </div>
+                    
+                    {/* List Selector - shown when Add to List is enabled */}
+                    {addToList && (
+                      <div className="mt-2">
+                        <select
+                          value={selectedListId}
+                          onChange={(e) => setSelectedListId(e.target.value)}
+                          className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          data-testid="select-list"
+                        >
+                          <option value="">Select a list...</option>
+                          {userLists.map((list: any) => (
+                            <option key={list.id} value={list.id}>
+                              {list.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    
+                    {/* Rank Selector - shown when Add to Rank is enabled */}
+                    {addToRank && (
+                      <div className="mt-2">
+                        <select
+                          value={selectedRankId}
+                          onChange={(e) => setSelectedRankId(e.target.value)}
+                          className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          data-testid="select-rank"
+                        >
+                          <option value="">Select a rank...</option>
+                          {userRanks.map((rank: any) => (
+                            <option key={rank.id} value={rank.id}>
+                              {rank.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    
+                    {/* Post to Feed Toggle - shown when adding to list/rank */}
+                    {(addToList || addToRank) && (
+                      <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={postToFeed}
+                          onChange={(e) => setPostToFeed(e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                        <span className="text-xs text-gray-600">Also post to feed</span>
+                      </label>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -887,38 +1026,36 @@ export default function InlineComposer() {
                       <span>Poll</span>
                     </button>
 
-                    {/* Add to List */}
+                    {/* Hot Take */}
                     <button
                       onClick={() => {
-                        setAddToList(!addToList);
-                        if (!addToList && !selectedMedia) setIsMediaSearchOpen(true);
+                        setPostType("hot_take");
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        addToList
-                          ? "bg-green-100 text-green-700" 
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                      data-testid="button-add-to-list"
-                    >
-                      <ListPlus className="w-3.5 h-3.5" />
-                      <span>Add to List</span>
-                    </button>
-
-                    {/* Add to Rank */}
-                    <button
-                      onClick={() => {
-                        setAddToRank(!addToRank);
-                        if (!addToRank && !selectedMedia) setIsMediaSearchOpen(true);
-                      }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        addToRank
+                        postType === "hot_take"
                           ? "bg-orange-100 text-orange-700" 
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
-                      data-testid="button-add-to-rank"
+                      data-testid="button-type-hot-take"
                     >
-                      <span className="text-xs">🔢</span>
-                      <span>Add to Rank</span>
+                      <Flame className="w-3.5 h-3.5" />
+                      <span>Hot Take</span>
+                    </button>
+
+                    {/* Ask for Recs */}
+                    <button
+                      onClick={() => {
+                        setPostType("ask_for_recs");
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        postType === "ask_for_recs"
+                          ? "bg-green-100 text-green-700" 
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                      data-testid="button-type-ask-recs"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      <span>Ask for Recs</span>
                     </button>
                   </div>
 
@@ -1153,6 +1290,52 @@ export default function InlineComposer() {
                           + Add option
                         </button>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Hot Take indicator when Hot Take is selected */}
+                {postType === "hot_take" && (
+                  <div className="px-4 pb-3">
+                    <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200">
+                      <Flame className="w-5 h-5 text-orange-500" />
+                      <div>
+                        <span className="text-sm font-medium text-orange-700">Hot Take Mode</span>
+                        <p className="text-xs text-orange-600">Friends will vote 🔥 or 🧊 on your take</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ask for Recs category picker when selected */}
+                {postType === "ask_for_recs" && (
+                  <div className="px-4 pb-3">
+                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                      <span className="text-xs text-green-700 font-medium mb-2 block">What are you looking for?</span>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { value: "", label: "Anything", emoji: "✨" },
+                          { value: "movies", label: "Movies", emoji: "🎬" },
+                          { value: "tv", label: "TV", emoji: "📺" },
+                          { value: "books", label: "Books", emoji: "📚" },
+                          { value: "music", label: "Music", emoji: "🎵" },
+                          { value: "podcasts", label: "Podcasts", emoji: "🎙️" },
+                          { value: "games", label: "Games", emoji: "🎮" },
+                        ].map((cat) => (
+                          <button
+                            key={cat.value}
+                            onClick={() => setRecCategory(cat.value)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              recCategory === cat.value
+                                ? "bg-green-600 text-white"
+                                : "bg-white text-green-700 border border-green-300 hover:bg-green-100"
+                            }`}
+                            data-testid={`button-rec-category-${cat.value || 'anything'}`}
+                          >
+                            {cat.emoji} {cat.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
