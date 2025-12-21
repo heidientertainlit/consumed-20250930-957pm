@@ -7,6 +7,15 @@ import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
 import MediaRecInput from "@/components/media-rec-input";
 
+interface MediaMetadata {
+  title: string;
+  type: string;
+  creator?: string;
+  poster_url?: string;
+  external_id?: string;
+  external_source?: string;
+}
+
 interface Comment {
   id: string;
   content: string;
@@ -24,6 +33,7 @@ interface Comment {
   downVoteCount?: number; // separate downvote count
   currentUserVote?: 'up' | 'down' | null; // user's current vote
   replies?: Comment[]; // Nested replies
+  media_metadata?: MediaMetadata; // For recommendation comments
 }
 
 interface CommentsSectionProps {
@@ -118,21 +128,55 @@ function CommentItem({
   const indentPx = depth * 16; // 16px per depth level
   const shouldShowVerticalLine = depth > 0;
 
+  // Try to parse media metadata from content (JSON format) or use existing media_metadata
+  const parseMediaMetadata = (): MediaMetadata | null => {
+    if (comment.media_metadata) return comment.media_metadata;
+    try {
+      const parsed = JSON.parse(comment.content);
+      if (parsed && parsed.title) return parsed as MediaMetadata;
+    } catch {
+      // Not JSON, use content as title
+    }
+    return null;
+  };
+  
+  const mediaData = isRecsMode ? parseMediaMetadata() : null;
+  const displayTitle = mediaData?.title || comment.content;
+  const displayCreator = mediaData?.creator;
+  const displayPoster = mediaData?.poster_url;
+  const displayType = mediaData?.type;
+
   // Recs mode: Render as recommendation card
   if (isRecsMode && depth === 0) {
     return (
       <div className="relative" id={`comment-${comment.id}`}>
         <div className="bg-white border border-purple-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow">
-          {/* Recommendation header with icon */}
+          {/* Recommendation header with poster or icon */}
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 text-xl">
-              {recEmoji}
-            </div>
+            {displayPoster ? (
+              <img 
+                src={displayPoster} 
+                alt={displayTitle}
+                className="w-12 h-16 rounded-lg object-cover flex-shrink-0 shadow-sm"
+              />
+            ) : (
+              <div className="w-12 h-16 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 text-xl">
+                {recEmoji}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               {/* Title - the recommendation content */}
-              <p className="font-semibold text-gray-900 text-base break-words">{renderMentions(comment.content)}</p>
-              {/* Metadata */}
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="font-semibold text-gray-900 text-base break-words">{renderMentions(displayTitle)}</p>
+              {/* Type and creator */}
+              {(displayType || displayCreator) && (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {displayType && <span className="capitalize">{displayType}</span>}
+                  {displayType && displayCreator && ' • '}
+                  {displayCreator}
+                </p>
+              )}
+              {/* Added by */}
+              <p className="text-xs text-gray-400 mt-1">
                 Added by <Link href={`/user/${comment.user.id}`} className="text-purple-600 hover:underline">@{comment.user.username || comment.user.displayName}</Link>
               </p>
             </div>
@@ -479,10 +523,18 @@ export default function CommentsSection({
   // Count for social proof
   const commentCount = comments?.length || 0;
 
-  // Handle media rec submission
+  // Handle media rec submission - store full metadata as JSON
   const handleMediaRecSubmit = (media: { title: string; type: string; creator: string; poster_url: string; external_id?: string; external_source?: string }) => {
-    // Submit the media title as the comment content
-    onSubmitComment(undefined, media.title);
+    // Store media metadata as JSON for poster display
+    const mediaJson = JSON.stringify({
+      title: media.title,
+      type: media.type,
+      creator: media.creator,
+      poster_url: media.poster_url,
+      external_id: media.external_id,
+      external_source: media.external_source
+    });
+    onSubmitComment(undefined, mediaJson);
   };
 
   return (
