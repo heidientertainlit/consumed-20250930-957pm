@@ -472,6 +472,9 @@ export default function CommentsSection({
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
   
+  // For recs mode: collapse the add input by default
+  const [showAddRecInput, setShowAddRecInput] = useState(false);
+  
   const { data: comments, isLoading } = useQuery({
     queryKey: ["post-comments", postId],
     queryFn: () => fetchComments(postId),
@@ -512,18 +515,38 @@ export default function CommentsSection({
       external_source: media.external_source
     });
     onSubmitComment(undefined, mediaJson);
+    setShowAddRecInput(false); // Collapse after adding
   };
 
   return (
     <div className={`rounded-lg p-4 space-y-3 ${isRecsMode ? 'bg-gray-50' : 'bg-gray-50'}`}>
       {/* Top-level Comment Input */}
       {isRecsMode ? (
-        <MediaRecInput
-          placeholder={`Search for a ${categoryLabel}...`}
-          onSubmit={handleMediaRecSubmit}
-          isSubmitting={isSubmitting}
-          recCategory={recCategory}
-        />
+        showAddRecInput ? (
+          <div className="space-y-2">
+            <MediaRecInput
+              placeholder={`Search for a ${categoryLabel}...`}
+              onSubmit={handleMediaRecSubmit}
+              isSubmitting={isSubmitting}
+              recCategory={recCategory}
+            />
+            <button
+              onClick={() => setShowAddRecInput(false)}
+              className="text-xs text-gray-400 hover:text-gray-600"
+              data-testid="button-cancel-add-rec"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowAddRecInput(true)}
+            className="w-full py-2 px-3 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg border border-dashed border-purple-300 transition-colors flex items-center justify-center gap-2"
+            data-testid="button-add-rec"
+          >
+            <span>+ Add a {categoryLabel}</span>
+          </button>
+        )
       ) : (
         <form onSubmit={handleSubmit} className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
