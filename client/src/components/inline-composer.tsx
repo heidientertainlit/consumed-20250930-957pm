@@ -459,17 +459,20 @@ export default function InlineComposer() {
 
       // Build payload based on post type - SAME LOGIC AS BEFORE
       if (postType === "thought") {
-        if (!contentText.trim()) {
+        // Either text or media is required (not both)
+        if (!contentText.trim() && !selectedMedia) {
           toast({
-            title: "Text Required",
-            description: "Please write something to share.",
+            title: "Content Required",
+            description: "Please write something or add media to share.",
             variant: "destructive",
           });
           setIsPosting(false);
           return;
         }
+        // Generate content based on what's available
+        const content = contentText.trim() || (selectedMedia ? `Shared ${selectedMedia.title}` : '');
         payload = {
-          content: contentText.trim(),
+          content: content,
           type: "thought",
           visibility: "public",
           contains_spoilers: containsSpoilers,
@@ -754,8 +757,8 @@ export default function InlineComposer() {
         if (addToList && selectedListId && selectedMedia) {
           return true;
         }
-        // Allow posting with just text (no media required)
-        return contentText.trim().length > 0;
+        // Allow posting with just media OR just text (either is sufficient)
+        return contentText.trim().length > 0 || selectedMedia;
       case "rating":
         return selectedMedia && (ratingValue > 0 || contentText.trim().length > 0);
       case "prediction":
@@ -1129,51 +1132,7 @@ export default function InlineComposer() {
                     </div>
                   )}
 
-                  {/* List dropdown when Add to List is selected */}
-                  {addToList && (
-                    <div className="mt-3 space-y-2">
-                      <select
-                        value={selectedListId}
-                        onChange={(e) => setSelectedListId(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white text-gray-900"
-                        data-testid="select-list-dropdown"
-                      >
-                        <option value="">Select a list...</option>
-                        {userLists.map((list: any) => (
-                          <option key={list.id} value={list.id}>
-                            {list.title || list.name}
-                          </option>
-                        ))}
-                      </select>
-                      <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                        <Checkbox
-                          checked={postToFeed}
-                          onCheckedChange={(checked) => setPostToFeed(checked === true)}
-                          data-testid="checkbox-post-to-feed"
-                        />
-                        <span>Post to feed</span>
-                      </label>
-                    </div>
-                  )}
-
-                  {/* Rank dropdown when Add to Rank is selected */}
-                  {addToRank && (
-                    <div className="mt-3">
-                      <select
-                        value={selectedRankId}
-                        onChange={(e) => setSelectedRankId(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white text-gray-900"
-                      >
-                        <option value="">Select a rank...</option>
-                        {userRanks.map((rank: any) => (
-                          <option key={rank.id} value={rank.id}>
-                            {rank.title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
+                  </div>
 
                 {/* Rating stars when Track & Rate is selected */}
                 {postType === "rating" && selectedMedia && (
