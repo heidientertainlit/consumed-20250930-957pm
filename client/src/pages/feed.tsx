@@ -8,7 +8,7 @@ import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
 import MediaCarousel from "@/components/media-carousel";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -539,6 +539,8 @@ export default function Feed() {
   const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
   const [activeInlineRating, setActiveInlineRating] = useState<string | null>(null); // Track which post has inline rating open
   const [currentVerb, setCurrentVerb] = useState("watching");
+  const [passItPostId, setPassItPostId] = useState<string | null>(null); // Hot Take "Pass It" modal
+  const [passItSearch, setPassItSearch] = useState(""); // Search friends for Pass It
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -2338,6 +2340,16 @@ export default function Feed() {
                             </button>
                           </div>
                           
+                          {/* Pass It Button */}
+                          <button
+                            onClick={() => setPassItPostId(post.id)}
+                            className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-purple-200 text-purple-600 rounded-xl font-medium hover:bg-purple-50 transition-all"
+                            data-testid={`button-pass-it-${post.id}`}
+                          >
+                            <Forward size={18} />
+                            <span>Pass It to a Friend</span>
+                          </button>
+                          
                           {/* Standard post actions */}
                           <div className="flex items-center justify-between mt-4 pt-3 border-t border-orange-200">
                             <div className="flex items-center gap-4">
@@ -3365,6 +3377,62 @@ export default function Feed() {
         isOpen={isTrackModalOpen}
         onClose={() => setIsTrackModalOpen(false)}
       />
+
+      {/* Pass It Modal for Hot Takes */}
+      {passItPostId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Pass It to a Friend</h3>
+              <button
+                onClick={() => {
+                  setPassItPostId(null);
+                  setPassItSearch("");
+                }}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4">
+              {/* Search Input */}
+              <div className="relative mb-4">
+                <SearchIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search friends..."
+                  value={passItSearch}
+                  onChange={(e) => setPassItSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  data-testid="input-pass-it-search"
+                />
+              </div>
+              
+              {/* Friend List - placeholder for now */}
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                <p className="text-sm text-gray-500 text-center py-4">
+                  Your friends will appear here. Pass a Hot Take to challenge them to defend or drop it!
+                </p>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  toast({
+                    title: "Coming Soon!",
+                    description: "Pass It feature will be available soon.",
+                  });
+                  setPassItPostId(null);
+                }}
+                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all"
+                data-testid="button-pass-it-confirm"
+              >
+                Pass This Hot Take
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       </div>
     </div>
