@@ -5,6 +5,7 @@ import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown } from "luc
 import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
+import MediaRecInput from "@/components/media-rec-input";
 
 interface Comment {
   id: string;
@@ -132,7 +133,7 @@ function CommentItem({
               <p className="font-semibold text-gray-900 text-base break-words">{renderMentions(comment.content)}</p>
               {/* Metadata */}
               <p className="text-xs text-gray-500 mt-1">
-                Added by <Link href={`/user/${comment.user.id}`} className="text-purple-600 hover:underline">@{comment.user.username || comment.user.displayName}</Link> · {formatCommentDate(comment.createdAt)}
+                Added by <Link href={`/user/${comment.user.id}`} className="text-purple-600 hover:underline">@{comment.user.username || comment.user.displayName}</Link>
               </p>
             </div>
             {currentUserId === comment.user.id && onDeleteComment && (
@@ -478,32 +479,47 @@ export default function CommentsSection({
   // Count for social proof
   const commentCount = comments?.length || 0;
 
+  // Handle media rec submission
+  const handleMediaRecSubmit = (media: { title: string; type: string; creator: string; image: string; external_id?: string; external_source?: string }) => {
+    // Submit the media title as the comment content
+    onSubmitComment(undefined, media.title);
+  };
+
   return (
     <div className={`rounded-lg p-4 space-y-3 ${isRecsMode ? 'bg-gray-50' : 'bg-gray-50'}`}>
       {/* Top-level Comment Input */}
-      <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-          <User size={16} className="text-gray-600" />
-        </div>
-        <MentionInput
-          placeholder={placeholder}
-          value={commentInput}
-          onChange={onCommentInputChange}
-          className="bg-white text-black placeholder:text-gray-500"
-          disabled={isSubmitting}
-          session={session}
-          testId="input-new-comment"
+      {isRecsMode ? (
+        <MediaRecInput
+          placeholder={`Search for a ${categoryLabel}...`}
+          onSubmit={handleMediaRecSubmit}
+          isSubmitting={isSubmitting}
+          recCategory={recCategory}
         />
-        <Button
-          type="submit"
-          size="sm"
-          disabled={!commentInput.trim() || isSubmitting}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
-          data-testid="button-submit-comment"
-        >
-          <Send size={16} />
-        </Button>
-      </form>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+            <User size={16} className="text-gray-600" />
+          </div>
+          <MentionInput
+            placeholder={placeholder}
+            value={commentInput}
+            onChange={onCommentInputChange}
+            className="bg-white text-black placeholder:text-gray-500"
+            disabled={isSubmitting}
+            session={session}
+            testId="input-new-comment"
+          />
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!commentInput.trim() || isSubmitting}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
+            data-testid="button-submit-comment"
+          >
+            <Send size={16} />
+          </Button>
+        </form>
+      )}
 
       {/* Comments List */}
       {isLoading ? (
