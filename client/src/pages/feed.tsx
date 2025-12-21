@@ -2397,10 +2397,10 @@ export default function Feed() {
                     <div key={`ask-recs-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
-                        <div className="rounded-2xl border border-green-200 p-4 shadow-sm bg-gradient-to-br from-green-50 via-emerald-50 to-green-100">
+                        <div className="rounded-2xl border border-purple-200 p-4 shadow-sm bg-gradient-to-br from-purple-50 via-indigo-50 to-purple-100">
                           {/* Ask for Recs Header */}
                           <div className="flex items-center gap-2 mb-3">
-                            <div className="flex items-center gap-1.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2.5 py-1 rounded-full text-xs font-bold">
+                            <div className="flex items-center gap-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-2.5 py-1 rounded-full text-xs font-bold">
                               <span>💡</span>
                               <span>ASKING FOR RECS</span>
                             </div>
@@ -2415,7 +2415,7 @@ export default function Feed() {
                           {post.user && (
                             <div className="flex items-center gap-2 mb-3">
                               <Link href={`/user/${post.user.id}`}>
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold cursor-pointer">
                                   {post.user.avatar ? (
                                     <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                                   ) : (
@@ -2435,7 +2435,7 @@ export default function Feed() {
                           <p className="text-lg font-medium text-gray-900 mb-4">{post.content}</p>
                           
                           {/* Standard post actions */}
-                          <div className="flex items-center justify-between mt-4 pt-3 border-t border-green-200">
+                          <div className="flex items-center justify-between pt-3 border-t border-purple-200">
                             <div className="flex items-center gap-4">
                               <button
                                 onClick={() => handleLike(post.id)}
@@ -2463,7 +2463,7 @@ export default function Feed() {
                           </div>
                           
                           {/* Comments always visible for Ask for Recs */}
-                          <div className="mt-4 pt-3 border-t border-green-200">
+                          <div className="mt-4 pt-3 border-t border-purple-200">
                             <CommentsSection 
                               postId={post.id}
                               fetchComments={fetchComments}
