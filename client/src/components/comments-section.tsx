@@ -39,6 +39,9 @@ interface CommentsSectionProps {
   onVoteComment?: (commentId: string, direction: 'up' | 'down') => void;
   likedComments?: Set<string>;
   commentVotes?: Map<string, 'up' | 'down'>; // Track user's votes per comment
+  // Ask for Recs mode
+  isRecsMode?: boolean;
+  recCategory?: string;
 }
 
 interface CommentItemProps {
@@ -55,6 +58,8 @@ interface CommentItemProps {
   onSubmitReply: (parentCommentId: string, content: string) => void;
   isSubmitting: boolean;
   session: any;
+  isRecsMode?: boolean;
+  recCategory?: string;
 }
 
 function CommentItem({
@@ -71,11 +76,20 @@ function CommentItem({
   onSubmitReply,
   isSubmitting,
   session,
+  isRecsMode = false,
+  recCategory,
 }: CommentItemProps) {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const hasReplies = comment.replies && comment.replies.length > 0;
+
+  // Category emoji mapping for recs mode
+  const categoryEmoji: Record<string, string> = {
+    movies: '🎬', tv: '📺', books: '📚', music: '🎵', 
+    podcasts: '🎙️', games: '🎮', '': '💡'
+  };
+  const recEmoji = categoryEmoji[recCategory || ''] || '💡';
 
   const formatCommentDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -103,6 +117,138 @@ function CommentItem({
   const indentPx = depth * 16; // 16px per depth level
   const shouldShowVerticalLine = depth > 0;
 
+  // Recs mode: Render as recommendation card
+  if (isRecsMode && depth === 0) {
+    return (
+      <div className="relative" id={`comment-${comment.id}`}>
+        <div className="bg-white border border-purple-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow">
+          {/* Recommendation header with icon */}
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 text-xl">
+              {recEmoji}
+            </div>
+            <div className="flex-1 min-w-0">
+              {/* Title - the recommendation content */}
+              <p className="font-semibold text-gray-900 text-base break-words">{renderMentions(comment.content)}</p>
+              {/* Metadata */}
+              <p className="text-xs text-gray-500 mt-1">
+                Added by <Link href={`/user/${comment.user.id}`} className="text-purple-600 hover:underline">@{comment.user.username || comment.user.displayName}</Link> · {formatCommentDate(comment.createdAt)}
+              </p>
+            </div>
+            {currentUserId === comment.user.id && onDeleteComment && (
+              <button
+                onClick={() => onDeleteComment(comment.id, postId)}
+                className="text-gray-400 hover:text-red-500 transition-colors"
+                data-testid={`button-delete-comment-${comment.id}`}
+                title="Delete"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+          
+          {/* Action buttons */}
+          <div className="flex items-center gap-4 mt-3 pt-2 border-t border-gray-100">
+            {onVoteComment && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onVoteComment(comment.id, 'up')}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                    (comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up')
+                      ? 'bg-green-100 text-green-600' 
+                      : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600'
+                  }`}
+                  data-testid={`button-upvote-comment-${comment.id}`}
+                >
+                  <ArrowBigUp size={14} fill={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'currentColor' : 'none'} />
+                  <span>{comment.upVoteCount || 0}</span>
+                </button>
+                <button
+                  onClick={() => onVoteComment(comment.id, 'down')}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                    (comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down')
+                      ? 'bg-red-100 text-red-600' 
+                      : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600'
+                  }`}
+                  data-testid={`button-downvote-comment-${comment.id}`}
+                >
+                  <ArrowBigDown size={14} fill={(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'currentColor' : 'none'} />
+                  <span>{comment.downVoteCount || 0}</span>
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => setShowReplyInput(!showReplyInput)}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-600 transition-colors"
+              data-testid={`button-reply-comment-${comment.id}`}
+            >
+              <MessageCircle size={14} />
+              <span>Reply</span>
+            </button>
+            {hasReplies && (
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="text-xs text-gray-500 hover:text-gray-700"
+                data-testid={`button-toggle-replies-${comment.id}`}
+              >
+                {isCollapsed ? `Show ${comment.replies?.length} ${comment.replies?.length === 1 ? 'reply' : 'replies'}` : 'Hide replies'}
+              </button>
+            )}
+          </div>
+
+          {/* Reply Input */}
+          {showReplyInput && (
+            <form onSubmit={handleSubmitReply} className="mt-3 flex items-center gap-2">
+              <MentionInput
+                placeholder="Write a reply..."
+                value={replyContent}
+                onChange={setReplyContent}
+                className="bg-gray-50 text-black placeholder:text-gray-500 text-sm"
+                disabled={isSubmitting}
+                autoFocus
+                session={session}
+                testId={`input-reply-${comment.id}`}
+              />
+              <Button type="submit" size="sm" disabled={!replyContent.trim() || isSubmitting} className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1">
+                <Send size={14} />
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => { setShowReplyInput(false); setReplyContent(""); }} className="px-3 py-1">
+                Cancel
+              </Button>
+            </form>
+          )}
+        </div>
+
+        {/* Nested Replies */}
+        {!isCollapsed && comment.replies && comment.replies.length > 0 && (
+          <div className="mt-2 ml-6 space-y-2 border-l-2 border-purple-100 pl-3">
+            {comment.replies.map((reply) => (
+              <CommentItem
+                key={reply.id}
+                comment={reply}
+                depth={depth + 1}
+                currentUserId={currentUserId}
+                onDeleteComment={onDeleteComment}
+                onLikeComment={onLikeComment}
+                onVoteComment={onVoteComment}
+                likedComments={likedComments}
+                commentVotes={commentVotes}
+                commentLikesEnabled={commentLikesEnabled}
+                postId={postId}
+                onSubmitReply={onSubmitReply}
+                isSubmitting={isSubmitting}
+                session={session}
+                isRecsMode={false}
+                recCategory={recCategory}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Standard comment rendering
   return (
     <div className="relative" id={`comment-${comment.id}`}>
       {/* Vertical threading line */}
@@ -272,6 +418,8 @@ function CommentItem({
               onSubmitReply={onSubmitReply}
               isSubmitting={isSubmitting}
               session={session}
+              isRecsMode={isRecsMode}
+              recCategory={recCategory}
             />
           ))}
         </div>
@@ -294,6 +442,8 @@ export default function CommentsSection({
   onVoteComment,
   likedComments = new Set(),
   commentVotes = new Map(),
+  isRecsMode = false,
+  recCategory,
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
@@ -313,15 +463,28 @@ export default function CommentsSection({
     onSubmitComment(parentCommentId, content);
   };
 
+  // Category emoji and label for recs mode
+  const categoryLabels: Record<string, string> = {
+    movies: 'movie', tv: 'show', books: 'book', music: 'song', 
+    podcasts: 'podcast', games: 'game', '': 'recommendation'
+  };
+  const categoryLabel = categoryLabels[recCategory || ''] || 'recommendation';
+  const placeholder = isRecsMode 
+    ? `Recommend a ${categoryLabel} 👇` 
+    : 'Add a comment';
+
+  // Count for social proof
+  const commentCount = comments?.length || 0;
+
   return (
-    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+    <div className={`rounded-lg p-4 space-y-3 ${isRecsMode ? 'bg-purple-50/50' : 'bg-gray-50'}`}>
       {/* Top-level Comment Input */}
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
           <User size={16} className="text-gray-600" />
         </div>
         <MentionInput
-          placeholder="Add a comment"
+          placeholder={placeholder}
           value={commentInput}
           onChange={onCommentInputChange}
           className="bg-white text-black placeholder:text-gray-500"
@@ -354,29 +517,46 @@ export default function CommentsSection({
           ))}
         </div>
       ) : comments && comments.length > 0 ? (
-        <div className="space-y-3">
-          {comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              depth={0}
-              currentUserId={currentUserId}
-              onDeleteComment={onDeleteComment}
-              onLikeComment={onLikeComment}
-              onVoteComment={onVoteComment}
-              likedComments={likedComments}
-              commentVotes={commentVotes}
-              commentLikesEnabled={commentLikesEnabled}
-              postId={postId}
-              onSubmitReply={handleSubmitReply}
-              isSubmitting={isSubmitting}
-              session={session}
-            />
-          ))}
-        </div>
+        <>
+          <div className={isRecsMode ? "space-y-2" : "space-y-3"}>
+            {comments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                depth={0}
+                currentUserId={currentUserId}
+                onDeleteComment={onDeleteComment}
+                onLikeComment={onLikeComment}
+                onVoteComment={onVoteComment}
+                likedComments={likedComments}
+                commentVotes={commentVotes}
+                commentLikesEnabled={commentLikesEnabled}
+                postId={postId}
+                onSubmitReply={handleSubmitReply}
+                isSubmitting={isSubmitting}
+                session={session}
+                isRecsMode={isRecsMode}
+                recCategory={recCategory}
+              />
+            ))}
+          </div>
+          {/* Social proof CTA for recs mode */}
+          {isRecsMode && (
+            <div 
+              className="text-center text-sm text-purple-600 pt-2 border-t border-purple-200 mt-3"
+              data-testid="status-recs-social-proof"
+            >
+              {commentCount === 1 
+                ? "1 friend replied • Be the next one →" 
+                : `${commentCount} friends replied • Add yours →`}
+            </div>
+          )}
+        </>
       ) : (
         <div className="text-center text-gray-500 text-sm py-2">
-          No comments yet. Be the first to comment!
+          {isRecsMode 
+            ? "No recs yet • Be the first →" 
+            : "No comments yet. Be the first to comment!"}
         </div>
       )}
     </div>
