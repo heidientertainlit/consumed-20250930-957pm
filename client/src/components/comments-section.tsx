@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown } from "lucide-react";
+import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
@@ -94,8 +94,10 @@ function CommentItem({
 }: CommentItemProps) {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // In recs mode, collapse replies by default
+  const [isCollapsed, setIsCollapsed] = useState(isRecsMode && depth === 0);
   const hasReplies = comment.replies && comment.replies.length > 0;
+  const replyCount = comment.replies?.length || 0;
 
   // Category emoji mapping for recs mode
   const categoryEmoji: Record<string, string> = {
@@ -221,6 +223,18 @@ function CommentItem({
                 title="Delete"
               >
                 <Trash2 size={14} />
+              </button>
+            )}
+            {/* Expand replies chevron */}
+            {hasReplies && (
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="text-gray-400 hover:text-purple-500 transition-colors p-1 flex items-center gap-0.5"
+                data-testid={`button-expand-replies-${comment.id}`}
+                title={isCollapsed ? 'Show replies' : 'Hide replies'}
+              >
+                <span className="text-xs">{replyCount}</span>
+                {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
               </button>
             )}
           </div>
