@@ -1,13 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Heart, MessageCircle, ChevronRight, Star, Plus, CheckCircle, Layers, MoreHorizontal, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, ChevronRight, Star, Plus, CheckCircle, Layers, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface MediaItem {
   id: string;
@@ -180,32 +174,20 @@ export default function ConsolidatedActivityCard({
               </div>
             )}
             
-            {/* Delete Menu - Only show for owner */}
+            {/* Delete Button - Only show for owner */}
             {isOwner && onDelete && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button 
-                    className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-100"
-                    data-testid={`button-more-options-${activity.id}`}
-                  >
-                    <MoreHorizontal size={16} />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-32">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this grouped activity? This will delete all posts in this group.')) {
-                        onDelete(activity.originalPostIds);
-                      }
-                    }}
-                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                    data-testid={`button-delete-grouped-${activity.id}`}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <button 
+                onClick={() => {
+                  if (confirm('Are you sure you want to delete this grouped activity? This will delete all posts in this group.')) {
+                    onDelete(activity.originalPostIds);
+                  }
+                }}
+                className="text-gray-400 hover:text-red-500 transition-colors"
+                data-testid={`button-delete-grouped-${activity.id}`}
+                title="Delete"
+              >
+                <Trash2 size={16} />
+              </button>
             )}
           </div>
         </div>
