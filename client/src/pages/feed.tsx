@@ -2446,34 +2446,34 @@ export default function Feed() {
                             {/* Request Content */}
                             <p className="text-lg font-medium text-gray-900 mb-4">{post.content}</p>
                             
-                            {/* Standard post actions */}
+                            {/* Simplified actions for recs card */}
                             <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                              <div className="flex items-center gap-4">
-                                <button
-                                  onClick={() => handleLike(post.id)}
-                                  className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                                  data-testid={`button-like-${post.id}`}
-                                >
-                                  <Heart size={18} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
-                                  <span>{post.likes || 0}</span>
-                                </button>
+                              <div className="flex items-center gap-3">
                                 <button
                                   onClick={() => {
-                                    // For recs posts, clicking comment icon expands the add rec input
                                     setExpandedAddRecInput(prev => {
                                       const newSet = new Set(prev);
                                       newSet.add(post.id);
                                       return newSet;
                                     });
                                   }}
-                                  className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600"
-                                  data-testid={`button-comments-${post.id}`}
+                                  className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-700 font-medium"
+                                  data-testid={`button-add-rec-${post.id}`}
                                 >
-                                  <MessageCircle size={18} />
-                                  <span>{post.comments || 0}</span>
+                                  <Plus size={16} />
+                                  <span>Add rec</span>
+                                </button>
+                                <button
+                                  onClick={() => handleLike(post.id)}
+                                  className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
+                                  data-testid={`button-follow-${post.id}`}
+                                  title="Follow for updates"
+                                >
+                                  <span className="text-base">👀</span>
+                                  <span>{likedPosts.has(post.id) ? 'Following' : 'Follow'}</span>
                                 </button>
                               </div>
-                              <span className="text-xs text-gray-500">Today</span>
+                              <span className="text-xs text-gray-400">{post.comments || 0} recs</span>
                             </div>
                           
                             {/* Recommendations section - always visible */}
