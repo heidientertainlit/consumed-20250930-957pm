@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Heart, MessageCircle, ChevronRight, Star, Plus, CheckCircle, Layers, Trash2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Heart, MessageCircle, ChevronRight, Star, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 
 interface MediaItem {
   id: string;
@@ -59,60 +59,10 @@ export default function ConsolidatedActivityCard({
   isLiked,
   currentUserId
 }: ConsolidatedActivityCardProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [showAll, setShowAll] = useState(false);
   
   const isOwner = currentUserId && activity.user.id === currentUserId;
   
-  // Check if we have multiple lists for carousel
-  const hasCarousel = activity.lists && activity.lists.length > 1;
-  const slides = activity.lists || [{ listId: 'default', listName: activity.listNames?.[0] || 'List', items: activity.items }];
-
-  const nextSlide = () => {
-    if (hasCarousel) {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }
-  };
-
-  const getActivityIcon = () => {
-    switch (activity.type) {
-      case 'ratings':
-        return <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />;
-      case 'finished':
-        return <CheckCircle className="w-3.5 h-3.5 text-green-500" />;
-      case 'list_adds':
-        return <Plus className="w-3.5 h-3.5 text-purple-500" />;
-      default:
-        return <Layers className="w-3.5 h-3.5 text-purple-500" />;
-    }
-  };
-
-  const getSummaryText = () => {
-    switch (activity.type) {
-      case 'ratings':
-        if (activity.totalItems === 1 && activity.items[0]) {
-          return `rated ${activity.items[0].title}`;
-        }
-        return `rated ${activity.totalItems} items`;
-      case 'finished':
-        if (activity.totalItems === 1 && activity.items[0]) {
-          return `finished ${activity.items[0].title}`;
-        }
-        return `finished ${activity.totalItems} items`;
-      case 'list_adds':
-        if (activity.totalLists && activity.totalLists > 1) {
-          return `added ${activity.totalItems} item${activity.totalItems !== 1 ? 's' : ''} across ${activity.totalLists} lists`;
-        }
-        if (activity.listNames?.[0]) {
-          return `added ${activity.totalItems} item${activity.totalItems !== 1 ? 's' : ''} to ${activity.listNames[0]}`;
-        }
-        return `added ${activity.totalItems} item${activity.totalItems !== 1 ? 's' : ''}`;
-      case 'games':
-        return activity.gameTitle ? `played ${activity.gameTitle}` : 'played a game';
-      default:
-        return 'shared activity';
-    }
-  };
-
   const getMediaTypeIcon = (type: string) => {
     const iconMap: { [key: string]: string } = {
       movie: '🎬',
@@ -125,160 +75,136 @@ export default function ConsolidatedActivityCard({
     return iconMap[type?.toLowerCase()] || '📱';
   };
 
-  const isConsolidated = activity.totalItems > 1 || (activity.totalLists && activity.totalLists > 1);
-  const currentListData = slides[currentSlide];
+  const getHeaderText = () => {
+    const displayName = activity.user.displayName || activity.user.username;
+    
+    switch (activity.type) {
+      case 'ratings':
+        return (
+          <span className="text-sm">
+            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-gray-900 hover:text-purple-600">
+              {displayName}
+            </Link>
+            <span className="text-gray-500"> rated</span>
+          </span>
+        );
+      case 'finished':
+        return (
+          <span className="text-sm">
+            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-gray-900 hover:text-purple-600">
+              {displayName}
+            </Link>
+            <span className="text-gray-500"> finished</span>
+          </span>
+        );
+      case 'list_adds':
+        const listName = activity.listNames?.[0] || 'a list';
+        return (
+          <span className="text-sm">
+            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-gray-900 hover:text-purple-600">
+              {displayName}
+            </Link>
+            <span className="text-gray-500"> added to → </span>
+            <span className="text-purple-600 font-medium">{listName}</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="text-sm">
+            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-gray-900 hover:text-purple-600">
+              {displayName}
+            </Link>
+            <span className="text-gray-500"> shared activity</span>
+          </span>
+        );
+    }
+  };
+
+  const allItems = activity.items;
+  const displayedItems = showAll ? allItems : allItems.slice(0, 3);
+  const remainingCount = allItems.length - 3;
+
+  const formattedDate = (() => {
+    try {
+      return format(new Date(activity.timestamp), 'MMM d');
+    } catch {
+      return '';
+    }
+  })();
 
   return (
     <div 
-      className={`rounded-2xl overflow-hidden shadow-sm bg-white border ${
-        isConsolidated 
-          ? 'border-purple-200 ring-1 ring-purple-100' 
-          : 'border-gray-200'
-      }`} 
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" 
       data-testid={`consolidated-activity-${activity.id}`}
     >
       {/* Header */}
-      <div className="p-4 pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <Link href={`/profile/${activity.user.username}`}>
-            <div className="flex items-center gap-3 cursor-pointer">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
-                {activity.user.avatar ? (
-                  <img src={activity.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                ) : (
-                  activity.user.displayName?.[0]?.toUpperCase() || activity.user.username?.[0]?.toUpperCase() || '?'
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-1">
-                  <span className="font-semibold text-gray-900">
-                    {activity.user.displayName || activity.user.username}
-                  </span>
-                  <span className="text-gray-500 text-sm">
-                    {getSummaryText()}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-400">
-                  {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
-                </div>
-              </div>
-            </div>
-          </Link>
-          
-          {/* Grouped Badge & Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            {isConsolidated && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded-full">
-                <Layers className="w-3 h-3 text-purple-500" />
-                <span className="text-xs font-medium text-purple-600">Grouped</span>
-              </div>
-            )}
-            
-            {/* Delete Button - Only show for owner */}
-            {isOwner && onDelete && (
-              <button 
-                onClick={() => {
-                  if (confirm('Are you sure you want to delete this grouped activity? This will delete all posts in this group.')) {
-                    onDelete(activity.originalPostIds);
-                  }
-                }}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-                data-testid={`button-delete-grouped-${activity.id}`}
-                title="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
-            )}
-          </div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex-1">
+          {getHeaderText()}
         </div>
-      </div>
-
-      {/* Content - Carousel for multiple lists */}
-      <div className="px-4 pb-3 relative">
-        <div className="bg-gray-50 rounded-xl p-3">
-          {/* List Header with swipe indicator */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              {getActivityIcon()}
-              <span className="text-sm font-medium text-gray-700">
-                {activity.type === 'list_adds' 
-                  ? `Added to ${currentListData.listName}`
-                  : activity.type === 'ratings' ? 'Rated'
-                  : activity.type === 'finished' ? 'Finished' 
-                  : 'Activity'}
-              </span>
-            </div>
-            
-            {/* Carousel indicator & next button */}
-            {hasCarousel && (
-              <button 
-                onClick={nextSlide}
-                className="flex items-center gap-1 text-purple-600 hover:text-purple-700 transition-colors"
-              >
-                <span className="text-xs font-medium">{currentSlide + 1}/{slides.length}</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Media Items for current list */}
-          <div className="space-y-1.5">
-            {currentListData.items.slice(0, 3).map((item, idx) => (
-              <Link 
-                key={item.id || idx} 
-                href={`/media/${item.externalSource}/${item.externalId}`}
-              >
-                <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                  <span className="text-lg">{getMediaTypeIcon(item.mediaType)}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 truncate text-sm">
-                      {item.title}
-                    </div>
-                    {item.creator && (
-                      <div className="text-xs text-gray-500 truncate">
-                        {item.creator}
-                      </div>
-                    )}
-                  </div>
-                  {item.rating && activity.type === 'ratings' && (
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                      <span className="text-xs font-medium text-gray-900">
-                        {item.rating}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* See More for current list */}
-          {currentListData.items.length > 3 && (
-            <div className="flex items-center justify-end gap-1 mt-2 text-sm font-medium text-purple-600">
-              <span>+{currentListData.items.length - 3} more in this list</span>
-            </div>
-          )}
-        </div>
-
-        {/* Carousel Dots */}
-        {hasCarousel && (
-          <div className="flex justify-center gap-1.5 mt-2">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentSlide(idx)}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  idx === currentSlide ? 'bg-purple-500' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
+        
+        {/* Delete Button - Only show for owner */}
+        {isOwner && onDelete && (
+          <button 
+            onClick={() => {
+              if (confirm('Are you sure you want to delete this? This will delete all posts in this group.')) {
+                onDelete(activity.originalPostIds);
+              }
+            }}
+            className="text-gray-400 hover:text-red-500 transition-colors ml-2"
+            data-testid={`button-delete-grouped-${activity.id}`}
+            title="Delete"
+          >
+            <Trash2 size={16} />
+          </button>
         )}
       </div>
 
-      {/* Footer - Likes & Comments */}
-      <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+      {/* Media Items - Simple list */}
+      <div className="space-y-1 mb-3">
+        {displayedItems.map((item, idx) => (
+          <Link 
+            key={item.id || idx} 
+            href={`/media/${item.externalSource}/${item.externalId}`}
+          >
+            <div className="flex items-center gap-2 py-1 hover:text-purple-600 transition-colors cursor-pointer">
+              <span className="text-base">{getMediaTypeIcon(item.mediaType)}</span>
+              <span className="text-sm text-gray-900 truncate flex-1">
+                {item.title}
+              </span>
+              {item.rating && activity.type === 'ratings' && (
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                  <span className="text-xs font-medium text-gray-700">
+                    {item.rating}
+                  </span>
+                </div>
+              )}
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* +X more link */}
+      {!showAll && remainingCount > 0 && (
+        <button 
+          onClick={() => setShowAll(true)}
+          className="text-sm text-purple-600 hover:text-purple-700 font-medium mb-3 flex items-center gap-1"
+        >
+          +{remainingCount} more <ChevronRight size={14} />
+        </button>
+      )}
+
+      {/* See more of user's lists */}
+      <Link 
+        href={`/user/${activity.user.id}?tab=lists`}
+        className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1 mb-3"
+      >
+        See more of {activity.user.displayName || activity.user.username}'s lists <ChevronRight size={14} />
+      </Link>
+
+      {/* Footer - Likes, Comments & Date */}
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
         <div className="flex items-center gap-4">
           <button
             onClick={() => onLike(activity.originalPostIds[0])}
@@ -297,6 +223,7 @@ export default function ConsolidatedActivityCard({
             <span className="text-sm">{activity.comments}</span>
           </button>
         </div>
+        <span className="text-sm text-gray-400">{formattedDate}</span>
       </div>
     </div>
   );
