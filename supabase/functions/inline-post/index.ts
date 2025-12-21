@@ -407,6 +407,32 @@ serve(async (req) => {
       }
       console.log('Post created:', post);
 
+      // Award points based on post type
+      try {
+        let pointsToAward = 10; // Default: 10 points for posts
+        let pointsReason = 'post';
+        
+        if (type === 'hot_take') {
+          pointsToAward = 10;
+          pointsReason = 'hot_take_post';
+        } else if (type === 'ask_for_recs') {
+          pointsToAward = 10;
+          pointsReason = 'ask_for_recs_post';
+        } else if (type === 'rate-review' && rating) {
+          pointsToAward = 10; // Rating with review
+          pointsReason = 'review';
+        }
+        
+        await adminClient.rpc('add_user_points', {
+          p_user_id: appUser.id,
+          p_points: pointsToAward,
+          p_reason: pointsReason
+        });
+        console.log(`Awarded ${pointsToAward} points for ${pointsReason}`);
+      } catch (pointsError) {
+        console.error('Points award error (non-fatal):', pointsError);
+      }
+
       // Check if this is user's first post and award referral bonus
       try {
         const { data: fullUser } = await adminClient
