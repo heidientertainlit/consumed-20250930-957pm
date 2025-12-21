@@ -134,13 +134,25 @@ export default function ConsolidatedActivityCard({
 
   return (
     <div 
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" 
+      className="bg-gray-50 rounded-2xl p-4" 
       data-testid={`consolidated-activity-${activity.id}`}
     >
-      {/* Header */}
+      {/* Header with Avatar */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex-1">
-          {getHeaderText()}
+        <div className="flex items-center gap-3 flex-1">
+          {/* Avatar */}
+          <Link href={`/profile/${activity.user.username}`}>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0 cursor-pointer">
+              {activity.user.avatar ? (
+                <img src={activity.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+              ) : (
+                (activity.user.displayName?.[0] || activity.user.username?.[0] || '?').toUpperCase()
+              )}
+            </div>
+          </Link>
+          <div className="flex-1">
+            {getHeaderText()}
+          </div>
         </div>
         
         {/* Delete Button - Only show for owner */}
