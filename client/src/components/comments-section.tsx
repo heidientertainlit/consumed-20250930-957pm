@@ -527,11 +527,11 @@ export default function CommentsSection({
   };
 
   return (
-    <div className={`rounded-lg ${isRecsMode ? 'p-3 space-y-2 bg-gray-50' : 'p-4 space-y-3 bg-gray-50'}`}>
-      {/* Top-level Comment Input */}
+    <div className={`rounded-lg ${isRecsMode ? 'p-2 space-y-2 bg-gray-50' : 'p-4 space-y-3 bg-gray-50'}`}>
+      {/* Top-level Comment Input - only show in recs mode when forceShowAddInput is true */}
       {isRecsMode ? (
-        showAddRecInput ? (
-          <div className="space-y-1">
+        showAddRecInput && (
+          <div className="space-y-1 mb-2">
             <MediaRecInput
               placeholder={`Search for a ${categoryLabel}...`}
               onSubmit={handleMediaRecSubmit}
@@ -546,14 +546,6 @@ export default function CommentsSection({
               Cancel
             </button>
           </div>
-        ) : (
-          <button
-            onClick={() => setShowAddRecInput(true)}
-            className="w-full py-1.5 px-3 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg border border-dashed border-purple-300 transition-colors flex items-center justify-center gap-2"
-            data-testid="button-add-rec"
-          >
-            <span>+ Add a {categoryLabel}</span>
-          </button>
         )
       ) : (
         <form onSubmit={handleSubmit} className="flex items-center space-x-2">
