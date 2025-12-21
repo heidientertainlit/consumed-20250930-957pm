@@ -153,8 +153,16 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
     const questions = currentGame.options;
     if (questions.length === 0 || currentQuestionIndex >= questions.length) return null;
     const q = questions[currentQuestionIndex];
-    if (q && typeof q === 'object' && 'question' in q && 'options' in q && 'correct' in q) {
-      return q as TriviaQuestion;
+    if (q && typeof q === 'object' && 'question' in q && 'options' in q) {
+      // Handle both 'correct' and 'answer' field names (database uses 'answer')
+      const correctAnswer = q.correct || q.answer;
+      if (correctAnswer) {
+        return {
+          question: q.question,
+          options: q.options,
+          correct: correctAnswer
+        };
+      }
     }
     return null;
   };
