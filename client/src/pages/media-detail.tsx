@@ -296,11 +296,8 @@ export default function MediaDetail() {
             variant="ghost"
             size="sm"
             onClick={() => {
-              if (window.history.length > 1) {
-                window.history.back();
-              } else {
-                setLocation('/');
-              }
+              // Use wouter navigation for reliable routing - fallback to activity feed
+              setLocation('/');
             }}
             className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             data-testid="button-back"
@@ -328,12 +325,12 @@ export default function MediaDetail() {
                   Browse Your Media
                 </Button>
                 <Button
-                  onClick={() => window.history.back()}
+                  onClick={() => setLocation('/')}
                   variant="outline"
                   className="w-full border-gray-300 text-gray-700 hover:bg-gray-100"
                   data-testid="button-go-back"
                 >
-                  Go Back
+                  Go to Feed
                 </Button>
               </div>
             </div>
@@ -373,13 +370,7 @@ export default function MediaDetail() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            if (window.history.length > 1) {
-              window.history.back();
-            } else {
-              setLocation('/');
-            }
-          }}
+          onClick={() => setLocation('/')}
           className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
           data-testid="button-back"
         >
