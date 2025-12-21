@@ -2388,100 +2388,100 @@ export default function Feed() {
                 // Check if this item is an ask_for_recs post
                 if (post.type === 'ask_for_recs') {
                   const recCategory = (post as any).recCategory;
-                  const categoryEmoji: Record<string, string> = {
-                    movies: '🎬', tv: '📺', books: '📚', music: '🎵', 
-                    podcasts: '🎙️', games: '🎮', '': '✨'
+                  const categoryLabels: Record<string, string> = {
+                    movies: 'movie', tv: 'TV show', books: 'book', music: 'music', 
+                    podcasts: 'podcast', games: 'game', '': ''
                   };
+                  const categoryLabel = categoryLabels[recCategory] || '';
+                  const purposeText = categoryLabel 
+                    ? `💡 Asking for ${categoryLabel} recommendations — friends, help me out 👇`
+                    : `💡 Asking for recommendations — friends, help me out 👇`;
                   
                   return (
                     <div key={`ask-recs-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
-                        <div className="rounded-2xl border border-purple-200 p-4 shadow-sm bg-purple-50">
-                          {/* Purpose Strip - Explains what this post is */}
-                          <div className="bg-purple-100 -mx-4 -mt-4 mb-4 px-4 py-2 rounded-t-2xl border-b border-purple-200">
-                            <p className="text-sm text-purple-700 font-medium">
-                              💡 Asking for recommendations — friends, help me out 👇
+                        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+                          {/* Purpose Strip - Dark purple gradient with category in text */}
+                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5">
+                            <p className="text-sm text-white font-medium">
+                              {purposeText}
                             </p>
                           </div>
                           
-                          {/* Category pill */}
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-sm bg-white text-purple-700 px-2.5 py-1 rounded-full border border-purple-200 font-medium">
-                              {categoryEmoji[recCategory] || '✨'} {recCategory ? recCategory.charAt(0).toUpperCase() + recCategory.slice(1) : 'Anything'}
-                            </span>
-                          </div>
-                          
-                          {/* User info */}
-                          {post.user && (
-                            <div className="flex items-center gap-2 mb-3">
-                              <Link href={`/user/${post.user.id}`}>
-                                <div className="w-8 h-8 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-purple-700 font-semibold cursor-pointer">
-                                  {post.user.avatar ? (
-                                    <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                                  ) : (
-                                    <span className="text-xs">{post.user.displayName?.[0]?.toUpperCase() || post.user.username?.[0]?.toUpperCase() || '?'}</span>
-                                  )}
-                                </div>
-                              </Link>
-                              <Link href={`/user/${post.user.id}`}>
-                                <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
-                                  {post.user.displayName || post.user.username}
-                                </span>
-                              </Link>
+                          {/* Card body */}
+                          <div className="p-4">
+                            {/* User info */}
+                            {post.user && (
+                              <div className="flex items-center gap-2 mb-3">
+                                <Link href={`/user/${post.user.id}`}>
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                                    {post.user.avatar ? (
+                                      <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                    ) : (
+                                      <span className="text-xs">{post.user.displayName?.[0]?.toUpperCase() || post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                                    )}
+                                  </div>
+                                </Link>
+                                <Link href={`/user/${post.user.id}`}>
+                                  <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
+                                    {post.user.displayName || post.user.username}
+                                  </span>
+                                </Link>
+                              </div>
+                            )}
+                            
+                            {/* Request Content */}
+                            <p className="text-lg font-medium text-gray-900 mb-4">{post.content}</p>
+                            
+                            {/* Standard post actions */}
+                            <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                              <div className="flex items-center gap-4">
+                                <button
+                                  onClick={() => handleLike(post.id)}
+                                  className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                                  data-testid={`button-like-${post.id}`}
+                                >
+                                  <Heart size={18} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
+                                  <span>{post.likes || 0}</span>
+                                </button>
+                                <button
+                                  onClick={() => setExpandedComments(prev => {
+                                    const newSet = new Set(prev);
+                                    if (newSet.has(post.id)) newSet.delete(post.id);
+                                    else newSet.add(post.id);
+                                    return newSet;
+                                  })}
+                                  className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600"
+                                  data-testid={`button-comments-${post.id}`}
+                                >
+                                  <MessageCircle size={18} />
+                                  <span>{post.comments || 0}</span>
+                                </button>
+                              </div>
+                              <span className="text-xs text-gray-500">{post.timestamp ? new Date(post.timestamp).toLocaleDateString() : 'Today'}</span>
                             </div>
-                          )}
                           
-                          {/* Request Content */}
-                          <p className="text-lg font-medium text-gray-900 mb-4">{post.content}</p>
-                          
-                          {/* Standard post actions */}
-                          <div className="flex items-center justify-between pt-3 border-t border-purple-200">
-                            <div className="flex items-center gap-4">
-                              <button
-                                onClick={() => handleLike(post.id)}
-                                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                                data-testid={`button-like-${post.id}`}
-                              >
-                                <Heart size={18} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
-                                <span>{post.likes || 0}</span>
-                              </button>
-                              <button
-                                onClick={() => setExpandedComments(prev => {
-                                  const newSet = new Set(prev);
-                                  if (newSet.has(post.id)) newSet.delete(post.id);
-                                  else newSet.add(post.id);
-                                  return newSet;
-                                })}
-                                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600"
-                                data-testid={`button-comments-${post.id}`}
-                              >
-                                <MessageCircle size={18} />
-                                <span>{post.comments || 0}</span>
-                              </button>
+                            {/* Recommendations section - always visible */}
+                            <div className="mt-4 pt-3 border-t border-gray-200">
+                              <CommentsSection 
+                                postId={post.id}
+                                fetchComments={fetchComments}
+                                session={session}
+                                commentInput={commentInputs[post.id] || ''}
+                                onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                                isSubmitting={commentMutation.isPending}
+                                currentUserId={user?.id}
+                                onDeleteComment={handleDeleteComment}
+                                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                                onVoteComment={handleVoteComment}
+                                likedComments={likedComments}
+                                commentVotes={commentVotes}
+                                isRecsMode={true}
+                                recCategory={recCategory}
+                              />
                             </div>
-                            <span className="text-xs text-gray-500">{post.timestamp ? new Date(post.timestamp).toLocaleDateString() : 'Today'}</span>
-                          </div>
-                          
-                          {/* Recommendations section - always visible */}
-                          <div className="mt-4 pt-3 border-t border-purple-200">
-                            <CommentsSection 
-                              postId={post.id}
-                              fetchComments={fetchComments}
-                              session={session}
-                              commentInput={commentInputs[post.id] || ''}
-                              onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                              onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                              isSubmitting={commentMutation.isPending}
-                              currentUserId={user?.id}
-                              onDeleteComment={handleDeleteComment}
-                              onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                              onVoteComment={handleVoteComment}
-                              likedComments={likedComments}
-                              commentVotes={commentVotes}
-                              isRecsMode={true}
-                              recCategory={recCategory}
-                            />
                           </div>
                         </div>
                       </div>

@@ -477,7 +477,7 @@ export default function CommentsSection({
   const commentCount = comments?.length || 0;
 
   return (
-    <div className={`rounded-lg p-4 space-y-3 ${isRecsMode ? 'bg-purple-50/50' : 'bg-gray-50'}`}>
+    <div className={`rounded-lg p-4 space-y-3 ${isRecsMode ? 'bg-gray-50' : 'bg-gray-50'}`}>
       {/* Top-level Comment Input */}
       <form onSubmit={handleSubmit} className="flex items-center space-x-2">
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
