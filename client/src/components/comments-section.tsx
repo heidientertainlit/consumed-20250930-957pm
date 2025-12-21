@@ -150,30 +150,32 @@ function CommentItem({
           {/* Action buttons */}
           <div className="flex items-center gap-4 mt-3 pt-2 border-t border-gray-100">
             {onVoteComment && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => onVoteComment(comment.id, 'up')}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                    (comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up')
-                      ? 'bg-green-100 text-green-600' 
-                      : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600'
-                  }`}
+                  className="flex items-center gap-0.5 transition-colors"
                   data-testid={`button-upvote-comment-${comment.id}`}
                 >
-                  <ArrowBigUp size={14} fill={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'currentColor' : 'none'} />
-                  <span>{comment.upVoteCount || 0}</span>
+                  <ArrowBigUp 
+                    size={18} 
+                    className={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'text-green-500 fill-green-500' : 'text-gray-400 hover:text-green-500'}
+                  />
+                  <span className={`text-sm font-medium ${(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'text-green-500' : 'text-gray-500'}`}>
+                    +{comment.upVoteCount || 0}
+                  </span>
                 </button>
                 <button
                   onClick={() => onVoteComment(comment.id, 'down')}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                    (comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down')
-                      ? 'bg-red-100 text-red-600' 
-                      : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600'
-                  }`}
+                  className="flex items-center gap-0.5 transition-colors"
                   data-testid={`button-downvote-comment-${comment.id}`}
                 >
-                  <ArrowBigDown size={14} fill={(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'currentColor' : 'none'} />
-                  <span>{comment.downVoteCount || 0}</span>
+                  <ArrowBigDown 
+                    size={18} 
+                    className={(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'}
+                  />
+                  <span className={`text-sm font-medium ${(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'text-red-500' : 'text-gray-500'}`}>
+                    -{comment.downVoteCount || 0}
+                  </span>
                 </button>
               </div>
             )}
