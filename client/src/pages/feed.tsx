@@ -2388,25 +2388,30 @@ export default function Feed() {
                 // Check if this item is an ask_for_recs post
                 if (post.type === 'ask_for_recs') {
                   const recCategory = (post as any).recCategory;
-                  const categoryLabels: Record<string, string> = {
-                    movies: 'movie', tv: 'TV show', books: 'book', music: 'music', 
-                    podcasts: 'podcast', games: 'game', '': ''
+                  const categoryEmojis: Record<string, string> = {
+                    movies: '🎬', tv: '📺', books: '📚', music: '🎵', 
+                    podcasts: '🎙️', games: '🎮'
                   };
-                  const categoryLabel = categoryLabels[recCategory] || '';
-                  const purposeText = categoryLabel 
-                    ? `💡 Asking for ${categoryLabel} recommendations — friends, help me out 👇`
-                    : `💡 Asking for recommendations — friends, help me out 👇`;
+                  const categoryLabels: Record<string, string> = {
+                    movies: 'Movies', tv: 'TV', books: 'Books', music: 'Music', 
+                    podcasts: 'Podcasts', games: 'Games'
+                  };
                   
                   return (
                     <div key={`ask-recs-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
                         <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-                          {/* Purpose Strip - Dark purple gradient with category in text */}
-                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5">
+                          {/* Purpose Strip - Dark purple gradient */}
+                          <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 px-4 py-2.5 flex items-center justify-between">
                             <p className="text-sm text-white font-medium">
-                              {purposeText}
+                              💡 Asking for recommendations 👇
                             </p>
+                            {recCategory && categoryLabels[recCategory] && (
+                              <span className="text-xs bg-white/20 text-white px-2.5 py-1 rounded-full font-medium">
+                                {categoryEmojis[recCategory]} {categoryLabels[recCategory]}
+                              </span>
+                            )}
                           </div>
                           
                           {/* Card body */}
