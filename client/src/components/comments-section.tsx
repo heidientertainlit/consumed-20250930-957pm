@@ -202,6 +202,15 @@ function CommentItem({
                 </button>
               </div>
             )}
+            {/* Reply button */}
+            <button
+              onClick={() => setShowReplyInput(!showReplyInput)}
+              className="text-gray-300 hover:text-purple-500 transition-colors p-1"
+              data-testid={`button-reply-comment-${comment.id}`}
+              title="Reply"
+            >
+              <MessageCircle size={14} />
+            </button>
             {currentUserId === comment.user.id && onDeleteComment && (
               <button
                 onClick={() => onDeleteComment(comment.id, postId)}
@@ -214,6 +223,24 @@ function CommentItem({
             )}
           </div>
           
+          {/* Reply Input */}
+          {showReplyInput && (
+            <form onSubmit={handleSubmitReply} className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-2">
+              <MentionInput
+                placeholder="Add a comment..."
+                value={replyContent}
+                onChange={setReplyContent}
+                className="bg-gray-50 text-black placeholder:text-gray-400 text-sm"
+                disabled={isSubmitting}
+                autoFocus
+                session={session}
+                testId={`input-reply-${comment.id}`}
+              />
+              <Button type="submit" size="sm" disabled={!replyContent.trim() || isSubmitting} className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 text-xs">
+                <Send size={12} />
+              </Button>
+            </form>
+          )}
         </div>
 
         {/* Nested Replies */}
