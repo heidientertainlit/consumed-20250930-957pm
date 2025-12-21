@@ -541,6 +541,8 @@ export default function Feed() {
   const [currentVerb, setCurrentVerb] = useState("watching");
   const [passItPostId, setPassItPostId] = useState<string | null>(null); // Hot Take "Pass It" modal
   const [passItSearch, setPassItSearch] = useState(""); // Search friends for Pass It
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null); // Selected friend for Pass It
+  const [isPassingHotTake, setIsPassingHotTake] = useState(false); // Loading state for passing
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -3388,6 +3390,7 @@ export default function Feed() {
                 onClick={() => {
                   setPassItPostId(null);
                   setPassItSearch("");
+                  setSelectedFriendId(null);
                 }}
                 className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -3408,26 +3411,119 @@ export default function Feed() {
                 />
               </div>
               
-              {/* Friend List - placeholder for now */}
+              {/* Friend List */}
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                <p className="text-sm text-gray-500 text-center py-4">
-                  Your friends will appear here. Pass a Hot Take to challenge them to defend or drop it!
-                </p>
+                {friendsData.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    Add friends to pass Hot Takes! They'll get to defend or drop your take.
+                  </p>
+                ) : (
+                  friendsData
+                    .filter((friend: any) => {
+                      if (!passItSearch) return true;
+                      const searchLower = passItSearch.toLowerCase();
+                      return (
+                        friend.user_name?.toLowerCase().includes(searchLower) ||
+                        friend.display_name?.toLowerCase().includes(searchLower)
+                      );
+                    })
+                    .map((friend: any) => (
+                      <button
+                        key={friend.id}
+                        onClick={() => setSelectedFriendId(friend.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+                          selectedFriendId === friend.id
+                            ? 'bg-purple-100 border-2 border-purple-500'
+                            : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                        }`}
+                        data-testid={`button-select-friend-${friend.id}`}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold">
+                          {friend.profile_image_url ? (
+                            <img src={friend.profile_image_url} alt="" className="w-full h-full rounded-full object-cover" />
+                          ) : (
+                            <span>{friend.display_name?.[0]?.toUpperCase() || friend.user_name?.[0]?.toUpperCase() || '?'}</span>
+                          )}
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className="font-medium text-gray-900">{friend.display_name || friend.user_name}</p>
+                          {friend.user_name && friend.display_name && (
+                            <p className="text-sm text-gray-500">@{friend.user_name}</p>
+                          )}
+                        </div>
+                        {selectedFriendId === friend.id && (
+                          <Check size={20} className="text-purple-600" />
+                        )}
+                      </button>
+                    ))
+                )}
               </div>
             </div>
             <div className="p-4 border-t border-gray-200">
               <button
-                onClick={() => {
-                  toast({
-                    title: "Coming Soon!",
-                    description: "Pass It feature will be available soon.",
-                  });
-                  setPassItPostId(null);
+                onClick={async () => {
+                  if (!selectedFriendId || !passItPostId) {
+                    toast({
+                      title: "Select a Friend",
+                      description: "Please select a friend to pass this Hot Take to.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  setIsPassingHotTake(true);
+                  try {
+                    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/pass-hot-take`, {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': `Bearer ${session?.access_token}`,
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        postId: passItPostId,
+                        targetUserId: selectedFriendId
+                      }),
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Failed to pass Hot Take');
+                    }
+                    
+                    toast({
+                      title: "🔥 Hot Take Passed!",
+                      description: "Your friend will get a notification to defend or drop it.",
+                    });
+                    
+                    setPassItPostId(null);
+                    setPassItSearch("");
+                    setSelectedFriendId(null);
+                  } catch (error) {
+                    console.error('Error passing hot take:', error);
+                    toast({
+                      title: "Failed to Pass",
+                      description: "Please try again.",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setIsPassingHotTake(false);
+                  }
                 }}
-                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all"
+                disabled={!selectedFriendId || isPassingHotTake}
+                className={`w-full py-3 rounded-xl font-semibold transition-all ${
+                  selectedFriendId && !isPassingHotTake
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
                 data-testid="button-pass-it-confirm"
               >
-                Pass This Hot Take
+                {isPassingHotTake ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Passing...
+                  </span>
+                ) : (
+                  'Pass This Hot Take'
+                )}
               </button>
             </div>
           </div>
