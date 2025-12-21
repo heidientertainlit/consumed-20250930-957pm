@@ -259,8 +259,8 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
                 {game.prediction || game.question || game.description || game.title}
               </p>
 
-              {/* Poll Results */}
-              <div className="space-y-1.5">
+              {/* Poll Results - Gradient Bar Style */}
+              <div className="space-y-2">
                 {options.map((option: string, index: number) => {
                   const result = pollResults.results.find((r: any) => r.option === option);
                   const percentage = result?.percentage || 0;
@@ -269,18 +269,26 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
                   return (
                     <div
                       key={`${game.id}-result-${index}`}
-                      className={`w-full py-2 px-3 rounded-lg border-2 flex items-center justify-between ${
-                        isSelected
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 bg-white opacity-60'
-                      }`}
+                      className="relative w-full h-10 rounded-full overflow-hidden bg-gray-100"
                     >
-                      <p className={`text-sm ${isSelected ? 'font-medium text-purple-700' : 'text-gray-900'}`}>
-                        {option}
-                      </p>
-                      <span className="text-sm font-semibold text-gray-700">
-                        {percentage}%
-                      </span>
+                      {/* Gradient fill bar */}
+                      <div 
+                        className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                          isSelected 
+                            ? 'bg-gradient-to-r from-purple-500 to-purple-600' 
+                            : 'bg-gradient-to-r from-purple-300 to-purple-400'
+                        }`}
+                        style={{ width: `${Math.max(percentage, 8)}%` }}
+                      />
+                      {/* Text overlay */}
+                      <div className="absolute inset-0 flex items-center justify-between px-4">
+                        <span className={`text-sm font-medium ${percentage > 50 ? 'text-white' : 'text-gray-900'}`}>
+                          {option}
+                        </span>
+                        <span className={`text-sm font-bold ${percentage > 50 ? 'text-white' : 'text-purple-600'}`}>
+                          {percentage}%
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -378,16 +386,16 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
             {game.prediction || game.question || game.description || game.title}
           </p>
 
-          {/* Options */}
-          <div className="space-y-1.5 mb-2">
+          {/* Options - Rounded Style */}
+          <div className="space-y-2 mb-3">
             {options.map((option: string, index: number) => (
               <button
                 key={`${game.id}-option-${index}`}
                 onClick={() => setSelectedAnswer(option)}
-                className={`w-full py-2 px-3 text-left rounded-lg border text-sm text-gray-900 transition-all ${
+                className={`w-full py-2.5 px-4 text-left rounded-full text-sm transition-all ${
                   selectedAnswer === option
-                    ? 'border-purple-500 bg-purple-50 font-medium'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white font-medium shadow-md'
+                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                 }`}
                 data-testid={`play-card-option-${index}`}
               >
@@ -475,7 +483,7 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
             </h3>
           </CardHeader>
           <CardContent className="px-3 pb-3">
-            {/* Poll Results */}
+            {/* Poll Results - Gradient Bar Style */}
             <div className="space-y-2">
               {options.map((option: string, index: number) => {
                 const result = pollResults.results.find((r: any) => r.option === option);
@@ -485,18 +493,26 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
                 return (
                   <div
                     key={`${game.id}-result-${index}`}
-                    className={`w-full py-2.5 px-3 rounded-lg border-2 flex items-center justify-between ${
-                      isSelected
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 bg-white opacity-60'
-                    }`}
+                    className="relative w-full h-10 rounded-full overflow-hidden bg-gray-100"
                   >
-                    <p className={`text-sm ${isSelected ? 'font-semibold text-purple-700' : 'text-gray-900'}`}>
-                      {option}
-                    </p>
-                    <span className="text-sm font-bold text-gray-700">
-                      {percentage}%
-                    </span>
+                    {/* Gradient fill bar */}
+                    <div 
+                      className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                        isSelected 
+                          ? 'bg-gradient-to-r from-purple-500 to-purple-600' 
+                          : 'bg-gradient-to-r from-purple-300 to-purple-400'
+                      }`}
+                      style={{ width: `${Math.max(percentage, 8)}%` }}
+                    />
+                    {/* Text overlay */}
+                    <div className="absolute inset-0 flex items-center justify-between px-4">
+                      <span className={`text-sm font-medium ${percentage > 50 ? 'text-white' : 'text-gray-900'}`}>
+                        {option}
+                      </span>
+                      <span className={`text-sm font-bold ${percentage > 50 ? 'text-white' : 'text-purple-600'}`}>
+                        {percentage}%
+                      </span>
+                    </div>
                   </div>
                 );
               })}

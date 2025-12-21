@@ -871,22 +871,6 @@ export default function InlineComposer() {
                       <span>Track & Rate</span>
                     </button>
 
-                    {/* Prediction */}
-                    <button
-                      onClick={() => {
-                        setPostType("prediction");
-                      }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        postType === "prediction"
-                          ? "bg-purple-100 text-purple-700" 
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                      data-testid="button-type-prediction"
-                    >
-                      <Target className="w-3.5 h-3.5" />
-                      <span>Prediction</span>
-                    </button>
-
                     {/* Poll */}
                     <button
                       onClick={() => {
