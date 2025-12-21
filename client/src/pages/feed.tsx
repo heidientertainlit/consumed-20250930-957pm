@@ -2388,6 +2388,7 @@ export default function Feed() {
                 // Check if this item is an ask_for_recs post
                 if (post.type === 'ask_for_recs') {
                   const recCategory = (post as any).recCategory;
+                  console.log('🎯 Ask for Recs post:', post.id, 'recCategory:', recCategory);
                   const categoryEmojis: Record<string, string> = {
                     movies: '🎬', tv: '📺', books: '📚', music: '🎵', 
                     podcasts: '🎙️', games: '🎮'
@@ -2396,6 +2397,7 @@ export default function Feed() {
                     movies: 'Movies', tv: 'TV', books: 'Books', music: 'Music', 
                     podcasts: 'Podcasts', games: 'Games'
                   };
+                  const hasCategoryPill = recCategory && categoryLabels[recCategory];
                   
                   return (
                     <div key={`ask-recs-${post.id}`} id={`post-${post.id}`}>
@@ -2407,9 +2409,13 @@ export default function Feed() {
                             <p className="text-sm text-white font-medium">
                               💡 Asking for recommendations 👇
                             </p>
-                            {recCategory && categoryLabels[recCategory] && (
+                            {hasCategoryPill ? (
                               <span className="text-xs bg-white/20 text-white px-2.5 py-1 rounded-full font-medium">
                                 {categoryEmojis[recCategory]} {categoryLabels[recCategory]}
+                              </span>
+                            ) : (
+                              <span className="text-xs bg-white/20 text-white px-2.5 py-1 rounded-full font-medium">
+                                ✨ Anything
                               </span>
                             )}
                           </div>
