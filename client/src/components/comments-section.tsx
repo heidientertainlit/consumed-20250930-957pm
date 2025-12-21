@@ -215,17 +215,7 @@ function CommentItem({
             >
               <MessageCircle size={14} />
             </button>
-            {currentUserId === comment.user.id && onDeleteComment && (
-              <button
-                onClick={() => onDeleteComment(comment.id, postId)}
-                className="text-gray-300 hover:text-red-500 transition-colors p-1"
-                data-testid={`button-delete-comment-${comment.id}`}
-                title="Delete"
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-            {/* Expand replies chevron */}
+            {/* Expand replies chevron - next to comment bubble */}
             {hasReplies && (
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
@@ -235,6 +225,16 @@ function CommentItem({
               >
                 <span className="text-xs">{replyCount}</span>
                 {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+              </button>
+            )}
+            {currentUserId === comment.user.id && onDeleteComment && (
+              <button
+                onClick={() => onDeleteComment(comment.id, postId)}
+                className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                data-testid={`button-delete-comment-${comment.id}`}
+                title="Delete"
+              >
+                <Trash2 size={14} />
               </button>
             )}
           </div>
