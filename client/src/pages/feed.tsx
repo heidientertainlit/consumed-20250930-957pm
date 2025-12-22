@@ -1672,11 +1672,8 @@ export default function Feed() {
       
       return { previousVote, previousCounts };
     },
-    onSuccess: (_, { voteType }) => {
-      toast({
-        title: voteType === 'fire' ? "🔥 Fire!" : "🧊 Cold!",
-        description: "Your vote has been recorded.",
-      });
+    onSuccess: () => {
+      // No toast needed - UI already shows the vote count update
     },
     onError: (error, { postId }, context) => {
       console.error('Hot take vote error:', error);
