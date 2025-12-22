@@ -127,7 +127,6 @@ serve(async (req) => {
           contains_spoilers,
           prediction_pool_id,
           list_id,
-          rank_id,
           rec_category
         `)
         .order('created_at', { ascending: false })
