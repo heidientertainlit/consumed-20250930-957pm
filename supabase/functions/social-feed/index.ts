@@ -127,7 +127,10 @@ serve(async (req) => {
           contains_spoilers,
           prediction_pool_id,
           list_id,
-          rec_category
+          rank_id,
+          rec_category,
+          fire_votes,
+          ice_votes
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
