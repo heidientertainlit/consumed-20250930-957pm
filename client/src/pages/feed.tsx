@@ -2386,7 +2386,7 @@ export default function Feed() {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleHotTakeVote(post.id, 'fire')}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-sm font-medium transition-all ${
                                   userHotTakeVote === 'fire'
                                     ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-sm'
                                     : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
@@ -2399,7 +2399,7 @@ export default function Feed() {
                               
                               <button
                                 onClick={() => handleHotTakeVote(post.id, 'ice')}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-sm font-medium transition-all ${
                                   userHotTakeVote === 'ice'
                                     ? 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white shadow-sm'
                                     : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
