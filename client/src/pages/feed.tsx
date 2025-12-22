@@ -2270,7 +2270,11 @@ export default function Feed() {
 
                 // Check if this item is a hot_take post
                 if (post.type === 'hot_take') {
-                  const hotTakeVotes = (post as any).hotTakeVotes || { fire: 0, ice: 0 };
+                  // Use fire_votes and ice_votes from the post data
+                  const hotTakeVotes = { 
+                    fire: (post as any).fireVotes || (post as any).fire_votes || 0, 
+                    ice: (post as any).iceVotes || (post as any).ice_votes || 0 
+                  };
                   const userHotTakeVote = (post as any).userHotTakeVote; // 'fire' | 'ice' | null
                   
                   return (

@@ -819,6 +819,8 @@ serve(async (req) => {
             totalCount: listData.totalCount
           } : null,
           recCategory: post.rec_category || null,
+          fireVotes: post.fire_votes || 0,
+          iceVotes: post.ice_votes || 0,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
