@@ -2343,83 +2343,90 @@ export default function Feed() {
                     <div key={`hot-take-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
-                        <div className="rounded-2xl border border-orange-200 p-4 shadow-sm bg-gradient-to-br from-orange-50 via-red-50 to-orange-100">
-                          {/* Hot Take Header */}
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold">
-                              <span>🔥</span>
-                              <span>HOT TAKE</span>
-                            </div>
+                        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+                          {/* Hot Take Header Strip */}
+                          <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-700 px-3 py-2 flex items-center gap-2">
+                            <span className="text-sm">🔥</span>
+                            <span className="text-xs font-bold text-white tracking-wide">HOT TAKE</span>
                             {post.user && (
-                              <Link href={`/user/${post.user.id}`}>
-                                <span className="text-sm font-semibold text-gray-800 hover:text-purple-600 cursor-pointer">
-                                  {post.user.displayName || post.user.username}
-                                </span>
-                              </Link>
+                              <>
+                                <span className="text-white/50">•</span>
+                                <Link href={`/user/${post.user.id}`}>
+                                  <span className="text-xs font-medium text-white/90 hover:text-white cursor-pointer">
+                                    {post.user.displayName || post.user.username}
+                                  </span>
+                                </Link>
+                              </>
                             )}
                           </div>
                           
-                          {/* Hot Take Content */}
-                          <p className="text-lg font-medium text-gray-900 mb-4">{post.content}</p>
-                          
-                          {/* Media if attached */}
-                          {post.mediaItems && post.mediaItems.length > 0 && (
-                            <div className="flex items-center gap-3 p-3 bg-white/60 rounded-xl mb-4">
-                              {post.mediaItems[0].imageUrl && (
-                                <img 
-                                  src={post.mediaItems[0].imageUrl} 
-                                  alt={post.mediaItems[0].title}
-                                  className="w-12 h-16 object-cover rounded-lg"
-                                />
-                              )}
-                              <div>
-                                <p className="font-medium text-gray-900">{post.mediaItems[0].title}</p>
-                                <p className="text-sm text-gray-500 capitalize">{post.mediaItems[0].mediaType}</p>
+                          {/* Card Body */}
+                          <div className="p-3">
+                            {/* Hot Take Content */}
+                            <p className="text-base font-medium text-gray-900 mb-3">{post.content}</p>
+                            
+                            {/* Media if attached */}
+                            {post.mediaItems && post.mediaItems.length > 0 && (
+                              <div className="flex items-center gap-2.5 p-2.5 bg-gray-50 rounded-lg mb-3">
+                                {post.mediaItems[0].imageUrl && (
+                                  <img 
+                                    src={post.mediaItems[0].imageUrl} 
+                                    alt={post.mediaItems[0].title}
+                                    className="w-10 h-14 object-cover rounded-md"
+                                  />
+                                )}
+                                <div>
+                                  <p className="font-medium text-gray-900 text-sm">{post.mediaItems[0].title}</p>
+                                  <p className="text-xs text-gray-500 capitalize">{post.mediaItems[0].mediaType}</p>
+                                </div>
                               </div>
-                            </div>
-                          )}
-                          
-                          {/* Hot Take Voting Buttons */}
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => handleHotTakeVote(post.id, 'fire')}
-                              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-                                userHotTakeVote === 'fire'
-                                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg scale-105'
-                                  : 'bg-white border-2 border-orange-200 text-orange-600 hover:bg-orange-50'
-                              }`}
-                              data-testid={`button-hot-take-fire-${post.id}`}
-                            >
-                              <span className="text-xl">🔥</span>
-                              <span>Fire</span>
-                              <span className="text-sm opacity-80">({displayCounts.fire})</span>
-                            </button>
-                            <button
-                              onClick={() => handleHotTakeVote(post.id, 'ice')}
-                              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${
-                                userHotTakeVote === 'ice'
-                                  ? 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white shadow-lg scale-105'
-                                  : 'bg-white border-2 border-blue-200 text-blue-600 hover:bg-blue-50'
-                              }`}
-                              data-testid={`button-hot-take-ice-${post.id}`}
-                            >
-                              <span className="text-xl">🧊</span>
-                              <span>Cold</span>
-                              <span className="text-sm opacity-80">({displayCounts.ice})</span>
-                            </button>
+                            )}
                           </div>
                           
-                          {/* Standard post actions */}
-                          <div className="flex items-center justify-between mt-4 pt-3 border-t border-orange-200">
-                            <div className="flex items-center gap-4">
+                          {/* Compact Bottom Bar with Fire/Ice + Likes/Comments */}
+                          <div className="flex items-center justify-between px-3 py-2.5 border-t border-gray-100 bg-gray-50/50">
+                            <div className="flex items-center gap-3">
+                              {/* Fire Vote */}
+                              <button
+                                onClick={() => handleHotTakeVote(post.id, 'fire')}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium transition-all ${
+                                  userHotTakeVote === 'fire'
+                                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                                    : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+                                }`}
+                                data-testid={`button-hot-take-fire-${post.id}`}
+                              >
+                                <span>🔥</span>
+                                <span>{displayCounts.fire}</span>
+                              </button>
+                              
+                              {/* Ice Vote */}
+                              <button
+                                onClick={() => handleHotTakeVote(post.id, 'ice')}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium transition-all ${
+                                  userHotTakeVote === 'ice'
+                                    ? 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white'
+                                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                                }`}
+                                data-testid={`button-hot-take-ice-${post.id}`}
+                              >
+                                <span>🧊</span>
+                                <span>{displayCounts.ice}</span>
+                              </button>
+                              
+                              <span className="text-gray-300">|</span>
+                              
+                              {/* Like */}
                               <button
                                 onClick={() => handleLike(post.id)}
-                                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                                className={`flex items-center gap-1 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
                                 data-testid={`button-like-${post.id}`}
                               >
-                                <Heart size={18} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
+                                <Heart size={16} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
                                 <span>{post.likes || 0}</span>
                               </button>
+                              
+                              {/* Comments */}
                               <button
                                 onClick={() => setExpandedComments(prev => {
                                   const newSet = new Set(prev);
@@ -2427,10 +2434,10 @@ export default function Feed() {
                                   else newSet.add(post.id);
                                   return newSet;
                                 })}
-                                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600"
+                                className="flex items-center gap-1 text-sm text-gray-500 hover:text-purple-600"
                                 data-testid={`button-comments-${post.id}`}
                               >
-                                <MessageCircle size={18} />
+                                <MessageCircle size={16} />
                                 <span>{post.comments || 0}</span>
                               </button>
                             </div>
