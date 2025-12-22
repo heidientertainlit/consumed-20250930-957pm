@@ -128,9 +128,7 @@ serve(async (req) => {
           prediction_pool_id,
           list_id,
           rank_id,
-          rec_category,
-          fire_votes,
-          ice_votes
+          rec_category
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -292,18 +290,6 @@ serve(async (req) => {
 
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
-
-      // Get user's hot take votes
-      const { data: userHotTakeVotes } = await supabaseAdmin
-        .from('hot_take_votes')
-        .select('post_id, vote_type')
-        .eq('user_id', appUser.id)
-        .in('post_id', postIds);
-      
-      const userHotTakeVoteMap = new Map(
-        (userHotTakeVotes || []).map(v => [v.post_id, v.vote_type])
-      );
-      console.log('User hot take votes:', userHotTakeVotes?.length || 0);
 
       // Fetch list data for posts with list_id (added_to_list OR rate-review posts with list)
       const listIds = posts?.filter(p => p.list_id).map(p => p.list_id) || [];
@@ -831,11 +817,6 @@ serve(async (req) => {
             totalCount: listData.totalCount
           } : null,
           recCategory: post.rec_category || null,
-          hotTakeVotes: {
-            fire: post.fire_votes || 0,
-            ice: post.ice_votes || 0
-          },
-          userHotTakeVote: userHotTakeVoteMap.get(post.id) || null,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
