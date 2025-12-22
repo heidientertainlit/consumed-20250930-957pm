@@ -2441,12 +2441,7 @@ export default function Feed() {
                               </button>
                             </div>
                             <span className="text-xs text-gray-400">
-                              {post.timestamp ? (() => {
-                                const postDate = new Date(post.timestamp);
-                                const today = new Date();
-                                const isToday = postDate.toDateString() === today.toDateString();
-                                return isToday ? 'Today' : postDate.toLocaleDateString();
-                              })() : 'Today'}
+                              {post.timestamp ? formatDate(post.timestamp) : 'Today'}
                             </span>
                           </div>
                           
