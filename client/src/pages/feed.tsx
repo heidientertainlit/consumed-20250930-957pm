@@ -1639,7 +1639,7 @@ export default function Feed() {
       }
       
       // Invalidate feed to refresh vote counts
-      queryClient.invalidateQueries({ queryKey: ['/api/social-feed'] });
+      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
       
       toast({
         title: voteType === 'fire' ? "🔥 Fire!" : "🧊 Cold!",
