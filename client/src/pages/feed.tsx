@@ -2409,16 +2409,6 @@ export default function Feed() {
                             </button>
                           </div>
                           
-                          {/* Pass It Button */}
-                          <button
-                            onClick={() => setPassItPostId(post.id)}
-                            className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-purple-200 text-purple-600 rounded-xl font-medium hover:bg-purple-50 transition-all"
-                            data-testid={`button-pass-it-${post.id}`}
-                          >
-                            <Forward size={18} />
-                            <span>Pass It to a Friend</span>
-                          </button>
-                          
                           {/* Standard post actions */}
                           <div className="flex items-center justify-between mt-4 pt-3 border-t border-orange-200">
                             <div className="flex items-center gap-4">
