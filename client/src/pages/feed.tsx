@@ -2381,18 +2381,15 @@ export default function Feed() {
                                 </div>
                               </div>
                             )}
-                          </div>
-                          
-                          {/* Compact Bottom Bar with Fire/Ice + Likes/Comments */}
-                          <div className="flex items-center justify-between px-3 py-2.5 border-t border-gray-100 bg-gray-50/50">
-                            <div className="flex items-center gap-3">
-                              {/* Fire Vote */}
+                            
+                            {/* Fire/Ice Voting Pills */}
+                            <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleHotTakeVote(post.id, 'fire')}
-                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium transition-all ${
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                                   userHotTakeVote === 'fire'
-                                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                                    : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+                                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
                                 }`}
                                 data-testid={`button-hot-take-fire-${post.id}`}
                               >
@@ -2400,26 +2397,28 @@ export default function Feed() {
                                 <span>{displayCounts.fire}</span>
                               </button>
                               
-                              {/* Ice Vote */}
                               <button
                                 onClick={() => handleHotTakeVote(post.id, 'ice')}
-                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium transition-all ${
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                                   userHotTakeVote === 'ice'
-                                    ? 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white'
-                                    : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                                    ? 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
                                 }`}
                                 data-testid={`button-hot-take-ice-${post.id}`}
                               >
                                 <span>🧊</span>
                                 <span>{displayCounts.ice}</span>
                               </button>
-                              
-                              <span className="text-gray-300">|</span>
-                              
+                            </div>
+                          </div>
+                          
+                          {/* Bottom Bar with Likes/Comments */}
+                          <div className="flex items-center justify-between px-3 py-2.5 border-t border-gray-100 bg-gray-50/50">
+                            <div className="flex items-center gap-4">
                               {/* Like */}
                               <button
                                 onClick={() => handleLike(post.id)}
-                                className={`flex items-center gap-1 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
                                 data-testid={`button-like-${post.id}`}
                               >
                                 <Heart size={16} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
@@ -2434,7 +2433,7 @@ export default function Feed() {
                                   else newSet.add(post.id);
                                   return newSet;
                                 })}
-                                className="flex items-center gap-1 text-sm text-gray-500 hover:text-purple-600"
+                                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600"
                                 data-testid={`button-comments-${post.id}`}
                               >
                                 <MessageCircle size={16} />
@@ -2443,6 +2442,31 @@ export default function Feed() {
                             </div>
                             <span className="text-xs text-gray-400">{post.timestamp ? new Date(post.timestamp).toLocaleDateString() : 'Today'}</span>
                           </div>
+                          
+                          {/* Comments Section */}
+                          {expandedComments.has(post.id) && (
+                            <div className="px-3 pb-3 border-t border-gray-100">
+                              <CommentsSection
+                                postId={post.id}
+                                isExpanded={true}
+                                isLiked={likedPosts.has(post.id)}
+                                onLike={handleLike}
+                                expandedComments={true}
+                                onToggleComments={() => {}}
+                                fetchComments={fetchComments}
+                                commentInput={commentInputs[post.id] || ''}
+                                onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                                isSubmitting={commentMutation.isPending}
+                                currentUserId={user?.id}
+                                onDeleteComment={handleDeleteComment}
+                                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                                onVoteComment={handleVoteComment}
+                                likedComments={likedComments}
+                                commentVotes={commentVotes}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
