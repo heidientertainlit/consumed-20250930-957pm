@@ -2440,7 +2440,14 @@ export default function Feed() {
                                 <span>{post.comments || 0}</span>
                               </button>
                             </div>
-                            <span className="text-xs text-gray-400">{post.timestamp ? new Date(post.timestamp).toLocaleDateString() : 'Today'}</span>
+                            <span className="text-xs text-gray-400">
+                              {post.timestamp ? (() => {
+                                const postDate = new Date(post.timestamp);
+                                const today = new Date();
+                                const isToday = postDate.toDateString() === today.toDateString();
+                                return isToday ? 'Today' : postDate.toLocaleDateString();
+                              })() : 'Today'}
+                            </span>
                           </div>
                           
                           {/* Comments Section */}
