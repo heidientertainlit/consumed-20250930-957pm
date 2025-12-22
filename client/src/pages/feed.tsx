@@ -533,6 +533,8 @@ export default function Feed() {
   const likedPostsInitialized = useRef(false); // Track if we've done initial sync
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [commentVotes, setCommentVotes] = useState<Map<string, 'up' | 'down'>>(new Map()); // Track user's comment votes
+  const [hotTakeVotes, setHotTakeVotes] = useState<Map<string, 'fire' | 'ice'>>(new Map()); // Track user's hot take votes
+  const [hotTakeVoteCounts, setHotTakeVoteCounts] = useState<Map<string, { fire: number; ice: number }>>(new Map()); // Track vote counts
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
@@ -1613,18 +1615,11 @@ export default function Feed() {
     commentVoteMutation.mutate({ commentId, direction });
   };
 
-  // Handle Hot Take voting (fire/ice)
-  const handleHotTakeVote = async (postId: string, voteType: 'fire' | 'ice') => {
-    if (!session?.access_token) {
-      toast({
-        title: "Not Authenticated",
-        description: "Please log in to vote.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
+  // Hot Take vote mutation with optimistic updates (same pattern as comment votes)
+  const hotTakeVoteMutation = useMutation({
+    mutationFn: async ({ postId, voteType }: { postId: string; voteType: 'fire' | 'ice' }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/hot-take-vote`, {
         method: 'POST',
         headers: {
@@ -1637,22 +1632,90 @@ export default function Feed() {
       if (!response.ok) {
         throw new Error('Failed to vote');
       }
+      return await response.json();
+    },
+    onMutate: async ({ postId, voteType }) => {
+      const previousVote = hotTakeVotes.get(postId);
+      const previousCounts = hotTakeVoteCounts.get(postId) || { fire: 0, ice: 0 };
       
-      // Invalidate feed to refresh vote counts
-      queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+      // Calculate new counts optimistically
+      let newCounts = { ...previousCounts };
+      if (previousVote === voteType) {
+        // Clicking same vote type removes vote
+        newCounts[voteType] = Math.max(0, newCounts[voteType] - 1);
+      } else {
+        // Add vote to new type
+        newCounts[voteType] = newCounts[voteType] + 1;
+        // If switching votes, remove from previous type
+        if (previousVote) {
+          newCounts[previousVote] = Math.max(0, newCounts[previousVote] - 1);
+        }
+      }
       
+      // Optimistically update vote state
+      setHotTakeVotes(prev => {
+        const newMap = new Map(prev);
+        if (previousVote === voteType) {
+          newMap.delete(postId);
+        } else {
+          newMap.set(postId, voteType);
+        }
+        return newMap;
+      });
+      
+      // Optimistically update counts
+      setHotTakeVoteCounts(prev => {
+        const newMap = new Map(prev);
+        newMap.set(postId, newCounts);
+        return newMap;
+      });
+      
+      return { previousVote, previousCounts };
+    },
+    onSuccess: (_, { voteType }) => {
       toast({
         title: voteType === 'fire' ? "🔥 Fire!" : "🧊 Cold!",
         description: "Your vote has been recorded.",
       });
-    } catch (error) {
-      console.error('Error voting on hot take:', error);
+    },
+    onError: (error, { postId }, context) => {
+      console.error('Hot take vote error:', error);
+      // Revert optimistic updates
+      setHotTakeVotes(prev => {
+        const newMap = new Map(prev);
+        if (context?.previousVote) {
+          newMap.set(postId, context.previousVote);
+        } else {
+          newMap.delete(postId);
+        }
+        return newMap;
+      });
+      setHotTakeVoteCounts(prev => {
+        const newMap = new Map(prev);
+        if (context?.previousCounts) {
+          newMap.set(postId, context.previousCounts);
+        }
+        return newMap;
+      });
       toast({
         title: "Vote Failed",
         description: "Please try again.",
         variant: "destructive",
       });
+    },
+  });
+
+  // Handle Hot Take voting (fire/ice)
+  const handleHotTakeVote = (postId: string, voteType: 'fire' | 'ice') => {
+    if (!session?.access_token) {
+      toast({
+        title: "Not Authenticated",
+        description: "Please log in to vote.",
+        variant: "destructive",
+      });
+      return;
     }
+    hotTakeVoteMutation.mutate({ postId, voteType });
   };
 
   const hasRating = (content: string): boolean => {
@@ -2270,12 +2333,14 @@ export default function Feed() {
 
                 // Check if this item is a hot_take post
                 if (post.type === 'hot_take') {
-                  // Use fire_votes and ice_votes from the post data
-                  const hotTakeVotes = { 
+                  // Use local state for optimistic updates, fallback to post data
+                  const localCounts = hotTakeVoteCounts.get(post.id);
+                  const serverCounts = { 
                     fire: (post as any).fireVotes || (post as any).fire_votes || 0, 
                     ice: (post as any).iceVotes || (post as any).ice_votes || 0 
                   };
-                  const userHotTakeVote = (post as any).userHotTakeVote; // 'fire' | 'ice' | null
+                  const displayCounts = localCounts || serverCounts;
+                  const userHotTakeVote = hotTakeVotes.get(post.id) || (post as any).userHotTakeVote; // 'fire' | 'ice' | null
                   
                   return (
                     <div key={`hot-take-${post.id}`} id={`post-${post.id}`}>
@@ -2330,7 +2395,7 @@ export default function Feed() {
                             >
                               <span className="text-xl">🔥</span>
                               <span>Fire</span>
-                              <span className="text-sm opacity-80">({hotTakeVotes.fire})</span>
+                              <span className="text-sm opacity-80">({displayCounts.fire})</span>
                             </button>
                             <button
                               onClick={() => handleHotTakeVote(post.id, 'ice')}
@@ -2343,7 +2408,7 @@ export default function Feed() {
                             >
                               <span className="text-xl">🧊</span>
                               <span>Cold</span>
-                              <span className="text-sm opacity-80">({hotTakeVotes.ice})</span>
+                              <span className="text-sm opacity-80">({displayCounts.ice})</span>
                             </button>
                           </div>
                           
