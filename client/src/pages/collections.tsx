@@ -37,7 +37,8 @@ import {
   Calendar,
   HelpCircle,
   X,
-  Share2
+  Share2,
+  Check
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -133,7 +134,7 @@ export default function CollectionsPage() {
     gcTime: 10 * 60 * 1000,
   });
 
-  // Full items query - only loads when History tab is active (lazy load)
+  // Full items query - always loaded for carousel and history
   const { data: listsData, isLoading: isLoadingLists } = useQuery({
     queryKey: ['user-lists', user?.id],
     queryFn: async () => {
@@ -154,9 +155,9 @@ export default function CollectionsPage() {
       }
       return { lists: [] };
     },
-    enabled: !!session?.access_token && !!user?.id && activeTab === 'history',
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    enabled: !!session?.access_token && !!user?.id,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   // Fetch user ranks with caching
@@ -184,6 +185,12 @@ export default function CollectionsPage() {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
+
+  // Extract Currently list items from the shared lists query
+  const currentlyConsumingItems = useMemo(() => {
+    const currentlyList = listsData?.lists?.find((list: any) => list.title === 'Currently');
+    return currentlyList?.items || [];
+  }, [listsData]);
 
   // Use metadata for Lists tab (fast), full data for History tab
   const userListsMetadata = listsMetadata?.lists || [];
@@ -258,6 +265,80 @@ export default function CollectionsPage() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to create rank", variant: "destructive" });
+    },
+  });
+
+  // Update progress mutation for Currently Consuming items
+  const updateProgressMutation = useMutation({
+    mutationFn: async ({ itemId, progress, total, mode }: { itemId: string; progress: number; total?: number; mode: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            progress,
+            total,
+            progress_mode: mode,
+          }),
+        }
+      );
+      
+      if (!response.ok) throw new Error('Failed to update progress');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Progress updated!" });
+      queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update progress", variant: "destructive" });
+    },
+  });
+
+  // Move item to different list mutation
+  const moveToListMutation = useMutation({
+    mutationFn: async ({ itemId, targetList }: { itemId: string; targetList: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/move-item-to-list',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            target_list: targetList,
+          }),
+        }
+      );
+      
+      if (!response.ok) throw new Error('Failed to move item');
+      return response.json();
+    },
+    onSuccess: (_, { targetList }) => {
+      const listNames: Record<string, string> = {
+        'finished': 'Finished',
+        'dnf': 'Did Not Finish',
+        'favorites': 'Favorites',
+        'queue': 'Want To'
+      };
+      toast({ title: `Moved to ${listNames[targetList] || targetList}` });
+      queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to move item", variant: "destructive" });
     },
   });
 
@@ -448,6 +529,72 @@ export default function CollectionsPage() {
           </h1>
           <p className="text-base text-gray-600">Your lists, ranks, and media history</p>
         </div>
+
+        {/* Currently Consuming Section */}
+        {currentlyConsumingItems.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Currently Consuming
+              </h2>
+              <Link href="/list/currently">
+                <span className="text-sm text-purple-600 font-medium flex items-center gap-1 cursor-pointer hover:text-purple-700">
+                  {currentlyConsumingItems.length > 10 ? `${currentlyConsumingItems.length} items • ` : ''}See All <ChevronRight size={16} />
+                </span>
+              </Link>
+            </div>
+            
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="flex gap-3" style={{ width: 'max-content' }}>
+                {currentlyConsumingItems.slice(0, 10).map((item: any) => (
+                  <CurrentlyConsumingCard 
+                    key={item.id} 
+                    item={item}
+                    onUpdateProgress={(progress, total, mode) => {
+                      updateProgressMutation.mutate({
+                        itemId: item.id,
+                        progress,
+                        total,
+                        mode
+                      });
+                    }}
+                    onMarkFinished={() => {
+                      moveToListMutation.mutate({
+                        itemId: item.id,
+                        targetList: 'finished'
+                      });
+                    }}
+                    isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Empty state for Currently Consuming */}
+        {!isLoadingLists && currentlyConsumingItems.length === 0 && (
+          <div className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-4 border border-purple-100">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Play className="text-purple-600" size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900">Nothing in progress</h3>
+                <p className="text-sm text-gray-600">Add media to your "Currently" list to track your progress</p>
+              </div>
+              <Button 
+                size="sm" 
+                className="bg-purple-600 hover:bg-purple-700"
+                onClick={() => setIsQuickAddOpen(true)}
+                data-testid="button-add-currently"
+              >
+                <Plus size={16} className="mr-1" />
+                Add
+              </Button>
+            </div>
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
           <TabsList className="w-full mb-3 bg-white border border-gray-200 p-1 h-auto">
@@ -1037,6 +1184,136 @@ export default function CollectionsPage() {
       />
 
       <FeedbackFooter />
+    </div>
+  );
+}
+
+// Currently Consuming Card Component
+interface CurrentlyConsumingCardProps {
+  item: any;
+  onUpdateProgress: (progress: number, total: number | undefined, mode: string) => void;
+  onMarkFinished: () => void;
+  isUpdating: boolean;
+}
+
+function CurrentlyConsumingCard({ item, onUpdateProgress, onMarkFinished, isUpdating }: CurrentlyConsumingCardProps) {
+  const [, setLocation] = useLocation();
+  const [localProgress, setLocalProgress] = useState(item.progress || 0);
+  const [localTotal, setLocalTotal] = useState(item.progress_total || 100);
+  
+  const mediaType = item.media_type || 'movie';
+  const isBook = mediaType === 'book';
+  const isTv = mediaType === 'tv' || mediaType === 'series';
+  const progressMode = item.progress_mode || (isBook ? 'page' : isTv ? 'episode' : 'percent');
+  
+  const getProgressDisplay = () => {
+    if (progressMode === 'percent') {
+      return `${localProgress}%`;
+    } else if (progressMode === 'page') {
+      return localTotal > 0 ? `p${localProgress}/${localTotal}` : `p${localProgress}`;
+    } else if (progressMode === 'episode') {
+      return isTv && localTotal > 0 ? `S${localTotal}E${localProgress}` : `E${localProgress}`;
+    }
+    return `${localProgress}%`;
+  };
+
+  const getProgressPercent = () => {
+    if (progressMode === 'percent') {
+      return localProgress;
+    } else if (localTotal > 0) {
+      return Math.min(Math.round((localProgress / localTotal) * 100), 100);
+    }
+    return 0;
+  };
+
+  const getMediaIcon = () => {
+    switch (mediaType) {
+      case 'movie': return <Film size={12} className="text-purple-400" />;
+      case 'tv': return <Tv size={12} className="text-pink-400" />;
+      case 'book': return <BookOpen size={12} className="text-cyan-400" />;
+      case 'music': return <Music size={12} className="text-green-400" />;
+      case 'podcast': return <Headphones size={12} className="text-blue-400" />;
+      case 'game': return <Gamepad2 size={12} className="text-orange-400" />;
+      default: return <Play size={12} className="text-gray-400" />;
+    }
+  };
+
+  const handleIncrement = () => {
+    let newProgress = localProgress;
+    if (progressMode === 'percent') {
+      newProgress = Math.min(localProgress + 10, 100);
+    } else {
+      newProgress = localProgress + 1;
+    }
+    setLocalProgress(newProgress);
+    onUpdateProgress(newProgress, progressMode !== 'percent' ? localTotal : undefined, progressMode);
+  };
+
+  return (
+    <div 
+      className="w-40 bg-gradient-to-br from-gray-900 via-purple-900/30 to-gray-900 rounded-xl overflow-hidden border border-gray-800/50 flex-shrink-0"
+      data-testid={`currently-card-${item.id}`}
+    >
+      {/* Image Section */}
+      <div 
+        className="relative h-24 cursor-pointer"
+        onClick={() => setLocation(`/media/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
+      >
+        {item.image_url ? (
+          <img 
+            src={item.image_url} 
+            alt={item.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex items-center justify-center">
+            {getMediaIcon()}
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+        
+        {/* Progress bar overlay */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-800">
+          <div 
+            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all"
+            style={{ width: `${getProgressPercent()}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="p-2">
+        <div className="flex items-center gap-1 mb-1">
+          {getMediaIcon()}
+          <span className="text-[10px] text-gray-400 uppercase">{mediaType}</span>
+        </div>
+        <h4 className="text-xs font-medium text-white truncate mb-1">{item.title}</h4>
+        <p className="text-[10px] text-purple-400 font-medium mb-2">{getProgressDisplay()}</p>
+        
+        {/* Action buttons */}
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleIncrement}
+            disabled={isUpdating}
+            className="flex-1 h-7 text-[10px] bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded"
+            data-testid={`button-increment-${item.id}`}
+          >
+            +{progressMode === 'percent' ? '10%' : '1'}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onMarkFinished}
+            disabled={isUpdating}
+            className="h-7 w-7 bg-green-600/20 hover:bg-green-600/40 text-green-300 rounded p-0"
+            data-testid={`button-finish-${item.id}`}
+          >
+            <Check size={12} />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
