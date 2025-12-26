@@ -14,6 +14,12 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { 
   List, 
@@ -38,7 +44,8 @@ import {
   HelpCircle,
   X,
   Share2,
-  Check
+  Check,
+  MoreHorizontal
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -270,7 +277,7 @@ export default function CollectionsPage() {
 
   // Update progress mutation for Currently Consuming items
   const updateProgressMutation = useMutation({
-    mutationFn: async ({ itemId, progress, total, mode }: { itemId: string; progress: number; total?: number; mode: string }) => {
+    mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const response = await fetch(
@@ -291,10 +298,10 @@ export default function CollectionsPage() {
       );
       
       if (!response.ok) throw new Error('Failed to update progress');
-      return response.json();
+      return { ...await response.json(), progressDisplay };
     },
-    onSuccess: () => {
-      toast({ title: "Progress updated!" });
+    onSuccess: (data) => {
+      toast({ title: `Progress updated to ${data.progressDisplay}` });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
     },
@@ -305,7 +312,7 @@ export default function CollectionsPage() {
 
   // Move item to different list mutation
   const moveToListMutation = useMutation({
-    mutationFn: async ({ itemId, targetList }: { itemId: string; targetList: string }) => {
+    mutationFn: async ({ itemId, targetList, listName }: { itemId: string; targetList: string; listName: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const response = await fetch(
@@ -324,16 +331,10 @@ export default function CollectionsPage() {
       );
       
       if (!response.ok) throw new Error('Failed to move item');
-      return response.json();
+      return { ...await response.json(), listName };
     },
-    onSuccess: (_, { targetList }) => {
-      const listNames: Record<string, string> = {
-        'finished': 'Finished',
-        'dnf': 'Did Not Finish',
-        'favorites': 'Favorites',
-        'queue': 'Want To'
-      };
-      toast({ title: `Moved to ${listNames[targetList] || targetList}` });
+    onSuccess: (data) => {
+      toast({ title: `Moved to ${data.listName}` });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
     },
@@ -550,18 +551,20 @@ export default function CollectionsPage() {
                   <CurrentlyConsumingCard 
                     key={item.id} 
                     item={item}
-                    onUpdateProgress={(progress, total, mode) => {
+                    onUpdateProgress={(progress, total, mode, progressDisplay) => {
                       updateProgressMutation.mutate({
                         itemId: item.id,
                         progress,
                         total,
-                        mode
+                        mode,
+                        progressDisplay
                       });
                     }}
-                    onMarkFinished={() => {
+                    onMoveToList={(targetList, listName) => {
                       moveToListMutation.mutate({
                         itemId: item.id,
-                        targetList: 'finished'
+                        targetList,
+                        listName
                       });
                     }}
                     isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
@@ -1191,20 +1194,33 @@ export default function CollectionsPage() {
 // Currently Consuming Card Component
 interface CurrentlyConsumingCardProps {
   item: any;
-  onUpdateProgress: (progress: number, total: number | undefined, mode: string) => void;
-  onMarkFinished: () => void;
+  onUpdateProgress: (progress: number, total: number | undefined, mode: string, progressDisplay: string) => void;
+  onMoveToList: (targetList: string, listName: string) => void;
   isUpdating: boolean;
 }
 
-function CurrentlyConsumingCard({ item, onUpdateProgress, onMarkFinished, isUpdating }: CurrentlyConsumingCardProps) {
+function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdating }: CurrentlyConsumingCardProps) {
   const [, setLocation] = useLocation();
+  const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
+  const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
+  
+  // Local state for progress editing
   const [localProgress, setLocalProgress] = useState(item.progress || 0);
   const [localTotal, setLocalTotal] = useState(item.progress_total || 100);
+  const [editProgress, setEditProgress] = useState(item.progress || 0);
+  const [editTotal, setEditTotal] = useState(item.progress_total || 100);
+  const [editSeason, setEditSeason] = useState(item.progress_total || 1);
+  const [editEpisode, setEditEpisode] = useState(item.progress || 1);
   
   const mediaType = item.media_type || 'movie';
   const isBook = mediaType === 'book';
   const isTv = mediaType === 'tv' || mediaType === 'series';
+  const isPodcast = mediaType === 'podcast';
+  const isMusic = mediaType === 'music';
   const progressMode = item.progress_mode || (isBook ? 'page' : isTv ? 'episode' : 'percent');
+  const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>(
+    progressMode === 'episode' ? 'episode' : progressMode === 'page' ? 'page' : 'percent'
+  );
   
   const getProgressDisplay = () => {
     if (progressMode === 'percent') {
@@ -1240,80 +1256,338 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMarkFinished, isUpda
 
   const handleIncrement = () => {
     let newProgress = localProgress;
+    let displayText = '';
     if (progressMode === 'percent') {
       newProgress = Math.min(localProgress + 10, 100);
+      displayText = `${newProgress}% (+10%)`;
+    } else if (progressMode === 'episode') {
+      newProgress = localProgress + 1;
+      displayText = isTv ? `S${localTotal}E${newProgress} (+1 episode)` : `E${newProgress} (+1 episode)`;
+    } else if (progressMode === 'page') {
+      newProgress = localProgress + 1;
+      displayText = localTotal > 0 ? `page ${newProgress}/${localTotal} (+1 page)` : `page ${newProgress} (+1 page)`;
     } else {
       newProgress = localProgress + 1;
+      displayText = `${newProgress} (+1)`;
     }
     setLocalProgress(newProgress);
-    onUpdateProgress(newProgress, progressMode !== 'percent' ? localTotal : undefined, progressMode);
+    onUpdateProgress(newProgress, progressMode !== 'percent' ? localTotal : undefined, progressMode, displayText);
+  };
+
+  const handleSaveProgress = () => {
+    let newProgress = editProgress;
+    let newTotal = editTotal;
+    let mode = editMode;
+    let displayText = '';
+    
+    if (editMode === 'episode') {
+      newProgress = editEpisode;
+      newTotal = editSeason;
+      mode = 'episode';
+      displayText = `S${newTotal}E${newProgress}`;
+    } else if (editMode === 'page') {
+      displayText = newTotal > 0 ? `page ${newProgress}/${newTotal}` : `page ${newProgress}`;
+    } else if (editMode === 'minutes') {
+      displayText = newTotal > 0 ? `${newProgress}/${newTotal} min` : `${newProgress} min`;
+      mode = 'percent'; // Store as percent for now
+    } else {
+      displayText = `${newProgress}%`;
+    }
+    
+    setLocalProgress(newProgress);
+    setLocalTotal(newTotal);
+    onUpdateProgress(newProgress, mode !== 'percent' ? newTotal : undefined, mode, displayText);
+    setIsProgressSheetOpen(false);
+  };
+
+  const getModeOptions = () => {
+    if (isTv) return [{ value: 'episode', label: 'Episode' }, { value: 'percent', label: 'Percent' }];
+    if (isBook) return [{ value: 'page', label: 'Page' }, { value: 'percent', label: 'Percent' }];
+    if (isPodcast) return [{ value: 'minutes', label: 'Minutes' }, { value: 'percent', label: 'Percent' }];
+    return [{ value: 'percent', label: 'Percent' }];
   };
 
   return (
-    <div 
-      className="w-40 bg-gradient-to-br from-gray-900 via-purple-900/30 to-gray-900 rounded-xl overflow-hidden border border-gray-800/50 flex-shrink-0"
-      data-testid={`currently-card-${item.id}`}
-    >
-      {/* Image Section */}
+    <>
       <div 
-        className="relative h-24 cursor-pointer"
-        onClick={() => setLocation(`/media/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
+        className="w-40 bg-gradient-to-br from-gray-900 via-purple-900/30 to-gray-900 rounded-xl overflow-hidden border border-gray-800/50 flex-shrink-0"
+        data-testid={`currently-card-${item.id}`}
       >
-        {item.image_url ? (
-          <img 
-            src={item.image_url} 
-            alt={item.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex items-center justify-center">
-            {getMediaIcon()}
+        {/* Image Section */}
+        <div 
+          className="relative h-24 cursor-pointer"
+          onClick={() => setLocation(`/media/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
+        >
+          {item.image_url ? (
+            <img 
+              src={item.image_url} 
+              alt={item.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex items-center justify-center">
+              {getMediaIcon()}
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+          
+          {/* Progress bar overlay */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-800">
+            <div 
+              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all"
+              style={{ width: `${getProgressPercent()}%` }}
+            />
           </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-        
-        {/* Progress bar overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-800">
-          <div 
-            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all"
-            style={{ width: `${getProgressPercent()}%` }}
-          />
+        </div>
+
+        {/* Content Section */}
+        <div className="p-2">
+          <div className="flex items-center gap-1 mb-1">
+            {getMediaIcon()}
+            <span className="text-[10px] text-gray-400 uppercase">{mediaType}</span>
+          </div>
+          <h4 className="text-xs font-medium text-white truncate mb-1">{item.title}</h4>
+          
+          {/* Tappable progress text */}
+          <button 
+            onClick={() => setIsProgressSheetOpen(true)}
+            className="text-[10px] text-purple-400 font-medium mb-2 hover:text-purple-300 underline decoration-dotted cursor-pointer block"
+            data-testid={`button-edit-progress-${item.id}`}
+          >
+            {getProgressDisplay()}
+          </button>
+          
+          {/* Action buttons */}
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleIncrement}
+              disabled={isUpdating}
+              className="flex-1 h-7 text-[10px] bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded"
+              data-testid={`button-increment-${item.id}`}
+            >
+              +{progressMode === 'percent' ? '10%' : '1'}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsMoveSheetOpen(true)}
+              disabled={isUpdating}
+              className="h-7 w-7 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 rounded p-0"
+              data-testid={`button-more-${item.id}`}
+            >
+              <MoreHorizontal size={12} />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Content Section */}
-      <div className="p-2">
-        <div className="flex items-center gap-1 mb-1">
-          {getMediaIcon()}
-          <span className="text-[10px] text-gray-400 uppercase">{mediaType}</span>
-        </div>
-        <h4 className="text-xs font-medium text-white truncate mb-1">{item.title}</h4>
-        <p className="text-[10px] text-purple-400 font-medium mb-2">{getProgressDisplay()}</p>
-        
-        {/* Action buttons */}
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleIncrement}
-            disabled={isUpdating}
-            className="flex-1 h-7 text-[10px] bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded"
-            data-testid={`button-increment-${item.id}`}
-          >
-            +{progressMode === 'percent' ? '10%' : '1'}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onMarkFinished}
-            disabled={isUpdating}
-            className="h-7 w-7 bg-green-600/20 hover:bg-green-600/40 text-green-300 rounded p-0"
-            data-testid={`button-finish-${item.id}`}
-          >
-            <Check size={12} />
-          </Button>
-        </div>
-      </div>
-    </div>
+      {/* Progress Edit Sheet */}
+      <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
+        <SheetContent side="bottom" className="bg-white rounded-t-2xl">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
+          </SheetHeader>
+          
+          <div className="space-y-4 pb-6">
+            {/* Item info */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              {item.image_url && (
+                <img src={item.image_url} alt={item.title} className="w-12 h-16 object-cover rounded" />
+              )}
+              <div>
+                <h4 className="font-medium text-gray-900">{item.title}</h4>
+                <p className="text-sm text-gray-500 capitalize">{mediaType}</p>
+              </div>
+            </div>
+
+            {/* Mode selector */}
+            {getModeOptions().length > 1 && (
+              <div className="flex gap-2">
+                {getModeOptions().map((opt) => (
+                  <Button
+                    key={opt.value}
+                    variant={editMode === opt.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setEditMode(opt.value as any)}
+                    className={editMode === opt.value ? "bg-purple-600 hover:bg-purple-700" : ""}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            {/* Mode-specific inputs */}
+            {editMode === 'percent' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Percentage Complete</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={editProgress}
+                    onChange={(e) => setEditProgress(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-24"
+                  />
+                  <span className="text-gray-500">%</span>
+                </div>
+              </div>
+            )}
+
+            {editMode === 'episode' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Season</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={editSeason}
+                    onChange={(e) => setEditSeason(Math.max(1, parseInt(e.target.value) || 1))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Episode</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={editEpisode}
+                    onChange={(e) => setEditEpisode(Math.max(1, parseInt(e.target.value) || 1))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {editMode === 'page' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Current Page</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editProgress}
+                    onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Total Pages</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editTotal}
+                    onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {editMode === 'minutes' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Minutes Listened</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editProgress}
+                    onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Total Minutes</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={editTotal}
+                    onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Save button */}
+            <Button 
+              onClick={handleSaveProgress}
+              disabled={isUpdating}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              Save Progress
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Move to List Sheet */}
+      <Sheet open={isMoveSheetOpen} onOpenChange={setIsMoveSheetOpen}>
+        <SheetContent side="bottom" className="bg-white rounded-t-2xl">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-lg font-semibold text-gray-900">Move to List</SheetTitle>
+          </SheetHeader>
+          
+          <div className="space-y-2 pb-6">
+            <button
+              onClick={() => { onMoveToList('finished', 'Finished'); setIsMoveSheetOpen(false); }}
+              disabled={isUpdating}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              data-testid={`move-finished-${item.id}`}
+            >
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <Check className="text-green-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Finished</p>
+                <p className="text-sm text-gray-500">Mark as completed</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => { onMoveToList('dnf', 'Did Not Finish'); setIsMoveSheetOpen(false); }}
+              disabled={isUpdating}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              data-testid={`move-dnf-${item.id}`}
+            >
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <X className="text-red-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Did Not Finish</p>
+                <p className="text-sm text-gray-500">Stopped watching/reading</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => { onMoveToList('queue', 'Want To'); setIsMoveSheetOpen(false); }}
+              disabled={isUpdating}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              data-testid={`move-queue-${item.id}`}
+            >
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Clock className="text-blue-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Want To</p>
+                <p className="text-sm text-gray-500">Save for later</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => { onMoveToList('favorites', 'Favorites'); setIsMoveSheetOpen(false); }}
+              disabled={isUpdating}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              data-testid={`move-favorites-${item.id}`}
+            >
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                <Trophy className="text-yellow-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Favorites</p>
+                <p className="text-sm text-gray-500">Add to your favorites</p>
+              </div>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
