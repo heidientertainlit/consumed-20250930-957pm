@@ -1348,17 +1348,14 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
           </div>
           <h4 className="text-xs font-medium text-white truncate mb-1">{item.title}</h4>
           
-          {/* Tappable progress row */}
-          <div className="flex items-center gap-1 mb-2">
-            <span className="text-[10px] text-purple-400 font-medium">{getProgressDisplay()}</span>
-            <button 
-              onClick={() => setIsProgressSheetOpen(true)}
-              className="text-[9px] text-white bg-purple-500/60 hover:bg-purple-500/80 px-1.5 py-0.5 rounded transition-colors"
-              data-testid={`button-edit-progress-${item.id}`}
-            >
-              Edit
-            </button>
-          </div>
+          {/* Tappable progress bar */}
+          <button 
+            onClick={() => setIsProgressSheetOpen(true)}
+            className="w-full mb-2 bg-purple-600/30 hover:bg-purple-600/50 rounded-md px-2 py-1.5 transition-colors text-left"
+            data-testid={`button-edit-progress-${item.id}`}
+          >
+            <span className="text-[10px] text-purple-300 font-medium">{getProgressDisplay()}</span>
+          </button>
           
           {/* Action buttons */}
           <div className="flex gap-1">
