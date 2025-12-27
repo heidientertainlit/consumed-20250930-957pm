@@ -1,4 +1,4 @@
-import { Plus, Star, Film, Tv, Music, Book, Mic, Check } from "lucide-react";
+import { Plus, Star, Film, Tv, Music, Book, Mic, Check, Clock, X, Heart, Ban, Play, Folder } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -446,9 +446,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
               
               {/* Bottom Sheet (Mobile) / Dropdown (Desktop) */}
               <div 
-                className="fixed z-50 bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 backdrop-blur-md shadow-2xl border border-purple-500/30 flex flex-col gap-1 text-sm
-                  max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:rounded-t-3xl max-sm:p-5 max-sm:pb-10 max-sm:max-h-[80vh] max-sm:overflow-y-auto
-                  sm:rounded-lg sm:p-2 sm:min-w-max sm:bg-gradient-to-br sm:from-purple-950/95 sm:via-purple-900/95 sm:to-indigo-950/95"
+                className="fixed z-50 bg-white shadow-2xl border border-gray-200 flex flex-col text-sm
+                  max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:rounded-t-2xl max-sm:pb-8 max-sm:max-h-[80vh] max-sm:overflow-y-auto
+                  sm:rounded-xl sm:min-w-[200px] sm:bg-white"
                 style={{
                   ...(window.innerWidth >= 640 ? {
                     top: `${listMenuPos.top}px`,
@@ -458,48 +458,73 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Drag handle for mobile */}
-                <div className="sm:hidden flex justify-center mb-4">
-                  <div className="w-12 h-1.5 bg-white/40 rounded-full" />
+                {/* Header with close button */}
+                <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-900">Add to List</h3>
+                  <button 
+                    onClick={() => setShowListMenu(false)}
+                    className="sm:hidden text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
                 
-                {/* Title for mobile */}
-                <p className="sm:hidden text-white font-bold text-lg mb-3 px-1">Add to List</p>
-                
-                {['Want To', 'Currently', 'Finished', 'Did Not Finish', 'Favorites'].map((listTitle) => (
-                  <button
-                    key={listTitle}
-                    onClick={() => {
-                      handleAddToList(listTitle, false);
-                      setShowListMenu(false);
-                    }}
-                    disabled={addToListMutation.isPending}
-                    className="px-4 py-3.5 sm:py-2 text-white text-base sm:text-sm font-medium hover:bg-white/20 rounded-xl sm:rounded-lg transition-all text-left active:scale-[0.98]"
-                  >
-                    {listTitle}
-                  </button>
-                ))}
+                <div className="px-4 py-2 space-y-1">
+                  {[
+                    { title: 'Want To', icon: <Clock className="text-blue-600" size={20} />, bg: 'bg-blue-100', desc: 'Save for later' },
+                    { title: 'Currently', icon: <Play className="text-purple-600" size={20} />, bg: 'bg-purple-100', desc: 'Currently consuming' },
+                    { title: 'Finished', icon: <Check className="text-green-600" size={20} />, bg: 'bg-green-100', desc: 'Mark as completed' },
+                    { title: 'Did Not Finish', icon: <X className="text-red-600" size={20} />, bg: 'bg-red-100', desc: 'Stopped watching/reading' },
+                    { title: 'Favorites', icon: <Heart className="text-yellow-600" size={20} />, bg: 'bg-yellow-100', desc: 'Add to your favorites' },
+                  ].map((listItem) => (
+                    <button
+                      key={listItem.title}
+                      onClick={() => {
+                        handleAddToList(listItem.title, false);
+                        setShowListMenu(false);
+                      }}
+                      disabled={addToListMutation.isPending}
+                      className="w-full p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                    >
+                      <div className={`w-10 h-10 ${listItem.bg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                        {listItem.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900">{listItem.title}</p>
+                        <p className="text-sm text-gray-500 hidden sm:block">{listItem.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
                 
                 {/* Custom Lists */}
                 {lists.filter((list: any) => list.isCustom).length > 0 && (
                   <>
-                    <div className="border-t border-white/20 my-3 sm:my-2" />
-                    <p className="sm:hidden text-white/70 text-sm font-semibold mb-2 px-1 uppercase tracking-wide">Your Lists</p>
-                    {lists
-                      .filter((list: any) => list.isCustom)
-                      .map((list: any) => (
-                        <button
-                          key={list.id}
-                          onClick={() => {
-                            handleAddToList(list.id, true);
-                            setShowListMenu(false);
-                          }}
-                          disabled={addToListMutation.isPending}
-                          className="px-4 py-3.5 sm:py-2 text-white text-base sm:text-sm font-medium hover:bg-white/20 rounded-xl sm:rounded-lg transition-all text-left active:scale-[0.98]"
-                        >
-                          {list.title}
-                        </button>
-                      ))}
+                    <div className="border-t border-gray-100 mx-4 my-2" />
+                    <p className="text-xs text-gray-400 font-semibold px-4 py-2 uppercase tracking-wide">Your Lists</p>
+                    <div className="px-4 pb-4 space-y-1">
+                      {lists
+                        .filter((list: any) => list.isCustom)
+                        .map((list: any) => (
+                          <button
+                            key={list.id}
+                            onClick={() => {
+                              handleAddToList(list.id, true);
+                              setShowListMenu(false);
+                            }}
+                            disabled={addToListMutation.isPending}
+                            className="w-full p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                          >
+                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Folder className="text-purple-600" size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900">{list.title}</p>
+                              <p className="text-sm text-gray-500 hidden sm:block">Custom list</p>
+                            </div>
+                          </button>
+                        ))}
+                    </div>
                   </>
                 )}
               </div>
