@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -311,6 +311,140 @@ export function FriendDNALockMessage({ itemCount }: { itemCount: number }) {
       <p className="text-xs text-gray-600">
         Log <span className="font-semibold text-purple-600">{itemsNeeded} more items</span> to unlock Friend DNA Comparisons
       </p>
+    </div>
+  );
+}
+
+// Section component for displaying in DNA expanded section
+interface FriendDNAComparisonSectionProps {
+  dnaLevel: 1 | 2 | 3;
+  itemCount: number;
+}
+
+export function FriendDNAComparison({ dnaLevel, itemCount }: FriendDNAComparisonSectionProps) {
+  const { session, user } = useAuth();
+  const [friends, setFriends] = useState<Array<{ id: string; user_name: string; avatar_url?: string }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch friends when component mounts and user is Level 3
+  useEffect(() => {
+    if (dnaLevel >= 3 && session?.access_token && user?.id) {
+      setIsLoading(true);
+      // Fetch friends from Supabase
+      fetch(`https://mahpgcogwpawvviapqza.supabase.co/rest/v1/friendships?or=(user_id.eq.${user.id},friend_id.eq.${user.id})&status=eq.accepted&select=user_id,friend_id,users!friendships_friend_id_fkey(id,user_name,avatar_url),friend:users!friendships_user_id_fkey(id,user_name,avatar_url)`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const friendList = data.map((f: any) => {
+              // Get the friend (not the current user)
+              const isFriend = f.friend_id !== user.id;
+              const friendData = isFriend ? f.users : f.friend;
+              return {
+                id: isFriend ? f.friend_id : f.user_id,
+                user_name: friendData?.user_name || 'Unknown',
+                avatar_url: friendData?.avatar_url,
+              };
+            }).filter(f => f.id !== user.id);
+            setFriends(friendList);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsLoading(false));
+    }
+  }, [dnaLevel, session?.access_token, user?.id]);
+
+  // Locked state for Level 1-2
+  if (dnaLevel < 3) {
+    const itemsNeeded = Math.max(0, 30 - itemCount);
+    return (
+      <div className="mt-4 bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="text-blue-500" size={20} />
+          <h4 className="font-semibold text-gray-900">Friend DNA Comparisons</h4>
+          <Badge className="bg-blue-100 text-blue-700 text-xs ml-auto">Level 3</Badge>
+        </div>
+        
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+            <Lock size={24} className="text-gray-400" />
+          </div>
+          <h5 className="font-semibold text-gray-700 mb-2">Friend Comparisons Locked</h5>
+          <p className="text-sm text-gray-500 mb-4 max-w-xs">
+            Compare your entertainment DNA with friends and get "Watch Together" recommendations
+          </p>
+          <div className="w-full max-w-xs">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+              <span>Progress to Level 3</span>
+              <span className="font-medium text-purple-600">{itemCount} / 30</span>
+            </div>
+            <Progress value={(itemCount / 30) * 100} className="h-2" />
+            <p className="text-xs text-gray-500 mt-2">
+              Log <span className="font-semibold text-purple-600">{itemsNeeded} more items</span> to unlock
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Level 3 - Show friends list with compare buttons
+  return (
+    <div className="mt-4 bg-white rounded-xl border border-gray-200 p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Users className="text-blue-500" size={20} />
+        <h4 className="font-semibold text-gray-900">Friend DNA Comparisons</h4>
+        <Badge className="bg-green-100 text-green-700 text-xs ml-auto">Unlocked</Badge>
+      </div>
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="animate-spin text-purple-500" size={24} />
+          <span className="ml-2 text-sm text-gray-500">Loading friends...</span>
+        </div>
+      ) : friends.length === 0 ? (
+        <div className="text-center py-6">
+          <Users size={32} className="mx-auto text-gray-300 mb-2" />
+          <p className="text-sm text-gray-500">Add friends to compare your entertainment DNA!</p>
+          <p className="text-xs text-gray-400 mt-1">Visit their profiles and add them as friends</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600 mb-3">
+            Compare your entertainment taste with friends and get personalized "Watch Together" suggestions!
+          </p>
+          {friends.slice(0, 5).map((friend) => (
+            <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold">
+                  {friend.avatar_url ? (
+                    <img src={friend.avatar_url} alt={friend.user_name} className="w-10 h-10 rounded-full object-cover" />
+                  ) : (
+                    friend.user_name.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <span className="font-medium text-gray-900">{friend.user_name}</span>
+              </div>
+              <FriendDNACompareButton
+                friendId={friend.id}
+                friendName={friend.user_name}
+                friendAvatar={friend.avatar_url}
+                userDnaLevel={dnaLevel}
+                userItemCount={itemCount}
+              />
+            </div>
+          ))}
+          {friends.length > 5 && (
+            <p className="text-xs text-gray-500 text-center mt-2">
+              +{friends.length - 5} more friends
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

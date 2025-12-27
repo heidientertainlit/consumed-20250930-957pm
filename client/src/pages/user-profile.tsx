@@ -35,7 +35,7 @@ import { copyLink } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
 import { queryClient } from "@/lib/queryClient";
 import { DNALevelBadge, DNAFeatureLock } from "@/components/dna-level-badge";
-import { CelebrityDNAMatches } from "@/components/celebrity-dna-matches";
+import { FriendDNAComparison } from "@/components/friend-dna-comparison";
 import { FriendDNACompareButton } from "@/components/friend-dna-comparison";
 
 export default function UserProfile() {
@@ -2847,7 +2847,7 @@ export default function UserProfile() {
                       </div>
                     )}
 
-                    {/* DNA Level Badge - Right above Celebrity Matches */}
+                    {/* DNA Level Badge with Progress */}
                     {isOwnProfile && (
                       <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
                         <DNALevelBadge 
@@ -2858,21 +2858,21 @@ export default function UserProfile() {
                         {dnaLevel < 3 && (
                           <div className="mt-3 pt-3 border-t border-purple-100">
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">Progress to Level {dnaLevel + 1}</span>
-                              <span className="text-xs text-purple-600 font-semibold">{dnaItemCount} of {dnaLevel === 1 ? 15 : 30}</span>
+                              <span className="text-sm font-medium text-gray-700">Progress to Level 3</span>
+                              <span className="text-xs text-purple-600 font-semibold">{dnaItemCount} of 30</span>
                             </div>
-                            <Progress value={(dnaItemCount / (dnaLevel === 1 ? 15 : 30)) * 100} className="h-2 mb-2" />
+                            <Progress value={(dnaItemCount / 30) * 100} className="h-2 mb-2" />
                             <p className="text-xs text-gray-600">
-                              Log <span className="font-semibold text-purple-600">{Math.max(0, (dnaLevel === 1 ? 15 : 30) - dnaItemCount)} more</span> items to unlock {dnaLevel === 1 ? 'Celebrity DNA Matches' : 'Friend DNA Comparisons'}
+                              Log <span className="font-semibold text-purple-600">{Math.max(0, 30 - dnaItemCount)} more</span> items to unlock Friend DNA Comparisons
                             </p>
                           </div>
                         )}
                       </div>
                     )}
 
-                    {/* Celebrity DNA Matches - Inside expanded section */}
+                    {/* Friend DNA Comparison - Level 3 Feature */}
                     {isOwnProfile && (
-                      <CelebrityDNAMatches dnaLevel={dnaLevel} itemCount={dnaItemCount} />
+                      <FriendDNAComparison dnaLevel={dnaLevel} itemCount={dnaItemCount} />
                     )}
                   </div>
                 )}

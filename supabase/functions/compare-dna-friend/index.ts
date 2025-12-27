@@ -47,18 +47,33 @@ serve(async (req) => {
         });
       }
 
-      // Verify current user is Level 3 (Blueprint)
-      const { data: userLevel } = await supabaseClient
-        .from('user_dna_levels')
-        .select('current_level')
+      // Calculate user's DNA level from logged items
+      const { data: userLists } = await supabaseClient
+        .from('user_lists')
+        .select('id')
         .eq('user_id', user.id)
+        .eq('list_type', 'all')
         .single();
 
-      if (!userLevel || userLevel.current_level < 3) {
+      let itemCount = 0;
+      if (userLists) {
+        const { count } = await supabaseClient
+          .from('user_list_items')
+          .select('*', { count: 'exact', head: true })
+          .eq('list_id', userLists.id);
+        itemCount = count || 0;
+      }
+
+      // Calculate level: 0-14 = Level 1, 15-29 = Level 2, 30+ = Level 3
+      const currentLevel = itemCount >= 30 ? 3 : itemCount >= 15 ? 2 : 1;
+
+      if (currentLevel < 3) {
         return new Response(JSON.stringify({ 
           error: 'Friend DNA comparison requires DNA Blueprint (Level 3)',
-          current_level: userLevel?.current_level || 1,
-          required_level: 3
+          current_level: currentLevel,
+          required_level: 3,
+          items_logged: itemCount,
+          items_needed: 30 - itemCount
         }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
