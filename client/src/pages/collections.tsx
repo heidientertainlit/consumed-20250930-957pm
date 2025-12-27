@@ -1257,12 +1257,16 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   );
   
   const getProgressDisplay = () => {
+    // For TV shows, always show episode format if we have season data (localTotal > 0)
+    if (isTv && localTotal > 0) {
+      return `S${localTotal}E${localProgress}`;
+    }
     if (progressMode === 'percent') {
       return `${localProgress}%`;
     } else if (progressMode === 'page') {
       return localTotal > 0 ? `p${localProgress}/${localTotal}` : `p${localProgress}`;
     } else if (progressMode === 'episode') {
-      return isTv && localTotal > 0 ? `S${localTotal}E${localProgress}` : `E${localProgress}`;
+      return localTotal > 0 ? `S${localTotal}E${localProgress}` : `E${localProgress}`;
     }
     return `${localProgress}%`;
   };
