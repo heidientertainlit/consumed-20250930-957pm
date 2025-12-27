@@ -1019,16 +1019,17 @@ export default function UserProfile() {
     }
   }, [session?.access_token, dnaProfileStatus, isOwnProfile]);
 
-  // Update DNA level from local stats when userStats loads (fallback for edge function)
+  // Update DNA level from local stats when userStats loads (always prefer higher count)
   useEffect(() => {
-    if (userStats && dnaItemCount === 0) {
+    if (userStats) {
       const { level, itemCount } = calculateDnaLevelFromStats(userStats);
-      if (itemCount > 0) {
+      // Always use local calculation if it's higher (more accurate than edge function)
+      if (itemCount > dnaItemCount) {
         setDnaLevel(level);
         setDnaItemCount(itemCount);
       }
     }
-  }, [userStats]);
+  }, [userStats, dnaItemCount]);
 
   // Handle URL tab parameter to switch to specific tab
   useEffect(() => {
@@ -2849,6 +2850,11 @@ export default function UserProfile() {
                         </div>
                       </div>
                     )}
+
+                    {/* Celebrity DNA Matches - Inside expanded section */}
+                    {isOwnProfile && (
+                      <CelebrityDNAMatches dnaLevel={dnaLevel} itemCount={dnaItemCount} />
+                    )}
                   </div>
                 )}
 
@@ -2862,11 +2868,6 @@ export default function UserProfile() {
                   {isDNAExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
               </div>
-            )}
-
-            {/* Celebrity DNA Matches - Only for Level 2+ users */}
-            {dnaProfileStatus === 'has_profile' && isOwnProfile && (
-              <CelebrityDNAMatches dnaLevel={dnaLevel} itemCount={dnaItemCount} />
             )}
 
             {/* DNA-Based Recommendations Section */}
