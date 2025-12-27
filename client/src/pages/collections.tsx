@@ -1385,123 +1385,209 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
 
       {/* Progress Edit Sheet */}
       <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
-        <SheetContent side="bottom" className="bg-white rounded-t-2xl">
-          <SheetHeader className="pb-4">
+        <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
             <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
-          </SheetHeader>
+            <button 
+              onClick={() => {
+                setIsProgressSheetOpen(false);
+                onMoveToList('finished', 'Finished');
+              }}
+              disabled={isUpdating}
+              className="text-green-600 font-semibold text-sm hover:text-green-700"
+            >
+              I'm finished!
+            </button>
+          </div>
           
-          <div className="space-y-4 pb-6">
+          <div className="px-4 py-4 space-y-4 pb-8">
             {/* Item info */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              {item.image_url && (
-                <img src={item.image_url} alt={item.title} className="w-12 h-16 object-cover rounded" />
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.title} className="w-12 h-16 object-cover rounded-lg" />
+              ) : (
+                <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                  {getMediaIcon()}
+                </div>
               )}
-              <div>
-                <h4 className="font-medium text-gray-900">{item.title}</h4>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-gray-900 truncate">{item.title}</h4>
                 <p className="text-sm text-gray-500 capitalize">{mediaType}</p>
               </div>
             </div>
 
-            {/* Mode selector */}
+            {/* Mode selector - pill style */}
             {getModeOptions().length > 1 && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
                 {getModeOptions().map((opt) => (
-                  <Button
+                  <button
                     key={opt.value}
-                    variant={editMode === opt.value ? "default" : "outline"}
-                    size="sm"
                     onClick={() => setEditMode(opt.value as any)}
-                    className={editMode === opt.value ? "bg-purple-600 hover:bg-purple-700" : ""}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                      editMode === opt.value 
+                        ? 'bg-white text-purple-600 shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
                   >
                     {opt.label}
-                  </Button>
+                  </button>
                 ))}
               </div>
             )}
 
             {/* Mode-specific inputs */}
             {editMode === 'percent' && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label className="text-sm font-medium text-gray-700">Percentage Complete</label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={editProgress}
-                    onChange={(e) => setEditProgress(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                    className="w-24"
-                  />
-                  <span className="text-gray-500">%</span>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={editProgress}
+                      onChange={(e) => setEditProgress(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                      className="text-center text-lg font-semibold pr-8 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
+                  </div>
+                </div>
+                {/* Quick percentage buttons */}
+                <div className="flex gap-2">
+                  {[25, 50, 75, 100].map((pct) => (
+                    <button
+                      key={pct}
+                      onClick={() => setEditProgress(pct)}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        editProgress === pct 
+                          ? 'bg-purple-100 text-purple-700' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
             {editMode === 'episode' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Season</label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={editSeason}
-                    onChange={(e) => setEditSeason(Math.max(1, parseInt(e.target.value) || 1))}
-                  />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Season</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={editSeason}
+                      onChange={(e) => setEditSeason(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Episode</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={editEpisode}
+                      onChange={(e) => setEditEpisode(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Episode</label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={editEpisode}
-                    onChange={(e) => setEditEpisode(Math.max(1, parseInt(e.target.value) || 1))}
-                  />
+                {/* Quick episode increment buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEditEpisode(editEpisode + 1)}
+                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                  >
+                    +1 Episode
+                  </button>
+                  <button
+                    onClick={() => { setEditSeason(editSeason + 1); setEditEpisode(1); }}
+                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                  >
+                    Next Season
+                  </button>
                 </div>
               </div>
             )}
 
             {editMode === 'page' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Current Page</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={editProgress}
-                    onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
-                  />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Current Page</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editProgress}
+                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Total Pages</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editTotal}
+                      onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Total Pages</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={editTotal}
-                    onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
-                  />
+                {/* Quick page increment buttons */}
+                <div className="flex gap-2">
+                  {[10, 25, 50].map((pages) => (
+                    <button
+                      key={pages}
+                      onClick={() => setEditProgress(Math.min(editProgress + pages, editTotal || 9999))}
+                      className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +{pages} pages
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
             {editMode === 'minutes' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Minutes Listened</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={editProgress}
-                    onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
-                  />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Minutes Listened</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editProgress}
+                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Total Minutes</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editTotal}
+                      onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Total Minutes</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={editTotal}
-                    onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
-                  />
+                {/* Quick minute increment buttons */}
+                <div className="flex gap-2">
+                  {[15, 30, 60].map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => setEditProgress(Math.min(editProgress + mins, editTotal || 9999))}
+                      className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +{mins} min
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -1510,9 +1596,9 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
             <Button 
               onClick={handleSaveProgress}
               disabled={isUpdating}
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium"
             >
-              Save Progress
+              Update Progress
             </Button>
           </div>
         </SheetContent>
