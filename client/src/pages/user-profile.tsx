@@ -34,6 +34,9 @@ import { useMutation } from "@tanstack/react-query";
 import { copyLink } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
 import { queryClient } from "@/lib/queryClient";
+import { DNALevelBadge, DNAFeatureLock } from "@/components/dna-level-badge";
+import { CelebrityDNAMatches } from "@/components/celebrity-dna-matches";
+import { FriendDNACompareButton } from "@/components/friend-dna-comparison";
 
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
@@ -91,6 +94,11 @@ export default function UserProfile() {
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   const [dnaProfile, setDnaProfile] = useState<any>(null);
+  
+  // DNA Level states (1=Snapshot, 2=Profile, 3=Blueprint)
+  const [dnaLevel, setDnaLevel] = useState<1 | 2 | 3>(1);
+  const [dnaItemCount, setDnaItemCount] = useState(0);
+  const [isLoadingDnaLevel, setIsLoadingDnaLevel] = useState(false);
 
   // Survey states
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -237,6 +245,43 @@ export default function UserProfile() {
       setUserBadges([]);
     } finally {
       setIsLoadingBadges(false);
+    }
+  };
+
+  // Fetch DNA Level (calculates level based on logged items)
+  const fetchDnaLevel = async () => {
+    if (!viewingUserId) return;
+
+    setIsLoadingDnaLevel(true);
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-dna-level?user_id=${viewingUserId}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDnaLevel(data.current_level || 1);
+        setDnaItemCount(data.item_count || 0);
+      } else {
+        console.error('Failed to fetch DNA level');
+        setDnaLevel(1);
+        setDnaItemCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching DNA level:', error);
+      setDnaLevel(1);
+      setDnaItemCount(0);
+    } finally {
+      setIsLoadingDnaLevel(false);
     }
   };
 
@@ -920,6 +965,8 @@ export default function UserProfile() {
     setUserPoints(null);
     setDnaProfile(null);
     setDnaProfileStatus('no_profile');
+    setDnaLevel(1);
+    setDnaItemCount(0);
     setHighlights([]);
     setUserBadges([]);
     setFriendshipStatus('loading');
@@ -938,6 +985,7 @@ export default function UserProfile() {
       fetchUserPredictions();
       fetchHighlights();
       fetchBadges();
+      fetchDnaLevel();
       if (isOwnProfile) {
         fetchFollowedCreators();
       }
@@ -2231,14 +2279,25 @@ export default function UserProfile() {
               ) : friendshipStatus !== 'loading' && (
                 <>
                   {friendshipStatus === 'friends' ? (
-                    <Button 
-                      disabled
-                      className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
-                      data-testid="button-already-friends"
-                    >
-                      <Users size={20} className="mr-2" />
-                      Already Friends
-                    </Button>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <Button 
+                        disabled
+                        className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
+                        data-testid="button-already-friends"
+                      >
+                        <Users size={20} className="mr-2" />
+                        Already Friends
+                      </Button>
+                      {viewingUserId && (
+                        <FriendDNACompareButton
+                          friendId={viewingUserId}
+                          friendName={userProfileData?.display_name || userProfileData?.user_name || 'Friend'}
+                          friendAvatar={userProfileData?.avatar_url}
+                          userDnaLevel={dnaLevel}
+                          userItemCount={dnaItemCount}
+                        />
+                      )}
+                    </div>
                   ) : friendshipStatus === 'pending_sent' ? (
                     <Button 
                       disabled
@@ -2544,6 +2603,17 @@ export default function UserProfile() {
               </div>
             </div>
 
+            {/* DNA Level Badge - Shows progress through levels */}
+            {dnaProfileStatus === 'has_profile' && (
+              <div className="mb-4">
+                <DNALevelBadge 
+                  level={dnaLevel} 
+                  itemCount={dnaItemCount} 
+                  showProgress={isOwnProfile} 
+                />
+              </div>
+            )}
+
             {/* Conditional Content based on status */}
             {dnaProfileStatus === 'no_profile' && (
               <div className="bg-white rounded-xl p-6 text-center">
@@ -2750,6 +2820,11 @@ export default function UserProfile() {
                   {isDNAExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
               </div>
+            )}
+
+            {/* Celebrity DNA Matches - Only for Level 2+ users */}
+            {dnaProfileStatus === 'has_profile' && isOwnProfile && (
+              <CelebrityDNAMatches dnaLevel={dnaLevel} itemCount={dnaItemCount} />
             )}
 
             {/* DNA-Based Recommendations Section */}

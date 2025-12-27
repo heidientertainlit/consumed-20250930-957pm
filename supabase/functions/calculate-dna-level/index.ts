@@ -19,27 +19,31 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const jwt = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
-
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     // Check for optional user_id param (for viewing other profiles)
     const url = new URL(req.url);
-    const targetUserId = url.searchParams.get('user_id') || user.id;
+    const targetUserIdParam = url.searchParams.get('user_id');
+    
+    // Allow anon access for read-only queries when user_id is provided
+    const authHeader = req.headers.get('Authorization');
+    let currentUser = null;
+    
+    if (authHeader) {
+      const jwt = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
+      if (!userError && user) {
+        currentUser = user;
+      }
+    }
+    
+    // Determine target user - require user_id param for anon requests
+    const targetUserId = targetUserIdParam || currentUser?.id;
+    
+    if (!targetUserId) {
+      return new Response(JSON.stringify({ error: 'user_id parameter required for unauthenticated requests' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // Get current DNA level from cache
     const { data: dnaLevel } = await supabaseClient
@@ -90,12 +94,12 @@ serve(async (req) => {
       currentLevel = 2;
     }
 
-    // Cache the level for future lookups
-    if (targetUserId === user.id) {
+    // Cache the level for future lookups (only for authenticated user's own profile)
+    if (currentUser && targetUserId === currentUser.id) {
       await supabaseClient
         .from('user_dna_levels')
         .upsert({
-          user_id: user.id,
+          user_id: currentUser.id,
           current_level: currentLevel,
           items_logged: itemsLogged,
           items_with_ratings: itemsWithRatings,
