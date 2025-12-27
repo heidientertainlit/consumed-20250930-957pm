@@ -78,31 +78,16 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
           </div>
         </div>
         
-        {/* Progress or status */}
-        <div className="text-right">
-          {showProgress && nextThreshold ? (
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <div className="text-xs text-gray-500">{itemCount} of {nextThreshold}</div>
-                <Progress value={progress} className="h-1.5 w-16" />
-              </div>
-              <ChevronDown size={16} className="text-gray-400" />
-            </div>
-          ) : level === 3 ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-emerald-600 font-medium">All unlocked</span>
-              <ChevronDown size={16} className="text-gray-400" />
-            </div>
-          ) : null}
+        {/* Status indicator only */}
+        <div className="flex items-center gap-2">
+          {level === 3 ? (
+            <span className="text-xs text-emerald-600 font-medium">All unlocked</span>
+          ) : (
+            <span className="text-xs text-purple-600 font-medium">{itemCount} logged</span>
+          )}
+          <ChevronDown size={16} className="text-gray-400" />
         </div>
       </div>
-
-      {/* Unlock hint */}
-      {showProgress && nextThreshold && itemsNeeded > 0 && (
-        <p className="text-xs text-gray-500 mt-2 pl-13">
-          Log <span className="font-semibold text-purple-600">{itemsNeeded} more</span> to unlock {config.nextUnlock}
-        </p>
-      )}
     </div>
   );
 }
