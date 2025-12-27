@@ -2767,29 +2767,6 @@ export default function UserProfile() {
                 {/* Expandable Details Section */}
                 {isDNAExpanded && dnaProfile && (
                   <div className="border-t border-gray-200 pt-6 mt-6 space-y-4">
-                    {/* DNA Level Badge - Shows current level and progress */}
-                    {isOwnProfile && (
-                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
-                        <DNALevelBadge 
-                          level={dnaLevel} 
-                          itemCount={dnaItemCount} 
-                          showProgress={true} 
-                        />
-                        {dnaLevel < 3 && (
-                          <div className="mt-3 pt-3 border-t border-purple-100">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">Progress to Level {dnaLevel + 1}</span>
-                              <span className="text-xs text-purple-600 font-semibold">{dnaItemCount} of {dnaLevel === 1 ? 15 : 30}</span>
-                            </div>
-                            <Progress value={(dnaItemCount / (dnaLevel === 1 ? 15 : 30)) * 100} className="h-2 mb-2" />
-                            <p className="text-xs text-gray-600">
-                              Log <span className="font-semibold text-purple-600">{Math.max(0, (dnaLevel === 1 ? 15 : 30) - dnaItemCount)} more</span> items to unlock {dnaLevel === 1 ? 'Celebrity DNA Matches' : 'Friend DNA Comparisons'}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
                     {/* Media Consumption Stats */}
                     {dnaProfile.media_consumption_stats && (
                       <div>
@@ -2867,6 +2844,29 @@ export default function UserProfile() {
                             </Badge>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* DNA Level Badge - Right above Celebrity Matches */}
+                    {isOwnProfile && (
+                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
+                        <DNALevelBadge 
+                          level={dnaLevel} 
+                          itemCount={dnaItemCount} 
+                          showProgress={true} 
+                        />
+                        {dnaLevel < 3 && (
+                          <div className="mt-3 pt-3 border-t border-purple-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-gray-700">Progress to Level {dnaLevel + 1}</span>
+                              <span className="text-xs text-purple-600 font-semibold">{dnaItemCount} of {dnaLevel === 1 ? 15 : 30}</span>
+                            </div>
+                            <Progress value={(dnaItemCount / (dnaLevel === 1 ? 15 : 30)) * 100} className="h-2 mb-2" />
+                            <p className="text-xs text-gray-600">
+                              Log <span className="font-semibold text-purple-600">{Math.max(0, (dnaLevel === 1 ? 15 : 30) - dnaItemCount)} more</span> items to unlock {dnaLevel === 1 ? 'Celebrity DNA Matches' : 'Friend DNA Comparisons'}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
 
