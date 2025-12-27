@@ -7,6 +7,17 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
 };
 
+interface CelebrityMatch {
+  name: string;
+  category: string;
+  match_score: number;
+  dna_title: string;
+  dna_tagline: string;
+  shared_traits: string[];
+  why_you_match: string;
+  image_url?: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -55,118 +66,20 @@ serve(async (req) => {
       });
     }
 
-    const url = new URL(req.url);
-    const celebrityId = url.searchParams.get('celebrity_id');
+    // Check cache first (cached for 7 days)
+    const { data: cachedMatches } = await supabaseClient
+      .from('celebrity_dna')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('updated_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+      .limit(1);
 
-    // GET: List all celebrities with match scores
-    if (req.method === 'GET' && !celebrityId) {
-      // Get user's signals
-      const { data: userSignals } = await supabaseClient
-        .from('user_dna_signals')
-        .select('signal_type, signal_value, strength')
-        .eq('user_id', user.id);
-
-      if (!userSignals || userSignals.length === 0) {
-        return new Response(JSON.stringify({ 
-          error: 'No DNA signals found. Log some media first.'
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Get all active celebrities
-      const { data: celebrities } = await supabaseClient
-        .from('celebrity_dna')
-        .select('*')
-        .eq('is_active', true);
-
-      if (!celebrities || celebrities.length === 0) {
-        return new Response(JSON.stringify({ 
-          celebrities: [],
-          message: 'No celebrity profiles available yet'
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Calculate match scores for each celebrity
-      const userGenreMap = new Map(
-        userSignals
-          .filter((s: any) => s.signal_type === 'genre')
-          .map((s: any) => [s.signal_value.toLowerCase(), s.strength])
-      );
-      const userCreatorMap = new Map(
-        userSignals
-          .filter((s: any) => s.signal_type === 'creator')
-          .map((s: any) => [s.signal_value.toLowerCase(), s.strength])
-      );
-      const userDecadeMap = new Map(
-        userSignals
-          .filter((s: any) => s.signal_type === 'decade')
-          .map((s: any) => [s.signal_value.toLowerCase(), s.strength])
-      );
-
-      const celebrityMatches = celebrities.map((celeb: any) => {
-        let matchScore = 0;
-        let totalWeight = 0;
-        const sharedGenres: string[] = [];
-
-        // Compare genre signals
-        const celebGenres = celeb.genre_signals || {};
-        for (const [genre, celebStrength] of Object.entries(celebGenres)) {
-          const userStrength = userGenreMap.get(genre.toLowerCase());
-          if (userStrength) {
-            const similarity = 1 - Math.abs(Number(userStrength) - Number(celebStrength));
-            matchScore += similarity * Number(userStrength);
-            totalWeight += Number(userStrength);
-            sharedGenres.push(genre);
-          }
-        }
-
-        // Compare decade signals
-        const celebDecades = celeb.decade_signals || {};
-        for (const [decade, celebStrength] of Object.entries(celebDecades)) {
-          const userStrength = userDecadeMap.get(decade.toLowerCase());
-          if (userStrength) {
-            const similarity = 1 - Math.abs(Number(userStrength) - Number(celebStrength));
-            matchScore += similarity * Number(userStrength) * 0.5;
-            totalWeight += Number(userStrength) * 0.5;
-          }
-        }
-
-        // Compare creator signals
-        const celebCreators = celeb.creator_signals || {};
-        for (const [creator, celebStrength] of Object.entries(celebCreators)) {
-          const userStrength = userCreatorMap.get(creator.toLowerCase());
-          if (userStrength) {
-            matchScore += Number(userStrength) * 1.5; // Creator matches are weighted higher
-            totalWeight += Number(userStrength) * 1.5;
-          }
-        }
-
-        const normalizedScore = totalWeight > 0 
-          ? Math.round((matchScore / totalWeight) * 100)
-          : 50;
-
-        return {
-          id: celeb.id,
-          name: celeb.name,
-          image_url: celeb.image_url,
-          category: celeb.category,
-          dna_title: celeb.dna_title,
-          dna_tagline: celeb.dna_tagline,
-          match_score: Math.min(99, Math.max(30, normalizedScore)), // Clamp between 30-99
-          shared_genres: sharedGenres.slice(0, 3)
-        };
-      });
-
-      // Sort by match score descending
-      celebrityMatches.sort((a: any, b: any) => b.match_score - a.match_score);
-
+    if (cachedMatches && cachedMatches.length > 0 && cachedMatches[0].favorite_titles) {
+      // Return cached results
+      const cached = cachedMatches[0];
       return new Response(JSON.stringify({
-        celebrities: celebrityMatches,
+        celebrities: cached.favorite_titles, // We store matches here
+        from_cache: true,
         user_level: userLevel.current_level
       }), {
         status: 200,
@@ -174,98 +87,185 @@ serve(async (req) => {
       });
     }
 
-    // GET with celebrity_id: Detailed comparison
-    if (req.method === 'GET' && celebrityId) {
-      const { data: celebrity } = await supabaseClient
-        .from('celebrity_dna')
-        .select('*')
-        .eq('id', celebrityId)
-        .eq('is_active', true)
-        .single();
+    // Get user's DNA signals
+    const { data: userSignals } = await supabaseClient
+      .from('user_dna_signals')
+      .select('signal_type, signal_value, strength')
+      .eq('user_id', user.id)
+      .order('strength', { ascending: false })
+      .limit(20);
 
-      if (!celebrity) {
-        return new Response(JSON.stringify({ error: 'Celebrity not found' }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+    // Get user's DNA profile
+    const { data: userProfile } = await supabaseClient
+      .from('dna_profiles')
+      .select('label, tagline, flavor_notes, favorite_genres, favorite_media_types')
+      .eq('user_id', user.id)
+      .single();
 
-      // Get user's signals and profile
-      const [userSignalsRes, userProfileRes] = await Promise.all([
-        supabaseClient.from('user_dna_signals').select('*').eq('user_id', user.id),
-        supabaseClient.from('dna_profiles').select('label, tagline, flavor_notes').eq('user_id', user.id).single()
-      ]);
-
-      const userSignals = userSignalsRes.data || [];
-      
-      // Calculate detailed comparison
-      const sharedGenres: string[] = [];
-      const sharedCreators: string[] = [];
-      const yourUnique: string[] = [];
-      const celebUnique: string[] = [];
-      let matchScore = 0;
-      let totalWeight = 0;
-
-      const userGenreMap = new Map(
-        userSignals.filter((s: any) => s.signal_type === 'genre')
-          .map((s: any) => [s.signal_value.toLowerCase(), s.strength])
-      );
-
-      // Genre comparison
-      const celebGenres = celebrity.genre_signals || {};
-      for (const [genre, strength] of Object.entries(celebGenres)) {
-        const userStrength = userGenreMap.get(genre.toLowerCase());
-        if (userStrength) {
-          sharedGenres.push(genre);
-          matchScore += Number(userStrength);
-          totalWeight += Number(userStrength);
-        } else if (Number(strength) > 0.5) {
-          celebUnique.push(genre);
-        }
-      }
-
-      // Find user's unique genres
-      for (const [genre, strength] of userGenreMap) {
-        const celebGenreLower = Object.keys(celebGenres).map((g: string) => g.toLowerCase());
-        if (!celebGenreLower.includes(genre) && Number(strength) > 0.5) {
-          yourUnique.push(genre);
-        }
-      }
-
-      const normalizedScore = totalWeight > 0 
-        ? Math.round((matchScore / totalWeight) * 100)
-        : 50;
-
-      return new Response(JSON.stringify({
-        celebrity: {
-          id: celebrity.id,
-          name: celebrity.name,
-          image_url: celebrity.image_url,
-          category: celebrity.category,
-          dna_title: celebrity.dna_title,
-          dna_tagline: celebrity.dna_tagline,
-          traits: celebrity.traits,
-          favorite_titles: celebrity.favorite_titles
-        },
-        your_dna: {
-          label: userProfileRes.data?.label,
-          tagline: userProfileRes.data?.tagline,
-          flavor_notes: userProfileRes.data?.flavor_notes
-        },
-        match_score: Math.min(99, Math.max(30, normalizedScore)),
-        shared_genres: sharedGenres,
-        shared_creators: sharedCreators,
-        your_unique: yourUnique.slice(0, 5),
-        celeb_unique: celebUnique.slice(0, 5),
-        compatibility_note: getCompatibilityNote(normalizedScore, celebrity.name)
+    if (!userSignals || userSignals.length === 0) {
+      return new Response(JSON.stringify({ 
+        error: 'No DNA signals found. Log some media first.'
       }), {
-        status: 200,
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return new Response(JSON.stringify({ error: 'OpenAI API key not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Format user's DNA for the prompt
+    const genreSignals = userSignals
+      .filter((s: any) => s.signal_type === 'genre')
+      .map((s: any) => `${s.signal_value} (${Math.round(s.strength * 100)}%)`)
+      .join(', ');
+
+    const creatorSignals = userSignals
+      .filter((s: any) => s.signal_type === 'creator')
+      .map((s: any) => s.signal_value)
+      .join(', ');
+
+    const mediaTypeSignals = userSignals
+      .filter((s: any) => s.signal_type === 'media_type')
+      .map((s: any) => s.signal_value)
+      .join(', ');
+
+    const decadeSignals = userSignals
+      .filter((s: any) => s.signal_type === 'decade')
+      .map((s: any) => s.signal_value)
+      .join(', ');
+
+    const prompt = `You are matching a user's Entertainment DNA with real celebrities based on shared entertainment taste.
+
+USER'S ENTERTAINMENT DNA:
+- DNA Label: "${userProfile?.label || 'Entertainment Explorer'}"
+- DNA Tagline: "${userProfile?.tagline || ''}"
+- Top Genres: ${genreSignals || 'various'}
+- Favorite Creators: ${creatorSignals || 'various'}
+- Media Types: ${mediaTypeSignals || 'various'}
+- Favorite Decades: ${decadeSignals || 'various'}
+- Flavor Notes: ${userProfile?.flavor_notes?.join(', ') || 'eclectic taste'}
+
+Based on this Entertainment DNA, suggest 8 REAL celebrities (actors, musicians, directors, athletes, authors, or creators) who likely share similar entertainment taste.
+
+REQUIREMENTS:
+1. Choose celebrities known for their entertainment preferences (not just their work)
+2. Mix categories: actors, musicians, directors, athletes, authors, influencers
+3. Include both very famous and some "good taste" tastemaker celebrities
+4. Make match scores between 55-95% (realistic, not all high)
+5. Be specific about WHY they match
+
+For each celebrity, provide:
+- name: Full real name
+- category: actor, musician, director, athlete, author, or influencer
+- match_score: 55-95 (percentage match)
+- dna_title: A fun 2-4 word entertainment archetype for them
+- dna_tagline: A witty one-liner about their taste (≤100 chars)
+- shared_traits: 2-3 specific things you share
+- why_you_match: One sentence explaining the connection
+
+Respond with JSON:
+{
+  "celebrities": [
+    {
+      "name": "string",
+      "category": "string",
+      "match_score": number,
+      "dna_title": "string",
+      "dna_tagline": "string",
+      "shared_traits": ["string", "string"],
+      "why_you_match": "string"
+    }
+  ]
+}`;
+
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an entertainment taste expert who knows celebrities\' actual entertainment preferences from interviews, social media, and public statements. Match users with celebrities based on shared taste. Only suggest REAL, well-known celebrities. Respond only with valid JSON.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 1500,
+        temperature: 0.9
+      })
+    });
+
+    if (!openaiResponse.ok) {
+      throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+    }
+
+    const openaiData = await openaiResponse.json();
+    const result = JSON.parse(openaiData.choices[0].message.content);
+    
+    let celebrities: CelebrityMatch[] = result.celebrities || [];
+
+    // Fetch images from TMDB for actors/directors
+    const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
+    if (tmdbApiKey) {
+      for (const celeb of celebrities) {
+        if (['actor', 'director'].includes(celeb.category)) {
+          try {
+            const searchResponse = await fetch(
+              `https://api.themoviedb.org/3/search/person?api_key=${tmdbApiKey}&query=${encodeURIComponent(celeb.name)}&page=1`
+            );
+            if (searchResponse.ok) {
+              const searchData = await searchResponse.json();
+              if (searchData.results && searchData.results.length > 0) {
+                const profilePath = searchData.results[0].profile_path;
+                if (profilePath) {
+                  celeb.image_url = `https://image.tmdb.org/t/p/w500${profilePath}`;
+                }
+              }
+            }
+            // Small delay to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (e) {
+            console.error('TMDB fetch error for', celeb.name, e);
+          }
+        }
+      }
+    }
+
+    // Sort by match score
+    celebrities.sort((a, b) => b.match_score - a.match_score);
+
+    // Cache the results (store in celebrity_dna table with user_id)
+    await supabaseClient
+      .from('celebrity_dna')
+      .upsert({
+        id: user.id, // Use user_id as the primary key for caching
+        name: `Cache for ${user.id}`,
+        user_id: user.id,
+        favorite_titles: celebrities, // Store the matches here
+        is_active: false, // Not a public celebrity
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+    return new Response(JSON.stringify({
+      celebrities,
+      user_dna: {
+        label: userProfile?.label,
+        tagline: userProfile?.tagline
+      },
+      from_cache: false,
+      user_level: userLevel.current_level
+    }), {
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
@@ -280,15 +280,3 @@ serve(async (req) => {
     });
   }
 });
-
-function getCompatibilityNote(score: number, celebName: string): string {
-  if (score >= 80) {
-    return `You and ${celebName} are entertainment soulmates! 🎬`;
-  } else if (score >= 65) {
-    return `You and ${celebName} would have great watch party chemistry! 🍿`;
-  } else if (score >= 50) {
-    return `You and ${celebName} share some common ground in entertainment taste.`;
-  } else {
-    return `You and ${celebName} have different tastes — but opposites can spark great recommendations!`;
-  }
-}
