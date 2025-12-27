@@ -1244,6 +1244,14 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   const seasons = tvShowData?.seasons || [];
   const currentSeasonData = seasons.find((s: any) => s.seasonNumber === editSeason);
   const maxEpisodes = currentSeasonData?.episodeCount || 999;
+
+  // Clamp episode value when TMDB data loads or season changes
+  useEffect(() => {
+    if (maxEpisodes < 999 && editEpisode > maxEpisodes) {
+      setEditEpisode(maxEpisodes);
+    }
+  }, [maxEpisodes, editEpisode]);
+
   const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>(
     progressMode === 'episode' ? 'episode' : progressMode === 'page' ? 'page' : 'percent'
   );
