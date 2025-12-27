@@ -1348,37 +1348,24 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
           </div>
           <h4 className="text-xs font-medium text-white truncate mb-1">{item.title}</h4>
           
-          {/* Tappable progress bar */}
-          <button 
-            onClick={() => setIsProgressSheetOpen(true)}
-            className="w-full mb-2 bg-purple-600/30 hover:bg-purple-600/50 rounded-md px-2 py-1.5 transition-colors text-left"
-            data-testid={`button-edit-progress-${item.id}`}
-          >
-            <span className="text-[10px] text-purple-300 font-medium">{getProgressDisplay()}</span>
-          </button>
-          
           {/* Action buttons */}
           <div className="flex gap-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleIncrement}
+            <button 
+              onClick={() => setIsProgressSheetOpen(true)}
               disabled={isUpdating}
-              className="flex-1 h-7 text-[10px] bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 rounded"
-              data-testid={`button-increment-${item.id}`}
+              className="flex-1 h-6 text-[10px] bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 font-medium rounded px-2 transition-colors"
+              data-testid={`button-edit-progress-${item.id}`}
             >
-              +{progressMode === 'percent' ? '10%' : '1'}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
+              {getProgressDisplay()}
+            </button>
+            <button
               onClick={() => setIsMoveSheetOpen(true)}
               disabled={isUpdating}
-              className="h-7 w-7 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 rounded p-0"
+              className="h-6 w-6 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 rounded flex items-center justify-center"
               data-testid={`button-more-${item.id}`}
             >
               <MoreHorizontal size={12} />
-            </Button>
+            </button>
           </div>
         </div>
       </div>
