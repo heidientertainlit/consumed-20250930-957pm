@@ -1205,20 +1205,27 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
   const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
   
-  // Local state for progress editing
-  const [localProgress, setLocalProgress] = useState(item.progress || 0);
-  const [localTotal, setLocalTotal] = useState(item.progress_total || 100);
-  const [editProgress, setEditProgress] = useState(item.progress || 0);
-  const [editTotal, setEditTotal] = useState(item.progress_total || 100);
-  const [editSeason, setEditSeason] = useState(item.progress_total || 1);
-  const [editEpisode, setEditEpisode] = useState(item.progress || 1);
-  
   const mediaType = item.media_type || 'movie';
   const isBook = mediaType === 'book';
   const isTv = mediaType === 'tv' || mediaType === 'series';
   const isPodcast = mediaType === 'podcast';
   const isMusic = mediaType === 'music';
   const progressMode = item.progress_mode || (isBook ? 'page' : isTv ? 'episode' : 'percent');
+
+  // Mode-aware default for total/season
+  const getDefaultTotal = () => {
+    if (isTv) return 1; // Default to Season 1
+    if (isBook || isPodcast) return 0; // No default total for pages/minutes
+    return 100; // Default 100% for percent mode
+  };
+
+  // Local state for progress editing
+  const [localProgress, setLocalProgress] = useState(item.progress || 0);
+  const [localTotal, setLocalTotal] = useState(item.progress_total ?? getDefaultTotal());
+  const [editProgress, setEditProgress] = useState(item.progress || 0);
+  const [editTotal, setEditTotal] = useState(item.progress_total ?? getDefaultTotal());
+  const [editSeason, setEditSeason] = useState(item.progress_total ?? 1);
+  const [editEpisode, setEditEpisode] = useState(item.progress || 1);
 
   // Fetch TV show details when progress sheet opens (for season/episode data)
   const { data: tvShowData, isLoading: isTvDataLoading } = useQuery({
