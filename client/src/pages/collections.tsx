@@ -1316,7 +1316,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
         {/* Image Section */}
         <div 
           className="relative h-24 cursor-pointer"
-          onClick={() => setLocation(`/media/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
+          onClick={() => setLocation(`/media/${item.media_type}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
         >
           {item.image_url ? (
             <img 
