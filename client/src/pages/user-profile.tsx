@@ -248,6 +248,20 @@ export default function UserProfile() {
     }
   };
 
+  // Calculate DNA Level from local stats (fallback when edge function isn't deployed)
+  const calculateDnaLevelFromStats = (stats: typeof userStats) => {
+    if (!stats) return { level: 1 as const, itemCount: 0 };
+    
+    const totalItems = (stats.moviesWatched || 0) + (stats.tvShowsWatched || 0) + 
+                       (stats.booksRead || 0) + (stats.gamesPlayed || 0);
+    
+    let level: 1 | 2 | 3 = 1;
+    if (totalItems >= 30) level = 3;
+    else if (totalItems >= 15) level = 2;
+    
+    return { level, itemCount: totalItems };
+  };
+
   // Fetch DNA Level (calculates level based on logged items)
   const fetchDnaLevel = async () => {
     if (!viewingUserId) return;
@@ -270,16 +284,19 @@ export default function UserProfile() {
       if (response.ok) {
         const data = await response.json();
         setDnaLevel(data.current_level || 1);
-        setDnaItemCount(data.item_count || 0);
+        setDnaItemCount(data.items_logged || 0);
       } else {
-        console.error('Failed to fetch DNA level');
-        setDnaLevel(1);
-        setDnaItemCount(0);
+        // Fallback: calculate from local stats
+        const { level, itemCount } = calculateDnaLevelFromStats(userStats);
+        setDnaLevel(level);
+        setDnaItemCount(itemCount);
       }
     } catch (error) {
       console.error('Error fetching DNA level:', error);
-      setDnaLevel(1);
-      setDnaItemCount(0);
+      // Fallback: calculate from local stats
+      const { level, itemCount } = calculateDnaLevelFromStats(userStats);
+      setDnaLevel(level);
+      setDnaItemCount(itemCount);
     } finally {
       setIsLoadingDnaLevel(false);
     }
@@ -1001,6 +1018,17 @@ export default function UserProfile() {
       fetchDNARecommendations();
     }
   }, [session?.access_token, dnaProfileStatus, isOwnProfile]);
+
+  // Update DNA level from local stats when userStats loads (fallback for edge function)
+  useEffect(() => {
+    if (userStats && dnaItemCount === 0) {
+      const { level, itemCount } = calculateDnaLevelFromStats(userStats);
+      if (itemCount > 0) {
+        setDnaLevel(level);
+        setDnaItemCount(itemCount);
+      }
+    }
+  }, [userStats]);
 
   // Handle URL tab parameter to switch to specific tab
   useEffect(() => {

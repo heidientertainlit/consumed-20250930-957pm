@@ -1,6 +1,6 @@
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Star, Trophy, Lock, Users } from "lucide-react";
+import { Sparkles, Star, Trophy, Lock, Users, ChevronDown } from "lucide-react";
 
 interface DNALevelBadgeProps {
   level: 1 | 2 | 3;
@@ -49,78 +49,62 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
   const config = LEVEL_CONFIG[level];
   const Icon = config.icon;
   
-  // Calculate progress to next level
   const nextThreshold = config.threshold;
-  const prevThreshold = level === 1 ? 0 : level === 2 ? 15 : 30;
   const itemsNeeded = nextThreshold ? Math.max(0, nextThreshold - itemCount) : 0;
   const progress = nextThreshold 
-    ? Math.min(100, ((itemCount - prevThreshold) / (nextThreshold - prevThreshold)) * 100)
+    ? Math.min(100, (itemCount / nextThreshold) * 100)
     : 100;
 
   if (compact) {
     return (
       <Badge className={`${config.bgColor} ${config.textColor} text-xs font-medium px-2 py-0.5`}>
         <Icon size={12} className="mr-1" />
-        Level {level}: {config.name}
+        Level {level}
       </Badge>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-      {/* Level Badge Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${config.color} flex items-center justify-center shadow-md`}>
-            <Icon className="text-white" size={20} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-gray-900">Level {level}</span>
-              <Badge className={`${config.bgColor} ${config.textColor} text-xs`}>
-                {config.name}
-              </Badge>
-            </div>
-            <p className="text-xs text-gray-500">{config.description}</p>
-          </div>
+    <div className="relative">
+      {/* Minimal DNA Header */}
+      <div className="flex items-center gap-4 py-3">
+        {/* Icon */}
+        <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${config.color} flex items-center justify-center shadow-lg`}>
+          <Icon className="text-white" size={24} />
         </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold text-gray-900">{itemCount}</div>
-          <div className="text-xs text-gray-500">items logged</div>
+        
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-gray-900">Entertainment DNA</span>
+            <span className="text-sm text-gray-500">Level {level}</span>
+          </div>
+          
+          {showProgress && nextThreshold ? (
+            <div className="flex items-center gap-2 mt-1">
+              <Progress value={progress} className="h-1.5 flex-1 max-w-[120px]" />
+              <span className="text-xs text-gray-500">{itemCount}/{nextThreshold}</span>
+            </div>
+          ) : level === 3 ? (
+            <span className="text-xs text-emerald-600 font-medium">All features unlocked</span>
+          ) : null}
+        </div>
+
+        {/* Chevron hint */}
+        <div className="flex flex-col items-center text-gray-400">
+          <ChevronDown size={18} className="animate-bounce" />
         </div>
       </div>
 
-      {/* Progress to Next Level */}
-      {showProgress && nextThreshold && (
-        <div className="space-y-2">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-600">Progress to Level {config.nextLevel}</span>
-            <span className="font-medium text-gray-900">{itemCount}/{nextThreshold}</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-          
-          {/* Unlock Message */}
-          <div className="flex items-center gap-2 mt-3 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-100">
-            {level === 1 ? (
-              <Star size={16} className="text-amber-500 flex-shrink-0" />
-            ) : (
-              <Users size={16} className="text-emerald-500 flex-shrink-0" />
-            )}
-            <span className="text-xs text-gray-700">
-              <span className="font-semibold text-purple-700">Log {itemsNeeded} more items</span> to unlock {config.nextUnlock}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Max Level */}
-      {level === 3 && (
-        <div className="flex items-center gap-2 mt-2 p-2 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-100">
-          <Trophy size={16} className="text-emerald-600 flex-shrink-0" />
-          <span className="text-xs text-gray-700">
-            <span className="font-semibold text-emerald-700">Max level reached!</span> All DNA features unlocked.
-          </span>
-        </div>
+      {/* Unlock hint - subtle inline text */}
+      {showProgress && nextThreshold && itemsNeeded > 0 && (
+        <p className="text-xs text-gray-500 pl-16 -mt-1 mb-2">
+          {level === 1 ? (
+            <>Log <span className="font-semibold text-purple-600">{itemsNeeded} more</span> to unlock Celebrity Matches</>
+          ) : (
+            <>Log <span className="font-semibold text-amber-600">{itemsNeeded} more</span> to unlock Friend Comparisons</>
+          )}
+        </p>
       )}
     </div>
   );
@@ -145,23 +129,26 @@ export function DNALevelProgress({ itemCount }: { itemCount: number }) {
   );
 }
 
-export function DNAFeatureLock({ requiredLevel, currentLevel, featureName }: { requiredLevel: 2 | 3; currentLevel: 1 | 2 | 3; featureName: string }) {
+export function DNAFeatureLock({ requiredLevel, currentLevel, currentItemCount, featureName }: { 
+  requiredLevel: 2 | 3; 
+  currentLevel: 1 | 2 | 3; 
+  currentItemCount: number;
+  featureName: string;
+}) {
   if (currentLevel >= requiredLevel) return null;
   
-  const itemsNeeded = requiredLevel === 2 ? 15 : 30;
+  const targetItems = requiredLevel === 2 ? 15 : 30;
+  const itemsNeeded = Math.max(0, targetItems - currentItemCount);
   
   return (
     <div className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-xl border border-gray-200 text-center">
       <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-3">
         <Lock size={24} className="text-gray-400" />
       </div>
-      <h4 className="font-semibold text-gray-700 mb-1">{featureName} Locked</h4>
-      <p className="text-sm text-gray-500 mb-3">
-        Log {itemsNeeded - (currentLevel === 1 ? 0 : 15)} more items to unlock
+      <h4 className="font-semibold text-gray-700 mb-1">{featureName}</h4>
+      <p className="text-sm text-gray-500">
+        Log {itemsNeeded} more items to unlock
       </p>
-      <Badge className="bg-purple-100 text-purple-700 text-xs">
-        Requires Level {requiredLevel}
-      </Badge>
     </div>
   );
 }
