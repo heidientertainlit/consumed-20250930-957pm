@@ -1,6 +1,6 @@
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Star, Trophy, Lock, Users, ChevronDown } from "lucide-react";
+import { Sparkles, Star, Trophy, Lock, ChevronDown } from "lucide-react";
 
 interface DNALevelBadgeProps {
   level: 1 | 2 | 3;
@@ -11,34 +11,34 @@ interface DNALevelBadgeProps {
 
 const LEVEL_CONFIG = {
   1: {
-    name: "Snapshot",
+    name: "DNA Snapshot",
     icon: Sparkles,
     color: "from-purple-500 to-indigo-500",
     bgColor: "bg-purple-100",
     textColor: "text-purple-700",
-    description: "Survey-based DNA profile",
+    description: "Survey-based profile",
     nextUnlock: "Celebrity Matches",
     nextLevel: 2,
     threshold: 15,
   },
   2: {
-    name: "Profile",
+    name: "DNA Profile",
     icon: Star,
     color: "from-amber-500 to-orange-500",
     bgColor: "bg-amber-100",
     textColor: "text-amber-700",
-    description: "Behavior + Survey blend (60/40)",
+    description: "Behavior + Survey blend",
     nextUnlock: "Friend DNA Comparisons",
     nextLevel: 3,
     threshold: 30,
   },
   3: {
-    name: "Blueprint",
+    name: "DNA Blueprint",
     icon: Trophy,
     color: "from-emerald-500 to-teal-500",
     bgColor: "bg-emerald-100",
     textColor: "text-emerald-700",
-    description: "Full behavior-driven DNA",
+    description: "Full behavior-driven",
     nextUnlock: null,
     nextLevel: null,
     threshold: null,
@@ -59,51 +59,48 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
     return (
       <Badge className={`${config.bgColor} ${config.textColor} text-xs font-medium px-2 py-0.5`}>
         <Icon size={12} className="mr-1" />
-        Level {level}
+        Level {level}: {config.name}
       </Badge>
     );
   }
 
   return (
-    <div className="relative">
-      {/* Minimal DNA Header */}
-      <div className="flex items-center gap-4 py-3">
-        {/* Icon */}
-        <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${config.color} flex items-center justify-center shadow-lg`}>
-          <Icon className="text-white" size={24} />
+    <div className="py-2">
+      {/* Simple horizontal layout */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${config.color} flex items-center justify-center shadow-md`}>
+            <Icon className="text-white" size={18} />
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">Level {level}</div>
+            <div className="font-semibold text-gray-900">{config.name}</div>
+          </div>
         </div>
         
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-gray-900">Entertainment DNA</span>
-            <span className="text-sm text-gray-500">Level {level}</span>
-          </div>
-          
+        {/* Progress or status */}
+        <div className="text-right">
           {showProgress && nextThreshold ? (
-            <div className="flex items-center gap-2 mt-1">
-              <Progress value={progress} className="h-1.5 flex-1 max-w-[120px]" />
-              <span className="text-xs text-gray-500">{itemCount}/{nextThreshold}</span>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="text-xs text-gray-500">{itemCount} of {nextThreshold}</div>
+                <Progress value={progress} className="h-1.5 w-16" />
+              </div>
+              <ChevronDown size={16} className="text-gray-400" />
             </div>
           ) : level === 3 ? (
-            <span className="text-xs text-emerald-600 font-medium">All features unlocked</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-emerald-600 font-medium">All unlocked</span>
+              <ChevronDown size={16} className="text-gray-400" />
+            </div>
           ) : null}
-        </div>
-
-        {/* Chevron hint */}
-        <div className="flex flex-col items-center text-gray-400">
-          <ChevronDown size={18} className="animate-bounce" />
         </div>
       </div>
 
-      {/* Unlock hint - subtle inline text */}
+      {/* Unlock hint */}
       {showProgress && nextThreshold && itemsNeeded > 0 && (
-        <p className="text-xs text-gray-500 pl-16 -mt-1 mb-2">
-          {level === 1 ? (
-            <>Log <span className="font-semibold text-purple-600">{itemsNeeded} more</span> to unlock Celebrity Matches</>
-          ) : (
-            <>Log <span className="font-semibold text-amber-600">{itemsNeeded} more</span> to unlock Friend Comparisons</>
-          )}
+        <p className="text-xs text-gray-500 mt-2 pl-13">
+          Log <span className="font-semibold text-purple-600">{itemsNeeded} more</span> to unlock {config.nextUnlock}
         </p>
       )}
     </div>
@@ -115,15 +112,10 @@ export function DNALevelProgress({ itemCount }: { itemCount: number }) {
   
   return (
     <div className="flex items-center gap-1">
-      {/* Level 1 */}
       <div className={`w-2 h-2 rounded-full ${level >= 1 ? 'bg-purple-500' : 'bg-gray-300'}`} />
       <div className={`flex-1 h-1 ${level >= 2 ? 'bg-amber-500' : 'bg-gray-200'}`} />
-      
-      {/* Level 2 */}
       <div className={`w-2 h-2 rounded-full ${level >= 2 ? 'bg-amber-500' : 'bg-gray-300'}`} />
       <div className={`flex-1 h-1 ${level >= 3 ? 'bg-emerald-500' : 'bg-gray-200'}`} />
-      
-      {/* Level 3 */}
       <div className={`w-2 h-2 rounded-full ${level >= 3 ? 'bg-emerald-500' : 'bg-gray-300'}`} />
     </div>
   );
