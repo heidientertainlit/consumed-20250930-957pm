@@ -1201,6 +1201,7 @@ interface CurrentlyConsumingCardProps {
 
 function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdating }: CurrentlyConsumingCardProps) {
   const [, setLocation] = useLocation();
+  const { session } = useAuth();
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
   const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
   
@@ -1218,6 +1219,31 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   const isPodcast = mediaType === 'podcast';
   const isMusic = mediaType === 'music';
   const progressMode = item.progress_mode || (isBook ? 'page' : isTv ? 'episode' : 'percent');
+
+  // Fetch TV show details when progress sheet opens (for season/episode data)
+  const { data: tvShowData, isLoading: isTvDataLoading } = useQuery({
+    queryKey: ['tv-show-seasons', item.external_source, item.external_id],
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${item.external_source || 'tmdb'}&external_id=${item.external_id}&media_type=tv`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: isTv && isProgressSheetOpen && !!session?.access_token,
+    staleTime: 1000 * 60 * 30, // Cache for 30 mins
+  });
+
+  // Get season data from TV show
+  const seasons = tvShowData?.seasons || [];
+  const currentSeasonData = seasons.find((s: any) => s.seasonNumber === editSeason);
+  const maxEpisodes = currentSeasonData?.episodeCount || 999;
   const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>(
     progressMode === 'episode' ? 'episode' : progressMode === 'page' ? 'page' : 'percent'
   );
@@ -1460,43 +1486,88 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
 
             {editMode === 'episode' && (
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Season</label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={editSeason}
-                      onChange={(e) => setEditSeason(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Episode</label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={editEpisode}
-                      onChange={(e) => setEditEpisode(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
-                    />
-                  </div>
-                </div>
-                {/* Quick episode increment buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setEditEpisode(editEpisode + 1)}
-                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
-                  >
-                    +1 Episode
-                  </button>
-                  <button
-                    onClick={() => { setEditSeason(editSeason + 1); setEditEpisode(1); }}
-                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                  >
-                    Next Season
-                  </button>
-                </div>
+                {isTvDataLoading ? (
+                  <div className="text-center py-4 text-gray-500">Loading season data...</div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Season</label>
+                        {seasons.length > 0 ? (
+                          <select
+                            value={editSeason}
+                            onChange={(e) => {
+                              const newSeason = parseInt(e.target.value);
+                              setEditSeason(newSeason);
+                              // Reset episode to 1 when changing seasons
+                              setEditEpisode(1);
+                            }}
+                            className="w-full h-10 px-3 text-center text-lg font-semibold bg-white text-gray-900 border border-gray-200 rounded-md focus:border-purple-400 focus:ring-purple-400"
+                          >
+                            {seasons.map((s: any) => (
+                              <option key={s.seasonNumber} value={s.seasonNumber}>
+                                S{s.seasonNumber} ({s.episodeCount} eps)
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input
+                            type="number"
+                            min={1}
+                            value={editSeason}
+                            onChange={(e) => setEditSeason(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                          />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Episode {maxEpisodes < 999 && <span className="text-gray-400 font-normal">/ {maxEpisodes}</span>}
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={maxEpisodes}
+                          value={editEpisode}
+                          onChange={(e) => setEditEpisode(Math.min(maxEpisodes, Math.max(1, parseInt(e.target.value) || 1)))}
+                          className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
+                    </div>
+                    {/* Quick episode increment buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditEpisode(Math.min(editEpisode + 1, maxEpisodes))}
+                        disabled={editEpisode >= maxEpisodes}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          editEpisode >= maxEpisodes
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                        }`}
+                      >
+                        +1 Episode
+                      </button>
+                      <button
+                        onClick={() => {
+                          const nextSeasonNum = editSeason + 1;
+                          const nextSeason = seasons.find((s: any) => s.seasonNumber === nextSeasonNum);
+                          if (nextSeason || seasons.length === 0) {
+                            setEditSeason(nextSeasonNum);
+                            setEditEpisode(1);
+                          }
+                        }}
+                        disabled={seasons.length > 0 && !seasons.find((s: any) => s.seasonNumber === editSeason + 1)}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          seasons.length > 0 && !seasons.find((s: any) => s.seasonNumber === editSeason + 1)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        Next Season
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
