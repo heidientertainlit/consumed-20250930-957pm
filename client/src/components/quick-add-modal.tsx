@@ -25,7 +25,13 @@ import {
   AlertTriangle,
   ChevronDown,
   Check,
-  X
+  X,
+  Play,
+  Clock,
+  Heart,
+  Ban,
+  Bookmark,
+  Folder
 } from "lucide-react";
 
 interface QuickAddModalProps {
@@ -648,65 +654,103 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
 
     {/* List Selection Drawer */}
     <Drawer open={isListDrawerOpen} onOpenChange={setIsListDrawerOpen}>
-      <DrawerContent className="bg-white">
-        <DrawerHeader className="text-left">
-          <DrawerTitle className="text-gray-900">Select a List</DrawerTitle>
+      <DrawerContent className="bg-white rounded-t-2xl">
+        <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+          <DrawerTitle className="text-lg font-semibold text-gray-900">Select a List</DrawerTitle>
         </DrawerHeader>
-        <div className="px-4 pb-6 max-h-[60vh] overflow-y-auto">
+        <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">
           <button
             onClick={() => {
               setSelectedListId("none");
               setIsListDrawerOpen(false);
             }}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
             data-testid="list-option-none"
           >
-            <span className="text-gray-900">None</span>
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <X className="text-gray-500" size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">None</p>
+              <p className="text-sm text-gray-500">Don't add to a list</p>
+            </div>
             {(!selectedListId || selectedListId === "none") && (
-              <Check size={18} className="text-purple-600" />
+              <Check size={20} className="text-purple-600" />
             )}
           </button>
-          {userLists.map((list: any) => (
-            <button
-              key={list.id}
-              onClick={() => {
-                setSelectedListId(list.id);
-                setIsListDrawerOpen(false);
-              }}
-              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
-              data-testid={`list-option-${list.id}`}
-            >
-              <div className="flex items-center gap-3">
-                <List size={16} className="text-purple-600" />
-                <span className="text-gray-900">{list.title}</span>
-              </div>
-              {selectedListId === list.id && (
-                <Check size={18} className="text-purple-600" />
-              )}
-            </button>
-          ))}
+          {userLists.map((list: any) => {
+            const getListStyle = (title: string) => {
+              const lower = title.toLowerCase();
+              if (lower.includes('currently') || lower.includes('watching') || lower.includes('reading')) {
+                return { bg: 'bg-purple-100', icon: <Play className="text-purple-600" size={20} />, desc: 'Currently consuming' };
+              }
+              if (lower.includes('queue') || lower.includes('want')) {
+                return { bg: 'bg-blue-100', icon: <Clock className="text-blue-600" size={20} />, desc: 'Save for later' };
+              }
+              if (lower.includes('finished') || lower.includes('complete')) {
+                return { bg: 'bg-green-100', icon: <Check className="text-green-600" size={20} />, desc: 'Completed media' };
+              }
+              if (lower.includes('dnf') || lower.includes('not finish')) {
+                return { bg: 'bg-red-100', icon: <Ban className="text-red-600" size={20} />, desc: 'Stopped watching/reading' };
+              }
+              if (lower.includes('favorite')) {
+                return { bg: 'bg-yellow-100', icon: <Heart className="text-yellow-600" size={20} />, desc: 'Your favorites' };
+              }
+              return { bg: 'bg-purple-100', icon: <Folder className="text-purple-600" size={20} />, desc: 'Custom list' };
+            };
+            const style = getListStyle(list.title);
+            
+            return (
+              <button
+                key={list.id}
+                onClick={() => {
+                  setSelectedListId(list.id);
+                  setIsListDrawerOpen(false);
+                }}
+                className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                data-testid={`list-option-${list.id}`}
+              >
+                <div className={`w-10 h-10 ${style.bg} rounded-full flex items-center justify-center`}>
+                  {style.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{list.title}</p>
+                  <p className="text-sm text-gray-500">{style.desc}</p>
+                </div>
+                {selectedListId === list.id && (
+                  <Check size={20} className="text-purple-600" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </DrawerContent>
     </Drawer>
 
     {/* Rank Selection Drawer */}
     <Drawer open={isRankDrawerOpen} onOpenChange={setIsRankDrawerOpen}>
-      <DrawerContent className="bg-white">
-        <DrawerHeader className="text-left">
-          <DrawerTitle className="text-gray-900">Select a Rank</DrawerTitle>
+      <DrawerContent className="bg-white rounded-t-2xl">
+        <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+          <DrawerTitle className="text-lg font-semibold text-gray-900">Select a Rank</DrawerTitle>
         </DrawerHeader>
-        <div className="px-4 pb-6 max-h-[60vh] overflow-y-auto">
+        <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">
           <button
             onClick={() => {
               setSelectedRankId("none");
               setIsRankDrawerOpen(false);
             }}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
             data-testid="rank-option-none"
           >
-            <span className="text-gray-900">None</span>
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <X className="text-gray-500" size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">None</p>
+              <p className="text-sm text-gray-500">Don't add to a rank</p>
+            </div>
             {(!selectedRankId || selectedRankId === "none") && (
-              <Check size={18} className="text-purple-600" />
+              <Check size={20} className="text-purple-600" />
             )}
           </button>
           {userRanks.map((rank: any) => (
@@ -716,15 +760,18 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                 setSelectedRankId(rank.id);
                 setIsRankDrawerOpen(false);
               }}
-              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
               data-testid={`rank-option-${rank.id}`}
             >
-              <div className="flex items-center gap-3">
-                <Trophy size={16} className="text-yellow-600" />
-                <span className="text-gray-900">{rank.title}</span>
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                <Trophy className="text-yellow-600" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">{rank.title}</p>
+                <p className="text-sm text-gray-500">Add to ranked list</p>
               </div>
               {selectedRankId === rank.id && (
-                <Check size={18} className="text-purple-600" />
+                <Check size={20} className="text-purple-600" />
               )}
             </button>
           ))}
