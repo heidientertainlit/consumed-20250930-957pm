@@ -1038,7 +1038,7 @@ export default function UserProfile() {
     
     if (tab) {
       // Map 'lists' to 'collections' for backward compatibility
-      const validTabs = ['stats', 'dna', 'friends', 'collections', 'history'];
+      const validTabs = ['stats', 'dna', 'badges', 'friends', 'collections', 'history'];
       const normalizedTab = tab === 'lists' ? 'collections' : tab;
       if (validTabs.includes(normalizedTab)) {
         setActiveSection(normalizedTab);
@@ -2223,6 +2223,16 @@ export default function UserProfile() {
                       </div>
                     )}
 
+                    {/* Badges Link */}
+                    <button
+                      onClick={() => setActiveSection('badges')}
+                      className="flex items-center space-x-2 hover:bg-gray-100 -ml-2 px-2 py-1 rounded-lg transition-colors group"
+                      data-testid="badges-link"
+                    >
+                      <Medal className="text-rose-500" size={18} />
+                      <span className="text-sm text-gray-600 group-hover:text-purple-600">badges →</span>
+                    </button>
+
                     {/* Badges */}
                     {userBadges.length > 0 && (
                       <div className="flex items-center space-x-2 flex-wrap gap-1">
@@ -2448,6 +2458,17 @@ export default function UserProfile() {
             >
               DNA
             </button>
+            <button
+              onClick={() => setActiveSection('badges')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'badges'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-badges"
+            >
+              Badges
+            </button>
             {isOwnProfile && (
               <button
                 onClick={() => setActiveSection('friends')}
@@ -2631,17 +2652,6 @@ export default function UserProfile() {
                 )}
               </div>
             </div>
-
-            {/* DNA Level Badge - Shows progress through levels */}
-            {dnaProfileStatus === 'has_profile' && (
-              <div className="mb-4">
-                <DNALevelBadge 
-                  level={dnaLevel} 
-                  itemCount={dnaItemCount} 
-                  showProgress={isOwnProfile} 
-                />
-              </div>
-            )}
 
             {/* Conditional Content based on status */}
             {dnaProfileStatus === 'no_profile' && (
@@ -3087,6 +3097,47 @@ export default function UserProfile() {
             )}
           </div>
         </div>
+        )}
+
+        {/* Badges Section */}
+        {activeSection === 'badges' && (
+          <div className="px-4 mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>
+              {isOwnProfile ? 'Your' : 'Their'} Badges
+            </h3>
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              {userBadges.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {userBadges.map((badge: any) => (
+                    <div
+                      key={badge.id}
+                      className="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:border-purple-200 transition-colors"
+                      style={{ backgroundColor: `${badge.theme_color}08` }}
+                    >
+                      <span className="text-3xl mb-2">{badge.emoji}</span>
+                      <span
+                        className="font-semibold text-sm text-center"
+                        style={{ color: badge.theme_color }}
+                      >
+                        {badge.name}
+                      </span>
+                      <p className="text-xs text-gray-500 text-center mt-1">{badge.description}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Medal size={28} className="text-gray-400" />
+                  </div>
+                  <h4 className="font-semibold text-gray-700 mb-2">No Badges Yet</h4>
+                  <p className="text-sm text-gray-500 max-w-xs mx-auto">
+                    Complete activities and reach milestones to earn badges!
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Friends Manager - Only show on own profile */}
