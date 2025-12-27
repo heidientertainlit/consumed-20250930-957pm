@@ -1310,12 +1310,12 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   return (
     <>
       <div 
-        className="w-40 bg-gradient-to-br from-gray-900 via-purple-900/30 to-gray-900 rounded-xl overflow-hidden border border-gray-800/50 flex-shrink-0"
+        className="w-36 flex-shrink-0"
         data-testid={`currently-card-${item.id}`}
       >
         {/* Image Section */}
         <div 
-          className="relative h-24 cursor-pointer"
+          className="relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer mb-2"
           onClick={() => setLocation(`/media/${item.media_type}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
         >
           {item.image_url ? (
@@ -1329,45 +1329,44 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
               {getMediaIcon()}
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
           
-          {/* Progress bar overlay */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-800">
-            <div 
-              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all"
-              style={{ width: `${getProgressPercent()}%` }}
-            />
+          {/* Bottom overlay with progress bar and controls */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-8 pb-2 px-2">
+            {/* Progress bar */}
+            <div className="h-1 bg-gray-700/50 rounded-full mb-2 overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all rounded-full"
+                style={{ width: `${getProgressPercent()}%` }}
+              />
+            </div>
+            
+            {/* Controls row */}
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 text-white/80">
+                {getMediaIcon()}
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsProgressSheetOpen(true); }}
+                disabled={isUpdating}
+                className="flex-1 h-6 text-[11px] bg-purple-600/80 hover:bg-purple-600 text-white font-medium rounded-md px-2 transition-colors"
+                data-testid={`button-edit-progress-${item.id}`}
+              >
+                {getProgressDisplay()}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsMoveSheetOpen(true); }}
+                disabled={isUpdating}
+                className="h-6 w-6 bg-white/20 hover:bg-white/30 text-white rounded-md flex items-center justify-center"
+                data-testid={`button-more-${item.id}`}
+              >
+                <MoreHorizontal size={12} />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="p-2">
-          <div className="flex items-center gap-1 mb-1">
-            {getMediaIcon()}
-            <span className="text-[10px] text-gray-400 uppercase">{mediaType}</span>
-          </div>
-          <h4 className="text-xs font-medium text-white truncate mb-1">{item.title}</h4>
-          
-          {/* Action buttons */}
-          <div className="flex gap-1">
-            <button 
-              onClick={() => setIsProgressSheetOpen(true)}
-              disabled={isUpdating}
-              className="flex-1 h-6 text-[10px] bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 font-medium rounded px-2 transition-colors"
-              data-testid={`button-edit-progress-${item.id}`}
-            >
-              {getProgressDisplay()}
-            </button>
-            <button
-              onClick={() => setIsMoveSheetOpen(true)}
-              disabled={isUpdating}
-              className="h-6 w-6 bg-gray-600/20 hover:bg-gray-600/40 text-gray-300 rounded flex items-center justify-center"
-              data-testid={`button-more-${item.id}`}
-            >
-              <MoreHorizontal size={12} />
-            </button>
-          </div>
-        </div>
+        {/* Title below card */}
+        <h4 className="text-sm font-medium text-white truncate px-0.5">{item.title}</h4>
       </div>
 
       {/* Progress Edit Sheet */}
