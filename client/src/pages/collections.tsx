@@ -1434,7 +1434,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       max={100}
                       value={editProgress}
                       onChange={(e) => setEditProgress(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                      className="text-center text-lg font-semibold pr-8 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                      className="text-center text-lg font-semibold pr-8 bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
                   </div>
@@ -1468,7 +1468,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       min={1}
                       value={editSeason}
                       onChange={(e) => setEditSeason(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1478,7 +1478,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       min={1}
                       value={editEpisode}
                       onChange={(e) => setEditEpisode(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                   </div>
                 </div>
@@ -1510,7 +1510,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       min={0}
                       value={editProgress}
                       onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1520,7 +1520,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       min={0}
                       value={editTotal}
                       onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                   </div>
                 </div>
@@ -1549,7 +1549,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       min={0}
                       value={editProgress}
                       onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1559,7 +1559,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       min={0}
                       value={editTotal}
                       onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="text-center text-lg font-semibold border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                   </div>
                 </div>
