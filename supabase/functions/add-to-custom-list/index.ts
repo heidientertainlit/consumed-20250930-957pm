@@ -74,7 +74,7 @@ serve(async (req) => {
 
     // Parse request
     const requestBody = await req.json();
-    const { media, rating, review, customListId } = requestBody;
+    const { media, rating, review, customListId, skip_social_post } = requestBody;
     const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle } = media || {};
 
     if (!customListId) {
@@ -132,8 +132,8 @@ serve(async (req) => {
 
     console.log('Successfully added media to custom list:', customList.title);
 
-    // Create a social post for this addition
-    if (mediaItem) {
+    // Create a social post for this addition (skip if caller will handle it, e.g. when rating is also being added)
+    if (mediaItem && !skip_social_post) {
       try {
         // Determine post type based on whether there's a rating
         const postType = rating ? 'rate-review' : 'add-to-list';
@@ -163,6 +163,8 @@ serve(async (req) => {
       } catch (postCreateError) {
         console.error('Error creating social post:', postCreateError);
       }
+    } else if (skip_social_post) {
+      console.log('Skipping social post creation (skip_social_post=true)');
     }
 
     return new Response(JSON.stringify({

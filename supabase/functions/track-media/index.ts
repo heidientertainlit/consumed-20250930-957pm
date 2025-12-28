@@ -124,7 +124,7 @@ serve(async (req) => {
 
     // Parse the request body
     const requestBody = await req.json();
-    const { media, rating, review, listType } = requestBody;
+    const { media, rating, review, listType, skip_social_post } = requestBody;
     const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle } = media || {};
 
     let targetList = null;
@@ -220,8 +220,8 @@ serve(async (req) => {
 
     console.log('Successfully added media item:', mediaItem);
 
-    // Create a social post for this addition (always create post when media is added)
-    if (mediaItem) {
+    // Create a social post for this addition (skip if caller will handle it, e.g. when rating is also being added)
+    if (mediaItem && !skip_social_post) {
       try {
         // Determine post type based on whether there's a rating
         const postType = rating ? 'rate-review' : 'add-to-list';
@@ -251,6 +251,8 @@ serve(async (req) => {
       } catch (postCreateError) {
         console.error('Error creating social post:', postCreateError);
       }
+    } else if (skip_social_post) {
+      console.log('Skipping social post creation (skip_social_post=true)');
     }
 
     // Also save rating to unified media_ratings table for Entertainment DNA

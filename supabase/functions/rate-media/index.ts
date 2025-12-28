@@ -198,6 +198,33 @@ serve(async (req) => {
     }
 
     console.log('Rating saved successfully:', result);
+
+    // Create a social post for this rating (the preferred post style)
+    try {
+      const { error: postError } = await supabase
+        .from('social_posts')
+        .insert({
+          user_id: appUser.id,
+          post_type: 'rate-review',
+          content: `Rated ${media_title}`,
+          media_title: media_title,
+          media_type: media_type,
+          media_external_id: media_external_id,
+          media_external_source: media_external_source,
+          image_url: body.media_image_url || null,
+          rating: rating,
+          visibility: 'public',
+          contains_spoilers: false
+        });
+      
+      if (postError) {
+        console.error('Failed to create social post for rating:', postError);
+      } else {
+        console.log('Created social post for rating');
+      }
+    } catch (postCreateError) {
+      console.error('Error creating social post:', postCreateError);
+    }
     
     return new Response(JSON.stringify({ 
       success: true,

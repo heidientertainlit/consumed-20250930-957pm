@@ -257,6 +257,9 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       
       // Step 1: Track media to history (always happens)
       // Use track-media for default "Finished" list, or add-to-custom-list for specific lists
+      // Skip social post creation if we have a rating (rate-media will create the preferred rating-style post)
+      const skipSocialPost = rating > 0;
+      
       if (selectedListId && selectedListId !== "none") {
         // Add to specific custom list
         const response = await fetch(
@@ -270,6 +273,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             body: JSON.stringify({
               media: mediaData,
               customListId: selectedListId,
+              skip_social_post: skipSocialPost,
             }),
           }
         );
@@ -292,6 +296,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             body: JSON.stringify({
               media: mediaData,
               listType: 'finished',
+              skip_social_post: skipSocialPost,
             }),
           }
         );
