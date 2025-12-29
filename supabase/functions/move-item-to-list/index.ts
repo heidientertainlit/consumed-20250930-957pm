@@ -114,18 +114,67 @@ serve(async (req) => {
       throw new Error(`Target list "${listConfig.title}" not found`);
     }
 
-    // Update the item's list_id
-    const { data, error } = await supabaseClient
+    // Get the item being moved to check for duplicates
+    const { data: sourceItem, error: sourceError } = await supabaseClient
       .from('list_items')
-      .update({ 
-        list_id: targetListData.id,
-        progress: target_list === 'finished' ? 100 : 0, // Set progress to 100 if finished
-        progress_mode: 'percent'
-      })
+      .select('id, external_id, external_source, list_id')
       .eq('id', item_id)
-      .eq('user_id', userId) // Ensure user owns this item
-      .select()
+      .eq('user_id', userId)
       .single();
+
+    if (sourceError || !sourceItem) {
+      console.error('Error finding source item:', sourceError);
+      throw new Error('Item not found');
+    }
+
+    // Check if already in target list
+    if (sourceItem.list_id === targetListData.id) {
+      return new Response(JSON.stringify({ success: true, message: 'Item already in target list' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    // Check if this media already exists in the target list (duplicate check)
+    const { data: existingInTarget } = await supabaseClient
+      .from('list_items')
+      .select('id')
+      .eq('list_id', targetListData.id)
+      .eq('external_id', sourceItem.external_id)
+      .eq('external_source', sourceItem.external_source)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    let data;
+    let error;
+
+    if (existingInTarget) {
+      // Media already exists in target list - just delete the source item
+      const deleteResult = await supabaseClient
+        .from('list_items')
+        .delete()
+        .eq('id', item_id)
+        .eq('user_id', userId);
+      
+      error = deleteResult.error;
+      data = { deleted: true, message: 'Duplicate removed, item exists in target list' };
+    } else {
+      // No duplicate - update the item's list_id
+      const updateResult = await supabaseClient
+        .from('list_items')
+        .update({ 
+          list_id: targetListData.id,
+          progress: target_list === 'finished' ? 100 : 0,
+          progress_mode: 'percent'
+        })
+        .eq('id', item_id)
+        .eq('user_id', userId)
+        .select()
+        .single();
+      
+      data = updateResult.data;
+      error = updateResult.error;
+    }
 
     if (error) {
       console.error('Error moving item:', error);
