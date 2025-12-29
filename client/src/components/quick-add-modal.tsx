@@ -487,24 +487,29 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                 </div>
               ) : searchResults.length > 0 ? (
                 <div className="space-y-2">
-                  {searchResults.map((result, index) => (
+                  {searchResults.map((result, index) => {
+                    const posterImage = result.poster_url || result.image_url || result.poster_path;
+                    return (
                     <button
                       key={`${result.external_id || result.id}-${index}`}
                       onClick={() => handleSelectMedia(result)}
                       className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors text-left"
                       data-testid={`search-result-${index}`}
                     >
-                      {result.image_url || result.poster_path ? (
+                      {posterImage ? (
                         <img
-                          src={result.image_url || result.poster_path}
+                          src={posterImage}
                           alt={result.title}
                           className="w-12 h-16 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
                         />
-                      ) : (
-                        <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
-                          {getMediaIcon(result.type)}
-                        </div>
-                      )}
+                      ) : null}
+                      <div className={`w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center ${posterImage ? 'hidden' : ''}`}>
+                        {getMediaIcon(result.type)}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{result.title}</p>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -517,7 +522,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                         )}
                       </div>
                     </button>
-                  ))}
+                  );
+                  })}
                 </div>
               ) : searchQuery.trim() ? (
                 <div className="text-center py-8 text-gray-500">
@@ -545,9 +551,9 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             <div className="flex-1 overflow-y-auto p-4 space-y-5">
               {selectedMedia && (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                  {selectedMedia.image_url || selectedMedia.poster_path ? (
+                  {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path) ? (
                     <img
-                      src={selectedMedia.image_url || selectedMedia.poster_path}
+                      src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path}
                       alt={selectedMedia.title}
                       className="w-14 h-20 object-cover rounded-lg"
                     />
