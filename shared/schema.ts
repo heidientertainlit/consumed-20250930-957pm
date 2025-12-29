@@ -418,6 +418,25 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
   createdAt: true,
 });
 
+// Did Not Finish reasons - tracks why users didn't finish media
+export const dnfReasons = pgTable("dnf_reasons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  listItemId: integer("list_item_id"), // References list_items.id
+  mediaExternalId: text("media_external_id"),
+  mediaExternalSource: text("media_external_source"),
+  mediaTitle: text("media_title"),
+  mediaType: text("media_type"),
+  reason: text("reason").notNull(), // 'got_bored', 'didnt_love_it', 'too_long', 'confusing', 'lost_interest', 'not_my_taste', 'other'
+  otherReason: text("other_reason"), // Free text if reason is 'other'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDnfReasonSchema = createInsertSchema(dnfReasons).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -456,3 +475,5 @@ export type ConversationTopic = typeof conversationTopics.$inferSelect;
 export type InsertConversationTopic = z.infer<typeof insertConversationTopicSchema>;
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type DnfReason = typeof dnfReasons.$inferSelect;
+export type InsertDnfReason = z.infer<typeof insertDnfReasonSchema>;
