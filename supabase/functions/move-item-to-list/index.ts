@@ -40,32 +40,60 @@ serve(async (req) => {
       throw new Error('target_list is required');
     }
 
-    // Map list names to list types for lookup
-    const listTypeMap: { [key: string]: string } = {
-      'currently': 'Currently',
-      'queue': 'Want To',
-      'finished': 'Finished',
-      'dnf': 'Did Not Finish',
-      'favorites': 'Favorites'
+    // Map list names to list types for lookup - use ilike patterns for flexible matching
+    const listTypeMap: { [key: string]: { title: string; patterns: string[] } } = {
+      'currently': { title: 'Currently', patterns: ['Currently%', '%Currently%'] },
+      'queue': { title: 'Want To', patterns: ['Want To', 'Queue', '%Want%', '%Queue%'] },
+      'finished': { title: 'Finished', patterns: ['Finished', '%Finished%'] },
+      'dnf': { title: 'Did Not Finish', patterns: ['Did Not Finish', 'DNF', '%Not Finish%', '%DNF%'] },
+      'favorites': { title: 'Favorites', patterns: ['Favorites', '%Favorite%'] }
     };
 
-    const targetListTitle = listTypeMap[target_list];
-    if (!targetListTitle) {
+    const listConfig = listTypeMap[target_list];
+    if (!listConfig) {
       throw new Error('Invalid target list');
     }
 
-    // Find the target list for this user
-    const { data: targetListData, error: listError } = await supabaseClient
+    // Find the target list for this user - try exact match first, then patterns
+    let targetListData = null;
+    let listError = null;
+    
+    // Try exact title match first
+    const exactMatch = await supabaseClient
       .from('lists')
       .select('id')
       .eq('user_id', user.id)
-      .eq('title', targetListTitle)
+      .eq('title', listConfig.title)
       .eq('is_default', true)
-      .single();
+      .maybeSingle();
+    
+    if (exactMatch.data) {
+      targetListData = exactMatch.data;
+    } else {
+      // Try pattern matches
+      for (const pattern of listConfig.patterns) {
+        const patternMatch = await supabaseClient
+          .from('lists')
+          .select('id')
+          .eq('user_id', user.id)
+          .ilike('title', pattern)
+          .eq('is_default', true)
+          .maybeSingle();
+        
+        if (patternMatch.data) {
+          targetListData = patternMatch.data;
+          break;
+        }
+      }
+      
+      if (!targetListData) {
+        listError = exactMatch.error || { message: 'List not found' };
+      }
+    }
 
     if (listError || !targetListData) {
       console.error('Error finding target list:', listError);
-      throw new Error(`Target list "${targetListTitle}" not found`);
+      throw new Error(`Target list "${listConfig.title}" not found`);
     }
 
     // Update the item's list_id
