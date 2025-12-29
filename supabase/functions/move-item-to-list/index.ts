@@ -30,6 +30,24 @@ serve(async (req) => {
       throw new Error('Not authenticated');
     }
 
+    // Look up app user by email (same pattern as other edge functions)
+    let appUser = null;
+    const { data: appUserData, error: appUserError } = await supabaseClient
+      .from('users')
+      .select('id, email, user_name')
+      .eq('email', user.email)
+      .single();
+
+    if (appUserError && appUserError.code === 'PGRST116') {
+      // User not found - this shouldn't happen for existing items
+      throw new Error('User not found');
+    } else if (appUserError) {
+      throw new Error('User lookup failed: ' + appUserError.message);
+    }
+    
+    appUser = appUserData;
+    const userId = appUser.id;
+
     const { item_id, target_list } = await req.json();
 
     if (!item_id) {
@@ -62,7 +80,7 @@ serve(async (req) => {
     const exactMatch = await supabaseClient
       .from('lists')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('title', listConfig.title)
       .eq('is_default', true)
       .maybeSingle();
@@ -75,7 +93,7 @@ serve(async (req) => {
         const patternMatch = await supabaseClient
           .from('lists')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .ilike('title', pattern)
           .eq('is_default', true)
           .maybeSingle();
@@ -105,7 +123,7 @@ serve(async (req) => {
         progress_mode: 'percent'
       })
       .eq('id', item_id)
-      .eq('user_id', user.id) // Ensure user owns this item
+      .eq('user_id', userId) // Ensure user owns this item
       .select()
       .single();
 
