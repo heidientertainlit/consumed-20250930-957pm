@@ -57,6 +57,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   const [selectedRankId, setSelectedRankId] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [containsSpoilers, setContainsSpoilers] = useState(false);
+  const [privateMode, setPrivateMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
   const [isRankDrawerOpen, setIsRankDrawerOpen] = useState(false);
@@ -257,8 +258,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       
       // Step 1: Track media to history (always happens)
       // Use track-media for default "Finished" list, or add-to-custom-list for specific lists
-      // Skip social post creation if we have a rating (rate-media will create the preferred rating-style post)
-      const skipSocialPost = rating > 0;
+      // Skip social post if: user chose private mode, OR if there's a rating (rate-media creates the post)
+      const skipSocialPost = privateMode || rating > 0;
       
       if (selectedListId && selectedListId !== "none") {
         // Add to specific custom list
@@ -325,6 +326,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               media_type: selectedMedia.type || 'movie',
               media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
               rating: rating,
+              skip_social_post: privateMode,
             }),
           }
         );
@@ -633,6 +635,18 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   </label>
                 </div>
               )}
+              
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                <Checkbox
+                  id="private-mode"
+                  checked={privateMode}
+                  onCheckedChange={(checked) => setPrivateMode(checked as boolean)}
+                  data-testid="checkbox-private-mode"
+                />
+                <label htmlFor="private-mode" className="text-sm text-gray-600">
+                  Don't add to feed (keep private)
+                </label>
+              </div>
             </div>
             
             <div className="p-4 border-t border-gray-200">

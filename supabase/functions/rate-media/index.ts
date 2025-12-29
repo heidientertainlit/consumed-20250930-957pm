@@ -93,7 +93,8 @@ serve(async (req) => {
       media_external_source,
       media_title,
       media_type,
-      rating
+      rating,
+      skip_social_post
     } = body;
 
     console.log('Rating request:', {
@@ -199,31 +200,35 @@ serve(async (req) => {
 
     console.log('Rating saved successfully:', result);
 
-    // Create a social post for this rating (the preferred post style)
-    try {
-      const { error: postError } = await supabase
-        .from('social_posts')
-        .insert({
-          user_id: appUser.id,
-          post_type: 'rate-review',
-          content: `Rated ${media_title}`,
-          media_title: media_title,
-          media_type: media_type,
-          media_external_id: media_external_id,
-          media_external_source: media_external_source,
-          image_url: body.media_image_url || null,
-          rating: rating,
-          visibility: 'public',
-          contains_spoilers: false
-        });
-      
-      if (postError) {
-        console.error('Failed to create social post for rating:', postError);
-      } else {
-        console.log('Created social post for rating');
+    // Create a social post for this rating (skip if user chose private mode)
+    if (!skip_social_post) {
+      try {
+        const { error: postError } = await supabase
+          .from('social_posts')
+          .insert({
+            user_id: appUser.id,
+            post_type: 'rate-review',
+            content: `Rated ${media_title}`,
+            media_title: media_title,
+            media_type: media_type,
+            media_external_id: media_external_id,
+            media_external_source: media_external_source,
+            image_url: body.media_image_url || null,
+            rating: rating,
+            visibility: 'public',
+            contains_spoilers: false
+          });
+        
+        if (postError) {
+          console.error('Failed to create social post for rating:', postError);
+        } else {
+          console.log('Created social post for rating');
+        }
+      } catch (postCreateError) {
+        console.error('Error creating social post:', postCreateError);
       }
-    } catch (postCreateError) {
-      console.error('Error creating social post:', postCreateError);
+    } else {
+      console.log('Skipping social post creation (skip_social_post=true, private mode)');
     }
     
     return new Response(JSON.stringify({ 
