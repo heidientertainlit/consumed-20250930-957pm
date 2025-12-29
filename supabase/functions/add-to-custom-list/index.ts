@@ -74,7 +74,7 @@ serve(async (req) => {
 
     // Parse request
     const requestBody = await req.json();
-    const { media, rating, review, customListId, skip_social_post } = requestBody;
+    const { media, rating, review, customListId, skip_social_post, dnf_reason, dnf_other_reason } = requestBody;
     const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle } = media || {};
 
     if (!customListId) {
@@ -131,6 +131,32 @@ serve(async (req) => {
     }
 
     console.log('Successfully added media to custom list:', customList.title);
+
+    // Save DNF reason if provided (for "Did Not Finish" lists)
+    if (dnf_reason && dnf_reason !== 'skipped' && mediaItem) {
+      try {
+        const { error: dnfError } = await supabase
+          .from('dnf_reasons')
+          .insert({
+            user_id: appUser.id,
+            list_item_id: mediaItem.id,
+            media_external_id: externalId || null,
+            media_external_source: externalSource || null,
+            media_title: title || null,
+            media_type: mediaType || null,
+            reason: dnf_reason,
+            other_reason: dnf_other_reason || null
+          });
+        
+        if (dnfError) {
+          console.error('Failed to save DNF reason:', dnfError);
+        } else {
+          console.log('Saved DNF reason:', dnf_reason);
+        }
+      } catch (dnfSaveError) {
+        console.error('Error saving DNF reason:', dnfSaveError);
+      }
+    }
 
     // Create a social post for this addition (skip if caller will handle it, e.g. when rating is also being added)
     if (mediaItem && !skip_social_post) {
