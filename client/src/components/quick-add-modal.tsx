@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { DnfReasonDrawer } from "./dnf-reason-drawer";
 import { 
   Search, 
   Star, 
@@ -61,6 +62,9 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
   const [isRankDrawerOpen, setIsRankDrawerOpen] = useState(false);
+  const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
+  const [dnfReason, setDnfReason] = useState<{ reason: string; otherReason?: string } | null>(null);
+  const [pendingDnfListId, setPendingDnfListId] = useState<string>("");
 
   const { data: listsData } = useQuery({
     queryKey: ['user-lists-metadata', user?.id],
@@ -166,6 +170,9 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     setContainsSpoilers(false);
     setIsListDrawerOpen(false);
     setIsRankDrawerOpen(false);
+    setIsDnfDrawerOpen(false);
+    setDnfReason(null);
+    setPendingDnfListId("");
   };
   
   const getSelectedListName = () => {
@@ -275,6 +282,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               media: mediaData,
               customListId: selectedListId,
               skip_social_post: skipSocialPost,
+              ...(dnfReason && { dnf_reason: dnfReason.reason, dnf_other_reason: dnfReason.otherReason }),
             }),
           }
         );
@@ -707,21 +715,21 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
             const getListStyle = (title: string) => {
               const lower = title.toLowerCase();
               if (lower.includes('currently') || lower.includes('watching') || lower.includes('reading')) {
-                return { bg: 'bg-purple-100', icon: <Play className="text-purple-600" size={20} />, desc: 'Currently consuming' };
+                return { bg: 'bg-purple-100', icon: <Play className="text-purple-600" size={20} />, desc: 'Currently consuming', isDnf: false };
               }
               if (lower.includes('queue') || lower.includes('want')) {
-                return { bg: 'bg-blue-100', icon: <Clock className="text-blue-600" size={20} />, desc: 'Save for later' };
+                return { bg: 'bg-blue-100', icon: <Clock className="text-blue-600" size={20} />, desc: 'Save for later', isDnf: false };
               }
               if (lower.includes('finished') || lower.includes('complete')) {
-                return { bg: 'bg-green-100', icon: <Check className="text-green-600" size={20} />, desc: 'Completed media' };
+                return { bg: 'bg-green-100', icon: <Check className="text-green-600" size={20} />, desc: 'Completed media', isDnf: false };
               }
               if (lower.includes('dnf') || lower.includes('not finish')) {
-                return { bg: 'bg-red-100', icon: <Ban className="text-red-600" size={20} />, desc: 'Stopped watching/reading' };
+                return { bg: 'bg-red-100', icon: <Ban className="text-red-600" size={20} />, desc: 'Stopped watching/reading', isDnf: true };
               }
               if (lower.includes('favorite')) {
-                return { bg: 'bg-yellow-100', icon: <Heart className="text-yellow-600" size={20} />, desc: 'Your favorites' };
+                return { bg: 'bg-yellow-100', icon: <Heart className="text-yellow-600" size={20} />, desc: 'Your favorites', isDnf: false };
               }
-              return { bg: 'bg-purple-100', icon: <Folder className="text-purple-600" size={20} />, desc: 'Custom list' };
+              return { bg: 'bg-purple-100', icon: <Folder className="text-purple-600" size={20} />, desc: 'Custom list', isDnf: false };
             };
             const style = getListStyle(list.title);
             
@@ -729,8 +737,15 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               <button
                 key={list.id}
                 onClick={() => {
-                  setSelectedListId(list.id);
-                  setIsListDrawerOpen(false);
+                  if (style.isDnf) {
+                    setPendingDnfListId(list.id);
+                    setIsListDrawerOpen(false);
+                    setIsDnfDrawerOpen(true);
+                  } else {
+                    setSelectedListId(list.id);
+                    setDnfReason(null);
+                    setIsListDrawerOpen(false);
+                  }
                 }}
                 className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
                 data-testid={`list-option-${list.id}`}
@@ -803,6 +818,22 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
         </div>
       </DrawerContent>
     </Drawer>
+
+    {/* DNF Reason Drawer */}
+    <DnfReasonDrawer
+      isOpen={isDnfDrawerOpen}
+      onClose={() => {
+        setIsDnfDrawerOpen(false);
+        setPendingDnfListId("");
+      }}
+      onSubmit={(reason, otherReason) => {
+        setDnfReason({ reason, otherReason });
+        setSelectedListId(pendingDnfListId);
+        setPendingDnfListId("");
+        setIsDnfDrawerOpen(false);
+      }}
+      mediaTitle={selectedMedia?.title}
+    />
     </>
   );
 }
