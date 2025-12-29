@@ -85,7 +85,7 @@ export function DnfReasonDrawer({ isOpen, onClose, onSubmit, mediaTitle }: DnfRe
                 placeholder="Tell us more (optional)..."
                 value={otherText}
                 onChange={(e) => setOtherText(e.target.value)}
-                className="min-h-[80px] resize-none"
+                className="min-h-[80px] resize-none bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
                 data-testid="dnf-other-reason-input"
               />
             </div>
