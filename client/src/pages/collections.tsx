@@ -330,7 +330,11 @@ export default function CollectionsPage() {
         }
       );
       
-      if (!response.ok) throw new Error('Failed to move item');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Move item error:', response.status, errorData);
+        throw new Error(errorData.error || 'Failed to move item');
+      }
       return { ...await response.json(), listName };
     },
     onSuccess: (data) => {
