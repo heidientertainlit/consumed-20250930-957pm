@@ -51,6 +51,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import FeedbackFooter from "@/components/feedback-footer";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { DnfReasonDrawer } from "@/components/dnf-reason-drawer";
 
 export default function CollectionsPage() {
   const { user, session } = useAuth();
@@ -1206,8 +1207,10 @@ interface CurrentlyConsumingCardProps {
 function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdating }: CurrentlyConsumingCardProps) {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
+  const { toast } = useToast();
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
   const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
+  const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
   
   const mediaType = item.media_type || 'movie';
   const isBook = mediaType === 'book';
@@ -1266,6 +1269,56 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>(
     progressMode === 'episode' ? 'episode' : progressMode === 'page' ? 'page' : 'percent'
   );
+
+  // DNF reason mutation
+  const dnfReasonMutation = useMutation({
+    mutationFn: async ({ listItemId, reasons, otherReason }: { listItemId: string; reasons: string[]; otherReason?: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/save-dnf-reason',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            list_item_id: listItemId,
+            reasons,
+            other_reason: otherReason,
+          }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save DNF reason');
+      }
+      return response.json();
+    },
+    onError: (error) => {
+      console.error('DNF reason error:', error);
+    },
+  });
+
+  const handleDnfWithReason = async (reasons: string[], otherReason?: string) => {
+    // First move the item to DNF list
+    onMoveToList('dnf', 'Did Not Finish');
+    setIsDnfDrawerOpen(false);
+    setIsMoveSheetOpen(false);
+    
+    // Then save the DNF reason (uses the current item ID)
+    try {
+      await dnfReasonMutation.mutateAsync({
+        listItemId: item.id,
+        reasons,
+        otherReason,
+      });
+    } catch (error) {
+      console.error('Failed to save DNF reason:', error);
+    }
+  };
   
   const getProgressDisplay = () => {
     // For TV shows, always show episode format if we have season data (localTotal > 0)
@@ -1708,7 +1761,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
             </button>
             
             <button
-              onClick={() => { onMoveToList('dnf', 'Did Not Finish'); setIsMoveSheetOpen(false); }}
+              onClick={() => { setIsDnfDrawerOpen(true); }}
               disabled={isUpdating}
               className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
               data-testid={`move-dnf-${item.id}`}
@@ -1754,6 +1807,14 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* DNF Reason Drawer */}
+      <DnfReasonDrawer
+        isOpen={isDnfDrawerOpen}
+        onClose={() => setIsDnfDrawerOpen(false)}
+        onSubmit={handleDnfWithReason}
+        mediaTitle={item.title}
+      />
     </>
   );
 }
