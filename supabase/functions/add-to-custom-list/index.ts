@@ -74,7 +74,7 @@ serve(async (req) => {
 
     // Parse request
     const requestBody = await req.json();
-    const { media, rating, review, customListId, skip_social_post, dnf_reason, dnf_other_reason } = requestBody;
+    const { media, rating, review, customListId, skip_social_post, dnf_reason, dnf_other_reason, rewatchCount } = requestBody;
     const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle } = media || {};
 
     if (!customListId) {
@@ -115,7 +115,8 @@ serve(async (req) => {
         creator: creator || '',
         image_url: imageUrl || null,
         external_id: externalId || null,
-        external_source: externalSource || null
+        external_source: externalSource || null,
+        rewatch_count: rewatchCount || 1
       })
       .select()
       .single();

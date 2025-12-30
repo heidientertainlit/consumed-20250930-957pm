@@ -124,7 +124,7 @@ serve(async (req) => {
 
     // Parse the request body
     const requestBody = await req.json();
-    const { media, rating, review, listType, skip_social_post } = requestBody;
+    const { media, rating, review, listType, skip_social_post, rewatchCount } = requestBody;
     const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle } = media || {};
 
     let targetList = null;
@@ -179,7 +179,8 @@ serve(async (req) => {
         creator: creator || '',
         image_url: imageUrl || null,
         external_id: externalId || null,
-        external_source: externalSource || null
+        external_source: externalSource || null,
+        rewatch_count: rewatchCount || 1
       })
       .select()
       .single();
