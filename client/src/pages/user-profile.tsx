@@ -99,6 +99,11 @@ export default function UserProfile() {
   const [dnaLevel, setDnaLevel] = useState<0 | 1 | 2>(0);
   const [dnaItemCount, setDnaItemCount] = useState(0);
   const [isLoadingDnaLevel, setIsLoadingDnaLevel] = useState(false);
+  
+  // Tracked genre analysis states
+  const [trackedGenres, setTrackedGenres] = useState<Record<string, number>>({});
+  const [isLoadingTrackedGenres, setIsLoadingTrackedGenres] = useState(false);
+  const [trackedGenresLoaded, setTrackedGenresLoaded] = useState(false);
 
   // Survey states
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -1043,6 +1048,28 @@ export default function UserProfile() {
     }
   }, [userStats, dnaItemCount, dnaProfileStatus]);
 
+  // Reset tracked genres when viewing a different user or when lists change
+  useEffect(() => {
+    setTrackedGenres({});
+    setTrackedGenresLoaded(false);
+  }, [viewingUserId]);
+
+  // Recompute tracked genres when userLists changes (new items added/removed)
+  const userListsLength = userLists.reduce((acc, list) => acc + (list.items?.length || 0), 0);
+  useEffect(() => {
+    if (trackedGenresLoaded && userListsLength > 0) {
+      // Reset to trigger re-fetch when list contents change
+      setTrackedGenresLoaded(false);
+    }
+  }, [userListsLength]);
+
+  // Fetch tracked genres when userLists loads (for genre comparison in DNA card)
+  useEffect(() => {
+    if (userLists.length > 0 && !trackedGenresLoaded && !isLoadingTrackedGenres && dnaProfileStatus === 'has_profile') {
+      fetchTrackedGenres();
+    }
+  }, [userLists, trackedGenresLoaded, isLoadingTrackedGenres, dnaProfileStatus]);
+
   // Handle URL tab parameter to switch to specific tab
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1225,6 +1252,104 @@ export default function UserProfile() {
       setUserStats(null);
     } finally {
       setIsLoadingStats(false);
+    }
+  };
+
+  // Fetch tracked genres from media items (analyzes movie/TV genres from TMDB)
+  const fetchTrackedGenres = async () => {
+    if (!session?.access_token || trackedGenresLoaded || isLoadingTrackedGenres) return;
+    if (userLists.length === 0) return;
+    
+    setIsLoadingTrackedGenres(true);
+    try {
+      // Get unique movie/TV items with TMDB external IDs
+      const allItems: any[] = [];
+      const seenIds = new Set<string>();
+      
+      userLists.forEach(list => {
+        if (list.items) {
+          list.items.forEach((item: any) => {
+            const key = item.external_id || item.media_id;
+            if (!seenIds.has(key) && (item.media_type === 'movie' || item.media_type === 'tv') && item.external_id) {
+              seenIds.add(key);
+              allItems.push(item);
+            }
+          });
+        }
+      });
+      
+      // Limit to top 30 items to avoid too many API calls
+      const itemsToFetch = allItems.slice(0, 30);
+      
+      if (itemsToFetch.length === 0) {
+        setTrackedGenresLoaded(true);
+        setIsLoadingTrackedGenres(false);
+        return;
+      }
+      
+      const genreCounts: Record<string, number> = {};
+      
+      // Fetch genres in parallel batches of 5
+      const batchSize = 5;
+      for (let i = 0; i < itemsToFetch.length; i += batchSize) {
+        const batch = itemsToFetch.slice(i, i + batchSize);
+        
+        const results = await Promise.allSettled(
+          batch.map(async (item) => {
+            try {
+              const source = item.external_source || 'tmdb';
+              const response = await fetch(
+                `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${source}&external_id=${item.external_id}&media_type=${item.media_type}`,
+                {
+                  headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                  },
+                }
+              );
+              
+              if (response.ok) {
+                const data = await response.json();
+                return data.genres || [];
+              }
+              return [];
+            } catch {
+              return [];
+            }
+          })
+        );
+        
+        results.forEach(result => {
+          if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+            result.value.forEach((genre: any) => {
+              // Handle both string genres and object genres with multiple possible keys
+              let genreName: string | null = null;
+              if (typeof genre === 'string') {
+                genreName = genre;
+              } else if (genre && typeof genre === 'object') {
+                // Try multiple common keys for genre name
+                genreName = genre.name ?? genre.genre ?? genre.label ?? null;
+              }
+              if (genreName && typeof genreName === 'string' && genreName !== '[object Object]') {
+                genreCounts[genreName] = (genreCounts[genreName] || 0) + 1;
+              }
+            });
+          }
+        });
+        
+        // Small delay between batches to avoid rate limiting
+        if (i + batchSize < itemsToFetch.length) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+      
+      setTrackedGenres(genreCounts);
+      setTrackedGenresLoaded(true);
+      console.log('Tracked genres loaded:', genreCounts);
+    } catch (error) {
+      console.error('Error fetching tracked genres:', error);
+    } finally {
+      setIsLoadingTrackedGenres(false);
     }
   };
 
@@ -2836,19 +2961,91 @@ export default function UserProfile() {
                     )}
                   </div>
                   
-                  {/* Favorite Genres */}
-                  {(dnaProfile?.favorite_genres || []).length > 0 && (
+                  {/* Favorite Genres - Survey vs Tracked Comparison */}
+                  {((dnaProfile?.favorite_genres || []).length > 0 || Object.keys(trackedGenres).length > 0) && (
                     <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
                       <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <span className="text-lg">🎭</span> Your Favorite Genres
+                        <span className="text-lg">🎭</span> Your Genre Breakdown
                       </h5>
-                      <div className="flex flex-wrap gap-2">
-                        {(dnaProfile?.favorite_genres || []).map((genre, index) => (
-                          <Badge key={index} className="bg-indigo-100 text-indigo-700 text-xs border border-indigo-200">
-                            {genre}
-                          </Badge>
-                        ))}
-                      </div>
+                      
+                      {/* Survey Genres */}
+                      {(dnaProfile?.favorite_genres || []).length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-500 mb-2 font-medium">You said you love:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(dnaProfile?.favorite_genres || []).map((genre, index) => (
+                              <Badge key={index} className="bg-indigo-100 text-indigo-700 text-xs border border-indigo-200">
+                                {genre}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Tracked Genres */}
+                      {Object.keys(trackedGenres).length > 0 && (
+                        <div className={`${(dnaProfile?.favorite_genres || []).length > 0 ? 'mt-3 pt-3 border-t border-indigo-100' : ''}`}>
+                          <p className="text-xs text-gray-500 mb-2 font-medium">What you actually watch:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(() => {
+                              const surveyGenres = (dnaProfile?.favorite_genres || []).map(g => g.toLowerCase());
+                              
+                              return Object.entries(trackedGenres)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 10)
+                                .map(([genre, count]) => {
+                                  const isMatch = surveyGenres.some(sg => 
+                                    sg.includes(genre.toLowerCase()) || genre.toLowerCase().includes(sg)
+                                  );
+                                  return (
+                                    <Badge 
+                                      key={genre} 
+                                      className={`text-xs ${isMatch 
+                                        ? 'bg-green-100 text-green-700 border border-green-200' 
+                                        : surveyGenres.length > 0 ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}
+                                    >
+                                      {genre}: {count}
+                                      {!isMatch && surveyGenres.length > 0 && count >= 3 && ' 👀'}
+                                    </Badge>
+                                  );
+                                });
+                            })()}
+                          </div>
+                          {(() => {
+                            const surveyGenres = (dnaProfile?.favorite_genres || []).map(g => g.toLowerCase());
+                            const topTracked = Object.entries(trackedGenres)
+                              .sort((a, b) => b[1] - a[1])[0];
+                            
+                            if (topTracked && surveyGenres.length > 0) {
+                              const isTopInSurvey = surveyGenres.some(sg => 
+                                sg.includes(topTracked[0].toLowerCase()) || topTracked[0].toLowerCase().includes(sg)
+                              );
+                              if (!isTopInSurvey && topTracked[1] >= 3) {
+                                return (
+                                  <p className="text-xs text-amber-700 mt-2 italic">
+                                    💡 You didn't mention {topTracked[0]} in your survey, but it shows up in {topTracked[1]} of your tracked items!
+                                  </p>
+                                );
+                              }
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      )}
+                      
+                      {/* Loading state for tracked genres */}
+                      {isLoadingTrackedGenres && (
+                        <div className="mt-3 pt-3 border-t border-indigo-100">
+                          <p className="text-xs text-gray-400 italic">Analyzing your tracked genres...</p>
+                        </div>
+                      )}
+                      
+                      {/* No tracked genres found - show regardless of survey presence */}
+                      {!isLoadingTrackedGenres && trackedGenresLoaded && Object.keys(trackedGenres).length === 0 && (
+                        <div className={`${(dnaProfile?.favorite_genres || []).length > 0 ? 'mt-3 pt-3 border-t border-indigo-100' : ''}`}>
+                          <p className="text-xs text-gray-400 italic">Track some movies or TV shows to see your actual genre preferences!</p>
+                        </div>
+                      )}
                     </div>
                   )}
 
