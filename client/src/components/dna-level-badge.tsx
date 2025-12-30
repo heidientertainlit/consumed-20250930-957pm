@@ -77,7 +77,9 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
             <Icon className="text-white" size={18} />
           </div>
           <div>
-            <div className="text-sm text-gray-500">Level {level}</div>
+            <div className="text-sm text-gray-500">
+              Level {level}{level === 2 && ' (Unlocked)'}
+            </div>
             <div className="font-semibold text-gray-900">{config.name}</div>
           </div>
         </div>
@@ -88,9 +90,6 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
         )}
         {level === 1 && (
           <span className="text-xs text-purple-600 font-medium">{itemCount} logged</span>
-        )}
-        {level === 2 && (
-          <span className="text-xs text-emerald-600 font-medium">(Unlocked)</span>
         )}
       </div>
       {/* V arrow pointing down for Level 2 */}
