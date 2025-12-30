@@ -520,8 +520,8 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                   <div className="space-y-3">
                     <div 
                       ref={card1Ref}
-                      className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-5 border border-purple-200"
-                      style={{ aspectRatio: '9/16', maxWidth: '320px', margin: '0 auto' }}
+                      className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-5 border border-purple-200 mx-auto"
+                      style={{ maxWidth: '320px' }}
                     >
                       {/* Part 1 indicator */}
                       <div className="flex items-center justify-between mb-3">
@@ -609,7 +609,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                       )}
 
                       {/* Footer CTA */}
-                      <div className="mt-auto pt-4 text-center">
+                      <div className="pt-4 mt-4 border-t border-purple-100 text-center">
                         <p className="text-xs text-gray-500">Find your entertainment match at</p>
                         <p className="text-sm font-semibold text-purple-600">consumed.app</p>
                       </div>
@@ -644,8 +644,8 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                   <div className="space-y-3">
                     <div 
                       ref={card2Ref}
-                      className="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 rounded-xl p-5 border border-amber-200"
-                      style={{ aspectRatio: '9/16', maxWidth: '320px', margin: '0 auto' }}
+                      className="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 rounded-xl p-5 border border-amber-200 mx-auto"
+                      style={{ maxWidth: '320px' }}
                     >
                       {/* Part 2 indicator */}
                       <div className="flex items-center justify-between mb-3">
@@ -720,7 +720,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                       })()}
 
                       {/* Footer CTA */}
-                      <div className="mt-auto pt-4 text-center">
+                      <div className="pt-4 mt-4 border-t border-amber-100 text-center">
                         <p className="text-xs text-gray-500">Find your entertainment match at</p>
                         <p className="text-sm font-semibold text-amber-600">consumed.app</p>
                       </div>
