@@ -694,7 +694,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                       </h5>
                       <div className="flex flex-wrap gap-2">
                         {comparison.insights.theyCouldIntroduce.map((item, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
+                          <Badge key={idx} className="text-xs bg-purple-100 text-purple-800 border border-purple-200">
                             {item}
                           </Badge>
                         ))}
@@ -709,7 +709,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                       </h5>
                       <div className="flex flex-wrap gap-2">
                         {comparison.insights.youCouldIntroduce.map((item, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
+                          <Badge key={idx} className="text-xs bg-blue-100 text-blue-800 border border-blue-200">
                             {item}
                           </Badge>
                         ))}
