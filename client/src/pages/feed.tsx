@@ -2052,14 +2052,59 @@ export default function Feed() {
     setInlineRatings(prev => ({ ...prev, [postId]: rating }));
   };
 
-  const submitInlineRating = (postId: string) => {
+  const submitInlineRating = async (postId: string, media?: any) => {
     const rating = inlineRatings[postId];
     if (!rating || parseFloat(rating) === 0) return;
+    if (!session?.access_token) return;
 
-    // Format as rating-only comment: "4.5."
+    // If media is provided, save to rate-media endpoint for proper tracking
+    if (media) {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/rate-media`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              media: {
+                title: media.title,
+                mediaType: media.mediaType,
+                imageUrl: media.imageUrl,
+                externalId: media.externalId,
+                externalSource: media.externalSource,
+              },
+              rating: parseFloat(rating),
+            }),
+          }
+        );
+        
+        if (response.ok) {
+          toast({
+            title: "Rating saved!",
+            description: `You rated ${media.title} ${rating}/5`,
+          });
+          setInlineRatings(prev => ({ ...prev, [postId]: '' }));
+          setActiveInlineRating(null);
+          queryClient.invalidateQueries({ queryKey: ['/api/social-feed'] });
+        } else {
+          throw new Error('Failed to save rating');
+        }
+      } catch (error) {
+        console.error('Error submitting rating:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save rating. Please try again.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // Fallback: Format as rating-only comment: "4.5."
     const formattedComment = `${rating}.`;
-    
-    // Use the existing comment mutation
     commentMutation.mutate(
       {
         postId,
@@ -2067,11 +2112,8 @@ export default function Feed() {
       },
       {
         onSuccess: () => {
-          // Clear rating and close inline rating
           setInlineRatings(prev => ({ ...prev, [postId]: '' }));
           setActiveInlineRating(null);
-          
-          // Optionally open comments to show the rating
           setExpandedComments(prev => new Set(prev).add(postId));
         },
         onError: (error) => {
@@ -3888,6 +3930,7 @@ export default function Feed() {
                               const currentVal = parseFloat(inlineRatings[post.id] || '0');
                               const isFullFilled = currentVal >= star;
                               const isHalfFilled = currentVal >= star - 0.5 && currentVal < star;
+                              const media = post.mediaItems[0];
                               return (
                                 <div
                                   key={star}
@@ -3906,7 +3949,7 @@ export default function Feed() {
                                     onMouseEnter={() => handleInlineRatingChange(post.id, String(star - 0.5))}
                                     onClick={() => {
                                       handleInlineRatingChange(post.id, String(star - 0.5));
-                                      setTimeout(() => submitInlineRating(post.id), 100);
+                                      setTimeout(() => submitInlineRating(post.id, media), 100);
                                     }}
                                   />
                                   <div 
@@ -3914,7 +3957,7 @@ export default function Feed() {
                                     onMouseEnter={() => handleInlineRatingChange(post.id, String(star))}
                                     onClick={() => {
                                       handleInlineRatingChange(post.id, String(star));
-                                      setTimeout(() => submitInlineRating(post.id), 100);
+                                      setTimeout(() => submitInlineRating(post.id, media), 100);
                                     }}
                                   />
                                 </div>
