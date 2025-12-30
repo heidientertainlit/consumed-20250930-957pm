@@ -640,12 +640,12 @@ export default function MediaDetail() {
               </div>
             </div>
 
-            {/* Social Activity Summary */}
-            {socialActivity.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Community Activity
-                </h2>
+            {/* Community Activity Section - Always shown */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Community Activity
+              </h2>
+              {socialActivity.length > 0 ? (
                 <div className="flex flex-wrap gap-4 text-sm">
                   {reviews.length > 0 && (
                     <div className="flex items-center gap-2">
@@ -676,8 +676,13 @@ export default function MediaDetail() {
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 text-sm mb-3">No community activity yet</p>
+                  <p className="text-gray-400 text-xs">Be the first to share your thoughts about this title!</p>
+                </div>
+              )}
+            </div>
 
             {/* Predictions */}
             {predictions.length > 0 && (
@@ -741,13 +746,13 @@ export default function MediaDetail() {
               </div>
             )}
 
-            {/* Reviews & Ratings */}
-            {reviews.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Star className="w-5 h-5 text-yellow-500" />
-                  Reviews & Ratings ({reviews.length})
-                </h2>
+            {/* Reviews & Ratings - Always shown */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                Reviews & Ratings {reviews.length > 0 && `(${reviews.length})`}
+              </h2>
+              {reviews.length > 0 ? (
                 <div className="space-y-4">
                   {reviews.map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
@@ -796,8 +801,14 @@ export default function MediaDetail() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl">
+                  <Star className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm mb-1">No reviews yet</p>
+                  <p className="text-gray-400 text-xs">Rate this title using the Quick Add button above</p>
+                </div>
+              )}
+            </div>
 
             {/* General Posts/Conversations */}
             {conversations.length > 0 && (
