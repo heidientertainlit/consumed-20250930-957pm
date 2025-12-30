@@ -2352,8 +2352,17 @@ export default function Feed() {
                               <>
                                 <span className="text-white/50">•</span>
                                 <Link href={`/user/${post.user.id}`}>
+                                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                                    {post.user.avatar ? (
+                                      <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                    ) : (
+                                      <span className="text-[10px] text-white font-medium">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                                    )}
+                                  </div>
+                                </Link>
+                                <Link href={`/user/${post.user.id}`}>
                                   <span className="text-xs font-medium text-white/90 hover:text-white cursor-pointer">
-                                    {post.user.displayName || post.user.username}
+                                    {post.user.username}
                                   </span>
                                 </Link>
                               </>
@@ -2510,13 +2519,13 @@ export default function Feed() {
                                       {post.user.avatar ? (
                                         <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                                       ) : (
-                                        <span className="text-xs">{post.user.displayName?.[0]?.toUpperCase() || post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                                        <span className="text-xs">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
                                       )}
                                     </div>
                                   </Link>
                                   <Link href={`/user/${post.user.id}`}>
                                     <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
-                                      {post.user.displayName || post.user.username}
+                                      {post.user.username}
                                     </span>
                                   </Link>
                                 </div>
