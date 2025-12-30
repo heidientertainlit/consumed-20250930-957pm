@@ -3,45 +3,49 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, Star, Trophy, Lock, ChevronDown } from "lucide-react";
 
 interface DNALevelBadgeProps {
-  level: 1 | 2 | 3;
+  level: 0 | 1 | 2;
   itemCount: number;
   showProgress?: boolean;
   compact?: boolean;
+  hasSurvey?: boolean;
 }
 
 const LEVEL_CONFIG = {
+  0: {
+    name: "No DNA Yet",
+    icon: Lock,
+    color: "from-gray-400 to-gray-500",
+    bgColor: "bg-gray-100",
+    textColor: "text-gray-600",
+    description: "Complete the survey to unlock",
+    nextUnlock: "DNA Summary",
+    nextLevel: 1,
+    threshold: 0,
+    nextThreshold: 10,
+  },
   1: {
-    name: "DNA Snapshot",
+    name: "DNA Summary",
     icon: Sparkles,
     color: "from-purple-500 to-indigo-500",
     bgColor: "bg-purple-100",
     textColor: "text-purple-700",
-    description: "Survey-based profile",
-    nextUnlock: "Celebrity Matches",
+    description: "Survey + behavior profile",
+    nextUnlock: "Friend DNA Comparisons",
     nextLevel: 2,
-    threshold: 15,
+    threshold: 10,
+    nextThreshold: 30,
   },
   2: {
-    name: "DNA Profile",
-    icon: Star,
-    color: "from-amber-500 to-orange-500",
-    bgColor: "bg-amber-100",
-    textColor: "text-amber-700",
-    description: "Behavior + Survey blend",
-    nextUnlock: "Friend DNA Comparisons",
-    nextLevel: 3,
-    threshold: 30,
-  },
-  3: {
-    name: "DNA Blueprint",
+    name: "DNA Friend Compare",
     icon: Trophy,
     color: "from-emerald-500 to-teal-500",
     bgColor: "bg-emerald-100",
     textColor: "text-emerald-700",
-    description: "Full behavior-driven",
+    description: "Compare with friends",
     nextUnlock: null,
     nextLevel: null,
-    threshold: null,
+    threshold: 30,
+    nextThreshold: null,
   },
 };
 
@@ -80,8 +84,10 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
         
         {/* Status indicator only */}
         <div className="flex items-center gap-2">
-          {level === 3 ? (
+          {level === 2 ? (
             <span className="text-xs text-emerald-600 font-medium">All unlocked</span>
+          ) : level === 0 ? (
+            <span className="text-xs text-gray-500 font-medium">Survey required</span>
           ) : (
             <span className="text-xs text-purple-600 font-medium">{itemCount} logged</span>
           )}
@@ -92,29 +98,35 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
   );
 }
 
-export function DNALevelProgress({ itemCount }: { itemCount: number }) {
-  const level = itemCount >= 30 ? 3 : itemCount >= 15 ? 2 : 1;
+export function DNALevelProgress({ itemCount, hasSurvey = false }: { itemCount: number; hasSurvey?: boolean }) {
+  const level = hasSurvey && itemCount >= 30 ? 2 : hasSurvey && itemCount >= 10 ? 1 : 0;
   
   return (
     <div className="flex items-center gap-1">
       <div className={`w-2 h-2 rounded-full ${level >= 1 ? 'bg-purple-500' : 'bg-gray-300'}`} />
-      <div className={`flex-1 h-1 ${level >= 2 ? 'bg-amber-500' : 'bg-gray-200'}`} />
-      <div className={`w-2 h-2 rounded-full ${level >= 2 ? 'bg-amber-500' : 'bg-gray-300'}`} />
-      <div className={`flex-1 h-1 ${level >= 3 ? 'bg-emerald-500' : 'bg-gray-200'}`} />
-      <div className={`w-2 h-2 rounded-full ${level >= 3 ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+      <div className={`flex-1 h-1 ${level >= 2 ? 'bg-emerald-500' : 'bg-gray-200'}`} />
+      <div className={`w-2 h-2 rounded-full ${level >= 2 ? 'bg-emerald-500' : 'bg-gray-300'}`} />
     </div>
   );
 }
 
-export function DNAFeatureLock({ requiredLevel, currentLevel, currentItemCount, featureName }: { 
-  requiredLevel: 2 | 3; 
-  currentLevel: 1 | 2 | 3; 
+export function getDnaLevel(itemCount: number, hasSurvey: boolean): 0 | 1 | 2 {
+  if (!hasSurvey) return 0;
+  if (itemCount >= 30) return 2;
+  if (itemCount >= 10) return 1;
+  return 0;
+}
+
+export function DNAFeatureLock({ requiredLevel, currentLevel, currentItemCount, featureName, hasSurvey = false }: { 
+  requiredLevel: 1 | 2; 
+  currentLevel: 0 | 1 | 2; 
   currentItemCount: number;
   featureName: string;
+  hasSurvey?: boolean;
 }) {
   if (currentLevel >= requiredLevel) return null;
   
-  const targetItems = requiredLevel === 2 ? 15 : 30;
+  const targetItems = requiredLevel === 1 ? 10 : 30;
   const itemsNeeded = Math.max(0, targetItems - currentItemCount);
   
   return (
@@ -123,9 +135,15 @@ export function DNAFeatureLock({ requiredLevel, currentLevel, currentItemCount, 
         <Lock size={24} className="text-gray-400" />
       </div>
       <h4 className="font-semibold text-gray-700 mb-1">{featureName}</h4>
-      <p className="text-sm text-gray-500">
-        Log {itemsNeeded} more items to unlock
-      </p>
+      {!hasSurvey ? (
+        <p className="text-sm text-gray-500">
+          Complete the DNA survey to unlock
+        </p>
+      ) : (
+        <p className="text-sm text-gray-500">
+          Log {itemsNeeded} more items to unlock
+        </p>
+      )}
     </div>
   );
 }

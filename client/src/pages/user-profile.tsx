@@ -95,8 +95,8 @@ export default function UserProfile() {
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   const [dnaProfile, setDnaProfile] = useState<any>(null);
   
-  // DNA Level states (1=Snapshot, 2=Profile, 3=Blueprint)
-  const [dnaLevel, setDnaLevel] = useState<1 | 2 | 3>(1);
+  // DNA Level states (0=No Survey, 1=DNA Summary (10+ items), 2=Friend Compare (30+ items))
+  const [dnaLevel, setDnaLevel] = useState<0 | 1 | 2>(0);
   const [dnaItemCount, setDnaItemCount] = useState(0);
   const [isLoadingDnaLevel, setIsLoadingDnaLevel] = useState(false);
 
@@ -249,15 +249,18 @@ export default function UserProfile() {
   };
 
   // Calculate DNA Level from local stats (fallback when edge function isn't deployed)
-  const calculateDnaLevelFromStats = (stats: typeof userStats) => {
-    if (!stats) return { level: 1 as const, itemCount: 0 };
+  // Level 0 = No survey, Level 1 = Survey + 10 items (DNA Summary), Level 2 = Survey + 30 items (Friend Compare)
+  const calculateDnaLevelFromStats = (stats: typeof userStats, hasSurvey: boolean) => {
+    if (!stats) return { level: 0 as const, itemCount: 0 };
     
     const totalItems = (stats.moviesWatched || 0) + (stats.tvShowsWatched || 0) + 
                        (stats.booksRead || 0) + (stats.gamesPlayed || 0);
     
-    let level: 1 | 2 | 3 = 1;
-    if (totalItems >= 30) level = 3;
-    else if (totalItems >= 15) level = 2;
+    if (!hasSurvey) return { level: 0 as const, itemCount: totalItems };
+    
+    let level: 0 | 1 | 2 = 0;
+    if (totalItems >= 30) level = 2;
+    else if (totalItems >= 10) level = 1;
     
     return { level, itemCount: totalItems };
   };
@@ -283,18 +286,26 @@ export default function UserProfile() {
 
       if (response.ok) {
         const data = await response.json();
-        setDnaLevel(data.current_level || 1);
-        setDnaItemCount(data.items_logged || 0);
+        // Use new 2-level system: 0=No Survey, 1=DNA Summary (10+), 2=Friend Compare (30+)
+        const hasSurvey = dnaProfileStatus === 'has_profile';
+        const itemsLogged = data.items_logged || 0;
+        let newLevel: 0 | 1 | 2 = 0;
+        if (hasSurvey && itemsLogged >= 30) newLevel = 2;
+        else if (hasSurvey && itemsLogged >= 10) newLevel = 1;
+        setDnaLevel(newLevel);
+        setDnaItemCount(itemsLogged);
       } else {
         // Fallback: calculate from local stats
-        const { level, itemCount } = calculateDnaLevelFromStats(userStats);
+        const hasSurvey = dnaProfileStatus === 'has_profile';
+        const { level, itemCount } = calculateDnaLevelFromStats(userStats, hasSurvey);
         setDnaLevel(level);
         setDnaItemCount(itemCount);
       }
     } catch (error) {
       console.error('Error fetching DNA level:', error);
       // Fallback: calculate from local stats
-      const { level, itemCount } = calculateDnaLevelFromStats(userStats);
+      const hasSurvey = dnaProfileStatus === 'has_profile';
+      const { level, itemCount } = calculateDnaLevelFromStats(userStats, hasSurvey);
       setDnaLevel(level);
       setDnaItemCount(itemCount);
     } finally {
@@ -982,7 +993,7 @@ export default function UserProfile() {
     setUserPoints(null);
     setDnaProfile(null);
     setDnaProfileStatus('no_profile');
-    setDnaLevel(1);
+    setDnaLevel(0);
     setDnaItemCount(0);
     setHighlights([]);
     setUserBadges([]);
@@ -1022,14 +1033,15 @@ export default function UserProfile() {
   // Update DNA level from local stats when userStats loads (always prefer higher count)
   useEffect(() => {
     if (userStats) {
-      const { level, itemCount } = calculateDnaLevelFromStats(userStats);
+      const hasSurvey = dnaProfileStatus === 'has_profile';
+      const { level, itemCount } = calculateDnaLevelFromStats(userStats, hasSurvey);
       // Always use local calculation if it's higher (more accurate than edge function)
       if (itemCount > dnaItemCount) {
         setDnaLevel(level);
         setDnaItemCount(itemCount);
       }
     }
-  }, [userStats, dnaItemCount]);
+  }, [userStats, dnaItemCount, dnaProfileStatus]);
 
   // Handle URL tab parameter to switch to specific tab
   useEffect(() => {
@@ -2334,6 +2346,7 @@ export default function UserProfile() {
                           friendAvatar={userProfileData?.avatar_url}
                           userDnaLevel={dnaLevel}
                           userItemCount={dnaItemCount}
+                          hasSurvey={dnaProfileStatus === 'has_profile'}
                         />
                       )}
                     </div>
@@ -2855,10 +2868,17 @@ export default function UserProfile() {
                           itemCount={dnaItemCount} 
                           showProgress={true} 
                         />
-                        {dnaLevel < 3 && (
+                        {dnaLevel === 0 && (
+                          <div className="mt-3 pt-3 border-t border-purple-100 text-center">
+                            <p className="text-sm text-gray-600">
+                              Complete the DNA survey above to unlock your profile
+                            </p>
+                          </div>
+                        )}
+                        {dnaLevel === 1 && (
                           <div className="mt-3 pt-3 border-t border-purple-100">
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">Progress to Level 3</span>
+                              <span className="text-sm font-medium text-gray-700">Progress to Level 2</span>
                               <span className="text-xs text-purple-600 font-semibold">{dnaItemCount} of 30</span>
                             </div>
                             <Progress value={(dnaItemCount / 30) * 100} className="h-2 mb-2" />
@@ -2867,12 +2887,17 @@ export default function UserProfile() {
                             </p>
                           </div>
                         )}
+                        {dnaLevel === 2 && (
+                          <div className="mt-3 pt-3 border-t border-purple-100 text-center">
+                            <p className="text-sm text-emerald-600 font-medium">All DNA features unlocked!</p>
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {/* Friend DNA Comparison - Level 3 Feature */}
+                    {/* Friend DNA Comparison - Level 2 Feature */}
                     {isOwnProfile && (
-                      <FriendDNAComparison dnaLevel={dnaLevel} itemCount={dnaItemCount} />
+                      <FriendDNAComparison dnaLevel={dnaLevel} itemCount={dnaItemCount} hasSurvey={dnaProfileStatus === 'has_profile'} />
                     )}
                   </div>
                 )}

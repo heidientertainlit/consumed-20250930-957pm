@@ -47,12 +47,11 @@ Preferred communication style: Simple, everyday language.
 - **Consumed vs User-Generated Content**: Differentiates platform-curated content with a "🏆 Consumed" badge from user-generated content.
 - **Prediction Resolution**: Supports timed and open-ended predictions with a scoring system and creator/crowd-resolve mechanisms.
 - **AI Builder** (`/library-ai`): Allows customization of list organization and tracking preferences via a visual builder and AI chat.
-- **DNA Levels System**: Three-tier Entertainment DNA evolution based on logged items:
-  - **Level 1: DNA Snapshot** (0+ items): Survey-based profile with basic preferences
-  - **Level 2: DNA Profile** (15+ items): 60/40 survey/behavior blend, unlocks celebrity matching
-  - **Level 3: DNA Blueprint** (30+ items): 40/60 survey/behavior blend, unlocks friend DNA comparisons
-  - **Celebrity DNA Matching** (Level 2+): AI-driven personalized celebrity matches using GPT-4o, cached 7 days, with TMDB images
-  - **Friend DNA Comparison** (Level 3): AI-generated match percentages and "Watch Together" suggestions, cached 24 hours
+- **DNA Levels System**: Two-tier Entertainment DNA system (survey required for both levels):
+  - **Level 0: No DNA** - User has not completed the DNA survey
+  - **Level 1: DNA Summary** (Survey + 10 items): Full DNA profile with label, tagline, preferences, and shareable card
+  - **Level 2: DNA Friend Compare** (Survey + 30 items): Unlocks friend DNA comparisons with match percentages and "Watch Together" suggestions
+  - **Friend DNA Comparison** (Level 2): AI-generated match percentages, shared genres/titles, and personalized recommendations, cached 24 hours
   - **Signal Extraction**: Analyzes logged media for genre, creator, decade, and mood patterns
 
 ### Feature Specifications

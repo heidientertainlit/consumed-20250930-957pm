@@ -17,8 +17,9 @@ interface FriendDNAComparisonProps {
   friendId: string;
   friendName: string;
   friendAvatar?: string;
-  userDnaLevel: 1 | 2 | 3;
+  userDnaLevel: 0 | 1 | 2;
   userItemCount: number;
+  hasSurvey?: boolean;
 }
 
 interface ComparisonResult {
@@ -48,7 +49,8 @@ export function FriendDNACompareButton({
   friendName, 
   friendAvatar,
   userDnaLevel, 
-  userItemCount 
+  userItemCount,
+  hasSurvey = false
 }: FriendDNAComparisonProps) {
   const { session } = useAuth();
   const { toast } = useToast();
@@ -57,7 +59,7 @@ export function FriendDNACompareButton({
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canCompare = userDnaLevel >= 3;
+  const canCompare = hasSurvey && userDnaLevel >= 2;
   const itemsNeeded = Math.max(0, 30 - userItemCount);
 
   const handleCompare = async () => {
@@ -130,7 +132,7 @@ export function FriendDNACompareButton({
       >
         <Lock size={14} className="mr-2" />
         Compare DNA
-        <Badge className="ml-2 bg-emerald-100 text-emerald-700 text-xs">L3</Badge>
+        <Badge className="ml-2 bg-emerald-100 text-emerald-700 text-xs">L2</Badge>
       </Button>
     );
   }
@@ -317,18 +319,19 @@ export function FriendDNALockMessage({ itemCount }: { itemCount: number }) {
 
 // Section component for displaying in DNA expanded section
 interface FriendDNAComparisonSectionProps {
-  dnaLevel: 1 | 2 | 3;
+  dnaLevel: 0 | 1 | 2;
   itemCount: number;
+  hasSurvey?: boolean;
 }
 
-export function FriendDNAComparison({ dnaLevel, itemCount }: FriendDNAComparisonSectionProps) {
+export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: FriendDNAComparisonSectionProps) {
   const { session, user } = useAuth();
   const [friends, setFriends] = useState<Array<{ id: string; user_name: string; avatar_url?: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch friends when component mounts and user is Level 3
+  // Fetch friends when component mounts and user is Level 2
   useEffect(() => {
-    if (dnaLevel >= 3 && session?.access_token && user?.id) {
+    if (dnaLevel >= 2 && session?.access_token && user?.id) {
       setIsLoading(true);
       // Fetch friends from Supabase
       fetch(`https://mahpgcogwpawvviapqza.supabase.co/rest/v1/friendships?or=(user_id.eq.${user.id},friend_id.eq.${user.id})&status=eq.accepted&select=user_id,friend_id,users!friendships_friend_id_fkey(id,user_name,avatar_url),friend:users!friendships_user_id_fkey(id,user_name,avatar_url)`, {
@@ -358,15 +361,15 @@ export function FriendDNAComparison({ dnaLevel, itemCount }: FriendDNAComparison
     }
   }, [dnaLevel, session?.access_token, user?.id]);
 
-  // Locked state for Level 1-2
-  if (dnaLevel < 3) {
+  // Locked state for Level 0-1
+  if (dnaLevel < 2) {
     const itemsNeeded = Math.max(0, 30 - itemCount);
     return (
       <div className="mt-4 bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center gap-2 mb-4">
           <Users className="text-blue-500" size={20} />
           <h4 className="font-semibold text-gray-900">Friend DNA Comparisons</h4>
-          <Badge className="bg-blue-100 text-blue-700 text-xs ml-auto">Level 3</Badge>
+          <Badge className="bg-blue-100 text-blue-700 text-xs ml-auto">Level 2</Badge>
         </div>
         
         <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -377,22 +380,30 @@ export function FriendDNAComparison({ dnaLevel, itemCount }: FriendDNAComparison
           <p className="text-sm text-gray-500 mb-4 max-w-xs">
             Compare your entertainment DNA with friends and get "Watch Together" recommendations
           </p>
-          <div className="w-full max-w-xs">
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-              <span>Progress to Level 3</span>
-              <span className="font-medium text-purple-600">{itemCount} / 30</span>
+          {!hasSurvey ? (
+            <div className="w-full max-w-xs">
+              <p className="text-sm text-purple-600 font-medium">
+                Complete the DNA survey to start unlocking
+              </p>
             </div>
-            <Progress value={(itemCount / 30) * 100} className="h-2" />
-            <p className="text-xs text-gray-500 mt-2">
-              Log <span className="font-semibold text-purple-600">{itemsNeeded} more items</span> to unlock
-            </p>
-          </div>
+          ) : (
+            <div className="w-full max-w-xs">
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                <span>Progress to Level 2</span>
+                <span className="font-medium text-purple-600">{itemCount} / 30</span>
+              </div>
+              <Progress value={(itemCount / 30) * 100} className="h-2" />
+              <p className="text-xs text-gray-500 mt-2">
+                Log <span className="font-semibold text-purple-600">{itemsNeeded} more items</span> to unlock
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-  // Level 3 - Show friends list with compare buttons
+  // Level 2 - Show friends list with compare buttons
   return (
     <div className="mt-4 bg-white rounded-xl border border-gray-200 p-6">
       <div className="flex items-center gap-2 mb-4">
