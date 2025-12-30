@@ -285,6 +285,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               media: mediaData,
               customListId: selectedListId,
               skip_social_post: skipSocialPost,
+              rewatchCount: rewatchCount > 1 ? rewatchCount : null,
               ...(dnfReason && { dnf_reason: dnfReason.reason, dnf_other_reason: dnfReason.otherReason }),
             }),
           }
@@ -309,6 +310,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               media: mediaData,
               listType: 'finished',
               skip_social_post: skipSocialPost,
+              rewatchCount: rewatchCount > 1 ? rewatchCount : null,
             }),
           }
         );
@@ -607,18 +609,25 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                       {count === 1 ? '1st' : count === 2 ? '2nd' : count === 3 ? '3rd' : `${count}th`}
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => setRewatchCount(rewatchCount > 5 ? rewatchCount + 1 : 6)}
-                    className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                  <input
+                    type="number"
+                    min="6"
+                    max="99"
+                    value={rewatchCount > 5 ? rewatchCount : ''}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (!isNaN(val) && val >= 6) setRewatchCount(val);
+                      else if (e.target.value === '') setRewatchCount(1);
+                    }}
+                    onFocus={() => { if (rewatchCount <= 5) setRewatchCount(6); }}
+                    placeholder="6+"
+                    className={`w-12 h-8 text-center rounded-lg border text-xs font-medium transition-colors ${
                       rewatchCount > 5
                         ? 'bg-purple-600 text-white border-purple-600'
                         : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
                     }`}
-                    data-testid="quick-add-rewatch-more"
-                  >
-                    {rewatchCount > 5 ? `${rewatchCount}th` : '6+'}
-                  </button>
+                    data-testid="quick-add-rewatch-custom"
+                  />
                 </div>
               </div>
 

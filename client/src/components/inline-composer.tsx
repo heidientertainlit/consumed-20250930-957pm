@@ -364,8 +364,8 @@ export default function InlineComposer() {
       }
 
       const body = isCustom
-        ? { media: mediaData, customListId: listIdOrType }
-        : { media: mediaData, listType };
+        ? { media: mediaData, customListId: listIdOrType, rewatchCount: rewatchCount > 1 ? rewatchCount : null }
+        : { media: mediaData, listType, rewatchCount: rewatchCount > 1 ? rewatchCount : null };
 
       const response = await fetch(url, {
         method: 'POST',
@@ -906,18 +906,25 @@ export default function InlineComposer() {
                           {count === 1 ? '1st' : count === 2 ? '2nd' : count === 3 ? '3rd' : `${count}th`}
                         </button>
                       ))}
-                      <button
-                        type="button"
-                        onClick={() => setRewatchCount(rewatchCount > 5 ? rewatchCount + 1 : 6)}
-                        className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      <input
+                        type="number"
+                        min="6"
+                        max="99"
+                        value={rewatchCount > 5 ? rewatchCount : ''}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 6) setRewatchCount(val);
+                          else if (e.target.value === '') setRewatchCount(1);
+                        }}
+                        onFocus={() => { if (rewatchCount <= 5) setRewatchCount(6); }}
+                        placeholder="6+"
+                        className={`w-12 h-8 text-center rounded-full text-xs font-medium transition-colors ${
                           rewatchCount > 5
                             ? 'bg-purple-600 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
-                        data-testid="composer-rewatch-more"
-                      >
-                        {rewatchCount > 5 ? `${rewatchCount}th` : '6+'}
-                      </button>
+                        data-testid="composer-rewatch-custom"
+                      />
                     </div>
                   </div>
 

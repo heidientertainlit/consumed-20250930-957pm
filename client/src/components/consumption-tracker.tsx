@@ -565,16 +565,25 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
                   {count === 1 ? '1st time' : count === 2 ? '2nd time' : count === 3 ? '3rd time' : `${count}th time`}
                 </button>
               ))}
-              <button
-                onClick={() => setRewatchCount(rewatchCount > 5 ? 6 : rewatchCount + 1)}
-                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+              <input
+                type="number"
+                min="6"
+                max="99"
+                value={rewatchCount > 5 ? rewatchCount : ''}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (!isNaN(val) && val >= 6) setRewatchCount(val);
+                  else if (e.target.value === '') setRewatchCount(1);
+                }}
+                onFocus={() => { if (rewatchCount <= 5) setRewatchCount(6); }}
+                placeholder="6+"
+                className={`w-14 h-10 text-center rounded-lg border text-sm font-medium transition-colors ${
                   rewatchCount > 5
                     ? 'bg-purple-600 text-white border-purple-600'
                     : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
                 }`}
-              >
-                {rewatchCount > 5 ? `${rewatchCount}th time` : '6+ times'}
-              </button>
+                data-testid="tracker-rewatch-custom"
+              />
             </div>
           </div>
 
