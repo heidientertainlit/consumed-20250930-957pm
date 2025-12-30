@@ -69,35 +69,27 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
   }
 
   return (
-    <div className="py-2">
-      {/* Simple horizontal layout */}
+    <div className="py-1">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${config.color} flex items-center justify-center shadow-md`}>
-            <Icon className="text-white" size={18} />
+        <div className="flex items-center gap-2">
+          <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${config.color} flex items-center justify-center`}>
+            <Icon className="text-white" size={14} />
           </div>
-          <div>
-            <div className="text-sm text-gray-500">
-              Level {level}{level === 2 && ' (Unlocked)'}
-            </div>
-            <div className="font-semibold text-gray-900">{config.name}</div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Level {level}{level === 2 && ' (Unlocked)'}</span>
+            <span className="font-medium text-gray-900 text-sm">{config.name}</span>
           </div>
         </div>
-        
-        {/* Status indicator */}
         {level === 0 && (
-          <span className="text-xs text-gray-500 font-medium">Survey required</span>
+          <span className="text-xs text-gray-500">Survey required</span>
         )}
         {level === 1 && (
-          <span className="text-xs text-purple-600 font-medium">{itemCount} logged</span>
+          <span className="text-xs text-purple-600">{itemCount} logged</span>
+        )}
+        {level === 2 && (
+          <ChevronDown size={16} className="text-emerald-500" />
         )}
       </div>
-      {/* V arrow pointing down for Level 2 */}
-      {level === 2 && (
-        <div className="flex justify-center mt-2">
-          <ChevronDown size={20} className="text-emerald-500" />
-        </div>
-      )}
     </div>
   );
 }
