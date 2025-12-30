@@ -648,7 +648,7 @@ function CurrentlyConsumingFeedCard({
                 <div>
                   <p className="text-gray-900">
                     <Link href={`/user/${post.user?.id}`}>
-                      <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                      <span className="font-semibold hover:text-purple-600 cursor-pointer">@{post.user?.username}</span>
                     </Link>
                     {' '}is currently {verb}...
                   </p>
