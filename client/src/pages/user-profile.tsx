@@ -2910,11 +2910,6 @@ export default function UserProfile() {
                           </p>
                         </div>
                       )}
-                      {dnaLevel === 2 && (
-                        <div className="mt-3 pt-3 border-t border-purple-100 text-center">
-                          <p className="text-sm text-emerald-600 font-medium">All DNA features unlocked!</p>
-                        </div>
-                      )}
                     </div>
 
                     {/* Friend DNA Comparison - Now prominently placed */}

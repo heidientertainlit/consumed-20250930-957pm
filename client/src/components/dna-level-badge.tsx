@@ -1,6 +1,6 @@
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Star, Trophy, Lock, ChevronDown } from "lucide-react";
+import { Sparkles, Star, Trophy, Lock, ChevronDown, ArrowDown } from "lucide-react";
 
 interface DNALevelBadgeProps {
   level: 0 | 1 | 2;
@@ -82,17 +82,18 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
           </div>
         </div>
         
-        {/* Status indicator only */}
-        <div className="flex items-center gap-2">
-          {level === 2 ? (
-            <span className="text-xs text-emerald-600 font-medium">All unlocked</span>
-          ) : level === 0 ? (
-            <span className="text-xs text-gray-500 font-medium">Survey required</span>
-          ) : (
-            <span className="text-xs text-purple-600 font-medium">{itemCount} logged</span>
-          )}
-          <ChevronDown size={16} className="text-gray-400" />
-        </div>
+        {/* Status indicator - minimal for Level 2 */}
+        {level === 0 && (
+          <span className="text-xs text-gray-500 font-medium">Survey required</span>
+        )}
+        {level === 1 && (
+          <span className="text-xs text-purple-600 font-medium">{itemCount} logged</span>
+        )}
+        {level === 2 && (
+          <div className="flex items-center gap-1 text-emerald-600">
+            <ArrowDown size={14} />
+          </div>
+        )}
       </div>
     </div>
   );
