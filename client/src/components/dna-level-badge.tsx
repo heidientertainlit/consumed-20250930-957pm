@@ -36,7 +36,7 @@ const LEVEL_CONFIG = {
     nextThreshold: 30,
   },
   2: {
-    name: "DNA Friend Compare",
+    name: "Entertainment DNA",
     icon: Trophy,
     color: "from-emerald-500 to-teal-500",
     bgColor: "bg-emerald-100",
@@ -82,7 +82,7 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
           </div>
         </div>
         
-        {/* Status indicator - minimal for Level 2 */}
+        {/* Status indicator */}
         {level === 0 && (
           <span className="text-xs text-gray-500 font-medium">Survey required</span>
         )}
@@ -90,11 +90,15 @@ export function DNALevelBadge({ level, itemCount, showProgress = true, compact =
           <span className="text-xs text-purple-600 font-medium">{itemCount} logged</span>
         )}
         {level === 2 && (
-          <div className="flex items-center gap-1 text-emerald-600">
-            <ArrowDown size={14} />
-          </div>
+          <span className="text-xs text-emerald-600 font-medium">(Level 2 Unlocked)</span>
         )}
       </div>
+      {/* V arrow pointing down for Level 2 */}
+      {level === 2 && (
+        <div className="flex justify-center mt-2">
+          <ChevronDown size={20} className="text-emerald-500" />
+        </div>
+      )}
     </div>
   );
 }
