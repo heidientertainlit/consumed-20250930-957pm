@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Users, Sparkles, Loader2, Lock, Film, Tv, BookOpen, Music, Heart, X, Download, Share2 } from "lucide-react";
+import { Users, Sparkles, Loader2, Lock, Film, Tv, BookOpen, Music, Heart, X, Download, Share2, Send, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 
@@ -33,10 +33,11 @@ interface FriendWithEligibility {
   id: string;
   user_name: string;
   avatar_url?: string;
-  isEligible?: boolean;
+  itemCount: number;
+  isEligible: boolean;
+  hasSurvey?: boolean;
 }
 
-// Section component for displaying in DNA expanded section
 interface FriendDNAComparisonSectionProps {
   dnaLevel: 0 | 1 | 2;
   itemCount: number;
@@ -55,6 +56,11 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
   const comparisonCardRef = useRef<HTMLDivElement>(null);
 
   const canCompare = hasSurvey && dnaLevel >= 2;
+  const appUrl = import.meta.env.VITE_APP_URL || 'https://consumed.app';
+
+  // Split friends into eligible and almost eligible
+  const eligibleFriends = friends.filter(f => f.isEligible);
+  const almostEligibleFriends = friends.filter(f => !f.isEligible && f.itemCount > 0);
 
   // Helper functions for displaying comparison
   const getMatchColor = (score: number) => {
@@ -80,7 +86,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
     return <Heart size={12} />;
   };
 
-  // Fetch friends when component mounts and user is Level 2
+  // Fetch friends with their item counts when component mounts and user is Level 2
   useEffect(() => {
     const fetchFriends = async () => {
       if (!session?.access_token || !user?.id || dnaLevel < 2) return;
@@ -132,13 +138,62 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
         const usersData = await usersResponse.json();
         console.log('Friends data:', usersData);
         
+        // Fetch user_stats for each friend to get item counts
+        const statsResponse = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/user_stats?user_id=in.(${friendIds.join(',')})&select=user_id,movies_watched,tv_watched,books_read,music_logged,podcasts_logged,games_played`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+          }
+        );
+        
+        const statsData = await statsResponse.json();
+        console.log('Friends stats:', statsData);
+        
+        // Create a map of friend stats
+        const statsMap: Record<string, number> = {};
+        if (Array.isArray(statsData)) {
+          statsData.forEach((s: any) => {
+            const total = (s.movies_watched || 0) + (s.tv_watched || 0) + (s.books_read || 0) + 
+                         (s.music_logged || 0) + (s.podcasts_logged || 0) + (s.games_played || 0);
+            statsMap[s.user_id] = total;
+          });
+        }
+        
+        // Fetch DNA profiles to check if they completed survey
+        const dnaResponse = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/dna_profiles?user_id=in.(${friendIds.join(',')})&select=user_id`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+          }
+        );
+        
+        const dnaData = await dnaResponse.json();
+        const hasSurveyMap: Record<string, boolean> = {};
+        if (Array.isArray(dnaData)) {
+          dnaData.forEach((d: any) => {
+            hasSurveyMap[d.user_id] = true;
+          });
+        }
+        
         if (Array.isArray(usersData)) {
-          const friendList = usersData.map((u: any) => ({
-            id: u.id,
-            user_name: u.user_name || 'Unknown',
-            avatar_url: u.avatar_url,
-            isEligible: true,
-          }));
+          const friendList = usersData.map((u: any) => {
+            const itemCount = statsMap[u.id] || 0;
+            const hasSurvey = hasSurveyMap[u.id] || false;
+            return {
+              id: u.id,
+              user_name: u.user_name || 'Unknown',
+              avatar_url: u.avatar_url,
+              itemCount,
+              hasSurvey,
+              isEligible: itemCount >= 30 && hasSurvey,
+            };
+          });
           setFriends(friendList);
         }
       } catch (err) {
@@ -247,7 +302,6 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
             files: [file],
           });
         } else {
-          // Fallback: copy to clipboard or download
           handleDownload();
           toast({
             title: "Sharing not supported",
@@ -257,7 +311,36 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
       });
     } catch (err) {
       console.error('Error sharing:', err);
-      // User cancelled share or error
+    }
+  };
+
+  // Nudge a friend to complete their profile
+  const handleNudgeFriend = async (friend: FriendWithEligibility) => {
+    const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+    const message = friend.hasSurvey 
+      ? `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on consumed, but you need to log ${itemsNeeded} more items first. Let's see how compatible our taste is! ${appUrl}`
+      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${appUrl}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Compare our Entertainment DNA!',
+          text: message,
+        });
+      } catch (err) {
+        // User cancelled or error
+        await navigator.clipboard.writeText(message);
+        toast({
+          title: "Message copied!",
+          description: "Share it with your friend to nudge them.",
+        });
+      }
+    } else {
+      await navigator.clipboard.writeText(message);
+      toast({
+        title: "Message copied!",
+        description: "Share it with your friend to nudge them.",
+      });
     }
   };
 
@@ -341,36 +424,103 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Friend Pills */}
-          <div>
-            <p className="text-sm text-gray-600 mb-3">Select a friend to compare entertainment DNA:</p>
-            <div className="flex flex-wrap gap-2">
-              {friends.map((friend) => (
-                <button
-                  key={friend.id}
-                  onClick={() => handleSelectFriend(friend.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-full border-2 transition-all ${
-                    selectedFriendId === friend.id
-                      ? 'border-purple-500 bg-purple-100 shadow-sm'
-                      : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
-                  }`}
-                  data-testid={`pill-friend-${friend.id}`}
-                >
-                  <div className="w-6 h-6 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 text-xs font-semibold overflow-hidden">
-                    {friend.avatar_url ? (
-                      <img src={friend.avatar_url} alt={friend.user_name} className="w-6 h-6 rounded-full object-cover" />
-                    ) : (
-                      friend.user_name.charAt(0).toUpperCase()
+          {/* Eligible Friend Pills */}
+          {eligibleFriends.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-600 mb-3">Select a friend to compare entertainment DNA:</p>
+              <div className="flex flex-wrap gap-2">
+                {eligibleFriends.map((friend) => (
+                  <button
+                    key={friend.id}
+                    onClick={() => handleSelectFriend(friend.id)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-full border-2 transition-all ${
+                      selectedFriendId === friend.id
+                        ? 'border-purple-500 bg-purple-100 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-purple-300 hover:bg-purple-50'
+                    }`}
+                    data-testid={`pill-friend-${friend.id}`}
+                  >
+                    <div className="w-6 h-6 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 text-xs font-semibold overflow-hidden">
+                      {friend.avatar_url ? (
+                        <img src={friend.avatar_url} alt={friend.user_name} className="w-6 h-6 rounded-full object-cover" />
+                      ) : (
+                        friend.user_name.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">{friend.user_name}</span>
+                    {selectedFriendId === friend.id && (
+                      <X size={14} className="text-gray-500" />
                     )}
-                  </div>
-                  <span className="text-sm font-medium text-gray-800">{friend.user_name}</span>
-                  {selectedFriendId === friend.id && (
-                    <X size={14} className="text-gray-500" />
-                  )}
-                </button>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Almost Eligible Friends - Nudge Section */}
+          {almostEligibleFriends.length > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageCircle size={16} className="text-amber-600" />
+                <h5 className="text-sm font-semibold text-amber-800">
+                  {almostEligibleFriends.length === 1 ? 'This friend is' : 'These friends are'} almost ready!
+                </h5>
+              </div>
+              <p className="text-xs text-amber-700 mb-3">
+                Nudge them to complete their profile so you can compare DNA
+              </p>
+              <div className="space-y-2">
+                {almostEligibleFriends.slice(0, 5).map((friend) => {
+                  const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+                  const needsSurvey = !friend.hasSurvey;
+                  return (
+                    <div 
+                      key={friend.id}
+                      className="flex items-center justify-between bg-white/70 rounded-lg p-2 border border-amber-100"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-amber-200 flex items-center justify-center text-amber-700 text-xs font-semibold overflow-hidden">
+                          {friend.avatar_url ? (
+                            <img src={friend.avatar_url} alt={friend.user_name} className="w-7 h-7 rounded-full object-cover" />
+                          ) : (
+                            friend.user_name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{friend.user_name}</p>
+                          <p className="text-xs text-amber-600">
+                            {needsSurvey 
+                              ? `Needs survey + ${itemsNeeded > 0 ? `${itemsNeeded} items` : ''}`
+                              : `${itemsNeeded} more items to go`
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleNudgeFriend(friend)}
+                        className="border-amber-300 hover:bg-amber-100 text-amber-700 text-xs h-7 px-2"
+                        data-testid={`button-nudge-${friend.id}`}
+                      >
+                        <Send size={12} className="mr-1" />
+                        Nudge
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* No eligible friends but have almost eligible */}
+          {eligibleFriends.length === 0 && almostEligibleFriends.length > 0 && (
+            <div className="text-center py-2 border-t border-gray-100 pt-4">
+              <p className="text-sm text-gray-500">
+                None of your friends are ready for DNA comparison yet. Nudge them above! 👆
+              </p>
+            </div>
+          )}
 
           {/* Inline Comparison Results */}
           {selectedFriendId && (
