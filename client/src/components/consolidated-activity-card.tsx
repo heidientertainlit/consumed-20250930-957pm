@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Heart, MessageCircle, ChevronRight, Star, Trash2 } from "lucide-react";
-import { format } from "date-fns";
 
 interface MediaItem {
   id: string;
@@ -126,7 +125,20 @@ export default function ConsolidatedActivityCard({
 
   const formattedDate = (() => {
     try {
-      return format(new Date(activity.timestamp), 'MMM d');
+      const date = new Date(activity.timestamp);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) return 'Today';
+      if (diffDays === 2) return 'Yesterday';
+      if (diffDays <= 7) return `${diffDays - 1} days ago`;
+
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      });
     } catch {
       return '';
     }
