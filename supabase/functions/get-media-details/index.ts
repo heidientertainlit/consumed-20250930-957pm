@@ -28,33 +28,47 @@ serve(async (req) => {
 
     let mediaDetails = null;
 
+    console.log('Request params:', { source, externalId, mediaType, seasonNumber });
+
     // Fetch from appropriate API based on source
     if (source === 'tmdb') {
       const tmdbKey = Deno.env.get('TMDB_API_KEY');
+      console.log('TMDB_API_KEY present:', !!tmdbKey);
+      
+      if (!tmdbKey) {
+        console.error('TMDB_API_KEY is not set!');
+        return new Response(JSON.stringify({ error: 'TMDB API key not configured' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
       
       // Use media_type if provided, otherwise try movie first then TV
       let response;
+      let apiUrl;
       if (mediaType === 'tv') {
-        response = await fetch(
-          `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
-        );
+        apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+        console.log('Fetching TV show:', externalId);
+        response = await fetch(apiUrl);
       } else if (mediaType === 'movie') {
-        response = await fetch(
-          `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
-        );
+        apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+        console.log('Fetching movie:', externalId);
+        response = await fetch(apiUrl);
       } else {
         // Fallback: try movie first, then TV
-        response = await fetch(
-          `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
-        );
+        apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+        console.log('Fallback - trying movie first:', externalId);
+        response = await fetch(apiUrl);
         
         if (!response.ok) {
-          response = await fetch(
-            `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`
-          );
+          console.log('Movie not found, trying TV');
+          apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+          response = await fetch(apiUrl);
         }
       }
 
+      console.log('TMDB response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
         const isMovie = !!data.title;
