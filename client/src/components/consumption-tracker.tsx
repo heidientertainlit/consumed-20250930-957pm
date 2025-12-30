@@ -45,6 +45,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
   const [rating, setRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
+  const [rewatchCount, setRewatchCount] = useState<number>(1);
 
   const queryClient = useQueryClient();
   const { user, session } = useAuth();
@@ -84,6 +85,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
     setSelectedMedia(null);
     setRating(0);
     setReview("");
+    setRewatchCount(1);
   };
 
 
@@ -186,6 +188,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
           },
           rating: rating > 0 ? rating : null,
           review: review.trim() || null,
+          rewatchCount: rewatchCount > 1 ? rewatchCount : null,
           // Send appropriate parameter based on list type
           ...(isCustomList 
             ? { customListId: listType } 
@@ -540,6 +543,38 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
                 />
                 <span className="text-sm text-gray-500">(0-5)</span>
               </div>
+            </div>
+          </div>
+
+          {/* Rewatch/Reread Count Section */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Which time is this? (optional)</h3>
+            <p className="text-sm text-gray-500 mb-3">Indicate if this is a rewatch or reread</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {[1, 2, 3, 4, 5].map((count) => (
+                <button
+                  key={count}
+                  onClick={() => setRewatchCount(count)}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    rewatchCount === count
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
+                  }`}
+                  data-testid={`rewatch-count-${count}`}
+                >
+                  {count === 1 ? '1st time' : count === 2 ? '2nd time' : count === 3 ? '3rd time' : `${count}th time`}
+                </button>
+              ))}
+              <button
+                onClick={() => setRewatchCount(rewatchCount > 5 ? 6 : rewatchCount + 1)}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  rewatchCount > 5
+                    ? 'bg-purple-600 text-white border-purple-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
+                }`}
+              >
+                {rewatchCount > 5 ? `${rewatchCount}th time` : '6+ times'}
+              </button>
             </div>
           </div>
 
