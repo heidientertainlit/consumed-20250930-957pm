@@ -93,10 +93,10 @@ serve(async (req) => {
       
       const listIds = userLists.map(l => l.id);
       
-      // Fetch all items from user's lists
+      // Fetch all items from user's lists (not all tables have 'year' column)
       const { data: listItems, error: itemsError } = await supabaseClient
         .from('list_items')
-        .select('title, media_type, creator, year, rating, external_id, external_source')
+        .select('title, media_type, creator, rating, external_id, external_source')
         .in('list_id', listIds);
 
       if (itemsError) {
@@ -144,18 +144,7 @@ serve(async (req) => {
           });
         }
 
-        // Decade signal (from year)
-        if (item.year && item.year >= 1900 && item.year <= 2030) {
-          const decade = `${Math.floor(item.year / 10) * 10}s`;
-          const key = `decade:${decade}`;
-          const existing = signals.get(key);
-          signals.set(key, {
-            type: 'decade',
-            value: decade,
-            count: (existing?.count || 0) + 1,
-            hasRating: existing?.hasRating || !!item.rating
-          });
-        }
+        // Note: Decade signal removed since 'year' column may not exist in all environments
       }
 
       // Fetch genre data from TMDB for movies/tv (batch first 20 items)
