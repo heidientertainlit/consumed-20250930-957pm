@@ -3004,14 +3004,23 @@ export default function UserProfile() {
                           <p className="text-xs text-gray-500 mb-2 font-medium">What you actually watch:</p>
                           <div className="flex flex-wrap gap-2">
                             {(() => {
-                              const surveyGenres = (dnaProfile?.favorite_genres || []).map(g => g.toLowerCase());
+                              // Normalize genres for better matching (handle Sci-Fi vs Science Fiction, etc.)
+                              const normalizeGenre = (g: string) => {
+                                const lower = g.toLowerCase().trim();
+                                // Map common variations
+                                if (lower === 'sci-fi' || lower === 'science fiction') return 'science fiction';
+                                if (lower === 'action & adventure') return 'action';
+                                return lower;
+                              };
+                              const surveyGenres = (dnaProfile?.favorite_genres || []).map(normalizeGenre);
                               
                               return Object.entries(trackedGenres)
                                 .sort((a, b) => b[1] - a[1])
                                 .slice(0, 10)
                                 .map(([genre, count]) => {
+                                  const normalizedTracked = normalizeGenre(genre);
                                   const isMatch = surveyGenres.some(sg => 
-                                    sg.includes(genre.toLowerCase()) || genre.toLowerCase().includes(sg)
+                                    sg === normalizedTracked || sg.includes(normalizedTracked) || normalizedTracked.includes(sg)
                                   );
                                   return (
                                     <Badge 
@@ -3028,13 +3037,21 @@ export default function UserProfile() {
                             })()}
                           </div>
                           {(() => {
-                            const surveyGenres = (dnaProfile?.favorite_genres || []).map(g => g.toLowerCase());
+                            // Use same normalization function for insight message
+                            const normalizeGenre = (g: string) => {
+                              const lower = g.toLowerCase().trim();
+                              if (lower === 'sci-fi' || lower === 'science fiction') return 'science fiction';
+                              if (lower === 'action & adventure') return 'action';
+                              return lower;
+                            };
+                            const surveyGenres = (dnaProfile?.favorite_genres || []).map(normalizeGenre);
                             const topTracked = Object.entries(trackedGenres)
                               .sort((a, b) => b[1] - a[1])[0];
                             
                             if (topTracked && surveyGenres.length > 0) {
+                              const normalizedTop = normalizeGenre(topTracked[0]);
                               const isTopInSurvey = surveyGenres.some(sg => 
-                                sg.includes(topTracked[0].toLowerCase()) || topTracked[0].toLowerCase().includes(sg)
+                                sg === normalizedTop || sg.includes(normalizedTop) || normalizedTop.includes(sg)
                               );
                               if (!isTopInSurvey && topTracked[1] >= 3) {
                                 return (

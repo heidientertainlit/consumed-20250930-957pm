@@ -420,8 +420,17 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
       ) : friends.length === 0 ? (
         <div className="text-center py-6">
           <Users size={32} className="mx-auto text-gray-300 mb-2" />
-          <p className="text-sm text-gray-500">Add friends to compare your entertainment DNA!</p>
-          <p className="text-xs text-gray-400 mt-1">Visit their profiles and add them as friends</p>
+          <p className="text-sm text-gray-500 mb-3">Add friends to compare your entertainment DNA!</p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.location.href = '/discover'}
+            className="border-purple-200 hover:border-purple-300 hover:bg-purple-50"
+            data-testid="button-find-friends"
+          >
+            <Users size={14} className="mr-2 text-purple-600" />
+            Find Friends
+          </Button>
         </div>
       ) : (
         <div className="space-y-3">
