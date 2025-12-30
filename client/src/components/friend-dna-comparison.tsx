@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Users, Sparkles, Loader2, Lock, Film, Tv, BookOpen, Music, Heart, X } from "lucide-react";
+import { Users, Sparkles, Loader2, Lock, Film, Tv, BookOpen, Music, Heart, X, Download, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import html2canvas from "html2canvas";
 
 interface ComparisonResult {
   match_score: number;
@@ -51,6 +52,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
   const [isComparing, setIsComparing] = useState(false);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [compareError, setCompareError] = useState<string | null>(null);
+  const comparisonCardRef = useRef<HTMLDivElement>(null);
 
   const canCompare = hasSurvey && dnaLevel >= 2;
 
@@ -80,35 +82,73 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
 
   // Fetch friends when component mounts and user is Level 2
   useEffect(() => {
-    if (dnaLevel >= 2 && session?.access_token && user?.id) {
+    const fetchFriends = async () => {
+      if (!session?.access_token || !user?.id || dnaLevel < 2) return;
+      
       setIsLoadingFriends(true);
-      // Fetch friends from Supabase
-      fetch(`https://mahpgcogwpawvviapqza.supabase.co/rest/v1/friendships?or=(user_id.eq.${user.id},friend_id.eq.${user.id})&status=eq.accepted&select=user_id,friend_id,users!friendships_friend_id_fkey(id,user_name,avatar_url),friend:users!friendships_user_id_fkey(id,user_name,avatar_url)`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            const friendList = data.map((f: any) => {
-              // Get the friend (not the current user)
-              const isFriend = f.friend_id !== user.id;
-              const friendData = isFriend ? f.users : f.friend;
-              return {
-                id: isFriend ? f.friend_id : f.user_id,
-                user_name: friendData?.user_name || 'Unknown',
-                avatar_url: friendData?.avatar_url,
-                isEligible: true, // Assume eligible for now, comparison will validate
-              };
-            }).filter(f => f.id !== user.id);
-            setFriends(friendList);
+      try {
+        // Fetch friendships directly
+        const response = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/friendships?or=(user_id.eq.${user.id},friend_id.eq.${user.id})&status=eq.accepted`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
           }
-        })
-        .catch(console.error)
-        .finally(() => setIsLoadingFriends(false));
-    }
+        );
+        
+        const friendships = await response.json();
+        console.log('Friendships fetched:', friendships);
+        
+        if (!Array.isArray(friendships) || friendships.length === 0) {
+          setFriends([]);
+          return;
+        }
+        
+        // Get friend IDs
+        const friendIds = friendships.map((f: any) => 
+          f.user_id === user.id ? f.friend_id : f.user_id
+        ).filter((id: string) => id !== user.id);
+        
+        console.log('Friend IDs:', friendIds);
+        
+        if (friendIds.length === 0) {
+          setFriends([]);
+          return;
+        }
+        
+        // Fetch user details for friends
+        const usersResponse = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,user_name,avatar_url`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+          }
+        );
+        
+        const usersData = await usersResponse.json();
+        console.log('Friends data:', usersData);
+        
+        if (Array.isArray(usersData)) {
+          const friendList = usersData.map((u: any) => ({
+            id: u.id,
+            user_name: u.user_name || 'Unknown',
+            avatar_url: u.avatar_url,
+            isEligible: true,
+          }));
+          setFriends(friendList);
+        }
+      } catch (err) {
+        console.error('Error fetching friends:', err);
+      } finally {
+        setIsLoadingFriends(false);
+      }
+    };
+    
+    fetchFriends();
   }, [dnaLevel, session?.access_token, user?.id]);
 
   // Handle friend selection and comparison
@@ -153,6 +193,71 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
       setCompareError('Failed to compare DNA');
     } finally {
       setIsComparing(false);
+    }
+  };
+
+  // Download comparison as image
+  const handleDownload = async () => {
+    if (!comparisonCardRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(comparisonCardRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `dna-comparison-${selectedFriend?.user_name || 'friend'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast({
+        title: "Downloaded!",
+        description: "Your DNA comparison card has been saved.",
+      });
+    } catch (err) {
+      console.error('Error downloading:', err);
+      toast({
+        title: "Download failed",
+        description: "Could not generate the image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Share comparison
+  const handleShare = async () => {
+    if (!comparisonCardRef.current || !comparison) return;
+    
+    try {
+      const canvas = await html2canvas(comparisonCardRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        
+        const file = new File([blob], 'dna-comparison.png', { type: 'image/png' });
+        
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'My Entertainment DNA Match',
+            text: `I have a ${comparison.match_score}% entertainment DNA match with ${selectedFriend?.user_name}! 🧬`,
+            files: [file],
+          });
+        } else {
+          // Fallback: copy to clipboard or download
+          handleDownload();
+          toast({
+            title: "Sharing not supported",
+            description: "The image has been downloaded instead.",
+          });
+        }
+      });
+    } catch (err) {
+      console.error('Error sharing:', err);
+      // User cancelled share or error
     }
   };
 
@@ -223,10 +328,8 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
             variant="outline" 
             size="sm"
             onClick={() => {
-              // Update URL to trigger friends tab
               window.history.pushState({}, '', '/me?tab=friends');
               window.dispatchEvent(new PopStateEvent('popstate'));
-              // Scroll to top
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className="border-purple-200 hover:border-purple-300 hover:bg-purple-50"
@@ -296,71 +399,103 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
 
               {!isComparing && !compareError && comparison && (
                 <div className="space-y-4">
-                  {/* Match Score Header */}
-                  <div className="text-center bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
-                    <div className="text-4xl font-bold mb-1">
-                      <span className={getMatchColor(comparison.match_score)}>
-                        {comparison.match_score}%
-                      </span>
-                      <span className="ml-2">{getMatchEmoji(comparison.match_score)}</span>
+                  {/* Downloadable/Shareable Card */}
+                  <div 
+                    ref={comparisonCardRef}
+                    className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-5 border border-purple-200"
+                  >
+                    {/* Header with branding */}
+                    <div className="text-center mb-4">
+                      <p className="text-xs text-purple-500 font-medium mb-1">🧬 consumed</p>
+                      <div className="text-4xl font-bold mb-1">
+                        <span className={getMatchColor(comparison.match_score)}>
+                          {comparison.match_score}%
+                        </span>
+                        <span className="ml-2">{getMatchEmoji(comparison.match_score)}</span>
+                      </div>
+                      <p className="text-gray-600 font-medium text-sm">Entertainment DNA Match</p>
                     </div>
-                    <p className="text-gray-600 font-medium text-sm">Entertainment DNA Match</p>
+
+                    {/* DNA Labels */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-white/70 rounded-lg p-3 border border-purple-100 text-center">
+                        <p className="text-xs text-gray-500 mb-1">You</p>
+                        <p className="font-semibold text-purple-800 text-sm">
+                          {comparison.your_dna_label || 'Your Profile'}
+                        </p>
+                      </div>
+                      <div className="bg-white/70 rounded-lg p-3 border border-indigo-100 text-center">
+                        <p className="text-xs text-gray-500 mb-1">{selectedFriend?.user_name}</p>
+                        <p className="font-semibold text-indigo-800 text-sm">
+                          {comparison.friend_dna_label || 'Their Profile'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Compatibility Line */}
                     {comparison.insights?.compatibilityLine && (
-                      <p className="text-xs text-purple-600 mt-2 italic">
+                      <p className="text-sm text-purple-700 text-center italic bg-white/50 rounded-lg p-3 mb-4">
                         "{comparison.insights.compatibilityLine}"
                       </p>
                     )}
+
+                    {/* Shared Content */}
+                    {comparison.shared_titles?.length > 0 && (
+                      <div className="mb-3">
+                        <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                          <Heart size={12} className="text-red-500" />
+                          You Both Love
+                        </h5>
+                        <div className="flex flex-wrap gap-1">
+                          {comparison.shared_titles.slice(0, 4).map((item, idx) => (
+                            <Badge key={idx} className="bg-white/70 text-gray-700 text-xs border border-gray-200">
+                              {item.title}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Shared Genres */}
+                    {comparison.shared_genres?.length > 0 && (
+                      <div>
+                        <h5 className="text-xs font-semibold text-gray-700 mb-2">Shared Genres</h5>
+                        <div className="flex flex-wrap gap-1">
+                          {comparison.shared_genres.slice(0, 5).map((genre, idx) => (
+                            <Badge key={idx} className="bg-purple-100/70 text-purple-700 text-xs">
+                              {genre}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* DNA Labels */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
-                      <p className="text-xs text-gray-500 mb-1">Your DNA</p>
-                      <p className="font-semibold text-purple-800 text-sm">
-                        {comparison.your_dna_label || 'Your Profile'}
-                      </p>
-                    </div>
-                    <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
-                      <p className="text-xs text-gray-500 mb-1">{selectedFriend?.user_name}'s DNA</p>
-                      <p className="font-semibold text-indigo-800 text-sm">
-                        {comparison.friend_dna_label || 'Their Profile'}
-                      </p>
-                    </div>
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownload}
+                      className="border-purple-200 hover:border-purple-300"
+                      data-testid="button-download-comparison"
+                    >
+                      <Download size={14} className="mr-2" />
+                      Download
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShare}
+                      className="border-purple-200 hover:border-purple-300"
+                      data-testid="button-share-comparison"
+                    >
+                      <Share2 size={14} className="mr-2" />
+                      Share
+                    </Button>
                   </div>
 
-                  {/* Shared Titles */}
-                  {comparison.shared_titles?.length > 0 && (
-                    <div>
-                      <h5 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                        <Heart size={14} className="text-red-500" />
-                        You Both Love
-                      </h5>
-                      <div className="flex flex-wrap gap-2">
-                        {comparison.shared_titles.slice(0, 6).map((item, idx) => (
-                          <Badge key={idx} className="bg-red-50 text-red-700 text-xs">
-                            {getMediaIcon(item.media_type)}
-                            <span className="ml-1">{item.title}</span>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Shared Genres */}
-                  {comparison.shared_genres?.length > 0 && (
-                    <div>
-                      <h5 className="text-sm font-semibold text-gray-900 mb-2">Shared Genres</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {comparison.shared_genres.slice(0, 6).map((genre, idx) => (
-                          <Badge key={idx} className="bg-purple-100 text-purple-700 text-xs">
-                            {genre}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* What to Enjoy Together */}
+                  {/* Additional Details (not in card) */}
                   {comparison.insights?.enjoyTogether?.length > 0 && (
                     <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-100">
                       <h5 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-2">
@@ -375,7 +510,6 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                     </div>
                   )}
 
-                  {/* What They Could Introduce You To */}
                   {comparison.insights?.theyCouldIntroduce?.length > 0 && (
                     <div>
                       <h5 className="text-sm font-semibold text-gray-900 mb-2">
@@ -391,7 +525,6 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                     </div>
                   )}
 
-                  {/* What You Could Introduce Them To */}
                   {comparison.insights?.youCouldIntroduce?.length > 0 && (
                     <div>
                       <h5 className="text-sm font-semibold text-gray-900 mb-2">
@@ -420,7 +553,6 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
 export function FriendDNACompareButton({ 
   friendId, 
   friendName, 
-  friendAvatar,
   userDnaLevel, 
   userItemCount,
   hasSurvey = false
@@ -455,7 +587,6 @@ export function FriendDNACompareButton({
       variant="outline" 
       size="sm"
       onClick={() => {
-        // Navigate to profile DNA section
         window.history.pushState({}, '', '/me?tab=dna');
         window.dispatchEvent(new PopStateEvent('popstate'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
