@@ -488,68 +488,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
             </div>
           )}
 
-          {/* No eligible friends message - show above nudges */}
-          {eligibleFriends.length === 0 && almostEligibleFriends.length > 0 && (
-            <div className="text-center py-3 bg-gray-50 rounded-lg border border-gray-200 mb-4">
-              <p className="text-sm text-gray-600">
-                None of your friends are ready for DNA comparison yet.
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Nudge them below to complete their profiles! 👇
-              </p>
-            </div>
-          )}
-
-          {/* Almost Eligible Friends - Nudge Section */}
-          {almostEligibleFriends.length > 0 && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
-              <div className="flex items-center gap-2 mb-3">
-                <MessageCircle size={16} className="text-amber-600" />
-                <h5 className="text-sm font-semibold text-amber-800">
-                  {almostEligibleFriends.length === 1 ? 'This friend is' : 'These friends are'} almost ready!
-                </h5>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {almostEligibleFriends.slice(0, 6).map((friend) => {
-                  const itemsNeeded = Math.max(0, 30 - friend.itemCount);
-                  const needsSurvey = !friend.hasSurvey;
-                  return (
-                    <div 
-                      key={friend.id}
-                      className="flex flex-col items-center bg-white/80 rounded-lg p-3 border border-amber-100"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center text-amber-700 text-sm font-semibold overflow-hidden mb-2">
-                        {friend.avatar_url ? (
-                          <img src={friend.avatar_url} alt={friend.user_name} className="w-10 h-10 rounded-full object-cover" />
-                        ) : (
-                          friend.user_name.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-gray-800 text-center truncate w-full">{friend.user_name}</p>
-                      <p className="text-xs text-amber-600 text-center mb-2">
-                        {needsSurvey 
-                          ? `Needs survey${itemsNeeded > 0 ? ` + ${itemsNeeded}` : ''}`
-                          : `${itemsNeeded} more items`
-                        }
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleNudgeFriend(friend)}
-                        className="w-full border-amber-300 hover:bg-amber-100 text-amber-700 text-xs h-7"
-                        data-testid={`button-nudge-${friend.id}`}
-                      >
-                        <Send size={12} className="mr-1" />
-                        Nudge
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Inline Comparison Results */}
+          {/* Inline Comparison Results - Show immediately after friend selection */}
           {selectedFriendId && (
             <div className="border-t border-gray-200 pt-4">
               {isComparing && (
@@ -718,6 +657,71 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* No eligible friends message */}
+          {eligibleFriends.length === 0 && almostEligibleFriends.length > 0 && (
+            <div className="text-center py-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-600">
+                None of your friends are ready for DNA comparison yet.
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Nudge them below to complete their profiles! 👇
+              </p>
+            </div>
+          )}
+
+          {/* Almost Eligible Friends - Nudge Section (Single Column) */}
+          {almostEligibleFriends.length > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageCircle size={16} className="text-amber-600" />
+                <h5 className="text-sm font-semibold text-amber-800">
+                  {almostEligibleFriends.length === 1 ? 'This friend is' : 'These friends are'} almost ready!
+                </h5>
+              </div>
+              <div className="space-y-3">
+                {almostEligibleFriends.slice(0, 6).map((friend) => {
+                  const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+                  const needsSurvey = !friend.hasSurvey;
+                  return (
+                    <div 
+                      key={friend.id}
+                      className="flex items-center justify-between bg-white/80 rounded-lg p-3 border border-amber-100"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center text-amber-700 text-sm font-semibold overflow-hidden flex-shrink-0">
+                          {friend.avatar_url ? (
+                            <img src={friend.avatar_url} alt={friend.user_name} className="w-10 h-10 rounded-full object-cover" />
+                          ) : (
+                            friend.user_name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{friend.user_name}</p>
+                          <p className="text-xs text-amber-600">
+                            {needsSurvey 
+                              ? `Needs survey${itemsNeeded > 0 ? ` + ${itemsNeeded} items` : ''}`
+                              : `${itemsNeeded} more items`
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleNudgeFriend(friend)}
+                        className="border-amber-300 hover:bg-amber-100 text-amber-700 text-xs"
+                        data-testid={`button-nudge-${friend.id}`}
+                      >
+                        <Send size={12} className="mr-1" />
+                        Nudge
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
