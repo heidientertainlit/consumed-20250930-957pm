@@ -38,6 +38,7 @@ export default function InlineComposer() {
   
   // Rating-specific state
   const [ratingValue, setRatingValue] = useState(0);
+  const [rewatchCount, setRewatchCount] = useState<number>(1);
   
   // Prediction-specific state  
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
@@ -149,6 +150,7 @@ export default function InlineComposer() {
     setSearchResults([]);
     setContentText("");
     setRatingValue(0);
+    setRewatchCount(1);
     setPredictionOptions(["", ""]);
     setCreatorPrediction("");
     setPollOptions(["", ""]);
@@ -885,6 +887,40 @@ export default function InlineComposer() {
                     </div>
                   )}
                   
+                  {/* Rewatch/Reread Count - shown when media is selected */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-xs font-medium text-gray-600 mb-2">Which time is this?</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[1, 2, 3, 4, 5].map((count) => (
+                        <button
+                          key={count}
+                          type="button"
+                          onClick={() => setRewatchCount(count)}
+                          className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            rewatchCount === count
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                          data-testid={`composer-rewatch-${count}`}
+                        >
+                          {count === 1 ? '1st' : count === 2 ? '2nd' : count === 3 ? '3rd' : `${count}th`}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setRewatchCount(rewatchCount > 5 ? rewatchCount + 1 : 6)}
+                        className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          rewatchCount > 5
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                        data-testid="composer-rewatch-more"
+                      >
+                        {rewatchCount > 5 ? `${rewatchCount}th` : '6+'}
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Add to List / Add to Rank Options - shown when media is selected */}
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <p className="text-xs font-medium text-gray-600 mb-2">Save to:</p>

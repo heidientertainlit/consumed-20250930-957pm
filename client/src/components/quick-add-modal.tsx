@@ -65,6 +65,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
   const [dnfReason, setDnfReason] = useState<{ reason: string; otherReason?: string } | null>(null);
   const [pendingDnfListId, setPendingDnfListId] = useState<string>("");
+  const [rewatchCount, setRewatchCount] = useState<number>(1);
 
   const { data: listsData } = useQuery({
     queryKey: ['user-lists-metadata', user?.id],
@@ -164,6 +165,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     setSelectedMedia(null);
     setRating(0);
     setHoverRating(0);
+    setRewatchCount(1);
     setSelectedListId("");
     setSelectedRankId("");
     setReviewText("");
@@ -227,6 +229,7 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
     setStage("search");
     setSelectedMedia(null);
     setRating(0);
+    setRewatchCount(1);
     setSelectedListId("");
     setSelectedRankId("");
     setReviewText("");
@@ -584,6 +587,39 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
                 {renderStars()}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Which time is this? (optional)</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[1, 2, 3, 4, 5].map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => setRewatchCount(count)}
+                      className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                        rewatchCount === count
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
+                      }`}
+                      data-testid={`quick-add-rewatch-${count}`}
+                    >
+                      {count === 1 ? '1st' : count === 2 ? '2nd' : count === 3 ? '3rd' : `${count}th`}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setRewatchCount(rewatchCount > 5 ? rewatchCount + 1 : 6)}
+                    className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                      rewatchCount > 5
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
+                    }`}
+                    data-testid="quick-add-rewatch-more"
+                  >
+                    {rewatchCount > 5 ? `${rewatchCount}th` : '6+'}
+                  </button>
+                </div>
               </div>
 
               <div>
