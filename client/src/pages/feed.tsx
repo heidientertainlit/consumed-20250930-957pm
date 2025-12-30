@@ -2677,34 +2677,34 @@ export default function Feed() {
                             </div>
                           </div>
                           
-                          {/* Featured media poster */}
-                          <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
-                            <div className="relative mx-4 mb-4 cursor-pointer group">
-                              {media.imageUrl ? (
-                                <img 
-                                  src={media.imageUrl} 
-                                  alt={media.title || ''} 
-                                  className="w-full aspect-[2/3] max-w-[200px] mx-auto rounded-xl object-cover shadow-lg group-hover:shadow-xl transition-shadow"
-                                />
-                              ) : (
-                                <div className="w-full aspect-[2/3] max-w-[200px] mx-auto rounded-xl bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                                  <Film size={48} className="text-purple-300" />
-                                </div>
-                              )}
-                            </div>
-                          </Link>
-                          
-                          {/* Media title and type */}
-                          <div className="px-4 pb-3 text-center">
+                          {/* Featured media - horizontal layout with smaller poster */}
+                          <div className="flex gap-4 px-4 pb-4">
                             <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
-                              <h3 className="font-semibold text-gray-900 text-lg hover:text-purple-600 cursor-pointer">{media.title}</h3>
+                              <div className="cursor-pointer group flex-shrink-0">
+                                {media.imageUrl ? (
+                                  <img 
+                                    src={media.imageUrl} 
+                                    alt={media.title || ''} 
+                                    className="w-24 h-36 rounded-lg object-cover shadow-md group-hover:shadow-lg transition-shadow"
+                                  />
+                                ) : (
+                                  <div className="w-24 h-36 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                                    <Film size={24} className="text-purple-300" />
+                                  </div>
+                                )}
+                              </div>
                             </Link>
-                            <p className="text-sm text-gray-500 capitalize">{media.mediaType}</p>
-                          </div>
-                          
-                          {/* Actions */}
-                          <div className="px-4 pb-4">
-                            <MediaCardActions media={media} session={session} />
+                            
+                            {/* Media info and actions */}
+                            <div className="flex-1 min-w-0">
+                              <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+                                <h3 className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{media.title}</h3>
+                              </Link>
+                              <p className="text-sm text-gray-500 capitalize mb-3">{media.mediaType}</p>
+                              
+                              {/* Compact actions */}
+                              <MediaCardActions media={media} session={session} />
+                            </div>
                           </div>
                           
                           {/* Like/Comment actions */}
