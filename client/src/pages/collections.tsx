@@ -1266,9 +1266,19 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
     }
   }, [maxEpisodes, editEpisode]);
 
-  const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>(
-    progressMode === 'episode' ? 'episode' : progressMode === 'page' ? 'page' : 'percent'
-  );
+  // Default to media-appropriate tracking mode
+  const getDefaultMode = () => {
+    // If user already has a mode saved, use that
+    if (progressMode === 'episode') return 'episode';
+    if (progressMode === 'page') return 'page';
+    // Otherwise, default based on media type
+    if (isTv) return 'episode';
+    if (isBook) return 'page';
+    if (isPodcast) return 'minutes';
+    return 'percent';
+  };
+  
+  const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>(getDefaultMode());
 
   // DNF reason mutation
   const dnfReasonMutation = useMutation({
