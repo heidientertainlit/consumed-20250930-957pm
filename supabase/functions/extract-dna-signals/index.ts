@@ -19,30 +19,68 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const jwt = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
-
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
+    // Check for user_id in body (when called by another edge function with service role)
+    let targetUserId: string | null = null;
+    
     if (req.method === 'POST') {
-      // Fetch all user's logged media items
+      try {
+        const body = await req.json();
+        if (body.user_id) {
+          targetUserId = body.user_id;
+        }
+      } catch {
+        // No body or invalid JSON
+      }
+    }
+    
+    // If no user_id in body, authenticate via JWT
+    if (!targetUserId) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const jwt = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
+
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      targetUserId = user.id;
+    }
+
+    if (req.method === 'POST' || targetUserId) {
+      // First get user's lists, then get items from those lists
+      const { data: userLists, error: listsError } = await supabaseClient
+        .from('lists')
+        .select('id')
+        .eq('user_id', targetUserId);
+      
+      if (listsError) throw listsError;
+      
+      if (!userLists || userLists.length === 0) {
+        return new Response(JSON.stringify({ 
+          message: 'No lists found for user',
+          signals_extracted: 0 
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      const listIds = userLists.map(l => l.id);
+      
+      // Fetch all items from user's lists
       const { data: listItems, error: itemsError } = await supabaseClient
         .from('list_items')
         .select('title, media_type, creator, year, rating, external_id, external_source')
-        .eq('user_id', user.id);
+        .in('list_id', listIds);
 
       if (itemsError) throw itemsError;
 
@@ -152,11 +190,11 @@ serve(async (req) => {
       await supabaseClient
         .from('user_dna_signals')
         .delete()
-        .eq('user_id', user.id);
+        .eq('user_id', targetUserId);
 
       // Insert new signals
       const signalsToInsert = signalArray.map(signal => ({
-        user_id: user.id,
+        user_id: targetUserId,
         signal_type: signal.type,
         signal_value: signal.value,
         strength: Math.min(1.0, (signal.count / maxCount) * (signal.hasRating ? 1.2 : 1.0)),
@@ -187,7 +225,7 @@ serve(async (req) => {
       const { error: levelError } = await supabaseClient
         .from('user_dna_levels')
         .upsert({
-          user_id: user.id,
+          user_id: targetUserId,
           current_level: currentLevel,
           items_logged: totalItems,
           items_with_ratings: itemsWithRatings,
