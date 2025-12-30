@@ -93,10 +93,10 @@ serve(async (req) => {
       
       const listIds = userLists.map(l => l.id);
       
-      // Fetch all items from user's lists - only select columns that exist
+      // Fetch all items from user's lists - using actual Supabase columns
       const { data: listItems, error: itemsError } = await supabaseClient
         .from('list_items')
-        .select('title, media_type, creator, external_id, external_source')
+        .select('title, media_type, type, creator, external_id, external_source')
         .in('list_id', listIds);
 
       if (itemsError) {
@@ -120,13 +120,14 @@ serve(async (req) => {
       const signals: Map<string, { type: string; value: string; count: number; hasRating: boolean }> = new Map();
 
       for (const item of listItems) {
-        // Media type signal
-        if (item.media_type) {
-          const key = `media_type:${item.media_type.toLowerCase()}`;
+        // Media type signal - use media_type or type field
+        const mediaType = item.media_type || item.type;
+        if (mediaType) {
+          const key = `media_type:${mediaType.toLowerCase()}`;
           const existing = signals.get(key);
           signals.set(key, {
             type: 'media_type',
-            value: item.media_type.toLowerCase(),
+            value: mediaType.toLowerCase(),
             count: (existing?.count || 0) + 1,
             hasRating: false
           });
@@ -147,11 +148,12 @@ serve(async (req) => {
 
       // Fetch genre data from TMDB for movies/tv (batch first 20 items)
       const tmdbItems = listItems
-        .filter(item => 
-          (item.media_type === 'movie' || item.media_type === 'tv') && 
-          item.external_source === 'tmdb' && 
-          item.external_id
-        )
+        .filter(item => {
+          const mt = item.media_type || item.type;
+          return (mt === 'movie' || mt === 'tv') && 
+            item.external_source === 'tmdb' && 
+            item.external_id;
+        })
         .slice(0, 20);
 
       const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
@@ -160,8 +162,9 @@ serve(async (req) => {
         // Fetch genres for each TMDB item (with rate limiting)
         for (const item of tmdbItems) {
           try {
+            const mt = item.media_type || item.type;
             const response = await fetch(
-              `https://api.themoviedb.org/3/${item.media_type}/${item.external_id}?api_key=${tmdbApiKey}`
+              `https://api.themoviedb.org/3/${mt}/${item.external_id}?api_key=${tmdbApiKey}`
             );
             
             if (response.ok) {
