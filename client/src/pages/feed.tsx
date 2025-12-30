@@ -2011,7 +2011,8 @@ export default function Feed() {
       source = 'tmdb';
     }
     
-    const externalId = item.id;
+    // Use externalId if available, otherwise extract from the prefixed id
+    const externalId = item.externalId || item.id?.replace(/^(tmdb|spotify|openlibrary)-/, '');
     
     // Navigate to media detail page
     setLocation(`/media/${mediaType}/${source}/${externalId}`);
