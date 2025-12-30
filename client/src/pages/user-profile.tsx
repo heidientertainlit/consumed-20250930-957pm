@@ -2761,53 +2761,77 @@ export default function UserProfile() {
                       </div>
                     )}
                     
-                    {/* Actual Tracking Data */}
-                    {totalItemsLogged > 0 && (
-                      <div className="mt-3 pt-3 border-t border-purple-100">
+                    {/* Actual Tracking Data - use userStats for reliable counts */}
+                    {userStats && (
+                      <div className={`${(dnaProfile?.favorite_media_types || []).length > 0 ? 'mt-3 pt-3 border-t border-purple-100' : ''}`}>
                         <p className="text-xs text-gray-500 mb-2 font-medium">What you actually track:</p>
                         <div className="flex flex-wrap gap-2">
-                          {Object.entries(mediaTypeCounts)
-                            .filter(([_, count]) => (count as number) > 0)
-                            .sort((a, b) => (b[1] as number) - (a[1] as number))
-                            .map(([type, count]) => {
-                              const labels: Record<string, string> = { movie: 'Movies', tv: 'TV', book: 'Books', music: 'Music', podcast: 'Podcasts', game: 'Games' };
-                              const surveyTypes = (dnaProfile?.favorite_media_types || []).map(t => t.toLowerCase());
+                          {(() => {
+                            const trackedData = [
+                              { key: 'movie', label: 'Movies', count: userStats.moviesWatched || 0 },
+                              { key: 'tv', label: 'TV Shows', count: userStats.tvShowsWatched || 0 },
+                              { key: 'book', label: 'Books', count: userStats.booksRead || 0 },
+                              { key: 'music', label: 'Music', count: userStats.musicHours || 0, suffix: 'h' },
+                              { key: 'podcast', label: 'Podcasts', count: userStats.podcastHours || 0, suffix: 'h' },
+                              { key: 'game', label: 'Games', count: userStats.gamesPlayed || 0 },
+                            ].filter(item => item.count > 0)
+                             .sort((a, b) => b.count - a.count);
+                            
+                            const surveyTypes = (dnaProfile?.favorite_media_types || []).map(t => t.toLowerCase());
+                            
+                            return trackedData.map(item => {
                               const isMatch = surveyTypes.some(st => 
-                                st.includes(type) || type.includes(st.replace(/s$/, ''))
+                                st.includes(item.key) || item.key.includes(st.replace(/s$/, '')) ||
+                                st.includes(item.label.toLowerCase()) || item.label.toLowerCase().includes(st)
                               );
                               return (
                                 <Badge 
-                                  key={type} 
+                                  key={item.key} 
                                   className={`text-xs ${isMatch 
                                     ? 'bg-green-100 text-green-700 border border-green-200' 
-                                    : 'bg-amber-100 text-amber-700 border border-amber-200'}`}
+                                    : surveyTypes.length > 0 ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}
                                 >
-                                  {labels[type] || type}: {count as number}
-                                  {!isMatch && (count as number) > 5 && ' 👀'}
+                                  {item.label}: {item.count}{item.suffix || ''}
+                                  {!isMatch && surveyTypes.length > 0 && item.count > 5 && ' 👀'}
                                 </Badge>
                               );
-                            })}
+                            });
+                          })()}
                         </div>
                         {(() => {
-                          const topTracked = Object.entries(mediaTypeCounts)
-                            .filter(([_, count]) => (count as number) > 0)
-                            .sort((a, b) => (b[1] as number) - (a[1] as number))[0];
+                          const trackedData = [
+                            { key: 'movie', label: 'Movies', count: userStats.moviesWatched || 0 },
+                            { key: 'tv', label: 'TV Shows', count: userStats.tvShowsWatched || 0 },
+                            { key: 'book', label: 'Books', count: userStats.booksRead || 0 },
+                            { key: 'game', label: 'Games', count: userStats.gamesPlayed || 0 },
+                          ].filter(item => item.count > 0)
+                           .sort((a, b) => b.count - a.count);
+                          
                           const surveyTypes = (dnaProfile?.favorite_media_types || []).map(t => t.toLowerCase());
-                          if (topTracked) {
-                            const labels: Record<string, string> = { movie: 'Movies', tv: 'TV Shows', book: 'Books', music: 'Music', podcast: 'Podcasts', game: 'Games' };
+                          const topTracked = trackedData[0];
+                          
+                          if (topTracked && surveyTypes.length > 0) {
                             const isTopInSurvey = surveyTypes.some(st => 
-                              st.includes(topTracked[0]) || topTracked[0].includes(st.replace(/s$/, ''))
+                              st.includes(topTracked.key) || topTracked.key.includes(st.replace(/s$/, '')) ||
+                              st.includes(topTracked.label.toLowerCase()) || topTracked.label.toLowerCase().includes(st)
                             );
-                            if (!isTopInSurvey && (topTracked[1] as number) >= 5) {
+                            if (!isTopInSurvey && topTracked.count >= 5) {
                               return (
                                 <p className="text-xs text-amber-700 mt-2 italic">
-                                  💡 You didn't mention {labels[topTracked[0]] || topTracked[0]} in your survey, but you've logged {topTracked[1] as number}!
+                                  💡 You didn't mention {topTracked.label} in your survey, but you've logged {topTracked.count}!
                                 </p>
                               );
                             }
                           }
                           return null;
                         })()}
+                      </div>
+                    )}
+                    
+                    {/* Loading state */}
+                    {!userStats && (
+                      <div className="mt-3 pt-3 border-t border-purple-100">
+                        <p className="text-xs text-gray-400 italic">Loading your tracking data...</p>
                       </div>
                     )}
                   </div>
