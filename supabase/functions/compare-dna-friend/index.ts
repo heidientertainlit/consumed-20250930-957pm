@@ -253,14 +253,28 @@ serve(async (req) => {
         ? Math.round((matchScore / totalWeight) * 100)
         : 50;
 
-      // Get shared titles
+      // Get shared titles - EXCLUDE items from "Did Not Finish" lists
+      // First, find DNF list IDs for both users
+      const [userDnfListRes, friendDnfListRes] = await Promise.all([
+        supabaseClient.from('lists').select('id').eq('user_id', user.id).ilike('name', '%did not finish%'),
+        supabaseClient.from('lists').select('id').eq('user_id', friend_id).ilike('name', '%did not finish%')
+      ]);
+      
+      const userDnfListIds = new Set((userDnfListRes.data || []).map((l: any) => l.id));
+      const friendDnfListIds = new Set((friendDnfListRes.data || []).map((l: any) => l.id));
+
+      // Get items excluding DNF lists
       const [userItemsRes, friendItemsRes] = await Promise.all([
-        supabaseClient.from('list_items').select('title, media_type').eq('user_id', user.id),
-        supabaseClient.from('list_items').select('title, media_type').eq('user_id', friend_id)
+        supabaseClient.from('list_items').select('title, media_type, list_id').eq('user_id', user.id),
+        supabaseClient.from('list_items').select('title, media_type, list_id').eq('user_id', friend_id)
       ]);
 
-      const userTitles = new Set((userItemsRes.data || []).map((i: any) => i.title.toLowerCase()));
-      const sharedTitles = (friendItemsRes.data || [])
+      // Filter out DNF items
+      const userItems = (userItemsRes.data || []).filter((i: any) => !userDnfListIds.has(i.list_id));
+      const friendItems = (friendItemsRes.data || []).filter((i: any) => !friendDnfListIds.has(i.list_id));
+
+      const userTitles = new Set(userItems.map((i: any) => i.title.toLowerCase()));
+      const sharedTitles = friendItems
         .filter((i: any) => userTitles.has(i.title.toLowerCase()))
         .slice(0, 10)
         .map((i: any) => ({ title: i.title, media_type: i.media_type }));
@@ -278,23 +292,26 @@ User 2 (${friendUser?.display_name || 'Friend'}) DNA: ${friendProfileRes.data?.l
 Match Score: ${normalizedScore}%
 Shared Genres: ${sharedGenres.slice(0, 5).join(', ') || 'None'}
 Shared Creators: ${sharedCreators.slice(0, 5).join(', ') || 'None'}
-Shared Titles: ${sharedTitles.slice(0, 5).map((t: any) => t.title).join(', ') || 'None'}
-User 1 Unique: ${userUnique.slice(0, 3).join(', ') || 'None'}
-User 2 Unique: ${friendUnique.slice(0, 3).join(', ') || 'None'}
+Shared Titles They Both Loved: ${sharedTitles.slice(0, 5).map((t: any) => t.title).join(', ') || 'None'}
 
-Generate brief, fun insights:
-1. A one-liner about their compatibility
-2. What they'd enjoy together (1-2 suggestions)
-3. What User 2 could introduce User 1 to
-4. What User 1 could introduce User 2 to
+Based on their shared interests, recommend SPECIFIC entertainment they should consume together.
+Generate:
+1. A fun one-liner about their compatibility
+2. 4-6 SPECIFIC recommendations of movies, TV shows, books, podcasts, or music they'd both enjoy based on their shared tastes. Be specific with actual titles - not generic descriptions. Group by media type.
 
 Respond with JSON:
 {
-  "compatibilityLine": "string (fun one-liner)",
-  "enjoyTogether": ["suggestion"],
-  "theyCouldIntroduce": ["what friend brings"],
-  "youCouldIntroduce": ["what user brings"]
-}`;
+  "compatibilityLine": "string (fun one-liner about their entertainment chemistry)",
+  "consumeTogether": {
+    "movies": ["Specific Movie Title 1", "Specific Movie Title 2"],
+    "tv": ["Specific TV Show 1"],
+    "books": ["Specific Book Title"],
+    "podcasts": ["Specific Podcast Name"],
+    "music": ["Specific Artist or Album"]
+  }
+}
+
+Only include media types where you have good recommendations. It's fine to have 0 in some categories.`;
 
         try {
           const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {

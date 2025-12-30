@@ -18,6 +18,14 @@ interface ComparisonResult {
   };
   insights: {
     compatibilityLine?: string;
+    consumeTogether?: {
+      movies?: string[];
+      tv?: string[];
+      books?: string[];
+      podcasts?: string[];
+      music?: string[];
+    };
+    // Legacy fields for backwards compatibility
     enjoyTogether?: string[];
     theyCouldIntroduce?: string[];
     youCouldIntroduce?: string[];
@@ -656,65 +664,119 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                       {/* Header */}
                       <div className="text-center mb-4">
                         <div className="flex items-center justify-center gap-2 mb-2">
-                          <Sparkles size={20} className="text-amber-500" />
-                          <span className="text-2xl font-bold text-gray-800">The Exchange</span>
-                          <Sparkles size={20} className="text-amber-500" />
+                          <Heart size={20} className="text-rose-500" />
+                          <span className="text-xl font-bold text-gray-800">Consume Together</span>
                         </div>
-                        <p className="text-gray-600 text-sm">What you can discover together</p>
+                        <p className="text-gray-600 text-sm">Based on what you both love</p>
                       </div>
 
-                      {/* They Could Introduce You To */}
+                      {/* Consume Together Recommendations */}
                       {(() => {
-                        const theyCouldIntroduce = comparison.insights?.theyCouldIntroduce;
-                        return theyCouldIntroduce && theyCouldIntroduce.length > 0 && (
-                          <div className="bg-white/80 rounded-xl p-4 border border-purple-100 mb-3">
-                            <h5 className="text-sm font-semibold text-purple-800 mb-2">
-                              {selectedFriend?.user_name} Could Introduce You To
-                            </h5>
-                            <div className="flex flex-wrap gap-1.5">
-                              {theyCouldIntroduce.slice(0, 4).map((item, idx) => (
-                                <Badge key={idx} className="text-xs bg-purple-100 text-purple-800 border border-purple-200">
-                                  {item}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
+                        const consumeTogether = comparison.insights?.consumeTogether;
+                        const hasRecommendations = consumeTogether && (
+                          (consumeTogether.movies?.length || 0) > 0 ||
+                          (consumeTogether.tv?.length || 0) > 0 ||
+                          (consumeTogether.books?.length || 0) > 0 ||
+                          (consumeTogether.podcasts?.length || 0) > 0 ||
+                          (consumeTogether.music?.length || 0) > 0
                         );
-                      })()}
 
-                      {/* You Could Introduce Them To */}
-                      {(() => {
-                        const youCouldIntroduce = comparison.insights?.youCouldIntroduce;
-                        return youCouldIntroduce && youCouldIntroduce.length > 0 && (
-                          <div className="bg-white/80 rounded-xl p-4 border border-blue-100 mb-3">
-                            <h5 className="text-sm font-semibold text-blue-800 mb-2">
-                              You Could Introduce {selectedFriend?.user_name} To
-                            </h5>
-                            <div className="flex flex-wrap gap-1.5">
-                              {youCouldIntroduce.slice(0, 4).map((item, idx) => (
-                                <Badge key={idx} className="text-xs bg-blue-100 text-blue-800 border border-blue-200">
-                                  {item}
-                                </Badge>
-                              ))}
+                        if (!hasRecommendations) {
+                          // Fallback to legacy format
+                          const enjoyTogether = comparison.insights?.enjoyTogether;
+                          return enjoyTogether && enjoyTogether.length > 0 && (
+                            <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
+                              <h5 className="text-sm font-semibold text-amber-800 mb-2">Recommendations</h5>
+                              <ul className="space-y-1">
+                                {enjoyTogether.slice(0, 4).map((suggestion, idx) => (
+                                  <li key={idx} className="text-xs text-amber-700">• {suggestion}</li>
+                                ))}
+                              </ul>
                             </div>
-                          </div>
-                        );
-                      })()}
+                          );
+                        }
 
-                      {/* Watch Together */}
-                      {(() => {
-                        const enjoyTogether = comparison.insights?.enjoyTogether;
-                        return enjoyTogether && enjoyTogether.length > 0 && (
-                          <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
-                            <h5 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
-                              <Heart size={14} className="text-red-500" />
-                              Watch/Read Together
-                            </h5>
-                            <ul className="space-y-1">
-                              {enjoyTogether.slice(0, 3).map((suggestion, idx) => (
-                                <li key={idx} className="text-xs text-amber-700">• {suggestion}</li>
-                              ))}
-                            </ul>
+                        return (
+                          <div className="space-y-3">
+                            {/* Movies */}
+                            {consumeTogether.movies && consumeTogether.movies.length > 0 && (
+                              <div className="bg-white/80 rounded-xl p-3 border border-rose-100">
+                                <h5 className="text-xs font-semibold text-rose-700 mb-2 flex items-center gap-1.5">
+                                  <Film size={12} /> Movies
+                                </h5>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {consumeTogether.movies.map((title, idx) => (
+                                    <Badge key={idx} className="text-xs bg-rose-100 text-rose-800 border border-rose-200">
+                                      {title}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* TV Shows */}
+                            {consumeTogether.tv && consumeTogether.tv.length > 0 && (
+                              <div className="bg-white/80 rounded-xl p-3 border border-purple-100">
+                                <h5 className="text-xs font-semibold text-purple-700 mb-2 flex items-center gap-1.5">
+                                  <Tv size={12} /> TV Shows
+                                </h5>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {consumeTogether.tv.map((title, idx) => (
+                                    <Badge key={idx} className="text-xs bg-purple-100 text-purple-800 border border-purple-200">
+                                      {title}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Books */}
+                            {consumeTogether.books && consumeTogether.books.length > 0 && (
+                              <div className="bg-white/80 rounded-xl p-3 border border-blue-100">
+                                <h5 className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1.5">
+                                  <BookOpen size={12} /> Books
+                                </h5>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {consumeTogether.books.map((title, idx) => (
+                                    <Badge key={idx} className="text-xs bg-blue-100 text-blue-800 border border-blue-200">
+                                      {title}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Podcasts */}
+                            {consumeTogether.podcasts && consumeTogether.podcasts.length > 0 && (
+                              <div className="bg-white/80 rounded-xl p-3 border border-green-100">
+                                <h5 className="text-xs font-semibold text-green-700 mb-2 flex items-center gap-1.5">
+                                  🎙️ Podcasts
+                                </h5>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {consumeTogether.podcasts.map((title, idx) => (
+                                    <Badge key={idx} className="text-xs bg-green-100 text-green-800 border border-green-200">
+                                      {title}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Music */}
+                            {consumeTogether.music && consumeTogether.music.length > 0 && (
+                              <div className="bg-white/80 rounded-xl p-3 border border-amber-100">
+                                <h5 className="text-xs font-semibold text-amber-700 mb-2 flex items-center gap-1.5">
+                                  <Music size={12} /> Music
+                                </h5>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {consumeTogether.music.map((title, idx) => (
+                                    <Badge key={idx} className="text-xs bg-amber-100 text-amber-800 border border-amber-200">
+                                      {title}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })()}
