@@ -1485,18 +1485,8 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
       <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
         <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+          <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
             <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
-            <button 
-              onClick={() => {
-                setIsProgressSheetOpen(false);
-                onMoveToList('finished', 'Finished');
-              }}
-              disabled={isUpdating}
-              className="text-green-600 font-semibold text-sm hover:text-green-700"
-            >
-              I'm finished!
-            </button>
           </div>
           
           <div className="px-4 py-4 space-y-4 pb-8">
@@ -1743,6 +1733,18 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
             >
               Update Progress
             </Button>
+            
+            {/* Finished button */}
+            <button 
+              onClick={() => {
+                setIsProgressSheetOpen(false);
+                onMoveToList('finished', 'Finished');
+              }}
+              disabled={isUpdating}
+              className="w-full text-center text-green-600 font-semibold text-sm hover:text-green-700 py-2"
+            >
+              I'm finished!
+            </button>
           </div>
         </SheetContent>
       </Sheet>
