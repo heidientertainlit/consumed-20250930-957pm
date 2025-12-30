@@ -370,14 +370,13 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
         <DropdownMenu onOpenChange={setIsDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="ghost"
               size="sm"
-              className="h-7 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              className="h-7 px-3 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500 text-white rounded-full hover:from-purple-700 hover:via-purple-600 hover:to-indigo-600 shadow-sm"
               disabled={addToListMutation.isPending}
               data-testid="button-add-to-list"
             >
               <Plus size={14} className="mr-1" />
-              <span className="text-xs">Add</span>
+              <span className="text-xs font-medium">Add</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
@@ -696,61 +695,6 @@ function CurrentlyConsumingFeedCard({
               {/* Compact actions */}
               <MediaCardActions media={media} session={session} />
               
-              {/* Inline rating */}
-              {!showRating && !selectedRating && (
-                <button
-                  onClick={() => setShowRating(true)}
-                  className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-yellow-500 mt-2"
-                  data-testid={`button-rate-currently-${post.id}`}
-                >
-                  <Star size={14} />
-                  <span>Rate it</span>
-                </button>
-              )}
-              
-              {showRating && (
-                <div className="flex items-center gap-1 mt-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      onClick={() => handleSubmitRating(star)}
-                      className="p-0.5"
-                      data-testid={`star-${star}-${post.id}`}
-                    >
-                      <Star
-                        size={20}
-                        className={`transition-colors ${
-                          (hoverRating || selectedRating) >= star
-                            ? 'text-yellow-400 fill-yellow-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setShowRating(false)}
-                    className="ml-2 text-xs text-gray-400 hover:text-gray-600"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-              
-              {selectedRating > 0 && (
-                <div className="flex items-center gap-1 mt-2 text-sm text-gray-600">
-                  <span>Rated:</span>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={14}
-                      className={selectedRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
-                    />
-                  ))}
-                </div>
-              )}
-              
               {/* See more link */}
               <Link href={`/user/${post.user?.id}?tab=lists`}>
                 <p className="text-sm text-purple-600 hover:text-purple-700 mt-3 cursor-pointer">
@@ -760,7 +704,7 @@ function CurrentlyConsumingFeedCard({
             </div>
           </div>
           
-          {/* Like/Comment actions */}
+          {/* Like/Comment/Rate actions */}
           <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
             <button
               onClick={() => handleLike(post.id)}
@@ -783,6 +727,56 @@ function CurrentlyConsumingFeedCard({
               <MessageCircle size={16} />
               <span>{post.comments || 0}</span>
             </button>
+            {/* Star rating button */}
+            {!showRating && !selectedRating && (
+              <button
+                onClick={() => setShowRating(true)}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-yellow-500"
+                data-testid={`button-rate-currently-${post.id}`}
+              >
+                <Star size={16} />
+              </button>
+            )}
+            {showRating && (
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    onClick={() => handleSubmitRating(star)}
+                    className="p-0.5"
+                    data-testid={`star-${star}-${post.id}`}
+                  >
+                    <Star
+                      size={16}
+                      className={`transition-colors ${
+                        (hoverRating || selectedRating) >= star
+                          ? 'text-yellow-400 fill-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+                <button
+                  onClick={() => setShowRating(false)}
+                  className="ml-1 text-xs text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            {selectedRating > 0 && (
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={14}
+                    className={selectedRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Comments Section */}
