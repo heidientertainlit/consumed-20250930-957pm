@@ -188,6 +188,42 @@ export default function MediaDetail() {
     replyMutation.mutate({ postId, content: replyContent });
   };
 
+  // Delete comment mutation
+  const deleteCommentMutation = useMutation({
+    mutationFn: async ({ commentId, postId }: { commentId: string; postId: string }) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/delete-comment`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ comment_id: commentId })
+        }
+      );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete comment');
+      }
+      return { postId };
+    },
+    onSuccess: (data) => {
+      // Refetch comments for this post
+      setExpandedComments(prev => {
+        const newState = { ...prev };
+        delete newState[data.postId];
+        return newState;
+      });
+      fetchComments(data.postId);
+      toast({ title: "Comment deleted" });
+    }
+  });
+
+  const handleDeleteComment = (commentId: string, postId: string) => {
+    deleteCommentMutation.mutate({ commentId, postId });
+  };
+
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
   };
@@ -984,12 +1020,26 @@ export default function MediaDetail() {
                           {expandedComments[review.id]?.length > 0 && (
                             <div className="space-y-2 pl-4 border-l-2 border-gray-100">
                               {expandedComments[review.id].map((comment: any) => (
-                                <div key={comment.id} className="text-sm">
-                                  <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
-                                  <p className="text-gray-700">{comment.content}</p>
-                                  <span className="text-xs text-gray-400">
-                                    {new Date(comment.created_at).toLocaleDateString()}
-                                  </span>
+                                <div key={comment.id} className="text-sm group">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
+                                      <p className="text-gray-700">{comment.content}</p>
+                                      <span className="text-xs text-gray-400">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    {user?.id === comment.user_id && (
+                                      <button
+                                        onClick={() => handleDeleteComment(comment.id, review.id)}
+                                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
+                                        data-testid={`button-delete-comment-${comment.id}`}
+                                        title="Delete your comment"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1088,12 +1138,26 @@ export default function MediaDetail() {
                               {expandedComments[post.id]?.length > 0 && (
                                 <div className="space-y-2 pl-4 border-l-2 border-gray-100">
                                   {expandedComments[post.id].map((comment: any) => (
-                                    <div key={comment.id} className="text-sm">
-                                      <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
-                                      <p className="text-gray-700">{comment.content}</p>
-                                      <span className="text-xs text-gray-400">
-                                        {new Date(comment.created_at).toLocaleDateString()}
-                                      </span>
+                                    <div key={comment.id} className="text-sm group">
+                                      <div className="flex items-start justify-between">
+                                        <div>
+                                          <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
+                                          <p className="text-gray-700">{comment.content}</p>
+                                          <span className="text-xs text-gray-400">
+                                            {new Date(comment.created_at).toLocaleDateString()}
+                                          </span>
+                                        </div>
+                                        {user?.id === comment.user_id && (
+                                          <button
+                                            onClick={() => handleDeleteComment(comment.id, post.id)}
+                                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
+                                            data-testid={`button-delete-comment-${comment.id}`}
+                                            title="Delete your comment"
+                                          >
+                                            <Trash2 size={12} />
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
