@@ -3872,53 +3872,60 @@ export default function Feed() {
                           <MessageCircle size={18} />
                           <span className="text-sm">{post.comments}</span>
                         </button>
-                        {hasRating(post.content) && !activeInlineRating && (
+                        {/* Star rating for posts with media */}
+                        {post.mediaItems && post.mediaItems.length > 0 && !activeInlineRating && (
                           <button 
                             onClick={() => toggleInlineRating(post.id)}
-                            className="flex items-center space-x-2 text-gray-500 hover:text-purple-600 transition-colors"
-                            data-testid={`button-rate-review-${post.id}`}
+                            className="flex items-center space-x-1 text-gray-500 hover:text-yellow-500 transition-colors"
+                            data-testid={`button-rate-${post.id}`}
                           >
                             <Star size={18} />
-                            <span className="text-sm">Rate</span>
                           </button>
                         )}
-                        {hasRating(post.content) && activeInlineRating === post.id && (
-                          <div className="flex items-center space-x-2">
-                            <Star size={18} className="text-gray-400" />
-                            <span className="text-sm text-gray-600">Rate</span>
-                            <input
-                              type="text"
-                              value={inlineRatings[post.id] || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  const num = parseFloat(value);
-                                  if (value === '' || (num >= 0 && num <= 5)) {
-                                    handleInlineRatingChange(post.id, value);
-                                  }
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  submitInlineRating(post.id);
-                                } else if (e.key === 'Escape') {
-                                  setActiveInlineRating(null);
-                                }
-                              }}
-                              placeholder="0"
-                              autoFocus
-                              className="w-16 text-sm text-gray-700 bg-white border border-gray-300 rounded px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                              data-testid={`inline-rating-input-${post.id}`}
-                            />
-                            <span className="text-sm text-gray-700">/5</span>
-                            <Button
-                              onClick={() => submitInlineRating(post.id)}
-                              disabled={!inlineRatings[post.id] || parseFloat(inlineRatings[post.id]) === 0 || commentMutation.isPending}
-                              size="sm"
-                              className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 h-7"
+                        {post.mediaItems && post.mediaItems.length > 0 && activeInlineRating === post.id && (
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => {
+                              const currentVal = parseFloat(inlineRatings[post.id] || '0');
+                              const isFullFilled = currentVal >= star;
+                              const isHalfFilled = currentVal >= star - 0.5 && currentVal < star;
+                              return (
+                                <div
+                                  key={star}
+                                  className="relative p-0.5 cursor-pointer"
+                                  data-testid={`star-${star}-post-${post.id}`}
+                                >
+                                  <Star size={18} className="text-gray-300" />
+                                  <div 
+                                    className="absolute inset-0 overflow-hidden p-0.5"
+                                    style={{ width: isFullFilled ? '100%' : isHalfFilled ? '50%' : '0%' }}
+                                  >
+                                    <Star size={18} className="text-yellow-400 fill-yellow-400" />
+                                  </div>
+                                  <div 
+                                    className="absolute inset-y-0 left-0 w-1/2"
+                                    onMouseEnter={() => handleInlineRatingChange(post.id, String(star - 0.5))}
+                                    onClick={() => {
+                                      handleInlineRatingChange(post.id, String(star - 0.5));
+                                      setTimeout(() => submitInlineRating(post.id), 100);
+                                    }}
+                                  />
+                                  <div 
+                                    className="absolute inset-y-0 right-0 w-1/2"
+                                    onMouseEnter={() => handleInlineRatingChange(post.id, String(star))}
+                                    onClick={() => {
+                                      handleInlineRatingChange(post.id, String(star));
+                                      setTimeout(() => submitInlineRating(post.id), 100);
+                                    }}
+                                  />
+                                </div>
+                              );
+                            })}
+                            <button
+                              onClick={() => setActiveInlineRating(null)}
+                              className="ml-1 text-xs text-gray-400 hover:text-gray-600"
                             >
-                              <Send size={14} />
-                            </Button>
+                              ✕
+                            </button>
                           </div>
                         )}
                       </div>
