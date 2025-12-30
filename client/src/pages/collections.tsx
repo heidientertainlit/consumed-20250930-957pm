@@ -1212,9 +1212,9 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
   const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
   
-  const mediaType = item.media_type || 'movie';
+  const mediaType = (item.media_type || 'movie').toLowerCase();
   const isBook = mediaType === 'book';
-  const isTv = mediaType === 'tv' || mediaType === 'series';
+  const isTv = mediaType === 'tv' || mediaType === 'series' || mediaType === 'tv show';
   const isPodcast = mediaType === 'podcast';
   const isMusic = mediaType === 'music';
   const progressMode = item.progress_mode || (isBook ? 'page' : isTv ? 'episode' : 'percent');
