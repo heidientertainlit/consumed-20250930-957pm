@@ -52,6 +52,11 @@ Preferred communication style: Simple, everyday language.
   - **Level 1: DNA Summary** (Survey + 10 items): Full DNA profile with label, tagline, preferences, and shareable card
   - **Level 2: DNA Friend Compare** (Survey + 30 items): Unlocks friend DNA comparisons with match percentages and "Watch Together" suggestions
   - **Friend DNA Comparison** (Level 2): AI-generated match percentages, shared genres/titles, and personalized recommendations, cached 24 hours
+  - **Unified DNA Insights Card**: Blends survey preferences with actual tracking behavior:
+    - Shows "You said you love" (survey media types) vs "What you actually track" (real counts)
+    - Green badges for matches, amber badges with 👀 for surprises (tracked but not in survey)
+    - Generates insights like "You didn't mention Movies in your survey, but you've logged 50!"
+    - Uses userStats from backend for reliable tracking data
   - **Signal Extraction**: Analyzes logged media for genre, creator, decade, and mood patterns
 
 ### Feature Specifications
