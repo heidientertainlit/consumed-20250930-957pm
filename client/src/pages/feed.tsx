@@ -511,6 +511,309 @@ function renderPostWithRating(content: string) {
   );
 }
 
+// Date formatting helper (module level for use in all components)
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 1) return 'Today';
+  if (diffDays === 2) return 'Yesterday';
+  if (diffDays <= 7) return `${diffDays - 1} days ago`;
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  });
+};
+
+// Currently Consuming Feed Card Component (extracted to use hooks properly)
+function CurrentlyConsumingFeedCard({
+  post,
+  carouselElements,
+  user,
+  session,
+  likedPosts,
+  expandedComments,
+  setExpandedComments,
+  handleLike,
+  handleDeletePost,
+  fetchComments,
+  commentInputs,
+  handleCommentInputChange,
+  handleComment,
+  commentMutation,
+  handleDeleteComment,
+  commentLikesEnabled,
+  handleLikeComment,
+  handleVoteComment,
+  likedComments,
+  commentVotes,
+}: {
+  post: SocialPost;
+  carouselElements: React.ReactNode;
+  user: any;
+  session: any;
+  likedPosts: Set<string>;
+  expandedComments: Set<string>;
+  setExpandedComments: React.Dispatch<React.SetStateAction<Set<string>>>;
+  handleLike: (postId: string) => void;
+  handleDeletePost: (postId: string) => void;
+  fetchComments: (postId: string) => Promise<any>;
+  commentInputs: { [postId: string]: string };
+  handleCommentInputChange: (postId: string, value: string) => void;
+  handleComment: (postId: string, parentCommentId?: string, content?: string) => void;
+  commentMutation: any;
+  handleDeleteComment: (commentId: string) => void;
+  commentLikesEnabled: boolean;
+  handleLikeComment?: (commentId: string) => void;
+  handleVoteComment: (commentId: string, voteType: 'up' | 'down') => void;
+  likedComments: Set<string>;
+  commentVotes: Map<string, 'up' | 'down'>;
+}) {
+  const [showRating, setShowRating] = useState(false);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [selectedRating, setSelectedRating] = useState(0);
+  
+  const media = post.mediaItems![0];
+  const isOwnPost = user?.id && post.user?.id === user.id;
+  
+  const handleSubmitRating = async (rating: number) => {
+    if (!session?.access_token) return;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/rate-media`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            media: {
+              title: media.title,
+              mediaType: media.mediaType,
+              imageUrl: media.imageUrl,
+              externalId: media.externalId,
+              externalSource: media.externalSource,
+            },
+            rating,
+          }),
+        }
+      );
+      if (response.ok) {
+        setShowRating(false);
+        setSelectedRating(rating);
+      }
+    } catch (error) {
+      console.error('Failed to submit rating:', error);
+    }
+  };
+  
+  // Determine verb based on media type
+  const getVerb = (mediaType: string | undefined) => {
+    const type = (mediaType || '').toLowerCase();
+    if (type === 'book') return 'reading';
+    if (type === 'tv' || type === 'tv show' || type === 'series') return 'watching';
+    if (type === 'movie') return 'watching';
+    if (type === 'game') return 'playing';
+    if (type === 'podcast') return 'listening to';
+    if (type === 'music') return 'listening to';
+    return 'consuming';
+  };
+  
+  const verb = getVerb(media.mediaType);
+  
+  return (
+    <div id={`post-${post.id}`}>
+      {carouselElements}
+      <div className="mb-4">
+        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+          {/* Header with user info */}
+          <div className="p-4 pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {post.user && (
+                  <Link href={`/user/${post.user.id}`}>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                      {post.user.avatar ? (
+                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <span className="text-sm">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                      )}
+                    </div>
+                  </Link>
+                )}
+                <div>
+                  <p className="text-gray-900">
+                    <Link href={`/user/${post.user?.id}`}>
+                      <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                    </Link>
+                    {' '}is currently {verb}...
+                  </p>
+                  <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
+                </div>
+              </div>
+              {isOwnPost && (
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                  data-testid={`button-delete-currently-${post.id}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Featured media - horizontal layout with smaller poster */}
+          <div className="flex gap-4 px-4 pb-4">
+            <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+              <div className="cursor-pointer group flex-shrink-0">
+                {media.imageUrl ? (
+                  <img 
+                    src={media.imageUrl} 
+                    alt={media.title || ''} 
+                    className="w-24 h-36 rounded-lg object-cover shadow-md group-hover:shadow-lg transition-shadow"
+                  />
+                ) : (
+                  <div className="w-24 h-36 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                    <Film size={24} className="text-purple-300" />
+                  </div>
+                )}
+              </div>
+            </Link>
+            
+            {/* Media info and actions */}
+            <div className="flex-1 min-w-0">
+              <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+                <h3 className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{media.title}</h3>
+              </Link>
+              <p className="text-sm text-gray-500 capitalize mb-3">{media.mediaType}</p>
+              
+              {/* Compact actions */}
+              <MediaCardActions media={media} session={session} />
+              
+              {/* Inline rating */}
+              {!showRating && !selectedRating && (
+                <button
+                  onClick={() => setShowRating(true)}
+                  className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-yellow-500 mt-2"
+                  data-testid={`button-rate-currently-${post.id}`}
+                >
+                  <Star size={14} />
+                  <span>Rate it</span>
+                </button>
+              )}
+              
+              {showRating && (
+                <div className="flex items-center gap-1 mt-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      onClick={() => handleSubmitRating(star)}
+                      className="p-0.5"
+                      data-testid={`star-${star}-${post.id}`}
+                    >
+                      <Star
+                        size={20}
+                        className={`transition-colors ${
+                          (hoverRating || selectedRating) >= star
+                            ? 'text-yellow-400 fill-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setShowRating(false)}
+                    className="ml-2 text-xs text-gray-400 hover:text-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+              
+              {selectedRating > 0 && (
+                <div className="flex items-center gap-1 mt-2 text-sm text-gray-600">
+                  <span>Rated:</span>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={14}
+                      className={selectedRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* See more link */}
+              <Link href={`/user/${post.user?.id}?tab=lists`}>
+                <p className="text-sm text-purple-600 hover:text-purple-700 mt-3 cursor-pointer">
+                  See what else they're consuming →
+                </p>
+              </Link>
+            </div>
+          </div>
+          
+          {/* Like/Comment actions */}
+          <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
+            <button
+              onClick={() => handleLike(post.id)}
+              className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+              data-testid={`button-like-currently-${post.id}`}
+            >
+              <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
+              <span>{post.likes || 0}</span>
+            </button>
+            <button
+              onClick={() => setExpandedComments(prev => {
+                const newSet = new Set(prev);
+                if (newSet.has(post.id)) newSet.delete(post.id);
+                else newSet.add(post.id);
+                return newSet;
+              })}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+              data-testid={`button-comment-currently-${post.id}`}
+            >
+              <MessageCircle size={16} />
+              <span>{post.comments || 0}</span>
+            </button>
+          </div>
+          
+          {/* Comments Section */}
+          {expandedComments.has(post.id) && (
+            <div className="px-4 pb-4 border-t border-gray-100">
+              <CommentsSection
+                postId={post.id}
+                isLiked={likedPosts.has(post.id)}
+                onLike={handleLike}
+                expandedComments={true}
+                onToggleComments={() => {}}
+                fetchComments={fetchComments}
+                commentInput={commentInputs[post.id] || ''}
+                onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                isSubmitting={commentMutation.isPending}
+                currentUserId={user?.id}
+                onDeleteComment={handleDeleteComment}
+                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                onVoteComment={handleVoteComment}
+                likedComments={likedComments}
+                commentVotes={commentVotes}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Feed() {
   // Load Inter font for this page only
   useEffect(() => {
@@ -2614,158 +2917,34 @@ export default function Feed() {
                 }
 
                 // Check if this is a "currently consuming" post (added to Currently list)
-                const listData = (post as any).listData;
-                const isCurrentlyPost = listData?.title === 'Currently' && post.mediaItems && post.mediaItems.length > 0;
+                const postListData = (post as any).listData;
+                const isCurrentlyPost = postListData?.title === 'Currently' && post.mediaItems && post.mediaItems.length > 0;
                 
                 if (isCurrentlyPost) {
-                  const media = post.mediaItems[0];
-                  const isOwnPost = user?.id && post.user?.id === user.id;
-                  
-                  // Determine verb based on media type
-                  const getVerb = (mediaType: string | undefined) => {
-                    const type = (mediaType || '').toLowerCase();
-                    if (type === 'book') return 'reading';
-                    if (type === 'tv' || type === 'tv show' || type === 'series') return 'watching';
-                    if (type === 'movie') return 'watching';
-                    if (type === 'game') return 'playing';
-                    if (type === 'podcast') return 'listening to';
-                    if (type === 'music') return 'listening to';
-                    return 'consuming';
-                  };
-                  
-                  const verb = getVerb(media.mediaType);
-                  
                   return (
-                    <div key={`currently-${post.id}`} id={`post-${post.id}`}>
-                      {carouselElements}
-                      <div className="mb-4">
-                        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-                          {/* Header with user info */}
-                          <div className="p-4 pb-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                {post.user && (
-                                  <Link href={`/user/${post.user.id}`}>
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
-                                      {post.user.avatar ? (
-                                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                                      ) : (
-                                        <span className="text-sm">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
-                                      )}
-                                    </div>
-                                  </Link>
-                                )}
-                                <div>
-                                  <p className="text-gray-900">
-                                    <Link href={`/user/${post.user?.id}`}>
-                                      <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
-                                    </Link>
-                                    {' '}is currently {verb}...
-                                  </p>
-                                  <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
-                                </div>
-                              </div>
-                              {isOwnPost && (
-                                <button
-                                  onClick={() => handleDeletePost(post.id)}
-                                  className="text-gray-400 hover:text-red-500 transition-colors"
-                                  data-testid={`button-delete-currently-${post.id}`}
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Featured media - horizontal layout with smaller poster */}
-                          <div className="flex gap-4 px-4 pb-4">
-                            <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
-                              <div className="cursor-pointer group flex-shrink-0">
-                                {media.imageUrl ? (
-                                  <img 
-                                    src={media.imageUrl} 
-                                    alt={media.title || ''} 
-                                    className="w-24 h-36 rounded-lg object-cover shadow-md group-hover:shadow-lg transition-shadow"
-                                  />
-                                ) : (
-                                  <div className="w-24 h-36 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                                    <Film size={24} className="text-purple-300" />
-                                  </div>
-                                )}
-                              </div>
-                            </Link>
-                            
-                            {/* Media info and actions */}
-                            <div className="flex-1 min-w-0">
-                              <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
-                                <h3 className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{media.title}</h3>
-                              </Link>
-                              <p className="text-sm text-gray-500 capitalize mb-3">{media.mediaType}</p>
-                              
-                              {/* Compact actions */}
-                              <MediaCardActions media={media} session={session} />
-                              
-                              {/* See more link */}
-                              <Link href={`/user/${post.user?.id}?tab=lists`}>
-                                <p className="text-sm text-purple-600 hover:text-purple-700 mt-3 cursor-pointer">
-                                  See what else they're consuming →
-                                </p>
-                              </Link>
-                            </div>
-                          </div>
-                          
-                          {/* Like/Comment actions */}
-                          <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
-                            <button
-                              onClick={() => handleLike(post.id)}
-                              className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                              data-testid={`button-like-currently-${post.id}`}
-                            >
-                              <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
-                              <span>{post.likes || 0}</span>
-                            </button>
-                            <button
-                              onClick={() => setExpandedComments(prev => {
-                                const newSet = new Set(prev);
-                                if (newSet.has(post.id)) newSet.delete(post.id);
-                                else newSet.add(post.id);
-                                return newSet;
-                              })}
-                              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
-                              data-testid={`button-comment-currently-${post.id}`}
-                            >
-                              <MessageCircle size={16} />
-                              <span>{post.comments || 0}</span>
-                            </button>
-                          </div>
-                          
-                          {/* Comments Section */}
-                          {expandedComments.has(post.id) && (
-                            <div className="px-4 pb-4 border-t border-gray-100">
-                              <CommentsSection
-                                postId={post.id}
-                                isExpanded={true}
-                                isLiked={likedPosts.has(post.id)}
-                                onLike={handleLike}
-                                expandedComments={true}
-                                onToggleComments={() => {}}
-                                fetchComments={fetchComments}
-                                commentInput={commentInputs[post.id] || ''}
-                                onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                                isSubmitting={commentMutation.isPending}
-                                currentUserId={user?.id}
-                                onDeleteComment={handleDeleteComment}
-                                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                                onVoteComment={handleVoteComment}
-                                likedComments={likedComments}
-                                commentVotes={commentVotes}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <CurrentlyConsumingFeedCard
+                      key={`currently-${post.id}`}
+                      post={post}
+                      carouselElements={carouselElements}
+                      user={user}
+                      session={session}
+                      likedPosts={likedPosts}
+                      expandedComments={expandedComments}
+                      setExpandedComments={setExpandedComments}
+                      handleLike={handleLike}
+                      handleDeletePost={handleDeletePost}
+                      fetchComments={fetchComments}
+                      commentInputs={commentInputs}
+                      handleCommentInputChange={handleCommentInputChange}
+                      handleComment={handleComment}
+                      commentMutation={commentMutation}
+                      handleDeleteComment={handleDeleteComment}
+                      commentLikesEnabled={commentLikesEnabled}
+                      handleLikeComment={handleLikeComment}
+                      handleVoteComment={handleVoteComment}
+                      likedComments={likedComments}
+                      commentVotes={commentVotes}
+                    />
                   );
                 }
 
