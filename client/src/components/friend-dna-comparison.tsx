@@ -112,10 +112,11 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
           return;
         }
         
-        // Get friend IDs
-        const friendIds = friendships.map((f: any) => 
+        // Get unique friend IDs
+        const friendIdsRaw = friendships.map((f: any) => 
           f.user_id === user.id ? f.friend_id : f.user_id
         ).filter((id: string) => id !== user.id);
+        const friendIds = [...new Set(friendIdsRaw)]; // Remove duplicates
         
         console.log('Friend IDs:', friendIds);
         
@@ -124,9 +125,9 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
           return;
         }
         
-        // Fetch user details for friends
+        // Fetch user details for friends (use 'avatar' not 'avatar_url')
         const usersResponse = await fetch(
-          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,user_name,avatar_url`,
+          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/users?id=in.(${friendIds.join(',')})&select=id,user_name,avatar`,
           {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
@@ -138,9 +139,13 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
         const usersData = await usersResponse.json();
         console.log('Friends data:', usersData);
         
-        // Fetch user_stats for each friend to get item counts
-        const statsResponse = await fetch(
-          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/user_stats?user_id=in.(${friendIds.join(',')})&select=user_id,movies_watched,tv_watched,books_read,music_logged,podcasts_logged,games_played`,
+        // Count list_items for each friend to get their tracked item count
+        // We need to count items in lists owned by each friend
+        const statsMap: Record<string, number> = {};
+        
+        // Fetch lists for all friends first
+        const listsResponse = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/lists?user_id=in.(${friendIds.join(',')})&select=id,user_id`,
           {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
@@ -149,18 +154,43 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
           }
         );
         
-        const statsData = await statsResponse.json();
-        console.log('Friends stats:', statsData);
+        const listsData = await listsResponse.json();
+        console.log('Friends lists:', listsData);
         
-        // Create a map of friend stats
-        const statsMap: Record<string, number> = {};
-        if (Array.isArray(statsData)) {
-          statsData.forEach((s: any) => {
-            const total = (s.movies_watched || 0) + (s.tv_watched || 0) + (s.books_read || 0) + 
-                         (s.music_logged || 0) + (s.podcasts_logged || 0) + (s.games_played || 0);
-            statsMap[s.user_id] = total;
+        if (Array.isArray(listsData) && listsData.length > 0) {
+          // Map list IDs to user IDs
+          const listToUserMap: Record<string, string> = {};
+          listsData.forEach((l: any) => {
+            listToUserMap[l.id] = l.user_id;
           });
+          
+          const listIds = listsData.map((l: any) => l.id);
+          
+          // Count items in those lists
+          const itemsResponse = await fetch(
+            `https://mahpgcogwpawvviapqza.supabase.co/rest/v1/list_items?list_id=in.(${listIds.join(',')})&select=list_id`,
+            {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              },
+            }
+          );
+          
+          const itemsData = await itemsResponse.json();
+          console.log('Friends items count:', Array.isArray(itemsData) ? itemsData.length : 0);
+          
+          if (Array.isArray(itemsData)) {
+            itemsData.forEach((item: any) => {
+              const userId = listToUserMap[item.list_id];
+              if (userId) {
+                statsMap[userId] = (statsMap[userId] || 0) + 1;
+              }
+            });
+          }
         }
+        
+        console.log('Stats map:', statsMap);
         
         // Fetch DNA profiles to check if they completed survey
         const dnaResponse = await fetch(
@@ -184,16 +214,17 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
         if (Array.isArray(usersData)) {
           const friendList = usersData.map((u: any) => {
             const itemCount = statsMap[u.id] || 0;
-            const hasSurvey = hasSurveyMap[u.id] || false;
+            const friendHasSurvey = hasSurveyMap[u.id] || false;
             return {
               id: u.id,
               user_name: u.user_name || 'Unknown',
-              avatar_url: u.avatar_url,
+              avatar_url: u.avatar, // Map 'avatar' to 'avatar_url' for consistency
               itemCount,
-              hasSurvey,
-              isEligible: itemCount >= 30 && hasSurvey,
+              hasSurvey: friendHasSurvey,
+              isEligible: itemCount >= 30 && friendHasSurvey,
             };
           });
+          console.log('Friend list with eligibility:', friendList);
           setFriends(friendList);
         }
       } catch (err) {
