@@ -2345,34 +2345,48 @@ export default function Feed() {
                       <div className="mb-4">
                         <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
                           {/* Hot Take Header Strip */}
-                          <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-700 px-3 py-2 flex items-center gap-2">
-                            <span className="text-sm">🔥</span>
-                            <span className="text-xs font-bold text-white tracking-wide">HOT TAKE</span>
-                            {post.user && (
-                              <>
-                                <span className="text-white/50">•</span>
-                                <Link href={`/user/${post.user.id}`}>
-                                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                                    {post.user.avatar ? (
-                                      <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                                    ) : (
-                                      <span className="text-[10px] text-white font-medium">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
-                                    )}
-                                  </div>
-                                </Link>
-                                <Link href={`/user/${post.user.id}`}>
-                                  <span className="text-xs font-medium text-white/90 hover:text-white cursor-pointer">
-                                    {post.user.username}
-                                  </span>
-                                </Link>
-                              </>
-                            )}
+                          <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-700 px-4 py-2.5">
+                            <p className="text-sm text-white font-medium flex items-center gap-1.5">
+                              <span>🔥</span>
+                              <span className="font-bold tracking-wide">HOT TAKE</span>
+                            </p>
                           </div>
                           
                           {/* Card Body */}
-                          <div className="p-3">
+                          <div className="p-4">
+                            {/* User info with trash icon */}
+                            {post.user && (
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Link href={`/user/${post.user.id}`}>
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                                      {post.user.avatar ? (
+                                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                      ) : (
+                                        <span className="text-xs">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                                      )}
+                                    </div>
+                                  </Link>
+                                  <Link href={`/user/${post.user.id}`}>
+                                    <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
+                                      {post.user.username}
+                                    </span>
+                                  </Link>
+                                </div>
+                                {post.user.id === user?.id && (
+                                  <button
+                                    onClick={() => handleDeletePost(post.id)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                    data-testid={`button-delete-hot-take-${post.id}`}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                            
                             {/* Hot Take Content */}
-                            <p className="text-base font-medium text-gray-900 mb-3">{post.content}</p>
+                            <p className="text-lg font-medium text-gray-900 mb-3">{post.content}</p>
                             
                             {/* Media if attached */}
                             {post.mediaItems && post.mediaItems.length > 0 && (
