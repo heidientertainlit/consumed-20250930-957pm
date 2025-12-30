@@ -3556,15 +3556,15 @@ export default function Feed() {
                             key={index} 
                             className="bg-gray-50 rounded-lg p-3 transition-colors"
                           >
-                            <div 
-                              className={`flex items-center space-x-3 ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
-                              onClick={() => {
-                                if (isClickable) {
-                                  setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                                }
-                              }}
-                            >
-                              <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0">
+                            <div className="flex space-x-3">
+                              <div 
+                                className={`w-12 h-16 rounded overflow-hidden flex-shrink-0 ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
+                                onClick={() => {
+                                  if (isClickable) {
+                                    setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                  }
+                                }}
+                              >
                                 <img 
                                   src={media.imageUrl || getMediaArtwork(media.title, media.mediaType)}
                                   alt={`${media.title} artwork`}
@@ -3572,23 +3572,31 @@ export default function Feed() {
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
-                                  {media.title}
-                                </h3>
-                                {media.creator && (
-                                  <div className="text-gray-600 text-xs mb-1">
-                                    by {media.creator}
+                                <div 
+                                  className={`${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
+                                  onClick={() => {
+                                    if (isClickable) {
+                                      setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                    }
+                                  }}
+                                >
+                                  <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 hover:text-purple-600">
+                                    {media.title}
+                                  </h3>
+                                  {media.creator && (
+                                    <div className="text-gray-600 text-xs mb-0.5">
+                                      by {media.creator}
+                                    </div>
+                                  )}
+                                  <div className="text-gray-500 text-xs capitalize mb-2">
+                                    {media.mediaType}
                                   </div>
-                                )}
-                                <div className="text-gray-500 text-xs capitalize">
-                                  {media.mediaType}
                                 </div>
+                                {/* Quick Actions - inline with content */}
+                                <MediaCardActions media={media} session={session} />
                               </div>
-                              {isClickable && <ChevronRight className="text-gray-400 flex-shrink-0" size={16} />}
+                              {isClickable && <ChevronRight className="text-gray-400 flex-shrink-0 mt-4" size={16} />}
                             </div>
-                            
-                            {/* Quick Actions - Always show for platform links */}
-                            <MediaCardActions media={media} session={session} />
                           </div>
                         );
                       })}
@@ -3731,16 +3739,16 @@ export default function Feed() {
                         ) : (
                         /* Standard Media Card for other posts */
                         <div className="bg-gray-50 rounded-lg p-3 mb-2">
-                          <div 
-                            className="flex items-center space-x-3 cursor-pointer mb-2"
-                            onClick={() => {
-                              const media = post.mediaItems[0];
-                              if (media.externalId && media.externalSource) {
-                                setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                              }
-                            }}
-                          >
-                            <div className="w-16 h-20 rounded overflow-hidden flex-shrink-0">
+                          <div className="flex space-x-3">
+                            <div 
+                              className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
+                              onClick={() => {
+                                const media = post.mediaItems[0];
+                                if (media.externalId && media.externalSource) {
+                                  setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                }
+                              }}
+                            >
                               <img 
                                 src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
                                 alt={`${post.mediaItems[0].title} artwork`}
@@ -3748,23 +3756,32 @@ export default function Feed() {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
-                                {post.mediaItems[0].title}
-                              </h3>
-                              {post.mediaItems[0].creator && (
-                                <div className="text-gray-600 text-xs mb-0.5">
-                                  by {post.mediaItems[0].creator}
+                              <div 
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  const media = post.mediaItems[0];
+                                  if (media.externalId && media.externalSource) {
+                                    setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                  }
+                                }}
+                              >
+                                <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 hover:text-purple-600">
+                                  {post.mediaItems[0].title}
+                                </h3>
+                                {post.mediaItems[0].creator && (
+                                  <div className="text-gray-600 text-xs mb-0.5">
+                                    by {post.mediaItems[0].creator}
+                                  </div>
+                                )}
+                                <div className="text-gray-500 text-xs capitalize mb-2">
+                                  {post.mediaItems[0].mediaType}
                                 </div>
-                              )}
-                              <div className="text-gray-500 text-xs capitalize">
-                                {post.mediaItems[0].mediaType}
                               </div>
+                              {/* Platform badges and actions inline */}
+                              <MediaCardActions media={post.mediaItems[0]} session={session} />
                             </div>
-                            <ChevronRight className="text-gray-400 flex-shrink-0" size={20} />
+                            <ChevronRight className="text-gray-400 flex-shrink-0 mt-6" size={20} />
                           </div>
-                          
-                          {/* Platform badges and actions - use consistent MediaCardActions component */}
-                          <MediaCardActions media={post.mediaItems[0]} session={session} />
                         </div>
                         )}
                         
