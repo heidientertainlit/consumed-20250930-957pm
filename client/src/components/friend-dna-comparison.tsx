@@ -420,16 +420,26 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
       ) : friends.length === 0 ? (
         <div className="text-center py-6">
           <Users size={32} className="mx-auto text-gray-300 mb-2" />
-          <p className="text-sm text-gray-500 mb-3">Add friends to compare your entertainment DNA!</p>
+          <p className="text-sm text-gray-600 mb-1">No friends to compare with yet!</p>
+          <p className="text-xs text-gray-500 mb-4">Add friends from the Friends tab to compare your entertainment DNA</p>
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.location.href = '/discover'}
+            onClick={() => {
+              // Scroll to Friends section and set active tab
+              const friendsSection = document.querySelector('[data-section="friends"]');
+              if (friendsSection) {
+                friendsSection.scrollIntoView({ behavior: 'smooth' });
+              }
+              // Update URL to trigger friends tab
+              window.history.pushState({}, '', '/me?tab=friends');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
             className="border-purple-200 hover:border-purple-300 hover:bg-purple-50"
-            data-testid="button-find-friends"
+            data-testid="button-go-to-friends"
           >
             <Users size={14} className="mr-2 text-purple-600" />
-            Find Friends
+            Go to Friends
           </Button>
         </div>
       ) : (
@@ -455,6 +465,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                 friendAvatar={friend.avatar_url}
                 userDnaLevel={dnaLevel}
                 userItemCount={itemCount}
+                hasSurvey={hasSurvey}
               />
             </div>
           ))}

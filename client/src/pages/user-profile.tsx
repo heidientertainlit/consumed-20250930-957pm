@@ -3099,8 +3099,8 @@ export default function UserProfile() {
                   )}
                 </div>
 
-                {/* Expandable Details Section */}
-                {isDNAExpanded && dnaProfile && (
+                {/* Details Section - Always visible */}
+                {dnaProfile && (
                   <div className="border-t border-gray-200 pt-6 mt-6 space-y-4">
                     {/* Media Consumption Stats */}
                     {dnaProfile.media_consumption_stats && (
@@ -3224,15 +3224,6 @@ export default function UserProfile() {
                   </div>
                 )}
 
-                {/* Show More/Less Button */}
-                <button
-                  onClick={() => setIsDNAExpanded(!isDNAExpanded)}
-                  className="flex items-center justify-center space-x-2 w-full mt-4 py-3 text-sm text-purple-700 hover:text-purple-800 transition-colors border-t border-gray-200"
-                  data-testid="button-expand-dna"
-                >
-                  <span>{isDNAExpanded ? 'Hide Details' : 'See What This Means For You'}</span>
-                  {isDNAExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
               </div>
             )}
 
