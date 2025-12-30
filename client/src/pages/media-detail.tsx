@@ -38,8 +38,58 @@ export default function MediaDetail() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
+  const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch comments for a post
+  const fetchComments = async (postId: string) => {
+    if (expandedComments[postId]) {
+      // Already loaded, just toggle visibility
+      return;
+    }
+    setLoadingComments(prev => new Set(prev).add(postId));
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}&include=meta`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setExpandedComments(prev => ({ ...prev, [postId]: data.comments || data || [] }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch comments:', error);
+    } finally {
+      setLoadingComments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    }
+  };
+
+  const toggleComments = (postId: string) => {
+    if (expandedComments[postId]) {
+      // Hide comments
+      setExpandedComments(prev => {
+        const newState = { ...prev };
+        delete newState[postId];
+        return newState;
+      });
+      setReplyingTo(null);
+    } else {
+      // Show comments and fetch them
+      fetchComments(postId);
+      setReplyingTo(postId);
+    }
+  };
 
   // Like mutation - uses social-feed-like edge function
   const likeMutation = useMutation({
@@ -111,9 +161,15 @@ export default function MediaDetail() {
       }
       return response.json();
     },
-    onSuccess: () => {
-      setReplyingTo(null);
+    onSuccess: (_, variables) => {
       setReplyContent("");
+      // Refetch comments for this post
+      setExpandedComments(prev => {
+        const newState = { ...prev };
+        delete newState[variables.postId];
+        return newState;
+      });
+      fetchComments(variables.postId);
       queryClient.invalidateQueries({ queryKey: ['media-detail'] });
       toast({ title: "Reply posted!" });
     }
@@ -905,33 +961,59 @@ export default function MediaDetail() {
                           <span>{review.likes_count || 0}</span>
                         </button>
                         <button
-                          onClick={() => setReplyingTo(replyingTo === review.id ? null : review.id)}
-                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-600 transition-colors"
+                          onClick={() => toggleComments(review.id)}
+                          className={`flex items-center gap-1 text-xs transition-colors ${
+                            expandedComments[review.id] ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'
+                          }`}
                           data-testid={`button-reply-review-${review.id}`}
                         >
                           <MessageCircle size={14} />
                           <span>{review.comments_count || 0}</span>
                         </button>
                       </div>
-                      {/* Reply Input */}
-                      {replyingTo === review.id && (
-                        <div className="mt-3 flex gap-2">
-                          <input
-                            type="text"
-                            value={replyContent}
-                            onChange={(e) => setReplyContent(e.target.value)}
-                            placeholder="Write a reply..."
-                            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            onKeyDown={(e) => e.key === 'Enter' && handleReply(review.id)}
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleReply(review.id)}
-                            disabled={!replyContent.trim() || replyMutation.isPending}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            <Send size={14} />
-                          </Button>
+                      
+                      {/* Comments Section */}
+                      {(expandedComments[review.id] || replyingTo === review.id) && (
+                        <div className="mt-3 space-y-3">
+                          {/* Loading state */}
+                          {loadingComments.has(review.id) && (
+                            <p className="text-xs text-gray-400">Loading replies...</p>
+                          )}
+                          
+                          {/* Existing comments */}
+                          {expandedComments[review.id]?.length > 0 && (
+                            <div className="space-y-2 pl-4 border-l-2 border-gray-100">
+                              {expandedComments[review.id].map((comment: any) => (
+                                <div key={comment.id} className="text-sm">
+                                  <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
+                                  <p className="text-gray-700">{comment.content}</p>
+                                  <span className="text-xs text-gray-400">
+                                    {new Date(comment.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Reply Input */}
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={replyContent}
+                              onChange={(e) => setReplyContent(e.target.value)}
+                              placeholder="Write a reply..."
+                              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              onKeyDown={(e) => e.key === 'Enter' && handleReply(review.id)}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleReply(review.id)}
+                              disabled={!replyContent.trim() || replyMutation.isPending}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Send size={14} />
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -980,8 +1062,10 @@ export default function MediaDetail() {
                               <span>{post.likes_count || 0}</span>
                             </button>
                             <button
-                              onClick={() => setReplyingTo(replyingTo === post.id ? null : post.id)}
-                              className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-600 transition-colors"
+                              onClick={() => toggleComments(post.id)}
+                              className={`flex items-center gap-1 text-xs transition-colors ${
+                                expandedComments[post.id] ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'
+                              }`}
                               data-testid={`button-reply-post-${post.id}`}
                             >
                               <MessageCircle size={14} />
@@ -991,25 +1075,49 @@ export default function MediaDetail() {
                               {new Date(post.created_at).toLocaleDateString()}
                             </span>
                           </div>
-                          {/* Reply Input */}
-                          {replyingTo === post.id && (
-                            <div className="mt-3 flex gap-2">
-                              <input
-                                type="text"
-                                value={replyContent}
-                                onChange={(e) => setReplyContent(e.target.value)}
-                                placeholder="Write a reply..."
-                                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
-                              />
-                              <Button
-                                size="sm"
-                                onClick={() => handleReply(post.id)}
-                                disabled={!replyContent.trim() || replyMutation.isPending}
-                                className="bg-purple-600 hover:bg-purple-700"
-                              >
-                                <Send size={14} />
-                              </Button>
+                          
+                          {/* Comments Section */}
+                          {(expandedComments[post.id] || replyingTo === post.id) && (
+                            <div className="mt-3 space-y-3">
+                              {/* Loading state */}
+                              {loadingComments.has(post.id) && (
+                                <p className="text-xs text-gray-400">Loading replies...</p>
+                              )}
+                              
+                              {/* Existing comments */}
+                              {expandedComments[post.id]?.length > 0 && (
+                                <div className="space-y-2 pl-4 border-l-2 border-gray-100">
+                                  {expandedComments[post.id].map((comment: any) => (
+                                    <div key={comment.id} className="text-sm">
+                                      <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
+                                      <p className="text-gray-700">{comment.content}</p>
+                                      <span className="text-xs text-gray-400">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {/* Reply Input */}
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={replyContent}
+                                  onChange={(e) => setReplyContent(e.target.value)}
+                                  placeholder="Write a reply..."
+                                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                  onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleReply(post.id)}
+                                  disabled={!replyContent.trim() || replyMutation.isPending}
+                                  className="bg-purple-600 hover:bg-purple-700"
+                                >
+                                  <Send size={14} />
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
