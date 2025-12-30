@@ -93,10 +93,10 @@ serve(async (req) => {
       
       const listIds = userLists.map(l => l.id);
       
-      // Fetch all items from user's lists (not all tables have 'year' column)
+      // Fetch all items from user's lists - only select columns that exist
       const { data: listItems, error: itemsError } = await supabaseClient
         .from('list_items')
-        .select('title, media_type, creator, rating, external_id, external_source')
+        .select('title, media_type, creator, external_id, external_source')
         .in('list_id', listIds);
 
       if (itemsError) {
@@ -128,7 +128,7 @@ serve(async (req) => {
             type: 'media_type',
             value: item.media_type.toLowerCase(),
             count: (existing?.count || 0) + 1,
-            hasRating: existing?.hasRating || !!item.rating
+            hasRating: false
           });
         }
 
@@ -140,11 +140,9 @@ serve(async (req) => {
             type: 'creator',
             value: item.creator.trim(),
             count: (existing?.count || 0) + 1,
-            hasRating: existing?.hasRating || !!item.rating
+            hasRating: false
           });
         }
-
-        // Note: Decade signal removed since 'year' column may not exist in all environments
       }
 
       // Fetch genre data from TMDB for movies/tv (batch first 20 items)
@@ -176,7 +174,7 @@ serve(async (req) => {
                     type: 'genre',
                     value: genre.name.toLowerCase(),
                     count: (existing?.count || 0) + 1,
-                    hasRating: existing?.hasRating || !!item.rating
+                    hasRating: false
                   });
                 }
               }
