@@ -739,25 +739,40 @@ function CurrentlyConsumingFeedCard({
             )}
             {showRating && (
               <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    onClick={() => handleSubmitRating(star)}
-                    className="p-0.5"
-                    data-testid={`star-${star}-${post.id}`}
-                  >
-                    <Star
-                      size={16}
-                      className={`transition-colors ${
-                        (hoverRating || selectedRating) >= star
-                          ? 'text-yellow-400 fill-yellow-400'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  </button>
-                ))}
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const currentValue = hoverRating || selectedRating;
+                  const isFullFilled = currentValue >= star;
+                  const isHalfFilled = currentValue >= star - 0.5 && currentValue < star;
+                  return (
+                    <div
+                      key={star}
+                      className="relative p-0.5 cursor-pointer"
+                      onMouseLeave={() => setHoverRating(0)}
+                      data-testid={`star-${star}-${post.id}`}
+                    >
+                      <Star size={16} className="text-gray-300" />
+                      {/* Half fill overlay */}
+                      <div 
+                        className="absolute inset-0 overflow-hidden p-0.5"
+                        style={{ width: isFullFilled ? '100%' : isHalfFilled ? '50%' : '0%' }}
+                      >
+                        <Star size={16} className="text-yellow-400 fill-yellow-400" />
+                      </div>
+                      {/* Left half click zone for .5 */}
+                      <div 
+                        className="absolute inset-y-0 left-0 w-1/2"
+                        onMouseEnter={() => setHoverRating(star - 0.5)}
+                        onClick={() => handleSubmitRating(star - 0.5)}
+                      />
+                      {/* Right half click zone for whole number */}
+                      <div 
+                        className="absolute inset-y-0 right-0 w-1/2"
+                        onMouseEnter={() => setHoverRating(star)}
+                        onClick={() => handleSubmitRating(star)}
+                      />
+                    </div>
+                  );
+                })}
                 <button
                   onClick={() => setShowRating(false)}
                   className="ml-1 text-xs text-gray-400 hover:text-gray-600"
@@ -768,13 +783,22 @@ function CurrentlyConsumingFeedCard({
             )}
             {selectedRating > 0 && (
               <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    size={14}
-                    className={selectedRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
-                  />
-                ))}
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const isFullFilled = selectedRating >= star;
+                  const isHalfFilled = selectedRating >= star - 0.5 && selectedRating < star;
+                  return (
+                    <span key={star} className="relative inline-block w-3.5 h-3.5">
+                      <Star size={14} className="absolute text-gray-300" />
+                      <span 
+                        className="absolute inset-0 overflow-hidden" 
+                        style={{ width: isFullFilled ? '100%' : isHalfFilled ? '50%' : '0%' }}
+                      >
+                        <Star size={14} className="fill-yellow-400 text-yellow-400" />
+                      </span>
+                    </span>
+                  );
+                })}
+                <span className="ml-1 text-xs text-gray-600">{selectedRating}/5</span>
               </div>
             )}
           </div>
