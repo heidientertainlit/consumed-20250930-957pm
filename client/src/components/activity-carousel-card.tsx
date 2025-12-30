@@ -186,7 +186,7 @@ export default function ActivityCarouselCard({
             {currentSlideData.items.slice(0, 3).map((item, idx) => (
               <Link 
                 key={item.id || idx} 
-                href={`/media/${item.externalSource}/${item.externalId}`}
+                href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
               >
                 <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                   <span className="text-lg">{getMediaTypeIcon(item.mediaType)}</span>

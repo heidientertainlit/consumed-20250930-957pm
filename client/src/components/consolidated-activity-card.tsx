@@ -189,7 +189,7 @@ export default function ConsolidatedActivityCard({
         {displayedItems.map((item, idx) => (
           <Link 
             key={item.id || idx} 
-            href={`/media/${item.externalSource}/${item.externalId}`}
+            href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
           >
             <div className="flex items-center gap-2 py-1 hover:text-purple-600 transition-colors cursor-pointer">
               <span className="text-base">{getMediaTypeIcon(item.mediaType)}</span>
