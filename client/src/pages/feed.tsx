@@ -2499,6 +2499,120 @@ export default function Feed() {
                   );
                 }
 
+                // Check if this item is a rewatch post (simple one-liner)
+                if (post.type === 'rewatch') {
+                  const isOwnPost = user?.id && post.user?.id === user.id;
+                  
+                  return (
+                    <div key={`rewatch-${post.id}`} id={`post-${post.id}`}>
+                      {carouselElements}
+                      <div className="mb-4">
+                        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden p-4">
+                          {/* User info with content in one line */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              {post.user && (
+                                <Link href={`/user/${post.user.id}`}>
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
+                                    {post.user.avatar ? (
+                                      <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                    ) : (
+                                      <span className="text-sm">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                                    )}
+                                  </div>
+                                </Link>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-gray-900">
+                                  <Link href={`/user/${post.user?.id}`}>
+                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                                  </Link>
+                                  {' '}{post.content}
+                                </p>
+                                <span className="text-xs text-gray-400">{formatRelativeTime(post.timestamp)}</span>
+                              </div>
+                            </div>
+                            {isOwnPost && (
+                              <button
+                                onClick={() => handleDeletePost(post.id)}
+                                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                data-testid={`button-delete-rewatch-${post.id}`}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
+                          
+                          {/* Media thumbnail if available */}
+                          {post.mediaItems && post.mediaItems[0]?.imageUrl && (
+                            <div className="mt-3 flex items-center gap-3">
+                              <img 
+                                src={post.mediaItems[0].imageUrl} 
+                                alt={post.mediaItems[0].title || ''} 
+                                className="w-12 h-16 rounded-lg object-cover"
+                              />
+                              <div>
+                                <p className="font-medium text-gray-900">{post.mediaItems[0].title}</p>
+                                <p className="text-xs text-gray-500 capitalize">{post.mediaItems[0].mediaType}</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Simple like/comment actions */}
+                          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                            <button
+                              onClick={() => handleLike(post.id)}
+                              className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                              data-testid={`button-like-rewatch-${post.id}`}
+                            >
+                              <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
+                              <span>{post.likes || 0}</span>
+                            </button>
+                            <button
+                              onClick={() => setExpandedComments(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(post.id)) newSet.delete(post.id);
+                                else newSet.add(post.id);
+                                return newSet;
+                              })}
+                              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+                              data-testid={`button-comment-rewatch-${post.id}`}
+                            >
+                              <MessageCircle size={16} />
+                              <span>{post.comments || 0}</span>
+                            </button>
+                          </div>
+                          
+                          {/* Comments Section */}
+                          {expandedComments.has(post.id) && (
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <CommentsSection
+                                postId={post.id}
+                                isExpanded={true}
+                                isLiked={likedPosts.has(post.id)}
+                                onLike={handleLike}
+                                expandedComments={true}
+                                onToggleComments={() => {}}
+                                fetchComments={fetchComments}
+                                commentInput={commentInputs[post.id] || ''}
+                                onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                                isSubmitting={commentMutation.isPending}
+                                currentUserId={user?.id}
+                                onDeleteComment={handleDeleteComment}
+                                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                                onVoteComment={handleVoteComment}
+                                likedComments={likedComments}
+                                commentVotes={commentVotes}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 // Check if this item is an ask_for_recs post
                 if (post.type === 'ask_for_recs') {
                   const recCategory = (post as any).recCategory;

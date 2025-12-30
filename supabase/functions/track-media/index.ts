@@ -224,8 +224,26 @@ serve(async (req) => {
     // Create a social post for this addition (skip if caller will handle it, e.g. when rating is also being added)
     if (mediaItem && !skip_social_post) {
       try {
-        // Determine post type based on whether there's a rating
-        const postType = rating ? 'rate-review' : 'add-to-list';
+        // Determine post type based on rewatch count and rating
+        const isRewatch = rewatchCount && rewatchCount > 1;
+        const postType = isRewatch ? 'rewatch' : (rating ? 'rate-review' : 'add-to-list');
+        
+        // Format ordinal suffix for rewatch count
+        const getOrdinalSuffix = (n: number): string => {
+          const s = ["th", "st", "nd", "rd"];
+          const v = n % 100;
+          return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        };
+        
+        // Generate content based on post type
+        let content: string;
+        if (isRewatch) {
+          content = `is consuming ${title} for the ${getOrdinalSuffix(rewatchCount)} time`;
+        } else if (rating) {
+          content = `Rated ${title}`;
+        } else {
+          content = `Added ${title} to ${targetList?.title || 'my list'}`;
+        }
         
         const { error: postError } = await supabase
           .from('social_posts')
@@ -233,7 +251,7 @@ serve(async (req) => {
             user_id: appUser.id,
             post_type: postType,
             list_id: targetList?.id || null,
-            content: rating ? `Rated ${title}` : `Added ${title} to ${targetList?.title || 'my list'}`,
+            content,
             media_title: title,
             media_type: mediaType,
             media_creator: creator,
