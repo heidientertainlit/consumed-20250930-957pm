@@ -2723,7 +2723,6 @@ export default function UserProfile() {
         {/* My Entertainment DNA */}
         {activeSection === 'dna' && (
         <div ref={dnaRef} className="px-4 mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>My Entertainment DNA</h3>
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
             {/* Responsive Header: Stack on mobile, horizontal on larger screens */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
