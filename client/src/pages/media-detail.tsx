@@ -765,7 +765,7 @@ export default function MediaDetail() {
                           </div>
                           <div className="flex-1">
                             <p className="font-medium text-gray-900">
-                              {review.users?.display_name || review.users?.user_name || 'Anonymous'}
+                              {review.users?.user_name || review.users?.display_name || 'Anonymous'}
                             </p>
                             <p className="text-xs text-gray-500">
                               {new Date(review.created_at).toLocaleDateString('en-US', { 
@@ -828,7 +828,7 @@ export default function MediaDetail() {
                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">
-                            {post.users?.display_name || post.users?.user_name || 'Anonymous'}
+                            {post.users?.user_name || post.users?.display_name || 'Anonymous'}
                           </p>
                           <p className="text-gray-700 text-sm leading-relaxed mt-1">{post.content}</p>
                           <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
