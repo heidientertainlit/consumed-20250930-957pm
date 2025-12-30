@@ -2529,7 +2529,7 @@ export default function Feed() {
                                   </Link>
                                   {' '}{post.content}
                                 </p>
-                                <span className="text-xs text-gray-400">{formatRelativeTime(post.timestamp)}</span>
+                                <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
                               </div>
                             </div>
                             {isOwnPost && (
@@ -2586,6 +2586,155 @@ export default function Feed() {
                           {/* Comments Section */}
                           {expandedComments.has(post.id) && (
                             <div className="mt-3 pt-3 border-t border-gray-100">
+                              <CommentsSection
+                                postId={post.id}
+                                isExpanded={true}
+                                isLiked={likedPosts.has(post.id)}
+                                onLike={handleLike}
+                                expandedComments={true}
+                                onToggleComments={() => {}}
+                                fetchComments={fetchComments}
+                                commentInput={commentInputs[post.id] || ''}
+                                onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                                isSubmitting={commentMutation.isPending}
+                                currentUserId={user?.id}
+                                onDeleteComment={handleDeleteComment}
+                                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                                onVoteComment={handleVoteComment}
+                                likedComments={likedComments}
+                                commentVotes={commentVotes}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Check if this is a "currently consuming" post (added to Currently list)
+                const listData = (post as any).listData;
+                const isCurrentlyPost = listData?.title === 'Currently' && post.mediaItems && post.mediaItems.length > 0;
+                
+                if (isCurrentlyPost) {
+                  const media = post.mediaItems[0];
+                  const isOwnPost = user?.id && post.user?.id === user.id;
+                  
+                  // Determine verb based on media type
+                  const getVerb = (mediaType: string | undefined) => {
+                    const type = (mediaType || '').toLowerCase();
+                    if (type === 'book') return 'reading';
+                    if (type === 'tv' || type === 'tv show' || type === 'series') return 'watching';
+                    if (type === 'movie') return 'watching';
+                    if (type === 'game') return 'playing';
+                    if (type === 'podcast') return 'listening to';
+                    if (type === 'music') return 'listening to';
+                    return 'consuming';
+                  };
+                  
+                  const verb = getVerb(media.mediaType);
+                  
+                  return (
+                    <div key={`currently-${post.id}`} id={`post-${post.id}`}>
+                      {carouselElements}
+                      <div className="mb-4">
+                        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+                          {/* Header with user info */}
+                          <div className="p-4 pb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {post.user && (
+                                  <Link href={`/user/${post.user.id}`}>
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                                      {post.user.avatar ? (
+                                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                      ) : (
+                                        <span className="text-sm">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                                      )}
+                                    </div>
+                                  </Link>
+                                )}
+                                <div>
+                                  <p className="text-gray-900">
+                                    <Link href={`/user/${post.user?.id}`}>
+                                      <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                                    </Link>
+                                    {' '}is currently {verb}...
+                                  </p>
+                                  <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
+                                </div>
+                              </div>
+                              {isOwnPost && (
+                                <button
+                                  onClick={() => handleDeletePost(post.id)}
+                                  className="text-gray-400 hover:text-red-500 transition-colors"
+                                  data-testid={`button-delete-currently-${post.id}`}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Featured media poster */}
+                          <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+                            <div className="relative mx-4 mb-4 cursor-pointer group">
+                              {media.imageUrl ? (
+                                <img 
+                                  src={media.imageUrl} 
+                                  alt={media.title || ''} 
+                                  className="w-full aspect-[2/3] max-w-[200px] mx-auto rounded-xl object-cover shadow-lg group-hover:shadow-xl transition-shadow"
+                                />
+                              ) : (
+                                <div className="w-full aspect-[2/3] max-w-[200px] mx-auto rounded-xl bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                                  <Film size={48} className="text-purple-300" />
+                                </div>
+                              )}
+                            </div>
+                          </Link>
+                          
+                          {/* Media title and type */}
+                          <div className="px-4 pb-3 text-center">
+                            <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+                              <h3 className="font-semibold text-gray-900 text-lg hover:text-purple-600 cursor-pointer">{media.title}</h3>
+                            </Link>
+                            <p className="text-sm text-gray-500 capitalize">{media.mediaType}</p>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="px-4 pb-4">
+                            <MediaCardActions media={media} session={session} />
+                          </div>
+                          
+                          {/* Like/Comment actions */}
+                          <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
+                            <button
+                              onClick={() => handleLike(post.id)}
+                              className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                              data-testid={`button-like-currently-${post.id}`}
+                            >
+                              <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
+                              <span>{post.likes || 0}</span>
+                            </button>
+                            <button
+                              onClick={() => setExpandedComments(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(post.id)) newSet.delete(post.id);
+                                else newSet.add(post.id);
+                                return newSet;
+                              })}
+                              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+                              data-testid={`button-comment-currently-${post.id}`}
+                            >
+                              <MessageCircle size={16} />
+                              <span>{post.comments || 0}</span>
+                            </button>
+                          </div>
+                          
+                          {/* Comments Section */}
+                          {expandedComments.has(post.id) && (
+                            <div className="px-4 pb-4 border-t border-gray-100">
                               <CommentsSection
                                 postId={post.id}
                                 isExpanded={true}
