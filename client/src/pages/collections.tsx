@@ -1592,7 +1592,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                           >
                             {seasons.map((s: any) => (
                               <option key={s.seasonNumber} value={s.seasonNumber}>
-                                S{s.seasonNumber} ({s.episodeCount} eps)
+                                S{s.seasonNumber}
                               </option>
                             ))}
                           </select>
