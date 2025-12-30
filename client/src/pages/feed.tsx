@@ -2704,6 +2704,13 @@ export default function Feed() {
                               
                               {/* Compact actions */}
                               <MediaCardActions media={media} session={session} />
+                              
+                              {/* See more link */}
+                              <Link href={`/user/${post.user?.id}?tab=lists`}>
+                                <p className="text-sm text-purple-600 hover:text-purple-700 mt-3 cursor-pointer">
+                                  See what else they're consuming →
+                                </p>
+                              </Link>
                             </div>
                           </div>
                           
