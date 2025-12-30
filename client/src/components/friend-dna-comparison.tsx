@@ -53,7 +53,8 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
   const [isComparing, setIsComparing] = useState(false);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [compareError, setCompareError] = useState<string | null>(null);
-  const comparisonCardRef = useRef<HTMLDivElement>(null);
+  const card1Ref = useRef<HTMLDivElement>(null);
+  const card2Ref = useRef<HTMLDivElement>(null);
 
   const canCompare = hasSurvey && dnaLevel >= 2;
   const appUrl = import.meta.env.VITE_APP_URL || 'https://consumed.app';
@@ -282,24 +283,24 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
     }
   };
 
-  // Download comparison as image
-  const handleDownload = async () => {
-    if (!comparisonCardRef.current) return;
+  // Download card as image
+  const handleDownload = async (cardRef: React.RefObject<HTMLDivElement>, cardName: string) => {
+    if (!cardRef.current) return;
     
     try {
-      const canvas = await html2canvas(comparisonCardRef.current, {
+      const canvas = await html2canvas(cardRef.current, {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: 3,
       });
       
       const link = document.createElement('a');
-      link.download = `dna-comparison-${selectedFriend?.user_name || 'friend'}.png`;
+      link.download = `dna-${cardName}-${selectedFriend?.user_name || 'friend'}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
       
       toast({
         title: "Downloaded!",
-        description: "Your DNA comparison card has been saved.",
+        description: `Your DNA ${cardName} card has been saved.`,
       });
     } catch (err) {
       console.error('Error downloading:', err);
@@ -311,20 +312,20 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
     }
   };
 
-  // Share comparison
-  const handleShare = async () => {
-    if (!comparisonCardRef.current || !comparison) return;
+  // Share card
+  const handleShare = async (cardRef: React.RefObject<HTMLDivElement>, cardName: string) => {
+    if (!cardRef.current || !comparison) return;
     
     try {
-      const canvas = await html2canvas(comparisonCardRef.current, {
+      const canvas = await html2canvas(cardRef.current, {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: 3,
       });
       
       canvas.toBlob(async (blob) => {
         if (!blob) return;
         
-        const file = new File([blob], 'dna-comparison.png', { type: 'image/png' });
+        const file = new File([blob], `dna-${cardName}.png`, { type: 'image/png' });
         
         if (navigator.share && navigator.canShare({ files: [file] })) {
           await navigator.share({
@@ -333,7 +334,7 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
             files: [file],
           });
         } else {
-          handleDownload();
+          handleDownload(cardRef, cardName);
           toast({
             title: "Sharing not supported",
             description: "The image has been downloaded instead.",
@@ -514,147 +515,241 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
               )}
 
               {!isComparing && !compareError && comparison && (
-                <div className="space-y-4">
-                  {/* Downloadable/Shareable Card */}
-                  <div 
-                    ref={comparisonCardRef}
-                    className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-5 border border-purple-200"
-                  >
-                    {/* Header with branding */}
-                    <div className="text-center mb-4">
-                      <p className="text-xs text-purple-500 font-medium mb-1">🧬 consumed</p>
-                      <div className="text-4xl font-bold mb-1">
-                        <span className={getMatchColor(comparison.match_score)}>
-                          {comparison.match_score}%
-                        </span>
-                        <span className="ml-2">{getMatchEmoji(comparison.match_score)}</span>
+                <div className="space-y-6">
+                  {/* CARD 1: The Match */}
+                  <div className="space-y-3">
+                    <div 
+                      ref={card1Ref}
+                      className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-5 border border-purple-200"
+                      style={{ aspectRatio: '9/16', maxWidth: '320px', margin: '0 auto' }}
+                    >
+                      {/* Part 1 indicator */}
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs text-purple-500 font-medium">🧬 consumed</p>
+                        <Badge className="bg-purple-100 text-purple-700 text-xs">Part 1 of 2</Badge>
                       </div>
-                      <p className="text-gray-600 font-medium text-sm">Entertainment DNA Match</p>
-                    </div>
 
-                    {/* DNA Labels */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-white/70 rounded-lg p-3 border border-purple-100 text-center">
-                        <p className="text-xs text-gray-500 mb-1">You</p>
-                        <p className="font-semibold text-purple-800 text-sm">
-                          {comparison.your_dna_label || 'Your Profile'}
-                        </p>
+                      {/* Match Score */}
+                      <div className="text-center mb-4">
+                        <div className="text-5xl font-bold mb-1">
+                          <span className={getMatchColor(comparison.match_score)}>
+                            {comparison.match_score}%
+                          </span>
+                          <span className="ml-2">{getMatchEmoji(comparison.match_score)}</span>
+                        </div>
+                        <p className="text-gray-600 font-semibold text-base">Entertainment DNA Match</p>
                       </div>
-                      <div className="bg-white/70 rounded-lg p-3 border border-indigo-100 text-center">
-                        <p className="text-xs text-gray-500 mb-1">{selectedFriend?.user_name}</p>
-                        <p className="font-semibold text-indigo-800 text-sm">
-                          {comparison.friend_dna_label || 'Their Profile'}
-                        </p>
-                      </div>
-                    </div>
 
-                    {/* Compatibility Line */}
-                    {comparison.insights?.compatibilityLine && (
-                      <p className="text-sm text-purple-700 text-center italic bg-white/50 rounded-lg p-3 mb-4">
-                        "{comparison.insights.compatibilityLine}"
-                      </p>
-                    )}
-
-                    {/* Shared Content */}
-                    {comparison.shared_titles?.length > 0 && (
-                      <div className="mb-3">
-                        <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                          <Heart size={12} className="text-red-500" />
-                          You Both Love
-                        </h5>
-                        <div className="flex flex-wrap gap-1">
-                          {comparison.shared_titles.slice(0, 4).map((item, idx) => (
-                            <Badge key={idx} className="bg-white/70 text-gray-700 text-xs border border-gray-200">
-                              {item.title}
-                            </Badge>
-                          ))}
+                      {/* DNA Labels with Avatars */}
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="bg-white/80 rounded-xl p-3 border border-purple-100 text-center">
+                          <div className="w-12 h-12 rounded-full bg-purple-200 mx-auto mb-2 flex items-center justify-center text-purple-700 font-bold text-lg overflow-hidden">
+                            {user?.user_metadata?.avatar_url ? (
+                              <img src={user.user_metadata.avatar_url} alt="You" className="w-12 h-12 rounded-full object-cover" />
+                            ) : (
+                              user?.email?.charAt(0).toUpperCase() || 'Y'
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mb-0.5">You</p>
+                          <p className="font-semibold text-purple-800 text-xs leading-tight">
+                            {comparison.your_dna_label || 'Your DNA'}
+                          </p>
+                        </div>
+                        <div className="bg-white/80 rounded-xl p-3 border border-indigo-100 text-center">
+                          <div className="w-12 h-12 rounded-full bg-indigo-200 mx-auto mb-2 flex items-center justify-center text-indigo-700 font-bold text-lg overflow-hidden">
+                            {selectedFriend?.avatar_url ? (
+                              <img src={selectedFriend.avatar_url} alt={selectedFriend.user_name} className="w-12 h-12 rounded-full object-cover" />
+                            ) : (
+                              selectedFriend?.user_name.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mb-0.5">{selectedFriend?.user_name}</p>
+                          <p className="font-semibold text-indigo-800 text-xs leading-tight">
+                            {comparison.friend_dna_label || 'Their DNA'}
+                          </p>
                         </div>
                       </div>
-                    )}
 
-                    {/* Shared Genres */}
-                    {comparison.shared_genres?.length > 0 && (
-                      <div>
-                        <h5 className="text-xs font-semibold text-gray-700 mb-2">Shared Genres</h5>
-                        <div className="flex flex-wrap gap-1">
-                          {comparison.shared_genres.slice(0, 5).map((genre, idx) => (
-                            <Badge key={idx} className="bg-purple-100/70 text-purple-700 text-xs">
-                              {genre}
-                            </Badge>
-                          ))}
+                      {/* Compatibility Line */}
+                      {comparison.insights?.compatibilityLine && (
+                        <p className="text-sm text-purple-700 text-center italic bg-white/60 rounded-lg p-3 mb-4">
+                          "{comparison.insights.compatibilityLine}"
+                        </p>
+                      )}
+
+                      {/* Shared Content */}
+                      {comparison.shared_titles?.length > 0 && (
+                        <div className="mb-3">
+                          <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                            <Heart size={12} className="text-red-500" />
+                            You Both Love
+                          </h5>
+                          <div className="flex flex-wrap gap-1">
+                            {comparison.shared_titles.slice(0, 4).map((item, idx) => (
+                              <Badge key={idx} className="bg-white/80 text-gray-700 text-xs border border-gray-200">
+                                {item.title}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
+                      )}
+
+                      {/* Shared Genres */}
+                      {comparison.shared_genres?.length > 0 && (
+                        <div>
+                          <h5 className="text-xs font-semibold text-gray-700 mb-2">Shared Genres</h5>
+                          <div className="flex flex-wrap gap-1">
+                            {comparison.shared_genres.slice(0, 5).map((genre, idx) => (
+                              <Badge key={idx} className="bg-purple-100/80 text-purple-700 text-xs">
+                                {genre}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Footer CTA */}
+                      <div className="mt-auto pt-4 text-center">
+                        <p className="text-xs text-gray-500">Find your entertainment match at</p>
+                        <p className="text-sm font-semibold text-purple-600">consumed.app</p>
                       </div>
-                    )}
+                    </div>
+
+                    {/* Card 1 Action Buttons */}
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(card1Ref, 'match')}
+                        className="border-purple-200 hover:border-purple-300"
+                        data-testid="button-download-card1"
+                      >
+                        <Download size={14} className="mr-2" />
+                        Save
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleShare(card1Ref, 'match')}
+                        className="border-purple-200 hover:border-purple-300"
+                        data-testid="button-share-card1"
+                      >
+                        <Share2 size={14} className="mr-2" />
+                        Share
+                      </Button>
+                    </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 justify-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDownload}
-                      className="border-purple-200 hover:border-purple-300"
-                      data-testid="button-download-comparison"
+                  {/* CARD 2: The Exchange */}
+                  <div className="space-y-3">
+                    <div 
+                      ref={card2Ref}
+                      className="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 rounded-xl p-5 border border-amber-200"
+                      style={{ aspectRatio: '9/16', maxWidth: '320px', margin: '0 auto' }}
                     >
-                      <Download size={14} className="mr-2" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShare}
-                      className="border-purple-200 hover:border-purple-300"
-                      data-testid="button-share-comparison"
-                    >
-                      <Share2 size={14} className="mr-2" />
-                      Share
-                    </Button>
+                      {/* Part 2 indicator */}
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs text-amber-600 font-medium">🧬 consumed</p>
+                        <Badge className="bg-amber-100 text-amber-700 text-xs">Part 2 of 2</Badge>
+                      </div>
+
+                      {/* Header */}
+                      <div className="text-center mb-4">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <Sparkles size={20} className="text-amber-500" />
+                          <span className="text-2xl font-bold text-gray-800">The Exchange</span>
+                          <Sparkles size={20} className="text-amber-500" />
+                        </div>
+                        <p className="text-gray-600 text-sm">What you can discover together</p>
+                      </div>
+
+                      {/* They Could Introduce You To */}
+                      {(() => {
+                        const theyCouldIntroduce = comparison.insights?.theyCouldIntroduce;
+                        return theyCouldIntroduce && theyCouldIntroduce.length > 0 && (
+                          <div className="bg-white/80 rounded-xl p-4 border border-purple-100 mb-3">
+                            <h5 className="text-sm font-semibold text-purple-800 mb-2">
+                              {selectedFriend?.user_name} Could Introduce You To
+                            </h5>
+                            <div className="flex flex-wrap gap-1.5">
+                              {theyCouldIntroduce.slice(0, 4).map((item, idx) => (
+                                <Badge key={idx} className="text-xs bg-purple-100 text-purple-800 border border-purple-200">
+                                  {item}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* You Could Introduce Them To */}
+                      {(() => {
+                        const youCouldIntroduce = comparison.insights?.youCouldIntroduce;
+                        return youCouldIntroduce && youCouldIntroduce.length > 0 && (
+                          <div className="bg-white/80 rounded-xl p-4 border border-blue-100 mb-3">
+                            <h5 className="text-sm font-semibold text-blue-800 mb-2">
+                              You Could Introduce {selectedFriend?.user_name} To
+                            </h5>
+                            <div className="flex flex-wrap gap-1.5">
+                              {youCouldIntroduce.slice(0, 4).map((item, idx) => (
+                                <Badge key={idx} className="text-xs bg-blue-100 text-blue-800 border border-blue-200">
+                                  {item}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Watch Together */}
+                      {(() => {
+                        const enjoyTogether = comparison.insights?.enjoyTogether;
+                        return enjoyTogether && enjoyTogether.length > 0 && (
+                          <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
+                            <h5 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
+                              <Heart size={14} className="text-red-500" />
+                              Watch/Read Together
+                            </h5>
+                            <ul className="space-y-1">
+                              {enjoyTogether.slice(0, 3).map((suggestion, idx) => (
+                                <li key={idx} className="text-xs text-amber-700">• {suggestion}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Footer CTA */}
+                      <div className="mt-auto pt-4 text-center">
+                        <p className="text-xs text-gray-500">Find your entertainment match at</p>
+                        <p className="text-sm font-semibold text-amber-600">consumed.app</p>
+                      </div>
+                    </div>
+
+                    {/* Card 2 Action Buttons */}
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(card2Ref, 'exchange')}
+                        className="border-amber-200 hover:border-amber-300"
+                        data-testid="button-download-card2"
+                      >
+                        <Download size={14} className="mr-2" />
+                        Save
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleShare(card2Ref, 'exchange')}
+                        className="border-amber-200 hover:border-amber-300"
+                        data-testid="button-share-card2"
+                      >
+                        <Share2 size={14} className="mr-2" />
+                        Share
+                      </Button>
+                    </div>
                   </div>
-
-                  {/* Additional Details (not in card) */}
-                  {comparison.insights?.enjoyTogether?.length > 0 && (
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-100">
-                      <h5 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-2">
-                        <Sparkles size={14} />
-                        Watch/Read Together
-                      </h5>
-                      <ul className="space-y-1">
-                        {comparison.insights.enjoyTogether.map((suggestion, idx) => (
-                          <li key={idx} className="text-xs text-amber-700">• {suggestion}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {comparison.insights?.theyCouldIntroduce?.length > 0 && (
-                    <div>
-                      <h5 className="text-sm font-semibold text-gray-900 mb-2">
-                        {selectedFriend?.user_name} Could Introduce You To
-                      </h5>
-                      <div className="flex flex-wrap gap-2">
-                        {comparison.insights.theyCouldIntroduce.map((item, idx) => (
-                          <Badge key={idx} className="text-xs bg-purple-100 text-purple-800 border border-purple-200">
-                            {item}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {comparison.insights?.youCouldIntroduce?.length > 0 && (
-                    <div>
-                      <h5 className="text-sm font-semibold text-gray-900 mb-2">
-                        You Could Introduce {selectedFriend?.user_name} To
-                      </h5>
-                      <div className="flex flex-wrap gap-2">
-                        {comparison.insights.youCouldIntroduce.map((item, idx) => (
-                          <Badge key={idx} className="text-xs bg-blue-100 text-blue-800 border border-blue-200">
-                            {item}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
