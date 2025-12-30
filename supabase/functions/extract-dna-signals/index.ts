@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('extract-dna-signals: Starting...');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -24,18 +26,24 @@ serve(async (req) => {
     
     if (req.method === 'POST') {
       try {
-        const body = await req.json();
-        if (body.user_id) {
-          targetUserId = body.user_id;
+        const bodyText = await req.text();
+        console.log('extract-dna-signals: Body received:', bodyText);
+        if (bodyText) {
+          const body = JSON.parse(bodyText);
+          if (body.user_id) {
+            targetUserId = body.user_id;
+            console.log('extract-dna-signals: Using user_id from body:', targetUserId);
+          }
         }
-      } catch {
-        // No body or invalid JSON
+      } catch (parseErr) {
+        console.log('extract-dna-signals: Body parse error (may be normal):', parseErr);
       }
     }
     
     // If no user_id in body, authenticate via JWT
     if (!targetUserId) {
       const authHeader = req.headers.get('Authorization');
+      console.log('extract-dna-signals: Authenticating via JWT');
       if (!authHeader) {
         return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
           status: 401,
@@ -47,22 +55,31 @@ serve(async (req) => {
       const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
 
       if (userError || !user) {
+        console.log('extract-dna-signals: Auth error:', userError);
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
       targetUserId = user.id;
+      console.log('extract-dna-signals: User authenticated:', targetUserId);
     }
 
     if (req.method === 'POST' || targetUserId) {
+      console.log('extract-dna-signals: Fetching lists for user:', targetUserId);
+      
       // First get user's lists, then get items from those lists
       const { data: userLists, error: listsError } = await supabaseClient
         .from('lists')
         .select('id')
         .eq('user_id', targetUserId);
       
-      if (listsError) throw listsError;
+      if (listsError) {
+        console.error('extract-dna-signals: Lists error:', listsError);
+        throw listsError;
+      }
+      
+      console.log('extract-dna-signals: Found lists:', userLists?.length || 0);
       
       if (!userLists || userLists.length === 0) {
         return new Response(JSON.stringify({ 
@@ -82,7 +99,12 @@ serve(async (req) => {
         .select('title, media_type, creator, year, rating, external_id, external_source')
         .in('list_id', listIds);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('extract-dna-signals: Items error:', itemsError);
+        throw itemsError;
+      }
+      
+      console.log('extract-dna-signals: Found items:', listItems?.length || 0);
 
       if (!listItems || listItems.length === 0) {
         return new Response(JSON.stringify({ 
@@ -186,11 +208,18 @@ serve(async (req) => {
       // Find max count for normalization
       const maxCount = Math.max(...signalArray.map(s => s.count), 1);
 
+      console.log('extract-dna-signals: Generated signals:', signalArray.length);
+      
       // Delete existing signals for this user
-      await supabaseClient
+      const { error: deleteError } = await supabaseClient
         .from('user_dna_signals')
         .delete()
         .eq('user_id', targetUserId);
+      
+      if (deleteError) {
+        console.error('extract-dna-signals: Delete error:', deleteError);
+        throw deleteError;
+      }
 
       // Insert new signals
       const signalsToInsert = signalArray.map(signal => ({
@@ -202,12 +231,18 @@ serve(async (req) => {
         updated_at: new Date().toISOString()
       }));
 
+      console.log('extract-dna-signals: Inserting signals:', signalsToInsert.length);
+
       if (signalsToInsert.length > 0) {
         const { error: insertError } = await supabaseClient
           .from('user_dna_signals')
           .insert(signalsToInsert);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('extract-dna-signals: Insert error:', insertError);
+          throw insertError;
+        }
+        console.log('extract-dna-signals: Successfully inserted signals');
       }
 
       // Calculate DNA level based on item count (without requiring separate table)
