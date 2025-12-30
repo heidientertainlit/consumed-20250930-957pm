@@ -41,22 +41,41 @@ export default function MediaDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Like mutation
+  // Like mutation - uses social-feed-like edge function
   const likeMutation = useMutation({
     mutationFn: async (postId: string) => {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/toggle-like`,
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-like`,
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ postId })
+          body: JSON.stringify({ post_id: postId })
         }
       );
-      if (!response.ok) throw new Error('Failed to toggle like');
-      return response.json();
+      const data = await response.json();
+      if (!response.ok) {
+        // If already liked, try to unlike
+        if (data.error === 'Already liked') {
+          const unlikeResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-like`,
+            {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${session?.access_token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ post_id: postId })
+            }
+          );
+          if (!unlikeResponse.ok) throw new Error('Failed to unlike');
+          return { liked: false };
+        }
+        throw new Error(data.error || 'Failed to like');
+      }
+      return { liked: true };
     },
     onSuccess: (data, postId) => {
       setLikedPosts(prev => {
@@ -68,31 +87,34 @@ export default function MediaDetail() {
         }
         return newSet;
       });
-      queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['media-detail'] });
     }
   });
 
-  // Reply mutation
+  // Reply mutation - uses social-feed-comments edge function
   const replyMutation = useMutation({
     mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/add-comment`,
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments`,
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ postId, content })
+          body: JSON.stringify({ post_id: postId, content })
         }
       );
-      if (!response.ok) throw new Error('Failed to add reply');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add reply');
+      }
       return response.json();
     },
     onSuccess: () => {
       setReplyingTo(null);
       setReplyContent("");
-      queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['media-detail'] });
       toast({ title: "Reply posted!" });
     }
   });
