@@ -2880,39 +2880,20 @@ export default function UserProfile() {
                   </p>
                 </div>
 
-                {/* DNA Level & Friend Comparison Section - Prominent placement */}
+                {/* DNA Level indicator - simple inline */}
                 {isOwnProfile && (
-                  <div className="mb-6 space-y-4">
-                    {/* DNA Level Badge with Progress */}
-                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
-                      <DNALevelBadge 
-                        level={dnaLevel} 
-                        itemCount={dnaItemCount} 
-                        showProgress={true} 
-                      />
-                      {dnaLevel === 0 && (
-                        <div className="mt-3 pt-3 border-t border-purple-100 text-center">
-                          <p className="text-sm text-gray-600">
-                            Complete the DNA survey above to unlock your profile
-                          </p>
-                        </div>
-                      )}
-                      {dnaLevel === 1 && (
-                        <div className="mt-3 pt-3 border-t border-purple-100">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700">Progress to Level 2</span>
-                            <span className="text-xs text-purple-600 font-semibold">{dnaItemCount} of 30</span>
-                          </div>
-                          <Progress value={(dnaItemCount / 30) * 100} className="h-2 mb-2" />
-                          <p className="text-xs text-gray-600">
-                            Log <span className="font-semibold text-purple-600">{Math.max(0, 30 - dnaItemCount)} more</span> items to unlock Friend DNA Comparisons
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Friend DNA Comparison - Now prominently placed */}
-                    <FriendDNAComparison dnaLevel={dnaLevel} itemCount={dnaItemCount} hasSurvey={dnaProfileStatus === 'has_profile'} />
+                  <div className="mb-4 flex items-center justify-between">
+                    <DNALevelBadge 
+                      level={dnaLevel} 
+                      itemCount={dnaItemCount} 
+                      showProgress={true} 
+                    />
+                    {dnaLevel === 1 && (
+                      <div className="text-right">
+                        <span className="text-xs text-purple-600 font-semibold">{dnaItemCount}/30 items</span>
+                        <Progress value={(dnaItemCount / 30) * 100} className="h-1.5 w-20 mt-1" />
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -3207,6 +3188,13 @@ export default function UserProfile() {
                   </CollapsibleContent>
                 </Collapsible>
 
+              </div>
+            )}
+
+            {/* Friend DNA Comparison - Standalone section for more room */}
+            {isOwnProfile && dnaProfileStatus === 'has_profile' && (
+              <div className="mt-4">
+                <FriendDNAComparison dnaLevel={dnaLevel} itemCount={dnaItemCount} hasSurvey={dnaProfileStatus === 'has_profile'} />
               </div>
             )}
 
