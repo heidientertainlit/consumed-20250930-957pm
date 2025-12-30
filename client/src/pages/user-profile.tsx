@@ -2739,43 +2739,111 @@ export default function UserProfile() {
                   </p>
                 </div>
 
-                {/* Favorite Genres */}
-                <div className="mb-6">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Favorite Genres</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {(dnaProfile?.favorite_genres || []).map((genre, index) => (
-                      <Badge key={index} className="bg-purple-100 text-purple-700 text-xs">
-                        {genre}
-                      </Badge>
-                    ))}
+                {/* Unified DNA Insights - Survey vs Actual Behavior */}
+                <div className="mb-6 space-y-4">
+                  {/* Media Types: What You Say vs What You Track */}
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
+                    <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <span className="text-lg">📊</span> Your Media Breakdown
+                    </h5>
+                    
+                    {/* Survey Preferences */}
+                    {(dnaProfile?.favorite_media_types || []).length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-2 font-medium">You said you love:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(dnaProfile?.favorite_media_types || []).map((type, index) => (
+                            <Badge key={index} className="bg-purple-100 text-purple-700 text-xs border border-purple-200">
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Actual Tracking Data */}
+                    {totalItemsLogged > 0 && (
+                      <div className="mt-3 pt-3 border-t border-purple-100">
+                        <p className="text-xs text-gray-500 mb-2 font-medium">What you actually track:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(mediaTypeCounts)
+                            .filter(([_, count]) => (count as number) > 0)
+                            .sort((a, b) => (b[1] as number) - (a[1] as number))
+                            .map(([type, count]) => {
+                              const labels: Record<string, string> = { movie: 'Movies', tv: 'TV', book: 'Books', music: 'Music', podcast: 'Podcasts', game: 'Games' };
+                              const surveyTypes = (dnaProfile?.favorite_media_types || []).map(t => t.toLowerCase());
+                              const isMatch = surveyTypes.some(st => 
+                                st.includes(type) || type.includes(st.replace(/s$/, ''))
+                              );
+                              return (
+                                <Badge 
+                                  key={type} 
+                                  className={`text-xs ${isMatch 
+                                    ? 'bg-green-100 text-green-700 border border-green-200' 
+                                    : 'bg-amber-100 text-amber-700 border border-amber-200'}`}
+                                >
+                                  {labels[type] || type}: {count as number}
+                                  {!isMatch && (count as number) > 5 && ' 👀'}
+                                </Badge>
+                              );
+                            })}
+                        </div>
+                        {(() => {
+                          const topTracked = Object.entries(mediaTypeCounts)
+                            .filter(([_, count]) => (count as number) > 0)
+                            .sort((a, b) => (b[1] as number) - (a[1] as number))[0];
+                          const surveyTypes = (dnaProfile?.favorite_media_types || []).map(t => t.toLowerCase());
+                          if (topTracked) {
+                            const labels: Record<string, string> = { movie: 'Movies', tv: 'TV Shows', book: 'Books', music: 'Music', podcast: 'Podcasts', game: 'Games' };
+                            const isTopInSurvey = surveyTypes.some(st => 
+                              st.includes(topTracked[0]) || topTracked[0].includes(st.replace(/s$/, ''))
+                            );
+                            if (!isTopInSurvey && (topTracked[1] as number) >= 5) {
+                              return (
+                                <p className="text-xs text-amber-700 mt-2 italic">
+                                  💡 You didn't mention {labels[topTracked[0]] || topTracked[0]} in your survey, but you've logged {topTracked[1] as number}!
+                                </p>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                {/* Favorite Media Types */}
-                <div className="mb-6">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Favorite Media Types</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {(dnaProfile?.favorite_media_types || []).map((type, index) => (
-                      <Badge key={index} className="bg-indigo-100 text-indigo-700 text-xs">
-                        {type}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Flavor Notes */}
-                {dnaProfile?.flavor_notes && dnaProfile.flavor_notes.length > 0 && (
-                  <div className="mb-6">
-                    <h5 className="text-sm font-semibold text-gray-900 mb-3">Your Entertainment Style</h5>
-                    <div className="flex flex-wrap gap-2">
-                      {dnaProfile.flavor_notes.map((note, index) => (
-                        <Badge key={index} className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 text-xs">
-                          {note}
-                        </Badge>
-                      ))}
+                  
+                  {/* Favorite Genres */}
+                  {(dnaProfile?.favorite_genres || []).length > 0 && (
+                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="text-lg">🎭</span> Your Favorite Genres
+                      </h5>
+                      <div className="flex flex-wrap gap-2">
+                        {(dnaProfile?.favorite_genres || []).map((genre, index) => (
+                          <Badge key={index} className="bg-indigo-100 text-indigo-700 text-xs border border-indigo-200">
+                            {genre}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {/* Entertainment Style */}
+                  {dnaProfile?.flavor_notes && dnaProfile.flavor_notes.length > 0 && (
+                    <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border border-pink-100">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="text-lg">✨</span> Your Entertainment Style
+                      </h5>
+                      <div className="flex flex-wrap gap-2">
+                        {dnaProfile.flavor_notes.map((note, index) => (
+                          <Badge key={index} className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 text-xs border border-purple-200">
+                            {note}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Expandable Details Section */}
                 {isDNAExpanded && dnaProfile && (
