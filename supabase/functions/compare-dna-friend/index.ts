@@ -48,32 +48,48 @@ serve(async (req) => {
       }
 
       // Calculate user's DNA level from logged items
+      // Get all lists for user and count items
       const { data: userLists } = await supabaseClient
-        .from('user_lists')
+        .from('lists')
         .select('id')
-        .eq('user_id', user.id)
-        .eq('list_type', 'all')
-        .single();
+        .eq('user_id', user.id);
 
       let itemCount = 0;
-      if (userLists) {
+      if (userLists && userLists.length > 0) {
+        const listIds = userLists.map((l: any) => l.id);
         const { count } = await supabaseClient
-          .from('user_list_items')
+          .from('list_items')
           .select('*', { count: 'exact', head: true })
-          .eq('list_id', userLists.id);
+          .in('list_id', listIds);
         itemCount = count || 0;
       }
 
-      // Calculate level: 0-14 = Level 1, 15-29 = Level 2, 30+ = Level 3
-      const currentLevel = itemCount >= 30 ? 3 : itemCount >= 15 ? 2 : 1;
+      // Check if user has completed DNA survey
+      const { data: userDnaProfile } = await supabaseClient
+        .from('dna_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
 
-      if (currentLevel < 3) {
+      const hasSurvey = !!userDnaProfile;
+
+      // DNA Level system (2 levels):
+      // Level 0: No survey completed
+      // Level 1: Survey completed, less than 30 items
+      // Level 2: Survey completed + 30 items = Friend comparisons unlocked
+      const currentLevel = !hasSurvey ? 0 : itemCount >= 30 ? 2 : 1;
+
+      if (currentLevel < 2) {
+        const itemsNeeded = Math.max(0, 30 - itemCount);
         return new Response(JSON.stringify({ 
-          error: 'Friend DNA comparison requires DNA Blueprint (Level 3)',
+          error: !hasSurvey 
+            ? 'Complete the DNA survey first to unlock friend comparisons'
+            : `Log ${itemsNeeded} more items to unlock friend comparisons`,
           current_level: currentLevel,
-          required_level: 3,
+          required_level: 2,
           items_logged: itemCount,
-          items_needed: 30 - itemCount
+          items_needed: itemsNeeded,
+          has_survey: hasSurvey
         }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
