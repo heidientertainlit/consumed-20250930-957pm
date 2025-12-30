@@ -115,7 +115,7 @@ serve(async (req) => {
       }
 
       // Get both users' signals
-      const [userSignalsRes, friendSignalsRes] = await Promise.all([
+      let [userSignalsRes, friendSignalsRes] = await Promise.all([
         supabaseClient
           .from('user_dna_signals')
           .select('signal_type, signal_value, strength')
@@ -126,14 +126,72 @@ serve(async (req) => {
           .eq('user_id', friend_id)
       ]);
 
-      const userSignals = userSignalsRes.data || [];
-      const friendSignals = friendSignalsRes.data || [];
+      let userSignals = userSignalsRes.data || [];
+      let friendSignals = friendSignalsRes.data || [];
 
+      // If signals are missing, try to extract them on the fly
+      if (userSignals.length === 0 || friendSignals.length === 0) {
+        console.log('Signals missing, attempting to extract...');
+        
+        // Call extract-dna-signals for users missing signals
+        const extractPromises = [];
+        if (userSignals.length === 0) {
+          extractPromises.push(
+            fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/extract-dna-signals`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ user_id: user.id })
+            })
+          );
+        }
+        if (friendSignals.length === 0) {
+          extractPromises.push(
+            fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/extract-dna-signals`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ user_id: friend_id })
+            })
+          );
+        }
+        
+        try {
+          await Promise.all(extractPromises);
+          
+          // Wait a moment for signals to be written
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Re-fetch signals
+          const [newUserSignalsRes, newFriendSignalsRes] = await Promise.all([
+            supabaseClient
+              .from('user_dna_signals')
+              .select('signal_type, signal_value, strength')
+              .eq('user_id', user.id),
+            supabaseClient
+              .from('user_dna_signals')
+              .select('signal_type, signal_value, strength')
+              .eq('user_id', friend_id)
+          ]);
+          
+          userSignals = newUserSignalsRes.data || [];
+          friendSignals = newFriendSignalsRes.data || [];
+        } catch (extractError) {
+          console.error('Error extracting signals:', extractError);
+        }
+      }
+
+      // If still no signals, return helpful error
       if (userSignals.length === 0 || friendSignals.length === 0) {
         return new Response(JSON.stringify({ 
-          error: 'Both users need DNA signals for comparison',
+          error: 'Could not generate DNA signals for comparison. Try again in a moment.',
           user_has_signals: userSignals.length > 0,
-          friend_has_signals: friendSignals.length > 0
+          friend_has_signals: friendSignals.length > 0,
+          hint: 'DNA signals are extracted from your tracked items. Make sure both users have logged media.'
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
