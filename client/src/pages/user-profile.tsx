@@ -1054,14 +1054,21 @@ export default function UserProfile() {
     setTrackedGenresLoaded(false);
   }, [viewingUserId]);
 
-  // Recompute tracked genres when userLists changes (new items added/removed)
-  const userListsLength = userLists.reduce((acc, list) => acc + (list.items?.length || 0), 0);
+  // Create a stable fingerprint of list items to detect any changes (not just length)
+  const listItemsFingerprint = useMemo(() => {
+    const items = userLists.flatMap(list => 
+      (list.items || []).map(item => `${item.id}-${item.media_id}-${item.updated_at || ''}`)
+    );
+    return items.sort().join('|');
+  }, [userLists]);
+
+  // Recompute tracked genres when list items change (including swaps/edits, not just length)
   useEffect(() => {
-    if (trackedGenresLoaded && userListsLength > 0) {
+    if (trackedGenresLoaded && listItemsFingerprint.length > 0) {
       // Reset to trigger re-fetch when list contents change
       setTrackedGenresLoaded(false);
     }
-  }, [userListsLength]);
+  }, [listItemsFingerprint]);
 
   // Fetch tracked genres when userLists loads (for genre comparison in DNA card)
   useEffect(() => {
@@ -1319,9 +1326,15 @@ export default function UserProfile() {
           })
         );
         
-        results.forEach(result => {
-          if (result.status === 'fulfilled' && Array.isArray(result.value)) {
-            result.value.forEach((genre: any) => {
+        results.forEach((result, idx) => {
+          if (result.status === 'fulfilled') {
+            const value = result.value;
+            // Verify we have an array before iterating
+            if (!Array.isArray(value)) {
+              console.warn('Unexpected genre response (not array):', value);
+              return;
+            }
+            value.forEach((genre: any) => {
               // Handle both string genres and object genres with multiple possible keys
               let genreName: string | null = null;
               if (typeof genre === 'string') {
@@ -1329,6 +1342,9 @@ export default function UserProfile() {
               } else if (genre && typeof genre === 'object') {
                 // Try multiple common keys for genre name
                 genreName = genre.name ?? genre.genre ?? genre.label ?? null;
+                if (!genreName) {
+                  console.warn('Unknown genre object shape:', genre);
+                }
               }
               if (genreName && typeof genreName === 'string' && genreName !== '[object Object]') {
                 genreCounts[genreName] = (genreCounts[genreName] || 0) + 1;
