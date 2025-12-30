@@ -507,31 +507,29 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                   return (
                     <div 
                       key={friend.id}
-                      className="flex items-center justify-between bg-white/70 rounded-lg p-2 border border-amber-100"
+                      className="flex items-center gap-2 bg-white/70 rounded-lg p-2 border border-amber-100"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-amber-200 flex items-center justify-center text-amber-700 text-xs font-semibold overflow-hidden">
-                          {friend.avatar_url ? (
-                            <img src={friend.avatar_url} alt={friend.user_name} className="w-7 h-7 rounded-full object-cover" />
-                          ) : (
-                            friend.user_name.charAt(0).toUpperCase()
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">{friend.user_name}</p>
-                          <p className="text-xs text-amber-600">
-                            {needsSurvey 
-                              ? `Needs survey + ${itemsNeeded > 0 ? `${itemsNeeded} items` : ''}`
-                              : `${itemsNeeded} more items to go`
-                            }
-                          </p>
-                        </div>
+                      <div className="w-7 h-7 flex-shrink-0 rounded-full bg-amber-200 flex items-center justify-center text-amber-700 text-xs font-semibold overflow-hidden">
+                        {friend.avatar_url ? (
+                          <img src={friend.avatar_url} alt={friend.user_name} className="w-7 h-7 rounded-full object-cover" />
+                        ) : (
+                          friend.user_name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{friend.user_name}</p>
+                        <p className="text-xs text-amber-600 truncate">
+                          {needsSurvey 
+                            ? `Needs survey${itemsNeeded > 0 ? ` + ${itemsNeeded} items` : ''}`
+                            : `${itemsNeeded} more items to go`
+                          }
+                        </p>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleNudgeFriend(friend)}
-                        className="border-amber-300 hover:bg-amber-100 text-amber-700 text-xs h-7 px-2"
+                        className="flex-shrink-0 border-amber-300 hover:bg-amber-100 text-amber-700 text-xs h-7 px-2"
                         data-testid={`button-nudge-${friend.id}`}
                       >
                         <Send size={12} className="mr-1" />
