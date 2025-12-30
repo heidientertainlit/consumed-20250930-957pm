@@ -210,40 +210,17 @@ serve(async (req) => {
         if (insertError) throw insertError;
       }
 
-      // Update user's DNA level based on item count
-      const itemsWithRatings = listItems.filter(i => i.rating).length;
-      const mediaTypesSet = new Set(listItems.map(i => i.media_type).filter(Boolean));
-      
+      // Calculate DNA level based on item count (without requiring separate table)
       let currentLevel = 1;
       if (totalItems >= 30) {
-        currentLevel = 3; // Blueprint
-      } else if (totalItems >= 15) {
-        currentLevel = 2; // Profile
+        currentLevel = 2; // Level 2: Full DNA unlocked
       }
-
-      // Upsert DNA level
-      const { error: levelError } = await supabaseClient
-        .from('user_dna_levels')
-        .upsert({
-          user_id: targetUserId,
-          current_level: currentLevel,
-          items_logged: totalItems,
-          items_with_ratings: itemsWithRatings,
-          media_types_count: mediaTypesSet.size,
-          updated_at: new Date().toISOString(),
-          ...(currentLevel > 1 ? { last_level_up: new Date().toISOString() } : {})
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (levelError) throw levelError;
 
       return new Response(JSON.stringify({
         success: true,
         signals_extracted: signalsToInsert.length,
         items_analyzed: totalItems,
-        current_level: currentLevel,
-        level_name: currentLevel === 1 ? 'Snapshot' : currentLevel === 2 ? 'Profile' : 'Blueprint'
+        current_level: currentLevel
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
