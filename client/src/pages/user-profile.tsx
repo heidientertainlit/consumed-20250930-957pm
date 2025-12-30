@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -2880,13 +2881,109 @@ export default function UserProfile() {
                   </p>
                 </div>
 
-                {/* Unified DNA Insights - Survey vs Actual Behavior */}
-                <div className="mb-6 space-y-4">
-                  {/* Media Types: What You Say vs What You Track */}
-                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
-                    <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <span className="text-lg">📊</span> Your Media Breakdown
-                    </h5>
+                {/* DNA Level & Friend Comparison Section - Prominent placement */}
+                {isOwnProfile && (
+                  <div className="mb-6 space-y-4">
+                    {/* DNA Level Badge with Progress */}
+                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
+                      <DNALevelBadge 
+                        level={dnaLevel} 
+                        itemCount={dnaItemCount} 
+                        showProgress={true} 
+                      />
+                      {dnaLevel === 0 && (
+                        <div className="mt-3 pt-3 border-t border-purple-100 text-center">
+                          <p className="text-sm text-gray-600">
+                            Complete the DNA survey above to unlock your profile
+                          </p>
+                        </div>
+                      )}
+                      {dnaLevel === 1 && (
+                        <div className="mt-3 pt-3 border-t border-purple-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700">Progress to Level 2</span>
+                            <span className="text-xs text-purple-600 font-semibold">{dnaItemCount} of 30</span>
+                          </div>
+                          <Progress value={(dnaItemCount / 30) * 100} className="h-2 mb-2" />
+                          <p className="text-xs text-gray-600">
+                            Log <span className="font-semibold text-purple-600">{Math.max(0, 30 - dnaItemCount)} more</span> items to unlock Friend DNA Comparisons
+                          </p>
+                        </div>
+                      )}
+                      {dnaLevel === 2 && (
+                        <div className="mt-3 pt-3 border-t border-purple-100 text-center">
+                          <p className="text-sm text-emerald-600 font-medium">All DNA features unlocked!</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Friend DNA Comparison - Now prominently placed */}
+                    <FriendDNAComparison dnaLevel={dnaLevel} itemCount={dnaItemCount} hasSurvey={dnaProfileStatus === 'has_profile'} />
+                  </div>
+                )}
+
+                {/* DNA-Based Recommendations - Inline */}
+                {isOwnProfile && (isDnaRecsLoading || isDnaRecsGenerating || (Array.isArray(dnaRecommendations) && dnaRecommendations.length > 0)) && (
+                  <div className="mb-6 bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-xl p-4 border border-gray-800/50">
+                    <div className="flex items-center mb-3">
+                      <Sparkles className="text-purple-400 mr-2" size={18} />
+                      <h4 className="text-lg font-bold text-white">For You</h4>
+                      {isDnaRecsGenerating && (
+                        <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full animate-pulse border border-blue-500/30">
+                          Generating...
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
+                      {isDnaRecsLoading ? (
+                        [...Array(4)].map((_, index) => (
+                          <div key={`loading-${index}`} className="flex-shrink-0 w-24">
+                            <div className="relative rounded-lg overflow-hidden bg-slate-700 aspect-[2/3] animate-pulse"></div>
+                          </div>
+                        ))
+                      ) : (
+                        dnaRecommendations.slice(0, 6).map((rec: any) => {
+                          const uniqueId = `${rec.external_source}-${rec.external_id}`;
+                          const showFallback = !rec.image_url || imageErrors[uniqueId];
+                          return (
+                            <div key={uniqueId} className="flex-shrink-0 w-24" data-testid={`dna-rec-inline-${uniqueId}`}>
+                              <div className="relative rounded-lg overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
+                                {showFallback ? (
+                                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 p-2">
+                                    <p className="text-white font-bold text-xs text-center line-clamp-2">{rec.title}</p>
+                                  </div>
+                                ) : (
+                                  <img 
+                                    src={rec.image_url} 
+                                    alt={rec.title}
+                                    className="w-full h-full object-cover"
+                                    onError={() => setImageErrors(prev => ({ ...prev, [uniqueId]: true }))}
+                                  />
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-300 mt-1 line-clamp-1">{rec.title}</p>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Deep Dive Section - Collapsible */}
+                <Collapsible>
+                  <CollapsibleTrigger className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors mb-4">
+                    <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <ChevronDown className="h-4 w-4" />
+                      Deep Dive: Your Entertainment Breakdown
+                    </span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4">
+                    {/* Media Types: What You Say vs What You Track */}
+                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="text-lg">📊</span> Your Media Breakdown
+                      </h5>
                     
                     {/* Survey Preferences */}
                     {(dnaProfile?.favorite_media_types || []).length > 0 && (
@@ -3097,351 +3194,28 @@ export default function UserProfile() {
                       </div>
                     </div>
                   )}
-                </div>
 
-                {/* Details Section - Always visible */}
-                {dnaProfile && (
-                  <div className="border-t border-gray-200 pt-6 mt-6 space-y-4">
-                    {/* Media Consumption Stats */}
-                    {dnaProfile.media_consumption_stats && (
-                      <div>
-                        <h5 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
-                          <Brain className="mr-2 text-indigo-600" size={18} />
-                          Your Entertainment Style
-                        </h5>
-                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
-                          <div className="space-y-2">
-                            {typeof dnaProfile.media_consumption_stats === 'string' ? (
-                              (() => {
-                                const stats = JSON.parse(dnaProfile.media_consumption_stats);
-                                return (
-                                  <>
-                                    {stats.primaryMediaType && (
-                                      <p className="text-sm text-indigo-800">
-                                        <span className="font-medium">Primary Media:</span> {stats.primaryMediaType}
-                                      </p>
-                                    )}
-                                    {stats.viewingStyle && (
-                                      <p className="text-sm text-indigo-800">
-                                        <span className="font-medium">Viewing Style:</span> {stats.viewingStyle}
-                                      </p>
-                                    )}
-                                    {stats.discoveryMethod && (
-                                      <p className="text-sm text-indigo-800">
-                                        <span className="font-medium">Discovery Method:</span> {stats.discoveryMethod}
-                                      </p>
-                                    )}
-                                    {stats.socialAspect && (
-                                      <p className="text-sm text-indigo-800">
-                                        <span className="font-medium">Social Aspect:</span> {stats.socialAspect}
-                                      </p>
-                                    )}
-                                  </>
-                                );
-                              })()
-                            ) : (
-                              <>
-                                {dnaProfile.media_consumption_stats.primaryMediaType && (
-                                  <p className="text-sm text-indigo-800">
-                                    <span className="font-medium">Primary Media:</span> {dnaProfile.media_consumption_stats.primaryMediaType}
-                                  </p>
-                                )}
-                                {dnaProfile.media_consumption_stats.viewingStyle && (
-                                  <p className="text-sm text-indigo-800">
-                                    <span className="font-medium">Viewing Style:</span> {dnaProfile.media_consumption_stats.viewingStyle}
-                                  </p>
-                                )}
-                                {dnaProfile.media_consumption_stats.discoveryMethod && (
-                                  <p className="text-sm text-indigo-800">
-                                    <span className="font-medium">Discovery Method:</span> {dnaProfile.media_consumption_stats.discoveryMethod}
-                                  </p>
-                                )}
-                                {dnaProfile.media_consumption_stats.socialAspect && (
-                                  <p className="text-sm text-indigo-800">
-                                    <span className="font-medium">Social Aspect:</span> {dnaProfile.media_consumption_stats.socialAspect}
-                                  </p>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
+                  {/* Favorite Sports */}
+                  {dnaProfile?.favorite_sports && dnaProfile.favorite_sports.length > 0 && (
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <span className="text-lg">🏆</span> Favorite Sports
+                      </h5>
+                      <div className="flex flex-wrap gap-2">
+                        {dnaProfile.favorite_sports.map((sport, index) => (
+                          <Badge key={index} className="bg-green-100 text-green-700 text-xs border border-green-200">
+                            {sport}
+                          </Badge>
+                        ))}
                       </div>
-                    )}
-
-                    {/* Favorite Sports */}
-                    {dnaProfile.favorite_sports && dnaProfile.favorite_sports.length > 0 && (
-                      <div>
-                        <h5 className="text-sm font-semibold text-gray-900 mb-2">Favorite Sports</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {dnaProfile.favorite_sports.map((sport, index) => (
-                            <Badge key={index} className="bg-green-100 text-green-700 text-xs">
-                              {sport}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* DNA Level Badge with Progress */}
-                    {isOwnProfile && (
-                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
-                        <DNALevelBadge 
-                          level={dnaLevel} 
-                          itemCount={dnaItemCount} 
-                          showProgress={true} 
-                        />
-                        {dnaLevel === 0 && (
-                          <div className="mt-3 pt-3 border-t border-purple-100 text-center">
-                            <p className="text-sm text-gray-600">
-                              Complete the DNA survey above to unlock your profile
-                            </p>
-                          </div>
-                        )}
-                        {dnaLevel === 1 && (
-                          <div className="mt-3 pt-3 border-t border-purple-100">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">Progress to Level 2</span>
-                              <span className="text-xs text-purple-600 font-semibold">{dnaItemCount} of 30</span>
-                            </div>
-                            <Progress value={(dnaItemCount / 30) * 100} className="h-2 mb-2" />
-                            <p className="text-xs text-gray-600">
-                              Log <span className="font-semibold text-purple-600">{Math.max(0, 30 - dnaItemCount)} more</span> items to unlock Friend DNA Comparisons
-                            </p>
-                          </div>
-                        )}
-                        {dnaLevel === 2 && (
-                          <div className="mt-3 pt-3 border-t border-purple-100 text-center">
-                            <p className="text-sm text-emerald-600 font-medium">All DNA features unlocked!</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Friend DNA Comparison - Level 2 Feature */}
-                    {isOwnProfile && (
-                      <FriendDNAComparison dnaLevel={dnaLevel} itemCount={dnaItemCount} hasSurvey={dnaProfileStatus === 'has_profile'} />
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                  </CollapsibleContent>
+                </Collapsible>
 
               </div>
             )}
 
-            {/* DNA-Based Recommendations Section */}
-            {dnaProfileStatus === 'has_profile' && isOwnProfile && (isDnaRecsLoading || isDnaRecsGenerating || (Array.isArray(dnaRecommendations) && dnaRecommendations.length > 0)) && (
-              <div className="w-full bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-3xl p-6 shadow-lg border border-gray-800/50 mt-6">
-                <div className="flex items-center mb-4">
-                  <Sparkles className="text-purple-400 mr-2" size={20} />
-                  <h3 className="text-xl font-bold text-white">Based on Your Entertainment DNA</h3>
-                  {isDnaRecsGenerating && (
-                    <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full animate-pulse border border-blue-500/30" data-testid="generating-badge">
-                      Generating...
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-gray-400 mb-4">Swipe to explore</p>
-
-                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide px-2">
-                  {isDnaRecsLoading ? (
-                    // Loading skeleton cards
-                    [...Array(4)].map((_, index) => (
-                      <div key={`loading-${index}`} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
-                        <div className="relative rounded-lg overflow-hidden bg-slate-700 aspect-[2/3] animate-pulse">
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        </div>
-                        <div className="mt-2">
-                          <div className="h-4 bg-slate-700 rounded w-3/4 animate-pulse"></div>
-                          <div className="h-3 bg-slate-700 rounded w-1/4 mt-1 animate-pulse"></div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    dnaRecommendations.map((rec: any, index: number) => {
-                      const uniqueId = `${rec.external_source}-${rec.external_id}`;
-                      const showFallback = !rec.image_url || imageErrors[uniqueId];
-                      
-                      return (
-                        <div key={uniqueId} className="flex-shrink-0 w-32 sm:w-36 md:w-40" data-testid={`dna-recommendation-card-${uniqueId}`}>
-                          <div className="relative rounded-lg overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
-                            {/* Poster Image or Fallback */}
-                            {showFallback ? (
-                              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 p-4">
-                                <div className="text-center">
-                                  <p className="text-white font-bold text-sm mb-2 line-clamp-3">{rec.title}</p>
-                                  <p className="text-slate-300 text-xs uppercase tracking-wider">{rec.media_type || rec.type}</p>
-                                </div>
-                              </div>
-                            ) : (
-                              <img 
-                                src={rec.image_url} 
-                                alt={rec.title}
-                                className="w-full h-full object-cover"
-                                onError={() => setImageErrors(prev => ({ ...prev, [uniqueId]: true }))}
-                              />
-                            )}
-                        
-                            {/* Gradient Overlay - Always visible */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                            
-                            {/* Action Buttons - Always visible at bottom */}
-                            <div className="absolute bottom-2 right-2 flex gap-1.5 z-10">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button
-                                    size="icon"
-                                    variant="secondary"
-                                    className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
-                                    data-testid={`add-to-list-${uniqueId}`}
-                                    disabled={addDNARecommendationMutation.isPending}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent 
-                                  align="center" 
-                                  side="top" 
-                                  sideOffset={8}
-                                  collisionPadding={16}
-                                  className="w-56 bg-gray-900 border-gray-700 max-h-[70vh] overflow-y-auto z-50"
-                                >
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'queue' });
-                                    }}
-                                    className="cursor-pointer text-white hover:bg-gray-800"
-                                    disabled={addDNARecommendationMutation.isPending}
-                                  >
-                                    Add to Want To
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'currently' });
-                                    }}
-                                    className="cursor-pointer text-white hover:bg-gray-800"
-                                    disabled={addDNARecommendationMutation.isPending}
-                                  >
-                                    Add to Currently
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'finished' });
-                                    }}
-                                    className="cursor-pointer text-white hover:bg-gray-800"
-                                    disabled={addDNARecommendationMutation.isPending}
-                                  >
-                                    Add to Finished
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'dnf' });
-                                    }}
-                                    className="cursor-pointer text-white hover:bg-gray-800"
-                                    disabled={addDNARecommendationMutation.isPending}
-                                  >
-                                    Add to Did Not Finish
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      addDNARecommendationMutation.mutate({ recommendation: rec, listType: 'favorites' });
-                                    }}
-                                    className="cursor-pointer text-white hover:bg-gray-800"
-                                    disabled={addDNARecommendationMutation.isPending}
-                                  >
-                                    Add to Favorites
-                                  </DropdownMenuItem>
-                                  
-                                  {/* Custom Lists */}
-                                  {userLists.filter((list: any) => list.isCustom).length > 0 && (
-                                    <>
-                                      <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold border-t border-gray-700 mt-1 pt-2">
-                                        MY CUSTOM LISTS
-                                      </div>
-                                      {userLists
-                                        .filter((list: any) => list.isCustom)
-                                        .map((list: any) => (
-                                          <DropdownMenuItem
-                                            key={list.id}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              addDNARecommendationMutation.mutate({ recommendation: rec, listType: list.id });
-                                            }}
-                                            className="cursor-pointer text-white hover:bg-gray-800"
-                                            disabled={addDNARecommendationMutation.isPending}
-                                          >
-                                            Add to {list.title}
-                                          </DropdownMenuItem>
-                                        ))}
-                                    </>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                              
-                              <Button
-                                size="icon"
-                                variant="secondary"
-                                className="h-8 w-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm text-white border border-white/20 shadow-lg"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setRatingStars(prev => ({ ...prev, [uniqueId]: !prev[uniqueId] }));
-                                }}
-                                data-testid={`rate-${uniqueId}`}
-                              >
-                                <Star className="h-4 w-4" />
-                              </Button>
-                              
-                              {/* Inline vertical star rating */}
-                              {ratingStars[uniqueId] && (
-                                <div 
-                                  className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 flex flex-col gap-0.5"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {[5, 4, 3, 2, 1].map((stars) => (
-                                    <button
-                                      key={stars}
-                                      type="button"
-                                      onClick={() => rateDNARecommendationMutation.mutate({ recommendation: rec, rating: stars })}
-                                      onMouseEnter={() => setHoveredStar(prev => ({ ...prev, [uniqueId]: stars }))}
-                                      onMouseLeave={() => setHoveredStar(prev => ({ ...prev, [uniqueId]: null }))}
-                                      disabled={rateDNARecommendationMutation.isPending}
-                                      className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-purple-600/50 transition-colors"
-                                      data-testid={`star-${stars}`}
-                                    >
-                                      <Star 
-                                        className={`h-4 w-4 transition-all ${
-                                          hoveredStar[uniqueId] === stars
-                                            ? 'text-yellow-400 fill-yellow-400'
-                                            : 'text-gray-400'
-                                        }`}
-                                      />
-                                      <span className="text-white text-xs font-medium">{stars}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Title and Year */}
-                          <div className="mt-2 px-1">
-                            <h4 className="text-sm font-semibold text-white line-clamp-2 leading-tight" title={rec.title}>
-                              {rec.title}
-                            </h4>
-                            {rec.year && (
-                              <p className="text-xs text-gray-400 mt-0.5">{rec.year}</p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
         )}
