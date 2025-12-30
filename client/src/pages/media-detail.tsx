@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -35,8 +35,80 @@ export default function MediaDetail() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Like mutation
+  const likeMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/toggle-like`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ postId })
+        }
+      );
+      if (!response.ok) throw new Error('Failed to toggle like');
+      return response.json();
+    },
+    onSuccess: (data, postId) => {
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        if (data.liked) {
+          newSet.add(postId);
+        } else {
+          newSet.delete(postId);
+        }
+        return newSet;
+      });
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
+    }
+  });
+
+  // Reply mutation
+  const replyMutation = useMutation({
+    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/add-comment`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ postId, content })
+        }
+      );
+      if (!response.ok) throw new Error('Failed to add reply');
+      return response.json();
+    },
+    onSuccess: () => {
+      setReplyingTo(null);
+      setReplyContent("");
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
+      toast({ title: "Reply posted!" });
+    }
+  });
+
+  const handleLike = (postId: string) => {
+    if (!session?.access_token) {
+      toast({ title: "Please sign in to like posts", variant: "destructive" });
+      return;
+    }
+    likeMutation.mutate(postId);
+  };
+
+  const handleReply = (postId: string) => {
+    if (!replyContent.trim()) return;
+    replyMutation.mutate({ postId, content: replyContent });
+  };
 
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
@@ -798,6 +870,48 @@ export default function MediaDetail() {
                       {review.content && (
                         <p className="text-gray-700 text-sm leading-relaxed">{review.content}</p>
                       )}
+                      {/* Like and Reply Actions */}
+                      <div className="flex items-center gap-4 mt-3 pt-2 border-t border-gray-50">
+                        <button
+                          onClick={() => handleLike(review.id)}
+                          className={`flex items-center gap-1 text-xs transition-colors ${
+                            likedPosts.has(review.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                          }`}
+                          data-testid={`button-like-review-${review.id}`}
+                        >
+                          <Heart size={14} className={likedPosts.has(review.id) ? 'fill-current' : ''} />
+                          <span>{review.likes_count || 0}</span>
+                        </button>
+                        <button
+                          onClick={() => setReplyingTo(replyingTo === review.id ? null : review.id)}
+                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-600 transition-colors"
+                          data-testid={`button-reply-review-${review.id}`}
+                        >
+                          <MessageCircle size={14} />
+                          <span>{review.comments_count || 0}</span>
+                        </button>
+                      </div>
+                      {/* Reply Input */}
+                      {replyingTo === review.id && (
+                        <div className="mt-3 flex gap-2">
+                          <input
+                            type="text"
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            placeholder="Write a reply..."
+                            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            onKeyDown={(e) => e.key === 'Enter' && handleReply(review.id)}
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleReply(review.id)}
+                            disabled={!replyContent.trim() || replyMutation.isPending}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Send size={14} />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -831,11 +945,51 @@ export default function MediaDetail() {
                             {post.users?.user_name || post.users?.display_name || 'Anonymous'}
                           </p>
                           <p className="text-gray-700 text-sm leading-relaxed mt-1">{post.content}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                            <span>{post.likes_count || 0} likes</span>
-                            <span>{post.comments_count || 0} replies</span>
-                            <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                          {/* Interactive Actions */}
+                          <div className="flex items-center gap-4 mt-3">
+                            <button
+                              onClick={() => handleLike(post.id)}
+                              className={`flex items-center gap-1 text-xs transition-colors ${
+                                likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                              }`}
+                              data-testid={`button-like-post-${post.id}`}
+                            >
+                              <Heart size={14} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
+                              <span>{post.likes_count || 0}</span>
+                            </button>
+                            <button
+                              onClick={() => setReplyingTo(replyingTo === post.id ? null : post.id)}
+                              className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-600 transition-colors"
+                              data-testid={`button-reply-post-${post.id}`}
+                            >
+                              <MessageCircle size={14} />
+                              <span>{post.comments_count || 0}</span>
+                            </button>
+                            <span className="text-xs text-gray-400">
+                              {new Date(post.created_at).toLocaleDateString()}
+                            </span>
                           </div>
+                          {/* Reply Input */}
+                          {replyingTo === post.id && (
+                            <div className="mt-3 flex gap-2">
+                              <input
+                                type="text"
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                placeholder="Write a reply..."
+                                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleReply(post.id)}
+                                disabled={!replyContent.trim() || replyMutation.isPending}
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                <Send size={14} />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
