@@ -232,6 +232,11 @@ function Router() {
             <UserProfile />
           </ProtectedRoute>
         </Route>
+        <Route path="/profile">
+          <ProtectedRoute>
+            <UserProfile />
+          </ProtectedRoute>
+        </Route>
         <Route path="/points">
           <ProtectedRoute>
             <PointsBreakdown />
