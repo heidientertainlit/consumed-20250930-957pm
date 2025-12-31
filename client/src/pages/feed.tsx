@@ -2639,9 +2639,9 @@ export default function Feed() {
                               className="flex-shrink-0 w-24 cursor-pointer group"
                             >
                               <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 mb-1.5">
-                                {item.posterPath ? (
+                                {(item.imageUrl || item.posterPath) ? (
                                   <img
-                                    src={item.posterPath}
+                                    src={item.imageUrl || item.posterPath}
                                     alt={item.title}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                   />
