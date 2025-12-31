@@ -17,7 +17,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2 } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -535,6 +536,75 @@ export default function UserProfile() {
         description: "Failed to submit rating. Please try again.",
         variant: "destructive",
       });
+    },
+  });
+
+  // Update progress mutation for Currently Consuming items
+  const updateProgressMutation = useMutation({
+    mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            progress,
+            total,
+            progress_mode: mode,
+          }),
+        }
+      );
+      
+      if (!response.ok) throw new Error('Failed to update progress');
+      return { ...await response.json(), progressDisplay };
+    },
+    onSuccess: (data) => {
+      toast({ title: `Progress updated to ${data.progressDisplay}` });
+      fetchUserLists(viewingUserId);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update progress", variant: "destructive" });
+    },
+  });
+
+  // Move item to different list mutation
+  const moveToListMutation = useMutation({
+    mutationFn: async ({ itemId, targetList, listName }: { itemId: string; targetList: string; listName: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/move-item-to-list',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            target_list: targetList,
+          }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to move item');
+      }
+      return { ...await response.json(), listName };
+    },
+    onSuccess: (data) => {
+      toast({ title: `Moved to ${data.listName}` });
+      fetchUserLists(viewingUserId);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to move item", variant: "destructive" });
     },
   });
 
@@ -2610,22 +2680,81 @@ export default function UserProfile() {
           )}
         </div>
 
-        {/* Currently Consuming - Compact */}
+        {/* Currently Consuming - With Progress Tracking */}
         {(() => {
           const currentlyList = userLists.find(list => list.title === 'Currently');
           const currentlyItems = currentlyList?.items?.slice(0, 5) || [];
           const firstName = userProfileData?.first_name || userProfileData?.user_name || 'User';
+          
+          const getProgressDisplay = (item: any) => {
+            const progressMode = item.progress_mode || 'percent';
+            const progress = item.progress || 0;
+            const total = item.progress_total;
+            
+            if (progressMode === 'episode' && total) {
+              return `S${total}E${progress}`;
+            } else if (progressMode === 'page') {
+              return total ? `p${progress}/${total}` : `p${progress}`;
+            }
+            return `${progress}%`;
+          };
+
+          const getProgressPercent = (item: any) => {
+            const progressMode = item.progress_mode || 'percent';
+            const progress = item.progress || 0;
+            const total = item.progress_total;
+            
+            if (progressMode === 'percent') return progress;
+            // For episode mode, progress_total is season number, not episode count
+            // So we show a modest visual indicator based on episode number
+            if (progressMode === 'episode') {
+              // Show visual progress: assume ~10 episodes per season as rough estimate
+              return Math.min(progress * 10, 100);
+            }
+            // For page/other modes where total is actual total
+            return total > 0 ? Math.min(Math.round((progress / total) * 100), 100) : Math.min(progress, 100);
+          };
+
+          const handleQuickProgress = (item: any) => {
+            const progressMode = item.progress_mode || 'percent';
+            const currentProgress = item.progress || 0;
+            const total = item.progress_total;
+            
+            let newProgress = currentProgress;
+            let displayText = '';
+            
+            if (progressMode === 'percent') {
+              newProgress = Math.min(currentProgress + 10, 100);
+              displayText = `${newProgress}%`;
+            } else if (progressMode === 'episode') {
+              newProgress = currentProgress + 1;
+              displayText = total ? `S${total}E${newProgress}` : `E${newProgress}`;
+            } else if (progressMode === 'page') {
+              newProgress = currentProgress + 1;
+              displayText = total ? `p${newProgress}/${total}` : `p${newProgress}`;
+            } else {
+              newProgress = currentProgress + 1;
+              displayText = `${newProgress}`;
+            }
+            
+            updateProgressMutation.mutate({
+              itemId: item.id,
+              progress: newProgress,
+              total: progressMode !== 'percent' ? total : undefined,
+              mode: progressMode,
+              progressDisplay: displayText
+            });
+          };
           
           return currentlyItems.length > 0 ? (
             <div className="px-4 mb-4">
               <p className="text-sm text-gray-600 mb-2">
                 {firstName} is currently consuming...
               </p>
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
                 {currentlyItems.map((item: any) => {
                   const mediaType = item.media_type || 'movie';
                   const source = item.external_source || 'tmdb';
-                  // Clean the external_id - remove leading slashes to avoid double slashes in URL
                   const rawId = item.external_id || '';
                   const id = rawId.startsWith('/') ? rawId.substring(1) : rawId;
                   const hasValidLink = !!id;
@@ -2633,15 +2762,17 @@ export default function UserProfile() {
                   return (
                     <div
                       key={item.id}
-                      onClick={() => {
-                        if (hasValidLink) {
-                          setLocation(`/media/${mediaType}/${source}/${id}`);
-                        }
-                      }}
-                      className={`flex-shrink-0 group ${hasValidLink ? 'cursor-pointer active:scale-95 transition-transform' : 'cursor-default'}`}
+                      className="flex-shrink-0 w-28"
                       data-testid={`currently-consuming-${item.id}`}
                     >
-                      <div className="w-16 h-24 rounded-lg overflow-hidden bg-gray-200 border border-gray-300 group-hover:border-purple-400 transition-colors">
+                      <div 
+                        className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-200 border border-gray-300 hover:border-purple-400 transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (hasValidLink) {
+                            setLocation(`/media/${mediaType}/${source}/${id}`);
+                          }
+                        }}
+                      >
                         {item.image_url ? (
                           <img
                             src={item.image_url}
@@ -2653,7 +2784,49 @@ export default function UserProfile() {
                             <Film size={24} />
                           </div>
                         )}
+                        
+                        {/* Progress overlay - only for own profile */}
+                        {isOwnProfile && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5">
+                            <div className="h-1 bg-gray-700/50 rounded-full mb-1.5 overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all rounded-full"
+                                style={{ width: `${getProgressPercent(item)}%` }}
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  handleQuickProgress(item);
+                                }}
+                                disabled={updateProgressMutation.isPending}
+                                className="flex-1 h-5 text-[10px] bg-purple-600/80 hover:bg-purple-600 text-white font-medium rounded px-1.5 transition-colors truncate"
+                                data-testid={`button-progress-${item.id}`}
+                              >
+                                {getProgressDisplay(item)}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  moveToListMutation.mutate({
+                                    itemId: item.id,
+                                    targetList: 'completed',
+                                    listName: 'Completed'
+                                  });
+                                }}
+                                disabled={moveToListMutation.isPending}
+                                className="h-5 w-5 bg-green-600/80 hover:bg-green-600 text-white rounded flex items-center justify-center"
+                                data-testid={`button-complete-${item.id}`}
+                                title="Mark as completed"
+                              >
+                                <Trophy size={10} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
+                      <p className="text-xs text-gray-700 truncate mt-1 px-0.5">{item.title}</p>
                     </div>
                   );
                 })}
@@ -3365,6 +3538,20 @@ export default function UserProfile() {
               {/* Lists Sub-Tab Content */}
               {collectionsSubTab === 'lists' && (
                 <>
+                  {/* Create List Button - Only for own profile */}
+                  {isOwnProfile && (
+                    <div className="flex justify-end mb-4">
+                      <Button
+                        onClick={() => setShowCreateListDialog(true)}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full"
+                        data-testid="button-create-list"
+                      >
+                        <Plus size={16} className="mr-2" />
+                        Create List
+                      </Button>
+                    </div>
+                  )}
+
                   {isLoadingLists ? (
                     <div className="text-center py-8">
                       <Loader2 className="animate-spin text-gray-400 mx-auto" size={24} />
