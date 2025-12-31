@@ -415,7 +415,7 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for a movie, show, book..."
-              className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               data-testid="quick-action-search"
             />
           </div>
@@ -466,56 +466,86 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
                 </button>
               </div>
               
-              {selectedMedia.type === 'tv' && seasons.length > 0 && (
-                <div className="flex gap-2">
-                  <select
-                    value={selectedSeason || ""}
-                    onChange={(e) => setSelectedSeason(Number(e.target.value) || null)}
-                    className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                    disabled={isLoadingSeasons}
-                  >
-                    <option value="">Select season</option>
-                    {seasons.map((s) => (
-                      <option key={s.season_number} value={s.season_number}>
-                        Season {s.season_number}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  {selectedSeason && (
-                    <select
-                      value={selectedEpisode || ""}
-                      onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)}
-                      className="flex-1 px-3 py-2 border rounded-lg text-sm"
-                      disabled={isLoadingEpisodes}
-                    >
-                      <option value="">Select episode</option>
-                      {episodes.map((ep) => (
-                        <option key={ep.episode_number} value={ep.episode_number}>
-                          E{ep.episode_number}: {ep.name}
-                        </option>
-                      ))}
-                    </select>
+              {selectedMedia.type === 'tv' && (
+                <div className="space-y-3 p-3 bg-gray-50 rounded-xl">
+                  <p className="text-sm font-medium text-gray-700">Track specific episode (optional)</p>
+                  {isLoadingSeasons ? (
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Loader2 className="animate-spin" size={16} />
+                      Loading seasons...
+                    </div>
+                  ) : seasons.length > 0 ? (
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedSeason || ""}
+                        onChange={(e) => setSelectedSeason(Number(e.target.value) || null)}
+                        className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">All seasons</option>
+                        {seasons.map((s) => (
+                          <option key={s.season_number} value={s.season_number}>
+                            Season {s.season_number} {s.episode_count ? `(${s.episode_count} eps)` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {selectedSeason && (
+                        <select
+                          value={selectedEpisode || ""}
+                          onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)}
+                          className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          disabled={isLoadingEpisodes}
+                        >
+                          <option value="">{isLoadingEpisodes ? "Loading..." : "All episodes"}</option>
+                          {episodes.map((ep) => (
+                            <option key={ep.episode_number} value={ep.episode_number}>
+                              Ep {ep.episode_number}: {ep.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No season data available</p>
                   )}
                 </div>
               )}
               
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Rating (optional)</label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
-                      className="p-1"
-                      data-testid={`rating-star-${star}`}
-                    >
-                      <Star
-                        size={28}
-                        className={star <= ratingValue ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}
-                      />
-                    </button>
-                  ))}
+              <div className="space-y-3 p-3 bg-gray-50 rounded-xl">
+                <label className="text-sm font-medium text-gray-700 block">Rating (optional)</label>
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const fillPercent = Math.min(Math.max(ratingValue - (star - 1), 0), 1) * 100;
+                      return (
+                        <button
+                          key={star}
+                          onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
+                          className="focus:outline-none relative"
+                          data-testid={`rating-star-${star}`}
+                        >
+                          <Star className="w-7 h-7 text-gray-300" />
+                          <div className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
+                            <Star className="w-7 h-7 fill-yellow-400 text-yellow-400" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={ratingValue || ""}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (isNaN(val)) setRatingValue(0);
+                      else setRatingValue(Math.min(5, Math.max(0, val)));
+                    }}
+                    placeholder="0.0"
+                    className="w-14 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center bg-white"
+                  />
                 </div>
               </div>
               
@@ -524,7 +554,7 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
                 <select
                   value={selectedListId}
                   onChange={(e) => setSelectedListId(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="finished">Finished</option>
                   <option value="queue">Queue</option>
@@ -541,7 +571,7 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
                   value={contentText}
                   onChange={(e) => setContentText(e.target.value)}
                   placeholder="What did you think?"
-                  className="w-full px-3 py-2 border rounded-lg resize-none"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg resize-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   rows={3}
                   data-testid="track-review-input"
                 />
@@ -920,11 +950,11 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
         ) : (
           <>
             <SheetHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <button onClick={handleBack} className="p-2 hover:bg-gray-100 rounded-full" data-testid="back-button">
+              <div className="relative flex items-center justify-center">
+                <button onClick={handleBack} className="absolute left-0 p-2 hover:bg-gray-100 rounded-full" data-testid="back-button">
                   <ArrowLeft size={20} className="text-gray-600" />
                 </button>
-                <SheetTitle className="flex-1 text-gray-900 text-lg font-semibold">
+                <SheetTitle className="text-gray-900 text-lg font-semibold">
                   {actions.find(a => a.id === selectedAction)?.label}
                 </SheetTitle>
               </div>
