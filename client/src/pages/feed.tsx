@@ -2635,10 +2635,12 @@ export default function Feed() {
                           {recommendedContent.slice(0, 6).map((item: any, idx: number) => (
                             <div
                               key={item.id || idx}
-                              onClick={() => handleMediaClick(item)}
-                              className="flex-shrink-0 w-24 cursor-pointer group"
+                              className="flex-shrink-0 w-28 group"
                             >
-                              <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 mb-1.5">
+                              <div 
+                                className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 mb-1.5 cursor-pointer"
+                                onClick={() => handleMediaClick(item)}
+                              >
                                 {(item.imageUrl || item.posterPath) ? (
                                   <img
                                     src={item.imageUrl || item.posterPath}
@@ -2650,8 +2652,44 @@ export default function Feed() {
                                     No image
                                   </div>
                                 )}
+                                {/* Quick action overlay on hover */}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2 gap-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Navigate to media page to add
+                                      handleMediaClick(item);
+                                    }}
+                                    className="bg-purple-600 text-white text-xs px-2 py-1 rounded-full hover:bg-purple-700"
+                                    data-testid={`rec-add-${idx}`}
+                                  >
+                                    + Add
+                                  </button>
+                                </div>
                               </div>
-                              <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight">{item.title}</p>
+                              <p 
+                                className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight cursor-pointer"
+                                onClick={() => handleMediaClick(item)}
+                              >
+                                {item.title}
+                              </p>
+                              {/* Star rating row */}
+                              <div className="flex items-center gap-0.5 mt-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Quick rate - navigate to media page for full flow
+                                      handleMediaClick(item);
+                                    }}
+                                    className="text-gray-300 hover:text-yellow-400 transition-colors"
+                                    data-testid={`rec-star-${idx}-${star}`}
+                                  >
+                                    <Star size={12} />
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           ))}
                         </div>
