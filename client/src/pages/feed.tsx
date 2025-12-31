@@ -2401,8 +2401,8 @@ export default function Feed() {
       <div className="bg-gradient-to-r from-slate-900 to-purple-900 pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
           <div className="text-center">
-            <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">What's everyone consuming?</h1>
-            <p className="text-gray-400 text-sm mt-2">See what your friends are watching, reading, and listening to.</p>
+            <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">Jump In</h1>
+            <p className="text-gray-400 text-sm mt-2">Play challenges, share takes, and see what friends are into</p>
           </div>
         </div>
       </div>
