@@ -39,6 +39,7 @@ import { queryClient } from "@/lib/queryClient";
 import { DNALevelBadge, DNAFeatureLock } from "@/components/dna-level-badge";
 import { FriendDNAComparison } from "@/components/friend-dna-comparison";
 import { FriendDNACompareButton } from "@/components/friend-dna-comparison";
+import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
@@ -541,7 +542,7 @@ export default function UserProfile() {
 
   // Update progress mutation for Currently Consuming items
   const updateProgressMutation = useMutation({
-    mutationFn: async ({ itemId, progress, mode, progressDisplay }: { itemId: string; progress: number; mode: string; progressDisplay: string }) => {
+    mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const response = await fetch(
@@ -555,6 +556,7 @@ export default function UserProfile() {
           body: JSON.stringify({
             item_id: itemId,
             progress,
+            progress_total: total,
             progress_mode: mode,
           }),
         }
@@ -2681,156 +2683,67 @@ export default function UserProfile() {
           )}
         </div>
 
-        {/* Currently Consuming - With Progress Tracking */}
+        {/* Currently Consuming - With Full Progress Tracking */}
         {(() => {
           const currentlyList = userLists.find(list => list.title === 'Currently');
-          const currentlyItems = currentlyList?.items?.slice(0, 5) || [];
+          const currentlyItems = currentlyList?.items?.slice(0, 10) || [];
           const firstName = userProfileData?.first_name || userProfileData?.user_name || 'User';
-          
-          const getProgressDisplay = (item: any) => {
-            const progressMode = item.progress_mode || 'percent';
-            const progress = item.progress || 0;
-            const total = item.progress_total;
-            
-            if (progressMode === 'episode' && total) {
-              return `S${total}E${progress}`;
-            } else if (progressMode === 'page') {
-              return total ? `p${progress}/${total}` : `p${progress}`;
-            }
-            return `${progress}%`;
-          };
-
-          const getProgressPercent = (item: any) => {
-            const progressMode = item.progress_mode || 'percent';
-            const progress = item.progress || 0;
-            const total = item.progress_total;
-            
-            if (progressMode === 'percent') return progress;
-            // For episode mode, progress_total is season number, not episode count
-            // So we show a modest visual indicator based on episode number
-            if (progressMode === 'episode') {
-              // Show visual progress: assume ~10 episodes per season as rough estimate
-              return Math.min(progress * 10, 100);
-            }
-            // For page/other modes where total is actual total
-            return total > 0 ? Math.min(Math.round((progress / total) * 100), 100) : Math.min(progress, 100);
-          };
-
-          const handleQuickProgress = (item: any) => {
-            const progressMode = item.progress_mode || 'percent';
-            const currentProgress = item.progress || 0;
-            const season = item.progress_total; // For episode mode, this is season number
-            
-            let newProgress = currentProgress;
-            let displayText = '';
-            
-            if (progressMode === 'percent') {
-              newProgress = Math.min(currentProgress + 10, 100);
-              displayText = `${newProgress}%`;
-            } else if (progressMode === 'episode') {
-              newProgress = currentProgress + 1;
-              displayText = season ? `S${season}E${newProgress}` : `E${newProgress}`;
-            } else if (progressMode === 'page') {
-              newProgress = currentProgress + 1;
-              const pageTotal = item.progress_total;
-              displayText = pageTotal ? `p${newProgress}/${pageTotal}` : `p${newProgress}`;
-            } else {
-              newProgress = currentProgress + 1;
-              displayText = `${newProgress}`;
-            }
-            
-            updateProgressMutation.mutate({
-              itemId: item.id,
-              progress: newProgress,
-              mode: progressMode,
-              progressDisplay: displayText
-            });
-          };
           
           return currentlyItems.length > 0 ? (
             <div className="px-4 mb-4">
               <p className="text-sm text-gray-600 mb-2">
                 {firstName} is currently consuming...
               </p>
-              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-                {currentlyItems.map((item: any) => {
-                  const mediaType = item.media_type || 'movie';
-                  const source = item.external_source || 'tmdb';
-                  const rawId = item.external_id || '';
-                  const id = rawId.startsWith('/') ? rawId.substring(1) : rawId;
-                  const hasValidLink = !!id;
-                  
-                  return (
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2" style={{ width: 'max-content' }}>
+                {currentlyItems.map((item: any) => (
+                  isOwnProfile ? (
+                    <CurrentlyConsumingCard 
+                      key={item.id} 
+                      item={item}
+                      onUpdateProgress={(progress, total, mode, progressDisplay) => {
+                        updateProgressMutation.mutate({
+                          itemId: item.id,
+                          progress,
+                          total,
+                          mode,
+                          progressDisplay
+                        });
+                      }}
+                      onMoveToList={(targetList, listName) => {
+                        moveToListMutation.mutate({
+                          itemId: item.id,
+                          targetList,
+                          listName
+                        });
+                      }}
+                      isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
+                    />
+                  ) : (
                     <div
                       key={item.id}
-                      className="flex-shrink-0 w-28"
+                      className="flex-shrink-0 w-28 cursor-pointer"
+                      onClick={() => {
+                        const mediaType = item.media_type || 'movie';
+                        const source = item.external_source || 'tmdb';
+                        const rawId = item.external_id || '';
+                        const id = rawId.startsWith('/') ? rawId.substring(1) : rawId;
+                        if (id) setLocation(`/media/${mediaType}/${source}/${id}`);
+                      }}
                       data-testid={`currently-consuming-${item.id}`}
                     >
-                      <div 
-                        className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-200 border border-gray-300 hover:border-purple-400 transition-colors cursor-pointer"
-                        onClick={() => {
-                          if (hasValidLink) {
-                            setLocation(`/media/${mediaType}/${source}/${id}`);
-                          }
-                        }}
-                      >
+                      <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-200 border border-gray-300 hover:border-purple-400 transition-colors">
                         {item.image_url ? (
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="w-full h-full object-cover pointer-events-none"
-                          />
+                          <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <Film size={24} />
                           </div>
                         )}
-                        
-                        {/* Progress overlay - only for own profile */}
-                        {isOwnProfile && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5">
-                            <div className="h-1 bg-gray-700/50 rounded-full mb-1.5 overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all rounded-full"
-                                style={{ width: `${getProgressPercent(item)}%` }}
-                              />
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <button 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  handleQuickProgress(item);
-                                }}
-                                disabled={updateProgressMutation.isPending}
-                                className="flex-1 h-5 text-[10px] bg-purple-600/80 hover:bg-purple-600 text-white font-medium rounded px-1.5 transition-colors truncate"
-                                data-testid={`button-progress-${item.id}`}
-                              >
-                                {getProgressDisplay(item)}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  moveToListMutation.mutate({
-                                    itemId: item.id,
-                                    targetList: 'completed',
-                                    listName: 'Completed'
-                                  });
-                                }}
-                                disabled={moveToListMutation.isPending}
-                                className="h-5 w-5 bg-green-600/80 hover:bg-green-600 text-white rounded flex items-center justify-center"
-                                data-testid={`button-complete-${item.id}`}
-                                title="Mark as completed"
-                              >
-                                <Trophy size={10} />
-                              </button>
-                            </div>
-                          </div>
-                        )}
                       </div>
                       <p className="text-xs text-gray-700 truncate mt-1 px-0.5">{item.title}</p>
                     </div>
-                  );
-                })}
+                  )
+                ))}
               </div>
             </div>
           ) : null;

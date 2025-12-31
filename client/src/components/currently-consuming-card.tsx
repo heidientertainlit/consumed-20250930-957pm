@@ -1,0 +1,595 @@
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play, MoreHorizontal, Check, X, Clock, Trophy } from 'lucide-react';
+import { DnfReasonDrawer } from '@/components/dnf-reason-drawer';
+
+interface CurrentlyConsumingCardProps {
+  item: any;
+  onUpdateProgress: (progress: number, total: number | undefined, mode: string, progressDisplay: string) => void;
+  onMoveToList: (targetList: string, listName: string) => void;
+  isUpdating: boolean;
+}
+
+export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdating }: CurrentlyConsumingCardProps) {
+  const [, setLocation] = useLocation();
+  const { session } = useAuth();
+  const { toast } = useToast();
+  const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
+  const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
+  const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
+  
+  const mediaType = (item.media_type || 'movie').toLowerCase();
+  const isBook = mediaType === 'book';
+  const isTv = mediaType === 'tv' || mediaType === 'series' || mediaType === 'tv show';
+  const isPodcast = mediaType === 'podcast';
+  const isMusic = mediaType === 'music';
+  const progressMode = item.progress_mode || (isBook ? 'page' : isTv ? 'episode' : 'percent');
+
+  const getDefaultTotal = () => {
+    if (isTv) return 1;
+    if (isBook || isPodcast) return 0;
+    return 100;
+  };
+
+  const [localProgress, setLocalProgress] = useState(item.progress || 0);
+  const [localTotal, setLocalTotal] = useState(item.progress_total ?? getDefaultTotal());
+  const [editProgress, setEditProgress] = useState(item.progress || 0);
+  const [editTotal, setEditTotal] = useState(item.progress_total ?? getDefaultTotal());
+  const [editSeason, setEditSeason] = useState(item.progress_total ?? 1);
+  const [editEpisode, setEditEpisode] = useState(item.progress || 1);
+
+  const { data: tvShowData, isLoading: isTvDataLoading } = useQuery({
+    queryKey: ['tv-show-seasons', item.external_source, item.external_id],
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${item.external_source || 'tmdb'}&external_id=${item.external_id}&media_type=tv`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: isTv && isProgressSheetOpen && !!session?.access_token,
+    staleTime: 1000 * 60 * 30,
+  });
+
+  const seasons = tvShowData?.seasons || [];
+  const currentSeasonData = seasons.find((s: any) => s.seasonNumber === editSeason);
+  const maxEpisodes = currentSeasonData?.episodeCount || 999;
+
+  useEffect(() => {
+    if (maxEpisodes < 999 && editEpisode > maxEpisodes) {
+      setEditEpisode(maxEpisodes);
+    }
+  }, [maxEpisodes, editEpisode]);
+
+  const getDefaultMode = () => {
+    if (progressMode === 'episode') return 'episode';
+    if (progressMode === 'page') return 'page';
+    if (isTv) return 'episode';
+    if (isBook) return 'page';
+    if (isPodcast) return 'minutes';
+    return 'percent';
+  };
+  
+  const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>(getDefaultMode());
+
+  const dnfReasonMutation = useMutation({
+    mutationFn: async ({ listItemId, reasons, otherReason }: { listItemId: string; reasons: string[]; otherReason?: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/save-dnf-reason',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            list_item_id: listItemId,
+            reasons,
+            other_reason: otherReason,
+          }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save DNF reason');
+      }
+      return response.json();
+    },
+    onError: (error) => {
+      console.error('DNF reason error:', error);
+    },
+  });
+
+  const handleDnfWithReason = async (reason: string, otherReason?: string) => {
+    onMoveToList('dnf', 'Did Not Finish');
+    setIsDnfDrawerOpen(false);
+    setIsMoveSheetOpen(false);
+    
+    try {
+      await dnfReasonMutation.mutateAsync({
+        listItemId: item.id,
+        reasons: [reason],
+        otherReason,
+      });
+    } catch (error) {
+      console.error('Failed to save DNF reason:', error);
+    }
+  };
+  
+  const getProgressDisplay = () => {
+    if (isTv && localTotal > 0) {
+      return `S${localTotal}E${localProgress}`;
+    }
+    if (progressMode === 'percent') {
+      return `${localProgress}%`;
+    } else if (progressMode === 'page') {
+      return localTotal > 0 ? `p${localProgress}/${localTotal}` : `p${localProgress}`;
+    } else if (progressMode === 'episode') {
+      return localTotal > 0 ? `S${localTotal}E${localProgress}` : `E${localProgress}`;
+    }
+    return `${localProgress}%`;
+  };
+
+  const getProgressPercent = () => {
+    if (progressMode === 'percent') {
+      return localProgress;
+    } else if (progressMode === 'episode') {
+      return Math.min(localProgress * 10, 100);
+    } else if (localTotal > 0) {
+      return Math.min(Math.round((localProgress / localTotal) * 100), 100);
+    }
+    return 0;
+  };
+
+  const getMediaIcon = () => {
+    switch (mediaType) {
+      case 'movie': return <Film size={12} className="text-purple-400" />;
+      case 'tv': return <Tv size={12} className="text-pink-400" />;
+      case 'book': return <BookOpen size={12} className="text-cyan-400" />;
+      case 'music': return <Music size={12} className="text-green-400" />;
+      case 'podcast': return <Headphones size={12} className="text-blue-400" />;
+      case 'game': return <Gamepad2 size={12} className="text-orange-400" />;
+      default: return <Play size={12} className="text-gray-400" />;
+    }
+  };
+
+  const handleSaveProgress = () => {
+    let newProgress = editProgress;
+    let newTotal = editTotal;
+    let mode = editMode;
+    let displayText = '';
+    
+    if (editMode === 'episode') {
+      newProgress = editEpisode;
+      newTotal = editSeason;
+      mode = 'episode';
+      displayText = `S${newTotal}E${newProgress}`;
+    } else if (editMode === 'page') {
+      displayText = newTotal > 0 ? `page ${newProgress}/${newTotal}` : `page ${newProgress}`;
+    } else if (editMode === 'minutes') {
+      displayText = newTotal > 0 ? `${newProgress}/${newTotal} min` : `${newProgress} min`;
+      mode = 'percent';
+    } else {
+      displayText = `${newProgress}%`;
+    }
+    
+    setLocalProgress(newProgress);
+    setLocalTotal(newTotal);
+    onUpdateProgress(newProgress, mode !== 'percent' ? newTotal : undefined, mode, displayText);
+    setIsProgressSheetOpen(false);
+  };
+
+  const getModeOptions = () => {
+    if (isTv) return [{ value: 'episode', label: 'Episode' }, { value: 'percent', label: 'Percent' }];
+    if (isBook) return [{ value: 'page', label: 'Page' }, { value: 'percent', label: 'Percent' }];
+    if (isPodcast) return [{ value: 'minutes', label: 'Minutes' }, { value: 'percent', label: 'Percent' }];
+    return [{ value: 'percent', label: 'Percent' }];
+  };
+
+  return (
+    <>
+      <div 
+        className="w-36 flex-shrink-0"
+        data-testid={`currently-card-${item.id}`}
+      >
+        <div 
+          className="relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer mb-2"
+          onClick={() => setLocation(`/media/${item.media_type}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
+        >
+          {item.image_url ? (
+            <img 
+              src={item.image_url} 
+              alt={item.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex items-center justify-center">
+              {getMediaIcon()}
+            </div>
+          )}
+          
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-8 pb-2 px-2">
+            <div className="h-1 bg-gray-700/50 rounded-full mb-2 overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all rounded-full"
+                style={{ width: `${getProgressPercent()}%` }}
+              />
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 text-white/80">
+                {getMediaIcon()}
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsProgressSheetOpen(true); }}
+                disabled={isUpdating}
+                className="flex-1 h-6 text-[11px] bg-purple-600/80 hover:bg-purple-600 text-white font-medium rounded-md px-2 transition-colors"
+                data-testid={`button-edit-progress-${item.id}`}
+              >
+                {getProgressDisplay()}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsMoveSheetOpen(true); }}
+                disabled={isUpdating}
+                className="h-6 w-6 bg-white/20 hover:bg-white/30 text-white rounded-md flex items-center justify-center"
+                data-testid={`button-more-${item.id}`}
+              >
+                <MoreHorizontal size={12} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <h4 className="text-sm font-medium text-gray-700 truncate px-0.5">{item.title}</h4>
+      </div>
+
+      <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
+        <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
+          <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
+            <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
+          </div>
+          
+          <div className="px-4 py-4 space-y-4 pb-8">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.title} className="w-12 h-16 object-cover rounded-lg" />
+              ) : (
+                <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                  {getMediaIcon()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-gray-900 truncate">{item.title}</h4>
+                <p className="text-sm text-gray-500 capitalize">{mediaType}</p>
+              </div>
+            </div>
+
+            {getModeOptions().length > 1 && (
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                {getModeOptions().map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setEditMode(opt.value as any)}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                      editMode === opt.value 
+                        ? 'bg-white text-purple-600 shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {editMode === 'percent' && (
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">Percentage Complete</label>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={editProgress}
+                      onChange={(e) => setEditProgress(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                      className="text-center text-lg font-semibold pr-8 bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {[25, 50, 75, 100].map((pct) => (
+                    <button
+                      key={pct}
+                      onClick={() => setEditProgress(pct)}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        editProgress === pct 
+                          ? 'bg-purple-100 text-purple-700' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {editMode === 'episode' && (
+              <div className="space-y-3">
+                {isTvDataLoading ? (
+                  <div className="text-center py-4 text-gray-500">Loading season data...</div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">Season</label>
+                        {seasons.length > 0 ? (
+                          <select
+                            value={editSeason}
+                            onChange={(e) => {
+                              const newSeason = parseInt(e.target.value);
+                              setEditSeason(newSeason);
+                              setEditEpisode(1);
+                            }}
+                            className="w-full h-10 px-3 text-center text-lg font-semibold bg-white text-gray-900 border border-gray-200 rounded-md focus:border-purple-400 focus:ring-purple-400"
+                          >
+                            {seasons.map((s: any) => (
+                              <option key={s.seasonNumber} value={s.seasonNumber}>
+                                S{s.seasonNumber}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input
+                            type="number"
+                            min={1}
+                            value={editSeason}
+                            onChange={(e) => setEditSeason(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                          />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">
+                          Episode {maxEpisodes < 999 && <span className="text-gray-400 font-normal">/ {maxEpisodes}</span>}
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={maxEpisodes}
+                          value={editEpisode}
+                          onChange={(e) => setEditEpisode(Math.min(maxEpisodes, Math.max(1, parseInt(e.target.value) || 1)))}
+                          className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditEpisode(Math.min(editEpisode + 1, maxEpisodes))}
+                        disabled={editEpisode >= maxEpisodes}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          editEpisode >= maxEpisodes
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                        }`}
+                      >
+                        +1 Episode
+                      </button>
+                      <button
+                        onClick={() => {
+                          const nextSeasonNum = editSeason + 1;
+                          const nextSeason = seasons.find((s: any) => s.seasonNumber === nextSeasonNum);
+                          if (nextSeason || seasons.length === 0) {
+                            setEditSeason(nextSeasonNum);
+                            setEditEpisode(1);
+                          }
+                        }}
+                        disabled={seasons.length > 0 && !seasons.find((s: any) => s.seasonNumber === editSeason + 1)}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          seasons.length > 0 && !seasons.find((s: any) => s.seasonNumber === editSeason + 1)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        Next Season
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {editMode === 'page' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Current Page</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editProgress}
+                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Total Pages</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editTotal}
+                      onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {[10, 25, 50].map((pages) => (
+                    <button
+                      key={pages}
+                      onClick={() => setEditProgress(Math.min(editProgress + pages, editTotal || 9999))}
+                      className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +{pages} pages
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {editMode === 'minutes' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Minutes Listened</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editProgress}
+                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Total Minutes</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editTotal}
+                      onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {[15, 30, 60].map((mins) => (
+                    <button
+                      key={mins}
+                      onClick={() => setEditProgress(Math.min(editProgress + mins, editTotal || 9999))}
+                      className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +{mins} min
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Button 
+              onClick={handleSaveProgress}
+              disabled={isUpdating}
+              className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium"
+            >
+              Update Progress
+            </Button>
+            
+            <button 
+              onClick={() => {
+                setIsProgressSheetOpen(false);
+                onMoveToList('finished', 'Finished');
+              }}
+              disabled={isUpdating}
+              className="w-full text-center text-green-600 font-semibold text-sm hover:text-green-700 py-2"
+            >
+              I'm finished!
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isMoveSheetOpen} onOpenChange={setIsMoveSheetOpen}>
+        <SheetContent side="bottom" className="bg-white rounded-t-2xl">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-lg font-semibold text-gray-900">Move to List</SheetTitle>
+          </SheetHeader>
+          
+          <div className="space-y-2 pb-6">
+            <button
+              onClick={() => { onMoveToList('finished', 'Finished'); setIsMoveSheetOpen(false); }}
+              disabled={isUpdating}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              data-testid={`move-finished-${item.id}`}
+            >
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <Check className="text-green-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Finished</p>
+                <p className="text-sm text-gray-500">Mark as completed</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => { setIsDnfDrawerOpen(true); }}
+              disabled={isUpdating}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              data-testid={`move-dnf-${item.id}`}
+            >
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <X className="text-red-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Did Not Finish</p>
+                <p className="text-sm text-gray-500">Stopped watching/reading</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => { onMoveToList('queue', 'Want To'); setIsMoveSheetOpen(false); }}
+              disabled={isUpdating}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              data-testid={`move-queue-${item.id}`}
+            >
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <Clock className="text-blue-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Want To</p>
+                <p className="text-sm text-gray-500">Save for later</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => { onMoveToList('favorites', 'Favorites'); setIsMoveSheetOpen(false); }}
+              disabled={isUpdating}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              data-testid={`move-favorites-${item.id}`}
+            >
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                <Trophy className="text-yellow-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Favorites</p>
+                <p className="text-sm text-gray-500">Add to your favorites</p>
+              </div>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <DnfReasonDrawer
+        isOpen={isDnfDrawerOpen}
+        onClose={() => setIsDnfDrawerOpen(false)}
+        onSubmit={handleDnfWithReason}
+        mediaTitle={item.title}
+      />
+    </>
+  );
+}
