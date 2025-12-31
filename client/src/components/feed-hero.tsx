@@ -91,25 +91,6 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
           </div>
         </Link>
 
-        <div className="flex items-center justify-around text-center">
-          <Link href="/leaderboard">
-            <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="ranking-card">
-              <div className="flex items-center gap-1.5 text-white">
-                <span className="text-sm font-semibold">{percentile}</span>
-              </div>
-              <p className="text-xs text-purple-300 mt-0.5">in your circle</p>
-            </div>
-          </Link>
-
-          <div className="w-px h-8 bg-white/20" />
-
-          <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="friend-challenge-card">
-            <div className="flex items-center gap-1.5 text-white">
-              <span className="text-sm font-semibold">Challenge</span>
-            </div>
-            <p className="text-xs text-purple-300 mt-0.5">Friends</p>
-          </div>
-        </div>
       </div>
     );
   }
@@ -133,34 +114,6 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
         </div>
       </Link>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/leaderboard">
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors" data-testid="ranking-card">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
-                <TrendingUp size={20} className="text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{percentile}</p>
-                <p className="text-xs text-gray-500">in your circle</p>
-              </div>
-            </div>
-          </div>
-        </Link>
-
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors" data-testid="friend-challenge-card-alt">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center">
-              <Swords size={20} className="text-pink-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">Challenge</p>
-              <p className="text-xs text-gray-500">Friends</p>
-            </div>
-            <ChevronRight size={16} className="text-gray-400" />
-          </div>
-        </div>
-      </div>
 
     </div>
   );
