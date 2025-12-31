@@ -2704,7 +2704,7 @@ export default function Feed() {
                                   });
                                   setIsQuickAddOpen(true);
                                 }}
-                                className="mt-1.5 w-full bg-purple-600 text-white text-xs py-1 rounded-full"
+                                className="mt-1.5 w-full bg-purple-700 text-white text-xs py-1 rounded-full"
                                 data-testid={`rec-add-${idx}`}
                               >
                                 + Add
