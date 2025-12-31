@@ -829,10 +829,10 @@ export default function ListDetail() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveItem(item.id)}
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-1 h-auto"
+                    className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 h-auto"
                     data-testid={`button-remove-${item.id}`}
                   >
-                    <X size={16} />
+                    <Trash2 size={16} />
                   </Button>
                 </div>
               );
@@ -883,10 +883,10 @@ export default function ListDetail() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveItem(item.id)}
-                    className="absolute top-0.5 right-0.5 z-10 bg-black/60 hover:bg-red-600 text-white p-1 h-auto opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                    className="absolute top-0.5 right-0.5 z-10 bg-black/60 hover:bg-red-600 text-white p-1 h-auto rounded"
                     data-testid={`button-remove-grid-${item.id}`}
                   >
-                    <X size={12} />
+                    <Trash2 size={12} />
                   </Button>
 
                   {isClickable ? (
@@ -933,6 +933,7 @@ export default function ListDetail() {
         isOpen={isTrackModalOpen} 
         onClose={() => setIsTrackModalOpen(false)}
         defaultListType={listData?.name && listData.name !== 'All' ? getListTypeFromTitle(listData.name) : undefined}
+        targetListDisplayName={listData?.name && listData.name !== 'All' ? getDisplayTitle(listData.name) : undefined}
       />
 
       {/* Manage Collaborators Dialog */}

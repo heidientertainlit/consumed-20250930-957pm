@@ -21,6 +21,7 @@ interface ConsumptionTrackerProps {
   onClose: () => void;
   defaultListType?: string; // Auto-select this list when provided
   targetRankId?: string; // When provided, add media to this rank instead of list
+  targetListDisplayName?: string; // Display name for custom lists (e.g., "Family")
 }
 
 interface MediaResult {
@@ -35,7 +36,7 @@ interface MediaResult {
   url?: string;
 }
 
-export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId }: ConsumptionTrackerProps) {
+export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId, targetListDisplayName }: ConsumptionTrackerProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["All Media"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
@@ -627,7 +628,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
               className="px-6 bg-blue-900 text-white hover:bg-blue-800 disabled:bg-gray-400"
               data-testid="button-add-to-list"
             >
-              {trackMediaMutation.isPending ? "Adding..." : `Add to ${getListDisplayName(defaultListType)}`}
+              {trackMediaMutation.isPending ? "Adding..." : `Add to ${targetListDisplayName || getListDisplayName(defaultListType)}`}
             </Button>
           ) : (
             <div className="flex">
