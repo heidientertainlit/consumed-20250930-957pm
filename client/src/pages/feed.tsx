@@ -2397,21 +2397,18 @@ export default function Feed() {
       <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      {/* Header Section */}
+      {/* Header Section with Daily Challenge */}
       <div className="bg-gradient-to-r from-slate-900 to-purple-900 pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
-          <div className="text-center">
+          <div className="text-center mb-5">
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">Jump In</h1>
             <p className="text-gray-400 text-sm mt-2">Play challenges, share takes, and see what friends are into</p>
           </div>
+          <FeedHero variant="header" />
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Hero Section */}
-        <div className="mb-6">
-          <FeedHero />
-        </div>
         {/* Activity Stream */}
         <div className="space-y-6">
 
