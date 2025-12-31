@@ -3595,16 +3595,6 @@ export default function Feed() {
                             <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}/5</span>
                           </div>
                         )}
-                        {/* See more lists link for rate-review posts with list_id */}
-                        {post.type === 'rate-review' && (post as any).listId && post.user && (
-                          <Link
-                            href={`/user/${post.user.id}?tab=lists`}
-                            className="text-sm text-purple-600 hover:text-purple-700 transition-colors font-medium mt-2 inline-block"
-                            data-testid={`link-see-lists-${post.user.id}`}
-                          >
-                            See more of {(post.user.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user.username}'s lists →
-                          </Link>
-                        )}
                       </div>
                     );
                   })()}
@@ -3674,17 +3664,6 @@ export default function Feed() {
                           </div>
                         </div>
                       </div>
-                      
-                      {/* See more of user's lists link */}
-                      {post.user && (
-                        <Link
-                          href={`/user/${post.user.id}?tab=lists`}
-                          className="text-sm text-purple-600 hover:text-purple-700 transition-colors font-medium mt-2 inline-block"
-                          data-testid={`link-see-lists-${post.user.id}`}
-                        >
-                          See more of {(post.user.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user.username}'s lists →
-                        </Link>
-                      )}
                     </div>
                   ) : post.content && post.mediaItems && post.mediaItems.length > 0 ? (
                     <div className="space-y-2 mb-2">
@@ -3739,40 +3718,6 @@ export default function Feed() {
                           </div>
                         );
                       })}
-                      
-                      {/* See more of user's lists link for posts with media */}
-                      {(() => {
-                        const contentLower = (post.content || '').toLowerCase();
-                        const isAddedPost = post.type === 'added_to_list' || contentLower.startsWith('added ');
-                        const isRateReview = post.type === 'rate-review';
-                        if (!isAddedPost && !isRateReview) return null;
-                        
-                        let userId: string | undefined;
-                        let username: string | undefined;
-                        
-                        if (post.user) {
-                          userId = post.user.id;
-                          username = post.user.username;
-                        } else if (post.groupedActivities?.[0]) {
-                          const activity = post.groupedActivities[0] as any;
-                          userId = activity.userId;
-                          username = activity.username;
-                        }
-                        
-                        if (!userId || !username) return null;
-                        
-                        const displayName = username.replace(/consumed|IsConsumed/gi, '').trim() || username;
-                        
-                        return (
-                          <Link
-                            href={`/user/${userId}?tab=lists`}
-                            className="text-sm text-purple-600 hover:text-purple-700 transition-colors font-medium mt-2 inline-block"
-                            data-testid={`link-see-lists-${userId}`}
-                          >
-                            See more of {displayName}'s lists →
-                          </Link>
-                        );
-                      })()}
                     </div>
                   ) : (
                     !post.content && post.mediaItems && post.mediaItems.length > 0 && (
