@@ -83,7 +83,6 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
               <div className="flex-1">
                 <span className="text-xs font-medium text-purple-300 uppercase tracking-wide">Daily Challenge</span>
                 <h3 className="text-base font-semibold mt-1">{dailyChallenge.title}</h3>
-                <p className="text-purple-300 text-xs mt-1">{motivatingMessage}</p>
               </div>
               <div className="text-purple-300 hover:text-white transition-colors">
                 <Play size={28} fill="currentColor" />
@@ -126,7 +125,6 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
                 <span className="text-xs font-medium text-purple-200 uppercase tracking-wide">Daily Challenge</span>
               </div>
               <h3 className="text-lg font-bold">{dailyChallenge.icon} {dailyChallenge.title}</h3>
-              <p className="text-purple-200 text-sm mt-1">{motivatingMessage}</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
               <Play size={24} fill="white" className="text-white" />
