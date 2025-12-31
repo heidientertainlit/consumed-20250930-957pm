@@ -50,50 +50,50 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
 
   if (variant === "header") {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Link href="/play?tab=trivia">
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 text-white cursor-pointer hover:bg-white/15 transition-all" data-testid="daily-challenge-card">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-white cursor-pointer hover:bg-white/10 transition-all" data-testid="daily-challenge-card">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Zap size={16} className="text-yellow-300" />
-                  <span className="text-xs font-medium text-purple-200 uppercase tracking-wide">Daily Challenge</span>
-                </div>
-                <h3 className="text-lg font-bold">{dailyChallenge.icon} {dailyChallenge.title}</h3>
-                <p className="text-purple-200 text-sm mt-1">Test your {dailyChallenge.category?.toLowerCase() || 'entertainment'} knowledge</p>
+                <span className="text-xs font-medium text-purple-300 uppercase tracking-wide">Daily Challenge</span>
+                <h3 className="text-base font-semibold mt-1">{dailyChallenge.title}</h3>
               </div>
-              <div className="bg-purple-500 rounded-full p-3 hover:bg-purple-400 transition-colors">
-                <Play size={24} fill="white" className="text-white" />
+              <div className="text-purple-300 hover:text-white transition-colors">
+                <Play size={28} fill="currentColor" />
               </div>
             </div>
           </div>
         </Link>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 text-center" data-testid="streak-card">
-            <div className="flex flex-col items-center gap-1">
-              <Flame size={20} className="text-orange-400" />
-              <p className="text-xl font-bold text-white">{streak}</p>
-              <p className="text-xs text-purple-200">day streak</p>
+        <div className="flex items-center justify-around text-center">
+          <div className="flex flex-col items-center" data-testid="streak-card">
+            <div className="flex items-center gap-1.5 text-white">
+              <Flame size={16} className="text-orange-400" />
+              <span className="text-lg font-bold">{streak}</span>
             </div>
+            <p className="text-xs text-purple-300 mt-0.5">day streak</p>
           </div>
 
+          <div className="w-px h-8 bg-white/20" />
+
           <Link href="/leaderboard">
-            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 text-center cursor-pointer hover:bg-white/15 transition-all" data-testid="leaderboard-card">
-              <div className="flex flex-col items-center gap-1">
-                <Trophy size={20} className="text-yellow-400" />
-                <p className="text-sm font-semibold text-white">Rankings</p>
-                <p className="text-xs text-purple-200">View all</p>
+            <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="leaderboard-card">
+              <div className="flex items-center gap-1.5 text-white">
+                <Trophy size={16} className="text-yellow-400" />
+                <span className="text-sm font-semibold">Rankings</span>
               </div>
+              <p className="text-xs text-purple-300 mt-0.5">View all</p>
             </div>
           </Link>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 text-center cursor-pointer hover:bg-white/15 transition-all" data-testid="friend-challenge-card">
-            <div className="flex flex-col items-center gap-1">
-              <Swords size={20} className="text-pink-400" />
-              <p className="text-sm font-semibold text-white">Challenge</p>
-              <p className="text-xs text-purple-200">Friends</p>
+          <div className="w-px h-8 bg-white/20" />
+
+          <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="friend-challenge-card">
+            <div className="flex items-center gap-1.5 text-white">
+              <Swords size={16} className="text-pink-400" />
+              <span className="text-sm font-semibold">Challenge</span>
             </div>
+            <p className="text-xs text-purple-300 mt-0.5">Friends</p>
           </div>
         </div>
       </div>
