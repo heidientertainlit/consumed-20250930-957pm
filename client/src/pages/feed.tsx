@@ -3,7 +3,7 @@ import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tansta
 import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
-import { QuickActionSheet } from "@/components/quick-action-sheet";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
@@ -4158,13 +4158,13 @@ export default function Feed() {
         onClose={() => setIsTrackModalOpen(false)}
       />
 
-      <QuickActionSheet
+      <QuickAddListSheet
         isOpen={isQuickAddOpen}
         onClose={() => {
           setIsQuickAddOpen(false);
           setQuickAddMedia(null);
         }}
-        preselectedMedia={quickAddMedia}
+        media={quickAddMedia}
       />
 
       {/* Pass It Modal for Hot Takes */}
