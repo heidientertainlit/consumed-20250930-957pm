@@ -625,87 +625,98 @@ function CurrentlyConsumingFeedCard({
   
   const verb = getVerb(media.mediaType);
   
+  // Get display name without "consumed/IsConsumed" suffix
+  const displayName = (post.user?.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user?.username;
+  
   return (
     <div id={`post-${post.id}`}>
       {carouselElements}
       <div className="mb-4">
-        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-          {/* Header with user info */}
-          <div className="p-4 pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {post.user && (
-                  <Link href={`/user/${post.user.id}`}>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
-                      {post.user.avatar ? (
-                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <span className="text-sm">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
-                      )}
-                    </div>
-                  </Link>
-                )}
-                <div>
-                  <p className="text-gray-900">
-                    <Link href={`/user/${post.user?.id}`}>
-                      <span className="font-semibold hover:text-purple-600 cursor-pointer">@{post.user?.username}</span>
-                    </Link>
-                    {' '}is currently {verb}...
-                  </p>
-                  <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
-                </div>
-              </div>
-              {isOwnPost && (
-                <button
-                  onClick={() => handleDeletePost(post.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                  data-testid={`button-delete-currently-${post.id}`}
-                >
-                  <Trash2 size={16} />
-                </button>
+        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden p-4">
+          {/* Header with user info - consistent with other posts */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start gap-3">
+              {post.user && (
+                <Link href={`/user/${post.user.id}`}>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
+                    {post.user.avatar ? (
+                      <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <span className="text-sm">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                    )}
+                  </div>
+                </Link>
               )}
+              <div className="min-w-0">
+                <p className="text-gray-900">
+                  <Link href={`/user/${post.user?.id}`}>
+                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.username}</span>
+                  </Link>
+                  {' '}added{' '}
+                  <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+                    <span className="hover:text-purple-600 cursor-pointer">{media.title}</span>
+                  </Link>
+                  {' '}→ <span className="text-purple-600">Currently</span>
+                </p>
+                <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
+              </div>
+            </div>
+            {isOwnPost && (
+              <button
+                onClick={() => handleDeletePost(post.id)}
+                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                data-testid={`button-delete-currently-${post.id}`}
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
+          
+          {/* Media card in gray box - consistent design */}
+          <div className="bg-gray-50 rounded-lg p-3 mb-2">
+            <div className="flex gap-3">
+              <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+                <div className="cursor-pointer flex-shrink-0">
+                  {media.imageUrl ? (
+                    <img 
+                      src={media.imageUrl} 
+                      alt={media.title || ''} 
+                      className="w-16 h-20 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-20 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                      <Film size={20} className="text-purple-300" />
+                    </div>
+                  )}
+                </div>
+              </Link>
+              
+              {/* Media info and actions */}
+              <div className="flex-1 min-w-0">
+                <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
+                  <h3 className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-1">{media.title}</h3>
+                </Link>
+                {media.creator && (
+                  <p className="text-xs text-gray-600 mb-0.5">by {media.creator}</p>
+                )}
+                <p className="text-xs text-gray-500 capitalize mb-2">{media.mediaType}</p>
+                
+                {/* Compact actions */}
+                <MediaCardActions media={media} session={session} />
+              </div>
+              <ChevronRight className="text-gray-400 flex-shrink-0 mt-6" size={16} />
             </div>
           </div>
           
-          {/* Featured media - horizontal layout with smaller poster */}
-          <div className="flex gap-4 px-4 pb-4">
-            <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
-              <div className="cursor-pointer group flex-shrink-0">
-                {media.imageUrl ? (
-                  <img 
-                    src={media.imageUrl} 
-                    alt={media.title || ''} 
-                    className="w-24 h-36 rounded-lg object-cover shadow-md group-hover:shadow-lg transition-shadow"
-                  />
-                ) : (
-                  <div className="w-24 h-36 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                    <Film size={24} className="text-purple-300" />
-                  </div>
-                )}
-              </div>
-            </Link>
-            
-            {/* Media info and actions */}
-            <div className="flex-1 min-w-0">
-              <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
-                <h3 className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{media.title}</h3>
-              </Link>
-              <p className="text-sm text-gray-500 capitalize mb-3">{media.mediaType}</p>
-              
-              {/* Compact actions */}
-              <MediaCardActions media={media} session={session} />
-              
-              {/* See more link */}
-              <Link href={`/user/${post.user?.id}?tab=lists`}>
-                <p className="text-sm text-purple-600 hover:text-purple-700 mt-3 cursor-pointer">
-                  See what else they're consuming →
-                </p>
-              </Link>
-            </div>
-          </div>
+          {/* See more link - consistent with other posts */}
+          <Link href={`/user/${post.user?.id}?tab=lists`}>
+            <p className="text-sm text-purple-600 hover:text-purple-700 cursor-pointer font-medium">
+              See more of {displayName}'s lists →
+            </p>
+          </Link>
           
           {/* Like/Comment/Rate actions */}
-          <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
+          <div className="flex items-center gap-4 pt-3 mt-2 border-t border-gray-100">
             <button
               onClick={() => handleLike(post.id)}
               className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
@@ -815,7 +826,7 @@ function CurrentlyConsumingFeedCard({
           
           {/* Comments Section */}
           {expandedComments.has(post.id) && (
-            <div className="px-4 pb-4 border-t border-gray-100">
+            <div className="pt-3 mt-2 border-t border-gray-100">
               <CommentsSection
                 postId={post.id}
                 isLiked={likedPosts.has(post.id)}
