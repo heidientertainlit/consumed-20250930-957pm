@@ -209,11 +209,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
       return response.json();
     },
     onSuccess: async (data) => {
-      const listTitle = data?.listTitle || "your list";
-      toast({
-        title: "Media added!",
-        description: `Successfully added to ${listTitle}.`,
-      });
+      // No toast needed - user can see the item added to the list visually
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       
