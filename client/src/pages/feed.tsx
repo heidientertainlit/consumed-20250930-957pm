@@ -8,6 +8,7 @@ import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
 import MediaCarousel from "@/components/media-carousel";
+import FeedHero from "@/components/feed-hero";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2407,6 +2408,10 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Hero Section */}
+        <div className="mb-6">
+          <FeedHero />
+        </div>
         {/* Activity Stream */}
         <div className="space-y-6">
 
