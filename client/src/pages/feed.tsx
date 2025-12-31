@@ -9,7 +9,6 @@ import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
 import MediaCarousel from "@/components/media-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X } from "lucide-react";
-import InlineComposer from "@/components/inline-composer";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -2397,17 +2396,13 @@ export default function Feed() {
       <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      {/* Extended Purple Gradient Section for Composer */}
-      <div className="bg-gradient-to-r from-slate-900 to-purple-900 pb-8 -mt-px">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-slate-900 to-purple-900 pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
-          {/* Tagline */}
-          <div className="text-center mb-6">
+          <div className="text-center">
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">What's everyone consuming?</h1>
-            <p className="text-gray-400 text-sm mt-2">See what everyone is watching, reading, and listening to. Add yours.</p>
+            <p className="text-gray-400 text-sm mt-2">See what your friends are watching, reading, and listening to.</p>
           </div>
-          
-          {/* Inline Composer - Always Visible */}
-          <InlineComposer />
         </div>
       </div>
 

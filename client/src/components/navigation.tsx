@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { QuickActionSheet } from "./quick-action-sheet";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -46,6 +47,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
 
   // Auto-focus when search expands
   useEffect(() => {
@@ -522,6 +524,17 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xs font-medium text-white whitespace-nowrap">Play</span>
           </Link>
 
+          {/* Quick Action + Button */}
+          <button
+            onClick={() => setIsQuickActionOpen(true)}
+            className="flex flex-col items-center gap-1 py-2 px-3"
+            data-testid="quick-action-button"
+          >
+            <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg -mt-6">
+              <Plus className="text-white" size={28} />
+            </div>
+          </button>
+
           <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
             className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
@@ -536,6 +549,11 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         </div>
       </nav>
 
+      {/* Quick Action Sheet */}
+      <QuickActionSheet
+        isOpen={isQuickActionOpen}
+        onClose={() => setIsQuickActionOpen(false)}
+      />
     </>
   );
 }
