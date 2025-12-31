@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ChevronRight, Flame, Trophy, Swords } from "lucide-react";
+import { Play, Flame, Trophy, Swords, ChevronRight, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 
@@ -42,52 +43,57 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   const dailyChallenge = triviaData?.games?.[0] || {
     title: "90s Movie Trivia",
     category: "Movies",
+    icon: "🎬",
   };
 
   const streak = userStats?.dayStreak || 0;
 
   if (variant === "header") {
     return (
-      <div className="space-y-6">
-        {/* Minimal Hero */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">consumed</h1>
-          <p className="text-purple-200 text-sm">
-            Where entertainment gets played
-          </p>
-          <p className="text-purple-300/80 text-xs mt-1">
-            Trivia, predictions, and rankings with friends.
-          </p>
-        </div>
-
-        {/* Editorial Daily Challenge */}
+      <div className="space-y-4">
         <Link href="/play?tab=trivia">
-          <div className="text-center cursor-pointer group" data-testid="daily-challenge-card">
-            <p className="text-[10px] font-medium text-purple-300 uppercase tracking-widest mb-1">
-              Daily Challenge
-            </p>
-            <p className="text-white font-medium group-hover:text-purple-200 transition-colors inline-flex items-center gap-1">
-              {dailyChallenge.title}
-              <ChevronRight size={16} className="text-purple-300" />
-            </p>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-white cursor-pointer hover:bg-white/10 transition-all" data-testid="daily-challenge-card">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <span className="text-xs font-medium text-purple-300 uppercase tracking-wide">Daily Challenge</span>
+                <h3 className="text-base font-semibold mt-1">{dailyChallenge.title}</h3>
+              </div>
+              <div className="text-purple-300 hover:text-white transition-colors">
+                <Play size={28} fill="currentColor" />
+              </div>
+            </div>
           </div>
         </Link>
 
-        {/* Your Play - Quiet tools section */}
-        <div className="pt-4 border-t border-white/10">
-          <p className="text-[10px] font-medium text-purple-400 uppercase tracking-widest mb-3">
-            Your Play
-          </p>
-          <div className="flex items-center justify-between text-sm text-purple-200">
-            <span className="flex items-center gap-1.5">
-              <span className="text-purple-300">{streak}</span> day streak
-            </span>
-            <span className="text-purple-400">•</span>
-            <Link href="/leaderboard">
-              <span className="hover:text-white transition-colors cursor-pointer">Rankings</span>
-            </Link>
-            <span className="text-purple-400">•</span>
-            <span className="hover:text-white transition-colors cursor-pointer">Challenge friends</span>
+        <div className="flex items-center justify-around text-center">
+          <div className="flex flex-col items-center" data-testid="streak-card">
+            <div className="flex items-center gap-1.5 text-white">
+              <Flame size={16} className="text-orange-400" />
+              <span className="text-lg font-bold">{streak}</span>
+            </div>
+            <p className="text-xs text-purple-300 mt-0.5">day streak</p>
+          </div>
+
+          <div className="w-px h-8 bg-white/20" />
+
+          <Link href="/leaderboard">
+            <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="leaderboard-card">
+              <div className="flex items-center gap-1.5 text-white">
+                <Trophy size={16} className="text-yellow-400" />
+                <span className="text-sm font-semibold">Rankings</span>
+              </div>
+              <p className="text-xs text-purple-300 mt-0.5">View all</p>
+            </div>
+          </Link>
+
+          <div className="w-px h-8 bg-white/20" />
+
+          <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="friend-challenge-card">
+            <div className="flex items-center gap-1.5 text-white">
+              <Swords size={16} className="text-pink-400" />
+              <span className="text-sm font-semibold">Challenge</span>
+            </div>
+            <p className="text-xs text-purple-300 mt-0.5">Friends</p>
           </div>
         </div>
       </div>
@@ -95,46 +101,64 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   }
 
   return (
-    <div className="space-y-6">
-      {/* Minimal Hero */}
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">consumed</h1>
-        <p className="text-gray-600 text-sm">
-          Where entertainment gets played
-        </p>
-        <p className="text-gray-500 text-xs mt-1">
-          Trivia, predictions, and rankings with friends.
-        </p>
-      </div>
-
-      {/* Editorial Daily Challenge */}
+    <div className="space-y-3">
       <Link href="/play?tab=trivia">
-        <div className="text-center cursor-pointer group" data-testid="daily-challenge-card">
-          <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-1">
-            Daily Challenge
-          </p>
-          <p className="text-gray-900 font-medium group-hover:text-purple-700 transition-colors inline-flex items-center gap-1">
-            {dailyChallenge.title}
-            <ChevronRight size={16} className="text-gray-400 group-hover:text-purple-500" />
-          </p>
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg cursor-pointer hover:shadow-xl transition-shadow" data-testid="daily-challenge-card">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Zap size={16} className="text-yellow-300" />
+                <span className="text-xs font-medium text-purple-200 uppercase tracking-wide">Daily Challenge</span>
+              </div>
+              <h3 className="text-lg font-bold">{dailyChallenge.icon} {dailyChallenge.title}</h3>
+              <p className="text-purple-200 text-sm mt-1">Test your {dailyChallenge.category?.toLowerCase() || 'entertainment'} knowledge</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
+              <Play size={24} fill="white" className="text-white" />
+            </div>
+          </div>
         </div>
       </Link>
 
-      {/* Your Play - Quiet tools section */}
-      <div className="bg-gray-50 rounded-xl p-4">
-        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-3">
-          Your Play
-        </p>
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <span className="flex items-center gap-1.5">
-            <span className="font-medium text-gray-900">{streak}</span> day streak
-          </span>
-          <span className="text-gray-300">•</span>
-          <Link href="/leaderboard">
-            <span className="hover:text-purple-700 transition-colors cursor-pointer">Rankings</span>
-          </Link>
-          <span className="text-gray-300">•</span>
-          <span className="hover:text-purple-700 transition-colors cursor-pointer">Challenge friends</span>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm" data-testid="streak-card">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
+              <Flame size={20} className="text-orange-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{streak}</p>
+              <p className="text-xs text-gray-500">day streak</p>
+            </div>
+          </div>
+        </div>
+
+        <Link href="/leaderboard">
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors" data-testid="leaderboard-card">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
+                <Trophy size={20} className="text-purple-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">Leaderboard</p>
+                <p className="text-xs text-gray-500">See rankings</p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400" />
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-4 border border-pink-100" data-testid="friend-challenge-card">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center">
+            <Swords size={20} className="text-pink-500" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-900">Challenge a friend</p>
+            <p className="text-xs text-gray-500">Create a trivia or prediction battle</p>
+          </div>
+          <ChevronRight size={16} className="text-gray-400" />
         </div>
       </div>
     </div>
