@@ -644,7 +644,6 @@ function CurrentlyConsumingFeedCard({
                   </Link>
                   {' '}→ <span className="text-purple-600">Currently</span>
                 </p>
-                <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
               </div>
             </div>
             {isOwnPost && (
@@ -702,7 +701,8 @@ function CurrentlyConsumingFeedCard({
           </Link>
           
           {/* Like/Comment/Rate actions */}
-          <div className="flex items-center gap-4 pt-3 mt-2 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-100">
+            <div className="flex items-center gap-4">
             <button
               onClick={() => handleLike(post.id)}
               className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
@@ -808,6 +808,9 @@ function CurrentlyConsumingFeedCard({
                 <span className="ml-1 text-xs text-gray-600">{selectedRating}/5</span>
               </div>
             )}
+            </div>
+            {/* Timestamp on the right */}
+            <span className="text-sm text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
           </div>
           
           {/* Comments Section */}
