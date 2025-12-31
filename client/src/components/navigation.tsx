@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Gamepad2, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -512,16 +512,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               <Activity className="text-white" size={24} />
             </div>
             <span className="text-xs font-medium text-white whitespace-nowrap">Activity</span>
-          </Link>
-
-          <Link
-            href="/play"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${location === "/play" || location.startsWith("/play/") ? "bg-white/20" : ""}`}
-          >
-            <div className="h-6 w-6 flex items-center justify-center">
-              <Gamepad2 className="text-white" size={24} />
-            </div>
-            <span className="text-xs font-medium text-white whitespace-nowrap">Play</span>
           </Link>
 
           {/* Quick Action + Button */}
