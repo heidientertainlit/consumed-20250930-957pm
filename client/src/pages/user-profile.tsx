@@ -541,7 +541,7 @@ export default function UserProfile() {
 
   // Update progress mutation for Currently Consuming items
   const updateProgressMutation = useMutation({
-    mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
+    mutationFn: async ({ itemId, progress, mode, progressDisplay }: { itemId: string; progress: number; mode: string; progressDisplay: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const response = await fetch(
@@ -555,7 +555,6 @@ export default function UserProfile() {
           body: JSON.stringify({
             item_id: itemId,
             progress,
-            total,
             progress_mode: mode,
           }),
         }
@@ -566,6 +565,7 @@ export default function UserProfile() {
     },
     onSuccess: (data) => {
       toast({ title: `Progress updated to ${data.progressDisplay}` });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       fetchUserLists(viewingUserId);
     },
     onError: () => {
@@ -601,6 +601,7 @@ export default function UserProfile() {
     },
     onSuccess: (data) => {
       toast({ title: `Moved to ${data.listName}` });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       fetchUserLists(viewingUserId);
     },
     onError: () => {
@@ -2718,7 +2719,7 @@ export default function UserProfile() {
           const handleQuickProgress = (item: any) => {
             const progressMode = item.progress_mode || 'percent';
             const currentProgress = item.progress || 0;
-            const total = item.progress_total;
+            const season = item.progress_total; // For episode mode, this is season number
             
             let newProgress = currentProgress;
             let displayText = '';
@@ -2728,10 +2729,11 @@ export default function UserProfile() {
               displayText = `${newProgress}%`;
             } else if (progressMode === 'episode') {
               newProgress = currentProgress + 1;
-              displayText = total ? `S${total}E${newProgress}` : `E${newProgress}`;
+              displayText = season ? `S${season}E${newProgress}` : `E${newProgress}`;
             } else if (progressMode === 'page') {
               newProgress = currentProgress + 1;
-              displayText = total ? `p${newProgress}/${total}` : `p${newProgress}`;
+              const pageTotal = item.progress_total;
+              displayText = pageTotal ? `p${newProgress}/${pageTotal}` : `p${newProgress}`;
             } else {
               newProgress = currentProgress + 1;
               displayText = `${newProgress}`;
@@ -2740,7 +2742,6 @@ export default function UserProfile() {
             updateProgressMutation.mutate({
               itemId: item.id,
               progress: newProgress,
-              total: progressMode !== 'percent' ? total : undefined,
               mode: progressMode,
               progressDisplay: displayText
             });
