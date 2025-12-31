@@ -2401,8 +2401,10 @@ export default function Feed() {
       <div className="bg-gradient-to-r from-slate-900 to-purple-900 pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
           <div className="text-center mb-5">
-            <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">Where entertainment gets played</h1>
-            <p className="text-gray-400 text-sm mt-2">Trivia, predictions, rankings, and hot takes with friends</p>
+            <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
+              Where entertainment<br />gets played
+            </h1>
+            <p className="text-gray-400 text-sm mt-2 max-w-[220px] mx-auto">Trivia, predictions, rankings, and hot takes with friends</p>
           </div>
           <FeedHero variant="header" />
         </div>
