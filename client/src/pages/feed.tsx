@@ -3591,7 +3591,9 @@ export default function Feed() {
                     if (!post.content) return null;
                     const contentLower = post.content.toLowerCase();
                     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
-                    const isAddedOrRatedPost = (contentLower.startsWith('added ') || contentLower.startsWith('rated ') || contentLower.startsWith('shared ')) && hasMediaItems;
+                    // Don't hide content for "thoughts" posts - they have actual user content to show
+                    const isThoughtsPost = contentLower.includes('thoughts') || (post.content.length > 50 && hasMediaItems);
+                    const isAddedOrRatedPost = !isThoughtsPost && (contentLower.startsWith('added ') || contentLower.startsWith('rated ') || contentLower.startsWith('shared ')) && hasMediaItems;
                     
                     if (isAddedOrRatedPost) {
                       return post.rating && post.rating > 0 ? (
@@ -3661,7 +3663,9 @@ export default function Feed() {
                   {(() => {
                     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
                     const contentLower = (post.content || '').toLowerCase();
-                    const isAddedPost = post.type === 'added_to_list' || contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating);
+                    // Don't treat "thoughts" posts as simple "added" posts - they should show content + media card
+                    const isThoughtsPost = contentLower.includes('thoughts') || (post.content && post.content.length > 50 && hasMediaItems);
+                    const isAddedPost = !isThoughtsPost && (post.type === 'added_to_list' || contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating));
                     const hasListData = !!(post as any).listData;
                     
                     // For added_to_list posts, show full media card with actions
