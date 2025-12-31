@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tansta
 import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
+import { QuickActionSheet } from "@/components/quick-action-sheet";
 import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
@@ -856,6 +857,8 @@ export default function Feed() {
   }, []);
 
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [expandedAddRecInput, setExpandedAddRecInput] = useState<Set<string>>(new Set()); // Track recs posts with add input expanded
@@ -2691,7 +2694,15 @@ export default function Feed() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleMediaClick(item);
+                                  setQuickAddMedia({
+                                    title: item.title,
+                                    mediaType: item.type || item.mediaType || 'movie',
+                                    imageUrl: item.imageUrl || item.posterPath,
+                                    externalId: item.externalId || item.id,
+                                    externalSource: item.externalSource || 'tmdb',
+                                    creator: item.creator || item.author,
+                                  });
+                                  setIsQuickAddOpen(true);
                                 }}
                                 className="mt-1.5 w-full bg-purple-600 text-white text-xs py-1 rounded-full"
                                 data-testid={`rec-add-${idx}`}
@@ -4145,6 +4156,15 @@ export default function Feed() {
       <ConsumptionTracker
         isOpen={isTrackModalOpen}
         onClose={() => setIsTrackModalOpen(false)}
+      />
+
+      <QuickActionSheet
+        isOpen={isQuickAddOpen}
+        onClose={() => {
+          setIsQuickAddOpen(false);
+          setQuickAddMedia(null);
+        }}
+        preselectedMedia={quickAddMedia}
       />
 
       {/* Pass It Modal for Hot Takes */}

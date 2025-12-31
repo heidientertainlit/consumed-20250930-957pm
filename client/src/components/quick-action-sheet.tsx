@@ -20,9 +20,17 @@ type ActionType = "track" | "post" | "hot_take" | "poll" | "ask_for_recs" | "ran
 interface QuickActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  preselectedMedia?: {
+    title: string;
+    mediaType: string;
+    imageUrl?: string;
+    externalId?: string;
+    externalSource?: string;
+    creator?: string;
+  } | null;
 }
 
-export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
+export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickActionSheetProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   
@@ -33,6 +41,22 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  
+  // Set preselected media and auto-select track action when provided
+  useEffect(() => {
+    if (isOpen && preselectedMedia) {
+      setSelectedMedia({
+        title: preselectedMedia.title,
+        type: preselectedMedia.mediaType,
+        image_url: preselectedMedia.imageUrl,
+        external_id: preselectedMedia.externalId,
+        external_source: preselectedMedia.externalSource,
+        creator: preselectedMedia.creator,
+      });
+      setSelectedAction("track");
+      setAddToList(true);
+    }
+  }, [isOpen, preselectedMedia]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
