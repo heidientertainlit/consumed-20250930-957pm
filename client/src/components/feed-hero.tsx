@@ -57,7 +57,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
     if (points >= 100) return "Top 30%";
     if (points >= 50) return "Top 40%";
     if (points >= 20) return "Top 50%";
-    return "Rising";
+    return "New";
   };
   
   const percentile = getPercentile(totalPoints);
@@ -96,7 +96,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
           <Link href="/leaderboard">
             <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="ranking-card">
               <div className="flex items-center gap-1.5 text-white">
-                <span className="text-lg font-bold">{percentile}</span>
+                <span className="text-sm font-semibold">{percentile}</span>
               </div>
               <p className="text-xs text-purple-300 mt-0.5">in your circle</p>
             </div>
