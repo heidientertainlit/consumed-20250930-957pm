@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft } from "lucide-react";
+import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type ActionType = "track" | "post" | "hot_take" | "poll" | "ask_for_recs" | "rank" | null;
+type ActionType = "track" | "post" | "hot_take" | "poll" | "ask_for_recs" | "rank" | "challenge" | null;
 
 interface QuickActionSheetProps {
   isOpen: boolean;
@@ -395,12 +395,13 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
   };
 
   const actions = [
-    { id: "track" as ActionType, label: "Track & Rate", icon: Star, color: "text-yellow-500", desc: "Log something you finished" },
-    { id: "post" as ActionType, label: "Post", icon: MessageSquare, color: "text-blue-500", desc: "Share a thought" },
-    { id: "hot_take" as ActionType, label: "Hot Take", icon: Flame, color: "text-orange-500", desc: "Drop a spicy opinion" },
-    { id: "poll" as ActionType, label: "Poll", icon: Vote, color: "text-purple-500", desc: "Ask your friends" },
-    { id: "ask_for_recs" as ActionType, label: "Ask for Recs", icon: HelpCircle, color: "text-green-500", desc: "Get suggestions" },
-    { id: "rank" as ActionType, label: "Rank", icon: Trophy, color: "text-amber-500", desc: "Create a ranked list" },
+    { id: "track" as ActionType, label: "Track & Rate", icon: Star, iconColor: "text-yellow-500", bgColor: "bg-yellow-50", desc: "Log something you finished" },
+    { id: "post" as ActionType, label: "Post", icon: MessageSquare, iconColor: "text-blue-500", bgColor: "bg-blue-50", desc: "Share a thought" },
+    { id: "hot_take" as ActionType, label: "Hot Take", icon: Flame, iconColor: "text-orange-500", bgColor: "bg-orange-50", desc: "Drop a spicy opinion" },
+    { id: "poll" as ActionType, label: "Poll", icon: Vote, iconColor: "text-purple-500", bgColor: "bg-purple-50", desc: "Ask your friends" },
+    { id: "ask_for_recs" as ActionType, label: "Ask for Recs", icon: HelpCircle, iconColor: "text-green-500", bgColor: "bg-green-50", desc: "Get suggestions" },
+    { id: "rank" as ActionType, label: "Rank", icon: Trophy, iconColor: "text-amber-500", bgColor: "bg-amber-50", desc: "Add to a ranked list" },
+    { id: "challenge" as ActionType, label: "Challenge", icon: Swords, iconColor: "text-pink-500", bgColor: "bg-pink-50", desc: "Challenge a friend" },
   ];
 
   const renderActionContent = () => {
@@ -831,6 +832,50 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
       );
     }
     
+    if (selectedAction === "challenge") {
+      return (
+        <div className="space-y-4">
+          <div className="text-center py-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-pink-50 flex items-center justify-center">
+              <Swords size={32} className="text-pink-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Challenge a Friend</h3>
+            <p className="text-gray-500 text-sm">Create a custom challenge and invite friends to compete!</p>
+          </div>
+          
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Challenge title (e.g., 'Best 90s Movie')"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+              data-testid="challenge-title-input"
+            />
+            
+            <textarea
+              placeholder="Describe your challenge..."
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white resize-none"
+              rows={3}
+              data-testid="challenge-description-input"
+            />
+            
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search friends to challenge..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+                data-testid="challenge-friend-search"
+              />
+            </div>
+          </div>
+          
+          <p className="text-center text-xs text-gray-400 pt-2">
+            Coming soon! Challenge functionality will be available shortly.
+          </p>
+        </div>
+      );
+    }
+    
     return null;
   };
 
@@ -840,6 +885,7 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
     if (selectedAction === "poll") return !!contentText.trim() && pollOptions.filter(o => o.trim()).length >= 2;
     if (selectedAction === "ask_for_recs") return !!contentText.trim();
     if (selectedAction === "rank") return !!selectedMedia && !!selectedRankId;
+    if (selectedAction === "challenge") return false;
     return false;
   };
 
@@ -852,20 +898,20 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
               <SheetTitle className="text-center">What do you want to do?</SheetTitle>
             </SheetHeader>
             
-            <div className="grid grid-cols-2 gap-3 pb-6">
+            <div className="space-y-2 pb-6">
               {actions.map((action) => (
                 <button
                   key={action.id}
                   onClick={() => handleActionSelect(action.id)}
-                  className="flex flex-col items-center gap-2 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+                  className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors"
                   data-testid={`action-${action.id}`}
                 >
-                  <div className={`p-3 rounded-full bg-white shadow-sm ${action.color}`}>
-                    <action.icon size={24} />
+                  <div className={`p-3 rounded-full ${action.bgColor}`}>
+                    <action.icon size={22} className={action.iconColor} />
                   </div>
-                  <div className="text-center">
+                  <div className="text-left">
                     <p className="font-semibold text-gray-900">{action.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{action.desc}</p>
+                    <p className="text-sm text-gray-500">{action.desc}</p>
                   </div>
                 </button>
               ))}
@@ -886,7 +932,7 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
             
             {renderActionContent()}
             
-            {(selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
+            {selectedAction !== "challenge" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
               <div className="pt-4 pb-2">
                 <Button
                   onClick={handlePost}
