@@ -693,7 +693,7 @@ export default function PlayPage() {
         {/* Quick Access to All Games */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h3 className="text-base font-semibold text-gray-900 mb-4">What would you like to do</h3>
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <Link href="/play/awards">
               <button
                 className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 transition-colors w-full border border-amber-200"
@@ -719,6 +719,15 @@ export default function PlayPage() {
               >
                 <HelpCircle className="text-green-600" size={24} />
                 <span className="text-xs font-medium text-green-600">Trivia</span>
+              </button>
+            </Link>
+            <Link href="/play/ranks">
+              <button
+                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 transition-colors w-full border border-orange-200"
+                data-testid="browse-ranks"
+              >
+                <Trophy className="text-orange-600" size={24} />
+                <span className="text-xs font-medium text-orange-600">Rank Challenge</span>
               </button>
             </Link>
           </div>

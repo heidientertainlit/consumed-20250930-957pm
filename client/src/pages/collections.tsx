@@ -57,7 +57,7 @@ export default function CollectionsPage() {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<'lists' | 'ranks' | 'history'>('lists');
+  const [activeTab, setActiveTab] = useState<'lists' | 'history'>('lists');
   
   // Lists state
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
@@ -65,11 +65,6 @@ export default function CollectionsPage() {
   const [newListVisibility, setNewListVisibility] = useState("private");
   const [listSearch, setListSearch] = useState("");
   
-  // Ranks state
-  const [isCreateRankOpen, setIsCreateRankOpen] = useState(false);
-  const [newRankName, setNewRankName] = useState("");
-  const [newRankVisibility, setNewRankVisibility] = useState("private");
-  const [rankSearch, setRankSearch] = useState("");
   
   // History state
   const [mediaHistorySearch, setMediaHistorySearch] = useState("");
@@ -168,31 +163,6 @@ export default function CollectionsPage() {
     gcTime: 5 * 60 * 1000,
   });
 
-  // Fetch user ranks with caching
-  const { data: ranksData, isLoading: isLoadingRanks } = useQuery({
-    queryKey: ['user-ranks', user?.id],
-    queryFn: async () => {
-      if (!session?.access_token || !user?.id) return { ranks: [] };
-      
-      const response = await fetch(
-        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks?user_id=${user.id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      
-      if (response.ok) {
-        return response.json();
-      }
-      return { ranks: [] };
-    },
-    enabled: !!session?.access_token && !!user?.id,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
 
   // Extract Currently list items from the shared lists query
   const currentlyConsumingItems = useMemo(() => {
@@ -203,7 +173,6 @@ export default function CollectionsPage() {
   // Use metadata for Lists tab (fast), full data for History tab
   const userListsMetadata = listsMetadata?.lists || [];
   const userListsFull = listsData?.lists || [];
-  const userRanks = ranksData?.ranks || [];
 
   // Create list mutation
   const createListMutation = useMutation({
@@ -241,40 +210,6 @@ export default function CollectionsPage() {
     },
   });
 
-  // Create rank mutation
-  const createRankMutation = useMutation({
-    mutationFn: async () => {
-      if (!session?.access_token || !newRankName.trim()) return;
-      
-      const response = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-ranks',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'create',
-            title: newRankName.trim(),
-            visibility: newRankVisibility,
-          }),
-        }
-      );
-      
-      if (!response.ok) throw new Error('Failed to create rank');
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Rank created!", description: `"${newRankName}" has been created.` });
-      setNewRankName("");
-      setIsCreateRankOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create rank", variant: "destructive" });
-    },
-  });
 
   // Update progress mutation for Currently Consuming items
   const updateProgressMutation = useMutation({
@@ -615,14 +550,6 @@ export default function CollectionsPage() {
               Lists
             </TabsTrigger>
             <TabsTrigger 
-              value="ranks" 
-              className="flex-1 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              data-testid="tab-ranks"
-            >
-              <Trophy size={16} className="mr-2" />
-              Ranks
-            </TabsTrigger>
-            <TabsTrigger 
               value="history" 
               className="flex-1 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
               data-testid="tab-history"
@@ -757,125 +684,6 @@ export default function CollectionsPage() {
                             e.stopPropagation();
                             const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
                             const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/list/${listSlug}?user=${user?.id}`;
-                            navigator.clipboard.writeText(url);
-                            toast({ title: "Link copied!" });
-                          }}
-                        />
-                        <ChevronRight className="text-gray-400" size={20} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Ranks Tab */}
-          <TabsContent value="ranks">
-            <div className="mb-4 flex justify-center">
-              <Dialog open={isCreateRankOpen} onOpenChange={setIsCreateRankOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 px-8 py-2 rounded-full" data-testid="button-create-rank">
-                    <Plus size={16} className="mr-2" />
-                    Create Rank
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-white">
-                  <DialogHeader>
-                    <DialogTitle className="text-gray-900">Create New Rank</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <Input
-                      placeholder="Rank name (e.g. Top 10 90s Movies)"
-                      value={newRankName}
-                      onChange={(e) => setNewRankName(e.target.value)}
-                      className="bg-white text-gray-900 border-gray-300"
-                      data-testid="input-rank-name"
-                    />
-                    <Select value={newRankVisibility} onValueChange={setNewRankVisibility}>
-                      <SelectTrigger className="bg-white text-gray-900 border-gray-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border border-gray-200">
-                        <SelectItem value="private" className="text-gray-900">Private</SelectItem>
-                        <SelectItem value="friends" className="text-gray-900">Friends Only</SelectItem>
-                        <SelectItem value="public" className="text-gray-900">Public</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button 
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                      onClick={() => createRankMutation.mutate()}
-                      disabled={!newRankName.trim() || createRankMutation.isPending}
-                      data-testid="button-submit-rank"
-                    >
-                      {createRankMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-                      Create Rank
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Search Ranks */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Search ranks..."
-                value={rankSearch}
-                onChange={(e) => setRankSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
-                data-testid="input-search-ranks"
-              />
-            </div>
-
-            {isLoadingRanks ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((n) => (
-                  <div key={n} className="bg-white rounded-xl p-4 animate-pulse">
-                    <div className="h-5 bg-gray-200 rounded w-1/3 mb-2"></div>
-                    <div className="h-4 bg-gray-100 rounded w-1/4"></div>
-                  </div>
-                ))}
-              </div>
-            ) : userRanks.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
-                <Trophy className="mx-auto mb-3 text-gray-300" size={48} />
-                <p className="text-gray-600">No ranks yet</p>
-                <p className="text-sm text-gray-500">Create your first ranked list</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {userRanks
-                  .filter((rank: any) => 
-                    rank.title.toLowerCase().includes(rankSearch.toLowerCase())
-                  )
-                  .map((rank: any) => (
-                  <div
-                    key={rank.id}
-                    className="bg-white border border-gray-200 rounded-xl hover:border-purple-300 transition-colors cursor-pointer"
-                    onClick={() => setLocation(`/rank/${rank.id}`)}
-                    data-testid={`rank-card-${rank.id}`}
-                  >
-                    <div className="px-4 py-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-lg flex items-center justify-center">
-                          <Trophy className="text-yellow-600" size={18} />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{rank.title}</h3>
-                          <p className="text-sm text-gray-500">
-                            {rank.items?.length || 0} {rank.items?.length === 1 ? 'item' : 'items'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Share2 
-                          className="text-gray-400 hover:text-purple-600" 
-                          size={18}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rank.id}?user=${user?.id}`;
                             navigator.clipboard.writeText(url);
                             toast({ title: "Link copied!" });
                           }}

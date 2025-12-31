@@ -38,6 +38,7 @@ import PlayTrivia from "@/pages/play-trivia";
 import PlayPolls from "@/pages/play-polls";
 import PlayPredictions from "@/pages/play-predictions";
 import PlayHighStakes from "@/pages/play-high-stakes";
+import PlayRanks from "@/pages/play-ranks";
 import Friends from "@/pages/friends";
 import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
@@ -184,6 +185,11 @@ function Router() {
         <Route path="/play/high-stakes">
           <ProtectedRoute>
             <PlayHighStakes />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/play/ranks">
+          <ProtectedRoute>
+            <PlayRanks />
           </ProtectedRoute>
         </Route>
         <Route path="/media/:type/:source/:id">
