@@ -224,9 +224,11 @@ serve(async (req) => {
     // Create a social post for this addition (skip if caller will handle it, e.g. when rating is also being added)
     if (mediaItem && !skip_social_post) {
       try {
-        // Determine post type based on rewatch count and rating
+        // Determine post type based on rewatch count
+        // Note: We use 'add-to-list' even when rating is provided - rating is included in the post data
+        // This ensures "Currently" list additions show as "is currently consuming" WITH rating, not separate posts
         const isRewatch = rewatchCount && rewatchCount > 1;
-        const postType = isRewatch ? 'rewatch' : (rating ? 'rate-review' : 'add-to-list');
+        const postType = isRewatch ? 'rewatch' : 'add-to-list';
         
         // Format ordinal suffix for rewatch count
         const getOrdinalSuffix = (n: number): string => {
@@ -239,8 +241,6 @@ serve(async (req) => {
         let content: string;
         if (isRewatch) {
           content = `is consuming ${title} for the ${getOrdinalSuffix(rewatchCount)} time`;
-        } else if (rating) {
-          content = `Rated ${title}`;
         } else {
           content = `Added ${title} to ${targetList?.title || 'my list'}`;
         }

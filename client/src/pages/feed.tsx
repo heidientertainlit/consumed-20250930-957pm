@@ -727,8 +727,18 @@ function CurrentlyConsumingFeedCard({
               <MessageCircle size={16} />
               <span>{post.comments || 0}</span>
             </button>
-            {/* Star rating button */}
-            {!showRating && !selectedRating && (
+            {/* Star rating - show existing rating from post, or button to add rating */}
+            {(post as any).rating ? (
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={14}
+                    className={star <= (post as any).rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                  />
+                ))}
+              </div>
+            ) : !showRating && !selectedRating && (
               <button
                 onClick={() => setShowRating(true)}
                 className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-yellow-500"
