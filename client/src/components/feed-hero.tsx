@@ -61,6 +61,18 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   };
   
   const percentile = getPercentile(totalPoints);
+  
+  // Motivating message based on current standing
+  const getMotivatingMessage = () => {
+    if (totalPoints < 20) return "Play to start climbing";
+    if (totalPoints < 50) return "Play to rise in your circle";
+    if (totalPoints < 100) return "Play to pass 2 friends";
+    if (totalPoints < 200) return "Play to break Top 30%";
+    if (totalPoints < 500) return "Play to reach Top 20%";
+    return "Play to stay on top";
+  };
+  
+  const motivatingMessage = getMotivatingMessage();
 
   if (variant === "header") {
     return (
@@ -122,7 +134,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
                 <span className="text-xs font-medium text-purple-200 uppercase tracking-wide">Daily Challenge</span>
               </div>
               <h3 className="text-lg font-bold">{dailyChallenge.icon} {dailyChallenge.title}</h3>
-              <p className="text-purple-200 text-sm mt-1">Test your {dailyChallenge.category?.toLowerCase() || 'entertainment'} knowledge</p>
+              <p className="text-purple-200 text-sm mt-1">{motivatingMessage}</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
               <Play size={24} fill="white" className="text-white" />
