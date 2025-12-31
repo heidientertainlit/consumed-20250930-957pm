@@ -891,14 +891,14 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto">
+      <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto !bg-white border-t border-gray-100" style={{ backgroundColor: 'white' }}>
         {!selectedAction ? (
           <>
-            <SheetHeader className="pb-4">
-              <SheetTitle className="text-center">What do you want to do?</SheetTitle>
+            <SheetHeader className="pb-2">
+              <SheetTitle className="text-center text-gray-900 text-lg font-semibold">What do you want to do?</SheetTitle>
             </SheetHeader>
             
-            <div className="space-y-2 pb-6">
+            <div className="space-y-1 pb-6">
               {actions.map((action) => (
                 <button
                   key={action.id}
@@ -906,7 +906,7 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
                   className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors"
                   data-testid={`action-${action.id}`}
                 >
-                  <div className={`p-3 rounded-full ${action.bgColor}`}>
+                  <div className={`w-12 h-12 rounded-full ${action.bgColor} flex items-center justify-center`}>
                     <action.icon size={22} className={action.iconColor} />
                   </div>
                   <div className="text-left">
@@ -922,9 +922,9 @@ export function QuickActionSheet({ isOpen, onClose }: QuickActionSheetProps) {
             <SheetHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <button onClick={handleBack} className="p-2 hover:bg-gray-100 rounded-full" data-testid="back-button">
-                  <ArrowLeft size={20} className="text-gray-500" />
+                  <ArrowLeft size={20} className="text-gray-600" />
                 </button>
-                <SheetTitle className="flex-1">
+                <SheetTitle className="flex-1 text-gray-900 text-lg font-semibold">
                   {actions.find(a => a.id === selectedAction)?.label}
                 </SheetTitle>
               </div>
