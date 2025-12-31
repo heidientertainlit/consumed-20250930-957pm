@@ -2462,12 +2462,12 @@ export default function Feed() {
             </div>
           ) : filteredPosts && filteredPosts.length > 0 ? (
             <div className="space-y-4 pb-24">
-              {/* Play Pills - Quick access to game types */}
+              {/* Play Pills - Clean minimal design */}
               <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
                 <button
                   onClick={() => setFeedFilter(feedFilter === '' ? '' : '')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    feedFilter === '' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    feedFilter === '' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                   data-testid="pill-all"
                 >
@@ -2475,34 +2475,34 @@ export default function Feed() {
                 </button>
                 <Link href="/play?tab=trivia">
                   <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-trivia"
                   >
-                    <span>🧠</span> Trivia
+                    Trivia
                   </button>
                 </Link>
                 <Link href="/play?tab=polls">
                   <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-polls"
                   >
-                    <span>📊</span> Polls
+                    Polls
                   </button>
                 </Link>
                 <Link href="/play?tab=predictions">
                   <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-predict"
                   >
-                    <span>🔮</span> Predict
+                    Predict
                   </button>
                 </Link>
                 <Link href="/collections?tab=ranks">
                   <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-rank"
                   >
-                    <span>🏆</span> Rank
+                    Rank
                   </button>
                 </Link>
               </div>
