@@ -2520,20 +2520,50 @@ export default function Feed() {
                 );
               })()}
 
-              {/* Recommended for you section - using MediaCarousel with working + and ★ buttons */}
-              {recommendedContent && recommendedContent.length > 0 && (
-                <div className="mb-4">
-                  <MediaCarousel
-                    title="Recommended for you"
-                    mediaType="mixed"
-                    items={recommendedContent}
-                    onItemClick={handleMediaClick}
-                  />
-                </div>
-              )}
-
-              {/* Feed Filter Button */}
-              <FeedFiltersDialog filters={detailedFilters} onFiltersChange={setDetailedFilters} />
+              {/* Play Pills - Quick access to game types */}
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+                <button
+                  onClick={() => setFeedFilter(feedFilter === '' ? '' : '')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    feedFilter === '' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  data-testid="pill-all"
+                >
+                  All
+                </button>
+                <Link href="/play?tab=trivia">
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                    data-testid="pill-trivia"
+                  >
+                    <span>🧠</span> Trivia
+                  </button>
+                </Link>
+                <Link href="/play?tab=polls">
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                    data-testid="pill-polls"
+                  >
+                    <span>📊</span> Polls
+                  </button>
+                </Link>
+                <Link href="/play?tab=predictions">
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                    data-testid="pill-predict"
+                  >
+                    <span>🔮</span> Predict
+                  </button>
+                </Link>
+                <Link href="/collections?tab=ranks">
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors"
+                    data-testid="pill-rank"
+                  >
+                    <span>🏆</span> Rank
+                  </button>
+                </Link>
+              </div>
 
               
               {filteredPosts.filter((item: SocialPost | ConsolidatedActivity) => {
@@ -2575,6 +2605,8 @@ export default function Feed() {
                 // Show game carousel every 20 posts (less frequent, for discovery)
                 const shouldShowGameCarousel = postIndex === 19 || (postIndex > 19 && (postIndex - 19) % 20 === 0);
                 const shouldShowMediaCarousel = (postIndex + 1) % 15 === 0 && postIndex > 0 && !shouldShowGameCarousel && !shouldShowInlineGame;
+                // Show recommendations card at position 4 (early in feed)
+                const shouldShowRecommendations = postIndex === 4 && recommendedContent && recommendedContent.length > 0;
                 
                 // Rotate through different carousel types
                 const carouselTypes = [
@@ -2591,6 +2623,38 @@ export default function Feed() {
                 // Carousel elements to prepend to any post type
                 const carouselElements = (
                   <>
+                    {shouldShowRecommendations && (
+                      <div className="mb-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm" data-testid="recommendations-feed-card">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-lg">✨</span>
+                          <h3 className="font-semibold text-gray-900">Recommended for you</h3>
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+                          {recommendedContent.slice(0, 6).map((item: any, idx: number) => (
+                            <div
+                              key={item.id || idx}
+                              onClick={() => handleMediaClick(item)}
+                              className="flex-shrink-0 w-24 cursor-pointer group"
+                            >
+                              <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 mb-1.5">
+                                {item.posterPath ? (
+                                  <img
+                                    src={item.posterPath}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                                    No image
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight">{item.title}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {shouldShowInlineGame && (
                       <div className="mb-4">
                         <InlineGameCard gameIndex={inlineGameIndex} />
