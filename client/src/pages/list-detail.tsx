@@ -139,6 +139,7 @@ export default function ListDetail() {
     name: sharedListData.title,
     description: getListDescription(sharedListData.title),
     isPublic: !sharedListData.is_private, // Use actual privacy setting
+    isCustom: sharedListData.isCustom || false, // Track if this is a custom list
     items: (sharedListData.items || []).map((item: any) => ({
       id: item.id,
       title: item.title,
@@ -934,6 +935,7 @@ export default function ListDetail() {
         onClose={() => setIsTrackModalOpen(false)}
         defaultListType={listData?.name && listData.name !== 'All' ? getListTypeFromTitle(listData.name) : undefined}
         targetListDisplayName={listData?.name && listData.name !== 'All' ? getDisplayTitle(listData.name) : undefined}
+        targetCustomListId={listData?.isCustom ? listData.id : undefined}
       />
 
       {/* Manage Collaborators Dialog */}

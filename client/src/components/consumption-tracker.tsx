@@ -22,6 +22,7 @@ interface ConsumptionTrackerProps {
   defaultListType?: string; // Auto-select this list when provided
   targetRankId?: string; // When provided, add media to this rank instead of list
   targetListDisplayName?: string; // Display name for custom lists (e.g., "Family")
+  targetCustomListId?: string; // ID for custom lists (e.g., list ID for "Family")
 }
 
 interface MediaResult {
@@ -36,7 +37,7 @@ interface MediaResult {
   url?: string;
 }
 
-export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId, targetListDisplayName }: ConsumptionTrackerProps) {
+export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId, targetListDisplayName, targetCustomListId }: ConsumptionTrackerProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["All Media"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MediaResult[]>([]);
@@ -163,11 +164,12 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
         throw new Error("Authentication required");
       }
 
-      const listType = mediaData.listType || 'all';
-      const isCustomList = mediaData.isCustomList || false;
+      // If targetCustomListId is provided, use custom list endpoint
+      const useCustomList = !!targetCustomListId || mediaData.isCustomList || false;
+      const listType = targetCustomListId || mediaData.listType || 'all';
       
-      // Choose endpoint based on isCustomList flag
-      const endpoint = isCustomList 
+      // Choose endpoint based on custom list flag
+      const endpoint = useCustomList 
         ? "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/add-to-custom-list"
         : "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media";
 
@@ -191,7 +193,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
           review: review.trim() || null,
           rewatchCount: rewatchCount > 1 ? rewatchCount : null,
           // Send appropriate parameter based on list type
-          ...(isCustomList 
+          ...(useCustomList 
             ? { customListId: listType } 
             : { listType: listType }
           ),
