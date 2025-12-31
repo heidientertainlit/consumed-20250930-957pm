@@ -2657,7 +2657,7 @@ export default function Feed() {
                                 )}
                               </div>
                               <p 
-                                className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight cursor-pointer"
+                                className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight cursor-pointer h-8"
                                 onClick={() => handleMediaClick(item)}
                               >
                                 {item.title}
