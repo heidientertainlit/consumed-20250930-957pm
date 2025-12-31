@@ -253,29 +253,51 @@ serve(async (req) => {
         ? Math.round((matchScore / totalWeight) * 100)
         : 50;
 
-      // Get shared titles - EXCLUDE items from "Did Not Finish" lists
-      // First, find DNF list IDs for both users
-      const [userDnfListRes, friendDnfListRes] = await Promise.all([
-        supabaseClient.from('lists').select('id').eq('user_id', user.id).ilike('name', '%did not finish%'),
-        supabaseClient.from('lists').select('id').eq('user_id', friend_id).ilike('name', '%did not finish%')
+      // Get shared LOVED titles - only items rated 4-5 stars OR in Favorites list
+      // "Loved" = rating >= 4 OR in a Favorites list
+      
+      // First, find Favorites and DNF list IDs for both users
+      const [userListsRes, friendListsRes] = await Promise.all([
+        supabaseClient.from('lists').select('id, title').eq('user_id', user.id),
+        supabaseClient.from('lists').select('id, title').eq('user_id', friend_id)
       ]);
       
-      const userDnfListIds = new Set((userDnfListRes.data || []).map((l: any) => l.id));
-      const friendDnfListIds = new Set((friendDnfListRes.data || []).map((l: any) => l.id));
+      const userFavListIds = new Set((userListsRes.data || [])
+        .filter((l: any) => l.title?.toLowerCase().includes('favorite'))
+        .map((l: any) => l.id));
+      const userDnfListIds = new Set((userListsRes.data || [])
+        .filter((l: any) => l.title?.toLowerCase().includes('did not finish'))
+        .map((l: any) => l.id));
+        
+      const friendFavListIds = new Set((friendListsRes.data || [])
+        .filter((l: any) => l.title?.toLowerCase().includes('favorite'))
+        .map((l: any) => l.id));
+      const friendDnfListIds = new Set((friendListsRes.data || [])
+        .filter((l: any) => l.title?.toLowerCase().includes('did not finish'))
+        .map((l: any) => l.id));
 
-      // Get items excluding DNF lists
+      // Get items with ratings
       const [userItemsRes, friendItemsRes] = await Promise.all([
-        supabaseClient.from('list_items').select('title, media_type, list_id').eq('user_id', user.id),
-        supabaseClient.from('list_items').select('title, media_type, list_id').eq('user_id', friend_id)
+        supabaseClient.from('list_items').select('title, media_type, list_id, rating').eq('user_id', user.id),
+        supabaseClient.from('list_items').select('title, media_type, list_id, rating').eq('user_id', friend_id)
       ]);
 
-      // Filter out DNF items
-      const userItems = (userItemsRes.data || []).filter((i: any) => !userDnfListIds.has(i.list_id));
-      const friendItems = (friendItemsRes.data || []).filter((i: any) => !friendDnfListIds.has(i.list_id));
+      // Helper to check if item is "loved" (4-5 stars OR in favorites, NOT in DNF)
+      const isLoved = (item: any, favListIds: Set<number>, dnfListIds: Set<number>) => {
+        if (dnfListIds.has(item.list_id)) return false;
+        return (item.rating && item.rating >= 4) || favListIds.has(item.list_id);
+      };
 
-      const userTitles = new Set(userItems.map((i: any) => i.title.toLowerCase()));
-      const sharedTitles = friendItems
-        .filter((i: any) => userTitles.has(i.title.toLowerCase()))
+      // Get loved items for each user
+      const userLovedItems = (userItemsRes.data || []).filter((i: any) => isLoved(i, userFavListIds, userDnfListIds));
+      const friendLovedItems = (friendItemsRes.data || []).filter((i: any) => isLoved(i, friendFavListIds, friendDnfListIds));
+
+      // Create lookup of user's loved titles
+      const userLovedTitles = new Set(userLovedItems.map((i: any) => i.title.toLowerCase()));
+      
+      // Find titles that BOTH users love
+      const sharedTitles = friendLovedItems
+        .filter((i: any) => userLovedTitles.has(i.title.toLowerCase()))
         .slice(0, 10)
         .map((i: any) => ({ title: i.title, media_type: i.media_type }));
 
@@ -292,7 +314,7 @@ User 2 (${friendUser?.display_name || 'Friend'}) DNA: ${friendProfileRes.data?.l
 Match Score: ${normalizedScore}%
 Shared Genres: ${sharedGenres.slice(0, 5).join(', ') || 'None'}
 Shared Creators: ${sharedCreators.slice(0, 5).join(', ') || 'None'}
-Shared Titles They Both Loved: ${sharedTitles.slice(0, 5).map((t: any) => t.title).join(', ') || 'None'}
+Titles They Both Rated 4-5 Stars or Favorited: ${sharedTitles.slice(0, 5).map((t: any) => t.title).join(', ') || 'None'}
 
 Based on their shared interests, recommend SPECIFIC entertainment they should consume together.
 Generate:
