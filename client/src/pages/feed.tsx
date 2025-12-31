@@ -611,20 +611,6 @@ function CurrentlyConsumingFeedCard({
     }
   };
   
-  // Determine verb based on media type
-  const getVerb = (mediaType: string | undefined) => {
-    const type = (mediaType || '').toLowerCase();
-    if (type === 'book') return 'reading';
-    if (type === 'tv' || type === 'tv show' || type === 'series') return 'watching';
-    if (type === 'movie') return 'watching';
-    if (type === 'game') return 'playing';
-    if (type === 'podcast') return 'listening to';
-    if (type === 'music') return 'listening to';
-    return 'consuming';
-  };
-  
-  const verb = getVerb(media.mediaType);
-  
   // Get display name without "consumed/IsConsumed" suffix
   const displayName = (post.user?.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user?.username;
   
