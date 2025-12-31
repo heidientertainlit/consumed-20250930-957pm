@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Play, Flame, Trophy, Swords, ChevronRight, Zap } from "lucide-react";
+import { Play, Flame, Trophy, Swords, ChevronRight, Zap, TrendingUp } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 
@@ -47,6 +47,20 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   };
 
   const streak = userStats?.dayStreak || 0;
+  const totalPoints = userStats?.totalPoints || 0;
+  
+  // Calculate percentile based on points (psychological framing)
+  const getPercentile = (points: number) => {
+    if (points >= 1000) return "Top 5%";
+    if (points >= 500) return "Top 10%";
+    if (points >= 200) return "Top 20%";
+    if (points >= 100) return "Top 30%";
+    if (points >= 50) return "Top 40%";
+    if (points >= 20) return "Top 50%";
+    return "Rising";
+  };
+  
+  const percentile = getPercentile(totalPoints);
 
   if (variant === "header") {
     return (
@@ -66,12 +80,11 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
         </Link>
 
         <div className="flex items-center justify-around text-center">
-          <div className="flex flex-col items-center" data-testid="streak-card">
+          <div className="flex flex-col items-center" data-testid="points-card">
             <div className="flex items-center gap-1.5 text-white">
-              <Flame size={16} className="text-orange-400" />
-              <span className="text-lg font-bold">{streak}</span>
+              <span className="text-lg font-bold">{totalPoints.toLocaleString()}</span>
             </div>
-            <p className="text-xs text-purple-300 mt-0.5">day streak</p>
+            <p className="text-xs text-purple-300 mt-0.5">total points</p>
           </div>
 
           <div className="w-px h-8 bg-white/20" />
@@ -79,10 +92,9 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
           <Link href="/leaderboard">
             <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="leaderboard-card">
               <div className="flex items-center gap-1.5 text-white">
-                <Trophy size={16} className="text-yellow-400" />
-                <span className="text-sm font-semibold">Rankings</span>
+                <span className="text-sm font-semibold">{percentile}</span>
               </div>
-              <p className="text-xs text-purple-300 mt-0.5">View all</p>
+              <p className="text-xs text-purple-300 mt-0.5">in your circle</p>
             </div>
           </Link>
 
@@ -90,7 +102,6 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
 
           <div className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity" data-testid="friend-challenge-card">
             <div className="flex items-center gap-1.5 text-white">
-              <Swords size={16} className="text-pink-400" />
               <span className="text-sm font-semibold">Challenge</span>
             </div>
             <p className="text-xs text-purple-300 mt-0.5">Friends</p>
@@ -121,14 +132,14 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
       </Link>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm" data-testid="streak-card">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm" data-testid="points-card">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
-              <Flame size={20} className="text-orange-500" />
+            <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
+              <span className="text-purple-600 font-bold text-sm">pts</span>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{streak}</p>
-              <p className="text-xs text-gray-500">day streak</p>
+              <p className="text-2xl font-bold text-gray-900">{totalPoints.toLocaleString()}</p>
+              <p className="text-xs text-gray-500">total points</p>
             </div>
           </div>
         </div>
@@ -136,12 +147,12 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
         <Link href="/leaderboard">
           <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm cursor-pointer hover:border-purple-200 transition-colors" data-testid="leaderboard-card">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
-                <Trophy size={20} className="text-purple-500" />
+              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
+                <TrendingUp size={20} className="text-green-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">Leaderboard</p>
-                <p className="text-xs text-gray-500">See rankings</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">{percentile}</p>
+                <p className="text-xs text-gray-500">in your circle</p>
               </div>
               <ChevronRight size={16} className="text-gray-400" />
             </div>
