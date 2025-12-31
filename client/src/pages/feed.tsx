@@ -3600,72 +3600,107 @@ export default function Feed() {
                   })()}
 
                   {/* Media Cards */}
-                  {/* List Preview Card for added_to_list posts - use content-based detection matching header logic */}
+                  {/* Unified media card for all post types */}
                   {(() => {
                     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
                     const contentLower = (post.content || '').toLowerCase();
-                    const isAddedPost = contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating);
+                    const isAddedPost = post.type === 'added_to_list' || contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating);
                     const hasListData = !!(post as any).listData;
-                    const isListPost = post.type === 'added_to_list' || (isAddedPost && hasListData) || (post.type === 'rate-review' && hasListData);
                     
-                    return isListPost && hasMediaItems ? (
-                    <div className="mb-2">
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex gap-3">
-                          {/* Poster on left - only show if single item */}
-                          {((post as any).listData?.items?.length || post.mediaItems.length) === 1 && (
-                            <div 
-                              className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
-                              onClick={() => {
-                                const media = post.mediaItems[0];
-                                if (media.externalId && media.externalSource) {
-                                  setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
-                                }
-                              }}
-                            >
-                              <img 
-                                src={post.mediaItems[0].imageUrl || getMediaArtwork(post.mediaItems[0].title, post.mediaItems[0].mediaType)}
-                                alt={`${post.mediaItems[0].title} artwork`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                          
-                          {/* List items - use listData.items if available, otherwise use mediaItems as fallback */}
-                          <div className="flex-1 min-w-0 space-y-1">
-                            {((post as any).listData?.items || post.mediaItems).slice(0, 3).map((item: any, idx: number) => {
-                              const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :
-                                item.mediaType?.toLowerCase() === 'music' ? '🎵' :
-                                item.mediaType?.toLowerCase() === 'podcast' ? '🎧' :
-                                item.mediaType?.toLowerCase() === 'game' ? '🎮' : '🎬';
-                              return (
+                    // For added_to_list posts, show full media card with actions
+                    if (isAddedPost && hasMediaItems) {
+                      const media = post.mediaItems[0];
+                      const isClickable = media.externalId && media.externalSource;
+                      
+                      return (
+                        <div className="mb-2">
+                          {/* Full media card in gray box */}
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex gap-3">
+                              <div 
+                                className={`w-16 h-20 rounded overflow-hidden flex-shrink-0 ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
+                                onClick={() => {
+                                  if (isClickable) {
+                                    setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
+                                  }
+                                }}
+                              >
+                                <img 
+                                  src={media.imageUrl || getMediaArtwork(media.title, media.mediaType)}
+                                  alt={`${media.title} artwork`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
                                 <div 
-                                  key={item.id || idx}
-                                  className="flex items-center gap-1.5 cursor-pointer hover:text-purple-600 transition-colors"
+                                  className={`${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
                                   onClick={() => {
-                                    if (item.externalId && item.externalSource) {
-                                      setLocation(`/media/${item.mediaType?.toLowerCase()}/${item.externalSource}/${item.externalId}`);
+                                    if (isClickable) {
+                                      setLocation(`/media/${media.mediaType?.toLowerCase()}/${media.externalSource}/${media.externalId}`);
                                     }
                                   }}
                                 >
-                                  <span className="text-xs">{mediaTypeEmoji}</span>
-                                  <span className="text-sm text-gray-800 truncate">{item.title}</span>
+                                  <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 hover:text-purple-600">
+                                    {media.title}
+                                  </h3>
+                                  {media.creator && (
+                                    <div className="text-gray-600 text-xs mb-0.5">
+                                      by {media.creator}
+                                    </div>
+                                  )}
+                                  <div className="text-gray-500 text-xs capitalize mb-2">
+                                    {media.mediaType}
+                                  </div>
                                 </div>
-                              );
-                            })}
-                            {(post as any).listData?.totalCount > 3 && (
-                              <Link
-                                href={`/list/${(post as any).listId}`}
-                                className="text-xs text-purple-600 hover:text-purple-700 font-medium"
-                              >
-                                +{(post as any).listData.totalCount - 3} more →
-                              </Link>
-                            )}
+                                {/* Actions - Add, Share, Available On */}
+                                <MediaCardActions media={media} session={session} />
+                              </div>
+                              {isClickable && <ChevronRight className="text-gray-400 flex-shrink-0 mt-6" size={16} />}
+                            </div>
                           </div>
+                          
+                          {/* Other list items if listData available */}
+                          {hasListData && (post as any).listData?.items?.length > 1 && (
+                            <div className="bg-gray-50 rounded-lg p-3 mt-2">
+                              <div className="space-y-1">
+                                {(post as any).listData.items.slice(0, 3).map((item: any, idx: number) => {
+                                  const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :
+                                    item.mediaType?.toLowerCase() === 'music' ? '🎵' :
+                                    item.mediaType?.toLowerCase() === 'podcast' ? '🎧' :
+                                    item.mediaType?.toLowerCase() === 'game' ? '🎮' : '🎬';
+                                  return (
+                                    <div 
+                                      key={item.id || idx}
+                                      className="flex items-center gap-1.5 cursor-pointer hover:text-purple-600 transition-colors"
+                                      onClick={() => {
+                                        if (item.externalId && item.externalSource) {
+                                          setLocation(`/media/${item.mediaType?.toLowerCase()}/${item.externalSource}/${item.externalId}`);
+                                        }
+                                      }}
+                                    >
+                                      <span className="text-xs">{mediaTypeEmoji}</span>
+                                      <span className="text-sm text-gray-800 truncate">{item.title}</span>
+                                    </div>
+                                  );
+                                })}
+                                {(post as any).listData.totalCount > 3 && (
+                                  <Link
+                                    href={`/list/${(post as any).listId}`}
+                                    className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                                  >
+                                    +{(post as any).listData.totalCount - 3} more →
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </div>
-                  ) : post.content && post.mediaItems && post.mediaItems.length > 0 ? (
+                      );
+                    }
+                    
+                    // For posts with content and media (reviews, thoughts)
+                    return post.content && post.mediaItems && post.mediaItems.length > 0 ? (
                     <div className="space-y-2 mb-2">
                       {post.mediaItems.map((media, index) => {
                         const isClickable = media.externalId && media.externalSource;
