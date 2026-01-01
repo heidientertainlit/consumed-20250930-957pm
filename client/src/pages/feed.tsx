@@ -3821,6 +3821,47 @@ export default function Feed() {
                       );
                     }
                     
+                    // For posts with listData but no mediaItems - wrap list items in gray card
+                    if (hasListData && !hasMediaItems && (post as any).listData?.items?.length > 0) {
+                      return (
+                        <div className="mb-2">
+                          <div className="bg-gray-100 rounded-lg p-3">
+                            <div className="space-y-1.5">
+                              {(post as any).listData.items.slice(0, 5).map((item: any, idx: number) => {
+                                const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :
+                                  item.mediaType?.toLowerCase() === 'music' ? '🎵' :
+                                  item.mediaType?.toLowerCase() === 'tv' ? '📺' :
+                                  item.mediaType?.toLowerCase() === 'podcast' ? '🎧' :
+                                  item.mediaType?.toLowerCase() === 'game' ? '🎮' : '🎬';
+                                return (
+                                  <div 
+                                    key={item.id || idx}
+                                    className="flex items-center gap-2 py-0.5 cursor-pointer hover:text-purple-600 transition-colors"
+                                    onClick={() => {
+                                      if (item.externalId && item.externalSource) {
+                                        setLocation(`/media/${item.mediaType?.toLowerCase()}/${item.externalSource}/${item.externalId}`);
+                                      }
+                                    }}
+                                  >
+                                    <span className="text-sm">{mediaTypeEmoji}</span>
+                                    <span className="text-sm text-gray-800 truncate">{item.title}</span>
+                                  </div>
+                                );
+                              })}
+                              {(post as any).listData.totalCount > 5 && (
+                                <Link
+                                  href={`/list/${(post as any).listId}`}
+                                  className="text-xs text-purple-600 hover:text-purple-700 font-medium pt-1"
+                                >
+                                  +{(post as any).listData.totalCount - 5} more →
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
                     // For posts with content and media (reviews, thoughts)
                     return post.content && post.mediaItems && post.mediaItems.length > 0 ? (
                     <div className="space-y-2 mb-2">

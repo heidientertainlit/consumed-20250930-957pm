@@ -146,7 +146,7 @@ export default function ConsolidatedActivityCard({
 
   return (
     <div 
-      className="bg-gray-50 rounded-2xl p-4" 
+      className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" 
       data-testid={`consolidated-activity-${activity.id}`}
     >
       {/* Header with Avatar */}
@@ -184,29 +184,31 @@ export default function ConsolidatedActivityCard({
         )}
       </div>
 
-      {/* Media Items - Simple list */}
-      <div className="space-y-1 mb-3">
-        {displayedItems.map((item, idx) => (
-          <Link 
-            key={item.id || idx} 
-            href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
-          >
-            <div className="flex items-center gap-2 py-1 hover:text-purple-600 transition-colors cursor-pointer">
-              <span className="text-base">{getMediaTypeIcon(item.mediaType)}</span>
-              <span className="text-sm text-gray-900 truncate flex-1">
-                {item.title}
-              </span>
-              {item.rating && activity.type === 'ratings' && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                  <span className="text-xs font-medium text-gray-700">
-                    {item.rating}
-                  </span>
-                </div>
-              )}
-            </div>
-          </Link>
-        ))}
+      {/* Media Items - in gray card */}
+      <div className="bg-gray-100 rounded-lg p-3 mb-3">
+        <div className="space-y-1.5">
+          {displayedItems.map((item, idx) => (
+            <Link 
+              key={item.id || idx} 
+              href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
+            >
+              <div className="flex items-center gap-2 py-1 hover:text-purple-600 transition-colors cursor-pointer">
+                <span className="text-base">{getMediaTypeIcon(item.mediaType)}</span>
+                <span className="text-sm text-gray-900 truncate flex-1">
+                  {item.title}
+                </span>
+                {item.rating && activity.type === 'ratings' && (
+                  <div className="flex items-center gap-1">
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                    <span className="text-xs font-medium text-gray-700">
+                      {item.rating}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* +X more link */}
