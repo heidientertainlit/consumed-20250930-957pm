@@ -3352,7 +3352,27 @@ export default function Feed() {
                               </p>
                             );
                           } else if (post.content && hasMediaItems) {
-                            // Post with content about media (thoughts about a specific title)
+                            // Check if content is just the media title (not actual thoughts)
+                            const contentIsJustTitle = post.mediaItems[0]?.title && 
+                              post.content.toLowerCase().trim() === post.mediaItems[0].title.toLowerCase().trim();
+                            
+                            if (contentIsJustTitle) {
+                              // Just showing the add, not actual thoughts
+                              return (
+                                <p className="text-sm">
+                                  <Link 
+                                    href={`/user/${post.user.id}`}
+                                    className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                    data-testid={`link-user-${post.user.id}`}
+                                  >
+                                    {post.user.username}
+                                  </Link>
+                                  <span className="text-gray-500"> added {post.mediaItems[0].title}</span>
+                                </p>
+                              );
+                            }
+                            
+                            // Post with actual content about media (thoughts about a specific title)
                             return (
                               <p className="text-sm">
                                 <Link 
@@ -3591,6 +3611,10 @@ export default function Feed() {
                     if (!post.content) return null;
                     const contentLower = post.content.toLowerCase();
                     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
+                    // Check if content is just the media title - if so, don't display it separately
+                    const contentIsJustTitle = hasMediaItems && post.mediaItems[0]?.title && 
+                      post.content.toLowerCase().trim() === post.mediaItems[0].title.toLowerCase().trim();
+                    if (contentIsJustTitle) return null;
                     // Don't hide content for "thoughts" posts - they have actual user content to show
                     const isThoughtsPost = contentLower.includes('thoughts') || (post.content.length > 50 && hasMediaItems);
                     const isAddedOrRatedPost = !isThoughtsPost && (contentLower.startsWith('added ') || contentLower.startsWith('rated ') || contentLower.startsWith('shared ')) && hasMediaItems;
@@ -3663,9 +3687,12 @@ export default function Feed() {
                   {(() => {
                     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
                     const contentLower = (post.content || '').toLowerCase();
+                    // Check if content is just the media title - treat as added post
+                    const contentIsJustTitle = hasMediaItems && post.mediaItems[0]?.title && 
+                      (post.content || '').toLowerCase().trim() === post.mediaItems[0].title.toLowerCase().trim();
                     // Don't treat "thoughts" posts as simple "added" posts - they should show content + media card
-                    const isThoughtsPost = contentLower.includes('thoughts') || (post.content && post.content.length > 50 && hasMediaItems);
-                    const isAddedPost = !isThoughtsPost && (post.type === 'added_to_list' || contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating));
+                    const isThoughtsPost = !contentIsJustTitle && (contentLower.includes('thoughts') || (post.content && post.content.length > 50 && hasMediaItems));
+                    const isAddedPost = contentIsJustTitle || (!isThoughtsPost && (post.type === 'added_to_list' || contentLower.startsWith('added ') || (!post.content && hasMediaItems && !post.rating)));
                     const hasListData = !!(post as any).listData;
                     
                     // For added_to_list posts, show full media card with actions
