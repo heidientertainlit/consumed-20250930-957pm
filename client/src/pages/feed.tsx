@@ -1220,6 +1220,20 @@ export default function Feed() {
     if ('originalPostIds' in item) return true;
     
     const post = item as SocialPost;
+    
+    // Hide malformed posts: short content (looks like just a title), no media items, 
+    // and not a special post type (prediction/poll/trivia/rank_share/hot_take)
+    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'hot_take', 'media_group', 'added_to_list', 'rewatch', 'ask_for_recs'];
+    const isSpecialType = specialTypes.includes(post.type || '');
+    const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
+    const hasListData = !!(post as any).listData;
+    const hasRankData = !!(post as any).rankData;
+    const isShortContent = post.content && post.content.length < 80 && !post.content.includes('\n');
+    
+    // If post has short content, no media, no list/rank data, and isn't a special type - hide it
+    if (isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType) {
+      return false;
+    }
     // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
     if (feedFilter === 'friends') {
       // Show only posts from friends (not own posts)
