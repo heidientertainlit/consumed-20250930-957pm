@@ -3402,7 +3402,24 @@ export default function Feed() {
                                 </p>
                               );
                             }
-                            // Thoughts post - has content but no media
+                            // If content is short (looks like just a title), show it inline
+                            // Otherwise show "added thoughts" and content separately
+                            const isShortContent = post.content.length < 60 && !post.content.includes('\n');
+                            if (isShortContent) {
+                              return (
+                                <p className="text-sm">
+                                  <Link 
+                                    href={`/user/${post.user.id}`}
+                                    className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                    data-testid={`link-user-${post.user.id}`}
+                                  >
+                                    {post.user.username}
+                                  </Link>
+                                  <span className="text-gray-500"> added {post.content}</span>
+                                </p>
+                              );
+                            }
+                            // Thoughts post - has actual content to show
                             return (
                               <p className="text-sm">
                                 <Link 
@@ -3412,7 +3429,7 @@ export default function Feed() {
                                 >
                                   {post.user.username}
                                 </Link>
-                                <span className="text-gray-500"> added thoughts</span>
+                                <span className="text-gray-500"> shared a thought</span>
                               </p>
                             );
                           } else {
@@ -3615,6 +3632,9 @@ export default function Feed() {
                     const contentIsJustTitle = hasMediaItems && post.mediaItems[0]?.title && 
                       post.content.toLowerCase().trim() === post.mediaItems[0].title.toLowerCase().trim();
                     if (contentIsJustTitle) return null;
+                    // For posts with short content and no media, content is shown in header, skip here
+                    const isShortContentNoMedia = !hasMediaItems && post.content.length < 60 && !post.content.includes('\n');
+                    if (isShortContentNoMedia) return null;
                     // Don't hide content for "thoughts" posts - they have actual user content to show
                     const isThoughtsPost = contentLower.includes('thoughts') || (post.content.length > 50 && hasMediaItems);
                     const isAddedOrRatedPost = !isThoughtsPost && (contentLower.startsWith('added ') || contentLower.startsWith('rated ') || contentLower.startsWith('shared ')) && hasMediaItems;
