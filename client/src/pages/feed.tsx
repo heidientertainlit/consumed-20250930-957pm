@@ -2487,7 +2487,7 @@ export default function Feed() {
                 >
                   All
                 </button>
-                <Link href="/play?tab=trivia">
+                <Link href="/play/trivia">
                   <button
                     className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-trivia"
@@ -2495,7 +2495,7 @@ export default function Feed() {
                     Trivia
                   </button>
                 </Link>
-                <Link href="/play?tab=polls">
+                <Link href="/play/polls">
                   <button
                     className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-polls"
@@ -2503,7 +2503,7 @@ export default function Feed() {
                     Polls
                   </button>
                 </Link>
-                <Link href="/play?tab=predictions">
+                <Link href="/play/predictions">
                   <button
                     className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-predict"
@@ -2511,7 +2511,7 @@ export default function Feed() {
                     Predict
                   </button>
                 </Link>
-                <Link href="/collections?tab=ranks">
+                <Link href="/play/ranks">
                   <button
                     className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-rank"
