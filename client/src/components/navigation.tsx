@@ -503,37 +503,36 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50 pb-safe">
-        <div className="relative flex justify-center items-end h-20 px-8">
-          {/* Left nav item */}
+        <div className="flex justify-around items-center h-18 px-4 pt-2 pb-3">
+          {/* Activity */}
           <Link
             href="/activity"
-            className={`absolute left-8 bottom-3 flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-lg transition-colors ${location === "/activity" ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
           >
-            <Activity className="text-white" size={22} />
-            <span className="text-[10px] font-medium text-white">Activity</span>
+            <Activity className="text-white" size={26} />
+            <span className="text-xs font-medium text-white">Activity</span>
           </Link>
 
-          {/* Center + Button - subtle, mostly inside nav */}
+          {/* Center Add - pill button */}
           <button
             onClick={() => setIsQuickActionOpen(true)}
-            className="absolute left-1/2 -translate-x-1/2 top-[-8px] flex items-center justify-center"
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 py-2.5 px-5 rounded-full transition-colors"
             data-testid="quick-action-button"
           >
-            <div className="h-11 w-11 bg-gradient-to-br from-purple-500/80 to-pink-500/80 rounded-full flex items-center justify-center shadow-lg border-2 border-slate-800">
-              <Plus className="text-white/90" size={22} strokeWidth={2} />
-            </div>
+            <Plus className="text-white" size={18} strokeWidth={2.5} />
+            <span className="text-xs font-medium text-white">Add</span>
           </button>
 
-          {/* Right nav item */}
+          {/* Me */}
           <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
-            className={`absolute right-8 bottom-3 flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-colors ${location.includes("/user/") ? "bg-white/15" : ""}`}
           >
             <div className="relative">
-              <User className="text-white" size={22} />
-              <Dna className="text-white absolute -right-1.5 -bottom-0.5" size={10} />
+              <User className="text-white" size={26} />
+              <Dna className="text-white absolute -right-1.5 -bottom-0.5" size={11} />
             </div>
-            <span className="text-[10px] font-medium text-white">Me</span>
+            <span className="text-xs font-medium text-white">Me</span>
           </Link>
         </div>
       </nav>
