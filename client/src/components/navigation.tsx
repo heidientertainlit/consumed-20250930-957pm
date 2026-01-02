@@ -503,31 +503,31 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50 pb-safe">
-        <div className="relative flex justify-center items-end h-16 px-8">
+        <div className="relative flex justify-center items-end h-20 px-8">
           {/* Left nav item */}
           <Link
             href="/activity"
-            className={`absolute left-8 bottom-2 flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-lg transition-colors ${location === "/activity" ? "bg-white/20" : ""}`}
+            className={`absolute left-8 bottom-3 flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-lg transition-colors ${location === "/activity" ? "bg-white/20" : ""}`}
           >
             <Activity className="text-white" size={22} />
             <span className="text-[10px] font-medium text-white">Activity</span>
           </Link>
 
-          {/* Center + Button */}
+          {/* Center + Button - subtle, mostly inside nav */}
           <button
             onClick={() => setIsQuickActionOpen(true)}
-            className="absolute left-1/2 -translate-x-1/2 -top-5 flex items-center justify-center"
+            className="absolute left-1/2 -translate-x-1/2 top-[-8px] flex items-center justify-center"
             data-testid="quick-action-button"
           >
-            <div className="h-14 w-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-xl border-4 border-slate-900">
-              <Plus className="text-white" size={28} strokeWidth={2.5} />
+            <div className="h-11 w-11 bg-gradient-to-br from-purple-500/80 to-pink-500/80 rounded-full flex items-center justify-center shadow-lg border-2 border-slate-800">
+              <Plus className="text-white/90" size={22} strokeWidth={2} />
             </div>
           </button>
 
           {/* Right nav item */}
           <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
-            className={`absolute right-8 bottom-2 flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
+            className={`absolute right-8 bottom-3 flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-lg transition-colors ${location.includes("/user/") ? "bg-white/20" : ""}`}
           >
             <div className="relative">
               <User className="text-white" size={22} />
