@@ -503,7 +503,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50 pb-safe">
-        <div className="flex justify-around items-center h-18 px-4 pt-2 pb-3">
+        <div className="flex justify-around items-center h-18 px-4 pt-3 pb-4">
           {/* Activity */}
           <Link
             href="/activity"
@@ -513,13 +513,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xs font-medium text-white">Activity</span>
           </Link>
 
-          {/* Center Add - pill button */}
+          {/* Center Add - subtle circle within nav */}
           <button
             onClick={() => setIsQuickActionOpen(true)}
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 py-2.5 px-5 rounded-full transition-colors"
+            className="flex flex-col items-center gap-1"
             data-testid="quick-action-button"
           >
-            <Plus className="text-white" size={18} strokeWidth={2.5} />
+            <div className="h-10 w-10 bg-white/15 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors">
+              <Plus className="text-white" size={20} strokeWidth={2} />
+            </div>
             <span className="text-xs font-medium text-white">Add</span>
           </button>
 

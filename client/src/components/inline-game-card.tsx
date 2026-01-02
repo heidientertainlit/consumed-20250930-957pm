@@ -142,13 +142,17 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
       });
       setSubmittedGames(prev => new Set([...prev, currentGame.id]));
       setLastEarnedPoints(currentGame.points_reward);
-      // Show completion dialog and advance to next game immediately
-      // so the next game appears behind the dialog
-      setShowCompleted(true);
+      // Show toast and immediately advance to next game
+      toast({
+        title: "🎉 Nice work!",
+        description: `+${currentGame.points_reward} points earned`,
+        duration: 2500,
+      });
+      // Advance to next game immediately
       setTimeout(() => {
         setCurrentGameOffset(prev => prev + 1);
         setSelectedAnswer(null);
-      }, 100);
+      }, 300);
     } finally {
       setIsSubmitting(false);
     }
@@ -209,16 +213,20 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
         });
         setSubmittedGames(prev => new Set([...prev, currentGame.id]));
         setLastEarnedPoints(newScore);
-        // Show completion dialog and advance to next game immediately
-        // so the next game appears behind the dialog
-        setShowCompleted(true);
+        // Show toast and immediately advance to next game
+        toast({
+          title: "🎉 Trivia Complete!",
+          description: `+${newScore} points earned`,
+          duration: 2500,
+        });
+        // Advance to next game immediately
         setTimeout(() => {
           setCurrentGameOffset(prev => prev + 1);
           setTriviaQuestionIndex(0);
           setTriviaScore(0);
           setTriviaComplete(false);
           setSelectedAnswer(null);
-        }, 100);
+        }, 300);
       } finally {
         setIsSubmitting(false);
       }
