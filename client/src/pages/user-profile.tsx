@@ -2499,8 +2499,23 @@ export default function UserProfile() {
                       </button>
                     ) : null}
 
-                    {/* Global Rank */}
-                    {userRank && (
+                    {/* Global Rank - Clickable to leaderboard */}
+                    {isOwnProfile && (
+                      <Link href="/leaderboard">
+                        <div className="flex items-center space-x-2 hover:bg-gray-100 -ml-2 px-2 py-1 rounded-lg transition-colors group cursor-pointer">
+                          <Medal className="text-purple-500" size={18} />
+                          {userRank ? (
+                            <>
+                              <span className="text-base font-bold text-gray-800">#{userRank.global}</span>
+                              <span className="text-sm text-gray-600 group-hover:text-purple-600">global rank →</span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-600 group-hover:text-purple-600">view leaderboard →</span>
+                          )}
+                        </div>
+                      </Link>
+                    )}
+                    {!isOwnProfile && userRank && (
                       <div className="flex items-center space-x-2">
                         <Medal className="text-purple-500" size={18} />
                         <span className="text-base font-bold text-gray-800">#{userRank.global}</span>
@@ -2878,24 +2893,7 @@ export default function UserProfile() {
               </div>
             )}
             
-            {/* Leaderboard Link */}
-            {isOwnProfile && (
-              <Link href="/leaderboard" className="block mt-4">
-                <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-4 hover:border-purple-300 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 rounded-full p-2">
-                      <Trophy className="text-purple-600" size={20} />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">View Leaderboard</p>
-                      <p className="text-xs text-gray-500">See how you rank among friends</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="text-gray-400" size={20} />
-                </div>
-              </Link>
-            )}
-          </div>
+                      </div>
         </div>
         )}
 
