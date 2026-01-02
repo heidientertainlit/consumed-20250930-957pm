@@ -76,7 +76,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
 
   if (variant === "header") {
     return (
-      <div className="space-y-2">
+      <div className="space-y-4">
         <Link href="/play?tab=trivia">
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-white cursor-pointer hover:bg-white/10 transition-all" data-testid="daily-challenge-card">
             <div className="flex items-center justify-between">
@@ -89,9 +89,6 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
               </div>
             </div>
           </div>
-        </Link>
-        <Link href="/leaderboard" className="text-xs text-purple-300 hover:text-white transition-colors flex items-center gap-1 pl-1">
-          View Leaderboard <span className="text-[10px]">→</span>
         </Link>
       </div>
     );

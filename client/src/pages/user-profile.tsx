@@ -2877,6 +2877,24 @@ export default function UserProfile() {
                 </div>
               </div>
             )}
+            
+            {/* Leaderboard Link */}
+            {isOwnProfile && (
+              <Link href="/leaderboard" className="block mt-4">
+                <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-4 hover:border-purple-300 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-purple-100 rounded-full p-2">
+                      <Trophy className="text-purple-600" size={20} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">View Leaderboard</p>
+                      <p className="text-xs text-gray-500">See how you rank among friends</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="text-gray-400" size={20} />
+                </div>
+              </Link>
+            )}
           </div>
         </div>
         )}
