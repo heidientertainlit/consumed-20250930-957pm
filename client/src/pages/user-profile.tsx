@@ -2507,10 +2507,10 @@ export default function UserProfile() {
                           {userRank ? (
                             <>
                               <span className="text-base font-bold text-gray-800">#{userRank.global}</span>
-                              <span className="text-sm text-gray-600 group-hover:text-purple-600">global rank →</span>
+                              <span className="text-sm text-gray-600 group-hover:text-purple-600">View Leaderboard →</span>
                             </>
                           ) : (
-                            <span className="text-sm text-gray-600 group-hover:text-purple-600">view leaderboard →</span>
+                            <span className="text-sm text-gray-600 group-hover:text-purple-600">View Leaderboard →</span>
                           )}
                         </div>
                       </Link>
