@@ -446,25 +446,25 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
       id: "capture" as IntentType, 
       label: "Capture", 
       icon: Star, 
-      iconColor: "text-yellow-500", 
-      bgColor: "bg-gradient-to-br from-yellow-400 to-amber-500", 
-      desc: "Save something you watched, read, or listened to" 
+      iconColor: "text-white", 
+      bgColor: "bg-gradient-to-br from-violet-500 to-purple-700", 
+      desc: "Track media" 
     },
     { 
       id: "say" as IntentType, 
       label: "Say something", 
       icon: MessageSquare, 
-      iconColor: "text-blue-500", 
-      bgColor: "bg-gradient-to-br from-blue-400 to-indigo-500", 
-      desc: "Share a thought, hot take, or question" 
+      iconColor: "text-white", 
+      bgColor: "bg-gradient-to-br from-blue-500 to-indigo-700", 
+      desc: "Share a thought" 
     },
     { 
       id: "play" as IntentType, 
       label: "Play", 
       icon: Swords, 
-      iconColor: "text-purple-500", 
-      bgColor: "bg-gradient-to-br from-purple-500 to-pink-500", 
-      desc: "Trivia, predictions, rankings, challenges" 
+      iconColor: "text-white", 
+      bgColor: "bg-gradient-to-br from-fuchsia-500 to-purple-700", 
+      desc: "Games & more" 
     },
   ];
 
@@ -1195,20 +1195,20 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               <SheetTitle className="text-center text-gray-900 text-xl font-semibold">What's on your mind?</SheetTitle>
             </SheetHeader>
             
-            <div className="grid grid-cols-3 gap-3 pb-6">
+            <div className="flex justify-center gap-6 pb-6 px-4">
               {intents.map((intent) => (
                 <button
                   key={intent.id}
                   onClick={() => handleIntentSelect(intent.id)}
-                  className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-gray-50 transition-colors"
+                  className="flex flex-col items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors w-24"
                   data-testid={`intent-${intent.id}`}
                 >
-                  <div className={`w-14 h-14 rounded-xl ${intent.bgColor} flex items-center justify-center shadow-lg`}>
-                    <intent.icon size={26} className="text-white" />
+                  <div className={`w-16 h-16 rounded-2xl ${intent.bgColor} flex items-center justify-center shadow-lg`}>
+                    <intent.icon size={28} className="text-white" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-gray-900 text-sm">{intent.label}</p>
-                    <p className="text-xs text-gray-500 leading-tight mt-0.5">{intent.desc}</p>
+                    <p className="font-semibold text-gray-900 text-sm leading-tight">{intent.label}</p>
+                    <p className="text-xs text-gray-400 leading-tight mt-1">{intent.desc}</p>
                   </div>
                 </button>
               ))}

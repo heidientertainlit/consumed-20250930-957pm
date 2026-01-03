@@ -452,8 +452,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                   className={cn(
                     "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
                     selectedAnswer === option
-                      ? "border-transparent bg-purple-600 text-white"
-                      : "border-transparent bg-gray-100 text-gray-900 hover:bg-gray-200"
+                      ? "border-transparent bg-gray-200 text-gray-900"
+                      : "border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
                   )}
                   data-testid={`trivia-option-${index}`}
                 >
@@ -529,8 +529,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                   className={cn(
                     "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
                     selectedAnswer === optionText && index === currentGameOffset
-                      ? "border-transparent bg-purple-600 text-white"
-                      : "border-transparent bg-gray-100 text-gray-900 hover:bg-gray-200"
+                      ? "border-transparent bg-gray-200 text-gray-900"
+                      : "border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
                   )}
                   data-testid={`poll-option-${optIndex}`}
                 >
