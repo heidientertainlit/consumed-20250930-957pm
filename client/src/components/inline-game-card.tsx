@@ -50,6 +50,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   const swipeStartX = useRef<number | null>(null);
   const swipeStartY = useRef<number | null>(null);
   const isSwiping = useRef(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleSwipeStart = (e: React.TouchEvent | React.MouseEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -554,7 +555,6 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
 
   const canGoPrev = currentGameOffset > 0;
   const canGoNext = availableGames.length > 1;
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle scroll snap to update current game offset
   const handleScroll = () => {
