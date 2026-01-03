@@ -637,7 +637,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="finished">Finished</option>
-                  <option value="queue">Queue</option>
+                  <option value="queue">Want To</option>
                   <option value="currently">Currently Consuming</option>
                   {userLists.filter((l: any) => !l.is_default).map((list: any) => (
                     <option key={list.id} value={list.id}>{list.title}</option>
