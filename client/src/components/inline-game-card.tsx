@@ -395,6 +395,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             data-testid="inline-trivia-preview-card"
             onTouchStart={handleTouchStart}
             onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+            style={{ touchAction: 'pan-y' }}
           >
             {/* Category and Invite row */}
             <div className="p-4 pb-0 flex items-center justify-between px-4">
@@ -453,6 +454,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           data-testid="inline-trivia-card"
           onTouchStart={handleTouchStart}
           onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+          style={{ touchAction: 'pan-y' }}
         >
           <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
             <div className="flex items-center justify-between">
@@ -532,6 +534,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         data-testid="inline-poll-card"
         onTouchStart={handleTouchStart}
         onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+        style={{ touchAction: 'pan-y' }}
       >
         <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
           <div className="flex items-center justify-between">
