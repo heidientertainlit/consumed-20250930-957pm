@@ -555,24 +555,36 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           </div>
         </div>
         <div className="p-5 px-10">
-          <p className="text-base font-semibold text-gray-900 mb-3 leading-snug">{currentGame.title}</p>
-          <div className="flex flex-col gap-1.5 mb-3">
+          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{currentGame.title}</p>
+          <div className="flex flex-col gap-2 mb-4">
             {(currentGame.options || []).map((option: any, index: number) => {
               const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
+              const isSelected = selectedAnswer === optionText;
               return (
                 <button
                   key={index}
                   onClick={() => setSelectedAnswer(optionText)}
                   disabled={isSubmitting}
                   className={cn(
-                    "w-full px-3.5 py-2.5 text-left rounded-full border-2 transition-all text-sm font-medium",
-                    selectedAnswer === optionText
-                      ? "border-purple-500 bg-purple-600 text-white"
-                      : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
+                    "w-full relative rounded-full overflow-hidden transition-all",
+                    isSelected ? "ring-2 ring-purple-400 ring-offset-2" : ""
                   )}
                   data-testid={`poll-option-${index}`}
                 >
-                  {optionText}
+                  <div className={cn(
+                    "w-full h-12 rounded-full",
+                    isSelected 
+                      ? "bg-gradient-to-r from-purple-500 to-violet-500"
+                      : "bg-gradient-to-r from-purple-400/80 to-violet-400/80"
+                  )} />
+                  <div className="absolute inset-0 flex items-center justify-between px-4">
+                    <span className={cn(
+                      "text-sm font-medium",
+                      isSelected ? "text-white" : "text-white"
+                    )}>
+                      {optionText}
+                    </span>
+                  </div>
                 </button>
               );
             })}
