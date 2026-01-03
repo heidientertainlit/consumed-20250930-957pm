@@ -66,9 +66,11 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const deltaX = Math.abs(clientX - swipeStartX.current);
     const deltaY = Math.abs(clientY - (swipeStartY.current || 0));
+    console.log('🟡 SWIPE MOVE', { deltaX, deltaY });
     // If horizontal movement exceeds vertical, it's a swipe attempt
     if (deltaX > 10 && deltaX > deltaY) {
       isSwiping.current = true;
+      e.preventDefault(); // Prevent scrolling when swiping horizontally
     }
   };
 
