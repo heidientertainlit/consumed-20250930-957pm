@@ -2619,11 +2619,13 @@ export default function Feed() {
                   : post.id;
                 
                 // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
-                // Show inline game card every 4 posts (starting at 2nd post)
-                const shouldShowInlineGame = postIndex === 1 || (postIndex > 1 && (postIndex - 1) % 4 === 0);
+                // Show polls carousel at positions 1, 9, 17, 25... (every 8 posts starting at 1)
+                const shouldShowPollsCarousel = postIndex === 1 || (postIndex > 1 && (postIndex - 1) % 8 === 0);
+                // Show trivia carousel at positions 5, 13, 21, 29... (every 8 posts starting at 5)
+                const shouldShowTriviaCarousel = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 8 === 0);
                 // Show game carousel every 20 posts (less frequent, for discovery)
                 const shouldShowGameCarousel = postIndex === 19 || (postIndex > 19 && (postIndex - 19) % 20 === 0);
-                const shouldShowMediaCarousel = (postIndex + 1) % 15 === 0 && postIndex > 0 && !shouldShowGameCarousel && !shouldShowInlineGame;
+                const shouldShowMediaCarousel = (postIndex + 1) % 15 === 0 && postIndex > 0 && !shouldShowGameCarousel && !shouldShowPollsCarousel && !shouldShowTriviaCarousel;
                 // Show recommendations card at position 4 (early in feed)
                 const shouldShowRecommendations = postIndex === 4 && recommendedContent && recommendedContent.length > 0;
                 
@@ -2635,9 +2637,6 @@ export default function Feed() {
                 ];
                 const carouselIndex = Math.floor((postIndex + 1) / 15) - 1;
                 const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length] || carouselTypes[0];
-                
-                // Calculate which game to show for this inline card position
-                const inlineGameIndex = shouldShowInlineGame ? Math.floor(postIndex / 4) : 0;
                 
                 // Carousel elements to prepend to any post type
                 const carouselElements = (
@@ -2728,9 +2727,14 @@ export default function Feed() {
                         </div>
                       </div>
                     )}
-                    {shouldShowInlineGame && (
+                    {shouldShowPollsCarousel && (
                       <div className="mb-4">
-                        <InlineGameCard gameIndex={inlineGameIndex} />
+                        <InlineGameCard gameType="vote" />
+                      </div>
+                    )}
+                    {shouldShowTriviaCarousel && (
+                      <div className="mb-4">
+                        <InlineGameCard gameType="trivia" />
                       </div>
                     )}
                     {shouldShowGameCarousel && (

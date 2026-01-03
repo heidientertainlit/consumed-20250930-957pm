@@ -30,9 +30,10 @@ interface Game {
 interface InlineGameCardProps {
   className?: string;
   gameIndex?: number;
+  gameType?: 'vote' | 'trivia' | 'all'; // Filter to show only polls, only trivia, or both (alternating)
 }
 
-export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameCardProps) {
+export default function InlineGameCard({ className, gameIndex = 0, gameType = 'all' }: InlineGameCardProps) {
   const [currentGameOffset, setCurrentGameOffset] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,7 +47,7 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
   const { toast } = useToast();
 
   const { data: games = [], isLoading } = useQuery({
-    queryKey: ['inline-games'],
+    queryKey: ['inline-games', gameType],
     queryFn: async () => {
       const { data: pools, error } = await supabase
         .from('prediction_pools')
@@ -55,15 +56,14 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw new Error('Failed to fetch games');
-      // Debug: Log trivia games with tags
-      const triviGames = (pools || []).filter((g: any) => g.type === 'trivia');
-      console.log('🎮 Trivia games with tags:', triviGames.map((g: any) => ({ id: g.id, tags: g.tags, category: g.category })));
       return (pools || []).filter((game: any) => {
         if (!game.id || !game.title || !game.type) return false;
         if (game.type === 'predict') return false;
         // Include Consumed platform content (consumed-*) and legacy trivia (trivia-*)
         const isConsumedContent = game.id.startsWith('consumed-') || game.id.startsWith('trivia-');
         if (!isConsumedContent) return false;
+        // Filter by gameType if specified
+        if (gameType !== 'all' && game.type !== gameType) return false;
         return true;
       }) as Game[];
     },
@@ -91,19 +91,24 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     return true;
   });
 
-  // Separate polls and trivia for alternating display
-  const polls = availableGames.filter(g => g.type === 'vote');
-  const trivia = availableGames.filter(g => g.type === 'trivia');
-  
-  // Alternate: even gameIndex = poll, odd gameIndex = trivia
-  const shouldShowTrivia = (gameIndex + currentGameOffset) % 2 === 1;
-  const targetList = shouldShowTrivia ? trivia : polls;
-  // Fallback to the other type if preferred type is empty
-  const fallbackList = shouldShowTrivia ? polls : trivia;
-  const activeList = targetList.length > 0 ? targetList : fallbackList;
-  
-  const effectiveIndex = Math.floor((gameIndex + currentGameOffset) / 2) % Math.max(activeList.length, 1);
-  const currentGame = activeList[effectiveIndex];
+  // When gameType is specified, use simple index-based navigation
+  // When 'all', alternate between polls and trivia
+  let currentGame: Game | undefined;
+  if (gameType !== 'all') {
+    // Simple: just use offset to navigate through filtered games
+    const effectiveIndex = currentGameOffset % Math.max(availableGames.length, 1);
+    currentGame = availableGames[effectiveIndex];
+  } else {
+    // Legacy alternating behavior
+    const polls = availableGames.filter(g => g.type === 'vote');
+    const trivia = availableGames.filter(g => g.type === 'trivia');
+    const shouldShowTrivia = (gameIndex + currentGameOffset) % 2 === 1;
+    const targetList = shouldShowTrivia ? trivia : polls;
+    const fallbackList = shouldShowTrivia ? polls : trivia;
+    const activeList = targetList.length > 0 ? targetList : fallbackList;
+    const effectiveIndex = Math.floor((gameIndex + currentGameOffset) / 2) % Math.max(activeList.length, 1);
+    currentGame = activeList[effectiveIndex];
+  }
 
   const submitAnswer = useMutation({
     mutationFn: async ({ poolId, answer, score, game }: { poolId: string; answer: string; score?: number; game: Game }) => {
