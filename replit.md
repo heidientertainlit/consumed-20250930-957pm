@@ -1,7 +1,7 @@
 # consumed - Entertainment Consumption Tracking MVP
 
 ## Overview
-consumed is a mobile-first MVP designed for tracking entertainment consumption. It allows users to log various media, engage with social features like leaderboards and activity feeds, discover friends, and participate in trivia and prediction games. The platform aims to offer an immersive experience for managing and sharing entertainment, characterized by a dark gradient theme, intuitive navigation, and an "Entertainment DNA" onboarding process. The project envisions significant market potential by becoming the go-to platform for entertainment tracking and social engagement.
+consumed is a mobile-first MVP for tracking entertainment consumption, offering social features like leaderboards, activity feeds, friend discovery, trivia, and prediction games. It aims to be an immersive platform for managing and sharing entertainment, characterized by a dark gradient theme, intuitive navigation, and an "Entertainment DNA" onboarding process, with significant market potential to become a leading platform in its niche.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -17,151 +17,57 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX Decisions
-- **Mobile-first design** with a **dark gradient theme**.
-- **Bottom Navigation**: Activity, Play, Collections, Me.
-- **Top Navigation**: Search (🔍), Notifications, Profile.
-- **Profile Section Navigation**: Sticky pills for Stats, DNA, Friends, Collections, History.
-- **Component Library**: shadcn/ui (Radix UI, Tailwind CSS).
-- **Button Theme**: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
-- **Composer**: Simplified inline composer with quick action buttons and dynamic forms for posts, ratings, predictions, and polls.
+- Mobile-first design with a dark gradient theme.
+- Bottom Navigation: Activity, Play, Collections, Me.
+- Top Navigation: Search (🔍), Notifications, Profile.
+- Profile Section Navigation: Sticky pills for Stats, DNA, Friends, Collections, History.
+- Component Library: shadcn/ui (Radix UI, Tailwind CSS).
+- Button Theme: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
+- Composer: Simplified inline with quick action buttons and dynamic forms.
 
 ### Technical Implementations
-- **Frontend**: React 18, TypeScript, Wouter, TanStack Query, Vite.
-- **Backend**: Supabase Edge Functions (Deno runtime) for all server-side logic.
-- **Database**: Supabase PostgreSQL.
-- **Authentication**: Supabase Auth.
-- **Unified API Search**: Integration with Spotify, TMDB, YouTube, Open Library via Edge Functions.
-- **Netflix Import Fix**: Netflix imports now use TMDB API to detect movies vs TV shows (previously all marked as TV). Uses rate limiting (3 req/800ms) and caching for efficiency. Includes validation to reject junk data (timestamps, device IDs, email addresses, profile names) from incorrectly formatted imports.
-- **Notification System**: Real-time unified system.
-- **Leaderboard System**: Engagement-focused with 5 categories (Fan Leaders, Conversation Starters, Top Predictors, Trivia Champs, Most Helpful) using 'Your Circle' (friends) and Global tabs.
-- **Unified Voting System**: Supports polls, predictions, and trivia.
-- **User Points System**: Comprehensive points system with standardized values:
-  - **Media Logging**: Books (15), TV (10), Movies (8), Games (5), Podcasts (3), Music (1), Reviews (+10)
-  - **Games**: Predictions (+20 correct/-20 wrong), Trivia (10 per correct), Polls (2 participation)
-  - **Social**: Friends (5 each), Referrals (25 when invited user does first activity)
-  - **Engagement**: Posts (10), Likes given (2), Comments (5), Predictions voted (5), Ranks (10), plus bonus for likes/comments received
-- **Smart Recommendations**: GPT-4o powered with caching for instant loading.
-- **Creator Follow System**: Enables users to follow creators and receive updates.
-- **Spoiler Protection**: Blurs spoiler content until revealed.
-- **Session Tracking & Analytics**: Monitors user engagement and churn. Includes behavioral analytics tracking page views, scroll depth, session duration, and user events. Data powers the "Behavior" tab in admin dashboard.
-- **Consumed vs User-Generated Content**: Differentiates platform-curated content with a "🏆 Consumed" badge from user-generated content.
-- **Prediction Resolution**: Supports timed and open-ended predictions with a scoring system and creator/crowd-resolve mechanisms.
-- **AI Builder** (`/library-ai`): Allows customization of list organization and tracking preferences via a visual builder and AI chat.
-- **DNA Levels System**: Two-tier Entertainment DNA system (survey required for both levels):
-  - **Level 0: No DNA** - User has not completed the DNA survey
-  - **Level 1: DNA Summary** (Survey + 10 items): Full DNA profile with label, tagline, preferences, and shareable card
-  - **Level 2: DNA Friend Compare** (Survey + 30 items): Unlocks friend DNA comparisons with match percentages and "Watch Together" suggestions
-  - **Friend DNA Comparison** (Level 2): AI-generated match percentages, shared genres/titles, and personalized recommendations, cached 24 hours
-  - **Unified DNA Insights Card**: Blends survey preferences with actual tracking behavior:
-    - Shows "You said you love" (survey media types) vs "What you actually track" (real counts)
-    - Green badges for matches, amber badges with 👀 for surprises (tracked but not in survey)
-    - Generates insights like "You didn't mention Movies in your survey, but you've logged 50!"
-    - Uses userStats from backend for reliable tracking data
-  - **Signal Extraction**: Analyzes logged media for genre, creator, decade, and mood patterns
+- Frontend: React 18, TypeScript, Wouter, TanStack Query, Vite.
+- Backend: Supabase Edge Functions (Deno runtime).
+- Database: Supabase PostgreSQL.
+- Authentication: Supabase Auth.
+- Unified API Search: Integration with Spotify, TMDB, YouTube, Open Library via Edge Functions.
+- Netflix Import Fix: Uses TMDB API for movie/TV detection, with rate limiting and caching. Includes data validation.
+- Real-time unified Notification System.
+- Engagement-focused Leaderboard System with 5 categories and 'Your Circle'/Global tabs.
+- Unified Voting System for polls, predictions, and trivia.
+- Comprehensive User Points System for various actions (media logging, games, social, engagement).
+- Smart Recommendations: GPT-4o powered with caching.
+- Creator Follow System.
+- Spoiler Protection: Blurs content until revealed.
+- Session Tracking & Analytics: Monitors engagement for admin dashboard.
+- Consumed vs User-Generated Content: Differentiates with a "🏆 Consumed" badge.
+- Prediction Resolution: Supports timed/open-ended predictions with scoring.
+- AI Builder (`/library-ai`): Customization of lists and tracking via visual builder and AI chat.
+- DNA Levels System: Two-tier "Entertainment DNA" (survey-based) with friend comparison and unified insights.
 
 ### Feature Specifications
-- **Friend Profile Viewing**: Friends can view each other's Stats, DNA, and Collections tabs. When viewing a friend's Collections and clicking on a list, the URL includes `?user=<friend-id>` so the list-detail page shows the friend's items correctly.
-- **Media Tracking**: Simplified list-based system with privacy controls.
-- **AI-Powered Search**: Unified search at `/search` for conversations, AI recommendations, and media results.
-- **Personal System Lists**: 5 default lists (Currently, Queue, Finished, Did Not Finish, Favorites) with privacy control.
-- **Custom & Collaborative Lists**: User-created and shared lists.
-- **Ranked Lists (Ranks)**: Ordered media rankings with drag-and-drop functionality and configurable visibility.
-- **Progress Tracking**: Tracks media consumption by percent, page, episode, or track.
-- **Social Features**: Leaderboards, activity feeds, friend discovery, and an "Inner Circle."
-- **Play Section**: Category-based navigation for Trivia, Polls, Predictions.
-- **Profile Management**: Editable display names, permanent usernames, and detailed user profiles.
-- **@ Mention System**: Tagging friends with real-time autocomplete and notifications.
-- **Creator Recognition**: Identifies "Favorite Creators" based on media consumption.
-- **Media Item Pages**: Provides dynamic links to platforms for media consumption.
-- **Polls/Surveys System**: Real-time voting, duplicate vote prevention, and points rewards.
-- **Discover Page**: AI-powered recommendations and trending content carousels.
-- **Analytics Dashboard**: Admin dashboard at `/admin` for comprehensive engagement metrics, partnership insights, and behavioral analytics. Includes tabs for Overview, Retention, Engagement, Activation, Partnership Insights, and Behavior (page time, feature usage, session stats).
+- Friend Profile Viewing: Friends can view Stats, DNA, Collections with appropriate URL parameters.
+- Media Tracking: Simplified list-based system with privacy.
+- AI-Powered Search: Unified search for conversations, AI recommendations, and media.
+- Personal System Lists: 5 default lists with privacy control.
+- Custom & Collaborative Lists.
+- Ranked Lists (Ranks): Ordered media rankings with drag-and-drop.
+- Progress Tracking: By percent, page, episode, or track.
+- Social Features: Leaderboards, activity feeds, friend discovery, "Inner Circle."
+- Play Section: Category-based navigation for Trivia, Polls, Predictions.
+- Profile Management: Editable display names, permanent usernames.
+- @ Mention System: Tagging friends with autocomplete and notifications.
+- Creator Recognition: Identifies "Favorite Creators."
+- Media Item Pages: Dynamic links to consumption platforms.
+- Polls/Surveys System: Real-time voting, duplicate prevention, points.
+- Discover Page: AI-powered recommendations and trending content.
+- Analytics Dashboard: Admin dashboard (`/admin`) for engagement, retention, activation, partnership, and behavioral analytics.
 
 ### System Design Choices
-- **Database Schema**: Strict naming conventions, synced dev/prod schemas.
-- **Row Level Security (RLS)**: Strict RLS for data privacy.
-- **Edge Functions**: Adhere to schema, handle user auto-creation, accept `user_id` for profile viewing.
-- **Privacy Toggle System**: Controls list visibility.
-
-## SQL Templates
-
-### Adding a Trivia Challenge
-Required fields for `prediction_pools` table when `type='trivia'`:
-
-```sql
-INSERT INTO prediction_pools (
-  id,
-  title,
-  description,
-  type,
-  category,
-  icon,
-  points_reward,
-  status,
-  origin_type,
-  options
-) VALUES (
-  'consumed-trivia-[slug]',           -- id: must start with 'consumed-trivia-' for platform content
-  '[Challenge Title]',                 -- title: display name
-  '[Description text]',                -- description: subtitle/description
-  'trivia',                            -- type: always 'trivia' for trivia challenges
-  '[Category]',                        -- category: Movies, TV, Music, Books, Podcasts, Sports, Pop Culture
-  '[emoji]',                           -- icon: emoji like 🎬 📺 🎵 📚 🎙️ 🏆
-  [points],                            -- points_reward: integer (e.g., 100)
-  'open',                              -- status: 'open' for active
-  'consumed',                          -- origin_type: 'consumed' for platform content
-  '[
-    {
-      "question": "Question text?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "answer": "Correct Option"
-    }
-  ]'::jsonb                            -- options: JSONB array of question objects
-);
-```
-
-**Category Icons:**
-- Movies: 🎬
-- TV: 📺
-- Music: 🎵
-- Books: 📚
-- Podcasts: 🎙️
-- Sports: 🏆
-- Pop Culture: 🌟
-
-### Adding a Poll
-Required fields for `prediction_pools` table when `type='vote'`:
-
-```sql
-INSERT INTO prediction_pools (
-  id,
-  title,
-  description,
-  type,
-  category,
-  icon,
-  points_reward,
-  status,
-  origin_type,
-  options
-) VALUES (
-  'consumed-poll-[slug]',              -- id: must start with 'consumed-poll-' for platform content
-  '[Poll Question]',                   -- title: the question being asked
-  '[Optional description]',            -- description: subtitle (can be empty string '')
-  'vote',                              -- type: always 'vote' for polls
-  '[Category]',                        -- category: Movies, TV, Music, Books, Podcasts, Sports, Pop Culture
-  '[emoji]',                           -- icon: emoji like 🎬 📺 🎵 📚 🎙️ 🏆
-  2,                                   -- points_reward: 2 for polls (per points system)
-  'open',                              -- status: 'open' for active
-  'consumed',                          -- origin_type: 'consumed' for platform content
-  '["Option 1", "Option 2", "Option 3"]'::jsonb  -- options: JSONB array of answer choices
-);
-```
-
-**Points Reference:**
-- Trivia: 10 per correct answer (or custom)
-- Polls: 2 points participation
-- Predictions: +20 correct / -20 wrong
+- Database Schema: Strict naming conventions, synced dev/prod.
+- Row Level Security (RLS): Strict RLS for data privacy.
+- Edge Functions: Adhere to schema, handle user auto-creation, accept `user_id`.
+- Privacy Toggle System: Controls list visibility.
 
 ## External Dependencies
 
