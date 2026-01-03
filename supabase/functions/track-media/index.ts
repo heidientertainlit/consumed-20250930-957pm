@@ -132,14 +132,14 @@ serve(async (req) => {
     if (listType && listType !== 'all') {
       // Map listType to actual list title
       const listTitleMapping = {
-        'currently': 'Currently',
+        'currently': 'Currently Consuming',
         'finished': 'Finished', 
         'dnf': 'Did Not Finish',
         'queue': 'Want To',
         'favorites': 'Favorites'
       };
 
-      const listTitle = listTitleMapping[listType] || 'Currently';
+      const listTitle = listTitleMapping[listType] || 'Currently Consuming';
       console.log('Looking for personal list with title:', listTitle);
 
       // Find USER'S personal list by title (is_default = true means it's a system list)
