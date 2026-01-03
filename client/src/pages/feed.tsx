@@ -2611,6 +2611,7 @@ export default function Feed() {
                         onDelete={(postIds) => {
                           postIds.forEach(postId => deletePostMutation.mutate(postId));
                         }}
+                        onBet={(postId, mediaTitle, userName) => setActiveBetPost({ postId, mediaTitle, userName })}
                         isLiked={consolidated.originalPostIds.some(id => likedPosts.has(id))}
                         currentUserId={currentAppUserId}
                       />
@@ -4212,6 +4213,7 @@ export default function Feed() {
                         {(() => {
                           const listData = (post as any).listData;
                           const listNames = (post as any).listNames as string[] | undefined;
+                          const postType = (post as any).type?.toLowerCase() || '';
                           const contentLower = (post.content || '').toLowerCase();
                           
                           // Check multiple sources for list name
@@ -4224,6 +4226,9 @@ export default function Feed() {
                             contentLower.includes('→ currently') ||
                             contentLower.includes('to want to') ||
                             contentLower.includes('→ want to');
+                          
+                          // Check if post type indicates list add (for consolidated cards)
+                          const isListAddType = postType === 'add-to-list' || postType === 'list_adds';
                           
                           const isBettableList = listTitle === 'currently' || listTitle === 'want to' || isBettableFromContent;
                           const hasMedia = post.mediaItems && post.mediaItems.length > 0;

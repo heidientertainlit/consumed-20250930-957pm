@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Heart, MessageCircle, ChevronRight, Star, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, ChevronRight, Star, Trash2, Dices } from "lucide-react";
 
 interface MediaItem {
   id: string;
@@ -46,6 +46,7 @@ interface ConsolidatedActivityCardProps {
   onLike: (postId: string) => void;
   onComment: (postId: string) => void;
   onDelete?: (postIds: string[]) => void;
+  onBet?: (postId: string, mediaTitle: string, userName: string) => void;
   isLiked: boolean;
   currentUserId?: string | null;
 }
@@ -55,12 +56,18 @@ export default function ConsolidatedActivityCard({
   onLike, 
   onComment,
   onDelete,
+  onBet,
   isLiked,
   currentUserId
 }: ConsolidatedActivityCardProps) {
   const [showAll, setShowAll] = useState(false);
   
   const isOwner = currentUserId && activity.user.id === currentUserId;
+  
+  // Check if this is a bettable list (Currently or Want To)
+  const listName = activity.listNames?.[0]?.toLowerCase() || '';
+  const isBettableList = activity.type === 'list_adds' && (listName === 'currently' || listName === 'want to');
+  const canBet = isBettableList && !isOwner && onBet && activity.items.length > 0;
   
   const getMediaTypeIcon = (type: string) => {
     const iconMap: { [key: string]: string } = {
@@ -248,6 +255,16 @@ export default function ConsolidatedActivityCard({
             <MessageCircle className="w-5 h-5" />
             <span className="text-sm">{activity.comments}</span>
           </button>
+          {canBet && (
+            <button
+              onClick={() => onBet(activity.originalPostIds[0], activity.items[0].title, activity.user.displayName || activity.user.username)}
+              className="flex items-center gap-1.5 text-gray-500 hover:text-purple-500 transition-colors"
+              data-testid={`button-bet-${activity.id}`}
+              title="Bet on their reaction"
+            >
+              <Dices className="w-5 h-5" />
+            </button>
+          )}
         </div>
         <span className="text-sm text-gray-400">{formattedDate}</span>
       </div>
