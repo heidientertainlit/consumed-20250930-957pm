@@ -564,7 +564,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                         <option value="">All seasons</option>
                         {seasons.map((s) => (
                           <option key={s.seasonNumber || s.season_number} value={s.seasonNumber || s.season_number}>
-                            Season {s.seasonNumber || s.season_number} {(s.episodeCount || s.episode_count) ? `(${s.episodeCount || s.episode_count} eps)` : ''}
+                            Season {s.seasonNumber || s.season_number}
                           </option>
                         ))}
                       </select>
