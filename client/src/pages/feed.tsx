@@ -8,6 +8,7 @@ import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
+import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X } from "lucide-react";
@@ -2623,6 +2624,8 @@ export default function Feed() {
                 const shouldShowPollsCarousel = postIndex === 1 || (postIndex > 1 && (postIndex - 1) % 8 === 0);
                 // Show trivia carousel at positions 5, 13, 21, 29... (every 8 posts starting at 5)
                 const shouldShowTriviaCarousel = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 8 === 0);
+                // Show points achievement card at positions 3, 11, 19... (every 8 posts starting at 3)
+                const shouldShowPointsAchievements = postIndex === 3 || (postIndex > 3 && (postIndex - 3) % 8 === 0);
                 // Show game carousel every 20 posts (less frequent, for discovery)
                 const shouldShowGameCarousel = postIndex === 19 || (postIndex > 19 && (postIndex - 19) % 20 === 0);
                 const shouldShowMediaCarousel = (postIndex + 1) % 15 === 0 && postIndex > 0 && !shouldShowGameCarousel && !shouldShowPollsCarousel && !shouldShowTriviaCarousel;
@@ -2735,6 +2738,11 @@ export default function Feed() {
                     {shouldShowTriviaCarousel && (
                       <div className="mb-4">
                         <InlineGameCard gameType="trivia" />
+                      </div>
+                    )}
+                    {shouldShowPointsAchievements && (
+                      <div className="mb-4">
+                        <PointsAchievementCard />
                       </div>
                     )}
                     {shouldShowGameCarousel && (
