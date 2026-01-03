@@ -563,8 +563,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                       >
                         <option value="">All seasons</option>
                         {seasons.map((s) => (
-                          <option key={s.season_number} value={s.season_number}>
-                            Season {s.season_number} {s.episode_count ? `(${s.episode_count} eps)` : ''}
+                          <option key={s.seasonNumber || s.season_number} value={s.seasonNumber || s.season_number}>
+                            Season {s.seasonNumber || s.season_number} {(s.episodeCount || s.episode_count) ? `(${s.episodeCount || s.episode_count} eps)` : ''}
                           </option>
                         ))}
                       </select>
@@ -578,8 +578,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                         >
                           <option value="">{isLoadingEpisodes ? "Loading..." : "All episodes"}</option>
                           {episodes.map((ep) => (
-                            <option key={ep.episode_number} value={ep.episode_number}>
-                              Ep {ep.episode_number}: {ep.name}
+                            <option key={ep.episodeNumber || ep.episode_number} value={ep.episodeNumber || ep.episode_number}>
+                              Ep {ep.episodeNumber || ep.episode_number}: {ep.name || ep.title}
                             </option>
                           ))}
                         </select>
