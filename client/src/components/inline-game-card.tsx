@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users } from 'lucide-react';
+import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -243,9 +243,31 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     setSelectedAnswer(null);
   };
 
+  const goToPrevGame = () => {
+    if (currentGameOffset > 0) {
+      setCurrentGameOffset(prev => prev - 1);
+      setTriviaQuestionIndex(0);
+      setTriviaScore(0);
+      setTriviaComplete(false);
+      setSelectedAnswer(null);
+    }
+  };
+
+  const goToNextGame = () => {
+    setCurrentGameOffset(prev => prev + 1);
+    setTriviaQuestionIndex(0);
+    setTriviaScore(0);
+    setTriviaComplete(false);
+    setSelectedAnswer(null);
+  };
+
   const handlePlayAnother = () => {
     setShowCompleted(false);
   };
+
+  // Calculate if we can navigate prev/next
+  const canGoPrev = currentGameOffset > 0;
+  const canGoNext = availableGames.length > 1;
 
   const getGameIcon = (type: string) => {
     switch (type) {
@@ -342,9 +364,29 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
       return (
         <>
           <CompletionDialog />
-          <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-preview-card">
+          <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} data-testid="inline-trivia-preview-card">
+            {/* Navigation arrows */}
+            {canGoPrev && (
+              <button
+                onClick={goToPrevGame}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors"
+                data-testid="trivia-preview-nav-prev"
+              >
+                <ChevronLeft size={18} className="text-gray-700" />
+              </button>
+            )}
+            {canGoNext && (
+              <button
+                onClick={goToNextGame}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors"
+                data-testid="trivia-preview-nav-next"
+              >
+                <ChevronRight size={18} className="text-gray-700" />
+              </button>
+            )}
+            
             {/* Category and Invite row */}
-            <div className="p-4 pb-0 flex items-center justify-between">
+            <div className="p-4 pb-0 flex items-center justify-between px-10">
               {currentGame.category && (
                 <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
                   {currentGame.category}
@@ -356,7 +398,7 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
               </button>
             </div>
             
-            <div className="p-4 pt-3">
+            <div className="p-4 pt-3 px-10">
               <h3 className="text-xl font-bold text-gray-900 mb-1">{currentGame.title}</h3>
               {currentGame.description && (
                 <p className="text-gray-600 text-sm mb-3">{currentGame.description}</p>
@@ -388,7 +430,27 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     return (
       <>
         <CompletionDialog />
-        <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-card">
+        <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} data-testid="inline-trivia-card">
+          {/* Navigation arrows */}
+          {canGoPrev && (
+            <button
+              onClick={goToPrevGame}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors"
+              data-testid="trivia-nav-prev"
+            >
+              <ChevronLeft size={18} className="text-gray-700" />
+            </button>
+          )}
+          {canGoNext && (
+            <button
+              onClick={goToNextGame}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors"
+              data-testid="trivia-nav-next"
+            >
+              <ChevronRight size={18} className="text-gray-700" />
+            </button>
+          )}
+          
           <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -405,7 +467,7 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
           </div>
           {/* Category and tags pills row */}
           {(currentGame.category || (currentGame.tags && currentGame.tags.length > 0)) && (
-            <div className="px-5 pt-4 flex flex-wrap gap-2">
+            <div className="px-10 pt-4 flex flex-wrap gap-2">
               {currentGame.category && (
                 <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
                   {currentGame.category}
@@ -418,7 +480,7 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
               ))}
             </div>
           )}
-          <div className="p-5 pt-3">
+          <div className="p-5 px-10 pt-3">
             <p className="text-base font-semibold text-gray-900 mb-3 leading-snug">{triviaQuestion.question}</p>
             <div className="flex flex-col gap-1.5 mb-3">
               {triviaQuestion.options.map((option, index) => (
@@ -455,7 +517,27 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
   return (
     <>
       <CompletionDialog />
-      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-poll-card">
+      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} data-testid="inline-poll-card">
+        {/* Navigation arrows */}
+        {canGoPrev && (
+          <button
+            onClick={goToPrevGame}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors"
+            data-testid="poll-nav-prev"
+          >
+            <ChevronLeft size={18} className="text-gray-700" />
+          </button>
+        )}
+        {canGoNext && (
+          <button
+            onClick={goToNextGame}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors"
+            data-testid="poll-nav-next"
+          >
+            <ChevronRight size={18} className="text-gray-700" />
+          </button>
+        )}
+        
         <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -467,7 +549,7 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
             </Badge>
           </div>
         </div>
-        <div className="p-5">
+        <div className="p-5 px-10">
           <p className="text-base font-semibold text-gray-900 mb-3 leading-snug">{currentGame.title}</p>
           <div className="flex flex-col gap-1.5 mb-3">
             {(currentGame.options || []).map((option: any, index: number) => {
