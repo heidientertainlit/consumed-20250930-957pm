@@ -57,6 +57,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     swipeStartX.current = clientX;
     swipeStartY.current = clientY;
     isSwiping.current = false;
+    console.log('🔵 SWIPE START', { clientX, clientY, availableGamesCount: availableGames.length });
   };
 
   const handleSwipeMove = (e: React.TouchEvent | React.MouseEvent) => {
@@ -76,6 +77,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
     const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
     const diff = swipeStartX.current - clientX;
+    console.log('🟢 SWIPE END', { diff, isSwiping: isSwiping.current, currentOffset: currentGameOffset });
     
     if (Math.abs(diff) > 50 && isSwiping.current) {
       // It's a swipe - handle navigation
