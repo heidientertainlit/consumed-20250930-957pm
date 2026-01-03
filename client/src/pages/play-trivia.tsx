@@ -268,8 +268,15 @@ export default function PlayTriviaPage() {
       });
     }
     
+    // Sort: uncompleted games first, completed games at the bottom
+    filtered.sort((a: any, b: any) => {
+      const aCompleted = allPredictions[a.id] ? 1 : 0;
+      const bCompleted = allPredictions[b.id] ? 1 : 0;
+      return aCompleted - bCompleted;
+    });
+    
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory, triviaType, selectedGenre]);
+  }, [processedGames, searchQuery, selectedCategory, triviaType, selectedGenre, allPredictions]);
   
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);

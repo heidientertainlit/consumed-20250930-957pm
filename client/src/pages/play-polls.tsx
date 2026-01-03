@@ -209,8 +209,15 @@ export default function PlayPollsPage() {
       filtered = filtered.filter((game: any) => game.category === selectedCategory);
     }
     
+    // Sort: uncompleted polls first, completed polls at the bottom
+    filtered.sort((a: any, b: any) => {
+      const aCompleted = allPredictions[a.id] ? 1 : 0;
+      const bCompleted = allPredictions[b.id] ? 1 : 0;
+      return aCompleted - bCompleted;
+    });
+    
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory]);
+  }, [processedGames, searchQuery, selectedCategory, allPredictions]);
 
   // Auto-open poll if gameId is in URL hash
   React.useEffect(() => {
