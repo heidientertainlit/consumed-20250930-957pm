@@ -2742,7 +2742,7 @@ export default function Feed() {
                     )}
                     {shouldShowPointsAchievements && (
                       <div className="mb-4">
-                        <PointsAchievementCard />
+                        <PointsAchievementCard cardIndex={Math.floor((postIndex - 3) / 8)} />
                       </div>
                     )}
                     {shouldShowGameCarousel && (

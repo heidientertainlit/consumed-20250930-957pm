@@ -93,8 +93,6 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     if (game.type === 'vote' && (!game.options || game.options.length < 2)) return false;
     return true;
   });
-  
-  console.log('📊 InlineGameCard: Total games:', games.length, 'Available (not voted):', availableGames.length);
 
   // activeGame is derived from scroll position
   const activeGame = availableGames[currentGameOffset % Math.max(availableGames.length, 1)];
