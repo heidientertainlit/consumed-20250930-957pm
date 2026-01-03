@@ -567,21 +567,18 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                   disabled={isSubmitting}
                   className={cn(
                     "w-full relative rounded-full overflow-hidden transition-all",
-                    isSelected ? "ring-2 ring-purple-400 ring-offset-2" : ""
+                    isSelected ? "ring-2 ring-purple-500 ring-offset-2" : ""
                   )}
                   data-testid={`poll-option-${index}`}
                 >
                   <div className={cn(
                     "w-full h-12 rounded-full",
                     isSelected 
-                      ? "bg-gradient-to-r from-purple-500 to-violet-500"
-                      : "bg-gradient-to-r from-purple-400/80 to-violet-400/80"
+                      ? "bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700"
+                      : "bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700"
                   )} />
                   <div className="absolute inset-0 flex items-center justify-between px-4">
-                    <span className={cn(
-                      "text-sm font-medium",
-                      isSelected ? "text-white" : "text-white"
-                    )}>
+                    <span className="text-sm font-medium text-white">
                       {optionText}
                     </span>
                   </div>
