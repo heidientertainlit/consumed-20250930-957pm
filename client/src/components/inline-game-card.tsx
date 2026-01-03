@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap } from 'lucide-react';
+import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { Link } from 'wouter';
 
 interface TriviaQuestion {
   question: string;
@@ -18,6 +19,7 @@ interface TriviaQuestion {
 interface Game {
   id: string;
   title: string;
+  description?: string;
   options: any[];
   type: 'vote' | 'trivia' | 'predict';
   points_reward: number;
@@ -335,6 +337,54 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
     const isQuickTrivia = totalTriviaQuestions === 1;
     const TriviaTypeIcon = isQuickTrivia ? Zap : Trophy;
     
+    // For multi-question trivia challenges, show preview card with "Play Trivia Game" button
+    if (!isQuickTrivia) {
+      return (
+        <>
+          <CompletionDialog />
+          <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-preview-card">
+            {/* Category and Invite row */}
+            <div className="p-4 pb-0 flex items-center justify-between">
+              {currentGame.category && (
+                <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
+                  {currentGame.category}
+                </Badge>
+              )}
+              <button className="flex items-center gap-1.5 text-purple-600 text-sm font-medium hover:text-purple-700">
+                <Users size={16} />
+                Invite to Play
+              </button>
+            </div>
+            
+            <div className="p-4 pt-3">
+              <h3 className="text-xl font-bold text-gray-900 mb-1">{currentGame.title}</h3>
+              {currentGame.description && (
+                <p className="text-gray-600 text-sm mb-3">{currentGame.description}</p>
+              )}
+              <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                <span className="text-amber-600 font-medium">☆ You Earn: {currentGame.points_reward} pts</span>
+                <span className="flex items-center gap-1">
+                  <Users size={14} />
+                  0
+                </span>
+              </div>
+              
+              <Link href={`/play/trivia#${currentGame.id}`}>
+                <Button
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white rounded-full py-4"
+                  data-testid="button-play-trivia"
+                >
+                  <Brain size={18} className="mr-2" />
+                  Play Trivia Game
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </>
+      );
+    }
+    
+    // Quick trivia (1 question) - show inline playable
     return (
       <>
         <CompletionDialog />
@@ -345,11 +395,11 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
                 <Icon className="text-white" size={20} />
                 <TriviaTypeIcon className="text-white" size={16} />
                 <span className="text-white font-semibold">
-                  {isQuickTrivia ? 'Quick Trivia' : 'Trivia Challenge'}
+                  Quick Trivia
                 </span>
               </div>
               <Badge className="bg-white/20 text-white border-0">
-                {triviaQuestionIndex + 1}/{totalTriviaQuestions}
+                +{currentGame.points_reward} pts
               </Badge>
             </div>
           </div>
@@ -396,9 +446,6 @@ export default function InlineGameCard({ className, gameIndex = 0 }: InlineGameC
             >
               {isSubmitting ? 'Submitting...' : 'Submit Answer'}
             </Button>
-            <div className="mt-3 text-center text-sm text-gray-500">
-              Score: {triviaScore} pts • Earn up to {currentGame.points_reward} pts
-            </div>
           </div>
         </div>
       </>
