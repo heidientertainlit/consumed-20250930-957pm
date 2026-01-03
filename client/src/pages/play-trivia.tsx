@@ -701,6 +701,10 @@ export default function PlayTriviaPage() {
           isOpen={!!selectedTriviaGame}
           onClose={() => {
             setSelectedTriviaGame(null);
+            // Clear URL hash to prevent useEffect from reopening
+            if (window.location.hash) {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
           }}
         />
       )}
