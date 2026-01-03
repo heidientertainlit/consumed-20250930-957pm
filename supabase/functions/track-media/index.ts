@@ -130,42 +130,68 @@ serve(async (req) => {
     let targetList = null;
 
     if (listType && listType !== 'all') {
-      // Map listType to actual list title (matches what's created in systemLists above)
-      const listTitleMapping: Record<string, string> = {
-        'currently': 'Currently',
-        'finished': 'Finished', 
-        'dnf': 'Did Not Finish',
-        'queue': 'Want To',
-        'favorites': 'Favorites'
-      };
+      // Check if listType is a UUID (direct list ID) or a slug
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isUuid = uuidRegex.test(listType);
 
-      const listTitle = listTitleMapping[listType] || 'Currently';
-      console.log('Looking for personal list with title:', listTitle);
+      if (isUuid) {
+        // listType is a UUID - look up list directly by ID
+        console.log('Looking for list by ID:', listType);
+        const { data: listById, error: listError } = await supabase
+          .from('lists')
+          .select('id, title')
+          .eq('id', listType)
+          .eq('user_id', appUser.id)
+          .maybeSingle();
 
-      // Find USER'S personal list by title (is_default = true means it's a system list)
-      // Use .limit(1) + .maybeSingle() to handle potential duplicates gracefully
-      const { data: systemList, error: listError } = await supabase
-        .from('lists')
-        .select('id, title')
-        .eq('user_id', appUser.id)
-        .eq('title', listTitle)
-        .eq('is_default', true)
-        .limit(1)
-        .maybeSingle();
+        console.log('List by ID lookup result:', { listById, listError });
 
-      console.log('System list lookup result:', { systemList, listError });
+        if (listError || !listById) {
+          console.error('List not found by ID:', listError);
+          return new Response(JSON.stringify({
+            error: `List not found`
+          }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        targetList = listById;
+      } else {
+        // listType is a slug - map to list title
+        const listTitleMapping: Record<string, string> = {
+          'currently': 'Currently',
+          'finished': 'Finished', 
+          'dnf': 'Did Not Finish',
+          'queue': 'Want To',
+          'favorites': 'Favorites'
+        };
 
-      if (listError || !systemList) {
-        console.error('System list not found:', listError);
-        return new Response(JSON.stringify({
-          error: `System list "${listTitle}" not found. Available lists should be: Currently, Want To, Finished, Did Not Finish, Favorites`
-        }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        const listTitle = listTitleMapping[listType] || listType;
+        console.log('Looking for personal list with title:', listTitle);
+
+        // Find USER'S personal list by title
+        const { data: systemList, error: listError } = await supabase
+          .from('lists')
+          .select('id, title')
+          .eq('user_id', appUser.id)
+          .eq('title', listTitle)
+          .limit(1)
+          .maybeSingle();
+
+        console.log('System list lookup result:', { systemList, listError });
+
+        if (listError || !systemList) {
+          console.error('System list not found:', listError);
+          return new Response(JSON.stringify({
+            error: `List "${listTitle}" not found`
+          }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        targetList = systemList;
       }
-
-      targetList = systemList;
     }
 
     // Insert the media item with core columns only (avoid schema cache issues)
