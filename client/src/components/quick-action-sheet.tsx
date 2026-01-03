@@ -1042,11 +1042,13 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const renderSayContent = () => {
     return (
       <div className="space-y-4">
-        <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
+        <div className="flex gap-2">
           <button
             onClick={() => { setSayMode("thought"); setSelectedAction("post"); }}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-              sayMode === "thought" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all ${
+              sayMode === "thought" 
+                ? "bg-gray-100 text-gray-900 border border-gray-200" 
+                : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
             }`}
             data-testid="say-mode-thought"
           >
@@ -1054,8 +1056,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           </button>
           <button
             onClick={() => { setSayMode("hot_take"); setSelectedAction("hot_take"); }}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-              sayMode === "hot_take" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all ${
+              sayMode === "hot_take" 
+                ? "bg-gray-100 text-gray-900 border border-gray-200" 
+                : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
             }`}
             data-testid="say-mode-hot-take"
           >
@@ -1063,8 +1067,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           </button>
           <button
             onClick={() => { setSayMode("ask"); setSelectedAction("ask_for_recs"); }}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-              sayMode === "ask" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all ${
+              sayMode === "ask" 
+                ? "bg-gray-100 text-gray-900 border border-gray-200" 
+                : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
             }`}
             data-testid="say-mode-ask"
           >
@@ -1081,7 +1087,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             sayMode === "hot_take" ? "Drop your spicy take..." :
             "What are you looking for?"
           }
-          className="min-h-[100px]"
+          className="min-h-[100px] bg-white text-gray-900 border border-gray-200 rounded-xl"
           testId="say-content-input"
         />
         
