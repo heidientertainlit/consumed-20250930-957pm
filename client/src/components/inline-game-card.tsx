@@ -374,7 +374,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             {canGoPrev && (
               <button
                 onClick={goToPrevGame}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
+                className="absolute -left-6 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
                 data-testid="trivia-preview-nav-prev"
               >
                 <ChevronLeft size={24} className="text-gray-400" />
@@ -383,7 +383,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             {canGoNext && (
               <button
                 onClick={goToNextGame}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
+                className="absolute -right-6 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
                 data-testid="trivia-preview-nav-next"
               >
                 <ChevronRight size={24} className="text-gray-400" />
@@ -440,7 +440,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           {canGoPrev && (
             <button
               onClick={goToPrevGame}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
+              className="absolute -left-6 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
               data-testid="trivia-nav-prev"
             >
               <ChevronLeft size={24} className="text-gray-400" />
@@ -449,7 +449,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           {canGoNext && (
             <button
               onClick={goToNextGame}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
+              className="absolute -right-6 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
               data-testid="trivia-nav-next"
             >
               <ChevronRight size={24} className="text-gray-400" />
@@ -527,7 +527,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         {canGoPrev && (
           <button
             onClick={goToPrevGame}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
+            className="absolute -left-6 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
             data-testid="poll-nav-prev"
           >
             <ChevronLeft size={24} className="text-gray-400" />
@@ -536,7 +536,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         {canGoNext && (
           <button
             onClick={goToNextGame}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
+            className="absolute -right-6 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
             data-testid="poll-nav-next"
           >
             <ChevronRight size={24} className="text-gray-400" />
