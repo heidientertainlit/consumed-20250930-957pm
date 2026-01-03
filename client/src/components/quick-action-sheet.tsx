@@ -452,7 +452,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
       icon: Star, 
       iconColor: "text-white", 
       bgColor: "bg-gradient-to-br from-violet-500 to-purple-700", 
-      desc: "Save what you watched, read, or listened to" 
+      desc: "Track, rate, or review something" 
     },
     { 
       id: "say" as IntentType, 
@@ -460,7 +460,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
       icon: MessageSquare, 
       iconColor: "text-white", 
       bgColor: "bg-gradient-to-br from-blue-500 to-indigo-700", 
-      desc: "Share a thought" 
+      desc: "Share a thought, hot take, or ask for recs" 
     },
     { 
       id: "play" as IntentType, 
@@ -468,7 +468,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
       icon: Swords, 
       iconColor: "text-white", 
       bgColor: "bg-gradient-to-br from-fuchsia-500 to-purple-700", 
-      desc: "Games & more" 
+      desc: "Create a poll, add to rankings" 
     },
   ];
 
