@@ -194,8 +194,14 @@ serve(async (req) => {
       }
     }
 
-    // Insert the media item with core columns only (avoid schema cache issues)
-    const { data: mediaItem, error: mediaError } = await supabase
+    // Use admin client for insert to bypass RLS (matching add-media-to-list pattern)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Insert the media item with core columns only (matching add-media-to-list)
+    const { data: mediaItem, error: mediaError } = await supabaseAdmin
       .from('list_items')
       .insert({
         list_id: targetList?.id || null,
@@ -205,8 +211,7 @@ serve(async (req) => {
         creator: creator || '',
         image_url: imageUrl || null,
         external_id: externalId || null,
-        external_source: externalSource || null,
-        rewatch_count: rewatchCount || 1
+        external_source: externalSource || 'tmdb'
       })
       .select()
       .single();
