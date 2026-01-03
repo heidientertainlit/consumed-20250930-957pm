@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -74,9 +74,11 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   const handleSwipeEnd = (e: React.TouchEvent | React.MouseEvent) => {
     if (swipeStartX.current === null) return;
     const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
+    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
     const diff = swipeStartX.current - clientX;
     
     if (Math.abs(diff) > 50 && isSwiping.current) {
+      // It's a swipe - handle navigation
       if (diff > 0 && availableGames.length > 1) {
         // Swipe left - go to next
         setCurrentGameOffset(prev => prev + 1);
@@ -85,6 +87,15 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         // Swipe right - go to prev
         setCurrentGameOffset(prev => prev - 1);
         setSelectedAnswer(null);
+      }
+    } else {
+      // It's a tap - find and click the element underneath
+      const overlay = e.currentTarget as HTMLElement;
+      overlay.style.pointerEvents = 'none';
+      const elementBelow = document.elementFromPoint(clientX, clientY) as HTMLElement;
+      overlay.style.pointerEvents = 'auto';
+      if (elementBelow && elementBelow !== overlay) {
+        elementBelow.click();
       }
     }
     swipeStartX.current = null;
@@ -546,33 +557,18 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
       <div 
         className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} 
         data-testid="inline-poll-card"
-        onTouchStart={handleSwipeStart}
-        onTouchMove={handleSwipeMove}
-        onTouchEnd={handleSwipeEnd}
-        onMouseDown={handleSwipeStart}
-        onMouseMove={handleSwipeMove}
-        onMouseUp={handleSwipeEnd}
-        style={{ touchAction: 'pan-y' }}
       >
-        {/* Navigation buttons */}
-        {canGoPrev && (
-          <button
-            onClick={goToPrev}
-            className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white z-10"
-            data-testid="poll-nav-prev"
-          >
-            <ChevronLeft size={16} className="text-gray-600" />
-          </button>
-        )}
-        {canGoNext && (
-          <button
-            onClick={goToNext}
-            className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white z-10"
-            data-testid="poll-nav-next"
-          >
-            <ChevronRight size={16} className="text-gray-600" />
-          </button>
-        )}
+        {/* Transparent swipe capture overlay */}
+        <div
+          className="absolute inset-0 z-20"
+          style={{ touchAction: 'pan-y' }}
+          onTouchStart={handleSwipeStart}
+          onTouchMove={handleSwipeMove}
+          onTouchEnd={handleSwipeEnd}
+          onMouseDown={handleSwipeStart}
+          onMouseMove={handleSwipeMove}
+          onMouseUp={handleSwipeEnd}
+        />
         
         <div className={cn("bg-gradient-to-r p-4", getGradient(activeGame.type))}>
           <div className="flex items-center justify-between">
