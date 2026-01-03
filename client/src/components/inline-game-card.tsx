@@ -58,7 +58,6 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     swipeStartX.current = clientX;
     swipeStartY.current = clientY;
     isSwiping.current = false;
-    console.log('🔵 SWIPE START', { clientX, clientY, availableGamesCount: availableGames.length });
   };
 
   const handleSwipeMove = (e: React.TouchEvent | React.MouseEvent) => {
@@ -67,11 +66,9 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const deltaX = Math.abs(clientX - swipeStartX.current);
     const deltaY = Math.abs(clientY - (swipeStartY.current || 0));
-    console.log('🟡 SWIPE MOVE', { deltaX, deltaY });
-    // If horizontal movement exceeds vertical, it's a swipe attempt
     if (deltaX > 10 && deltaX > deltaY) {
       isSwiping.current = true;
-      e.preventDefault(); // Prevent scrolling when swiping horizontally
+      e.preventDefault();
     }
   };
 
@@ -80,7 +77,6 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
     const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
     const diff = swipeStartX.current - clientX;
-    console.log('🟢 SWIPE END', { diff, isSwiping: isSwiping.current, currentOffset: currentGameOffset });
     
     if (Math.abs(diff) > 50 && isSwiping.current) {
       // It's a swipe - handle navigation
