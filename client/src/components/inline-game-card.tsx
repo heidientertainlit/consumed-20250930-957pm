@@ -554,54 +554,58 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
 
   const canGoPrev = currentGameOffset > 0;
   const canGoNext = availableGames.length > 1;
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <>
-      <CompletionDialog />
+  // Handle scroll snap to update current game offset
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const cardWidth = container.offsetWidth;
+    const newIndex = Math.round(scrollLeft / cardWidth);
+    if (newIndex !== currentGameOffset && newIndex >= 0 && newIndex < availableGames.length) {
+      setCurrentGameOffset(newIndex);
+      setSelectedAnswer(null);
+    }
+  };
+
+  // Render a single poll card content
+  const renderPollCard = (game: any, index: number) => {
+    const GameIcon = game.type === 'trivia' ? Brain : game.type === 'prediction' ? Sparkles : Vote;
+    return (
       <div 
-        className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} 
-        data-testid="inline-poll-card"
+        key={game.id} 
+        className="min-w-full snap-center"
+        style={{ scrollSnapAlign: 'center' }}
       >
-        {/* Transparent swipe capture overlay */}
-        <div
-          className="absolute inset-0 z-20"
-          style={{ touchAction: 'pan-y' }}
-          onTouchStart={handleSwipeStart}
-          onTouchMove={handleSwipeMove}
-          onTouchEnd={handleSwipeEnd}
-          onMouseDown={handleSwipeStart}
-          onMouseMove={handleSwipeMove}
-          onMouseUp={handleSwipeEnd}
-        />
-        
-        <div className={cn("bg-gradient-to-r p-4", getGradient(activeGame.type))}>
+        <div className={cn("bg-gradient-to-r p-4", getGradient(game.type))}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Icon className="text-white" size={20} />
-              <span className="text-white font-semibold">{getGameLabel(activeGame.type)}</span>
+              <GameIcon className="text-white" size={20} />
+              <span className="text-white font-semibold">{getGameLabel(game.type)}</span>
             </div>
             <Badge className="bg-white/20 text-white border-0">
-              +{activeGame.points_reward} pts
+              +{game.points_reward} pts
             </Badge>
           </div>
         </div>
         <div className="p-5 px-4">
-          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{activeGame.title}</p>
+          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{game.title}</p>
           <div className="flex flex-col gap-2 mb-4">
-            {(activeGame.options || []).map((option: any, index: number) => {
+            {(game.options || []).map((option: any, optIndex: number) => {
               const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
               return (
                 <button
-                  key={index}
+                  key={optIndex}
                   onClick={() => setSelectedAnswer(optionText)}
                   disabled={isSubmitting}
                   className={cn(
                     "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
-                    selectedAnswer === optionText
+                    selectedAnswer === optionText && index === currentGameOffset
                       ? "border-transparent bg-purple-600 text-white"
                       : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
                   )}
-                  data-testid={`poll-option-${index}`}
+                  data-testid={`poll-option-${optIndex}`}
                 >
                   {optionText}
                 </button>
@@ -616,14 +620,42 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           >
             {isSubmitting ? 'Submitting...' : 'Submit Vote'}
           </Button>
-          {availableGames.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="poll-carousel-dots">
-              <div className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-              <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-              <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-            </div>
-          )}
         </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <CompletionDialog />
+      <div 
+        className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} 
+        data-testid="inline-poll-card"
+      >
+        {/* Horizontal scroll container with snap */}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
+        >
+          {availableGames.map((game, index) => renderPollCard(game, index))}
+        </div>
+        
+        {/* Dot indicators */}
+        {availableGames.length > 1 && (
+          <div className="flex items-center justify-center gap-1.5 pb-4" data-testid="poll-carousel-dots">
+            {availableGames.map((_, index) => (
+              <div 
+                key={index}
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full transition-colors",
+                  index === currentGameOffset ? "bg-purple-600" : "bg-gray-300"
+                )}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </>
   );
