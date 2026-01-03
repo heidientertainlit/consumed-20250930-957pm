@@ -43,8 +43,29 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   const [triviaQuestionIndex, setTriviaQuestionIndex] = useState(0);
   const [triviaScore, setTriviaScore] = useState(0);
   const [triviaComplete, setTriviaComplete] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent, gamesCount: number) => {
+    if (touchStart === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart - touchEnd;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && gamesCount > 1) {
+        setCurrentGameOffset(prev => prev + 1);
+        setSelectedAnswer(null);
+      } else if (diff < 0 && currentGameOffset > 0) {
+        setCurrentGameOffset(prev => prev - 1);
+        setSelectedAnswer(null);
+      }
+    }
+    setTouchStart(null);
+  };
 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['inline-games', gameType],
@@ -369,7 +390,12 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
       return (
         <>
           <CompletionDialog />
-          <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-preview-card">
+          <div 
+            className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
+            data-testid="inline-trivia-preview-card"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+          >
             {/* Category and Invite row */}
             <div className="p-4 pb-0 flex items-center justify-between px-4">
               {currentGame.category && (
@@ -406,25 +432,10 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                 </Button>
               </Link>
               {availableGames.length > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-3" data-testid="trivia-preview-carousel-dots">
-                  {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentGameOffset(idx)}
-                      className="p-1"
-                      data-testid={`trivia-preview-dot-${idx}`}
-                    >
-                      <div className={cn(
-                        "w-2 h-2 rounded-full transition-colors",
-                        idx === (currentGameOffset % availableGames.length)
-                          ? "bg-purple-600"
-                          : "bg-gray-300"
-                      )} />
-                    </button>
-                  ))}
-                  {availableGames.length > 5 && (
-                    <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
-                  )}
+                <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="trivia-preview-carousel-dots">
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
                 </div>
               )}
             </div>
@@ -437,7 +448,12 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     return (
       <>
         <CompletionDialog />
-        <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-card">
+        <div 
+          className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
+          data-testid="inline-trivia-card"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+        >
           <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -496,25 +512,10 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
               {isSubmitting ? 'Submitting...' : 'Submit Answer'}
             </Button>
             {availableGames.length > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-3" data-testid="trivia-carousel-dots">
-                {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentGameOffset(idx)}
-                    className="p-1"
-                    data-testid={`trivia-dot-${idx}`}
-                  >
-                    <div className={cn(
-                      "w-2 h-2 rounded-full transition-colors",
-                      idx === (currentGameOffset % availableGames.length)
-                        ? "bg-purple-600"
-                        : "bg-gray-300"
-                    )} />
-                  </button>
-                ))}
-                {availableGames.length > 5 && (
-                  <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
-                )}
+              <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="trivia-carousel-dots">
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
               </div>
             )}
           </div>
@@ -526,7 +527,12 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   return (
     <>
       <CompletionDialog />
-      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-poll-card">
+      <div 
+        className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
+        data-testid="inline-poll-card"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+      >
         <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -570,25 +576,10 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             {isSubmitting ? 'Submitting...' : 'Submit Vote'}
           </Button>
           {availableGames.length > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-3" data-testid="poll-carousel-dots">
-              {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentGameOffset(idx)}
-                  className="p-1"
-                  data-testid={`poll-dot-${idx}`}
-                >
-                  <div className={cn(
-                    "w-2 h-2 rounded-full transition-colors",
-                    idx === (currentGameOffset % availableGames.length)
-                      ? "bg-purple-600"
-                      : "bg-gray-300"
-                  )} />
-                </button>
-              ))}
-              {availableGames.length > 5 && (
-                <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
-              )}
+            <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="poll-carousel-dots">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+              <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+              <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
             </div>
           )}
         </div>
