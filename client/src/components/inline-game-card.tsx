@@ -638,18 +638,12 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           {availableGames.map((game, index) => renderPollCard(game, index))}
         </div>
         
-        {/* Dot indicators */}
+        {/* Static 3-dot visual indicator for swipe hint */}
         {availableGames.length > 1 && (
           <div className="flex items-center justify-center gap-1.5 pb-4" data-testid="poll-carousel-dots">
-            {availableGames.map((_, index) => (
-              <div 
-                key={index}
-                className={cn(
-                  "w-1.5 h-1.5 rounded-full transition-colors",
-                  index === currentGameOffset ? "bg-purple-600" : "bg-gray-300"
-                )}
-              />
-            ))}
+            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-600" : "bg-gray-300")} />
+            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-600" : "bg-gray-300")} />
+            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-600" : "bg-gray-300")} />
           </div>
         )}
       </div>
