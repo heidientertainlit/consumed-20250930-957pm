@@ -1052,7 +1052,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             }`}
             data-testid="say-mode-thought"
           >
-            💭 Thought
+            Thought
           </button>
           <button
             onClick={() => { setSayMode("hot_take"); setSelectedAction("hot_take"); }}
@@ -1063,7 +1063,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             }`}
             data-testid="say-mode-hot-take"
           >
-            🔥 Hot Take
+            Hot Take
           </button>
           <button
             onClick={() => { setSayMode("ask"); setSelectedAction("ask_for_recs"); }}
@@ -1074,7 +1074,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             }`}
             data-testid="say-mode-ask"
           >
-            ❓ Ask
+            Ask
           </button>
         </div>
         
