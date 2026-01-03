@@ -112,24 +112,9 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     return true;
   });
 
-  // When gameType is specified, use simple index-based navigation
-  // When 'all', alternate between polls and trivia
-  let currentGame: Game | undefined;
-  if (gameType !== 'all') {
-    // Simple: just use offset to navigate through filtered games
-    const effectiveIndex = currentGameOffset % Math.max(availableGames.length, 1);
-    currentGame = availableGames[effectiveIndex];
-  } else {
-    // Legacy alternating behavior
-    const polls = availableGames.filter(g => g.type === 'vote');
-    const trivia = availableGames.filter(g => g.type === 'trivia');
-    const shouldShowTrivia = (gameIndex + currentGameOffset) % 2 === 1;
-    const targetList = shouldShowTrivia ? trivia : polls;
-    const fallbackList = shouldShowTrivia ? polls : trivia;
-    const activeList = targetList.length > 0 ? targetList : fallbackList;
-    const effectiveIndex = Math.floor((gameIndex + currentGameOffset) / 2) % Math.max(activeList.length, 1);
-    currentGame = activeList[effectiveIndex];
-  }
+  // Simple index-based navigation through all available games
+  const effectiveIndex = currentGameOffset % Math.max(availableGames.length, 1);
+  const currentGame = availableGames[effectiveIndex];
 
   const submitAnswer = useMutation({
     mutationFn: async ({ poolId, answer, score, game }: { poolId: string; answer: string; score?: number; game: Game }) => {
