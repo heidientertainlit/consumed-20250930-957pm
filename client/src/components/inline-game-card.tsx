@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users } from 'lucide-react';
+import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -46,20 +45,64 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   const [triviaComplete, setTriviaComplete] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   
-  useEffect(() => {
-    if (!carouselApi) return;
-    const onSelect = () => {
-      const newIndex = carouselApi.selectedScrollSnap();
-      if (newIndex !== currentGameOffset) {
-        setCurrentGameOffset(newIndex);
+  // Swipe gesture state
+  const swipeStartX = useRef<number | null>(null);
+  const swipeStartY = useRef<number | null>(null);
+  const isSwiping = useRef(false);
+
+  const handleSwipeStart = (e: React.TouchEvent | React.MouseEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    swipeStartX.current = clientX;
+    swipeStartY.current = clientY;
+    isSwiping.current = false;
+  };
+
+  const handleSwipeMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (swipeStartX.current === null) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const deltaX = Math.abs(clientX - swipeStartX.current);
+    const deltaY = Math.abs(clientY - (swipeStartY.current || 0));
+    // If horizontal movement exceeds vertical, it's a swipe attempt
+    if (deltaX > 10 && deltaX > deltaY) {
+      isSwiping.current = true;
+    }
+  };
+
+  const handleSwipeEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    if (swipeStartX.current === null) return;
+    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
+    const diff = swipeStartX.current - clientX;
+    
+    if (Math.abs(diff) > 50 && isSwiping.current) {
+      if (diff > 0 && availableGames.length > 1) {
+        // Swipe left - go to next
+        setCurrentGameOffset(prev => prev + 1);
+        setSelectedAnswer(null);
+      } else if (diff < 0 && currentGameOffset > 0) {
+        // Swipe right - go to prev
+        setCurrentGameOffset(prev => prev - 1);
         setSelectedAnswer(null);
       }
-    };
-    carouselApi.on('select', onSelect);
-    return () => { carouselApi.off('select', onSelect); };
-  }, [carouselApi, currentGameOffset]);
+    }
+    swipeStartX.current = null;
+    swipeStartY.current = null;
+    isSwiping.current = false;
+  };
+
+  const goToPrev = () => {
+    if (currentGameOffset > 0) {
+      setCurrentGameOffset(prev => prev - 1);
+      setSelectedAnswer(null);
+    }
+  };
+
+  const goToNext = () => {
+    setCurrentGameOffset(prev => prev + 1);
+    setSelectedAnswer(null);
+  };
 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['inline-games', gameType],
@@ -268,10 +311,6 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   const handlePlayAnother = () => {
     setShowCompleted(false);
   };
-
-  // Calculate if we can navigate prev/next
-  const canGoPrev = currentGameOffset > 0;
-  const canGoNext = availableGames.length > 1;
 
   const getGameIcon = (type: string) => {
     switch (type) {
@@ -498,43 +537,71 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     );
   }
 
-  // Render a single poll card for a given game
-  const renderPollCard = (game: Game, index: number) => {
-    const GameIcon = getGameIcon(game.type);
-    const isActive = index === currentGameOffset;
-    return (
+  const canGoPrev = currentGameOffset > 0;
+  const canGoNext = availableGames.length > 1;
+
+  return (
+    <>
+      <CompletionDialog />
       <div 
-        className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" 
-        data-testid={`inline-poll-card-${index}`}
+        className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} 
+        data-testid="inline-poll-card"
+        onTouchStart={handleSwipeStart}
+        onTouchMove={handleSwipeMove}
+        onTouchEnd={handleSwipeEnd}
+        onMouseDown={handleSwipeStart}
+        onMouseMove={handleSwipeMove}
+        onMouseUp={handleSwipeEnd}
+        style={{ touchAction: 'pan-y' }}
       >
-        <div className={cn("bg-gradient-to-r p-4", getGradient(game.type))}>
+        {/* Navigation buttons */}
+        {canGoPrev && (
+          <button
+            onClick={goToPrev}
+            className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white z-10"
+            data-testid="poll-nav-prev"
+          >
+            <ChevronLeft size={16} className="text-gray-600" />
+          </button>
+        )}
+        {canGoNext && (
+          <button
+            onClick={goToNext}
+            className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white z-10"
+            data-testid="poll-nav-next"
+          >
+            <ChevronRight size={16} className="text-gray-600" />
+          </button>
+        )}
+        
+        <div className={cn("bg-gradient-to-r p-4", getGradient(activeGame.type))}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <GameIcon className="text-white" size={20} />
-              <span className="text-white font-semibold">{getGameLabel(game.type)}</span>
+              <Icon className="text-white" size={20} />
+              <span className="text-white font-semibold">{getGameLabel(activeGame.type)}</span>
             </div>
             <Badge className="bg-white/20 text-white border-0">
-              +{game.points_reward} pts
+              +{activeGame.points_reward} pts
             </Badge>
           </div>
         </div>
         <div className="p-5 px-4">
-          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{game.title}</p>
+          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{activeGame.title}</p>
           <div className="flex flex-col gap-2 mb-4">
-            {(game.options || []).map((option: any, optIndex: number) => {
+            {(activeGame.options || []).map((option: any, index: number) => {
               const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
               return (
                 <button
-                  key={optIndex}
-                  onClick={() => isActive && setSelectedAnswer(optionText)}
-                  disabled={isSubmitting || !isActive}
+                  key={index}
+                  onClick={() => setSelectedAnswer(optionText)}
+                  disabled={isSubmitting}
                   className={cn(
                     "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
-                    isActive && selectedAnswer === optionText
+                    selectedAnswer === optionText
                       ? "border-transparent bg-purple-600 text-white"
                       : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
                   )}
-                  data-testid={`poll-option-${optIndex}`}
+                  data-testid={`poll-option-${index}`}
                 >
                   {optionText}
                 </button>
@@ -543,7 +610,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           </div>
           <Button
             onClick={handleVoteSubmit}
-            disabled={!selectedAnswer || isSubmitting || !isActive}
+            disabled={!selectedAnswer || isSubmitting}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
             data-testid="button-submit-poll"
           >
@@ -558,32 +625,6 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           )}
         </div>
       </div>
-    );
-  };
-
-  // Filter to only poll-type games for the carousel
-  const pollGames = availableGames.filter(g => g.type === 'vote');
-  
-  if (pollGames.length === 0) {
-    return null;
-  }
-
-  return (
-    <>
-      <CompletionDialog />
-      <Carousel 
-        setApi={setCarouselApi}
-        className={cn("w-full", className)}
-        opts={{ align: 'start', loop: false }}
-      >
-        <CarouselContent className="-ml-0">
-          {pollGames.map((game, index) => (
-            <CarouselItem key={game.id} className="pl-0">
-              {renderPollCard(game, index)}
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-      </Carousel>
     </>
   );
 }
