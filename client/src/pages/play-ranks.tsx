@@ -87,11 +87,12 @@ export default function PlayRanks() {
       
       <div className="max-w-4xl mx-auto px-4 py-6">
         <button 
-          onClick={() => setLocation('/play')}
+          onClick={() => window.history.back()}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          data-testid="back-button"
         >
           <ArrowLeft size={20} />
-          <span>Back to Play</span>
+          <span>Back</span>
         </button>
 
         <div className="mb-6">

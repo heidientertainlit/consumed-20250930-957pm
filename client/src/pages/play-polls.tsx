@@ -242,12 +242,12 @@ export default function PlayPollsPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Back Button and Header */}
         <button
-          onClick={() => setLocation('/play')}
+          onClick={() => window.history.back()}
           className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          data-testid="back-to-play"
+          data-testid="back-button"
         >
           <ChevronLeft size={20} />
-          <span className="ml-1">Back to Play</span>
+          <span className="ml-1">Back</span>
         </button>
 
         <div className="mb-6">
