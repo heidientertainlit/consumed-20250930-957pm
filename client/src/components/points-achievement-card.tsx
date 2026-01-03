@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -102,25 +102,18 @@ export default function PointsAchievementCard({ className }: PointsAchievementCa
         </button>
       )}
       
-      <div className="flex items-center justify-between gap-3 px-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-            <Trophy size={16} className="text-purple-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 text-sm flex-wrap">
-              <Link href={`/profile/${currentAchiever.userId}`} className="font-semibold text-gray-900 hover:underline truncate">
-                {currentAchiever.userName}
-              </Link>
-              <span className="text-gray-600">earned</span>
-              <span className="font-bold text-purple-600">{currentAchiever.pointsToday} pts</span>
-              <span className="text-gray-600">today</span>
-            </div>
-          </div>
+      <div className="flex flex-col gap-1 px-2">
+        <div className="flex items-center gap-1 text-sm">
+          <Link href={`/profile/${currentAchiever.userId}`} className="font-semibold text-gray-900 hover:underline">
+            {currentAchiever.userName}
+          </Link>
+          <span className="text-gray-600">earned</span>
+          <span className="font-bold text-purple-600">{currentAchiever.pointsToday} pts</span>
+          <span className="text-gray-600">today</span>
         </div>
         <Link 
           href="/play" 
-          className="text-xs font-medium text-purple-600 hover:text-purple-700 whitespace-nowrap"
+          className="text-xs font-medium text-purple-600 hover:text-purple-700"
           data-testid="points-cta-play"
         >
           Play to climb →
