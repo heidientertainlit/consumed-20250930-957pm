@@ -43,18 +43,17 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   const [triviaQuestionIndex, setTriviaQuestionIndex] = useState(0);
   const [triviaScore, setTriviaScore] = useState(0);
   const [triviaComplete, setTriviaComplete] = useState(false);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [pointerStart, setPointerStart] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientX);
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setPointerStart(e.clientX);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent, gamesCount: number) => {
-    if (touchStart === null) return;
-    const touchEnd = e.changedTouches[0].clientX;
-    const diff = touchStart - touchEnd;
+  const handlePointerUp = (e: React.PointerEvent, gamesCount: number) => {
+    if (pointerStart === null) return;
+    const diff = pointerStart - e.clientX;
     if (Math.abs(diff) > 50) {
       if (diff > 0 && gamesCount > 1) {
         setCurrentGameOffset(prev => prev + 1);
@@ -64,7 +63,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         setSelectedAnswer(null);
       }
     }
-    setTouchStart(null);
+    setPointerStart(null);
   };
 
   const { data: games = [], isLoading } = useQuery({
@@ -378,8 +377,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           <div 
             className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
             data-testid="inline-trivia-preview-card"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+            onPointerDown={handlePointerDown}
+            onPointerUp={(e) => handlePointerUp(e, availableGames.length)}
             style={{ touchAction: 'pan-y' }}
           >
             {/* Category and Invite row */}
@@ -437,8 +436,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         <div 
           className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
           data-testid="inline-trivia-card"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+          onPointerDown={handlePointerDown}
+          onPointerUp={(e) => handlePointerUp(e, availableGames.length)}
           style={{ touchAction: 'pan-y' }}
         >
           <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
@@ -517,8 +516,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
       <div 
         className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
         data-testid="inline-poll-card"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={(e) => handleTouchEnd(e, availableGames.length)}
+        onPointerDown={handlePointerDown}
+        onPointerUp={(e) => handlePointerUp(e, availableGames.length)}
         style={{ touchAction: 'pan-y' }}
       >
         <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
