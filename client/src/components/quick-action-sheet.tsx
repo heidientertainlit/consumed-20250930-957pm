@@ -448,11 +448,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const intents = [
     { 
       id: "capture" as IntentType, 
-      label: "Capture", 
+      label: "Add", 
       icon: Star, 
       iconColor: "text-white", 
       bgColor: "bg-gradient-to-br from-violet-500 to-purple-700", 
-      desc: "Track media" 
+      desc: "Save what you watched, read, or listened to" 
     },
     { 
       id: "say" as IntentType, 
@@ -1005,7 +1005,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
 
   const getSheetTitle = () => {
     if (!selectedIntent) return null;
-    if (selectedIntent === "capture") return "Capture";
+    if (selectedIntent === "capture") return "Add";
     if (selectedIntent === "say") return "Say something";
     if (selectedIntent === "play" && !selectedAction) return "Play";
     if (selectedAction) return actions.find(a => a.id === selectedAction)?.label;
@@ -1256,7 +1256,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                   {isPosting ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    selectedAction === "track" ? "Capture" : 
+                    selectedAction === "track" ? "Add" : 
                     selectedAction === "rank" ? "Add to Rank" : 
                     sayMode === "hot_take" ? "Drop It 🔥" :
                     sayMode === "ask" ? "Ask" :
