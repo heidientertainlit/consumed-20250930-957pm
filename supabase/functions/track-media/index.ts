@@ -269,11 +269,13 @@ serve(async (req) => {
         };
         
         // Generate content based on post type
-        let content: string;
+        // For simple add-to-list, leave content empty - the header already shows "added to → List"
+        let content: string | null;
         if (isRewatch) {
           content = `is consuming ${title} for the ${getOrdinalSuffix(rewatchCount)} time`;
         } else {
-          content = `Added ${title} to ${targetList?.title || 'my list'}`;
+          // No redundant text for simple list additions - the media card is enough
+          content = null;
         }
         
         const { error: postError } = await supabase

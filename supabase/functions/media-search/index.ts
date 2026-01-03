@@ -557,8 +557,12 @@ serve(async (req) => {
     // Limit results to avoid massive responses
     const trimmed = scoredResults.slice(0, 50);
     
-    // Remove internal score before returning
-    const results = trimmed.map(({ _score, ...item }) => item);
+    // Remove internal score and normalize image field before returning
+    const results = trimmed.map(({ _score, poster_url, ...item }) => ({
+      ...item,
+      poster_url,
+      image: poster_url // Alias for frontend compatibility
+    }));
 
     // Log final results
     console.log('Final results:', results.length, 'items');
