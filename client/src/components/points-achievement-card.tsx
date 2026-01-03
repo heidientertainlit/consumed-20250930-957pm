@@ -44,12 +44,12 @@ export default function PointsAchievementCard({ className }: PointsAchievementCa
         }
       });
       
-      const userIds = Object.keys(pointsByUser).filter(id => pointsByUser[id] >= 10);
+      const userIds = Object.keys(pointsByUser).filter(id => pointsByUser[id] >= 2);
       if (userIds.length === 0) return [];
       
       const { data: users } = await supabase
         .from('users')
-        .select('id, user_name, display_name, profile_image_url')
+        .select('id, user_name, display_name, avatar')
         .in('id', userIds);
       
       const userMap = new Map((users || []).map((u: any) => [u.id, u]));
@@ -61,7 +61,7 @@ export default function PointsAchievementCard({ className }: PointsAchievementCa
             userId,
             userName: user?.user_name || 'User',
             displayName: user?.display_name,
-            profileImage: user?.profile_image_url,
+            profileImage: user?.avatar,
             pointsToday: pointsByUser[userId]
           };
         })
