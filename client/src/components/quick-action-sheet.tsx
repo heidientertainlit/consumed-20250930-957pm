@@ -1205,20 +1205,20 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               <SheetTitle className="text-center text-gray-900 text-xl font-semibold">What's on your mind?</SheetTitle>
             </SheetHeader>
             
-            <div className="flex justify-center gap-6 pb-6 px-4">
+            <div className="flex flex-col gap-3 pb-6 px-4">
               {intents.map((intent) => (
                 <button
                   key={intent.id}
                   onClick={() => handleIntentSelect(intent.id)}
-                  className="flex flex-col items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors w-24"
+                  className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
                   data-testid={`intent-${intent.id}`}
                 >
-                  <div className={`w-16 h-16 rounded-2xl ${intent.bgColor} flex items-center justify-center shadow-lg`}>
-                    <intent.icon size={28} className="text-white" />
+                  <div className={`w-14 h-14 rounded-xl ${intent.bgColor} flex items-center justify-center shadow-md flex-shrink-0`}>
+                    <intent.icon size={24} className="text-white" />
                   </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-gray-900 text-sm leading-tight">{intent.label}</p>
-                    <p className="text-xs text-gray-400 leading-tight mt-1">{intent.desc}</p>
+                  <div className="text-left flex-1">
+                    <p className="font-semibold text-gray-900 text-base">{intent.label}</p>
+                    <p className="text-sm text-gray-500 mt-0.5">{intent.desc}</p>
                   </div>
                 </button>
               ))}
