@@ -311,7 +311,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           }),
         });
         
-        if (!response.ok) throw new Error('Failed to track media');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Track media error:', response.status, errorData);
+          throw new Error(errorData.error || 'Failed to track media');
+        }
         
         toast({ title: `Tracked ${selectedMedia.title}!` });
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
