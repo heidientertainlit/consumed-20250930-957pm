@@ -406,19 +406,21 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                 </Button>
               </Link>
               {availableGames.length > 1 && (
-                <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="trivia-preview-carousel-dots">
+                <div className="flex items-center justify-center gap-2 mt-3" data-testid="trivia-preview-carousel-dots">
                   {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentGameOffset(idx)}
-                      className={cn(
+                      className="p-1"
+                      data-testid={`trivia-preview-dot-${idx}`}
+                    >
+                      <div className={cn(
                         "w-2 h-2 rounded-full transition-colors",
                         idx === (currentGameOffset % availableGames.length)
                           ? "bg-purple-600"
-                          : "bg-gray-300 hover:bg-gray-400"
-                      )}
-                      data-testid={`trivia-preview-dot-${idx}`}
-                    />
+                          : "bg-gray-300"
+                      )} />
+                    </button>
                   ))}
                   {availableGames.length > 5 && (
                     <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
@@ -494,19 +496,21 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
               {isSubmitting ? 'Submitting...' : 'Submit Answer'}
             </Button>
             {availableGames.length > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="trivia-carousel-dots">
+              <div className="flex items-center justify-center gap-2 mt-3" data-testid="trivia-carousel-dots">
                 {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentGameOffset(idx)}
-                    className={cn(
+                    className="p-1"
+                    data-testid={`trivia-dot-${idx}`}
+                  >
+                    <div className={cn(
                       "w-2 h-2 rounded-full transition-colors",
                       idx === (currentGameOffset % availableGames.length)
                         ? "bg-purple-600"
-                        : "bg-gray-300 hover:bg-gray-400"
-                    )}
-                    data-testid={`trivia-dot-${idx}`}
-                  />
+                        : "bg-gray-300"
+                    )} />
+                  </button>
                 ))}
                 {availableGames.length > 5 && (
                   <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
@@ -566,19 +570,21 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             {isSubmitting ? 'Submitting...' : 'Submit Vote'}
           </Button>
           {availableGames.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="poll-carousel-dots">
+            <div className="flex items-center justify-center gap-2 mt-3" data-testid="poll-carousel-dots">
               {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentGameOffset(idx)}
-                  className={cn(
+                  className="p-1"
+                  data-testid={`poll-dot-${idx}`}
+                >
+                  <div className={cn(
                     "w-2 h-2 rounded-full transition-colors",
                     idx === (currentGameOffset % availableGames.length)
                       ? "bg-purple-600"
-                      : "bg-gray-300 hover:bg-gray-400"
-                  )}
-                  data-testid={`poll-dot-${idx}`}
-                />
+                      : "bg-gray-300"
+                  )} />
+                </button>
               ))}
               {availableGames.length > 5 && (
                 <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
