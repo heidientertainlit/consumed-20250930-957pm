@@ -4211,12 +4211,27 @@ export default function Feed() {
                         {/* Bet button - only show for Currently/Want To list posts */}
                         {(() => {
                           const listData = (post as any).listData;
-                          const listTitle = listData?.title?.toLowerCase();
-                          const isBettableList = listTitle === 'currently' || listTitle === 'want to';
+                          const listNames = (post as any).listNames as string[] | undefined;
+                          const contentLower = (post.content || '').toLowerCase();
+                          
+                          // Check multiple sources for list name
+                          const listTitle = listData?.title?.toLowerCase() || 
+                            listNames?.[0]?.toLowerCase() || '';
+                          
+                          // Also check content for "to Currently" or "to Want To" patterns
+                          const isBettableFromContent = 
+                            contentLower.includes('to currently') || 
+                            contentLower.includes('→ currently') ||
+                            contentLower.includes('to want to') ||
+                            contentLower.includes('→ want to');
+                          
+                          const isBettableList = listTitle === 'currently' || listTitle === 'want to' || isBettableFromContent;
                           const hasMedia = post.mediaItems && post.mediaItems.length > 0;
+                          const isOwnPost = post.user?.id === currentAppUserId;
                           const userName = post.user?.displayName || post.user?.username || 'them';
                           
-                          if (isBettableList && hasMedia && !activeInlineRating) {
+                          // Only show bet button for other users' posts (can't bet on your own)
+                          if (isBettableList && hasMedia && !activeInlineRating && !isOwnPost) {
                             return (
                               <button 
                                 onClick={() => setActiveBetPost({
