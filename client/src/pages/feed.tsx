@@ -11,6 +11,7 @@ import InlineGameCard from "@/components/inline-game-card";
 import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
+import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2425,6 +2426,11 @@ export default function Feed() {
             <p className="text-gray-400 text-sm mt-2 max-w-[220px] mx-auto">Trivia, predictions, rankings, and hot takes with friends.</p>
           </div>
           <FeedHero variant="header" />
+          
+          {/* Daily Challenge */}
+          <div className="mt-4">
+            <DailyChallengeCard />
+          </div>
         </div>
       </div>
 

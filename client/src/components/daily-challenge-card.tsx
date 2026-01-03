@@ -1,0 +1,288 @@
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
+import { Calendar, Trophy, CheckCircle, Loader2, Send } from 'lucide-react';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+interface DailyChallenge {
+  id: string;
+  scheduled_date: string;
+  challenge_type: 'trivia' | 'poll' | 'predict' | 'rank' | 'custom';
+  title: string;
+  description: string | null;
+  options: string[] | null;
+  correct_answer: string | null;
+  points_reward: number;
+  category: string | null;
+  icon: string;
+  status: string;
+}
+
+interface DailyChallengeResponse {
+  id: string;
+  challenge_id: string;
+  user_id: string;
+  response: any;
+  points_earned: number;
+}
+
+export function DailyChallengeCard() {
+  const { user, session } = useAuth();
+  const { toast } = useToast();
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [customResponse, setCustomResponse] = useState('');
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const { data: challenge, isLoading: challengeLoading } = useQuery({
+    queryKey: ['daily-challenge'],
+    queryFn: async () => {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`
+        },
+        body: JSON.stringify({ action: 'getToday' })
+      });
+      
+      const data = await response.json();
+      if (data.error || !data.challenge) {
+        console.log('No daily challenge for today');
+        return null;
+      }
+      console.log('Found daily challenge:', data.challenge);
+      return data.challenge as DailyChallenge;
+    }
+  });
+
+  const { data: existingResponse } = useQuery({
+    queryKey: ['daily-challenge-response', challenge?.id],
+    queryFn: async () => {
+      if (!challenge || !session?.access_token) return null;
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          action: 'checkResponse',
+          challengeId: challenge.id 
+        })
+      });
+      
+      const data = await response.json();
+      if (data.hasResponded) {
+        return data.response as DailyChallengeResponse;
+      }
+      return null;
+    },
+    enabled: !!challenge && !!session?.access_token
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: async (responseData: any) => {
+      if (!challenge || !session?.access_token) throw new Error('Missing data');
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          action: 'submit',
+          challengeId: challenge.id,
+          response: responseData
+        })
+      });
+      
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      return { 
+        pointsEarned: data.pointsEarned, 
+        isCorrect: data.isCorrect,
+        correctAnswer: data.correctAnswer
+      };
+    },
+    onSuccess: (result) => {
+      setHasSubmitted(true);
+      queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
+      
+      if (challenge?.challenge_type === 'trivia') {
+        if (result.isCorrect) {
+          toast({
+            title: "Correct! 🎉",
+            description: `You earned ${result.pointsEarned} points!`
+          });
+        } else {
+          toast({
+            title: "Not quite!",
+            description: `The correct answer was: ${result.correctAnswer}`
+          });
+        }
+      } else {
+        toast({
+          title: "Challenge Complete! 🎯",
+          description: `You earned ${result.pointsEarned} points!`
+        });
+      }
+    },
+    onError: (error: any) => {
+      if (error.message?.includes('Already submitted')) {
+        toast({
+          title: "Already submitted",
+          description: "You've already completed today's challenge!"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to submit response",
+          variant: "destructive"
+        });
+      }
+    }
+  });
+
+  const handleSubmit = () => {
+    if (challenge?.challenge_type === 'custom') {
+      if (!customResponse.trim()) return;
+      submitMutation.mutate({ text: customResponse });
+    } else {
+      if (!selectedOption) return;
+      submitMutation.mutate({ answer: selectedOption });
+    }
+  };
+
+  if (challengeLoading) {
+    return (
+      <Card className="p-4 bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-purple-500/30">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (!challenge) {
+    return null;
+  }
+
+  const alreadyCompleted = !!existingResponse || hasSubmitted;
+
+  return (
+    <Card 
+      className="p-4 bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-purple-500/30 overflow-hidden"
+      data-testid="daily-challenge-card"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{challenge.icon}</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-purple-300">Daily Challenge</span>
+              <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-400">
+                <Trophy className="w-3 h-3 mr-1" />
+                {challenge.points_reward} pts
+              </Badge>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-gray-400">
+              <Calendar className="w-3 h-3" />
+              {new Date(challenge.scheduled_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </div>
+          </div>
+        </div>
+        {challenge.category && (
+          <Badge variant="secondary" className="text-xs">
+            {challenge.category}
+          </Badge>
+        )}
+      </div>
+
+      <h3 className="text-lg font-bold text-white mb-2">{challenge.title}</h3>
+      {challenge.description && (
+        <p className="text-sm text-gray-300 mb-4">{challenge.description}</p>
+      )}
+
+      {alreadyCompleted ? (
+        <div className="flex items-center gap-2 p-3 bg-green-500/20 rounded-lg border border-green-500/30">
+          <CheckCircle className="w-5 h-5 text-green-400" />
+          <div>
+            <p className="text-green-300 font-medium">Challenge Complete!</p>
+            {existingResponse && (
+              <p className="text-xs text-green-400/70">
+                You earned {existingResponse.points_earned} points
+              </p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          {challenge.challenge_type === 'custom' ? (
+            <div className="space-y-3">
+              <Textarea
+                value={customResponse}
+                onChange={(e) => setCustomResponse(e.target.value)}
+                placeholder="Share your answer..."
+                className="min-h-[80px] bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+              />
+              <Button
+                onClick={handleSubmit}
+                disabled={!customResponse.trim() || submitMutation.isPending}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                data-testid="submit-custom-challenge"
+              >
+                {submitMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                Submit Response
+              </Button>
+            </div>
+          ) : challenge.options ? (
+            <div className="space-y-2">
+              {challenge.options.map((option, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedOption(option)}
+                  className={`w-full p-3 rounded-lg text-left transition-all ${
+                    selectedOption === option
+                      ? 'bg-purple-600 text-white border-2 border-purple-400'
+                      : 'bg-white/10 text-gray-200 border-2 border-transparent hover:bg-white/20'
+                  }`}
+                  data-testid={`challenge-option-${idx}`}
+                >
+                  {option}
+                </button>
+              ))}
+              <Button
+                onClick={handleSubmit}
+                disabled={!selectedOption || submitMutation.isPending}
+                className="w-full mt-3 bg-purple-600 hover:bg-purple-700"
+                data-testid="submit-challenge"
+              >
+                {submitMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Submit Answer
+              </Button>
+            </div>
+          ) : null}
+        </>
+      )}
+    </Card>
+  );
+}
