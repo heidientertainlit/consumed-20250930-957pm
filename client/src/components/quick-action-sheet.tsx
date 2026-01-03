@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+type IntentType = "capture" | "say" | "play" | null;
 type ActionType = "track" | "post" | "hot_take" | "poll" | "ask_for_recs" | "rank" | "challenge" | null;
 
 interface QuickActionSheetProps {
@@ -34,7 +35,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const { session, user } = useAuth();
   const { toast } = useToast();
   
+  const [selectedIntent, setSelectedIntent] = useState<IntentType>(null);
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
+  const [sayMode, setSayMode] = useState<"thought" | "hot_take" | "ask">("thought");
   const [isPosting, setIsPosting] = useState(false);
   
   const [contentText, setContentText] = useState("");
@@ -53,6 +56,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         external_source: preselectedMedia.externalSource,
         creator: preselectedMedia.creator,
       });
+      setSelectedIntent("capture");
       setSelectedAction("track");
       setAddToList(true);
     }
@@ -216,7 +220,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   };
 
   const resetAll = () => {
+    setSelectedIntent(null);
     setSelectedAction(null);
+    setSayMode("thought");
     setContentText("");
     setContainsSpoilers(false);
     setSelectedMedia(null);
@@ -240,12 +246,29 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     onClose();
   };
 
+  const handleIntentSelect = (intent: IntentType) => {
+    setSelectedIntent(intent);
+    if (intent === "capture") {
+      setSelectedAction("track");
+    } else if (intent === "say") {
+      setSelectedAction("post");
+      setSayMode("thought");
+    } else if (intent === "play") {
+      setSelectedAction(null);
+    }
+  };
+
   const handleActionSelect = (action: ActionType) => {
     setSelectedAction(action);
   };
 
   const handleBack = () => {
-    setSelectedAction(null);
+    if (selectedAction && selectedIntent === "play") {
+      setSelectedAction(null);
+    } else if (selectedIntent) {
+      setSelectedIntent(null);
+      setSelectedAction(null);
+    }
     setSearchQuery("");
     setSearchResults([]);
   };
@@ -417,6 +440,39 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
       setIsPosting(false);
     }
   };
+
+  const intents = [
+    { 
+      id: "capture" as IntentType, 
+      label: "Capture", 
+      icon: Star, 
+      iconColor: "text-yellow-500", 
+      bgColor: "bg-gradient-to-br from-yellow-400 to-amber-500", 
+      desc: "Save something you watched, read, or listened to" 
+    },
+    { 
+      id: "say" as IntentType, 
+      label: "Say something", 
+      icon: MessageSquare, 
+      iconColor: "text-blue-500", 
+      bgColor: "bg-gradient-to-br from-blue-400 to-indigo-500", 
+      desc: "Share a thought, hot take, or question" 
+    },
+    { 
+      id: "play" as IntentType, 
+      label: "Play", 
+      icon: Swords, 
+      iconColor: "text-purple-500", 
+      bgColor: "bg-gradient-to-br from-purple-500 to-pink-500", 
+      desc: "Trivia, predictions, rankings, challenges" 
+    },
+  ];
+
+  const playActions = [
+    { id: "poll" as ActionType, label: "Create a Poll", icon: Vote, desc: "Ask your friends" },
+    { id: "rank" as ActionType, label: "Add to Ranking", icon: Trophy, desc: "Build a ranked list" },
+    { id: "challenge" as ActionType, label: "Challenge a Friend", icon: Swords, desc: "Coming soon" },
+  ];
 
   const actions = [
     { id: "track" as ActionType, label: "Track & Rate", icon: Star, iconColor: "text-yellow-500", bgColor: "bg-yellow-50", desc: "Log something you finished" },
@@ -943,29 +999,216 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     return false;
   };
 
+  const getSheetTitle = () => {
+    if (!selectedIntent) return null;
+    if (selectedIntent === "capture") return "Capture";
+    if (selectedIntent === "say") return "Say something";
+    if (selectedIntent === "play" && !selectedAction) return "Play";
+    if (selectedAction) return actions.find(a => a.id === selectedAction)?.label;
+    return null;
+  };
+
+  const renderPlayHub = () => {
+    return (
+      <div className="space-y-4 pb-4">
+        <div className="grid grid-cols-1 gap-3">
+          {playActions.map((action) => (
+            <button
+              key={action.id}
+              onClick={() => handleActionSelect(action.id)}
+              className="flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+              data-testid={`play-action-${action.id}`}
+            >
+              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                <action.icon size={20} className="text-purple-600" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900">{action.label}</p>
+                <p className="text-sm text-gray-500">{action.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+        
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-center text-xs text-gray-400 py-2">
+            Or explore the Play page for trivia, predictions & more
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSayContent = () => {
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
+          <button
+            onClick={() => { setSayMode("thought"); setSelectedAction("post"); }}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+              sayMode === "thought" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+            data-testid="say-mode-thought"
+          >
+            💭 Thought
+          </button>
+          <button
+            onClick={() => { setSayMode("hot_take"); setSelectedAction("hot_take"); }}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+              sayMode === "hot_take" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+            data-testid="say-mode-hot-take"
+          >
+            🔥 Hot Take
+          </button>
+          <button
+            onClick={() => { setSayMode("ask"); setSelectedAction("ask_for_recs"); }}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+              sayMode === "ask" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+            data-testid="say-mode-ask"
+          >
+            ❓ Ask
+          </button>
+        </div>
+        
+        <MentionTextarea
+          value={contentText}
+          onChange={setContentText}
+          session={session}
+          placeholder={
+            sayMode === "thought" ? "What's on your mind?" :
+            sayMode === "hot_take" ? "Drop your spicy take..." :
+            "What are you looking for?"
+          }
+          className="min-h-[100px]"
+          testId="say-content-input"
+        />
+        
+        {sayMode === "ask" && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">Category (optional)</p>
+            <div className="flex flex-wrap gap-2">
+              {["Movies", "TV Shows", "Books", "Music", "Podcasts", "Games"].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setRecCategory(recCategory === cat ? "" : cat)}
+                  className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                    recCategory === cat
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  data-testid={`rec-category-${cat.toLowerCase()}`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tag Media Section */}
+        {(sayMode === "thought" || sayMode === "hot_take") && (
+          <div className="space-y-2">
+            {!selectedMedia ? (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tag a movie, show, book... (optional)"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  data-testid="say-media-search"
+                />
+              </div>
+            ) : null}
+            
+            {isSearching && (
+              <div className="flex justify-center py-2">
+                <Loader2 className="animate-spin text-purple-500" size={20} />
+              </div>
+            )}
+            
+            {!selectedMedia && searchResults.length > 0 && (
+              <div className="max-h-32 overflow-y-auto space-y-1 bg-gray-50 rounded-lg p-2">
+                {searchResults.slice(0, 4).map((result, idx) => (
+                  <button
+                    key={`${result.external_id}-${idx}`}
+                    onClick={() => {
+                      setSelectedMedia(result);
+                      setSearchResults([]);
+                      setSearchQuery("");
+                    }}
+                    className="w-full flex items-center gap-2 p-2 hover:bg-gray-100 rounded text-left"
+                    data-testid={`say-search-result-${result.external_id}`}
+                  >
+                    {result.image && (
+                      <img src={result.image} alt={result.title} className="w-8 h-10 object-cover rounded" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
+                      <p className="text-xs text-gray-500 truncate">{result.type}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {selectedMedia && (
+              <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg">
+                {selectedMedia.image && (
+                  <img src={selectedMedia.image} alt={selectedMedia.title} className="w-8 h-10 object-cover rounded" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{selectedMedia.title}</p>
+                  <p className="text-xs text-gray-500 truncate">{selectedMedia.type}</p>
+                </div>
+                <button onClick={() => setSelectedMedia(null)} className="p-1 hover:bg-purple-100 rounded">
+                  <X size={16} className="text-gray-500" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="spoilers"
+            checked={containsSpoilers}
+            onCheckedChange={(checked) => setContainsSpoilers(!!checked)}
+          />
+          <label htmlFor="spoilers" className="text-sm text-gray-600">
+            Contains spoilers
+          </label>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto !bg-white border-t border-gray-100" style={{ backgroundColor: 'white' }}>
-        {!selectedAction ? (
+        {!selectedIntent ? (
           <>
-            <SheetHeader className="pb-2">
-              <SheetTitle className="text-center text-gray-900 text-lg font-semibold">What do you want to do?</SheetTitle>
+            <SheetHeader className="pb-4">
+              <SheetTitle className="text-center text-gray-900 text-xl font-semibold">What's on your mind?</SheetTitle>
             </SheetHeader>
             
-            <div className="space-y-1 pb-6">
-              {actions.map((action) => (
+            <div className="grid grid-cols-3 gap-3 pb-6">
+              {intents.map((intent) => (
                 <button
-                  key={action.id}
-                  onClick={() => handleActionSelect(action.id)}
-                  className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors"
-                  data-testid={`action-${action.id}`}
+                  key={intent.id}
+                  onClick={() => handleIntentSelect(intent.id)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-gray-50 transition-colors"
+                  data-testid={`intent-${intent.id}`}
                 >
-                  <div className={`w-12 h-12 rounded-full ${action.bgColor} flex items-center justify-center`}>
-                    <action.icon size={22} className={action.iconColor} />
+                  <div className={`w-14 h-14 rounded-xl ${intent.bgColor} flex items-center justify-center shadow-lg`}>
+                    <intent.icon size={26} className="text-white" />
                   </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-gray-900">{action.label}</p>
-                    <p className="text-sm text-gray-500">{action.desc}</p>
+                  <div className="text-center">
+                    <p className="font-semibold text-gray-900 text-sm">{intent.label}</p>
+                    <p className="text-xs text-gray-500 leading-tight mt-0.5">{intent.desc}</p>
                   </div>
                 </button>
               ))}
@@ -979,14 +1222,20 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                   <ArrowLeft size={20} className="text-gray-600" />
                 </button>
                 <SheetTitle className="text-gray-900 text-lg font-semibold">
-                  {actions.find(a => a.id === selectedAction)?.label}
+                  {getSheetTitle()}
                 </SheetTitle>
               </div>
             </SheetHeader>
             
-            {renderActionContent()}
+            {selectedIntent === "play" && !selectedAction ? (
+              renderPlayHub()
+            ) : selectedIntent === "say" && selectedAction !== "poll" && selectedAction !== "rank" ? (
+              renderSayContent()
+            ) : (
+              renderActionContent()
+            )}
             
-            {selectedAction !== "challenge" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
+            {selectedAction && selectedAction !== "challenge" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
               <div className="pt-4 pb-2">
                 <Button
                   onClick={handlePost}
@@ -997,7 +1246,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                   {isPosting ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    selectedAction === "track" ? "Track" : selectedAction === "rank" ? "Add to Rank" : "Post"
+                    selectedAction === "track" ? "Capture" : 
+                    selectedAction === "rank" ? "Add to Rank" : 
+                    sayMode === "hot_take" ? "Drop It 🔥" :
+                    sayMode === "ask" ? "Ask" :
+                    "Share"
                   )}
                 </Button>
               </div>
