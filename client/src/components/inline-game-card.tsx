@@ -391,7 +391,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             )}
             
             {/* Category and Invite row */}
-            <div className="p-4 pb-0 flex items-center justify-between px-10">
+            <div className="p-4 pb-0 flex items-center justify-between px-4">
               {currentGame.category && (
                 <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
                   {currentGame.category}
@@ -403,7 +403,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
               </button>
             </div>
             
-            <div className="p-4 pt-3 px-10">
+            <div className="p-4 pt-3 px-4">
               <h3 className="text-xl font-bold text-gray-900 mb-1">{currentGame.title}</h3>
               {currentGame.description && (
                 <p className="text-gray-600 text-sm mb-3">{currentGame.description}</p>
@@ -472,7 +472,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           </div>
           {/* Category and tags pills row */}
           {(currentGame.category || (currentGame.tags && currentGame.tags.length > 0)) && (
-            <div className="px-10 pt-4 flex flex-wrap gap-2">
+            <div className="px-4 pt-4 flex flex-wrap gap-2">
               {currentGame.category && (
                 <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
                   {currentGame.category}
@@ -485,18 +485,18 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
               ))}
             </div>
           )}
-          <div className="p-5 px-10 pt-3">
-            <p className="text-base font-semibold text-gray-900 mb-3 leading-snug">{triviaQuestion.question}</p>
-            <div className="flex flex-col gap-1.5 mb-3">
+          <div className="p-5 px-4 pt-3">
+            <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{triviaQuestion.question}</p>
+            <div className="flex flex-col gap-2 mb-4">
               {triviaQuestion.options.map((option, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedAnswer(option)}
                   disabled={isSubmitting}
                   className={cn(
-                    "w-full px-3.5 py-2.5 text-left rounded-full border-2 transition-all text-sm font-medium",
+                    "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
                     selectedAnswer === option
-                      ? "border-purple-500 bg-purple-600 text-white"
+                      ? "border-transparent bg-gradient-to-r from-purple-700 to-violet-500 text-white"
                       : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
                   )}
                   data-testid={`trivia-option-${index}`}
@@ -508,7 +508,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             <Button
               onClick={handleTriviaAnswer}
               disabled={!selectedAnswer || isSubmitting}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-purple-700 to-violet-500 hover:from-purple-800 hover:to-violet-600 text-white rounded-full py-4 disabled:opacity-50"
               data-testid="button-submit-trivia"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Answer'}
@@ -554,9 +554,9 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             </Badge>
           </div>
         </div>
-        <div className="p-5 px-10">
-          <p className="text-base font-semibold text-gray-900 mb-3 leading-snug">{currentGame.title}</p>
-          <div className="flex flex-col gap-1.5 mb-3">
+        <div className="p-5 px-4">
+          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{currentGame.title}</p>
+          <div className="flex flex-col gap-2 mb-4">
             {(currentGame.options || []).map((option: any, index: number) => {
               const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
               return (
@@ -565,9 +565,9 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                   onClick={() => setSelectedAnswer(optionText)}
                   disabled={isSubmitting}
                   className={cn(
-                    "w-full px-3.5 py-2.5 text-left rounded-full border-2 transition-all text-sm font-medium",
+                    "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
                     selectedAnswer === optionText
-                      ? "border-purple-500 bg-purple-600 text-white"
+                      ? "border-transparent bg-gradient-to-r from-purple-700 to-violet-500 text-white"
                       : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
                   )}
                   data-testid={`poll-option-${index}`}
@@ -580,7 +580,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           <Button
             onClick={handleVoteSubmit}
             disabled={!selectedAnswer || isSubmitting}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-purple-700 to-violet-500 hover:from-purple-800 hover:to-violet-600 text-white rounded-full py-4 disabled:opacity-50"
             data-testid="button-submit-poll"
           >
             {isSubmitting ? 'Submitting...' : 'Submit Vote'}
