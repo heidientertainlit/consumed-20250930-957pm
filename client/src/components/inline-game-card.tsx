@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -43,28 +44,22 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   const [triviaQuestionIndex, setTriviaQuestionIndex] = useState(0);
   const [triviaScore, setTriviaScore] = useState(0);
   const [triviaComplete, setTriviaComplete] = useState(false);
-  const [pointerStart, setPointerStart] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    setPointerStart(e.clientX);
-  };
-
-  const handlePointerUp = (e: React.PointerEvent, gamesCount: number) => {
-    if (pointerStart === null) return;
-    const diff = pointerStart - e.clientX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0 && gamesCount > 1) {
-        setCurrentGameOffset(prev => prev + 1);
-        setSelectedAnswer(null);
-      } else if (diff < 0 && currentGameOffset > 0) {
-        setCurrentGameOffset(prev => prev - 1);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  
+  useEffect(() => {
+    if (!carouselApi) return;
+    const onSelect = () => {
+      const newIndex = carouselApi.selectedScrollSnap();
+      if (newIndex !== currentGameOffset) {
+        setCurrentGameOffset(newIndex);
         setSelectedAnswer(null);
       }
-    }
-    setPointerStart(null);
-  };
+    };
+    carouselApi.on('select', onSelect);
+    return () => { carouselApi.off('select', onSelect); };
+  }, [carouselApi, currentGameOffset]);
 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['inline-games', gameType],
@@ -111,9 +106,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     return true;
   });
 
-  // Simple index-based navigation through all available games
-  const effectiveIndex = currentGameOffset % Math.max(availableGames.length, 1);
-  const currentGame = availableGames[effectiveIndex];
+  // activeGame is derived from scroll position
+  const activeGame = availableGames[currentGameOffset % Math.max(availableGames.length, 1)];
 
   const submitAnswer = useMutation({
     mutationFn: async ({ poolId, answer, score, game }: { poolId: string; answer: string; score?: number; game: Game }) => {
@@ -143,21 +137,21 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   });
 
   const handleVoteSubmit = async () => {
-    if (!currentGame || !selectedAnswer) return;
+    if (!activeGame || !selectedAnswer) return;
     
     setIsSubmitting(true);
     try {
       await submitAnswer.mutateAsync({
-        poolId: currentGame.id,
+        poolId: activeGame.id,
         answer: selectedAnswer,
-        game: currentGame,
+        game: activeGame,
       });
-      setSubmittedGames(prev => new Set([...prev, currentGame.id]));
-      setLastEarnedPoints(currentGame.points_reward);
+      setSubmittedGames(prev => new Set([...prev, activeGame.id]));
+      setLastEarnedPoints(activeGame.points_reward);
       // Show toast and immediately advance to next game
       toast({
         title: "🎉 Nice work!",
-        description: `+${currentGame.points_reward} points earned`,
+        description: `+${activeGame.points_reward} points earned`,
         duration: 2500,
       });
       // Advance to next game immediately
@@ -171,9 +165,9 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   };
 
   const getCurrentTriviaQuestion = (): TriviaQuestion | null => {
-    if (!currentGame || currentGame.type !== 'trivia') return null;
-    if (!Array.isArray(currentGame.options)) return null;
-    const q = currentGame.options[triviaQuestionIndex];
+    if (!activeGame || activeGame.type !== 'trivia') return null;
+    if (!Array.isArray(activeGame.options)) return null;
+    const q = activeGame.options[triviaQuestionIndex];
     if (q && typeof q === 'object' && 'question' in q && 'options' in q) {
       // Handle both 'correct' and 'answer' field names
       const correctAnswer = q.correct || q.answer;
@@ -185,15 +179,15 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   };
 
   const triviaQuestion = getCurrentTriviaQuestion();
-  const totalTriviaQuestions = currentGame?.type === 'trivia' && Array.isArray(currentGame.options) 
-    ? currentGame.options.length 
+  const totalTriviaQuestions = activeGame?.type === 'trivia' && Array.isArray(activeGame.options) 
+    ? activeGame.options.length 
     : 0;
 
   const handleTriviaAnswer = async () => {
-    if (!currentGame || !triviaQuestion || !selectedAnswer) return;
+    if (!activeGame || !triviaQuestion || !selectedAnswer) return;
     
     const isCorrect = selectedAnswer === triviaQuestion.correct;
-    const pointsPerQuestion = Math.floor(currentGame.points_reward / totalTriviaQuestions);
+    const pointsPerQuestion = Math.floor(activeGame.points_reward / totalTriviaQuestions);
     const earnedPoints = isCorrect ? pointsPerQuestion : 0;
     
     const newScore = isCorrect ? triviaScore + earnedPoints : triviaScore;
@@ -218,12 +212,12 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
       setIsSubmitting(true);
       try {
         await submitAnswer.mutateAsync({
-          poolId: currentGame.id,
+          poolId: activeGame.id,
           answer: `Completed with score: ${newScore}`,
           score: newScore,
-          game: currentGame,
+          game: activeGame,
         });
-        setSubmittedGames(prev => new Set([...prev, currentGame.id]));
+        setSubmittedGames(prev => new Set([...prev, activeGame.id]));
         setLastEarnedPoints(newScore);
         // Show toast and immediately advance to next game
         toast({
@@ -318,11 +312,11 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     );
   }
 
-  if (!currentGame || availableGames.length === 0) {
+  if (availableGames.length === 0 || !activeGame) {
     return null;
   }
-
-  const Icon = getGameIcon(currentGame.type);
+  
+  const Icon = getGameIcon(activeGame.type);
 
   // Completion popup dialog
   const CompletionDialog = () => (
@@ -361,7 +355,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   }
 
   // For trivia games, we must have a valid question - if not, skip rendering
-  if (currentGame.type === 'trivia') {
+  if (activeGame.type === 'trivia') {
     if (!triviaQuestion) {
       // Trivia without valid questions - skip to next game
       return null;
@@ -377,15 +371,12 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           <div 
             className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
             data-testid="inline-trivia-preview-card"
-            onPointerDown={handlePointerDown}
-            onPointerUp={(e) => handlePointerUp(e, availableGames.length)}
-            style={{ touchAction: 'pan-y' }}
           >
             {/* Category and Invite row */}
             <div className="p-4 pb-0 flex items-center justify-between px-4">
-              {currentGame.category && (
+              {activeGame.category && (
                 <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
-                  {currentGame.category}
+                  {activeGame.category}
                 </Badge>
               )}
               <button className="flex items-center gap-1.5 text-purple-600 text-sm font-medium hover:text-purple-700">
@@ -395,19 +386,19 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             </div>
             
             <div className="p-4 pt-3 px-4">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">{currentGame.title}</h3>
-              {currentGame.description && (
-                <p className="text-gray-600 text-sm mb-3">{currentGame.description}</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-1">{activeGame.title}</h3>
+              {activeGame.description && (
+                <p className="text-gray-600 text-sm mb-3">{activeGame.description}</p>
               )}
               <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                <span className="text-amber-600 font-medium">☆ You Earn: {currentGame.points_reward} pts</span>
+                <span className="text-amber-600 font-medium">☆ You Earn: {activeGame.points_reward} pts</span>
                 <span className="flex items-center gap-1">
                   <Users size={14} />
                   0
                 </span>
               </div>
               
-              <Link href={`/play/trivia#${currentGame.id}`}>
+              <Link href={`/play/trivia#${activeGame.id}`}>
                 <Button
                   className="w-full bg-gray-600 hover:bg-gray-700 text-white rounded-full py-4"
                   data-testid="button-play-trivia"
@@ -436,11 +427,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         <div 
           className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
           data-testid="inline-trivia-card"
-          onPointerDown={handlePointerDown}
-          onPointerUp={(e) => handlePointerUp(e, availableGames.length)}
-          style={{ touchAction: 'pan-y' }}
-        >
-          <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
+                  >
+          <div className={cn("bg-gradient-to-r p-4", getGradient(activeGame.type))}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Icon className="text-white" size={20} />
@@ -450,19 +438,19 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                 </span>
               </div>
               <Badge className="bg-white/20 text-white border-0">
-                +{currentGame.points_reward} pts
+                +{activeGame.points_reward} pts
               </Badge>
             </div>
           </div>
           {/* Category and tags pills row */}
-          {(currentGame.category || (currentGame.tags && currentGame.tags.length > 0)) && (
+          {(activeGame.category || (activeGame.tags && activeGame.tags.length > 0)) && (
             <div className="px-4 pt-4 flex flex-wrap gap-2">
-              {currentGame.category && (
+              {activeGame.category && (
                 <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
-                  {currentGame.category}
+                  {activeGame.category}
                 </Badge>
               )}
-              {currentGame.tags?.map((tag: string, idx: number) => (
+              {activeGame.tags?.map((tag: string, idx: number) => (
                 <Badge key={idx} className="bg-blue-100 text-blue-700 border-0 text-xs px-3 py-1">
                   {tag}
                 </Badge>
@@ -510,44 +498,43 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     );
   }
 
-  return (
-    <>
-      <CompletionDialog />
+  // Render a single poll card for a given game
+  const renderPollCard = (game: Game, index: number) => {
+    const GameIcon = getGameIcon(game.type);
+    const isActive = index === currentGameOffset;
+    return (
       <div 
-        className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
-        data-testid="inline-poll-card"
-        onPointerDown={handlePointerDown}
-        onPointerUp={(e) => handlePointerUp(e, availableGames.length)}
-        style={{ touchAction: 'pan-y' }}
+        className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" 
+        data-testid={`inline-poll-card-${index}`}
       >
-        <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
+        <div className={cn("bg-gradient-to-r p-4", getGradient(game.type))}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Icon className="text-white" size={20} />
-              <span className="text-white font-semibold">{getGameLabel(currentGame.type)}</span>
+              <GameIcon className="text-white" size={20} />
+              <span className="text-white font-semibold">{getGameLabel(game.type)}</span>
             </div>
             <Badge className="bg-white/20 text-white border-0">
-              +{currentGame.points_reward} pts
+              +{game.points_reward} pts
             </Badge>
           </div>
         </div>
         <div className="p-5 px-4">
-          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{currentGame.title}</p>
+          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{game.title}</p>
           <div className="flex flex-col gap-2 mb-4">
-            {(currentGame.options || []).map((option: any, index: number) => {
+            {(game.options || []).map((option: any, optIndex: number) => {
               const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
               return (
                 <button
-                  key={index}
-                  onClick={() => setSelectedAnswer(optionText)}
-                  disabled={isSubmitting}
+                  key={optIndex}
+                  onClick={() => isActive && setSelectedAnswer(optionText)}
+                  disabled={isSubmitting || !isActive}
                   className={cn(
                     "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
-                    selectedAnswer === optionText
+                    isActive && selectedAnswer === optionText
                       ? "border-transparent bg-purple-600 text-white"
                       : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
                   )}
-                  data-testid={`poll-option-${index}`}
+                  data-testid={`poll-option-${optIndex}`}
                 >
                   {optionText}
                 </button>
@@ -556,7 +543,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           </div>
           <Button
             onClick={handleVoteSubmit}
-            disabled={!selectedAnswer || isSubmitting}
+            disabled={!selectedAnswer || isSubmitting || !isActive}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
             data-testid="button-submit-poll"
           >
@@ -571,6 +558,32 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           )}
         </div>
       </div>
+    );
+  };
+
+  // Filter to only poll-type games for the carousel
+  const pollGames = availableGames.filter(g => g.type === 'vote');
+  
+  if (pollGames.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <CompletionDialog />
+      <Carousel 
+        setApi={setCarouselApi}
+        className={cn("w-full", className)}
+        opts={{ align: 'start', loop: false }}
+      >
+        <CarouselContent className="-ml-0">
+          {pollGames.map((game, index) => (
+            <CarouselItem key={game.id} className="pl-0">
+              {renderPollCard(game, index)}
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
     </>
   );
 }
