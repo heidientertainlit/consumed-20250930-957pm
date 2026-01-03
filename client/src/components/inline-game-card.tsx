@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Brain, Vote, Sparkles, ArrowRight, Trophy, Zap, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -369,27 +369,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
       return (
         <>
           <CompletionDialog />
-          <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} data-testid="inline-trivia-preview-card">
-            {/* Navigation arrows */}
-            {canGoPrev && (
-              <button
-                onClick={goToPrevGame}
-                className="absolute left-1 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
-                data-testid="trivia-preview-nav-prev"
-              >
-                <ChevronLeft size={24} className="text-gray-400" />
-              </button>
-            )}
-            {canGoNext && (
-              <button
-                onClick={goToNextGame}
-                className="absolute right-1 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
-                data-testid="trivia-preview-nav-next"
-              >
-                <ChevronRight size={24} className="text-gray-400" />
-              </button>
-            )}
-            
+          <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-preview-card">
             {/* Category and Invite row */}
             <div className="p-4 pb-0 flex items-center justify-between px-4">
               {currentGame.category && (
@@ -425,6 +405,26 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                   Play Trivia Game
                 </Button>
               </Link>
+              {availableGames.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="trivia-preview-carousel-dots">
+                  {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentGameOffset(idx)}
+                      className={cn(
+                        "w-2 h-2 rounded-full transition-colors",
+                        idx === (currentGameOffset % availableGames.length)
+                          ? "bg-purple-600"
+                          : "bg-gray-300 hover:bg-gray-400"
+                      )}
+                      data-testid={`trivia-preview-dot-${idx}`}
+                    />
+                  ))}
+                  {availableGames.length > 5 && (
+                    <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </>
@@ -435,27 +435,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     return (
       <>
         <CompletionDialog />
-        <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} data-testid="inline-trivia-card">
-          {/* Navigation arrows */}
-          {canGoPrev && (
-            <button
-              onClick={goToPrevGame}
-              className="absolute left-1 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
-              data-testid="trivia-nav-prev"
-            >
-              <ChevronLeft size={24} className="text-gray-400" />
-            </button>
-          )}
-          {canGoNext && (
-            <button
-              onClick={goToNextGame}
-              className="absolute right-1 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
-              data-testid="trivia-nav-next"
-            >
-              <ChevronRight size={24} className="text-gray-400" />
-            </button>
-          )}
-          
+        <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-trivia-card">
           <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -513,6 +493,26 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             >
               {isSubmitting ? 'Submitting...' : 'Submit Answer'}
             </Button>
+            {availableGames.length > 1 && (
+              <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="trivia-carousel-dots">
+                {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentGameOffset(idx)}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-colors",
+                      idx === (currentGameOffset % availableGames.length)
+                        ? "bg-purple-600"
+                        : "bg-gray-300 hover:bg-gray-400"
+                    )}
+                    data-testid={`trivia-dot-${idx}`}
+                  />
+                ))}
+                {availableGames.length > 5 && (
+                  <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </>
@@ -522,27 +522,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   return (
     <>
       <CompletionDialog />
-      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} data-testid="inline-poll-card">
-        {/* Navigation arrows */}
-        {canGoPrev && (
-          <button
-            onClick={goToPrevGame}
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
-            data-testid="poll-nav-prev"
-          >
-            <ChevronLeft size={24} className="text-gray-400" />
-          </button>
-        )}
-        {canGoNext && (
-          <button
-            onClick={goToNextGame}
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-10 p-1 hover:opacity-70 transition-opacity"
-            data-testid="poll-nav-next"
-          >
-            <ChevronRight size={24} className="text-gray-400" />
-          </button>
-        )}
-        
+      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} data-testid="inline-poll-card">
         <div className={cn("bg-gradient-to-r p-4", getGradient(currentGame.type))}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -585,6 +565,26 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           >
             {isSubmitting ? 'Submitting...' : 'Submit Vote'}
           </Button>
+          {availableGames.length > 1 && (
+            <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="poll-carousel-dots">
+              {availableGames.slice(0, Math.min(availableGames.length, 5)).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentGameOffset(idx)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-colors",
+                    idx === (currentGameOffset % availableGames.length)
+                      ? "bg-purple-600"
+                      : "bg-gray-300 hover:bg-gray-400"
+                  )}
+                  data-testid={`poll-dot-${idx}`}
+                />
+              ))}
+              {availableGames.length > 5 && (
+                <span className="text-xs text-gray-400 ml-1">+{availableGames.length - 5}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>
