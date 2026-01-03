@@ -12,7 +12,7 @@ import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -882,6 +882,7 @@ export default function Feed() {
   const [passItSearch, setPassItSearch] = useState(""); // Search friends for Pass It
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null); // Selected friend for Pass It
   const [isPassingHotTake, setIsPassingHotTake] = useState(false); // Loading state for passing
+  const [activeBetPost, setActiveBetPost] = useState<{ postId: string; mediaTitle: string; userName: string } | null>(null); // Bet modal state
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -4207,6 +4208,32 @@ export default function Feed() {
                             </button>
                           </div>
                         )}
+                        {/* Bet button - only show for Currently/Want To list posts */}
+                        {(() => {
+                          const listData = (post as any).listData;
+                          const listTitle = listData?.title?.toLowerCase();
+                          const isBettableList = listTitle === 'currently' || listTitle === 'want to';
+                          const hasMedia = post.mediaItems && post.mediaItems.length > 0;
+                          const userName = post.user?.displayName || post.user?.username || 'them';
+                          
+                          if (isBettableList && hasMedia && !activeInlineRating) {
+                            return (
+                              <button 
+                                onClick={() => setActiveBetPost({
+                                  postId: post.id,
+                                  mediaTitle: post.mediaItems[0].title,
+                                  userName
+                                })}
+                                className="flex items-center space-x-1 text-gray-500 hover:text-purple-500 transition-colors"
+                                data-testid={`button-bet-${post.id}`}
+                                title="Bet on their reaction"
+                              >
+                                <Dices size={18} />
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                       <div className="text-sm text-gray-500">
                         {formatDate(post.timestamp)}
@@ -4437,6 +4464,66 @@ export default function Feed() {
                 ) : (
                   'Pass This Hot Take'
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bet Modal - Will they like it? */}
+      {activeBetPost && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm shadow-xl animate-in slide-in-from-bottom duration-300">
+            <div className="p-5 text-center">
+              <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
+                <Dices size={24} className="text-purple-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Place Your Bet</h3>
+              <p className="text-gray-600 text-sm mb-6">
+                Will {activeBetPost.userName} like<br />
+                <span className="font-semibold text-gray-900">{activeBetPost.mediaTitle}</span>?
+              </p>
+              
+              <div className="flex gap-3 mb-4">
+                <button
+                  onClick={() => {
+                    toast({
+                      title: "🎲 Bet placed!",
+                      description: `You bet they'll love ${activeBetPost.mediaTitle}. You'll earn 5 points if you're right!`,
+                    });
+                    setActiveBetPost(null);
+                  }}
+                  className="flex-1 py-4 px-4 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-xl transition-all hover:scale-105"
+                  data-testid="bet-love-it"
+                >
+                  <ThumbsUp size={28} className="mx-auto mb-2 text-green-600" />
+                  <span className="font-semibold text-green-700">They'll love it</span>
+                </button>
+                <button
+                  onClick={() => {
+                    toast({
+                      title: "🎲 Bet placed!",
+                      description: `You bet they won't like ${activeBetPost.mediaTitle}. You'll earn 5 points if you're right!`,
+                    });
+                    setActiveBetPost(null);
+                  }}
+                  className="flex-1 py-4 px-4 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-xl transition-all hover:scale-105"
+                  data-testid="bet-wont-like"
+                >
+                  <ThumbsDown size={28} className="mx-auto mb-2 text-red-500" />
+                  <span className="font-semibold text-red-600">Nope</span>
+                </button>
+              </div>
+              
+              <p className="text-xs text-gray-400 mb-4">
+                🏆 Win 5 points if you're right!
+              </p>
+              
+              <button
+                onClick={() => setActiveBetPost(null)}
+                className="text-gray-500 hover:text-gray-700 text-sm font-medium"
+              >
+                Cancel
               </button>
             </div>
           </div>
