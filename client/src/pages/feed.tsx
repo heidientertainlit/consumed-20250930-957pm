@@ -3664,11 +3664,13 @@ export default function Feed() {
                     const contentIsJustTitle = hasMediaItems && post.mediaItems[0]?.title && 
                       post.content.toLowerCase().trim() === post.mediaItems[0].title.toLowerCase().trim();
                     if (contentIsJustTitle) return null;
+                    // Hide "Added X to Y" style content (legacy posts) - matches "Added [title] to [list]"
+                    if (contentLower.startsWith('added ') && contentLower.includes(' to ') && hasMediaItems) return null;
                     // For posts with short content and no media, content is shown in header, skip here
                     const isShortContentNoMedia = !hasMediaItems && post.content.length < 60 && !post.content.includes('\n');
                     if (isShortContentNoMedia) return null;
                     // Don't hide content for "thoughts" posts - they have actual user content to show
-                    const isThoughtsPost = contentLower.includes('thoughts') || (post.content.length > 50 && hasMediaItems);
+                    const isThoughtsPost = contentLower.includes('thoughts') || (post.content.length > 50 && hasMediaItems && !contentLower.startsWith('added '));
                     const isAddedOrRatedPost = !isThoughtsPost && (contentLower.startsWith('added ') || contentLower.startsWith('rated ') || contentLower.startsWith('shared ')) && hasMediaItems;
                     
                     if (isAddedOrRatedPost) {
