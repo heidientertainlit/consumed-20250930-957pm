@@ -46,75 +46,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
-  // Swipe gesture state
-  const swipeStartX = useRef<number | null>(null);
-  const swipeStartY = useRef<number | null>(null);
-  const isSwiping = useRef(false);
+  // Native scroll container ref for horizontal swipe
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const handleSwipeStart = (e: React.TouchEvent | React.MouseEvent) => {
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    swipeStartX.current = clientX;
-    swipeStartY.current = clientY;
-    isSwiping.current = false;
-  };
-
-  const handleSwipeMove = (e: React.TouchEvent | React.MouseEvent) => {
-    if (swipeStartX.current === null) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    const deltaX = Math.abs(clientX - swipeStartX.current);
-    const deltaY = Math.abs(clientY - (swipeStartY.current || 0));
-    if (deltaX > 10 && deltaX > deltaY) {
-      isSwiping.current = true;
-      e.preventDefault();
-    }
-  };
-
-  const handleSwipeEnd = (e: React.TouchEvent | React.MouseEvent) => {
-    if (swipeStartX.current === null) return;
-    const clientX = 'changedTouches' in e ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = 'changedTouches' in e ? e.changedTouches[0].clientY : e.clientY;
-    const diff = swipeStartX.current - clientX;
-    
-    if (Math.abs(diff) > 50 && isSwiping.current) {
-      // It's a swipe - handle navigation
-      if (diff > 0 && availableGames.length > 1) {
-        // Swipe left - go to next
-        setCurrentGameOffset(prev => prev + 1);
-        setSelectedAnswer(null);
-      } else if (diff < 0 && currentGameOffset > 0) {
-        // Swipe right - go to prev
-        setCurrentGameOffset(prev => prev - 1);
-        setSelectedAnswer(null);
-      }
-    } else {
-      // It's a tap - find and click the element underneath
-      const overlay = e.currentTarget as HTMLElement;
-      overlay.style.pointerEvents = 'none';
-      const elementBelow = document.elementFromPoint(clientX, clientY) as HTMLElement;
-      overlay.style.pointerEvents = 'auto';
-      if (elementBelow && elementBelow !== overlay) {
-        elementBelow.click();
-      }
-    }
-    swipeStartX.current = null;
-    swipeStartY.current = null;
-    isSwiping.current = false;
-  };
-
-  const goToPrev = () => {
-    if (currentGameOffset > 0) {
-      setCurrentGameOffset(prev => prev - 1);
-      setSelectedAnswer(null);
-    }
-  };
-
-  const goToNext = () => {
-    setCurrentGameOffset(prev => prev + 1);
-    setSelectedAnswer(null);
-  };
 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['inline-games', gameType],
@@ -549,8 +482,6 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     );
   }
 
-  const canGoPrev = currentGameOffset > 0;
-  const canGoNext = availableGames.length > 1;
 
   // Handle scroll snap to update current game offset
   const handleScroll = () => {
