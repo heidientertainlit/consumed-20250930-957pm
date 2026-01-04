@@ -275,9 +275,9 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
 
   const getGradient = (type: string) => {
     switch (type) {
-      case 'trivia': return 'from-blue-500 via-purple-500 to-purple-600';
-      case 'vote': return 'from-blue-500 via-purple-500 to-purple-600';
-      default: return 'from-blue-500 via-purple-500 to-purple-600';
+      case 'trivia': return 'from-purple-600 to-indigo-600';
+      case 'vote': return 'from-blue-600 to-purple-600';
+      default: return 'from-purple-600 to-pink-600';
     }
   };
 
@@ -502,10 +502,10 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     return (
       <div 
         key={game.id} 
-        className="min-w-full snap-center"
+        className={cn("min-w-full snap-center bg-gradient-to-r", getGradient(game.type))}
         style={{ scrollSnapAlign: 'center' }}
       >
-        <div className={cn("bg-gradient-to-r p-4", getGradient(game.type))}>
+        <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <GameIcon className="text-white" size={20} />
@@ -516,8 +516,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             </Badge>
           </div>
         </div>
-        <div className="p-5 px-4">
-          <p className="text-base font-semibold text-gray-900 mb-4 leading-snug">{game.title}</p>
+        <div className="p-5 px-4 pt-0">
+          <p className="text-base font-semibold text-white mb-4 leading-snug">{game.title}</p>
           <div className="flex flex-col gap-2 mb-4">
             {(game.options || []).map((option: any, optIndex: number) => {
               const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
@@ -529,8 +529,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
                   className={cn(
                     "w-full px-4 py-3 text-left rounded-full border-2 transition-all text-sm font-medium",
                     selectedAnswer === optionText && index === currentGameOffset
-                      ? "border-transparent bg-gray-200 text-gray-900"
-                      : "border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
+                      ? "border-white/50 bg-white/30 text-white"
+                      : "border-white/30 bg-white text-gray-900 hover:bg-white/90"
                   )}
                   data-testid={`poll-option-${optIndex}`}
                 >
@@ -542,7 +542,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
           <Button
             onClick={handleVoteSubmit}
             disabled={!selectedAnswer || isSubmitting}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-4 disabled:opacity-50"
+            className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-full py-4 disabled:opacity-50"
             data-testid="button-submit-poll"
           >
             {isSubmitting ? 'Submitting...' : 'Submit Vote'}
@@ -556,7 +556,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     <>
       <CompletionDialog />
       <div 
-        className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative", className)} 
+        className={cn("rounded-2xl shadow-sm overflow-hidden relative", className)} 
         data-testid="inline-poll-card"
       >
         {/* Horizontal scroll container with snap */}
@@ -571,10 +571,10 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         
         {/* Static 3-dot visual indicator for swipe hint */}
         {availableGames.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5 pb-4" data-testid="poll-carousel-dots">
-            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-600" : "bg-gray-300")} />
-            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-600" : "bg-gray-300")} />
-            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-600" : "bg-gray-300")} />
+          <div className={cn("flex items-center justify-center gap-1.5 pb-4 -mt-2 bg-gradient-to-r", getGradient(activeGame?.type || 'vote'))} data-testid="poll-carousel-dots">
+            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-white" : "bg-white/40")} />
+            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-white" : "bg-white/40")} />
+            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-white" : "bg-white/40")} />
           </div>
         )}
       </div>
