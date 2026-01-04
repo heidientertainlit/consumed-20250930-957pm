@@ -2903,7 +2903,7 @@ export default function Feed() {
                 const carouselElements = (
                   <>
                     {shouldShowRecommendations && (
-                      <div className="mb-4 bg-gradient-to-br from-purple-100 via-purple-50 to-pink-50 rounded-2xl border border-purple-200/50 p-4 shadow-sm" data-testid="recommendations-feed-card">
+                      <div className="mb-4 bg-gradient-to-br from-purple-300 via-purple-200 to-purple-100 rounded-2xl border border-purple-300/50 p-4 shadow-sm" data-testid="recommendations-feed-card">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-lg">✨</span>
                           <h3 className="font-semibold text-purple-900">Recommended for you</h3>
@@ -2933,23 +2933,11 @@ export default function Feed() {
                     )}
                     {shouldShowPollsCarousel && (
                       <div className="mb-4">
-                        <div className="flex items-center gap-2 mb-2 px-1">
-                          <span className="text-purple-600">🎮</span>
-                          <span className="text-sm font-semibold text-gray-900">Games</span>
-                          <span className="text-gray-400">•</span>
-                          <span className="text-sm text-purple-600 font-medium">Polls</span>
-                        </div>
                         <InlineGameCard gameType="vote" />
                       </div>
                     )}
                     {shouldShowTriviaCarousel && (
                       <div className="mb-4">
-                        <div className="flex items-center gap-2 mb-2 px-1">
-                          <span className="text-purple-600">🎮</span>
-                          <span className="text-sm font-semibold text-gray-900">Games</span>
-                          <span className="text-gray-400">•</span>
-                          <span className="text-sm text-purple-600 font-medium">Trivia</span>
-                        </div>
                         <InlineGameCard gameType="trivia" />
                       </div>
                     )}
