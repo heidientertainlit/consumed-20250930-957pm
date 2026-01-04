@@ -191,14 +191,18 @@ export default function ConsolidatedActivityCard({
         )}
       </div>
 
-      {/* Media Items - in dark gradient card */}
-      <div className="bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-lg p-3 mb-3">
+      {/* Media Items - purple gradient if bettable, dark gradient otherwise */}
+      <div className={`rounded-lg p-3 mb-3 ${
+        canBet 
+          ? 'bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800' 
+          : 'bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e]'
+      }`}>
         <div className="space-y-1.5">
           {displayedItems.map((item, idx) => (
             <div key={item.id || idx} className="flex items-center gap-2 py-1">
               <Link 
                 href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
-                className="flex items-center gap-2 flex-1 min-w-0 hover:text-purple-300 transition-colors cursor-pointer"
+                className="flex items-center gap-2 flex-1 min-w-0 hover:text-purple-200 transition-colors cursor-pointer"
               >
                 <span className="text-base">{getMediaTypeIcon(item.mediaType)}</span>
                 <span className="text-sm text-white truncate flex-1">
@@ -227,7 +231,7 @@ export default function ConsolidatedActivityCard({
                       item.mediaType
                     );
                   }}
-                  className="p-1 text-purple-300 hover:text-white hover:bg-purple-500/30 rounded transition-colors"
+                  className="p-1.5 text-white/90 hover:text-white bg-white/20 hover:bg-white/30 rounded-full transition-colors"
                   title={`Bet on ${item.title}`}
                   data-testid={`bet-item-${idx}`}
                 >
