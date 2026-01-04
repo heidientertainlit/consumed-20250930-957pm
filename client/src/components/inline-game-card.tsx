@@ -349,29 +349,27 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         <>
           <CompletionDialog />
           <div 
-            className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)} 
+            className={cn("bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl shadow-lg overflow-hidden", className)} 
             data-testid="inline-trivia-preview-card"
           >
             {/* Category and Invite row */}
             <div className="p-4 pb-0 flex items-center justify-between px-4">
-              {activeGame.category && (
-                <Badge className="bg-purple-100 text-purple-700 border-0 text-xs px-3 py-1">
-                  {activeGame.category}
-                </Badge>
-              )}
-              <button className="flex items-center gap-1.5 text-purple-600 text-sm font-medium hover:text-purple-700">
+              <Badge className="bg-purple-500/30 text-purple-200 border-0 text-xs px-3 py-1">
+                Trivia Challenges
+              </Badge>
+              <button className="flex items-center gap-1.5 text-purple-300 text-sm font-medium hover:text-purple-200">
                 <Users size={16} />
                 Invite to Play
               </button>
             </div>
             
             <div className="p-4 pt-3 px-4">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">{activeGame.title}</h3>
+              <h3 className="text-xl font-bold text-white mb-1">{activeGame.title}</h3>
               {activeGame.description && (
-                <p className="text-gray-600 text-sm mb-3">{activeGame.description}</p>
+                <p className="text-purple-200/80 text-sm mb-3">{activeGame.description}</p>
               )}
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                <span className="text-amber-600 font-medium">☆ You Earn: {activeGame.points_reward} pts</span>
+              <div className="flex items-center gap-4 text-sm text-purple-200/70 mb-4">
+                <span className="text-amber-400 font-medium">☆ You Earn: {activeGame.points_reward} pts</span>
                 <span className="flex items-center gap-1">
                   <Users size={14} />
                   0
@@ -380,7 +378,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
               
               <Link href={`/play/trivia#${activeGame.id}`}>
                 <Button
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white rounded-full py-4"
+                  className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-full py-4"
                   data-testid="button-play-trivia"
                 >
                   <Brain size={18} className="mr-2" />
@@ -389,9 +387,9 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
               </Link>
               {availableGames.length > 1 && (
                 <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="trivia-preview-carousel-dots">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400/40" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400/40" />
                 </div>
               )}
             </div>
