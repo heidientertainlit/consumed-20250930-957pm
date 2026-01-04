@@ -553,6 +553,7 @@ function CurrentlyConsumingFeedCard({
   handleVoteComment,
   likedComments,
   commentVotes,
+  onBet,
 }: {
   post: SocialPost;
   carouselElements: React.ReactNode;
@@ -574,6 +575,7 @@ function CurrentlyConsumingFeedCard({
   handleVoteComment: (commentId: string, voteType: 'up' | 'down') => void;
   likedComments: Set<string>;
   commentVotes: Map<string, 'up' | 'down'>;
+  onBet?: (postId: string, mediaTitle: string, userName: string) => void;
 }) {
   const [showRating, setShowRating] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
@@ -810,6 +812,17 @@ function CurrentlyConsumingFeedCard({
                 })}
                 <span className="ml-1 text-xs text-gray-600">{selectedRating}/5</span>
               </div>
+            )}
+            {/* Bet button - only for other users' Currently posts */}
+            {!isOwnPost && onBet && (
+              <button
+                onClick={() => onBet(post.id, media.title, post.user?.displayName || post.user?.username || 'them')}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-purple-500 transition-colors"
+                data-testid={`button-bet-currently-${post.id}`}
+                title="Bet on their reaction"
+              >
+                <Dices size={16} />
+              </button>
             )}
             </div>
             {/* Timestamp on the right */}
@@ -3168,6 +3181,7 @@ export default function Feed() {
                       handleVoteComment={handleVoteComment}
                       likedComments={likedComments}
                       commentVotes={commentVotes}
+                      onBet={(postId, mediaTitle, userName) => setActiveBetPost({ postId, mediaTitle, userName })}
                     />
                   );
                 }
