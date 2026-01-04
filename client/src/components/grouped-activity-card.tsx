@@ -18,20 +18,28 @@ interface GroupedUser {
   postId?: string;
 }
 
+const formatUsername = (username: string): string => {
+  let clean = username;
+  if (clean.includes('+')) {
+    clean = clean.split('+').pop() || clean;
+  }
+  clean = clean.replace(/\d+$/, '');
+  clean = clean.replace(/[@_.-]/g, ' ');
+  clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
+  return clean.split(' ')
+    .filter(w => w.length > 0)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ') || 'User';
+};
+
 const getAvatarInitial = (displayName?: string, username?: string): string => {
-  if (displayName && displayName.trim()) {
+  if (displayName && displayName.trim() && displayName !== username) {
     return displayName.charAt(0).toUpperCase();
   }
   
   if (username) {
-    if (username.includes('+')) {
-      const afterPlus = username.split('+')[1];
-      if (afterPlus) {
-        const cleanName = afterPlus.replace(/\d+$/, '');
-        return cleanName.charAt(0).toUpperCase();
-      }
-    }
-    return username.charAt(0).toUpperCase();
+    const formatted = formatUsername(username);
+    return formatted.charAt(0).toUpperCase();
   }
   
   return '?';
@@ -43,14 +51,7 @@ const getDisplayName = (displayName?: string, username?: string): string => {
   }
   
   if (username) {
-    if (username.includes('+')) {
-      const afterPlus = username.split('+')[1];
-      if (afterPlus) {
-        const cleanName = afterPlus.replace(/\d+$/, '');
-        return cleanName.split(/(?=[A-Z])/).join(' ').replace(/^\w/, c => c.toUpperCase());
-      }
-    }
-    return username;
+    return formatUsername(username);
   }
   
   return 'Unknown';
@@ -85,13 +86,8 @@ const getMediaIcon = (mediaType: string) => {
   }
 };
 
-const getListTypeLabel = (listType: string) => {
-  switch (listType?.toLowerCase()) {
-    case 'want_to': case 'want to watch': return 'Want to Watch';
-    case 'currently': case 'currently watching': return 'Currently';
-    case 'completed': case 'finished': return 'Completed';
-    default: return 'a List';
-  }
+const getListTypeLabel = (_listType: string) => {
+  return 'a list';
 };
 
 export default function GroupedActivityCard({
@@ -102,14 +98,19 @@ export default function GroupedActivityCard({
   timestamp
 }: GroupedActivityCardProps) {
   const [showAllUsers, setShowAllUsers] = useState(false);
-  const displayedUsers = showAllUsers ? users : users.slice(0, 3);
-  const remainingCount = users.length - 3;
+  
+  const uniqueUsers = users.filter((user, index, self) => 
+    index === self.findIndex(u => u.id === user.id)
+  );
+  
+  const displayedUsers = showAllUsers ? uniqueUsers : uniqueUsers.slice(0, 3);
+  const remainingCount = uniqueUsers.length - 3;
   const showBetButton = listType?.toLowerCase() === 'want_to' || 
                         listType?.toLowerCase() === 'currently' ||
                         listType?.toLowerCase().includes('want') ||
                         listType?.toLowerCase().includes('currently');
 
-  const usersWithPostIds = users.filter(u => u.postId);
+  const usersWithPostIds = uniqueUsers.filter(u => u.postId);
 
   return (
     <div className="bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl border border-purple-900/50 p-4 shadow-lg" data-testid={`grouped-activity-${media.id}`}>
@@ -135,7 +136,7 @@ export default function GroupedActivityCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-sm text-purple-200/80 mb-1">
             <Users size={14} className="text-purple-400" />
-            <span className="font-medium text-white">{users.length} friend{users.length !== 1 ? 's' : ''}</span>
+            <span className="font-medium text-white">{uniqueUsers.length} friend{uniqueUsers.length !== 1 ? 's' : ''}</span>
             <span>added to {getListTypeLabel(listType)}</span>
           </div>
 
@@ -177,9 +178,9 @@ export default function GroupedActivityCard({
                 {getDisplayName(user.displayName, user.username)}{index < Math.min(displayedUsers.length - 1, 1) ? ',' : ''}
               </span>
             ))}
-            {users.length > 2 && (
+            {uniqueUsers.length > 2 && (
               <span className="text-xs text-purple-200/70">
-                +{users.length - 2} more
+                +{uniqueUsers.length - 2} more
               </span>
             )}
           </div>
