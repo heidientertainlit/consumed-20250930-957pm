@@ -207,32 +207,60 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
           <div className="px-4 py-6 space-y-6">
             <div className="text-center">
               <p className="text-gray-700 font-medium mb-4">How would you rate this?</p>
-              <div className="flex justify-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setSelectedRating(star)}
-                    onMouseEnter={() => setHoveredRating(star)}
-                    onMouseLeave={() => setHoveredRating(0)}
-                    className="p-1 transition-transform hover:scale-110"
-                    data-testid={`followup-star-${star}`}
-                  >
-                    <Star
-                      size={32}
-                      className={
-                        (hoveredRating || selectedRating) >= star
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300"
-                      }
-                    />
-                  </button>
-                ))}
+              <div className="flex justify-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const activeRating = hoveredRating || selectedRating;
+                  const isFullFilled = activeRating >= star;
+                  const isHalfFilled = activeRating >= star - 0.5 && activeRating < star;
+                  
+                  return (
+                    <div
+                      key={star}
+                      className="relative p-1 cursor-pointer transition-transform hover:scale-110"
+                      data-testid={`followup-star-${star}`}
+                    >
+                      <Star
+                        size={32}
+                        className="text-gray-300"
+                      />
+                      {(isFullFilled || isHalfFilled) && (
+                        <div 
+                          className="absolute inset-0 p-1 overflow-hidden"
+                          style={{ width: isHalfFilled ? '50%' : '100%' }}
+                        >
+                          <Star
+                            size={32}
+                            className="text-yellow-400 fill-yellow-400"
+                          />
+                        </div>
+                      )}
+                      <div
+                        className="absolute inset-0 flex"
+                        onMouseLeave={() => setHoveredRating(0)}
+                      >
+                        <div
+                          className="w-1/2 h-full"
+                          onMouseEnter={() => setHoveredRating(star - 0.5)}
+                          onClick={() => setSelectedRating(star - 0.5)}
+                        />
+                        <div
+                          className="w-1/2 h-full"
+                          onMouseEnter={() => setHoveredRating(star)}
+                          onClick={() => setSelectedRating(star)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+              {selectedRating > 0 && (
+                <p className="text-sm text-gray-500 mt-2">{selectedRating} stars</p>
+              )}
               {selectedRating > 0 && (
                 <button
                   onClick={handleSubmitRating}
                   disabled={isSubmittingRating}
-                  className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  className="mt-3 px-6 py-2 bg-purple-600 text-white rounded-full text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
                   data-testid="submit-rating-btn"
                 >
                   {isSubmittingRating ? (
