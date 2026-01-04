@@ -191,9 +191,14 @@ export default function UserProfile() {
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('stats');
   const [collectionsSubTab, setCollectionsSubTab] = useState<'lists'>('lists');
-  const [activitySubFilter, setActivitySubFilter] = useState<'all' | 'history' | 'ratings' | 'posts' | 'games'>('all');
+  const [activitySubFilter, setActivitySubFilter] = useState<'all' | 'history' | 'ratings' | 'posts' | 'games' | 'bets'>('all');
   const [userActivity, setUserActivity] = useState<any[]>([]);
   const [isLoadingActivity, setIsLoadingActivity] = useState(false);
+  
+  // Bets state
+  const [userBets, setUserBets] = useState<any[]>([]);
+  const [isLoadingBets, setIsLoadingBets] = useState(false);
+  const [betsTab, setBetsTab] = useState<'placed' | 'received'>('placed');
   const [openFilter, setOpenFilter] = useState<'type' | 'year' | 'rating' | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportHelpOpen, setIsImportHelpOpen] = useState(false);
@@ -260,6 +265,38 @@ export default function UserProfile() {
       setUserBadges([]);
     } finally {
       setIsLoadingBadges(false);
+    }
+  };
+
+  // Fetch user bets
+  const fetchBets = async (type: 'placed' | 'received' = 'placed') => {
+    if (!session?.access_token || !isOwnProfile) return;
+
+    setIsLoadingBets(true);
+    try {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-bets?type=${type}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserBets(data.bets || []);
+      } else {
+        console.error('Failed to fetch bets');
+        setUserBets([]);
+      }
+    } catch (error) {
+      console.error('Error fetching bets:', error);
+      setUserBets([]);
+    } finally {
+      setIsLoadingBets(false);
     }
   };
 
@@ -1134,6 +1171,13 @@ export default function UserProfile() {
     setTrackedGenres({});
     setTrackedGenresLoaded(false);
   }, [viewingUserId]);
+
+  // Fetch bets when switching to the bets filter or changing bets tab
+  useEffect(() => {
+    if (activitySubFilter === 'bets' && isOwnProfile && session?.access_token) {
+      fetchBets(betsTab);
+    }
+  }, [activitySubFilter, betsTab, isOwnProfile]);
 
   // Create a stable fingerprint of list items to detect any changes (not just length)
   const listItemsFingerprint = useMemo(() => {
@@ -3569,6 +3613,7 @@ export default function UserProfile() {
                   { id: 'ratings', label: 'Ratings', icon: Star },
                   { id: 'posts', label: 'Posts', icon: MessageCircle },
                   { id: 'games', label: 'Games', icon: Gamepad2 },
+                  ...(isOwnProfile ? [{ id: 'bets', label: 'My Bets', icon: Target }] : []),
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
@@ -3732,6 +3777,110 @@ export default function UserProfile() {
                 <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
                   <Gamepad2 className="mx-auto mb-3 text-gray-300" size={48} />
                   <p className="text-gray-600">Games activity coming soon</p>
+                </div>
+              )}
+
+              {/* Bets Section - Only for own profile */}
+              {activitySubFilter === 'bets' && isOwnProfile && (
+                <div className="space-y-4">
+                  {/* Bets Toggle - Placed vs Received */}
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      onClick={() => { setBetsTab('placed'); fetchBets('placed'); }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        betsTab === 'placed' 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      data-testid="bets-tab-placed"
+                    >
+                      Bets You Placed
+                    </button>
+                    <button
+                      onClick={() => { setBetsTab('received'); fetchBets('received'); }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        betsTab === 'received' 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      data-testid="bets-tab-received"
+                    >
+                      Bets on You
+                    </button>
+                  </div>
+
+                  {isLoadingBets ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((n) => (
+                        <div key={n} className="bg-gray-50 rounded-xl p-4 animate-pulse">
+                          <div className="h-5 bg-gray-200 rounded w-2/3 mb-2"></div>
+                          <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : userBets.length === 0 ? (
+                    <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
+                      <Target className="mx-auto mb-3 text-gray-300" size={48} />
+                      <p className="text-gray-600">
+                        {betsTab === 'placed' ? 'No bets placed yet' : 'No one has bet on you yet'}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {betsTab === 'placed' 
+                          ? 'Predict if your friends will love or hate media they added!' 
+                          : 'When friends bet on your reactions, they\'ll appear here'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {userBets.map((bet) => (
+                        <div 
+                          key={bet.id} 
+                          className="bg-gray-50 rounded-xl p-4 border border-gray-200"
+                          data-testid={`bet-item-${bet.id}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  bet.status === 'pending' 
+                                    ? 'bg-yellow-100 text-yellow-700' 
+                                    : bet.status === 'won' 
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {bet.status === 'pending' ? '⏳ Pending' : bet.status === 'won' ? '✅ Won' : '❌ Lost'}
+                                </span>
+                                {bet.points_won && (
+                                  <span className="text-xs text-green-600 font-medium">+{bet.points_won} pts</span>
+                                )}
+                              </div>
+                              <h4 className="font-medium text-gray-900">{bet.media_title}</h4>
+                              <p className="text-sm text-gray-600">
+                                {betsTab === 'placed' ? (
+                                  <>
+                                    You bet {bet.target_user?.display_name || bet.target_user?.user_name || 'someone'} will{' '}
+                                    <span className={bet.prediction === 'will_like' ? 'text-green-600' : 'text-red-600'}>
+                                      {bet.prediction === 'will_like' ? 'love it 💚' : 'not like it 👎'}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    {bet.bettor?.display_name || bet.bettor?.user_name || 'Someone'} thinks you'll{' '}
+                                    <span className={bet.prediction === 'will_like' ? 'text-green-600' : 'text-red-600'}>
+                                      {bet.prediction === 'will_like' ? 'love it 💚' : 'not like it 👎'}
+                                    </span>
+                                  </>
+                                )}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {new Date(bet.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
