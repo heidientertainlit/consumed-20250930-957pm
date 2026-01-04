@@ -1249,8 +1249,144 @@ export default function Feed() {
   // Apply grouping to social posts
   const processedPosts = groupUserActivities(socialPosts);
 
+  // Tier classification for feed priority (maintains chronological order)
+  type PostTier = 1 | 2 | 3;
+  
+  const classifyPostTier = (item: SocialPost | ConsolidatedActivity): PostTier => {
+    // ConsolidatedActivity cards stay as Tier 1 - they have engagement controls
+    if ('originalPostIds' in item) return 1;
+    
+    const post = item as SocialPost;
+    const postType = post.type?.toLowerCase() || '';
+    
+    // Tier 1: Jump-in moments (high engagement, interactive)
+    if (['hot_take', 'prediction', 'poll', 'vote', 'bet'].includes(postType)) {
+      return 1;
+    }
+    
+    // Tier 1: Posts with substantial text content (reviews, hot takes)
+    if (post.content && post.content.length > 100) {
+      return 1;
+    }
+    
+    // Tier 3: Receipts (low signal - trivia scores, rank edits)
+    if (['trivia', 'rank_edit', 'badge', 'achievement'].includes(postType)) {
+      return 3;
+    }
+    
+    // Tier 2: Simple media activities (ratings without review, list adds, finished, watching)
+    if (['add-to-list', 'rating', 'finished', 'progress', 'update', 'consuming'].includes(postType)) {
+      // Only Tier 2 if it's a simple activity without detailed content
+      if (!post.content || post.content.length < 50) {
+        return 2;
+      }
+    }
+    
+    // Posts with media items but short/no content are Tier 2
+    if (post.mediaItems?.length > 0 && (!post.content || post.content.length < 50)) {
+      return 2;
+    }
+    
+    // Everything else is Tier 1 (regular posts, comments-worthy content)
+    return 1;
+  };
+
+  // Group consecutive Tier 2 activities into compact "Friend Activity" blocks while maintaining chronological order
+  interface FriendActivityBlock {
+    id: string;
+    type: 'friend_activity_block';
+    timestamp: string;
+    activities: Array<{
+      user: { id: string; username: string; displayName?: string; avatar?: string };
+      action: string;
+      mediaTitle: string;
+      mediaType?: string;
+      rating?: number;
+      listName?: string;
+      postId: string;
+    }>;
+  }
+
+  const createTieredFeed = (posts: (SocialPost | ConsolidatedActivity)[]): (SocialPost | ConsolidatedActivity | FriendActivityBlock)[] => {
+    if (!posts.length) return [];
+    
+    const result: (SocialPost | ConsolidatedActivity | FriendActivityBlock)[] = [];
+    let tier2Buffer: SocialPost[] = [];
+    
+    const flushTier2Buffer = () => {
+      if (tier2Buffer.length === 0) return;
+      
+      if (tier2Buffer.length >= 3) {
+        // Group 3+ consecutive Tier 2 posts into a Friend Activity block
+        const activities: FriendActivityBlock['activities'] = [];
+        const firstTimestamp = tier2Buffer[0].timestamp;
+        
+        tier2Buffer.forEach(post => {
+          if (!post.user) return;
+          
+          const postType = post.type?.toLowerCase() || '';
+          let action = 'added';
+          if (postType === 'rating' || (post.rating && post.rating > 0)) action = 'rated';
+          else if (postType === 'finished') action = 'finished';
+          else if (postType === 'progress' || postType === 'consuming') action = 'started';
+          
+          const mediaTitle = post.mediaItems?.[0]?.title || (post as any).listData?.title || 'something';
+          
+          activities.push({
+            user: post.user,
+            action,
+            mediaTitle,
+            mediaType: post.mediaItems?.[0]?.mediaType,
+            rating: post.rating || post.mediaItems?.[0]?.rating,
+            listName: (post as any).listData?.title,
+            postId: post.id
+          });
+        });
+        
+        if (activities.length > 0) {
+          // Use deterministic ID based on first post's ID
+          result.push({
+            id: `friend-activity-block-${tier2Buffer[0].id}`,
+            type: 'friend_activity_block',
+            timestamp: firstTimestamp,
+            activities
+          });
+        }
+      } else {
+        // Less than 3 Tier 2 posts - show them individually
+        result.push(...tier2Buffer);
+      }
+      
+      tier2Buffer = [];
+    };
+    
+    // Process posts in chronological order
+    posts.forEach(item => {
+      const tier = classifyPostTier(item);
+      
+      if (tier === 2 && !('originalPostIds' in item)) {
+        // Collect consecutive Tier 2 posts
+        tier2Buffer.push(item as SocialPost);
+      } else {
+        // Flush any buffered Tier 2 posts before adding Tier 1/3
+        flushTier2Buffer();
+        result.push(item);
+      }
+    });
+    
+    // Flush any remaining Tier 2 posts
+    flushTier2Buffer();
+    
+    return result;
+  };
+
+  // Apply tiered grouping (maintains chronological order)
+  const tieredPosts = createTieredFeed(processedPosts);
+
   // Filter posts by detailed filters and feed filter
-  const filteredPosts = processedPosts.filter(item => {
+  const filteredPosts = tieredPosts.filter(item => {
+    // Skip FriendActivityBlock from filtering
+    if ((item as any).type === 'friend_activity_block') return true;
     // Skip ConsolidatedActivity items from filtering (they're already processed)
     if ('originalPostIds' in item) return true;
     
@@ -2676,12 +2812,63 @@ export default function Feed() {
               })()}
 
               
-              {filteredPosts.filter((item: SocialPost | ConsolidatedActivity) => {
+              {filteredPosts.filter((item: any) => {
                 // Filter out incorrectly formatted prediction posts
                 if ('originalPostIds' in item) return true; // Keep consolidated activities
+                if ((item as any).type === 'friend_activity_block') return true; // Keep friend activity blocks
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
-              }).map((item: SocialPost | ConsolidatedActivity, postIndex: number) => {
+              }).map((item: any, postIndex: number) => {
+                // Handle FriendActivityBlock (Tier 2 grouped activities from multiple users)
+                if ((item as any).type === 'friend_activity_block') {
+                  const block = item as any;
+                  const getDisplayName = (username: string) => {
+                    if (username?.includes('+')) {
+                      const parts = username.split('+');
+                      return parts[parts.length - 1]?.split('@')[0] || username;
+                    }
+                    return username?.split('@')[0] || username;
+                  };
+                  
+                  const renderStars = (rating: number) => {
+                    if (!rating) return null;
+                    const fullStars = Math.floor(rating);
+                    const hasHalf = rating % 1 >= 0.5;
+                    return (
+                      <span className="text-yellow-500 ml-1">
+                        {'★'.repeat(fullStars)}{hasHalf ? '½' : ''}
+                      </span>
+                    );
+                  };
+                  
+                  return (
+                    <div key={block.id} className="mb-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm" data-testid="friend-activity-block">
+                      <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <span>✨</span>
+                        Friend Activity
+                      </p>
+                      <div className="space-y-2">
+                        {block.activities.slice(0, 5).map((activity: any, idx: number) => (
+                          <div 
+                            key={`${activity.postId}-${idx}`}
+                            className="flex items-center text-sm text-gray-700"
+                          >
+                            <span className="font-medium text-gray-900 truncate max-w-[100px]">
+                              {getDisplayName(activity.user?.displayName || activity.user?.username)}
+                            </span>
+                            <span className="mx-1.5 text-gray-500">{activity.action}</span>
+                            <span className="truncate flex-1 font-medium">{activity.mediaTitle}</span>
+                            {activity.rating && renderStars(activity.rating)}
+                          </div>
+                        ))}
+                      </div>
+                      {block.activities.length > 5 && (
+                        <p className="text-xs text-gray-500 mt-2">+{block.activities.length - 5} more</p>
+                      )}
+                    </div>
+                  );
+                }
+                
                 // Handle ConsolidatedActivity cards (per activity type)
                 if ('originalPostIds' in item && 'type' in item && ['list_adds', 'ratings', 'finished', 'games'].includes((item as any).type)) {
                   const consolidated = item as ConsolidatedActivity;
