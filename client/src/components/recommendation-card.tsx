@@ -60,13 +60,10 @@ export default function RecommendationCard({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            media: {
-              title: item.title,
-              mediaType: mediaType,
-              imageUrl: item.imageUrl || item.posterPath,
-              externalId: externalId,
-              externalSource: externalSource,
-            },
+            media_external_id: externalId,
+            media_external_source: externalSource,
+            media_title: item.title,
+            media_type: mediaType,
             rating: rating,
           }),
         }
