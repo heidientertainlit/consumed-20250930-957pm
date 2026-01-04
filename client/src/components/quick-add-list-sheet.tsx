@@ -67,7 +67,7 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
     setIsAdding(listId);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const response = await fetch(`${supabaseUrl}/functions/v1/add-to-list`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/add-media-to-list`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -75,14 +75,12 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
         },
         body: JSON.stringify({
           list_id: listId,
-          media: {
-            title: media.title,
-            media_type: media.mediaType,
-            creator: media.creator || '',
-            image_url: media.imageUrl || '',
-            external_id: media.externalId,
-            external_source: media.externalSource || 'tmdb',
-          },
+          media_title: media.title,
+          media_type: media.mediaType,
+          media_creator: media.creator || '',
+          media_image_url: media.imageUrl || '',
+          media_external_id: media.externalId,
+          media_external_source: media.externalSource || 'tmdb',
         }),
       });
 
