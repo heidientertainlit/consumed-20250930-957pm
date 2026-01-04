@@ -2844,7 +2844,7 @@ export default function Feed() {
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((item: any, postIndex: number) => {
-                // Handle "The Buzz" cards (scrolling Tier 2 grouped activities)
+                // Handle Quick Glimpse cards (scrolling Tier 2 grouped activities)
                 if ((item as any).type === 'friend_activity_block') {
                   const block = item as any;
                   const getDisplayName = (username: string) => {
@@ -2855,53 +2855,43 @@ export default function Feed() {
                     return username?.split('@')[0] || username;
                   };
                   
-                  const renderStars = (rating: number) => {
-                    if (!rating) return null;
-                    const fullStars = Math.floor(rating);
-                    const hasHalf = rating % 1 >= 0.5;
-                    return (
-                      <span className="text-yellow-500 ml-1 text-xs">
-                        {'★'.repeat(fullStars)}{hasHalf ? '½' : ''}
-                      </span>
-                    );
-                  };
-                  
                   const activities = block.activities || [];
-                  const shouldScroll = activities.length > 3;
                   
                   return (
-                    <div key={block.id} className="mb-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100/50 px-3 py-2 overflow-hidden" data-testid="buzz-card">
-                      <p className="text-xs font-semibold text-purple-600 mb-1.5 flex items-center gap-1">
-                        <span>🐝</span>
-                        The Buzz
+                    <div key={block.id} className="mb-4 bg-purple-50 rounded-2xl p-3 border border-purple-100 shadow-sm overflow-hidden" data-testid="quick-glimpse-card">
+                      <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <span>✨</span>
+                        Quick Glimpse
                       </p>
-                      <div className={`${shouldScroll ? 'h-[48px] overflow-hidden' : ''}`}>
+                      <div className="h-[60px] overflow-hidden">
                         <div 
-                          className={shouldScroll ? 'flex flex-col' : 'space-y-1'}
-                          style={shouldScroll ? {
-                            animation: `buzzScroll ${activities.length * 2}s linear infinite`,
-                          } : undefined}
+                          className="flex flex-col"
+                          style={{
+                            animation: `scrollVerticalGlimpse ${activities.length * 3}s linear infinite`,
+                            '--scroll-distance': `-${activities.length * 20}px`
+                          } as React.CSSProperties}
                         >
-                          {/* Show all activities, duplicate for seamless loop if scrolling */}
-                          {(shouldScroll ? [...activities, ...activities] : activities).map((activity: any, idx: number) => (
+                          {/* Duplicate for seamless loop */}
+                          {[...activities, ...activities].map((activity: any, idx: number) => (
                             <div 
                               key={`${activity.postId}-${idx}`}
-                              className="flex items-center text-xs text-gray-600 h-4 shrink-0"
+                              className="h-5 flex items-center text-xs text-gray-700 whitespace-nowrap"
                             >
-                              <span className="font-medium text-gray-800 truncate max-w-[80px]">
-                                {getDisplayName(activity.user?.displayName || activity.user?.username)}
+                              <span className="font-medium truncate">{getDisplayName(activity.user?.displayName || activity.user?.username)}</span>
+                              <span className="mx-1 text-gray-500">
+                                {activity.action === 'rated' && activity.rating 
+                                  ? `gave ${activity.mediaTitle} ${activity.rating} star${activity.rating !== 1 ? 's' : ''}`
+                                  : `${activity.action} ${activity.mediaTitle}`
+                                }
                               </span>
-                              <span className="mx-1 text-gray-400">{activity.action}</span>
-                              <span className="truncate flex-1">{activity.mediaTitle}</span>
-                              {activity.rating && renderStars(activity.rating)}
                             </div>
                           ))}
                         </div>
                       </div>
                       <style>{`
-                        @keyframes buzzScroll {
+                        @keyframes scrollVerticalGlimpse {
                           0% { transform: translateY(0); }
-                          100% { transform: translateY(-${activities.length * 16}px); }
+                          100% { transform: translateY(calc(var(--scroll-distance))); }
                         }
                       `}</style>
                     </div>
