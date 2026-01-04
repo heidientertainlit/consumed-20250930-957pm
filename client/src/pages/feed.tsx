@@ -2773,68 +2773,6 @@ export default function Feed() {
                 </Link>
               </div>
 
-              {/* Quick Glimpse - Scrolling ticker */}
-              {(() => {
-                // Extract friend activities from recent posts with media (only regular posts, not grouped)
-                const friendActivities = filteredPosts
-                  .filter((item): item is SocialPost => !('slides' in item) && !!(item as SocialPost).user && (item as SocialPost).user!.id !== user?.id && !!(item as SocialPost).mediaItems && (item as SocialPost).mediaItems.length > 0)
-                  .slice(0, 6)
-                  .map((p: SocialPost) => {
-                    // Build action text based on rating
-                    let action = 'added';
-                    if (p.rating !== undefined && p.rating !== null) {
-                      action = `gave ${p.mediaItems[0].title} ${p.rating} star${p.rating !== 1 ? 's' : ''}`;
-                      return {
-                        username: p.user!.username,
-                        media: '', // Already included in action
-                        action
-                      };
-                    }
-                    return {
-                      username: p.user!.username,
-                      media: p.mediaItems[0].title,
-                      action: 'added'
-                    };
-                  });
-                
-                if (friendActivities.length === 0) return null;
-                
-                return (
-                  <div className="bg-purple-50 rounded-2xl p-3 border border-purple-100 shadow-sm overflow-hidden">
-                    <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                      <span>✨</span>
-                      Quick Glimpse
-                    </p>
-                    <div className="h-[60px] overflow-hidden">
-                      <div 
-                        className="flex flex-col"
-                        style={{
-                          animation: `scrollVertical ${friendActivities.length * 3}s linear infinite`,
-                          '--scroll-distance': `-${friendActivities.length * 20}px`
-                        } as React.CSSProperties}
-                      >
-                        {/* Duplicate for seamless loop */}
-                        {[...friendActivities, ...friendActivities].map((activity, idx) => (
-                          <div 
-                            key={idx}
-                            className="h-5 flex items-center text-xs text-gray-700 whitespace-nowrap"
-                          >
-                            <span className="font-medium truncate">{activity.username}</span>
-                            <span className="mx-1 text-gray-500">{activity.action}</span>
-                            <span className="truncate">{activity.media}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <style>{`
-                      @keyframes scrollVertical {
-                        0% { transform: translateY(0); }
-                        100% { transform: translateY(calc(var(--scroll-distance))); }
-                      }
-                    `}</style>
-                  </div>
-                );
-              })()}
 
               
               {filteredPosts.filter((item: any) => {
@@ -2930,15 +2868,26 @@ export default function Feed() {
                 
                 // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
                 // Show polls carousel at positions 1, 9, 17, 25... (every 8 posts starting at 1)
-                const shouldShowPollsCarousel = postIndex === 1 || (postIndex > 1 && (postIndex - 1) % 8 === 0);
-                // Show trivia carousel at positions 5, 13, 21, 29... (every 8 posts starting at 5)
-                const shouldShowTriviaCarousel = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 8 === 0);
-                // Show points achievement card at positions 3, 11, 19... (every 8 posts starting at 3)
-                const shouldShowPointsAchievements = postIndex === 3 || (postIndex > 3 && (postIndex - 3) % 8 === 0);
-                // Show game carousel every 20 posts (less frequent, for discovery)
-                const shouldShowGameCarousel = postIndex === 19 || (postIndex > 19 && (postIndex - 19) % 20 === 0);
-                const shouldShowMediaCarousel = (postIndex + 1) % 15 === 0 && postIndex > 0 && !shouldShowGameCarousel && !shouldShowPollsCarousel && !shouldShowTriviaCarousel;
-                // Show recommendations card at position 4 (early in feed)
+                // FEED STRUCTURE (cycle of 6 posts for maximum game exposure):
+                // Position 0: Post
+                // Position 1: Poll Carousel (GAME) 
+                // Position 2: Post
+                // Position 3: Trivia Carousel (GAME)
+                // Position 4: Post + Recommendations (first time only)
+                // Position 5: Post
+                // Then repeat every 6 posts
+                
+                // Polls at positions 1, 7, 13, 19... (every 6 posts starting at 1)
+                const shouldShowPollsCarousel = postIndex === 1 || (postIndex > 1 && (postIndex - 1) % 6 === 0);
+                // Trivia at positions 3, 9, 15, 21... (every 6 posts starting at 3)
+                const shouldShowTriviaCarousel = postIndex === 3 || (postIndex > 3 && (postIndex - 3) % 6 === 0);
+                // Game/Predictions carousel at positions 11, 23, 35... (every 12 posts starting at 11)
+                const shouldShowGameCarousel = postIndex === 11 || (postIndex > 11 && (postIndex - 11) % 12 === 0);
+                // Points achievement at positions 5, 17, 29... (every 12 posts starting at 5)
+                const shouldShowPointsAchievements = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 12 === 0);
+                // Media carousel at positions 8, 20, 32... (every 12 posts starting at 8)
+                const shouldShowMediaCarousel = postIndex === 8 || (postIndex > 8 && (postIndex - 8) % 12 === 0);
+                // Recommendations only at position 4 (early in feed)
                 const shouldShowRecommendations = postIndex === 4 && recommendedContent && recommendedContent.length > 0;
                 
                 // Rotate through different carousel types
