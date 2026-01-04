@@ -126,12 +126,12 @@ export default function GameCarousel({ className }: GameCarouselProps) {
 
   if (isLoading) {
     return (
-      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm p-4", className)}>
+      <div className={cn("bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl shadow-lg border border-purple-900/50 p-4", className)}>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-3" />
+          <div className="h-4 bg-purple-800/50 rounded w-1/4 mb-3" />
           <div className="flex gap-3 overflow-hidden">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex-shrink-0 w-28 h-40 bg-gray-200 rounded-xl" />
+              <div key={i} className="flex-shrink-0 w-28 h-40 bg-purple-800/30 rounded-xl" />
             ))}
           </div>
         </div>
@@ -145,27 +145,27 @@ export default function GameCarousel({ className }: GameCarouselProps) {
 
   return (
     <>
-      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden", className)}>
-        <div className="p-4 pb-2">
-          <div className="flex items-center justify-between mb-3">
+      <div className={cn("bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl shadow-lg border border-purple-900/50 overflow-hidden", className)}>
+        <div className="p-4 pb-3">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Gamepad2 className="text-purple-600" size={18} />
-              <span className="font-semibold text-gray-900">Play</span>
-              <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
+              <Gamepad2 className="text-purple-400" size={18} />
+              <span className="font-semibold text-white">Play</span>
+              <Badge variant="secondary" className="bg-purple-500/30 text-purple-200 text-xs border border-purple-400/30">
                 {availableGames.length} games
               </Badge>
             </div>
             <div className="flex gap-1">
               <button
                 onClick={() => scroll('left')}
-                className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
+                className="p-1 rounded-full hover:bg-purple-500/30 text-purple-300"
                 data-testid="button-scroll-left"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={() => scroll('right')}
-                className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
+                className="p-1 rounded-full hover:bg-purple-500/30 text-purple-300"
                 data-testid="button-scroll-right"
               >
                 <ChevronRight size={18} />
@@ -214,7 +214,7 @@ export default function GameCarousel({ className }: GameCarouselProps) {
         <div className="px-4 pb-4">
           <Link 
             href="/play"
-            className="flex items-center justify-center gap-2 text-purple-600 hover:text-purple-700 text-sm font-medium py-2"
+            className="flex items-center justify-center gap-2 text-purple-300 hover:text-white text-sm font-medium py-2"
             data-testid="link-play-more-games"
           >
             <span>Play more games</span>

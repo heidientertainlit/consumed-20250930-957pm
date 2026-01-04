@@ -191,12 +191,8 @@ export default function ConsolidatedActivityCard({
         )}
       </div>
 
-      {/* Media Items - purple gradient if bettable, dark gradient otherwise */}
-      <div className={`rounded-lg p-3 mb-3 ${
-        canBet 
-          ? 'bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800' 
-          : 'bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e]'
-      }`}>
+      {/* Media Items - dark gradient */}
+      <div className="bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-lg p-4 mb-3">
         <div className="space-y-1.5">
           {displayedItems.map((item, idx) => (
             <div key={item.id || idx} className="flex items-center gap-2 py-1">

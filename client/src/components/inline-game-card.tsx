@@ -279,13 +279,13 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
 
   if (isLoading) {
     return (
-      <div className={cn("bg-white rounded-2xl border border-gray-200 shadow-sm p-6", className)}>
+      <div className={cn("bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl shadow-lg border border-purple-900/50 p-6", className)}>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-3" />
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-4" />
+          <div className="h-4 bg-purple-800/50 rounded w-1/4 mb-3" />
+          <div className="h-6 bg-purple-800/50 rounded w-3/4 mb-4" />
           <div className="space-y-2">
-            <div className="h-12 bg-gray-200 rounded-full" />
-            <div className="h-12 bg-gray-200 rounded-full" />
+            <div className="h-12 bg-purple-800/30 rounded-full" />
+            <div className="h-12 bg-purple-800/30 rounded-full" />
           </div>
         </div>
       </div>
@@ -350,11 +350,11 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
       const renderTriviaPreviewCard = (game: Game, index: number) => (
         <div 
           key={game.id}
-          className="min-w-full snap-center bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e]"
+          className="min-w-full snap-center"
           style={{ scrollSnapAlign: 'center' }}
         >
           {/* Category and Invite row */}
-          <div className="p-4 pb-0 flex items-center justify-between px-4">
+          <div className="p-5 pb-0 flex items-center justify-between">
             <Badge className="bg-purple-500/30 text-purple-200 border-0 text-xs px-3 py-1">
               Trivia Challenges
             </Badge>
@@ -364,12 +364,12 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             </button>
           </div>
           
-          <div className="p-4 pt-3 px-4">
-            <h3 className="text-xl font-bold text-white mb-1">{game.title}</h3>
+          <div className="p-5 pt-4">
+            <h3 className="text-xl font-bold text-white mb-2">{game.title}</h3>
             {game.description && (
-              <p className="text-purple-200/80 text-sm mb-3">{game.description}</p>
+              <p className="text-purple-200/80 text-sm mb-4">{game.description}</p>
             )}
-            <div className="flex items-center gap-4 text-sm text-purple-200/70 mb-4">
+            <div className="flex items-center gap-4 text-sm text-purple-200/70 mb-5">
               <span className="text-amber-400 font-medium">☆ You Earn: {game.points_reward} pts</span>
               <span className="flex items-center gap-1">
                 <Users size={14} />
@@ -394,7 +394,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         <>
           <CompletionDialog />
           <div 
-            className={cn("rounded-2xl shadow-lg overflow-hidden", className)} 
+            className={cn("bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl shadow-lg border border-purple-900/50 overflow-hidden", className)} 
             data-testid="inline-trivia-preview-card"
           >
             <div
@@ -417,7 +417,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             </div>
             
             {/* Swipe indicator dots */}
-            <div className="flex items-center justify-center gap-1.5 py-3 bg-[#1a1a2e]" data-testid="trivia-preview-carousel-dots">
+            <div className="flex items-center justify-center gap-1.5 py-4" data-testid="trivia-preview-carousel-dots">
               <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-400" : "bg-purple-400/40")} />
               <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-400" : "bg-purple-400/40")} />
               <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-400" : "bg-purple-400/40")} />
