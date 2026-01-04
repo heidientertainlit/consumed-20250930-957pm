@@ -1316,13 +1316,24 @@ export default function Feed() {
     const flushTier2Buffer = () => {
       if (tier2Buffer.length === 0) return;
       
-      if (tier2Buffer.length >= 3) {
-        // Group 3+ consecutive Tier 2 posts into a Friend Activity block
+      // Check for user diversity - need at least 2 unique users for a Friend Activity block
+      const uniqueUsers = new Set(tier2Buffer.map(p => p.user?.id).filter(Boolean));
+      const hasEnoughDiversity = uniqueUsers.size >= 2;
+      
+      if (tier2Buffer.length >= 3 && hasEnoughDiversity) {
+        // Group into a Friend Activity block with user diversity
         const activities: FriendActivityBlock['activities'] = [];
         const firstTimestamp = tier2Buffer[0].timestamp;
+        const userCounts: Record<string, number> = {};
+        const MAX_PER_USER = 2; // Cap per-user entries to keep digest balanced
         
         tier2Buffer.forEach(post => {
           if (!post.user) return;
+          
+          // Enforce per-user cap
+          const userId = post.user.id;
+          userCounts[userId] = (userCounts[userId] || 0) + 1;
+          if (userCounts[userId] > MAX_PER_USER) return;
           
           const postType = post.type?.toLowerCase() || '';
           let action = 'added';
@@ -1353,7 +1364,7 @@ export default function Feed() {
           });
         }
       } else {
-        // Less than 3 Tier 2 posts - show them individually
+        // Not enough diversity or posts - show them individually (preserves ConsolidatedActivity cards)
         result.push(...tier2Buffer);
       }
       
