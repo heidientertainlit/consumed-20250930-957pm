@@ -273,6 +273,32 @@ serve(async (req) => {
       }
     }
 
+    // 3.5. BETTING EXPERTS - users who win bets on friends' reactions
+    if (category === 'all' || category === 'bets') {
+      const { data: wonBets } = await supabase
+        .from('bets')
+        .select('user_id, points_awarded, created_at')
+        .eq('status', 'won')
+        .gte('created_at', dateFilter || '1970-01-01');
+
+      const betMap: Record<string, { wins: number; points: number }> = {};
+      (wonBets || []).forEach((b: any) => {
+        if (!betMap[b.user_id]) {
+          betMap[b.user_id] = { wins: 0, points: 0 };
+        }
+        betMap[b.user_id].wins += 1;
+        betMap[b.user_id].points += b.points_awarded || 0;
+      });
+
+      results.bets = formatEntries(
+        Object.entries(betMap).map(([user_id, data]) => ({ 
+          user_id, 
+          score: data.points,
+          detail: `${data.wins} wins`
+        }))
+      );
+    }
+
     // 4. PREDICTION PROS - users with best prediction accuracy
     if (category === 'all' || category === 'predictions') {
       const { data: predictPools } = await supabase

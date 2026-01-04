@@ -224,6 +224,16 @@ serve(async (req) => {
       }
     });
 
+    // Count bet winnings (5 pts per won bet)
+    const { data: wonBets } = await supabase
+      .from('bets')
+      .select('id, points_awarded')
+      .eq('user_id', targetUserId)
+      .eq('status', 'won');
+    
+    const betsWonCount = wonBets?.length || 0;
+    const betsPoints = (wonBets || []).reduce((sum: number, bet: any) => sum + (bet.points_awarded || 0), 0);
+
     // Calculate totals
     const bookPoints = books.length * 15;
     const moviePoints = movies.length * 8;
@@ -233,7 +243,7 @@ serve(async (req) => {
     const gamePoints = games.length * 5;
     const reviewPoints = reviews.length * 10;
 
-    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints + friendPoints + referralPoints + engagementPoints;
+    const allTimePoints = bookPoints + moviePoints + tvPoints + musicPoints + podcastPoints + gamePoints + reviewPoints + predictionPoints + triviaPoints + pollPoints + betsPoints + friendPoints + referralPoints + engagementPoints;
 
     // Calculate global rank by counting users with more points
     // Use service role for cross-user queries
@@ -283,6 +293,19 @@ serve(async (req) => {
       }
     }
 
+    // Add bet winnings to global ranking calculation
+    const { data: allWonBets } = await supabaseAdmin
+      .from('bets')
+      .select('user_id, points_awarded')
+      .eq('status', 'won');
+    
+    if (allWonBets) {
+      for (const bet of allWonBets) {
+        if (!userPointsMap[bet.user_id]) userPointsMap[bet.user_id] = 0;
+        userPointsMap[bet.user_id] += (bet.points_awarded || 0);
+      }
+    }
+
     // Count how many users have more points than current user
     const currentUserPoints = userPointsMap[targetUserId] || 0;
     const usersWithMorePoints = Object.values(userPointsMap).filter(pts => pts > currentUserPoints).length;
@@ -302,6 +325,7 @@ serve(async (req) => {
       { user_id: appUser.id, category: 'predictions', points: predictionPoints },
       { user_id: appUser.id, category: 'trivia', points: triviaPoints },
       { user_id: appUser.id, category: 'polls', points: pollPoints },
+      { user_id: appUser.id, category: 'bets', points: betsPoints },
       { user_id: appUser.id, category: 'friends', points: friendPoints },
       { user_id: appUser.id, category: 'referrals', points: referralPoints },
       { user_id: appUser.id, category: 'engagement', points: engagementPoints }
@@ -336,6 +360,7 @@ serve(async (req) => {
         predictions: predictionPoints,
         trivia: triviaPoints,
         polls: pollPoints,
+        bets: betsPoints,
         friends: friendPoints,
         referrals: referralPoints,
         engagement: engagementPoints
@@ -351,6 +376,7 @@ serve(async (req) => {
         predictions: predictionCount,
         trivia: triviaCount,
         polls: pollCount,
+        bets: betsWonCount,
         friends: friendCount,
         referrals: referralCount,
         engagement: 1,

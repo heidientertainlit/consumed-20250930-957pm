@@ -19,7 +19,8 @@ import {
   BarChart3,
   Users,
   Gift,
-  TrendingUp
+  TrendingUp,
+  Dices
 } from "lucide-react";
 
 interface PointsData {
@@ -34,6 +35,7 @@ interface PointsData {
   predictions: number;
   trivia: number;
   polls: number;
+  bets: number;
   friends: number;
   referrals: number;
   engagement: number;
@@ -50,6 +52,7 @@ interface CountsData {
   predictions: number;
   trivia: number;
   polls: number;
+  bets: number;
   friends: number;
   referrals: number;
   engagement: number;
@@ -67,6 +70,7 @@ const CATEGORY_CONFIG = [
   { key: 'predictions', label: 'Predictions', icon: Target, color: 'text-red-600', bgColor: 'bg-red-50', pointsPer: null, description: '+20 pts when correct, -20 pts when wrong. High risk, high reward!' },
   { key: 'trivia', label: 'Trivia', icon: Zap, color: 'text-yellow-600', bgColor: 'bg-yellow-50', pointsPer: 10, description: '10 pts for each correct answer.' },
   { key: 'polls', label: 'Polls', icon: BarChart3, color: 'text-cyan-600', bgColor: 'bg-cyan-50', pointsPer: 2, description: '2 pts for participating in polls.' },
+  { key: 'bets', label: 'Bets Won', icon: Dices, color: 'text-emerald-600', bgColor: 'bg-emerald-50', pointsPer: 5, description: 'Win 5 pts when you correctly predict if a friend will like or dislike media.' },
   { key: 'friends', label: 'Friends Added', icon: Users, color: 'text-teal-600', bgColor: 'bg-teal-50', pointsPer: 5, description: 'Earn points for each friend connection. Building your network is rewarded!' },
   { key: 'referrals', label: 'Referrals', icon: Gift, color: 'text-rose-600', bgColor: 'bg-rose-50', pointsPer: 25, description: 'Earn 25 points when someone you invite does their first activity (logs media or posts).' },
   { key: 'engagement', label: 'Engagement', icon: TrendingUp, color: 'text-violet-600', bgColor: 'bg-violet-50', pointsPer: null, description: 'Posts (10pts), likes given (2pts), comments (5pts), predictions (5pts), ranks (10pts), plus bonus for likes/comments you receive!' },

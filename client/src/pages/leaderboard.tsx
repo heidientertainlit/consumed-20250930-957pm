@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -23,6 +23,7 @@ interface LeaderboardData {
     overall?: LeaderboardEntry[];
     trivia?: LeaderboardEntry[];
     polls?: LeaderboardEntry[];
+    bets?: LeaderboardEntry[];
     predictions?: LeaderboardEntry[];
     books?: LeaderboardEntry[];
     movies?: LeaderboardEntry[];
@@ -531,6 +532,17 @@ export default function Leaderboard() {
                 'No predictions resolved yet. Make some predictions!',
                 'from-green-500 to-emerald-500',
                 { label: 'Do Predictions', href: '/play/predictions' },
+                true
+              )}
+              
+              {renderCategoryCard(
+                'Betting Experts',
+                Dices,
+                leaderboardData?.categories?.bets,
+                'Bets',
+                'No bets won yet. Bet on your friends\' reactions!',
+                'from-emerald-500 to-teal-500',
+                undefined,
                 true
               )}
 
