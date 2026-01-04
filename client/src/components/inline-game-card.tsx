@@ -273,12 +273,8 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     }
   };
 
-  const getGradient = (type: string) => {
-    switch (type) {
-      case 'trivia': return 'from-purple-600 to-indigo-600';
-      case 'vote': return 'from-blue-600 to-purple-600';
-      default: return 'from-purple-600 to-pink-600';
-    }
+  const getGradient = (_type: string) => {
+    return 'from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e]';
   };
 
   if (isLoading) {
@@ -570,13 +566,11 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         </div>
         
         {/* Static 3-dot visual indicator for swipe hint */}
-        {availableGames.length > 1 && (
-          <div className={cn("flex items-center justify-center gap-1.5 pb-4 -mt-2 bg-gradient-to-r", getGradient(activeGame?.type || 'vote'))} data-testid="poll-carousel-dots">
-            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-white" : "bg-white/40")} />
-            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-white" : "bg-white/40")} />
-            <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-white" : "bg-white/40")} />
-          </div>
-        )}
+        <div className="flex items-center justify-center gap-1.5 pb-4 -mt-2 bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e]" data-testid="poll-carousel-dots">
+          <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-400" : "bg-purple-400/30")} />
+          <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-400" : "bg-purple-400/30")} />
+          <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-400" : "bg-purple-400/30")} />
+        </div>
       </div>
     </>
   );
