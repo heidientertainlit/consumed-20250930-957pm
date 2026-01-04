@@ -200,6 +200,71 @@ serve(async (req) => {
 
     console.log('Rating saved successfully:', result);
 
+    // Resolve any pending bets on this user + media combination
+    try {
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      // Find pending bets for this user on this specific media
+      const { data: pendingBets, error: betsError } = await supabaseAdmin
+        .from('bets')
+        .select('*')
+        .eq('target_user_id', appUser.id)
+        .eq('external_id', media_external_id)
+        .eq('external_source', media_external_source)
+        .eq('status', 'pending');
+
+      if (!betsError && pendingBets && pendingBets.length > 0) {
+        console.log(`Found ${pendingBets.length} pending bets to resolve`);
+        
+        // Rating >= 4 means user liked it, < 4 means disliked
+        const userLikedIt = rating >= 4;
+        
+        for (const bet of pendingBets) {
+          const betWon = (bet.prediction === 'will_like' && userLikedIt) || 
+                         (bet.prediction === 'will_dislike' && !userLikedIt);
+          
+          const pointsToAward = betWon ? 5 : 0;
+          
+          // Update bet status
+          await supabaseAdmin
+            .from('bets')
+            .update({
+              status: betWon ? 'won' : 'lost',
+              points_awarded: pointsToAward,
+              resolved_at: new Date().toISOString()
+            })
+            .eq('id', bet.id);
+          
+          // Award points if won
+          if (betWon) {
+            await supabaseAdmin.rpc('increment_user_points', {
+              p_user_id: bet.user_id,
+              p_column: 'app_engagement',
+              p_amount: pointsToAward
+            });
+            
+            // Send notification to winner
+            await supabaseAdmin
+              .from('notifications')
+              .insert({
+                user_id: bet.user_id,
+                type: 'bet_won',
+                title: 'You won your bet!',
+                message: `Your prediction about ${bet.media_title} was correct! +${pointsToAward} points`,
+                data: { bet_id: bet.id, media_title: bet.media_title, points: pointsToAward }
+              });
+          }
+          
+          console.log(`Bet ${bet.id} resolved: ${betWon ? 'WON' : 'LOST'}`);
+        }
+      }
+    } catch (betResolutionError) {
+      console.error('Error resolving bets (non-fatal):', betResolutionError);
+    }
+
     // Create a social post for this rating (skip if user chose private mode)
     if (!skip_social_post) {
       try {

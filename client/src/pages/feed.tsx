@@ -575,7 +575,7 @@ function CurrentlyConsumingFeedCard({
   handleVoteComment: (commentId: string, voteType: 'up' | 'down') => void;
   likedComments: Set<string>;
   commentVotes: Map<string, 'up' | 'down'>;
-  onBet?: (postId: string, mediaTitle: string, userName: string) => void;
+  onBet?: (postId: string, mediaTitle: string, userName: string, targetUserId: string, externalId?: string, externalSource?: string, mediaType?: string) => void;
 }) {
   const [showRating, setShowRating] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
@@ -816,7 +816,15 @@ function CurrentlyConsumingFeedCard({
             {/* Bet button - only for other users' Currently posts */}
             {!isOwnPost && onBet && (
               <button
-                onClick={() => onBet(post.id, media.title, post.user?.displayName || post.user?.username || 'them')}
+                onClick={() => onBet(
+                  post.id, 
+                  media.title, 
+                  post.user?.displayName || post.user?.username || 'them',
+                  post.user?.id || '',
+                  media.externalId,
+                  media.externalSource,
+                  media.mediaType
+                )}
                 className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-purple-500 transition-colors"
                 data-testid={`button-bet-currently-${post.id}`}
                 title="Bet on their reaction"
@@ -895,7 +903,16 @@ export default function Feed() {
   const [passItSearch, setPassItSearch] = useState(""); // Search friends for Pass It
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null); // Selected friend for Pass It
   const [isPassingHotTake, setIsPassingHotTake] = useState(false); // Loading state for passing
-  const [activeBetPost, setActiveBetPost] = useState<{ postId: string; mediaTitle: string; userName: string } | null>(null); // Bet modal state
+  const [activeBetPost, setActiveBetPost] = useState<{ 
+    postId: string; 
+    mediaTitle: string; 
+    userName: string;
+    targetUserId: string;
+    externalId?: string;
+    externalSource?: string;
+    mediaType?: string;
+  } | null>(null); // Bet modal state
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -1979,6 +1996,57 @@ export default function Feed() {
     commentVoteMutation.mutate({ commentId, direction });
   };
 
+  // Place bet on friend's reaction
+  const handlePlaceBet = async (prediction: 'will_like' | 'will_dislike') => {
+    if (!activeBetPost || !session?.access_token) return;
+    
+    setIsPlacingBet(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/place-bet`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            post_id: activeBetPost.postId,
+            target_user_id: activeBetPost.targetUserId,
+            media_title: activeBetPost.mediaTitle,
+            media_type: activeBetPost.mediaType,
+            external_id: activeBetPost.externalId,
+            external_source: activeBetPost.externalSource,
+            prediction
+          }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to place bet');
+      }
+      
+      toast({
+        title: "🎲 Bet placed!",
+        description: prediction === 'will_like' 
+          ? `You bet ${activeBetPost.userName} will love ${activeBetPost.mediaTitle}. You'll earn 5 points if you're right!`
+          : `You bet ${activeBetPost.userName} won't like ${activeBetPost.mediaTitle}. You'll earn 5 points if you're right!`,
+      });
+      setActiveBetPost(null);
+    } catch (error: any) {
+      console.error('Failed to place bet:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to place bet. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPlacingBet(false);
+    }
+  };
+
   // Hot Take vote mutation with optimistic updates (same pattern as comment votes)
   const hotTakeVoteMutation = useMutation({
     mutationFn: async ({ postId, voteType }: { postId: string; voteType: 'fire' | 'ice' }) => {
@@ -2624,7 +2692,9 @@ export default function Feed() {
                         onDelete={(postIds) => {
                           postIds.forEach(postId => deletePostMutation.mutate(postId));
                         }}
-                        onBet={(postId, mediaTitle, userName) => setActiveBetPost({ postId, mediaTitle, userName })}
+                        onBet={(postId, mediaTitle, userName, targetUserId, externalId, externalSource, mediaType) => 
+                          setActiveBetPost({ postId, mediaTitle, userName, targetUserId, externalId, externalSource, mediaType })
+                        }
                         isLiked={consolidated.originalPostIds.some(id => likedPosts.has(id))}
                         currentUserId={currentAppUserId}
                       />
@@ -3181,7 +3251,9 @@ export default function Feed() {
                       handleVoteComment={handleVoteComment}
                       likedComments={likedComments}
                       commentVotes={commentVotes}
-                      onBet={(postId, mediaTitle, userName) => setActiveBetPost({ postId, mediaTitle, userName })}
+                      onBet={(postId, mediaTitle, userName, targetUserId, externalId, externalSource, mediaType) => 
+                        setActiveBetPost({ postId, mediaTitle, userName, targetUserId, externalId, externalSource, mediaType })
+                      }
                     />
                   );
                 }
@@ -4239,12 +4311,17 @@ export default function Feed() {
                           
                           // Only show bet button for other users' posts (can't bet on your own)
                           if (isBettableList && hasMedia && !activeInlineRating && !isOwnPost) {
+                            const media = post.mediaItems[0];
                             return (
                               <button 
                                 onClick={() => setActiveBetPost({
                                   postId: post.id,
-                                  mediaTitle: post.mediaItems[0].title,
-                                  userName
+                                  mediaTitle: media.title,
+                                  userName,
+                                  targetUserId: post.user?.id || '',
+                                  externalId: media.externalId,
+                                  externalSource: media.externalSource,
+                                  mediaType: media.mediaType
                                 })}
                                 className="flex items-center space-x-1 text-gray-500 hover:text-purple-500 transition-colors"
                                 data-testid={`button-bet-${post.id}`}
@@ -4508,31 +4585,29 @@ export default function Feed() {
               
               <div className="flex gap-3 mb-4">
                 <button
-                  onClick={() => {
-                    toast({
-                      title: "🎲 Bet placed!",
-                      description: `You bet they'll love ${activeBetPost.mediaTitle}. You'll earn 5 points if you're right!`,
-                    });
-                    setActiveBetPost(null);
-                  }}
-                  className="flex-1 py-4 px-4 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-xl transition-all hover:scale-105"
+                  onClick={() => handlePlaceBet('will_like')}
+                  disabled={isPlacingBet}
+                  className="flex-1 py-4 px-4 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="bet-love-it"
                 >
-                  <ThumbsUp size={28} className="mx-auto mb-2 text-green-600" />
+                  {isPlacingBet ? (
+                    <div className="w-7 h-7 mx-auto mb-2 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <ThumbsUp size={28} className="mx-auto mb-2 text-green-600" />
+                  )}
                   <span className="font-semibold text-green-700">They'll love it</span>
                 </button>
                 <button
-                  onClick={() => {
-                    toast({
-                      title: "🎲 Bet placed!",
-                      description: `You bet they won't like ${activeBetPost.mediaTitle}. You'll earn 5 points if you're right!`,
-                    });
-                    setActiveBetPost(null);
-                  }}
-                  className="flex-1 py-4 px-4 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-xl transition-all hover:scale-105"
+                  onClick={() => handlePlaceBet('will_dislike')}
+                  disabled={isPlacingBet}
+                  className="flex-1 py-4 px-4 bg-red-50 hover:bg-red-100 border-2 border-red-200 rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="bet-wont-like"
                 >
-                  <ThumbsDown size={28} className="mx-auto mb-2 text-red-500" />
+                  {isPlacingBet ? (
+                    <div className="w-7 h-7 mx-auto mb-2 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <ThumbsDown size={28} className="mx-auto mb-2 text-red-500" />
+                  )}
                   <span className="font-semibold text-red-600">Nope</span>
                 </button>
               </div>

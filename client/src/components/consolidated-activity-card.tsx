@@ -46,7 +46,7 @@ interface ConsolidatedActivityCardProps {
   onLike: (postId: string) => void;
   onComment: (postId: string) => void;
   onDelete?: (postIds: string[]) => void;
-  onBet?: (postId: string, mediaTitle: string, userName: string) => void;
+  onBet?: (postId: string, mediaTitle: string, userName: string, targetUserId: string, externalId?: string, externalSource?: string, mediaType?: string) => void;
   isLiked: boolean;
   currentUserId?: string | null;
 }
@@ -257,7 +257,18 @@ export default function ConsolidatedActivityCard({
           </button>
           {canBet && (
             <button
-              onClick={() => onBet(activity.originalPostIds[0], activity.items[0].title, activity.user.displayName || activity.user.username)}
+              onClick={() => {
+                const item = activity.items[0];
+                onBet(
+                  activity.originalPostIds[0], 
+                  item.title, 
+                  activity.user.displayName || activity.user.username,
+                  activity.user.id,
+                  item.externalId,
+                  item.externalSource,
+                  item.type
+                );
+              }}
               className="flex items-center gap-1.5 text-gray-500 hover:text-purple-500 transition-colors"
               data-testid={`button-bet-${activity.id}`}
               title="Bet on their reaction"
