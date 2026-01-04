@@ -2903,7 +2903,7 @@ export default function Feed() {
                 const carouselElements = (
                   <>
                     {shouldShowRecommendations && (
-                      <div className="mb-4 bg-gradient-to-br from-purple-800 via-purple-700 to-purple-600 rounded-2xl border border-purple-500/30 p-4 shadow-lg" data-testid="recommendations-feed-card">
+                      <div className="mb-4 bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl border border-purple-900/50 p-4 shadow-lg" data-testid="recommendations-feed-card">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-lg">✨</span>
                           <h3 className="font-semibold text-white">Recommended for you</h3>
