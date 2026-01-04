@@ -18,6 +18,44 @@ interface GroupedUser {
   postId?: string;
 }
 
+const getAvatarInitial = (displayName?: string, username?: string): string => {
+  if (displayName && displayName.trim()) {
+    return displayName.charAt(0).toUpperCase();
+  }
+  
+  if (username) {
+    if (username.includes('+')) {
+      const afterPlus = username.split('+')[1];
+      if (afterPlus) {
+        const cleanName = afterPlus.replace(/\d+$/, '');
+        return cleanName.charAt(0).toUpperCase();
+      }
+    }
+    return username.charAt(0).toUpperCase();
+  }
+  
+  return '?';
+};
+
+const getDisplayName = (displayName?: string, username?: string): string => {
+  if (displayName && displayName.trim() && displayName !== username) {
+    return displayName;
+  }
+  
+  if (username) {
+    if (username.includes('+')) {
+      const afterPlus = username.split('+')[1];
+      if (afterPlus) {
+        const cleanName = afterPlus.replace(/\d+$/, '');
+        return cleanName.split(/(?=[A-Z])/).join(' ').replace(/^\w/, c => c.toUpperCase());
+      }
+    }
+    return username;
+  }
+  
+  return 'Unknown';
+};
+
 interface GroupedMedia {
   id: string;
   title: string;
@@ -114,9 +152,9 @@ export default function GroupedActivityCard({
             {displayedUsers.map((user) => (
               <Link key={user.id} href={`/user/${user.id}`}>
                 <Avatar className="w-7 h-7 border-2 border-white -ml-2 first:ml-0 cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all">
-                  <AvatarImage src={user.avatar} alt={user.displayName} />
+                  <AvatarImage src={user.avatar} alt={getDisplayName(user.displayName, user.username)} />
                   <AvatarFallback className="text-xs bg-gradient-to-br from-purple-100 to-blue-100 text-purple-700">
-                    {user.displayName?.charAt(0) || user.username?.charAt(0) || '?'}
+                    {getAvatarInitial(user.displayName, user.username)}
                   </AvatarFallback>
                 </Avatar>
               </Link>
@@ -134,7 +172,7 @@ export default function GroupedActivityCard({
           <div className="flex items-center gap-2 mt-2">
             {displayedUsers.slice(0, 2).map((user, index) => (
               <span key={user.id} className="text-xs text-gray-500">
-                {user.displayName || user.username}{index < Math.min(displayedUsers.length - 1, 1) ? ',' : ''}
+                {getDisplayName(user.displayName, user.username)}{index < Math.min(displayedUsers.length - 1, 1) ? ',' : ''}
               </span>
             ))}
             {users.length > 2 && (
@@ -157,7 +195,7 @@ export default function GroupedActivityCard({
               data-testid="button-bet-on-reactions"
             >
               <Dices size={16} className="mr-2" />
-              Bet on {usersWithPostIds[0].displayName || usersWithPostIds[0].username}'s reaction
+              Bet on {getDisplayName(usersWithPostIds[0].displayName, usersWithPostIds[0].username)}'s reaction
             </Button>
           ) : (
             <DropdownMenu>
@@ -183,12 +221,12 @@ export default function GroupedActivityCard({
                   >
                     <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6">
-                        <AvatarImage src={user.avatar} alt={user.displayName} />
+                        <AvatarImage src={user.avatar} alt={getDisplayName(user.displayName, user.username)} />
                         <AvatarFallback className="text-xs bg-gradient-to-br from-purple-100 to-blue-100 text-purple-700">
-                          {user.displayName?.charAt(0) || user.username?.charAt(0) || '?'}
+                          {getAvatarInitial(user.displayName, user.username)}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{user.displayName || user.username}</span>
+                      <span>{getDisplayName(user.displayName, user.username)}</span>
                     </div>
                   </DropdownMenuItem>
                 ))}
