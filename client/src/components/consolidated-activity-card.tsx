@@ -195,11 +195,11 @@ export default function ConsolidatedActivityCard({
       <div className="bg-gray-100 rounded-lg p-3 mb-3">
         <div className="space-y-1.5">
           {displayedItems.map((item, idx) => (
-            <Link 
-              key={item.id || idx} 
-              href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
-            >
-              <div className="flex items-center gap-2 py-1 hover:text-purple-600 transition-colors cursor-pointer">
+            <div key={item.id || idx} className="flex items-center gap-2 py-1">
+              <Link 
+                href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
+                className="flex items-center gap-2 flex-1 min-w-0 hover:text-purple-600 transition-colors cursor-pointer"
+              >
                 <span className="text-base">{getMediaTypeIcon(item.mediaType)}</span>
                 <span className="text-sm text-gray-900 truncate flex-1">
                   {item.title}
@@ -212,8 +212,29 @@ export default function ConsolidatedActivityCard({
                     </span>
                   </div>
                 )}
-              </div>
-            </Link>
+              </Link>
+              {canBet && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBet!(
+                      activity.originalPostIds[0],
+                      item.title,
+                      activity.user.displayName || activity.user.username,
+                      activity.user.id,
+                      item.externalId,
+                      item.externalSource,
+                      item.mediaType
+                    );
+                  }}
+                  className="p-1 text-purple-500 hover:text-purple-700 hover:bg-purple-100 rounded transition-colors"
+                  title={`Bet on ${item.title}`}
+                  data-testid={`bet-item-${idx}`}
+                >
+                  <Dices size={14} />
+                </button>
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -255,27 +276,6 @@ export default function ConsolidatedActivityCard({
             <MessageCircle className="w-5 h-5" />
             <span className="text-sm">{activity.comments}</span>
           </button>
-          {canBet && (
-            <button
-              onClick={() => {
-                const item = activity.items[0];
-                onBet(
-                  activity.originalPostIds[0], 
-                  item.title, 
-                  activity.user.displayName || activity.user.username,
-                  activity.user.id,
-                  item.externalId,
-                  item.externalSource,
-                  item.type
-                );
-              }}
-              className="flex items-center gap-1.5 text-gray-500 hover:text-purple-500 transition-colors"
-              data-testid={`button-bet-${activity.id}`}
-              title="Bet on their reaction"
-            >
-              <Dices className="w-5 h-5" />
-            </button>
-          )}
         </div>
         <span className="text-sm text-gray-400">{formattedDate}</span>
       </div>
