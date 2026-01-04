@@ -1316,55 +1316,81 @@ export default function Feed() {
     const flushTier2Buffer = () => {
       if (tier2Buffer.length === 0) return;
       
-      // Check for user diversity - need at least 2 unique users for a Friend Activity block
+      // Check for user diversity - need at least 2 unique users for a Quick Glimpse
       const uniqueUsers = new Set(tier2Buffer.map(p => p.user?.id).filter(Boolean));
       const hasEnoughDiversity = uniqueUsers.size >= 2;
       
       if (tier2Buffer.length >= 3 && hasEnoughDiversity) {
-        // Group into a Friend Activity block with user diversity
-        const activities: FriendActivityBlock['activities'] = [];
-        const firstTimestamp = tier2Buffer[0].timestamp;
+        // Create small "Quick Glimpse" cards (2-3 activities each) scattered in feed
+        const GLIMPSE_SIZE = 3; // Small bite-sized glimpses
         const userCounts: Record<string, number> = {};
-        const MAX_PER_USER = 2; // Cap per-user entries to keep digest balanced
+        const MAX_PER_USER = 2; // Cap per-user entries
+        const includedPosts: SocialPost[] = [];
+        const overflowPosts: SocialPost[] = [];
         
         tier2Buffer.forEach(post => {
-          if (!post.user) return;
+          if (!post.user) {
+            overflowPosts.push(post);
+            return;
+          }
           
-          // Enforce per-user cap
           const userId = post.user.id;
           userCounts[userId] = (userCounts[userId] || 0) + 1;
-          if (userCounts[userId] > MAX_PER_USER) return;
           
-          const postType = post.type?.toLowerCase() || '';
-          let action = 'added';
-          if (postType === 'rating' || (post.rating && post.rating > 0)) action = 'rated';
-          else if (postType === 'finished') action = 'finished';
-          else if (postType === 'progress' || postType === 'consuming') action = 'started';
-          
-          const mediaTitle = post.mediaItems?.[0]?.title || (post as any).listData?.title || 'something';
-          
-          activities.push({
-            user: post.user,
-            action,
-            mediaTitle,
-            mediaType: post.mediaItems?.[0]?.mediaType,
-            rating: post.rating || post.mediaItems?.[0]?.rating,
-            listName: (post as any).listData?.title,
-            postId: post.id
-          });
+          if (userCounts[userId] <= MAX_PER_USER) {
+            includedPosts.push(post);
+          } else {
+            overflowPosts.push(post); // Don't drop - show individually
+          }
         });
         
-        if (activities.length > 0) {
-          // Use deterministic ID based on first post's ID
-          result.push({
-            id: `friend-activity-block-${tier2Buffer[0].id}`,
-            type: 'friend_activity_block',
-            timestamp: firstTimestamp,
-            activities
+        // Create multiple small Quick Glimpse cards
+        for (let i = 0; i < includedPosts.length; i += GLIMPSE_SIZE) {
+          const chunk = includedPosts.slice(i, i + GLIMPSE_SIZE);
+          if (chunk.length < 2) {
+            // Too small for a glimpse, show individually
+            result.push(...chunk);
+            continue;
+          }
+          
+          const activities: FriendActivityBlock['activities'] = [];
+          
+          chunk.forEach(post => {
+            if (!post.user) return;
+            
+            const postType = post.type?.toLowerCase() || '';
+            let action = 'added';
+            if (postType === 'rating' || (post.rating && post.rating > 0)) action = 'rated';
+            else if (postType === 'finished') action = 'finished';
+            else if (postType === 'progress' || postType === 'consuming') action = 'started';
+            
+            const mediaTitle = post.mediaItems?.[0]?.title || (post as any).listData?.title || 'something';
+            
+            activities.push({
+              user: post.user,
+              action,
+              mediaTitle,
+              mediaType: post.mediaItems?.[0]?.mediaType,
+              rating: post.rating || post.mediaItems?.[0]?.rating,
+              listName: (post as any).listData?.title,
+              postId: post.id
+            });
           });
+          
+          if (activities.length > 0) {
+            result.push({
+              id: `quick-glimpse-${chunk[0].id}`,
+              type: 'friend_activity_block', // Reuse same type for rendering
+              timestamp: chunk[0].timestamp,
+              activities
+            });
+          }
         }
+        
+        // Add overflow posts individually (don't drop any activity)
+        result.push(...overflowPosts);
       } else {
-        // Not enough diversity or posts - show them individually (preserves ConsolidatedActivity cards)
+        // Not enough diversity or posts - show them individually
         result.push(...tier2Buffer);
       }
       
@@ -2830,7 +2856,7 @@ export default function Feed() {
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((item: any, postIndex: number) => {
-                // Handle FriendActivityBlock (Tier 2 grouped activities from multiple users)
+                // Handle Quick Glimpse cards (small Tier 2 grouped activities)
                 if ((item as any).type === 'friend_activity_block') {
                   const block = item as any;
                   const getDisplayName = (username: string) => {
@@ -2846,36 +2872,33 @@ export default function Feed() {
                     const fullStars = Math.floor(rating);
                     const hasHalf = rating % 1 >= 0.5;
                     return (
-                      <span className="text-yellow-500 ml-1">
+                      <span className="text-yellow-500 ml-1 text-xs">
                         {'★'.repeat(fullStars)}{hasHalf ? '½' : ''}
                       </span>
                     );
                   };
                   
                   return (
-                    <div key={block.id} className="mb-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm" data-testid="friend-activity-block">
-                      <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <div key={block.id} className="mb-3 bg-purple-50/50 rounded-xl border border-purple-100/50 px-3 py-2" data-testid="quick-glimpse-card">
+                      <p className="text-xs font-medium text-purple-600 mb-1.5 flex items-center gap-1">
                         <span>✨</span>
-                        Friend Activity
+                        Quick Glimpse
                       </p>
-                      <div className="space-y-2">
-                        {block.activities.slice(0, 5).map((activity: any, idx: number) => (
+                      <div className="space-y-1">
+                        {block.activities.slice(0, 3).map((activity: any, idx: number) => (
                           <div 
                             key={`${activity.postId}-${idx}`}
-                            className="flex items-center text-sm text-gray-700"
+                            className="flex items-center text-xs text-gray-600"
                           >
-                            <span className="font-medium text-gray-900 truncate max-w-[100px]">
+                            <span className="font-medium text-gray-800 truncate max-w-[80px]">
                               {getDisplayName(activity.user?.displayName || activity.user?.username)}
                             </span>
-                            <span className="mx-1.5 text-gray-500">{activity.action}</span>
-                            <span className="truncate flex-1 font-medium">{activity.mediaTitle}</span>
+                            <span className="mx-1 text-gray-400">{activity.action}</span>
+                            <span className="truncate flex-1">{activity.mediaTitle}</span>
                             {activity.rating && renderStars(activity.rating)}
                           </div>
                         ))}
                       </div>
-                      {block.activities.length > 5 && (
-                        <p className="text-xs text-gray-500 mt-2">+{block.activities.length - 5} more</p>
-                      )}
                     </div>
                   );
                 }
