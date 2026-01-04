@@ -4213,26 +4213,14 @@ export default function Feed() {
                         {(() => {
                           const listData = (post as any).listData;
                           const listNames = (post as any).listNames as string[] | undefined;
-                          const postType = (post as any).type?.toLowerCase() || '';
-                          const contentLower = (post.content || '').toLowerCase();
                           
                           // Check multiple sources for list name
-                          const listTitle = listData?.title?.toLowerCase() || 
-                            listNames?.[0]?.toLowerCase() || '';
+                          const listTitle = (listData?.title || listNames?.[0] || '').toLowerCase();
                           
-                          // Also check content for "to Currently" or "to Want To" patterns
-                          const isBettableFromContent = 
-                            contentLower.includes('to currently') || 
-                            contentLower.includes('→ currently') ||
-                            contentLower.includes('to want to') ||
-                            contentLower.includes('→ want to');
-                          
-                          // Check if post type indicates list add (for consolidated cards)
-                          const isListAddType = postType === 'add-to-list' || postType === 'list_adds';
-                          
-                          const isBettableList = listTitle === 'currently' || listTitle === 'want to' || isBettableFromContent;
+                          // Direct check for bettable lists
+                          const isBettableList = listTitle === 'currently' || listTitle === 'want to';
                           const hasMedia = post.mediaItems && post.mediaItems.length > 0;
-                          const isOwnPost = post.user?.id === currentAppUserId;
+                          const isOwnPost = currentAppUserId && post.user?.id === currentAppUserId;
                           const userName = post.user?.displayName || post.user?.username || 'them';
                           
                           // Only show bet button for other users' posts (can't bet on your own)
