@@ -118,7 +118,7 @@ export default function RecommendationCard({
         )}
       </div>
       <p
-        className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight cursor-pointer h-8"
+        className="text-xs font-medium text-white line-clamp-2 leading-tight cursor-pointer h-8"
         onClick={() => onMediaClick(item)}
       >
         {item.title}
@@ -142,14 +142,14 @@ export default function RecommendationCard({
                 className={`transition-colors ${
                   isFilled
                     ? "text-yellow-400 fill-yellow-400"
-                    : "text-gray-300"
+                    : "text-purple-300"
                 }`}
               />
             </button>
           );
         })}
         {submittedRating !== null && (
-          <Check size={12} className="text-green-500 ml-1" />
+          <Check size={12} className="text-green-400 ml-1" />
         )}
       </div>
       <button
@@ -157,7 +157,7 @@ export default function RecommendationCard({
           e.stopPropagation();
           onAddClick(item);
         }}
-        className="mt-1.5 w-full bg-purple-700 text-white text-xs py-1 rounded-full hover:bg-purple-800 transition-colors"
+        className="mt-1.5 w-full bg-white text-purple-800 text-xs py-1.5 rounded-full hover:bg-purple-100 transition-colors font-medium"
         data-testid={`rec-add-${idx}`}
       >
         + Add
