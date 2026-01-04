@@ -121,15 +121,8 @@ serve(async (req) => {
       });
     }
 
-    // Require external_id for proper bet resolution
-    if (!external_id || !external_source) {
-      return new Response(JSON.stringify({ 
-        error: 'Missing media external_id or external_source' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // external_id and external_source are optional but helpful for bet resolution
+    // Bets can still work without them
 
     const { data: existingBet, error: checkError } = await supabaseAdmin
       .from('bets')

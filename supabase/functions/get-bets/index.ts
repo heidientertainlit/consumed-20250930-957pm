@@ -56,18 +56,7 @@ serve(async (req) => {
     if (type === 'placed') {
       const { data, error } = await supabaseAdmin
         .from('bets')
-        .select(`
-          id,
-          media_title,
-          media_type,
-          prediction,
-          status,
-          points_won,
-          created_at,
-          resolved_at,
-          target_user_id,
-          target_user:users!bets_target_user_id_fkey(user_name, display_name)
-        `)
+        .select('*')
         .eq('user_id', appUser.id)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -76,19 +65,21 @@ serve(async (req) => {
         console.error('Error fetching placed bets:', error);
         throw error;
       }
-      bets = data || [];
+      
+      // Fetch target user info separately
+      const betsWithUsers = await Promise.all((data || []).map(async (bet) => {
+        const { data: targetUser } = await supabaseAdmin
+          .from('users')
+          .select('user_name, display_name')
+          .eq('id', bet.target_user_id)
+          .single();
+        return { ...bet, target_user: targetUser };
+      }));
+      bets = betsWithUsers;
     } else if (type === 'received') {
       const { data, error } = await supabaseAdmin
         .from('bets')
-        .select(`
-          id,
-          media_title,
-          media_type,
-          prediction,
-          status,
-          created_at,
-          bettor:users!bets_user_id_fkey(user_name, display_name)
-        `)
+        .select('*')
         .eq('target_user_id', appUser.id)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -97,7 +88,17 @@ serve(async (req) => {
         console.error('Error fetching received bets:', error);
         throw error;
       }
-      bets = data || [];
+      
+      // Fetch bettor info separately
+      const betsWithUsers = await Promise.all((data || []).map(async (bet) => {
+        const { data: bettor } = await supabaseAdmin
+          .from('users')
+          .select('user_name, display_name')
+          .eq('id', bet.user_id)
+          .single();
+        return { ...bet, bettor };
+      }));
+      bets = betsWithUsers;
     }
 
     return new Response(JSON.stringify({ 
