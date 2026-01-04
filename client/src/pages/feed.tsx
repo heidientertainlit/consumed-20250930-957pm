@@ -2795,35 +2795,52 @@ export default function Feed() {
                   
                   const activities = block.activities || [];
                   
+                  // Calculate points for each activity type
+                  const getPointsForAction = (action: string, rating?: number) => {
+                    if (action === 'rated') return rating && rating >= 4 ? 10 : 5;
+                    if (action === 'finished') return 15;
+                    if (action === 'added to currently') return 5;
+                    if (action === 'added to queue') return 3;
+                    if (action === 'added') return 5;
+                    return 5;
+                  };
+
                   return (
-                    <div key={block.id} className="mb-4 bg-purple-50 rounded-2xl p-3 border border-purple-100 shadow-sm overflow-hidden" data-testid="quick-glimpse-card">
+                    <div key={block.id} className="mb-4 bg-gradient-to-r from-purple-600/10 via-pink-500/10 to-orange-400/10 rounded-2xl p-3 border border-purple-200 shadow-sm overflow-hidden" data-testid="quick-glimpse-card">
                       <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                        <span>✨</span>
-                        Quick Glimpse
+                        <span className="text-lg">🔥</span>
+                        <span>Points Rolling In</span>
+                        <span className="ml-auto text-xs font-normal text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">LIVE</span>
                       </p>
-                      <div className="h-[60px] overflow-hidden">
+                      <div className="h-[72px] overflow-hidden">
                         <div 
                           className="flex flex-col"
                           style={{
                             animation: `scrollVerticalGlimpse ${activities.length * 3}s linear infinite`,
-                            '--scroll-distance': `-${activities.length * 20}px`
+                            '--scroll-distance': `-${activities.length * 24}px`
                           } as React.CSSProperties}
                         >
                           {/* Duplicate for seamless loop */}
-                          {[...activities, ...activities].map((activity: any, idx: number) => (
-                            <div 
-                              key={`${activity.postId}-${idx}`}
-                              className="h-5 flex items-center text-xs text-gray-700 whitespace-nowrap"
-                            >
-                              <span className="font-medium truncate">{getDisplayName(activity.user?.displayName || activity.user?.username)}</span>
-                              <span className="mx-1 text-gray-500">
-                                {activity.action === 'rated' && activity.rating 
-                                  ? `gave ${activity.mediaTitle} ${activity.rating} star${activity.rating !== 1 ? 's' : ''}`
-                                  : `${activity.action} ${activity.mediaTitle}`
-                                }
-                              </span>
-                            </div>
-                          ))}
+                          {[...activities, ...activities].map((activity: any, idx: number) => {
+                            const points = getPointsForAction(activity.action, activity.rating);
+                            return (
+                              <div 
+                                key={`${activity.postId}-${idx}`}
+                                className="h-6 flex items-center text-sm whitespace-nowrap gap-2"
+                              >
+                                <span className="text-green-600 font-bold bg-green-100 px-1.5 py-0.5 rounded text-xs">+{points}</span>
+                                <span className="font-medium text-gray-900 truncate">{getDisplayName(activity.user?.displayName || activity.user?.username)}</span>
+                                <span className="text-gray-500 truncate">
+                                  {activity.action === 'rated' && activity.rating 
+                                    ? `rated ${activity.mediaTitle} ${activity.rating}★`
+                                    : activity.action === 'finished'
+                                    ? `finished ${activity.mediaTitle}`
+                                    : `${activity.action} ${activity.mediaTitle}`
+                                  }
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                       <style>{`
