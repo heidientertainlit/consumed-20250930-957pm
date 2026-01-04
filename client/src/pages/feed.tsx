@@ -20,6 +20,7 @@ import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import RankFeedCard from "@/components/rank-feed-card";
 import ConsolidatedActivityCard, { ConsolidatedActivity } from "@/components/consolidated-activity-card";
+import GroupedActivityCard from "@/components/grouped-activity-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -1256,7 +1257,7 @@ export default function Feed() {
     
     // Hide malformed posts: short content (looks like just a title), no media items, 
     // and not a special post type (prediction/poll/trivia/rank_share/hot_take)
-    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'hot_take', 'media_group', 'added_to_list', 'rewatch', 'ask_for_recs'];
+    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'hot_take', 'media_group', 'added_to_list', 'rewatch', 'ask_for_recs', 'friend_list_group'];
     const isSpecialType = specialTypes.includes(post.type || '');
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
@@ -3104,6 +3105,51 @@ export default function Feed() {
                             </div>
                           )}
                         </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Check if this item is a friend_list_group post (multiple friends added same media)
+                if (post.type === 'friend_list_group') {
+                  const friendGroupPost = post as any;
+                  const usersWithPostIds = (friendGroupPost.groupedActivities || []).map((activity: any) => ({
+                    id: activity.userId,
+                    username: activity.username,
+                    displayName: activity.displayName,
+                    avatar: activity.avatar,
+                    postId: activity.postId
+                  }));
+                  
+                  return (
+                    <div key={`friend-group-${post.id}`} id={`post-${post.id}`}>
+                      {carouselElements}
+                      <div className="mb-4">
+                        <GroupedActivityCard
+                          media={{
+                            id: friendGroupPost.media?.id || post.mediaItems?.[0]?.id || '',
+                            title: friendGroupPost.media?.title || post.mediaItems?.[0]?.title || 'Unknown',
+                            imageUrl: friendGroupPost.media?.imageUrl || post.mediaItems?.[0]?.imageUrl,
+                            mediaType: friendGroupPost.media?.mediaType || post.mediaItems?.[0]?.mediaType || 'movie',
+                            externalId: friendGroupPost.media?.externalId || post.mediaItems?.[0]?.externalId || '',
+                            externalSource: friendGroupPost.media?.externalSource || post.mediaItems?.[0]?.externalSource || ''
+                          }}
+                          users={usersWithPostIds}
+                          listType={friendGroupPost.listType || 'list'}
+                          onBetClick={(userId, postId, media) => {
+                            const targetUser = usersWithPostIds.find((u: any) => u.id === userId);
+                            setActiveBetPost({
+                              postId: postId,
+                              mediaTitle: media.title,
+                              userName: targetUser?.displayName || targetUser?.username || 'friend',
+                              targetUserId: userId,
+                              externalId: media.externalId,
+                              externalSource: media.externalSource,
+                              mediaType: media.mediaType
+                            });
+                          }}
+                          timestamp={post.timestamp}
+                        />
                       </div>
                     </div>
                   );

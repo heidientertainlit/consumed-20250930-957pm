@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { 
   DropdownMenu, 
@@ -190,7 +190,10 @@ export default function UserProfile() {
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('stats');
-  const [collectionsSubTab, setCollectionsSubTab] = useState<'lists' | 'history'>('lists');
+  const [collectionsSubTab, setCollectionsSubTab] = useState<'lists'>('lists');
+  const [activitySubFilter, setActivitySubFilter] = useState<'all' | 'history' | 'ratings' | 'posts' | 'games'>('all');
+  const [userActivity, setUserActivity] = useState<any[]>([]);
+  const [isLoadingActivity, setIsLoadingActivity] = useState(false);
   const [openFilter, setOpenFilter] = useState<'type' | 'year' | 'rating' | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportHelpOpen, setIsImportHelpOpen] = useState(false);
@@ -1162,7 +1165,7 @@ export default function UserProfile() {
     
     if (tab) {
       // Map 'lists' to 'collections' for backward compatibility
-      const validTabs = ['stats', 'dna', 'badges', 'friends', 'collections', 'history'];
+      const validTabs = ['stats', 'dna', 'badges', 'friends', 'collections', 'activity'];
       const normalizedTab = tab === 'lists' ? 'collections' : tab;
       if (validTabs.includes(normalizedTab)) {
         setActiveSection(normalizedTab);
@@ -2826,6 +2829,19 @@ export default function UserProfile() {
                 Collections
               </button>
             )}
+            {(isOwnProfile || friendshipStatus === 'friends') && (
+              <button
+                onClick={() => setActiveSection('activity')}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  activeSection === 'activity'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+                data-testid="nav-activity"
+              >
+                Activity
+              </button>
+            )}
           </div>
         </div>
 
@@ -3427,47 +3443,18 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* Collections Section (Lists + History) - Show for own profile or friends */}
+        {/* Collections Section (Lists only) - Show for own profile or friends */}
         {activeSection === 'collections' && (isOwnProfile || friendshipStatus === 'friends') && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               {/* Section Header */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {isOwnProfile ? 'Your Collections' : 'Collections'}
+                  {isOwnProfile ? 'Your Lists' : 'Lists'}
                 </h2>
               </div>
-              {/* Sub-navigation: Lists vs History */}
-              <div className="flex items-center gap-2 mb-6">
-                <button
-                  onClick={() => setCollectionsSubTab('lists')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    collectionsSubTab === 'lists'
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  data-testid="subtab-lists"
-                >
-                  <List size={16} />
-                  Lists
-                </button>
-                <button
-                  onClick={() => setCollectionsSubTab('history')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    collectionsSubTab === 'history'
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  data-testid="subtab-history"
-                >
-                  <Clock size={16} />
-                  History
-                </button>
-              </div>
 
-              {/* Lists Sub-Tab Content */}
-              {collectionsSubTab === 'lists' && (
-                <>
+              {/* Lists Content */}
                   {/* Create List Button - Only for own profile */}
                   {isOwnProfile && (
                     <div className="flex justify-end mb-4">
@@ -3559,158 +3546,117 @@ export default function UserProfile() {
                       </Button>
                     </div>
                   )}
-                </>
+            </div>
+          </div>
+        )}
+
+        {/* Activity Section - Show for own profile or friends */}
+        {activeSection === 'activity' && (isOwnProfile || friendshipStatus === 'friends') && (
+          <div ref={historyRef} className="px-4 mb-8">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              {/* Section Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {isOwnProfile ? 'Your Activity' : 'Activity'}
+                </h2>
+              </div>
+
+              {/* Sub-filter Pills */}
+              <div className="flex items-center gap-2 mb-6 overflow-x-auto">
+                {[
+                  { id: 'all', label: 'All', icon: Activity },
+                  { id: 'history', label: 'Media History', icon: Clock },
+                  { id: 'ratings', label: 'Ratings', icon: Star },
+                  { id: 'posts', label: 'Posts', icon: MessageCircle },
+                  { id: 'games', label: 'Games', icon: Gamepad2 },
+                ].map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setActivitySubFilter(id as any)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      activitySubFilter === id
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid={`activity-filter-${id}`}
+                  >
+                    <Icon size={16} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Import Button - Only for own profile, only in history filter */}
+              {isOwnProfile && activitySubFilter === 'history' && (
+                <button
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="w-full mb-4 px-4 py-3 rounded-xl border-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center gap-2 font-medium"
+                  data-testid="button-import-history"
+                >
+                  <Upload size={18} />
+                  Import Media History
+                </button>
               )}
 
-              {/* History Sub-Tab Content */}
-              {collectionsSubTab === 'history' && (
+              {/* Activity Content - Media History */}
+              {(activitySubFilter === 'all' || activitySubFilter === 'history') && (
                 <>
-                  {/* Import Media History Button - Only for own profile */}
-                  {isOwnProfile && (
-                    <button
-                      onClick={() => setIsImportModalOpen(true)}
-                      className="w-full mb-4 px-4 py-3 rounded-xl border-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center gap-2 font-medium"
-                      data-testid="button-import-history"
-                    >
-                      <Upload size={18} />
-                      Import Media History
-                    </button>
+                  {/* Filter buttons row for history */}
+                  {activitySubFilter === 'history' && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                            mediaHistoryType !== 'all'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                          }`}
+                          data-testid="filter-type-button"
+                        >
+                          <Film size={12} />
+                          {getTypeLabel()}
+                          <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
+                        </button>
+                        {openFilter === 'type' && (
+                          <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
+                            {[
+                              { value: 'all', label: 'All Types' },
+                              { value: 'movies', label: 'Movies', icon: Film },
+                              { value: 'tv', label: 'TV', icon: Tv },
+                              { value: 'books', label: 'Books', icon: BookOpen },
+                              { value: 'music', label: 'Music', icon: Music },
+                            ].map(({ value, label, icon: Icon }) => (
+                              <button
+                                key={value}
+                                onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
+                                className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${
+                                  mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
+                                }`}
+                              >
+                                {Icon && <Icon size={12} className="text-gray-600" />}
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
-
-                  {/* Filter buttons row */}
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {/* Media Type Filter */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                          mediaHistoryType !== 'all'
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                        }`}
-                        data-testid="filter-type-button"
-                      >
-                        <Film size={12} />
-                        {getTypeLabel()}
-                        <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
-                      </button>
-                      {openFilter === 'type' && (
-                        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
-                          {[
-                            { value: 'all', label: 'All Types' },
-                            { value: 'movies', label: 'Movies', icon: Film },
-                            { value: 'tv', label: 'TV', icon: Tv },
-                            { value: 'books', label: 'Books', icon: BookOpen },
-                            { value: 'music', label: 'Music', icon: Music },
-                          ].map(({ value, label, icon: Icon }) => (
-                            <button
-                              key={value}
-                              onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
-                              className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${
-                                mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
-                              }`}
-                            >
-                              {Icon && <Icon size={12} className="text-gray-600" />}
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Year Filter */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setOpenFilter(openFilter === 'year' ? null : 'year')}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                          mediaHistoryYear !== 'all'
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                        }`}
-                        data-testid="filter-year-button"
-                      >
-                        <Calendar size={12} />
-                        {getYearLabel()}
-                        <ChevronRight size={12} className={`transition-transform ${openFilter === 'year' ? 'rotate-90' : ''}`} />
-                      </button>
-                      {openFilter === 'year' && (
-                        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px] max-h-48 overflow-y-auto">
-                          <button
-                            onClick={() => { setMediaHistoryYear('all'); setOpenFilter(null); }}
-                            className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
-                              mediaHistoryYear === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
-                            }`}
-                          >
-                            All Years
-                          </button>
-                          {years.map((year) => (
-                            <button
-                              key={year}
-                              onClick={() => { setMediaHistoryYear(year); setOpenFilter(null); }}
-                              className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
-                                mediaHistoryYear === year ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
-                              }`}
-                            >
-                              {year}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Rating Filter */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setOpenFilter(openFilter === 'rating' ? null : 'rating')}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                          mediaHistoryRating !== 'all'
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                        }`}
-                        data-testid="filter-rating-button"
-                      >
-                        ⭐
-                        {getRatingLabel()}
-                        <ChevronRight size={12} className={`transition-transform ${openFilter === 'rating' ? 'rotate-90' : ''}`} />
-                      </button>
-                      {openFilter === 'rating' && (
-                        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px]">
-                          <button
-                            onClick={() => { setMediaHistoryRating('all'); setOpenFilter(null); }}
-                            className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
-                              mediaHistoryRating === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
-                            }`}
-                          >
-                            All Ratings
-                          </button>
-                          {[5, 4, 3, 2, 1].map((rating) => (
-                            <button
-                              key={rating}
-                              onClick={() => { setMediaHistoryRating(rating.toString()); setOpenFilter(null); }}
-                              className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
-                                mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
-                              }`}
-                            >
-                              {'⭐'.repeat(rating)}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
                   {/* Search Bar */}
                   <div className="relative mb-4">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <Input
-                      placeholder="Search media history..."
+                      placeholder="Search activity..."
                       value={mediaHistorySearch}
                       onChange={(e) => setMediaHistorySearch(e.target.value)}
                       className="pl-10 bg-white text-gray-900 border-gray-300"
-                      data-testid="input-history-search"
+                      data-testid="input-activity-search"
                     />
                   </div>
 
+                  {/* Activity Items */}
                   {isLoadingLists ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map((n) => (
@@ -3722,9 +3668,9 @@ export default function UserProfile() {
                     </div>
                   ) : filteredMediaHistory.length === 0 ? (
                     <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-                      <Clock className="mx-auto mb-3 text-gray-300" size={48} />
-                      <p className="text-gray-600">No media history yet</p>
-                      <p className="text-sm text-gray-500">Start tracking media to see your history here</p>
+                      <Activity className="mx-auto mb-3 text-gray-300" size={48} />
+                      <p className="text-gray-600">No activity yet</p>
+                      <p className="text-sm text-gray-500">Start tracking media to see your activity here</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -3737,7 +3683,7 @@ export default function UserProfile() {
                               setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
                             }
                           }}
-                          data-testid={`history-item-${index}`}
+                          data-testid={`activity-item-${index}`}
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0">
@@ -3768,10 +3714,29 @@ export default function UserProfile() {
                   )}
                 </>
               )}
+
+              {/* Placeholder for other activity types */}
+              {activitySubFilter === 'ratings' && (
+                <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
+                  <Star className="mx-auto mb-3 text-gray-300" size={48} />
+                  <p className="text-gray-600">Ratings activity coming soon</p>
+                </div>
+              )}
+              {activitySubFilter === 'posts' && (
+                <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
+                  <MessageCircle className="mx-auto mb-3 text-gray-300" size={48} />
+                  <p className="text-gray-600">Posts activity coming soon</p>
+                </div>
+              )}
+              {activitySubFilter === 'games' && (
+                <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
+                  <Gamepad2 className="mx-auto mb-3 text-gray-300" size={48} />
+                  <p className="text-gray-600">Games activity coming soon</p>
+                </div>
+              )}
             </div>
           </div>
         )}
-
 
         {/* Logout Button - Only shown on own profile, at bottom */}
         {isOwnProfile && (

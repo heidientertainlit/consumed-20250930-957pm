@@ -524,14 +524,20 @@ serve(async (req) => {
 
       console.log('DEBUG: Vote counts:', voteCounts);
 
-      // DISABLED: Group posts by media - treating all posts individually for now
-      // TODO: Re-enable grouping when bugs are fixed
+      // ENABLED: Group "added to list" posts by media (multiple friends adding same media)
+      // High-signal posts (ratings, reviews, hot takes) remain individual
+      const ENABLE_FRIEND_LIST_GROUPING = true;
+      
+      // DISABLED: Group all posts by media - treating most posts individually for now
       const ENABLE_MEDIA_GROUPING = false;
       
       // ENABLED: Consolidate posts with list_id by user + list + time window
       // This prevents duplicate posts when a user adds multiple items to the SAME list at once
       const TIME_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
       const listAdditionGroups = new Map<string, any[]>();
+      
+      // NEW: Group list additions by media (for friend grouping display)
+      const friendListGroups = new Map<string, any[]>();
       
       const mediaGroups = new Map<string, any[]>();
       const nonMediaPosts: any[] = [];
@@ -604,9 +610,20 @@ serve(async (req) => {
         
         const hasMedia = post.media_title && post.media_title.trim() !== '' && post.media_external_id;
         
-        // rank_share posts need special handling - don't group them with media
-        // When grouping is disabled, treat all media posts as single posts (groupPosts.length === 1 path)
-        if (ENABLE_MEDIA_GROUPING && hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia' && post.post_type !== 'rank_share') {
+        // Check if this is a low-signal "added to list" post (no rating, no review content)
+        const isListAddition = (post.list_id || post.post_type === 'add-to-list') && 
+                               !post.rating && 
+                               (!post.content || post.content.trim() === '' || post.content.toLowerCase().includes('added'));
+        
+        // NEW: Group low-signal list additions by media for friend grouping
+        if (ENABLE_FRIEND_LIST_GROUPING && hasMedia && isListAddition) {
+          const mediaKey = `${post.media_external_source}:${post.media_external_id}`;
+          if (!friendListGroups.has(mediaKey)) {
+            friendListGroups.set(mediaKey, []);
+          }
+          friendListGroups.get(mediaKey)!.push(post);
+        } else if (ENABLE_MEDIA_GROUPING && hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia' && post.post_type !== 'rank_share') {
+          // Original media grouping (currently disabled)
           const mediaKey = `${post.media_external_source}:${post.media_external_id}`;
           if (!mediaGroups.has(mediaKey)) {
             mediaGroups.set(mediaKey, []);
@@ -623,6 +640,137 @@ serve(async (req) => {
 
       // Transform grouped media posts
       const groupedItems: any[] = [];
+      
+      // Process friend list groupings first (multiple friends adding same media)
+      console.log('DEBUG FRIEND_LIST_GROUPS: found', friendListGroups.size, 'media groups from list additions');
+      
+      friendListGroups.forEach((groupPosts, mediaKey) => {
+        if (groupPosts.length === 1) {
+          // Only one friend added this media - show as individual post
+          const post = groupPosts[0];
+          const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+          const effectiveListId = post.list_id || postToListIdMap.get(post.id);
+          const listData = effectiveListId ? listDataMap.get(effectiveListId) : null;
+          
+          groupedItems.push({
+            id: post.id,
+            type: post.post_type || 'added_to_list',
+            user: {
+              id: post.user_id,
+              username: postUser.user_name || 'Unknown',
+              displayName: postUser.display_name || postUser.user_name || 'Unknown',
+              avatar: postUser.avatar || '',
+              email: postUser.email || ''
+            },
+            content: post.content || '',
+            timestamp: post.created_at,
+            likes: post.likes_count || 0,
+            comments: post.comments_count || 0,
+            shares: 0,
+            likedByCurrentUser: likedPostIds.has(post.id),
+            listId: effectiveListId || null,
+            listData: listData ? {
+              title: listData.title,
+              items: listData.items.map((item: any) => ({
+                id: item.id,
+                title: item.title,
+                mediaType: item.media_type,
+                creator: item.creator,
+                imageUrl: item.image_url,
+                externalId: item.external_id,
+                externalSource: item.external_source
+              })),
+              totalCount: listData.totalCount
+            } : null,
+            mediaItems: [{
+              id: `${post.media_external_source}-${post.media_external_id}`,
+              title: post.media_title || '',
+              creator: post.media_creator || '',
+              mediaType: post.media_type || 'unknown',
+              imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source),
+              externalId: post.media_external_id || '',
+              externalSource: post.media_external_source || ''
+            }]
+          });
+        } else {
+          // Multiple friends added this same media - create grouped post
+          const firstPost = groupPosts[0];
+          const mostRecentTimestamp = groupPosts.reduce((latest: string, post: any) => {
+            return new Date(post.created_at) > new Date(latest) ? post.created_at : latest;
+          }, groupPosts[0].created_at);
+          
+          // Get unique users who added this media
+          const uniqueUsers = new Map<string, any>();
+          groupPosts.forEach((post: any) => {
+            if (!uniqueUsers.has(post.user_id)) {
+              const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+              uniqueUsers.set(post.user_id, {
+                id: post.user_id,
+                username: postUser.user_name || 'Unknown',
+                displayName: postUser.display_name || postUser.user_name || 'Unknown',
+                avatar: postUser.avatar || ''
+              });
+            }
+          });
+          
+          // Determine most common list type
+          const listTypeCounts = new Map<string, number>();
+          groupPosts.forEach((post: any) => {
+            const listId = post.list_id || postToListIdMap.get(post.id);
+            const listData = listId ? listDataMap.get(listId) : null;
+            const listTitle = listData?.title?.toLowerCase() || 'list';
+            listTypeCounts.set(listTitle, (listTypeCounts.get(listTitle) || 0) + 1);
+          });
+          let dominantListType = 'list';
+          let maxCount = 0;
+          listTypeCounts.forEach((count, listType) => {
+            if (count > maxCount) {
+              maxCount = count;
+              dominantListType = listType;
+            }
+          });
+          
+          console.log('DEBUG: Creating friend_list_group for', mediaKey, 'with', uniqueUsers.size, 'users');
+          
+          groupedItems.push({
+            id: `friend-group-${mediaKey}`,
+            type: 'friend_list_group',
+            timestamp: mostRecentTimestamp,
+            friendCount: uniqueUsers.size,
+            listType: dominantListType,
+            users: Array.from(uniqueUsers.values()),
+            media: {
+              id: `${firstPost.media_external_source}-${firstPost.media_external_id}`,
+              title: firstPost.media_title || '',
+              imageUrl: ensureImageUrl(firstPost.image_url, firstPost.media_external_id, firstPost.media_external_source),
+              mediaType: firstPost.media_type || 'unknown',
+              externalId: firstPost.media_external_id || '',
+              externalSource: firstPost.media_external_source || ''
+            },
+            mediaItems: [{
+              id: `${firstPost.media_external_source}-${firstPost.media_external_id}`,
+              title: firstPost.media_title || '',
+              creator: firstPost.media_creator || '',
+              mediaType: firstPost.media_type || 'unknown',
+              imageUrl: ensureImageUrl(firstPost.image_url, firstPost.media_external_id, firstPost.media_external_source),
+              externalId: firstPost.media_external_id || '',
+              externalSource: firstPost.media_external_source || ''
+            }],
+            groupedActivities: groupPosts.map((post: any) => {
+              const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
+              return {
+                postId: post.id,
+                userId: post.user_id,
+                username: postUser.user_name || 'Unknown',
+                displayName: postUser.display_name || postUser.user_name || 'Unknown',
+                avatar: postUser.avatar || '',
+                activityText: 'added to list',
+                timestamp: post.created_at
+              };
+            })
+          });
+        }
+      });
       
       mediaGroups.forEach((groupPosts, mediaKey) => {
         if (groupPosts.length === 1) {
