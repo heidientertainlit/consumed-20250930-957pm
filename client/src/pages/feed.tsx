@@ -21,6 +21,7 @@ import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog
 import RankFeedCard from "@/components/rank-feed-card";
 import ConsolidatedActivityCard, { ConsolidatedActivity } from "@/components/consolidated-activity-card";
 import GroupedActivityCard from "@/components/grouped-activity-card";
+import RecommendationCard from "@/components/recommendation-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -2744,80 +2745,23 @@ export default function Feed() {
                         </div>
                         <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
                           {recommendedContent.slice(0, 6).map((item: any, idx: number) => (
-                            <div
+                            <RecommendationCard
                               key={item.id || idx}
-                              className="flex-shrink-0 w-28"
-                            >
-                              <div 
-                                className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 mb-1.5 cursor-pointer"
-                                onClick={() => handleMediaClick(item)}
-                              >
-                                {(item.imageUrl || item.posterPath) ? (
-                                  <img
-                                    src={item.imageUrl || item.posterPath}
-                                    alt={item.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                                    No image
-                                  </div>
-                                )}
-                              </div>
-                              <p 
-                                className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight cursor-pointer h-8"
-                                onClick={() => handleMediaClick(item)}
-                              >
-                                {item.title}
-                              </p>
-                              {/* Star rating row with half-star support */}
-                              <div className="flex items-center gap-0.5 mt-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <div
-                                    key={star}
-                                    className="relative w-3.5 h-3.5"
-                                    data-testid={`rec-star-${idx}-${star}`}
-                                  >
-                                    <Star size={14} className="absolute text-gray-300" />
-                                    {/* Left half for .5 rating */}
-                                    <div 
-                                      className="absolute inset-y-0 left-0 w-1/2 cursor-pointer z-10"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleMediaClick(item);
-                                      }}
-                                    />
-                                    {/* Right half for full rating */}
-                                    <div 
-                                      className="absolute inset-y-0 right-0 w-1/2 cursor-pointer z-10"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleMediaClick(item);
-                                      }}
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                              {/* Always visible Add button */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setQuickAddMedia({
-                                    title: item.title,
-                                    mediaType: item.type || item.mediaType || 'movie',
-                                    imageUrl: item.imageUrl || item.posterPath,
-                                    externalId: item.externalId || item.id,
-                                    externalSource: item.externalSource || 'tmdb',
-                                    creator: item.creator || item.author,
-                                  });
-                                  setIsQuickAddOpen(true);
-                                }}
-                                className="mt-1.5 w-full bg-purple-700 text-white text-xs py-1 rounded-full"
-                                data-testid={`rec-add-${idx}`}
-                              >
-                                + Add
-                              </button>
-                            </div>
+                              item={item}
+                              idx={idx}
+                              onMediaClick={handleMediaClick}
+                              onAddClick={(mediaItem) => {
+                                setQuickAddMedia({
+                                  title: mediaItem.title,
+                                  mediaType: mediaItem.type || mediaItem.mediaType || 'movie',
+                                  imageUrl: mediaItem.imageUrl || mediaItem.posterPath,
+                                  externalId: mediaItem.externalId || mediaItem.id,
+                                  externalSource: mediaItem.externalSource || 'tmdb',
+                                  creator: mediaItem.creator || mediaItem.author,
+                                });
+                                setIsQuickAddOpen(true);
+                              }}
+                            />
                           ))}
                         </div>
                       </div>
