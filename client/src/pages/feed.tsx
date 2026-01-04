@@ -2846,11 +2846,11 @@ export default function Feed() {
                                 key={`${activity.postId}-${idx}`}
                                 className="h-6 flex items-center text-sm whitespace-nowrap gap-1.5"
                               >
-                                {points && (
-                                  <span className="text-purple-600 font-semibold text-xs">+{points}</span>
-                                )}
                                 <span className="font-medium text-gray-900 truncate">{name}</span>
-                                <span className="text-gray-600 truncate">{text}</span>
+                                <span className="text-gray-600 truncate flex-1">{text}</span>
+                                {points && (
+                                  <span className="text-purple-600 font-semibold text-xs ml-auto">+{points}</span>
+                                )}
                               </div>
                             );
                           })}
