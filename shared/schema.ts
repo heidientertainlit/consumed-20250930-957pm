@@ -196,6 +196,23 @@ export const predictionCommentLikes = pgTable("prediction_comment_likes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Bets table - for betting on friends' reactions to media
+export const bets = pgTable("bets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  targetUserId: varchar("target_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").notNull().references(() => socialPosts.id, { onDelete: "cascade" }),
+  mediaTitle: text("media_title").notNull(),
+  mediaType: text("media_type"),
+  externalId: text("external_id"),
+  externalSource: text("external_source"),
+  prediction: text("prediction").notNull(), // 'will_like' or 'will_dislike'
+  status: text("status").notNull().default("pending"), // 'pending', 'won', 'lost'
+  pointsWon: integer("points_won"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
 export const userRecommendations = pgTable("user_recommendations", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id).unique(),
@@ -340,6 +357,12 @@ export const insertUserPredictionSchema = createInsertSchema(userPredictions).om
   createdAt: true,
 });
 
+export const insertBetSchema = createInsertSchema(bets).omit({
+  id: true,
+  createdAt: true,
+  resolvedAt: true,
+});
+
 export const insertUserRecommendationsSchema = createInsertSchema(userRecommendations).omit({
   id: true,
   generatedAt: true,
@@ -477,3 +500,5 @@ export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type DnfReason = typeof dnfReasons.$inferSelect;
 export type InsertDnfReason = z.infer<typeof insertDnfReasonSchema>;
+export type Bet = typeof bets.$inferSelect;
+export type InsertBet = z.infer<typeof insertBetSchema>;
