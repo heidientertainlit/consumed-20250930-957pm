@@ -343,55 +343,84 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     const isQuickTrivia = totalTriviaQuestions === 1;
     const TriviaTypeIcon = isQuickTrivia ? Zap : Trophy;
     
-    // For multi-question trivia challenges, show preview card with "Play Trivia Game" button
+    // For multi-question trivia challenges, show swipeable preview cards
     if (!isQuickTrivia) {
+      const triviaGames = availableGames.filter(g => g.type === 'trivia');
+      
+      const renderTriviaPreviewCard = (game: Game, index: number) => (
+        <div 
+          key={game.id}
+          className="min-w-full snap-center bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e]"
+          style={{ scrollSnapAlign: 'center' }}
+        >
+          {/* Category and Invite row */}
+          <div className="p-4 pb-0 flex items-center justify-between px-4">
+            <Badge className="bg-purple-500/30 text-purple-200 border-0 text-xs px-3 py-1">
+              Trivia Challenges
+            </Badge>
+            <button className="flex items-center gap-1.5 text-purple-300 text-sm font-medium hover:text-purple-200">
+              <Users size={16} />
+              Invite to Play
+            </button>
+          </div>
+          
+          <div className="p-4 pt-3 px-4">
+            <h3 className="text-xl font-bold text-white mb-1">{game.title}</h3>
+            {game.description && (
+              <p className="text-purple-200/80 text-sm mb-3">{game.description}</p>
+            )}
+            <div className="flex items-center gap-4 text-sm text-purple-200/70 mb-4">
+              <span className="text-amber-400 font-medium">☆ You Earn: {game.points_reward} pts</span>
+              <span className="flex items-center gap-1">
+                <Users size={14} />
+                0
+              </span>
+            </div>
+            
+            <Link href={`/play/trivia#${game.id}`}>
+              <Button
+                className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-full py-4"
+                data-testid="button-play-trivia"
+              >
+                <Brain size={18} className="mr-2" />
+                Play Trivia Game
+              </Button>
+            </Link>
+          </div>
+        </div>
+      );
+      
       return (
         <>
           <CompletionDialog />
           <div 
-            className={cn("bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl shadow-lg overflow-hidden", className)} 
+            className={cn("rounded-2xl shadow-lg overflow-hidden", className)} 
             data-testid="inline-trivia-preview-card"
           >
-            {/* Category and Invite row */}
-            <div className="p-4 pb-0 flex items-center justify-between px-4">
-              <Badge className="bg-purple-500/30 text-purple-200 border-0 text-xs px-3 py-1">
-                Trivia Challenges
-              </Badge>
-              <button className="flex items-center gap-1.5 text-purple-300 text-sm font-medium hover:text-purple-200">
-                <Users size={16} />
-                Invite to Play
-              </button>
+            <div
+              ref={scrollContainerRef}
+              onScroll={() => {
+                if (!scrollContainerRef.current) return;
+                const container = scrollContainerRef.current;
+                const scrollLeft = container.scrollLeft;
+                const cardWidth = container.offsetWidth;
+                const newIndex = Math.round(scrollLeft / cardWidth);
+                if (newIndex !== currentGameOffset && newIndex >= 0 && newIndex < triviaGames.length) {
+                  setCurrentGameOffset(newIndex);
+                  setSelectedAnswer(null);
+                }
+              }}
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+              style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
+            >
+              {triviaGames.map((game, index) => renderTriviaPreviewCard(game, index))}
             </div>
             
-            <div className="p-4 pt-3 px-4">
-              <h3 className="text-xl font-bold text-white mb-1">{activeGame.title}</h3>
-              {activeGame.description && (
-                <p className="text-purple-200/80 text-sm mb-3">{activeGame.description}</p>
-              )}
-              <div className="flex items-center gap-4 text-sm text-purple-200/70 mb-4">
-                <span className="text-amber-400 font-medium">☆ You Earn: {activeGame.points_reward} pts</span>
-                <span className="flex items-center gap-1">
-                  <Users size={14} />
-                  0
-                </span>
-              </div>
-              
-              <Link href={`/play/trivia#${activeGame.id}`}>
-                <Button
-                  className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-full py-4"
-                  data-testid="button-play-trivia"
-                >
-                  <Brain size={18} className="mr-2" />
-                  Play Trivia Game
-                </Button>
-              </Link>
-              {availableGames.length > 1 && (
-                <div className="flex items-center justify-center gap-1.5 mt-3" data-testid="trivia-preview-carousel-dots">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400/40" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400/40" />
-                </div>
-              )}
+            {/* Swipe indicator dots */}
+            <div className="flex items-center justify-center gap-1.5 py-3 bg-[#1a1a2e]" data-testid="trivia-preview-carousel-dots">
+              <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-400" : "bg-purple-400/40")} />
+              <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-400" : "bg-purple-400/40")} />
+              <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-400" : "bg-purple-400/40")} />
             </div>
           </div>
         </>
