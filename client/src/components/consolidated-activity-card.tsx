@@ -88,39 +88,39 @@ export default function ConsolidatedActivityCard({
       case 'ratings':
         return (
           <span className="text-sm">
-            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-gray-900 hover:text-purple-600">
+            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
-            <span className="text-gray-500"> rated</span>
+            <span className="text-purple-200/70"> rated</span>
           </span>
         );
       case 'finished':
         return (
           <span className="text-sm">
-            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-gray-900 hover:text-purple-600">
+            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
-            <span className="text-gray-500"> finished</span>
+            <span className="text-purple-200/70"> finished</span>
           </span>
         );
       case 'list_adds':
         const listName = activity.listNames?.[0] || 'a list';
         return (
           <span className="text-sm">
-            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-gray-900 hover:text-purple-600">
+            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
-            <span className="text-gray-500"> added to → </span>
-            <span className="text-purple-600 font-medium">{listName}</span>
+            <span className="text-purple-200/70"> added to → </span>
+            <span className="text-purple-300 font-medium">{listName}</span>
           </span>
         );
       default:
         return (
           <span className="text-sm">
-            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-gray-900 hover:text-purple-600">
+            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
-            <span className="text-gray-500"> shared activity</span>
+            <span className="text-purple-200/70"> shared activity</span>
           </span>
         );
     }
@@ -153,11 +153,11 @@ export default function ConsolidatedActivityCard({
 
   return (
     <div 
-      className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" 
+      className="bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl border border-purple-900/50 p-4 shadow-lg" 
       data-testid={`consolidated-activity-${activity.id}`}
     >
       {/* Header with Avatar */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3 flex-1">
           {/* Avatar */}
           <Link href={`/profile/${activity.user.username}`}>
@@ -182,7 +182,7 @@ export default function ConsolidatedActivityCard({
                 onDelete(activity.originalPostIds);
               }
             }}
-            className="text-gray-400 hover:text-red-500 transition-colors ml-2"
+            className="text-purple-300 hover:text-red-400 transition-colors ml-2"
             data-testid={`button-delete-grouped-${activity.id}`}
             title="Delete"
           >
@@ -191,8 +191,8 @@ export default function ConsolidatedActivityCard({
         )}
       </div>
 
-      {/* Media Items - dark gradient */}
-      <div className="bg-gradient-to-br from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-lg p-4 mb-3">
+      {/* Media Items */}
+      <div className="bg-white/10 rounded-lg p-4 mb-4">
         <div className="space-y-1.5">
           {displayedItems.map((item, idx) => (
             <div key={item.id || idx} className="flex items-center gap-2 py-1">
@@ -243,7 +243,7 @@ export default function ConsolidatedActivityCard({
       {!showAll && remainingCount > 0 && (
         <button 
           onClick={() => setShowAll(true)}
-          className="text-sm text-purple-600 hover:text-purple-700 font-medium mb-3 flex items-center gap-1"
+          className="text-sm text-purple-300 hover:text-white font-medium mb-3 flex items-center gap-1"
         >
           +{remainingCount} more <ChevronRight size={14} />
         </button>
@@ -252,17 +252,17 @@ export default function ConsolidatedActivityCard({
       {/* See more of user's lists */}
       <Link 
         href={`/user/${activity.user.id}?tab=lists`}
-        className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1 mb-3"
+        className="text-sm text-purple-300 hover:text-white font-medium flex items-center gap-1 mb-4"
       >
         See more of {activity.user.displayName || activity.user.username}'s lists <ChevronRight size={14} />
       </Link>
 
       {/* Footer - Likes, Comments & Date */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-between pt-3 border-t border-purple-500/30">
         <div className="flex items-center gap-4">
           <button
             onClick={() => onLike(activity.originalPostIds[0])}
-            className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors"
+            className="flex items-center gap-1.5 text-purple-300 hover:text-red-400 transition-colors"
             data-testid="like-button"
           >
             <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
@@ -270,14 +270,14 @@ export default function ConsolidatedActivityCard({
           </button>
           <button
             onClick={() => onComment(activity.originalPostIds[0])}
-            className="flex items-center gap-1.5 text-gray-500 hover:text-purple-500 transition-colors"
+            className="flex items-center gap-1.5 text-purple-300 hover:text-white transition-colors"
             data-testid="comment-button"
           >
             <MessageCircle className="w-5 h-5" />
             <span className="text-sm">{activity.comments}</span>
           </button>
         </div>
-        <span className="text-sm text-gray-400">{formattedDate}</span>
+        <span className="text-sm text-purple-200/60">{formattedDate}</span>
       </div>
     </div>
   );
