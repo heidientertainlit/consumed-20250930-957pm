@@ -19,7 +19,7 @@ interface QuickAddListSheetProps {
   } | null;
 }
 
-type SheetStep = 'select-list' | 'follow-up';
+type SheetStep = 'select-list' | 'rate' | 'recommend';
 
 export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetProps) {
   const { session } = useAuth();
@@ -115,7 +115,7 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
       
       if (shouldShowFollowUp(listName)) {
         setAddedListName(listName);
-        setStep('follow-up');
+        setStep('rate');
       } else {
         toast({ title: `Added "${media.title}" to ${listName}!` });
         handleClose();
@@ -154,7 +154,7 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
 
       toast({ title: `Rated "${media.title}" ${selectedRating} stars!` });
       queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
-      handleClose();
+      setStep('recommend');
     } catch (error: any) {
       toast({ title: error.message || "Failed to rate", variant: "destructive" });
     } finally {
@@ -184,7 +184,7 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
     handleClose();
   };
 
-  if (step === 'follow-up') {
+  if (step === 'rate') {
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
         <DrawerContent className="bg-white rounded-t-2xl">
@@ -244,26 +244,70 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
               )}
             </div>
 
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-center text-gray-500 text-sm mb-4">Or share the love...</p>
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={handleShare}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-sm font-medium text-gray-700 transition-colors"
-                  data-testid="share-btn"
-                >
-                  <Share2 size={16} />
-                  Recommend to Friends
-                </button>
+            <button
+              onClick={handleClose}
+              className="w-full py-3 text-gray-500 text-sm hover:text-gray-700 transition-colors"
+              data-testid="skip-rating-btn"
+            >
+              Skip for now
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  if (step === 'recommend') {
+    return (
+      <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DrawerContent className="bg-white rounded-t-2xl">
+          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={16}
+                    className={
+                      selectedRating >= star
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-300"
+                    }
+                  />
+                ))}
               </div>
             </div>
+            <DrawerTitle className="text-lg font-semibold text-gray-900">
+              Recommend this?
+            </DrawerTitle>
+            {media && (
+              <p className="text-sm text-gray-500 mt-1">
+                Share <span className="font-medium text-gray-700">{media.title}</span> with others
+              </p>
+            )}
+          </DrawerHeader>
+          
+          <div className="px-4 py-6 space-y-3">
+            <button
+              onClick={handleShare}
+              className="w-full p-4 text-left rounded-lg bg-purple-50 hover:bg-purple-100 flex items-center gap-3 transition-colors"
+              data-testid="share-link-btn"
+            >
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <Share2 className="text-purple-600" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Share with a friend</p>
+                <p className="text-sm text-gray-500">Send a link to someone</p>
+              </div>
+            </button>
 
             <button
               onClick={handleClose}
               className="w-full py-3 text-gray-500 text-sm hover:text-gray-700 transition-colors"
-              data-testid="skip-followup-btn"
+              data-testid="skip-recommend-btn"
             >
-              Skip for now
+              Maybe later
             </button>
           </div>
         </DrawerContent>
