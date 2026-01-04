@@ -103,6 +103,11 @@ export default function GroupedActivityCard({
     index === self.findIndex(u => u.id === user.id)
   );
   
+  // Don't render grouped card if only 1 unique user - return null
+  if (uniqueUsers.length < 2) {
+    return null;
+  }
+  
   const displayedUsers = showAllUsers ? uniqueUsers : uniqueUsers.slice(0, 3);
   const remainingCount = uniqueUsers.length - 3;
   const showBetButton = listType?.toLowerCase() === 'want_to' || 

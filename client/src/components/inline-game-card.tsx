@@ -566,10 +566,10 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         </div>
         
         {/* Static 3-dot visual indicator for swipe hint */}
-        <div className="flex items-center justify-center gap-1.5 pb-4 -mt-2 bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e]" data-testid="poll-carousel-dots">
-          <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-400" : "bg-purple-400/30")} />
-          <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-400" : "bg-purple-400/30")} />
-          <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-400" : "bg-purple-400/30")} />
+        <div className="flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e]" data-testid="poll-carousel-dots">
+          <div className={cn("w-2 h-2 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-400" : "bg-purple-400/40")} />
+          <div className={cn("w-2 h-2 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-400" : "bg-purple-400/40")} />
+          <div className={cn("w-2 h-2 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-400" : "bg-purple-400/40")} />
         </div>
       </div>
     </>
