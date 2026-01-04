@@ -112,10 +112,10 @@ export default function GroupedActivityCard({
   const usersWithPostIds = users.filter(u => u.postId);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm" data-testid={`grouped-activity-${media.id}`}>
+    <div className="bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl border border-purple-900/50 p-4 shadow-lg" data-testid={`grouped-activity-${media.id}`}>
       <div className="flex gap-3">
         <Link href={`/media/${media.mediaType}/${media.externalSource}/${media.externalId}`}>
-          <div className="w-16 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity">
+          <div className="w-16 h-24 rounded-lg overflow-hidden bg-gradient-to-br from-purple-900/50 to-purple-800/30 flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity ring-1 ring-purple-500/30">
             {media.imageUrl ? (
               <img 
                 src={media.imageUrl} 
@@ -124,36 +124,38 @@ export default function GroupedActivityCard({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                {getMediaIcon(media.mediaType)}
+                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  {getMediaIcon(media.mediaType)}
+                </div>
               </div>
             )}
           </div>
         </Link>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <Users size={14} />
-            <span className="font-medium text-gray-900">{users.length} friend{users.length !== 1 ? 's' : ''}</span>
+          <div className="flex items-center gap-2 text-sm text-purple-200/80 mb-1">
+            <Users size={14} className="text-purple-400" />
+            <span className="font-medium text-white">{users.length} friend{users.length !== 1 ? 's' : ''}</span>
             <span>added to {getListTypeLabel(listType)}</span>
           </div>
 
           <Link href={`/media/${media.mediaType}/${media.externalSource}/${media.externalId}`}>
-            <h3 className="font-semibold text-gray-900 truncate hover:text-purple-600 cursor-pointer">
+            <h3 className="font-semibold text-white truncate hover:text-purple-300 cursor-pointer">
               {media.title}
             </h3>
           </Link>
 
           <div className="flex items-center gap-1 mt-1">
             {getMediaIcon(media.mediaType)}
-            <span className="text-xs text-gray-500 capitalize">{media.mediaType}</span>
+            <span className="text-xs text-purple-200/60 capitalize">{media.mediaType}</span>
           </div>
 
           <div className="flex items-center gap-1 mt-3">
             {displayedUsers.map((user) => (
               <Link key={user.id} href={`/user/${user.id}`}>
-                <Avatar className="w-7 h-7 border-2 border-white -ml-2 first:ml-0 cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all">
+                <Avatar className="w-7 h-7 border-2 border-purple-900/50 -ml-2 first:ml-0 cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all">
                   <AvatarImage src={user.avatar} alt={getDisplayName(user.displayName, user.username)} />
-                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-100 to-blue-100 text-purple-700">
+                  <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-blue-500 text-white">
                     {getAvatarInitial(user.displayName, user.username)}
                   </AvatarFallback>
                 </Avatar>
@@ -162,7 +164,7 @@ export default function GroupedActivityCard({
             {remainingCount > 0 && !showAllUsers && (
               <button 
                 onClick={() => setShowAllUsers(true)}
-                className="w-7 h-7 rounded-full bg-gray-100 border-2 border-white -ml-2 flex items-center justify-center text-xs font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+                className="w-7 h-7 rounded-full bg-purple-900/50 border-2 border-purple-900/50 -ml-2 flex items-center justify-center text-xs font-medium text-purple-200 hover:bg-purple-800/50 transition-colors"
               >
                 +{remainingCount}
               </button>
@@ -171,12 +173,12 @@ export default function GroupedActivityCard({
 
           <div className="flex items-center gap-2 mt-2">
             {displayedUsers.slice(0, 2).map((user, index) => (
-              <span key={user.id} className="text-xs text-gray-500">
+              <span key={user.id} className="text-xs text-purple-200/70">
                 {getDisplayName(user.displayName, user.username)}{index < Math.min(displayedUsers.length - 1, 1) ? ',' : ''}
               </span>
             ))}
             {users.length > 2 && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-purple-200/70">
                 +{users.length - 2} more
               </span>
             )}
@@ -185,13 +187,13 @@ export default function GroupedActivityCard({
       </div>
 
       {showBetButton && onBetClick && usersWithPostIds.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-gray-100">
+        <div className="mt-4 pt-3 border-t border-purple-900/50">
           {usersWithPostIds.length === 1 ? (
             <Button
               variant="outline"
               size="sm"
               onClick={() => onBetClick(usersWithPostIds[0].id, usersWithPostIds[0].postId!, media)}
-              className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 rounded-full"
+              className="w-full border-purple-500/50 text-purple-200 bg-purple-900/30 hover:bg-purple-800/50 hover:border-purple-400/50 rounded-full"
               data-testid="button-bet-on-reactions"
             >
               <Dices size={16} className="mr-2" />
@@ -203,7 +205,7 @@ export default function GroupedActivityCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 rounded-full"
+                  className="w-full border-purple-500/50 text-purple-200 bg-purple-900/30 hover:bg-purple-800/50 hover:border-purple-400/50 rounded-full"
                   data-testid="button-bet-on-reactions"
                 >
                   <Dices size={16} className="mr-2" />
@@ -237,7 +239,7 @@ export default function GroupedActivityCard({
       )}
 
       {timestamp && (
-        <div className="text-xs text-gray-400 mt-2 text-right">
+        <div className="text-xs text-purple-300/60 mt-2 text-right">
           {new Date(timestamp).toLocaleDateString()}
         </div>
       )}
