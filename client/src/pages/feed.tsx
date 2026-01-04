@@ -3083,25 +3083,24 @@ export default function Feed() {
                           {/* Comments Section */}
                           {expandedComments.has(post.id) && (
                             <div className="px-3 pb-3 border-t border-gray-100">
-                              <CommentsSection
-                                postId={post.id}
-                                isExpanded={true}
-                                isLiked={likedPosts.has(post.id)}
-                                onLike={handleLike}
-                                expandedComments={true}
-                                onToggleComments={() => {}}
-                                fetchComments={fetchComments}
-                                commentInput={commentInputs[post.id] || ''}
-                                onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                                isSubmitting={commentMutation.isPending}
-                                currentUserId={user?.id}
-                                onDeleteComment={handleDeleteComment}
-                                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                                onVoteComment={handleVoteComment}
-                                likedComments={likedComments}
-                                commentVotes={commentVotes}
-                              />
+                          <CommentsSection
+                            postId={post.id}
+                            isLiked={likedPosts.has(post.id)}
+                            onLike={handleLike}
+                            expandedComments={true}
+                            onToggleComments={() => {}}
+                            fetchComments={fetchComments}
+                            commentInput={commentInputs[post.id] || ''}
+                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                            isSubmitting={commentMutation.isPending}
+                            currentUserId={user?.id}
+                            onDeleteComment={handleDeleteComment}
+                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                            onVoteComment={handleVoteComment}
+                            likedComments={likedComments}
+                            commentVotes={commentVotes}
+                          />
                             </div>
                           )}
                         </div>
@@ -3242,25 +3241,24 @@ export default function Feed() {
                           {/* Comments Section */}
                           {expandedComments.has(post.id) && (
                             <div className="mt-3 pt-3 border-t border-gray-100">
-                              <CommentsSection
-                                postId={post.id}
-                                isExpanded={true}
-                                isLiked={likedPosts.has(post.id)}
-                                onLike={handleLike}
-                                expandedComments={true}
-                                onToggleComments={() => {}}
-                                fetchComments={fetchComments}
-                                commentInput={commentInputs[post.id] || ''}
-                                onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                                isSubmitting={commentMutation.isPending}
-                                currentUserId={user?.id}
-                                onDeleteComment={handleDeleteComment}
-                                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                                onVoteComment={handleVoteComment}
-                                likedComments={likedComments}
-                                commentVotes={commentVotes}
-                              />
+                          <CommentsSection
+                            postId={post.id}
+                            isLiked={likedPosts.has(post.id)}
+                            onLike={handleLike}
+                            expandedComments={true}
+                            onToggleComments={() => {}}
+                            fetchComments={fetchComments}
+                            commentInput={commentInputs[post.id] || ''}
+                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                            isSubmitting={commentMutation.isPending}
+                            currentUserId={user?.id}
+                            onDeleteComment={handleDeleteComment}
+                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                            onVoteComment={handleVoteComment}
+                            likedComments={likedComments}
+                            commentVotes={commentVotes}
+                          />
                             </div>
                           )}
                         </div>
