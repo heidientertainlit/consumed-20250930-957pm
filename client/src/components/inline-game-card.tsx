@@ -275,9 +275,9 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
 
   const getGradient = (type: string) => {
     switch (type) {
-      case 'trivia': return 'from-purple-600 to-indigo-600';
-      case 'vote': return 'from-blue-600 to-purple-600';
-      default: return 'from-purple-600 to-pink-600';
+      case 'trivia': return 'from-blue-500 via-purple-500 to-purple-600';
+      case 'vote': return 'from-blue-500 via-purple-500 to-purple-600';
+      default: return 'from-blue-500 via-purple-500 to-purple-600';
     }
   };
 
