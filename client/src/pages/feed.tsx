@@ -665,7 +665,7 @@ function CurrentlyConsumingFeedCard({
           </div>
           
           {/* Media card in gray box - consistent design */}
-          <div className="bg-gray-50 rounded-lg p-3 mb-2">
+          <div className="bg-white rounded-lg p-3 mb-2 border border-gray-100">
             <div className="flex gap-3">
               <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
                 <div className="cursor-pointer flex-shrink-0">
@@ -2933,11 +2933,23 @@ export default function Feed() {
                     )}
                     {shouldShowPollsCarousel && (
                       <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <span className="text-purple-600">🎮</span>
+                          <span className="text-sm font-semibold text-gray-900">Games</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-sm text-purple-600 font-medium">Polls</span>
+                        </div>
                         <InlineGameCard gameType="vote" />
                       </div>
                     )}
                     {shouldShowTriviaCarousel && (
                       <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                          <span className="text-purple-600">🎮</span>
+                          <span className="text-sm font-semibold text-gray-900">Games</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-sm text-purple-600 font-medium">Trivia</span>
+                        </div>
                         <InlineGameCard gameType="trivia" />
                       </div>
                     )}
@@ -3997,8 +4009,8 @@ export default function Feed() {
                       
                       return (
                         <div className="mb-2">
-                          {/* Full media card in gray box */}
-                          <div className="bg-gray-50 rounded-lg p-3">
+                          {/* Full media card */}
+                          <div className="bg-white rounded-lg p-3 border border-gray-100">
                             <div className="flex gap-3">
                               <div 
                                 className={`w-16 h-20 rounded overflow-hidden flex-shrink-0 ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
@@ -4045,7 +4057,7 @@ export default function Feed() {
                           
                           {/* Other list items if listData available */}
                           {hasListData && (post as any).listData?.items?.length > 1 && (
-                            <div className="bg-gray-50 rounded-lg p-3 mt-2">
+                            <div className="bg-white rounded-lg p-3 mt-2 border border-gray-100">
                               <div className="space-y-1">
                                 {(post as any).listData.items.slice(0, 3).map((item: any, idx: number) => {
                                   const mediaTypeEmoji = item.mediaType?.toLowerCase() === 'book' ? '📚' :
@@ -4131,7 +4143,7 @@ export default function Feed() {
                         return (
                           <div 
                             key={index} 
-                            className="bg-gray-50 rounded-lg p-3 transition-colors"
+                            className="bg-white rounded-lg p-3 transition-colors border border-gray-100"
                           >
                             <div className="flex space-x-3">
                               <div 
@@ -4207,7 +4219,7 @@ export default function Feed() {
                         
                         {/* List Preview Card for posts - show compact format even without listData */}
                         {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && post.mediaItems && post.mediaItems.length > 0 ? (
-                          <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                          <div className="bg-white rounded-lg p-3 mb-2 border border-gray-100">
                             <div className="flex gap-3">
                               {/* Poster on left - only show if single item */}
                               {((post as any).listData?.items?.length || post.mediaItems.length) === 1 && (
@@ -4281,7 +4293,7 @@ export default function Feed() {
                           </div>
                         ) : (
                         /* Standard Media Card for other posts */
-                        <div className="bg-gray-50 rounded-lg p-3 mb-2">
+                        <div className="bg-white rounded-lg p-3 mb-2 border border-gray-100">
                           <div className="flex space-x-3">
                             <div 
                               className="w-16 h-20 rounded overflow-hidden flex-shrink-0 cursor-pointer"
