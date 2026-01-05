@@ -112,14 +112,19 @@ export default function ConsolidatedActivityCard({
           </span>
         );
       case 'list_adds':
-        const listName = activity.listNames?.[0] || 'a list';
+        const uniqueLists = [...new Set(activity.listNames || [])];
+        const listLabel = uniqueLists.length === 0 
+          ? 'a list'
+          : uniqueLists.length === 1 
+            ? uniqueLists[0] 
+            : 'lists';
         return (
           <span className="text-sm">
             <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
             <span className="text-purple-200/70"> added to → </span>
-            <span className="text-purple-300 font-medium">{listName}</span>
+            <span className="text-purple-300 font-medium">{listLabel}</span>
           </span>
         );
       default:
