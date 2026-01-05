@@ -1048,8 +1048,9 @@ export default function Feed() {
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
 
-  // Group same-user activities within 3-hour windows into consolidated cards BY ACTIVITY TYPE
-  const TIME_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+  // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
+  // Ratings consolidate if 2+ in same day, list adds go to Quick Glimpse (don't consolidate)
+  const TIME_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours (same day)
   
   type ActivityType = 'list_adds' | 'ratings' | 'finished' | 'games';
 
@@ -1146,12 +1147,12 @@ export default function Feed() {
     
     posts.forEach(post => {
       const postType = post.type?.toLowerCase() || '';
+      
+      // Only ratings and finished are groupable into consolidated cards
+      // List adds (add-to-list) go to Quick Glimpse instead - don't consolidate them
       const isGroupable = (
-        postType === 'add-to-list' || 
         postType === 'rating' || 
-        postType === 'finished' || 
-        postType === 'progress' ||
-        postType === 'update'
+        postType === 'finished'
       ) && post.mediaItems && post.mediaItems.length > 0;
       
       if (isGroupable) {
@@ -1249,11 +1250,23 @@ export default function Feed() {
   // Apply grouping to social posts
   const processedPosts = groupUserActivities(socialPosts);
 
+  // Shared predicate: Check if post type is a list-add (handles all variants)
+  const isListAddType = (postType: string): boolean => {
+    const normalizedType = postType?.toLowerCase() || '';
+    // Use pattern matching to catch ALL variants (any combo of "list" and "add")
+    // This catches: add-to-list, added_to_list, list_add, list_add_single, list-add-single, etc.
+    if (normalizedType.includes('list') && normalizedType.includes('add')) {
+      return true;
+    }
+    // Also check for specific known variants without both keywords
+    return ['addtolist', 'listadd', 'added_to_list'].includes(normalizedType);
+  };
+
   // Tier classification for feed priority (maintains chronological order)
   type PostTier = 1 | 2 | 3;
   
   const classifyPostTier = (item: SocialPost | ConsolidatedActivity): PostTier => {
-    // ConsolidatedActivity cards stay as Tier 1 - they have engagement controls
+    // ConsolidatedActivity cards stay as Tier 1 - they have engagement controls (ratings, finished)
     if ('originalPostIds' in item) return 1;
     
     const post = item as SocialPost;
@@ -1261,6 +1274,16 @@ export default function Feed() {
     
     // Tier 1: Jump-in moments (high engagement, interactive)
     if (['hot_take', 'prediction', 'poll', 'vote', 'bet'].includes(postType)) {
+      return 1;
+    }
+    
+    // Tier 1: Ratings - people can engage with agree/disagree
+    if (postType === 'rating' || (post.rating && post.rating > 0)) {
+      return 1;
+    }
+    
+    // Tier 1: Cross-user media groups (multiple people added same thing)
+    if (postType === 'media_group' && post.groupedActivities && post.groupedActivities.length > 1) {
       return 1;
     }
     
@@ -1274,8 +1297,13 @@ export default function Feed() {
       return 3;
     }
     
-    // Tier 2: Simple media activities (ratings without review, list adds, finished, watching)
-    if (['add-to-list', 'rating', 'finished', 'progress', 'update', 'consuming'].includes(postType)) {
+    // Tier 2: List adds (single-user) - go to Quick Glimpse only
+    if (isListAddType(postType)) {
+      return 2;
+    }
+    
+    // Tier 2: Simple activities (finished without rating, progress, consuming)
+    if (['finished', 'progress', 'update', 'consuming'].includes(postType)) {
       // Only Tier 2 if it's a simple activity without detailed content
       if (!post.content || post.content.length < 50) {
         return 2;
@@ -1312,6 +1340,59 @@ export default function Feed() {
     
     const result: (SocialPost | ConsolidatedActivity | FriendActivityBlock)[] = [];
     let tier2Buffer: SocialPost[] = [];
+    
+    // Helper: Convert list adds to Quick Glimpse, keep other tier-2 posts as cards
+    const convertToQuickGlimpse = (posts: SocialPost[], output: (SocialPost | ConsolidatedActivity | FriendActivityBlock)[]) => {
+      const listAdds: SocialPost[] = [];
+      const otherPosts: SocialPost[] = [];
+      
+      posts.forEach(post => {
+        const postType = post.type?.toLowerCase() || '';
+        // Use shared predicate to catch all list-add variants
+        if (isListAddType(postType)) {
+          listAdds.push(post);
+        } else {
+          otherPosts.push(post);
+        }
+      });
+      
+      // Create a Quick Glimpse block for list adds if any
+      if (listAdds.length > 0) {
+        const activities: FriendActivityBlock['activities'] = listAdds
+          .map(post => {
+            // Handle missing user data gracefully - use post.id for unique fallback
+            const postUser = post.user as any;
+            // Use post.id as fallback user id to ensure unique React keys
+            const fallbackId = `user-${post.id}`;
+            const fallbackUser = { id: fallbackId, username: 'A friend', displayName: 'A friend', avatar: undefined };
+            const user = postUser || fallbackUser;
+            return {
+              user: {
+                id: user.id || fallbackId,
+                username: user.username || user.displayName || 'A friend',
+                displayName: user.displayName || user.username || 'A friend',
+                avatar: user.avatar
+              },
+              action: 'added to ' + ((post as any).listData?.title?.toLowerCase() || 'list'),
+              mediaTitle: post.mediaItems?.[0]?.title || 'something',
+              mediaType: post.mediaItems?.[0]?.mediaType,
+              listName: (post as any).listData?.title,
+              postId: post.id
+            };
+          });
+        
+        // Always create Quick Glimpse - never drop list adds
+        output.push({
+          id: `glimpse-${listAdds[0].id}`,
+          type: 'friend_activity_block',
+          timestamp: listAdds[0].timestamp,
+          activities
+        });
+      }
+      
+      // Add other tier-2 posts as individual cards
+      output.push(...otherPosts);
+    };
     
     const flushTier2Buffer = () => {
       if (tier2Buffer.length === 0) return;
@@ -1369,17 +1450,18 @@ export default function Feed() {
             activities
           });
           
-          // Remaining posts after Buzz come next (they're chronologically later)
-          for (let i = buzzEndIndex; i < tier2Buffer.length; i++) {
-            result.push(tier2Buffer[i]);
+          // Process remaining posts after Buzz - list adds go to Quick Glimpse, others as cards
+          const remainingPosts = tier2Buffer.slice(buzzEndIndex);
+          if (remainingPosts.length > 0) {
+            convertToQuickGlimpse(remainingPosts, result);
           }
         } else {
-          // Not enough for Buzz, show all individually
-          result.push(...tier2Buffer);
+          // Not enough for Buzz - list adds go to Quick Glimpse, others stay as cards
+          convertToQuickGlimpse(tier2Buffer, result);
         }
       } else {
-        // Not enough diversity or posts - show them individually
-        result.push(...tier2Buffer);
+        // Not enough diversity or posts - list adds go to Quick Glimpse, others stay as cards
+        convertToQuickGlimpse(tier2Buffer, result);
       }
       
       tier2Buffer = [];

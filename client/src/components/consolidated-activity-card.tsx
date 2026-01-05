@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Heart, MessageCircle, ChevronRight, Star, Trash2, Dices } from "lucide-react";
+import { Heart, MessageCircle, ChevronRight, Star, Trash2, Dices, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface MediaItem {
   id: string;
@@ -61,6 +61,14 @@ export default function ConsolidatedActivityCard({
   currentUserId
 }: ConsolidatedActivityCardProps) {
   const [showAll, setShowAll] = useState(false);
+  const [itemReactions, setItemReactions] = useState<Record<string, 'agree' | 'disagree' | null>>({});
+  
+  const handleReaction = (itemId: string, reaction: 'agree' | 'disagree') => {
+    setItemReactions(prev => ({
+      ...prev,
+      [itemId]: prev[itemId] === reaction ? null : reaction
+    }));
+  };
   
   const isOwner = currentUserId && activity.user.id === currentUserId;
   
@@ -193,18 +201,66 @@ export default function ConsolidatedActivityCard({
 
       {/* Media Items */}
       <div className="bg-white/10 rounded-lg p-4 mb-4">
-        <div className="space-y-1.5">
-          {displayedItems.map((item, idx) => (
-            <div key={item.id || idx} className="flex items-center gap-2 py-1">
-              <Link 
-                href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
-                className="flex items-center gap-2 flex-1 min-w-0 hover:text-purple-200 transition-colors cursor-pointer"
-              >
-                <span className="text-base">{getMediaTypeIcon(item.mediaType)}</span>
-                <span className="text-sm text-white truncate flex-1">
-                  {item.title}
-                </span>
-                {item.rating && activity.type === 'ratings' && (
+        <div className="space-y-2">
+          {displayedItems.map((item, idx) => {
+            const itemKey = item.id || `${item.externalSource}-${item.externalId}`;
+            const reaction = itemReactions[itemKey];
+            const isRating = activity.type === 'ratings' && item.rating;
+            
+            return (
+              <div key={itemKey} className="flex items-center gap-2 py-1.5">
+                <Link 
+                  href={`/media/${item.mediaType?.toLowerCase() || 'movie'}/${item.externalSource}/${item.externalId}`}
+                  className="flex items-center gap-2 flex-1 min-w-0 hover:text-purple-200 transition-colors cursor-pointer"
+                >
+                  <span className="text-base">{getMediaTypeIcon(item.mediaType)}</span>
+                  <span className="text-sm text-white truncate flex-1">
+                    {item.title}
+                  </span>
+                </Link>
+                
+                {/* Rating with agree/disagree buttons */}
+                {isRating && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded">
+                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      <span className="text-xs font-medium text-white">
+                        {item.rating}
+                      </span>
+                    </div>
+                    {!isOwner && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleReaction(itemKey, 'agree')}
+                          className={`p-1 rounded transition-colors ${
+                            reaction === 'agree' 
+                              ? 'bg-green-500/30 text-green-400' 
+                              : 'text-white/60 hover:text-green-400 hover:bg-white/10'
+                          }`}
+                          title="Agree"
+                          data-testid={`agree-${idx}`}
+                        >
+                          <ThumbsUp size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleReaction(itemKey, 'disagree')}
+                          className={`p-1 rounded transition-colors ${
+                            reaction === 'disagree' 
+                              ? 'bg-red-500/30 text-red-400' 
+                              : 'text-white/60 hover:text-red-400 hover:bg-white/10'
+                          }`}
+                          title="Disagree"
+                          data-testid={`disagree-${idx}`}
+                        >
+                          <ThumbsDown size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Non-rating items (finished, etc) */}
+                {!isRating && item.rating && activity.type !== 'ratings' && (
                   <div className="flex items-center gap-1">
                     <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
                     <span className="text-xs font-medium text-white">
@@ -212,30 +268,31 @@ export default function ConsolidatedActivityCard({
                     </span>
                   </div>
                 )}
-              </Link>
-              {canBet && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onBet!(
-                      activity.originalPostIds[0],
-                      item.title,
-                      activity.user.displayName || activity.user.username,
-                      activity.user.id,
-                      item.externalId,
-                      item.externalSource,
-                      item.mediaType
-                    );
-                  }}
-                  className="p-1.5 text-white/90 hover:text-white bg-white/20 hover:bg-white/30 rounded-full transition-colors"
-                  title={`Bet on ${item.title}`}
-                  data-testid={`bet-item-${idx}`}
-                >
-                  <Dices size={14} />
-                </button>
-              )}
-            </div>
-          ))}
+                
+                {canBet && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onBet!(
+                        activity.originalPostIds[0],
+                        item.title,
+                        activity.user.displayName || activity.user.username,
+                        activity.user.id,
+                        item.externalId,
+                        item.externalSource,
+                        item.mediaType
+                      );
+                    }}
+                    className="p-1.5 text-white/90 hover:text-white bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+                    title={`Bet on ${item.title}`}
+                    data-testid={`bet-item-${idx}`}
+                  >
+                    <Dices size={14} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
