@@ -1297,9 +1297,9 @@ export default function Feed() {
       return 3;
     }
     
-    // Tier 2: List adds (single-user) - go to Quick Glimpse only
+    // List adds now show as regular Tier 1 cards (user prefers clickable items)
     if (isListAddType(postType)) {
-      return 2;
+      return 1;
     }
     
     // Tier 2: Simple activities (finished without rating, progress, consuming)
@@ -1335,156 +1335,11 @@ export default function Feed() {
     }>;
   }
 
+  // Simplified: No scattered Quick Glimpses - just pass through all posts as regular cards
   const createTieredFeed = (posts: (SocialPost | ConsolidatedActivity)[]): (SocialPost | ConsolidatedActivity | FriendActivityBlock)[] => {
-    if (!posts.length) return [];
-    
-    const result: (SocialPost | ConsolidatedActivity | FriendActivityBlock)[] = [];
-    let tier2Buffer: SocialPost[] = [];
-    
-    // Helper: Convert list adds to Quick Glimpse, keep other tier-2 posts as cards
-    const convertToQuickGlimpse = (posts: SocialPost[], output: (SocialPost | ConsolidatedActivity | FriendActivityBlock)[]) => {
-      const listAdds: SocialPost[] = [];
-      const otherPosts: SocialPost[] = [];
-      
-      posts.forEach(post => {
-        const postType = post.type?.toLowerCase() || '';
-        // Use shared predicate to catch all list-add variants
-        if (isListAddType(postType)) {
-          listAdds.push(post);
-        } else {
-          otherPosts.push(post);
-        }
-      });
-      
-      // Create a Quick Glimpse block for list adds if any
-      if (listAdds.length > 0) {
-        const activities: FriendActivityBlock['activities'] = listAdds
-          .map(post => {
-            // Handle missing user data gracefully - use post.id for unique fallback
-            const postUser = post.user as any;
-            // Use post.id as fallback user id to ensure unique React keys
-            const fallbackId = `user-${post.id}`;
-            const fallbackUser = { id: fallbackId, username: 'A friend', displayName: 'A friend', avatar: undefined };
-            const user = postUser || fallbackUser;
-            return {
-              user: {
-                id: user.id || fallbackId,
-                username: user.username || user.displayName || 'A friend',
-                displayName: user.displayName || user.username || 'A friend',
-                avatar: user.avatar
-              },
-              action: 'added to ' + ((post as any).listData?.title?.toLowerCase() || 'list'),
-              mediaTitle: post.mediaItems?.[0]?.title || 'something',
-              mediaType: post.mediaItems?.[0]?.mediaType,
-              listName: (post as any).listData?.title,
-              postId: post.id
-            };
-          });
-        
-        // Always create Quick Glimpse - never drop list adds
-        output.push({
-          id: `glimpse-${listAdds[0].id}`,
-          type: 'friend_activity_block',
-          timestamp: listAdds[0].timestamp,
-          activities
-        });
-      }
-      
-      // Add other tier-2 posts as individual cards
-      output.push(...otherPosts);
-    };
-    
-    const flushTier2Buffer = () => {
-      if (tier2Buffer.length === 0) return;
-      
-      // Check for user diversity - need at least 2 unique users for a Buzz card
-      const uniqueUsers = new Set(tier2Buffer.map(p => p.user?.id).filter(Boolean));
-      const hasEnoughDiversity = uniqueUsers.size >= 2;
-      
-      if (tier2Buffer.length >= 3 && hasEnoughDiversity) {
-        // Create a "Buzz" card from the FIRST few diverse activities only
-        // This preserves chronology: Buzz shows earliest activities, rest follow individually
-        const activities: FriendActivityBlock['activities'] = [];
-        const userCounts: Record<string, number> = {};
-        const MAX_PER_USER = 1; // Only 1 per user to maximize diversity
-        const MAX_BUZZ_SIZE = 4; // Keep Buzz cards small
-        const firstTimestamp = tier2Buffer[0].timestamp;
-        let buzzEndIndex = 0;
-        
-        // Single pass: take first N eligible activities for Buzz card
-        for (let i = 0; i < tier2Buffer.length && activities.length < MAX_BUZZ_SIZE; i++) {
-          const post = tier2Buffer[i];
-          if (!post.user) continue;
-          
-          const userId = post.user.id;
-          userCounts[userId] = (userCounts[userId] || 0) + 1;
-          
-          if (userCounts[userId] <= MAX_PER_USER) {
-            const postType = post.type?.toLowerCase() || '';
-            let action = 'added';
-            if (postType === 'rating' || (post.rating && post.rating > 0)) action = 'rated';
-            else if (postType === 'finished') action = 'finished';
-            else if (postType === 'progress' || postType === 'consuming') action = 'started';
-            
-            const mediaTitle = post.mediaItems?.[0]?.title || (post as any).listData?.title || 'something';
-            
-            activities.push({
-              user: post.user,
-              action,
-              mediaTitle,
-              mediaType: post.mediaItems?.[0]?.mediaType,
-              rating: post.rating || post.mediaItems?.[0]?.rating,
-              listName: (post as any).listData?.title,
-              postId: post.id
-            });
-            buzzEndIndex = i + 1;
-          }
-        }
-        
-        // Emit Buzz card (represents earliest activities in the buffer)
-        if (activities.length >= 2) {
-          result.push({
-            id: `buzz-${tier2Buffer[0].id}`,
-            type: 'friend_activity_block',
-            timestamp: firstTimestamp,
-            activities
-          });
-          
-          // Process remaining posts after Buzz - list adds go to Quick Glimpse, others as cards
-          const remainingPosts = tier2Buffer.slice(buzzEndIndex);
-          if (remainingPosts.length > 0) {
-            convertToQuickGlimpse(remainingPosts, result);
-          }
-        } else {
-          // Not enough for Buzz - list adds go to Quick Glimpse, others stay as cards
-          convertToQuickGlimpse(tier2Buffer, result);
-        }
-      } else {
-        // Not enough diversity or posts - list adds go to Quick Glimpse, others stay as cards
-        convertToQuickGlimpse(tier2Buffer, result);
-      }
-      
-      tier2Buffer = [];
-    };
-    
-    // Process posts in chronological order
-    posts.forEach(item => {
-      const tier = classifyPostTier(item);
-      
-      if (tier === 2 && !('originalPostIds' in item)) {
-        // Collect consecutive Tier 2 posts
-        tier2Buffer.push(item as SocialPost);
-      } else {
-        // Flush any buffered Tier 2 posts before adding Tier 1/3
-        flushTier2Buffer();
-        result.push(item);
-      }
-    });
-    
-    // Flush any remaining Tier 2 posts
-    flushTier2Buffer();
-    
-    return result;
+    // Simply return posts as-is - no more scattered Quick Glimpse blocks
+    // The single Quick Glimpse at the top of the feed handles summary view
+    return posts;
   };
 
   // Apply tiered grouping (maintains chronological order)
