@@ -502,7 +502,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       </div>
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-900 to-purple-900 z-50 pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
         <div className="flex justify-around items-center h-18 px-4 pt-3 pb-4">
           {/* Activity */}
           <Link
