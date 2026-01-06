@@ -699,7 +699,7 @@ export default function PlayPage() {
                 className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 transition-colors w-full border border-amber-200"
                 data-testid="browse-predictions"
               >
-                <Target className="text-amber-600" size={24} />
+                <Award className="text-amber-600" size={24} />
                 <span className="text-xs font-medium text-amber-600">Predictions</span>
               </button>
             </Link>
@@ -883,7 +883,7 @@ export default function PlayPage() {
                   'Predictions',
                   'No predictions resolved yet. Make some predictions!',
                   'from-green-500 to-emerald-500',
-                  { label: 'Do Predictions', href: '/play/predictions' },
+                  { label: 'Do Predictions', href: '/play/awards' },
                   true
                 )}
               </TabsContent>

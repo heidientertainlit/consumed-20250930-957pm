@@ -157,9 +157,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/play/predictions">
-          <ProtectedRoute>
-            <PlayPredictions />
-          </ProtectedRoute>
+          <RedirectTo to="/play/awards" />
         </Route>
         <Route path="/play/awards">
           <ProtectedRoute>

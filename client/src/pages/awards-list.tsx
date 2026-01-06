@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Trophy, ArrowLeft, Calendar, Clock, ChevronRight, Award, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import Navigation from "@/components/navigation";
 
@@ -76,6 +77,11 @@ export default function AwardsList() {
         </button>
 
         <div className="text-center mb-8">
+          <div className="mb-4">
+            <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
+              Consumed
+            </Badge>
+          </div>
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 mb-4">
             <Trophy size={32} className="text-black" />
           </div>
@@ -117,11 +123,16 @@ export default function AwardsList() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`text-lg font-semibold transition-colors ${
-                          comingSoon ? 'text-gray-400' : 'text-white group-hover:text-amber-400'
-                        }`}>
-                          {event.name} {event.year}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className={`text-lg font-semibold transition-colors ${
+                            comingSoon ? 'text-gray-400' : 'text-white group-hover:text-amber-400'
+                          }`}>
+                            {event.name} {event.year}
+                          </h3>
+                          <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
+                            Consumed
+                          </Badge>
+                        </div>
                         {getStatusBadge(event.status, !comingSoon)}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">

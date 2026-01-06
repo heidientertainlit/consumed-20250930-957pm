@@ -8,6 +8,7 @@ import {
   Sparkles, Lock, Clock, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import Navigation from "@/components/navigation";
@@ -381,6 +382,12 @@ export default function AwardsPredictions() {
             Back to Awards
           </button>
           
+          <div className="mb-4">
+            <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
+              Consumed
+            </Badge>
+          </div>
+
           <div className="flex items-center space-x-3 mb-3">
             <Trophy className="w-10 h-10 text-amber-400" />
             <div>
