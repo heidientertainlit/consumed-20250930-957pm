@@ -467,6 +467,57 @@ export default function PlayPollsPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+
+        {/* Quick Glimpse - Recent Polls Activity */}
+        {(() => {
+          const recentActivity = [
+            { name: 'Maya', action: 'voted on Best 2024 Album', points: 5 },
+            { name: 'Chris', action: 'voted on Greatest TV Villain', points: 5 },
+            { name: 'Olivia', action: 'voted on Most Rewatchable Movie', points: 5 },
+            { name: 'Liam', action: 'voted on Best Taylor Swift Era', points: 5 },
+            { name: 'Sophia', action: 'voted on Iconic Red Carpet Look', points: 5 },
+            { name: 'Noah', action: 'voted on Best Movie Soundtrack', points: 5 },
+          ];
+          
+          if (recentActivity.length < 2) return null;
+          
+          return (
+            <div className="mb-6 bg-purple-50 rounded-2xl p-3 border border-purple-100 shadow-sm overflow-hidden" data-testid="quick-glimpse-polls">
+              <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <span>✨</span>
+                Quick Glimpse
+              </p>
+              <div className="h-[72px] overflow-hidden">
+                <div 
+                  className="flex flex-col"
+                  style={{
+                    animation: `scrollVerticalGlimpsePolls ${recentActivity.length * 3}s linear infinite`,
+                  }}
+                >
+                  {[...recentActivity, ...recentActivity].map((activity, idx) => (
+                    <div 
+                      key={`glimpse-polls-${idx}`}
+                      className="h-6 flex items-center text-sm whitespace-nowrap"
+                    >
+                      <span className="font-medium text-gray-900">{activity.name}</span>
+                      <span className="text-gray-600 ml-1 truncate">{activity.action}</span>
+                      {activity.points && (
+                        <span className="ml-2 text-purple-600 font-semibold">+{activity.points} pts</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <style>{`
+                @keyframes scrollVerticalGlimpsePolls {
+                  0% { transform: translateY(0); }
+                  100% { transform: translateY(-${recentActivity.length * 24}px); }
+                }
+              `}</style>
+            </div>
+          );
+        })()}
+
         {/* Polls by Category */}
         {Object.keys(pollsByCategory).length > 0 ? (
           <div className="space-y-8">
