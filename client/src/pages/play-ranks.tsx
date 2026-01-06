@@ -32,9 +32,34 @@ export default function PlayRanks() {
     { id: 'Podcasts', label: 'Podcasts' },
   ];
 
-  // Note: Public rank fetching requires backend edge function (RLS restricts direct access)
-  // For now, showing curated Consumed ranks only
-  const isLoadingPublic = false;
+  // Fetch public community ranks via edge function
+  const { data: publicRanksData, isLoading: isLoadingPublic } = useQuery({
+    queryKey: ['public-ranks', selectedCategory, searchQuery],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.set('topic', selectedCategory);
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      params.set('limit', '30');
+      
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-ranks?${params.toString()}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        console.error('Failed to fetch public ranks:', response.status);
+        return [];
+      }
+      
+      const data = await response.json();
+      return data.ranks || [];
+    },
+    staleTime: 30000,
+  });
 
   // Consumed-curated rank templates (hardcoded as inspiration)
   const consumedRanks = [
@@ -97,9 +122,13 @@ export default function PlayRanks() {
     },
   ];
 
-  // For now, only showing Consumed curated ranks
-  // Community ranks will be added when backend edge function is available
-  const allRanks = [...consumedRanks];
+  // Combine Consumed showcase ranks with community public ranks
+  const communityRanks = (publicRanksData || []).map((item: any) => ({
+    ...item,
+    postId: item.rank?.id,
+    isConsumed: false,
+  }));
+  const allRanks = [...consumedRanks, ...communityRanks];
 
   // Filter ranks
   const filteredRanks = useMemo(() => {
