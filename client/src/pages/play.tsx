@@ -730,6 +730,24 @@ export default function PlayPage() {
                 <span className="text-xs text-orange-600/80">Order your favorites</span>
               </button>
             </Link>
+            <Link href="/play/hot-takes">
+              <button
+                className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100 transition-colors w-full border border-orange-200"
+                data-testid="browse-hot-takes"
+              >
+                <span className="text-sm font-semibold text-orange-600">Hot Takes</span>
+                <span className="text-xs text-orange-500/80">Share bold opinions</span>
+              </button>
+            </Link>
+            <Link href="/play/ask-recs">
+              <button
+                className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 transition-colors w-full border border-yellow-200"
+                data-testid="browse-ask-recs"
+              >
+                <span className="text-sm font-semibold text-yellow-700">Ask for Recs</span>
+                <span className="text-xs text-yellow-600/80">Get suggestions</span>
+              </button>
+            </Link>
           </div>
           <Link href="/leaderboard">
             <button

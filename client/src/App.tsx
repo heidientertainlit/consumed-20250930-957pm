@@ -37,6 +37,8 @@ import Play from "@/pages/play";
 import PlayTrivia from "@/pages/play-trivia";
 import PlayPolls from "@/pages/play-polls";
 import PlayPredictions from "@/pages/play-predictions";
+import PlayHotTakes from "@/pages/play-hot-takes";
+import PlayAskRecs from "@/pages/play-ask-recs";
 import PlayHighStakes from "@/pages/play-high-stakes";
 import PlayRanks from "@/pages/play-ranks";
 import Friends from "@/pages/friends";
@@ -188,6 +190,16 @@ function Router() {
         <Route path="/play/ranks">
           <ProtectedRoute>
             <PlayRanks />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/play/hot-takes">
+          <ProtectedRoute>
+            <PlayHotTakes />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/play/ask-recs">
+          <ProtectedRoute>
+            <PlayAskRecs />
           </ProtectedRoute>
         </Route>
         <Route path="/media/:type/:source/:id">
