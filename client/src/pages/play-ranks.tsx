@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Plus, ChevronRight, ArrowLeft, Users, Loader2, Share2 } from "lucide-react";
+import { Trophy, Plus, ChevronLeft, Search, ChevronDown, Loader2, Award } from "lucide-react";
 
 export default function PlayRanks() {
   const { user, session } = useAuth();
@@ -18,29 +18,126 @@ export default function PlayRanks() {
   const [isCreateRankOpen, setIsCreateRankOpen] = useState(false);
   const [newRankName, setNewRankName] = useState("");
   const [newRankVisibility, setNewRankVisibility] = useState("public");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [expandedFilter, setExpandedFilter] = useState<'topic' | null>(null);
 
-  const { data: ranksData, isLoading } = useQuery({
-    queryKey: ['user-ranks', user?.id],
-    queryFn: async () => {
-      if (!session?.access_token || !user?.id) return { ranks: [] };
-      
-      const response = await fetch(
-        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks?user_id=${user.id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      
-      if (response.ok) {
-        return response.json();
-      }
-      return { ranks: [] };
+  const categoryFilters = [
+    { id: 'Movies', label: 'Movies' },
+    { id: 'TV', label: 'TV Shows' },
+    { id: 'Music', label: 'Music' },
+    { id: 'Books', label: 'Books' },
+    { id: 'Sports', label: 'Sports' },
+    { id: 'Games', label: 'Games' },
+    { id: 'Podcasts', label: 'Podcasts' },
+  ];
+
+  // Note: Public rank fetching requires backend edge function (RLS restricts direct access)
+  // For now, showing curated Consumed ranks only
+  const isLoadingPublic = false;
+
+  // Consumed-curated rank templates (hardcoded as inspiration)
+  const consumedRanks = [
+    {
+      postId: 'consumed-best-90s-movies',
+      rank: {
+        id: 'consumed-best-90s-movies',
+        title: 'Best 90s Movies',
+        user_id: 'consumed',
+        visibility: 'public',
+        items: [
+          { id: '1', position: 1, title: 'Pulp Fiction', media_type: 'movie', creator: 'Quentin Tarantino' },
+          { id: '2', position: 2, title: 'The Shawshank Redemption', media_type: 'movie', creator: 'Frank Darabont' },
+          { id: '3', position: 3, title: 'Fight Club', media_type: 'movie', creator: 'David Fincher' },
+        ],
+      },
+      author: { id: 'consumed', user_name: 'Consumed', display_name: 'Consumed' },
+      isConsumed: true,
+      createdAt: new Date().toISOString(),
+      likesCount: 42,
+      commentsCount: 8,
     },
-    enabled: !!session?.access_token && !!user?.id,
-  });
+    {
+      postId: 'consumed-top-sci-fi-shows',
+      rank: {
+        id: 'consumed-top-sci-fi-shows',
+        title: 'Top Sci-Fi TV Shows',
+        user_id: 'consumed',
+        visibility: 'public',
+        items: [
+          { id: '1', position: 1, title: 'Breaking Bad', media_type: 'tv', creator: 'Vince Gilligan' },
+          { id: '2', position: 2, title: 'Black Mirror', media_type: 'tv', creator: 'Charlie Brooker' },
+          { id: '3', position: 3, title: 'Stranger Things', media_type: 'tv', creator: 'The Duffer Brothers' },
+        ],
+      },
+      author: { id: 'consumed', user_name: 'Consumed', display_name: 'Consumed' },
+      isConsumed: true,
+      createdAt: new Date().toISOString(),
+      likesCount: 35,
+      commentsCount: 12,
+    },
+    {
+      postId: 'consumed-goat-albums',
+      rank: {
+        id: 'consumed-goat-albums',
+        title: 'GOAT Albums of All Time',
+        user_id: 'consumed',
+        visibility: 'public',
+        items: [
+          { id: '1', position: 1, title: 'Thriller', media_type: 'music', creator: 'Michael Jackson' },
+          { id: '2', position: 2, title: 'Abbey Road', media_type: 'music', creator: 'The Beatles' },
+          { id: '3', position: 3, title: 'To Pimp a Butterfly', media_type: 'music', creator: 'Kendrick Lamar' },
+        ],
+      },
+      author: { id: 'consumed', user_name: 'Consumed', display_name: 'Consumed' },
+      isConsumed: true,
+      createdAt: new Date().toISOString(),
+      likesCount: 28,
+      commentsCount: 5,
+    },
+  ];
+
+  // For now, only showing Consumed curated ranks
+  // Community ranks will be added when backend edge function is available
+  const allRanks = [...consumedRanks];
+
+  // Filter ranks
+  const filteredRanks = useMemo(() => {
+    // Start with ranks that have valid IDs and at least one item (or are Consumed showcase)
+    let result = allRanks.filter((item: any) => {
+      if (item.isConsumed) return true; // Always show Consumed showcase ranks
+      return item.rank?.id && (item.rank?.items?.length > 0 || item.rank?.title);
+    });
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((item: any) => {
+        const title = item.rank?.title?.toLowerCase() || '';
+        return title.includes(query);
+      });
+    }
+
+    // Category filter - match rank title or items' media types
+    if (selectedCategory) {
+      result = result.filter((item: any) => {
+        const title = item.rank?.title?.toLowerCase() || '';
+        const categoryLower = selectedCategory.toLowerCase();
+        
+        // Check if title mentions the category
+        if (title.includes(categoryLower)) return true;
+        
+        // Check items' media types
+        const items = item.rank?.items || [];
+        return items.some((i: any) => 
+          i.media_type?.toLowerCase() === categoryLower ||
+          i.media_type?.toLowerCase().includes(categoryLower)
+        );
+      });
+    }
+
+    return result;
+  }, [allRanks, searchQuery, selectedCategory]);
 
   const createRankMutation = useMutation({
     mutationFn: async () => {
@@ -70,6 +167,7 @@ export default function PlayRanks() {
       setNewRankName("");
       setIsCreateRankOpen(false);
       queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['public-ranks'] });
       if (data?.rank?.id) {
         setLocation(`/rank/${data.rank.id}`);
       }
@@ -79,52 +177,119 @@ export default function PlayRanks() {
     },
   });
 
-  const userRanks = ranksData?.ranks || [];
+  const isLoading = isLoadingPublic;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation />
-      
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <button 
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-          data-testid="back-button"
-        >
-          <ArrowLeft size={20} />
-          <span>Back</span>
-        </button>
 
-        <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-2 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            <Trophy className="text-orange-600" size={32} />
-            Rank Challenges
-          </h1>
-          <p className="text-base text-gray-600">
-            Create ranked lists and challenge friends to make their own
-          </p>
-        </div>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-4">
+          {/* Back Button */}
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center text-gray-300 hover:text-white mb-4"
+            data-testid="back-button"
+          >
+            <ChevronLeft size={20} />
+            <span className="ml-1">Back</span>
+          </button>
 
-        <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl border border-orange-200 p-6 mb-6">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Users className="text-orange-600" size={24} />
+          <div className="mb-4">
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <Trophy className="text-orange-400" size={32} />
+              <h1 className="text-3xl font-semibold text-white" data-testid="ranks-title">Ranks</h1>
             </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-1">Challenge Friends</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Create a ranked list like "Top 10 90s Movies" and share it with friends. They can make their own version and see how your tastes compare!
-              </p>
+            <p className="text-gray-400 text-center mb-6">
+              Vote on community rankings and create your own
+            </p>
+
+            {/* Search Row */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                type="text"
+                placeholder="Search ranks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-gray-400"
+                data-testid="ranks-search-input"
+              />
+            </div>
+
+            {/* Filter Row */}
+            <div className="flex flex-wrap gap-2 items-center justify-between">
+              <div className="flex gap-2">
+                {/* Topic Filter Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                      selectedCategory
+                        ? 'bg-purple-600/30 border-purple-400 text-purple-200'
+                        : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
+                    }`}
+                    data-testid="topic-filter-toggle"
+                  >
+                    <span className="text-sm font-medium">
+                      Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}
+                    </span>
+                    <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
+                  </button>
+                  {expandedFilter === 'topic' && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(null);
+                          setExpandedFilter(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                          !selectedCategory
+                            ? 'bg-purple-100 text-purple-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        data-testid="filter-all-topics"
+                      >
+                        All Topics
+                      </button>
+                      {categoryFilters.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            setSelectedCategory(cat.id);
+                            setExpandedFilter(null);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                            selectedCategory === cat.id
+                              ? 'bg-purple-100 text-purple-700 font-medium'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                          data-testid={`filter-${cat.id}`}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Create Rank Button */}
               <Dialog open={isCreateRankOpen} onOpenChange={setIsCreateRankOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-orange-600 hover:bg-orange-700" data-testid="button-create-rank">
-                    <Plus size={16} className="mr-2" />
-                    Create Rank Challenge
+                  <Button 
+                    size="sm"
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                    data-testid="button-create-rank"
+                  >
+                    <Plus size={16} className="mr-1" />
+                    Create Rank
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-white">
                   <DialogHeader>
-                    <DialogTitle className="text-gray-900">Create Rank Challenge</DialogTitle>
+                    <DialogTitle className="text-gray-900">Create Rank</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
                     <Input
@@ -159,57 +324,120 @@ export default function PlayRanks() {
             </div>
           </div>
         </div>
+      </div>
 
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Ranks</h2>
-
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Ranks List */}
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-white rounded-xl p-4 animate-pulse">
-                <div className="h-5 bg-gray-200 rounded w-1/3 mb-2"></div>
-                <div className="h-4 bg-gray-100 rounded w-1/4"></div>
+              <div key={n} className="bg-white rounded-xl p-6 animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                  <div>
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-1" />
+                    <div className="h-3 bg-gray-100 rounded w-16" />
+                  </div>
+                </div>
+                <div className="h-5 bg-gray-200 rounded w-48 mb-3" />
+                <div className="space-y-2">
+                  <div className="h-10 bg-gray-100 rounded" />
+                  <div className="h-10 bg-gray-100 rounded" />
+                  <div className="h-10 bg-gray-100 rounded" />
+                </div>
               </div>
             ))}
           </div>
-        ) : userRanks.length === 0 ? (
+        ) : filteredRanks.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
             <Trophy className="mx-auto mb-3 text-gray-300" size={48} />
-            <p className="text-gray-600">No rank challenges yet</p>
-            <p className="text-sm text-gray-500">Create your first ranked list to challenge friends</p>
+            <p className="text-gray-600 mb-2">No ranks found</p>
+            <p className="text-sm text-gray-500 mb-4">Be the first to create a ranked list!</p>
+            <Button 
+              onClick={() => setIsCreateRankOpen(true)}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              <Plus size={16} className="mr-2" />
+              Create Rank
+            </Button>
           </div>
         ) : (
-          <div className="space-y-2">
-            {userRanks.map((rank: any) => (
-              <div
-                key={rank.id}
-                className="bg-white border border-gray-200 rounded-xl hover:border-orange-300 transition-colors cursor-pointer"
-                onClick={() => setLocation(`/rank/${rank.id}`)}
-                data-testid={`rank-card-${rank.id}`}
+          <div className="space-y-4">
+            {filteredRanks.map((item: any) => (
+              <div 
+                key={item.postId} 
+                className="relative cursor-pointer"
+                onClick={() => {
+                  if (!item.isConsumed && item.rank?.id) {
+                    setLocation(`/rank/${item.rank.id}?user=${item.author?.id}`);
+                  }
+                }}
               >
-                <div className="px-4 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg flex items-center justify-center">
-                      <Trophy className="text-orange-600" size={18} />
+                {/* Rank showcase card */}
+                <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow ${
+                  item.isConsumed ? 'border-purple-200' : 'border-gray-200'
+                }`}>
+                  {item.isConsumed && (
+                    <div className="absolute -top-0 left-4 z-10">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-600 text-white text-xs font-medium rounded-b-lg">
+                        <Award size={12} />
+                        Consumed
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{rank.title}</h3>
-                      <p className="text-sm text-gray-500">
-                        {rank.items?.length || 0} {rank.items?.length === 1 ? 'item' : 'items'}
+                  )}
+                  <div className="p-4 pt-5">
+                    {/* Author info for community ranks */}
+                    {!item.isConsumed && item.author && (
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                          {(item.author.user_name || 'U')[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">@{item.author.user_name}</span>
+                          <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      <Trophy className={item.isConsumed ? "text-purple-500" : "text-orange-500"} size={18} />
+                      <h3 className="font-semibold text-gray-900">{item.rank?.title || 'Untitled Rank'}</h3>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {(item.rank?.items || []).slice(0, 3).map((rankItem: any, idx: number) => (
+                        <div key={idx} className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
+                          <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold rounded ${
+                            item.isConsumed 
+                              ? 'bg-purple-100 text-purple-700' 
+                              : 'bg-orange-100 text-orange-700'
+                          }`}>
+                            {rankItem.position || idx + 1}
+                          </span>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium text-gray-900">{rankItem.title}</span>
+                            {rankItem.creator && (
+                              <span className="text-xs text-gray-500 ml-2">{rankItem.creator}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {(item.rank?.items?.length || 0) > 3 && (
+                        <p className="text-xs text-purple-600 text-center py-1">
+                          +{item.rank.items.length - 3} more items
+                        </p>
+                      )}
+                    </div>
+                    
+                    {item.isConsumed ? (
+                      <p className="text-xs text-gray-500 mt-3 text-center">
+                        Create your own version of this ranking!
                       </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Share2 
-                      className="text-gray-400 hover:text-orange-600" 
-                      size={18}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rank.id}`;
-                        navigator.clipboard.writeText(url);
-                        toast({ title: "Link copied!" });
-                      }}
-                    />
-                    <ChevronRight className="text-gray-400" size={20} />
+                    ) : (
+                      <p className="text-xs text-purple-600 mt-3 text-center font-medium">
+                        Tap to view full ranking and vote
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
