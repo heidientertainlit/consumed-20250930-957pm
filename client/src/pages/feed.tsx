@@ -127,6 +127,29 @@ let currentAppUserId: string | null = null;
 
 export const getCurrentAppUserId = () => currentAppUserId;
 
+// Helper to format username consistently across the app
+const formatUsername = (username?: string): string => {
+  if (!username) return 'Unknown';
+  let clean = username;
+  // Handle email-style usernames with + (e.g., "thinkhp+jordanrivers24")
+  if (clean.includes('+')) {
+    clean = clean.split('+').pop() || clean;
+  }
+  // Remove trailing numbers
+  clean = clean.replace(/\d+$/, '');
+  // Remove @ and domain if email
+  clean = clean.split('@')[0];
+  // Replace special chars with spaces
+  clean = clean.replace(/[@_.-]/g, ' ');
+  // Add space between camelCase
+  clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
+  // Capitalize each word
+  return clean.split(' ')
+    .filter(w => w.length > 0)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ') || 'User';
+};
+
 const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number; session: any }): Promise<SocialPost[]> => {
   if (!session?.access_token) {
     throw new Error('No authentication token available');
@@ -822,7 +845,7 @@ function CurrentlyConsumingFeedCard({
                 onClick={() => onBet(
                   post.id, 
                   media.title, 
-                  post.user?.displayName || post.user?.username || 'them',
+                  formatUsername(post.user?.username),
                   post.user?.id || '',
                   media.externalId,
                   media.externalSource,
@@ -2719,10 +2742,7 @@ export default function Feed() {
                   const user = post.user;
                   if (!user) return null;
                   
-                  const displayName = user.displayName || user.username || 'Someone';
-                  const cleanName = displayName.includes('+') 
-                    ? displayName.split('+').pop()?.split('@')[0] || displayName
-                    : displayName.split('@')[0] || displayName;
+                  const cleanName = formatUsername(user.username);
                   
                   let action = '';
                   let mediaTitle = post.mediaItems?.[0]?.title || (post as any).listData?.title || '';
@@ -2839,13 +2859,6 @@ export default function Feed() {
                 // Handle Quick Glimpse cards (scrolling Tier 2 grouped activities)
                 if ((item as any).type === 'friend_activity_block') {
                   const block = item as any;
-                  const getDisplayName = (username: string) => {
-                    if (username?.includes('+')) {
-                      const parts = username.split('+');
-                      return parts[parts.length - 1]?.split('@')[0] || username;
-                    }
-                    return username?.split('@')[0] || username;
-                  };
                   
                   const activities = block.activities || [];
                   
@@ -2863,7 +2876,7 @@ export default function Feed() {
                   // Format activity text with points emphasis for games
                   const formatActivityText = (activity: any) => {
                     const points = getPointsForAction(activity.action, activity.rating);
-                    const name = getDisplayName(activity.user?.displayName || activity.user?.username);
+                    const name = formatUsername(activity.user?.username);
                     
                     // Game activities - show scoring
                     if (activity.action === 'trivia' || activity.action === 'scored') {
@@ -3334,7 +3347,7 @@ export default function Feed() {
                             setActiveBetPost({
                               postId: postId,
                               mediaTitle: media.title,
-                              userName: targetUser?.displayName || targetUser?.username || 'friend',
+                              userName: formatUsername(targetUser?.username),
                               targetUserId: userId,
                               externalId: media.externalId,
                               externalSource: media.externalSource,
@@ -3374,7 +3387,7 @@ export default function Feed() {
                               <div className="flex-1 min-w-0">
                                 <p className="text-gray-900">
                                   <Link href={`/user/${post.user?.id}`}>
-                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{formatUsername(post.user?.username)}</span>
                                   </Link>
                                   {' '}{post.content}
                                 </p>
@@ -4547,7 +4560,7 @@ export default function Feed() {
                           const isBettableList = listTitle === 'currently' || listTitle === 'want to';
                           const hasMedia = post.mediaItems && post.mediaItems.length > 0;
                           const isOwnPost = currentAppUserId && post.user?.id === currentAppUserId;
-                          const userName = post.user?.displayName || post.user?.username || 'them';
+                          const userName = formatUsername(post.user?.username);
                           
                           // Only show bet button for other users' posts (can't bet on your own)
                           if (isBettableList && hasMedia && !activeInlineRating && !isOwnPost) {

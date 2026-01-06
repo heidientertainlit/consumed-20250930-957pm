@@ -45,11 +45,8 @@ const getAvatarInitial = (displayName?: string, username?: string): string => {
   return '?';
 };
 
-const getDisplayName = (displayName?: string, username?: string): string => {
-  if (displayName && displayName.trim() && displayName !== username) {
-    return displayName;
-  }
-  
+const getDisplayName = (_displayName?: string, username?: string): string => {
+  // Always use formatted username for consistency across the app
   if (username) {
     return formatUsername(username);
   }
