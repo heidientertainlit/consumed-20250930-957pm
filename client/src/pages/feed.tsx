@@ -1426,6 +1426,21 @@ export default function Feed() {
       if (!hasRating) return false;
     }
     
+    if (feedFilter === 'ask-for-recs') {
+      // Show only posts that are asking for recommendations
+      const postType = post.type?.toLowerCase() || '';
+      const contentLower = (post.content || '').toLowerCase();
+      const isAskForRecs = postType === 'ask_for_recs' || 
+        contentLower.includes('recommend') || 
+        contentLower.includes('suggestion') ||
+        contentLower.includes('what should i watch') ||
+        contentLower.includes('what should i read') ||
+        contentLower.includes('what should i listen') ||
+        contentLower.includes('looking for') ||
+        contentLower.includes('any recs');
+      if (!isAskForRecs) return false;
+    }
+    
     // Apply media type filter
     if (detailedFilters.mediaTypes.length > 0) {
       if (!post.mediaItems || post.mediaItems.length === 0) return false;
@@ -2739,6 +2754,15 @@ export default function Feed() {
                   data-testid="pill-hot-takes"
                 >
                   🔥 Hot Takes
+                </button>
+                <button
+                  onClick={() => setFeedFilter(feedFilter === 'ask-for-recs' ? '' : 'ask-for-recs')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    feedFilter === 'ask-for-recs' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="pill-ask-for-recs"
+                >
+                  Ask for Recs
                 </button>
               </div>
 
