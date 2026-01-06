@@ -70,18 +70,6 @@ export default function AwardsList() {
       {/* Header Section with Gradient - Matching Polls/Trivia */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
-          <div className="mb-6">
-            <Link href="/play">
-              <button
-                className="flex items-center text-gray-300 hover:text-white transition-colors"
-                data-testid="button-back-play"
-              >
-                <ChevronLeft size={20} />
-                <span className="ml-1">Back</span>
-              </button>
-            </Link>
-          </div>
-
           <div>
             <h1 className="text-3xl font-semibold text-white mb-2" data-testid="predictions-title">Predictions</h1>
             <p className="text-gray-400 text-left">

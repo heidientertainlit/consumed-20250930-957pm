@@ -371,21 +371,7 @@ export default function AwardsPredictions() {
       <Navigation />
       
       {/* Hero Header - Matching Predictions List Page */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 -mt-px">
-          <div className="max-w-4xl mx-auto px-4 pt-4">
-            <div className="mb-6">
-              <Link href="/play/awards">
-                <button 
-                  className="flex items-center text-gray-300 hover:text-white transition-colors"
-                  data-testid="button-back-awards"
-                >
-                  <ChevronLeft size={20} />
-                  <span className="ml-1">Back</span>
-                </button>
-              </Link>
-            </div>
-          </div>
-          
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 pt-6 -mt-px text-center">
           <div className="mb-4">
             <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
               Consumed

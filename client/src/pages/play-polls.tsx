@@ -335,16 +335,6 @@ export default function PlayPollsPage() {
       {/* Header Section with Gradient */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
-          {/* Back Button */}
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center text-gray-300 hover:text-white mb-4"
-            data-testid="back-button"
-          >
-            <ChevronLeft size={20} />
-            <span className="ml-1">Back</span>
-          </button>
-
           <div className="mb-2">
             <h1 className="text-3xl font-semibold text-white" data-testid="polls-title">Polls</h1>
           </div>
