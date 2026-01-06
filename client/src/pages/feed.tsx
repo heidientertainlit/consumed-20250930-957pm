@@ -1370,10 +1370,15 @@ export default function Feed() {
 
   // Filter posts by detailed filters and feed filter
   const filteredPosts = tieredPosts.filter(item => {
-    // Skip FriendActivityBlock from filtering
-    if ((item as any).type === 'friend_activity_block') return true;
-    // Skip ConsolidatedActivity items from filtering (they're already processed)
-    if ('originalPostIds' in item) return true;
+    // When filtering for specific content types, hide grouped/consolidated items
+    if (feedFilter === 'hot-takes' || feedFilter === 'ask-for-recs') {
+      if ((item as any).type === 'friend_activity_block') return false;
+      if ('originalPostIds' in item) return false;
+    } else {
+      // No special filter - show grouped items
+      if ((item as any).type === 'friend_activity_block') return true;
+      if ('originalPostIds' in item) return true;
+    }
     
     const post = item as SocialPost;
     
@@ -1387,16 +1392,44 @@ export default function Feed() {
     const isShortContent = post.content && post.content.length < 80 && !post.content.includes('\n');
     
     // If post has short content, no media, no list/rank data, and isn't a special type - hide it
+    // BUT allow through if we're filtering for hot-takes (text-only posts are valid hot takes)
     if (isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType) {
-      return false;
+      if (feedFilter !== 'hot-takes') {
+        return false;
+      }
     }
     
-    // Apply main feed filter (All, Friends)
+    // Apply main feed filter (All, Friends, Hot Takes, Ask for Recs)
     if (feedFilter === 'friends') {
       // Show only posts from friends (not own posts)
       if (!post.user || post.user.id === user?.id || !friendIds.has(post.user.id)) {
         return false;
       }
+    }
+    
+    if (feedFilter === 'hot-takes') {
+      // Hot takes = text-only posts (no media items) with substantial content
+      const hasNoMedia = !post.mediaItems || post.mediaItems.length === 0;
+      const hasContent = post.content && post.content.trim().length > 10;
+      // Exclude special types that aren't opinion posts
+      const isExcludedType = ['prediction', 'poll', 'trivia', 'rank_share'].includes(post.type?.toLowerCase() || '');
+      if (!hasNoMedia || !hasContent || isExcludedType) return false;
+    }
+    
+    if (feedFilter === 'ask-for-recs') {
+      // Ask for recs = posts asking for recommendations
+      const contentLower = (post.content || '').toLowerCase();
+      const hasRecKeyword = 
+        contentLower.includes('recommend') || 
+        contentLower.includes('suggestion') ||
+        contentLower.includes('what should i watch') ||
+        contentLower.includes('what should i read') ||
+        contentLower.includes('what should i listen') ||
+        contentLower.includes('looking for') ||
+        contentLower.includes('any recs') ||
+        contentLower.includes('recs?') ||
+        contentLower.includes('ideas?');
+      if (!hasRecKeyword) return false;
     }
     
     // Apply media type filter
@@ -2704,6 +2737,24 @@ export default function Feed() {
                     Rank
                   </button>
                 </Link>
+                <button
+                  onClick={() => setFeedFilter(feedFilter === 'hot-takes' ? '' : 'hot-takes')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    feedFilter === 'hot-takes' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="pill-hot-takes"
+                >
+                  🔥 Hot Takes
+                </button>
+                <button
+                  onClick={() => setFeedFilter(feedFilter === 'ask-for-recs' ? '' : 'ask-for-recs')}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    feedFilter === 'ask-for-recs' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  data-testid="pill-ask-for-recs"
+                >
+                  Ask for Recs
+                </button>
               </div>
 
               {/* Single Quick Glimpse at the top - scrolls through recent friend activities */}
@@ -2824,6 +2875,20 @@ export default function Feed() {
               {/* Empty state for filtered views */}
               {feedFilter && filteredPosts.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
+                  {feedFilter === 'hot-takes' && (
+                    <>
+                      <div className="text-4xl mb-3">🔥</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Hot Takes Yet</h3>
+                      <p className="text-gray-500 text-sm">Be the first to share a bold opinion!</p>
+                    </>
+                  )}
+                  {feedFilter === 'ask-for-recs' && (
+                    <>
+                      <div className="text-4xl mb-3">💡</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Recommendation Requests</h3>
+                      <p className="text-gray-500 text-sm">Ask your friends what to watch, read, or listen to next!</p>
+                    </>
+                  )}
                   {feedFilter === 'friends' && (
                     <>
                       <div className="text-4xl mb-3">👥</div>
