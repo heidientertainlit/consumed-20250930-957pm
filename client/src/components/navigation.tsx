@@ -503,7 +503,9 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 >
                   <Trophy className="text-purple-400" size={20} />
                 </Link>
-                <NotificationBell />
+                <div className="flex items-center -mr-1">
+                  <NotificationBell />
+                </div>
               </>
             )}
           </div>
