@@ -85,7 +85,7 @@ export function FeedbackDialog({ isOpen, onClose }: FeedbackDialogProps) {
 
           <div className="border-t border-gray-100 pt-4">
             <p className="text-sm text-gray-600 mb-3">
-              Submit any thoughts below or take the 2-minute survey here:
+              Submit any thoughts below or take the 4 question survey here:
             </p>
             
             <Button 
@@ -94,7 +94,7 @@ export function FeedbackDialog({ isOpen, onClose }: FeedbackDialogProps) {
               className="w-full mb-4 border-purple-200 text-purple-600 hover:bg-purple-50"
               data-testid="take-survey-button"
             >
-              Take 2-Minute Survey
+              Take 4 Question Survey
               <ArrowRight size={16} className="ml-2" />
             </Button>
           </div>

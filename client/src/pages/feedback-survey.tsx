@@ -147,7 +147,7 @@ export default function FeedbackSurveyPage() {
         </button>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">2-Minute Survey</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">4 Question Survey</h1>
           <p className="text-gray-600">
             Your honest answers help us build something you'll actually love.
           </p>
