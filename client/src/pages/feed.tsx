@@ -1387,8 +1387,11 @@ export default function Feed() {
     const isShortContent = post.content && post.content.length < 80 && !post.content.includes('\n');
     
     // If post has short content, no media, no list/rank data, and isn't a special type - hide it
+    // BUT allow through if we're filtering for hot-takes or ask-for-recs (these are text-based)
     if (isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType) {
-      return false;
+      if (feedFilter !== 'hot-takes' && feedFilter !== 'ask-for-recs') {
+        return false;
+      }
     }
     // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
     if (feedFilter === 'friends') {
@@ -1399,8 +1402,10 @@ export default function Feed() {
     }
     
     if (feedFilter === 'hot-takes') {
-      // Show only posts without media items (text-only posts = hot takes)
-      if (post.mediaItems && post.mediaItems.length > 0) return false;
+      // Show only posts without media items OR posts with type hot_take
+      const postType = post.type?.toLowerCase() || '';
+      const isHotTake = postType === 'hot_take' || (!post.mediaItems || post.mediaItems.length === 0);
+      if (!isHotTake) return false;
     }
     
     if (feedFilter === 'predictions') {
