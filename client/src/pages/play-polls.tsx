@@ -55,19 +55,40 @@ export default function PlayPollsPage() {
     setIsTrackModalOpen(true);
   };
 
-  // Fetch games directly from Supabase - only curated Consumed polls
+  // Fetch games directly from Supabase - both curated Consumed polls and user polls
   const { data: games = [], isLoading } = useQuery({
-    queryKey: ['/api/predictions/polls'],
+    queryKey: ['/api/predictions/polls', selectedCategory, searchQuery, selectedGenre],
     queryFn: async () => {
-      const { data: pools, error } = await supabase
-        .from('prediction_pools')
-        .select('*')
-        .eq('status', 'open')
-        .eq('type', 'vote')
-        .order('created_at', { ascending: false });
-      if (error) throw new Error('Failed to fetch games');
-      // Filter to only show curated Consumed polls
-      return (pools || []).filter((p: any) => p.id?.startsWith('consumed-poll-'));
+      const params = new URLSearchParams();
+      if (selectedCategory) params.set('category', selectedCategory);
+      if (searchQuery) params.set('search', searchQuery);
+      if (selectedGenre) params.set('genre', selectedGenre);
+
+      const { data, error } = await supabase.functions.invoke('get-polls', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Object.fromEntries(params)),
+      });
+
+      if (error) {
+        // Fallback to direct client fetch if function fails
+        const { data: directPools, error: directError } = await supabase
+          .from('prediction_pools')
+          .select('*')
+          .eq('status', 'open')
+          .eq('type', 'vote')
+          .order('created_at', { ascending: false });
+        
+        if (directError) throw new Error('Failed to fetch games');
+        return (directPools || []).map((p: any) => ({
+          ...p,
+          isConsumed: p.id?.startsWith('consumed-poll-') || p.origin_type === 'consumed'
+        }));
+      }
+
+      return data.polls || [];
     },
   });
 
@@ -473,7 +494,15 @@ export default function PlayPollsPage() {
                         <CardHeader className="pb-3 pt-4">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <Star size={14} className="text-purple-600" />
+                              {game.isConsumed ? (
+                                <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
+                                  Consumed
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
+                                  User
+                                </Badge>
+                              )}
                               <span className="text-sm font-medium text-purple-600">{game.points || 10} pts</span>
                             </div>
                             <button
