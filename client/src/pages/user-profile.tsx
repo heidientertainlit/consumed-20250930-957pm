@@ -3580,27 +3580,15 @@ export default function UserProfile() {
                       History
                     </button>
                   </div>
-
-                  {isOwnProfile && (
-                    <Button
-                      onClick={() => setIsTrackModalOpen(true)}
-                      size="sm"
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full h-9 px-4"
-                      data-testid="button-track-media"
-                    >
-                      <Plus size={16} className="mr-1.5" />
-                      Track
-                    </Button>
-                  )}
                 </div>
               </div>
 
               {/* Lists Tab Content */}
               {collectionsSubTab === 'lists' && (
                 <>
-                  {/* Create List Button - Only for own profile */}
+                  {/* Action Buttons - Only for own profile */}
                   {isOwnProfile && (
-                    <div className="flex justify-end mb-4 border-t border-gray-100 pt-4">
+                    <div className="flex items-center justify-end gap-2 mb-4 border-t border-gray-100 pt-4">
                       <Button
                         onClick={() => setShowCreateListDialog(true)}
                         variant="ghost"
@@ -3610,6 +3598,16 @@ export default function UserProfile() {
                       >
                         <Plus size={14} className="mr-1.5" />
                         Create List
+                      </Button>
+                      <Button
+                        onClick={() => setIsTrackModalOpen(true)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-full h-8"
+                        data-testid="button-track-media"
+                      >
+                        <Plus size={14} className="mr-1.5" />
+                        Add Media
                       </Button>
                     </div>
                   )}
@@ -3696,16 +3694,30 @@ export default function UserProfile() {
               {/* History Tab Content */}
               {collectionsSubTab === 'history' && (
                 <>
-                  {/* Import Button - Only for own profile */}
+                  {/* Action Buttons - Only for own profile */}
                   {isOwnProfile && (
-                    <button
-                      onClick={() => setIsImportModalOpen(true)}
-                      className="w-full mb-4 px-4 py-3 rounded-xl border-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center gap-2 font-medium"
-                      data-testid="button-import-history"
-                    >
-                      <Upload size={18} />
-                      Import Media History
-                    </button>
+                    <div className="flex items-center justify-end gap-2 mb-4 border-t border-gray-100 pt-4">
+                      <Button
+                        onClick={() => setIsImportModalOpen(true)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-purple-600 hover:bg-purple-50 hover:text-purple-700 rounded-full h-8"
+                        data-testid="button-import-history"
+                      >
+                        <Upload size={14} className="mr-1.5" />
+                        Import
+                      </Button>
+                      <Button
+                        onClick={() => setIsTrackModalOpen(true)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-full h-8"
+                        data-testid="button-track-media"
+                      >
+                        <Plus size={14} className="mr-1.5" />
+                        Add Media
+                      </Button>
+                    </div>
                   )}
 
                   {/* Filter buttons row for history */}
