@@ -2705,6 +2705,22 @@ export default function Feed() {
                     Rank
                   </button>
                 </Link>
+                <Link href="/play/hot-takes">
+                  <button
+                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    data-testid="pill-hot-takes"
+                  >
+                    🔥 Hot Takes
+                  </button>
+                </Link>
+                <Link href="/play/ask-recs">
+                  <button
+                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    data-testid="pill-ask-recs"
+                  >
+                    💡 Ask for Recs
+                  </button>
+                </Link>
               </div>
 
               {/* Single Quick Glimpse at the top - scrolls through recent friend activities */}
