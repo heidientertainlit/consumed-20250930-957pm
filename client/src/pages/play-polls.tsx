@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Vote, Star, Users, UserPlus, ChevronLeft, Search, SlidersHorizontal } from 'lucide-react';
+import { Vote, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
@@ -22,17 +22,17 @@ export default function PlayPollsPage() {
   const [shareModalGame, setShareModalGame] = useState<any>(null);
   const [selectedPoll, setSelectedPoll] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [expandedFilter, setExpandedFilter] = useState<'topic' | null>(null);
 
   const categoryFilters = [
-    { id: 'Movies', label: 'Movies', icon: '🎬' },
-    { id: 'TV', label: 'TV', icon: '📺' },
-    { id: 'Music', label: 'Music', icon: '🎵' },
-    { id: 'Books', label: 'Books', icon: '📚' },
-    { id: 'Sports', label: 'Sports', icon: '🏆' },
-    { id: 'Podcasts', label: 'Podcasts', icon: '🎙️' },
-    { id: 'Pop Culture', label: 'Pop Culture', icon: '⭐' },
+    { id: 'Movies', label: 'Movies' },
+    { id: 'TV', label: 'TV Shows' },
+    { id: 'Music', label: 'Music' },
+    { id: 'Books', label: 'Books' },
+    { id: 'Sports', label: 'Sports' },
+    { id: 'Podcasts', label: 'Podcasts' },
+    { id: 'Pop Culture', label: 'Pop Culture' },
   ];
 
   // Extract game ID from URL hash if present (format: /play/polls#game-id)
@@ -219,6 +219,45 @@ export default function PlayPollsPage() {
     return filtered;
   }, [processedGames, searchQuery, selectedCategory, allPredictions]);
 
+  // Normalize category names to consistent format
+  const normalizeCategory = (cat: string): string => {
+    if (!cat) return 'Other';
+    const lower = cat.toLowerCase().trim();
+    if (lower === 'movies' || lower === 'movie') return 'Movies';
+    if (lower === 'tv' || lower === 'tv shows' || lower === 'tv-show' || lower === 'tv show') return 'TV';
+    if (lower === 'books' || lower === 'book') return 'Books';
+    if (lower === 'sports' || lower === 'sport') return 'Sports';
+    if (lower === 'music') return 'Music';
+    if (lower === 'podcasts' || lower === 'podcast') return 'Podcasts';
+    if (lower === 'pop culture') return 'Pop Culture';
+    return cat;
+  };
+
+  // Group polls by category for carousel display
+  const pollsByCategory = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    pollGames.forEach((game: any) => {
+      const category = normalizeCategory(game.category);
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(game);
+    });
+    return groups;
+  }, [pollGames]);
+
+  // Category display info
+  const categoryInfo: Record<string, { label: string }> = {
+    'Movies': { label: 'Movies' },
+    'TV': { label: 'TV Shows' },
+    'Music': { label: 'Music' },
+    'Books': { label: 'Books' },
+    'Sports': { label: 'Sports' },
+    'Podcasts': { label: 'Podcasts' },
+    'Pop Culture': { label: 'Pop Culture' },
+    'Other': { label: 'General' },
+  };
+
   // Auto-open poll if gameId is in URL hash
   React.useEffect(() => {
     if (gameIdFromUrl && !selectedPoll && pollGames.length > 0) {
@@ -246,84 +285,180 @@ export default function PlayPollsPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Back Button and Header */}
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          data-testid="back-button"
-        >
-          <ChevronLeft size={20} />
-          <span className="ml-1">Back</span>
-        </button>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-4">
+          {/* Back Button */}
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center text-gray-300 hover:text-white mb-4"
+            data-testid="back-button"
+          >
+            <ChevronLeft size={20} />
+            <span className="ml-1">Back</span>
+          </button>
 
-        <div className="mb-6">
-          <div className="flex items-center justify-center space-x-2 mb-3">
-            <Vote className="text-blue-600" size={32} />
-            <h1 className="text-3xl font-semibold text-black" data-testid="polls-title">Polls</h1>
-          </div>
-          <p className="text-gray-600 text-center mb-6">
-            Vote on trending topics and see how your opinions compare to others
-          </p>
+          <div className="mb-4">
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <Vote className="text-blue-400" size={32} />
+              <h1 className="text-3xl font-semibold text-white" data-testid="polls-title">Polls</h1>
+            </div>
+            <p className="text-gray-400 text-center mb-6">
+              Vote on trending topics and see how your opinions compare to others
+            </p>
 
-          {/* Search and Filter Row */}
-          <div className="flex gap-2 mb-4">
-            <div className="relative flex-1">
+            {/* Search Row */}
+            <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <Input
                 type="text"
                 placeholder="Search polls..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white border-gray-200 rounded-xl"
+                className="pl-10 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-gray-400"
                 data-testid="polls-search-input"
               />
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
-                showFilters || selectedCategory
-                  ? 'bg-blue-50 border-blue-300 text-blue-700'
-                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
-              data-testid="filter-toggle"
-            >
-              <SlidersHorizontal size={18} />
-              <span className="text-sm font-medium">Filter</span>
-              {selectedCategory && (
-                <span className="w-2 h-2 bg-blue-600 rounded-full" />
-              )}
-            </button>
-          </div>
 
-          {/* Filter Panel */}
-          {showFilters && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-              <div className="flex items-start gap-3">
-                <span className="text-sm font-medium text-gray-600 w-12 pt-2">Topic:</span>
-                <div className="flex flex-wrap gap-2">
-                  {categoryFilters.map((cat) => (
+            {/* Topic Filter Dropdown */}
+            <div className="flex flex-wrap gap-2">
+              <div className="relative">
+                <button
+                  onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                    selectedCategory
+                      ? 'bg-purple-600/30 border-purple-400 text-purple-200'
+                      : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
+                  }`}
+                  data-testid="topic-filter-toggle"
+                >
+                  <span className="text-sm font-medium">
+                    Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedFilter === 'topic' && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
                     <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedCategory === cat.id
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setExpandedFilter(null);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                        !selectedCategory
+                          ? 'bg-purple-100 text-purple-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
                       }`}
-                      data-testid={`filter-${cat.id}`}
+                      data-testid="filter-all-topics"
                     >
-                      {cat.icon} {cat.label}
+                      All Topics
                     </button>
+                    {categoryFilters.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setSelectedCategory(cat.id);
+                          setExpandedFilter(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                          selectedCategory === cat.id
+                            ? 'bg-purple-100 text-purple-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        data-testid={`filter-${cat.id}`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Polls by Category */}
+        {Object.keys(pollsByCategory).length > 0 ? (
+          <div className="space-y-8">
+            {Object.entries(pollsByCategory).map(([category, games]) => (
+              <div key={category} className="mb-6">
+                {/* Category Header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">{categoryInfo[category]?.label || category}</h2>
+                  <span className="text-sm text-gray-500">({games.length})</span>
+                </div>
+                
+                {/* Horizontal Scrolling Cards */}
+                <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {games.map((game: any) => (
+                    <div key={game.id} className="flex-shrink-0 w-72">
+                      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden h-full">
+                        <CardHeader className="pb-3 pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Star size={14} className="text-purple-600" />
+                              <span className="text-sm font-medium text-purple-600">{game.points || 10} pts</span>
+                            </div>
+                            <button
+                              onClick={() => handleInviteFriends(game)}
+                              className="p-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors"
+                              data-testid={`invite-${game.id}`}
+                            >
+                              <UserPlus size={14} className="text-purple-600" />
+                            </button>
+                          </div>
+
+                          <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 leading-tight">{game.title}</CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="pt-0 pb-4 space-y-2">
+                          {allPredictions[game.id] ? (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                              <div className="text-green-800 font-bold text-sm">✓ Voted</div>
+                              <div className="text-green-700 text-xs line-clamp-1">"{allPredictions[game.id]}"</div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex flex-col gap-1.5">
+                                {(game.options || []).slice(0, 3).map((option: any, index: number) => {
+                                  const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
+                                  return (
+                                    <button
+                                      key={index}
+                                      onClick={() => handleOptionSelect(game.id, optionText)}
+                                      className={`w-full px-3 py-2 text-center rounded-full border-2 transition-all text-xs font-medium ${
+                                        selectedAnswers[game.id] === optionText
+                                          ? 'border-purple-500 bg-purple-600 text-white'
+                                          : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+                                      }`}
+                                      data-testid={`option-${game.id}-${index}`}
+                                    >
+                                      <span className="line-clamp-1">{optionText}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <Button
+                                onClick={() => handleSubmitAnswer(game)}
+                                disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
+                                className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 rounded-full py-2 text-sm"
+                                data-testid={`submit-${game.id}`}
+                              >
+                                {submitPrediction.isPending ? '...' : 'Vote'}
+                              </Button>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Polls Section */}
-        {pollGames.length > 0 && (
+            ))}
+          </div>
+        ) : pollGames.length > 0 && (
           <div className="mb-8">
             <div className="space-y-4">
               {pollGames.map((game: any) => (
