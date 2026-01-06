@@ -2712,8 +2712,8 @@ export default function Feed() {
 
               {/* Single Quick Glimpse at the top - scrolls through recent friend activities */}
               {socialPosts && socialPosts.length > 0 && (() => {
-                // Get recent activities for Quick Glimpse
-                const allActivities = socialPosts.slice(0, 30).map(post => {
+                // Get activities for Quick Glimpse - scan more posts for variety
+                const allActivities = socialPosts.slice(0, 100).map(post => {
                   const postType = post.type?.toLowerCase() || '';
                   const user = post.user;
                   if (!user) return null;
@@ -2726,16 +2726,39 @@ export default function Feed() {
                   let action = '';
                   let mediaTitle = post.mediaItems?.[0]?.title || (post as any).listData?.title || '';
                   
+                  // Ratings
                   if (postType === 'rating' || (post.rating && post.rating > 0)) {
                     action = `gave ${mediaTitle} ${post.rating || post.mediaItems?.[0]?.rating || '?'} stars`;
-                  } else if (postType === 'finished') {
+                  } 
+                  // Finished
+                  else if (postType === 'finished') {
                     action = `finished ${mediaTitle}`;
-                  } else if (postType.includes('list') && postType.includes('add')) {
+                  } 
+                  // List adds
+                  else if (postType.includes('list') && postType.includes('add')) {
                     const listName = (post as any).listData?.title || 'a list';
                     action = `added ${mediaTitle} to ${listName}`;
-                  } else if (postType === 'trivia') {
-                    action = `scored on ${mediaTitle} Trivia`;
-                  } else if (mediaTitle) {
+                  } 
+                  // Trivia
+                  else if (postType === 'trivia') {
+                    const score = (post as any).score || (post as any).points || 60;
+                    action = `scored ${score} points on ${mediaTitle || 'Trivia'}`;
+                  }
+                  // Hot takes (text-only posts)
+                  else if (postType === 'hot_take' || (post.content && post.content.length > 20 && !post.mediaItems?.length)) {
+                    const preview = post.content?.slice(0, 40) || 'a hot take';
+                    action = `posted "${preview}${post.content && post.content.length > 40 ? '...' : ''}"`;
+                  }
+                  // Predictions
+                  else if (postType === 'prediction') {
+                    action = `made a prediction about ${mediaTitle || 'something'}`;
+                  }
+                  // Polls
+                  else if (postType === 'poll') {
+                    action = `started a poll`;
+                  }
+                  // Generic media add
+                  else if (mediaTitle) {
                     action = `added ${mediaTitle}`;
                   } else {
                     return null;
@@ -2744,18 +2767,27 @@ export default function Feed() {
                   return { name: cleanName, action, postId: post.id, odUserId: user.id };
                 }).filter(Boolean);
                 
-                // Mingle users - don't show same user consecutively
+                // Mingle users - prioritize variety, limit each user to max 2 entries
                 const mingledActivities: any[] = [];
+                const userCounts: Record<string, number> = {};
                 let lastUserId: string | null = null;
                 const remaining = [...allActivities];
                 
-                while (remaining.length > 0 && mingledActivities.length < 10) {
-                  // Find next activity from a different user
-                  let foundIdx = remaining.findIndex(a => a.odUserId !== lastUserId);
-                  if (foundIdx === -1) foundIdx = 0; // If all same user, just take first
+                while (remaining.length > 0 && mingledActivities.length < 12) {
+                  // Find next activity from a different user who hasn't hit the limit
+                  let foundIdx = remaining.findIndex(a => 
+                    a.odUserId !== lastUserId && (userCounts[a.odUserId] || 0) < 2
+                  );
+                  // If no different user available, try any user under limit
+                  if (foundIdx === -1) {
+                    foundIdx = remaining.findIndex(a => (userCounts[a.odUserId] || 0) < 2);
+                  }
+                  // If still nothing, break
+                  if (foundIdx === -1) break;
                   
                   const activity = remaining.splice(foundIdx, 1)[0];
                   mingledActivities.push(activity);
+                  userCounts[activity.odUserId] = (userCounts[activity.odUserId] || 0) + 1;
                   lastUserId = activity.odUserId;
                 }
                 
