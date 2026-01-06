@@ -300,7 +300,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
           
           {/* Expandable Search Section */}
-          <div className="flex items-center space-x-6 flex-1 justify-end">
+          <div className="flex items-center gap-6 flex-1 justify-end">
             <div className={`flex items-center transition-all duration-300 ${isSearchExpanded ? 'flex-1 max-w-md' : 'w-auto'}`}>
               {isSearchExpanded ? (
                 <div className="relative w-full">
@@ -501,7 +501,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                   className="hover:opacity-70 transition-opacity"
                   data-testid="leaderboard-button"
                 >
-                  <Trophy className="text-amber-400" size={20} />
+                  <Trophy className="text-purple-400" size={20} />
                 </Link>
                 <NotificationBell />
               </>
