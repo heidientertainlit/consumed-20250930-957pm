@@ -366,22 +366,22 @@ export default function PlayPollsPage() {
             </div>
 
             {/* Filter Dropdowns Row */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {/* Topic Filter Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded transition-all text-xs ${
                     selectedCategory
-                      ? 'bg-purple-600/30 border-purple-400 text-purple-200'
-                      : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
+                      ? 'text-purple-300'
+                      : 'text-gray-400 hover:text-gray-200'
                   }`}
                   data-testid="topic-filter-toggle"
                 >
-                  <span className="text-sm font-medium">
+                  <span>
                     Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}
                   </span>
-                  <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
                 </button>
                 {expandedFilter === 'topic' && (
                   <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
@@ -424,17 +424,17 @@ export default function PlayPollsPage() {
               <div className="relative">
                 <button
                   onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded transition-all text-xs ${
                     selectedGenre
-                      ? 'bg-purple-600/30 border-purple-400 text-purple-200'
-                      : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
+                      ? 'text-purple-300'
+                      : 'text-gray-400 hover:text-gray-200'
                   }`}
                   data-testid="genre-filter-toggle"
                 >
-                  <span className="text-sm font-medium">
+                  <span>
                     Genre{selectedGenre ? `: ${selectedGenre}` : ''}
                   </span>
-                  <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
                 </button>
                 {expandedFilter === 'genre' && (
                   <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[150px]">
