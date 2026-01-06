@@ -178,7 +178,7 @@ export default function FeedbackSurveyPage() {
                     placeholder="Your answer..."
                     value={responses[question.id] || ''}
                     onChange={(e) => setResponses(prev => ({ ...prev, [question.id]: e.target.value }))}
-                    className="min-h-[80px] bg-gray-50 border-gray-200 focus:border-purple-300"
+                    className="min-h-[80px] bg-gray-50 border-gray-200 focus:border-purple-300 text-gray-900"
                     data-testid={`question-${question.id}`}
                   />
                 </CardContent>
