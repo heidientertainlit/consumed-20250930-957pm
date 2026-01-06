@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Trophy, ArrowLeft, Calendar, Clock, ChevronRight, Award, Sparkles } from "lucide-react";
+import { Trophy, ArrowLeft, Calendar, Clock, ChevronRight, Award, Sparkles, ChevronLeft, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import Navigation from "@/components/navigation";
+import FeedbackFooter from "@/components/feedback-footer";
 
 interface AwardsEvent {
   id: string;
@@ -63,127 +64,155 @@ export default function AwardsList() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <button 
-          onClick={() => navigate('/play')}
-          className="flex items-center text-gray-400 hover:text-white mb-6 transition-colors"
-          data-testid="button-back-play"
-        >
-          <ArrowLeft size={20} className="mr-2" />
-          Back to Play
-        </button>
+      {/* Header Section with Gradient - Matching Polls/Trivia */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-4">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/play')}
+            className="flex items-center text-gray-300 hover:text-white mb-6"
+            data-testid="button-back-play"
+          >
+            <ChevronLeft size={20} />
+            <span className="ml-1">Back</span>
+          </button>
 
-        <div className="text-center mb-8">
-          <div className="mb-4">
-            <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
-              Consumed
-            </Badge>
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <Target className="text-amber-400" size={32} />
+              <h1 className="text-3xl font-semibold text-white" data-testid="predictions-title">Predictions</h1>
+            </div>
+            <p className="text-gray-400 max-w-lg mx-auto">
+              Predict outcomes, earn points, and climb the leaderboard by showing off your expertise
+            </p>
           </div>
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 mb-4">
-            <Trophy size={32} className="text-black" />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Awards Ballots</h1>
-          <p className="text-gray-400">Make your predictions for upcoming award shows</p>
-        </div>
-
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-gray-400">Loading awards...</p>
-          </div>
-        ) : events && events.length > 0 ? (
-          <div className="space-y-4">
-            {events.map((event, index) => {
-              const comingSoon = isComingSoon(event);
-              return (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                onClick={() => !comingSoon && navigate(`/play/awards/${event.slug}`)}
-                className={`w-full rounded-2xl p-5 text-left transition-all ${
-                  comingSoon 
-                    ? 'bg-gray-800/40 border border-gray-700/30 cursor-default opacity-70' 
-                    : 'bg-gradient-to-r from-gray-800/80 to-gray-900/80 border border-gray-700/50 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 cursor-pointer group'
-                }`}
-                data-testid={`button-awards-${event.slug}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      comingSoon 
-                        ? 'bg-gradient-to-br from-gray-600 to-gray-700' 
-                        : 'bg-gradient-to-br from-amber-500 to-amber-600'
-                    }`}>
-                      <Award size={28} className={comingSoon ? 'text-gray-400' : 'text-black'} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className={`text-lg font-semibold transition-colors ${
-                            comingSoon ? 'text-gray-400' : 'text-white group-hover:text-amber-400'
-                          }`}>
-                            {event.name} {event.year}
-                          </h3>
-                          <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
-                            Consumed
-                          </Badge>
-                        </div>
-                        {getStatusBadge(event.status, !comingSoon)}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">
-                        {!comingSoon && event.deadline && (
-                          <span className="flex items-center">
-                            <Clock size={14} className="mr-1 text-amber-400" />
-                            Due: {formatDate(event.deadline)}
-                          </span>
-                        )}
-                        <span className="flex items-center">
-                          <Calendar size={14} className="mr-1" />
-                          Airs: {formatDate(event.ceremony_date)}
-                        </span>
-                        {!comingSoon && (
-                          <span className="flex items-center">
-                            <Sparkles size={14} className="mr-1" />
-                            +{event.points_per_correct} pts/correct
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {!comingSoon && (
-                    <ChevronRight size={24} className="text-gray-500 group-hover:text-amber-400 transition-colors" />
-                  )}
-                </div>
-              </motion.div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-gray-800/50 rounded-2xl border border-gray-700">
-            <Trophy size={48} className="mx-auto text-gray-500 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No Awards Available</h3>
-            <p className="text-gray-400">Check back soon for upcoming award shows!</p>
-          </div>
-        )}
-
-        <div className="mt-8 p-4 bg-gray-800/30 rounded-xl border border-gray-700/50">
-          <h4 className="text-sm font-semibold text-white mb-2 flex items-center">
-            <Sparkles size={16} className="mr-2 text-amber-400" />
-            How it works
-          </h4>
-          <ul className="text-sm text-gray-400 space-y-1">
-            <li>• Pick your winner for each category</li>
-            <li>• Picks auto-save instantly</li>
-            <li>• Earn points for each correct prediction</li>
-            <li>• Share your ballot with friends</li>
-          </ul>
         </div>
       </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-8 -mt-6">
+        {/* Awards Ballots Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
+                Consumed
+              </Badge>
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Trophy size={20} className="text-amber-500" />
+                Awards Ballots
+              </h2>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">Loading ballots...</p>
+            </div>
+          ) : events && events.length > 0 ? (
+            <div className="space-y-4">
+              {events.map((event, index) => {
+                const comingSoon = isComingSoon(event);
+                return (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => !comingSoon && navigate(`/play/awards/${event.slug}`)}
+                    className={`w-full rounded-2xl p-5 text-left transition-all ${
+                      comingSoon 
+                        ? 'bg-gray-100 border border-gray-200 cursor-default opacity-70' 
+                        : 'bg-white border border-gray-200 shadow-sm hover:border-amber-500/50 hover:shadow-md cursor-pointer group'
+                    }`}
+                    data-testid={`button-awards-${event.slug}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          comingSoon 
+                            ? 'bg-gray-200' 
+                            : 'bg-amber-50'
+                        }`}>
+                          <Award size={28} className={comingSoon ? 'text-gray-400' : 'text-amber-600'} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className={`text-lg font-bold transition-colors ${
+                              comingSoon ? 'text-gray-400' : 'text-gray-900 group-hover:text-amber-600'
+                            }`}>
+                              {event.name} {event.year}
+                            </h3>
+                            {getStatusBadge(event.status, !comingSoon)}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+                            {!comingSoon && event.deadline && (
+                              <span className="flex items-center">
+                                <Clock size={14} className="mr-1 text-amber-500" />
+                                Due: {formatDate(event.deadline)}
+                              </span>
+                            )}
+                            <span className="flex items-center">
+                              <Calendar size={14} className="mr-1" />
+                              Airs: {formatDate(event.ceremony_date)}
+                            </span>
+                            {!comingSoon && (
+                              <span className="flex items-center">
+                                <Sparkles size={14} className="mr-1 text-purple-600" />
+                                +{event.points_per_correct} pts/correct
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {!comingSoon && (
+                        <ChevronRight size={24} className="text-gray-400 group-hover:text-amber-500 transition-colors" />
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-2xl border border-gray-200 shadow-sm">
+              <Trophy size={48} className="mx-auto text-gray-300 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Awards Available</h3>
+              <p className="text-gray-500">Check back soon for upcoming award shows!</p>
+            </div>
+          )}
+        </div>
+
+        {/* How it works Section */}
+        <div className="mt-12 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+          <h4 className="text-base font-bold text-gray-900 mb-4 flex items-center">
+            <Sparkles size={20} className="mr-2 text-amber-500" />
+            How Predictions Work
+          </h4>
+          <div className="grid grid-cols-1 gap-4 text-sm text-gray-600">
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 font-bold">1</div>
+              <p>Pick your winner for each category before the deadline.</p>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 font-bold">2</div>
+              <p>Your picks are automatically saved as you make them.</p>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 font-bold">3</div>
+              <p>Earn points for every correct prediction made.</p>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 font-bold">4</div>
+              <p>Share your ballot link with friends to compare picks.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <FeedbackFooter />
     </div>
   );
 }

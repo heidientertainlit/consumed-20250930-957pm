@@ -4,7 +4,7 @@ import { useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Check, X, ChevronDown, ChevronUp, Share2, 
-  Users, TrendingUp, Info, ArrowLeft,
+  Users, TrendingUp, Info, ArrowLeft, ChevronLeft,
   Sparkles, Lock, Clock, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -366,20 +366,19 @@ export default function AwardsPredictions() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white pb-24">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/30 via-transparent to-purple-900/20" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-        
-        <div className="relative px-4 pt-12 pb-8">
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <Navigation />
+      
+      {/* Hero Header - Matching Predictions List Page */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-4 text-center">
           <button 
             onClick={() => navigate('/play/awards')}
-            className="flex items-center text-gray-400 hover:text-white mb-4 transition-colors"
+            className="flex items-center text-gray-300 hover:text-white mb-6 transition-colors"
             data-testid="button-back-awards"
           >
-            <ArrowLeft size={20} className="mr-2" />
-            Back to Awards
+            <ChevronLeft size={20} />
+            <span className="ml-1">Back to Predictions</span>
           </button>
           
           <div className="mb-4">
@@ -388,93 +387,109 @@ export default function AwardsPredictions() {
             </Badge>
           </div>
 
-          <div className="flex items-center space-x-3 mb-3">
-            <Trophy className="w-10 h-10 text-amber-400" />
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-200 via-amber-400 to-amber-300 bg-clip-text text-transparent">
-                {event.year} {event.name} Predictions
-              </h1>
-              <p className="text-gray-400 text-sm">
-                Make your picks. See how your predictions stack up.
-              </p>
-            </div>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 mb-4">
+            <Trophy className="w-8 h-8 text-amber-600" />
           </div>
           
-          {event.deadline && event.status === 'open' && (
-            <div className="flex items-center text-amber-400/80 text-sm mt-4">
-              <Clock size={14} className="mr-2" />
-              Predictions close: {new Date(event.deadline).toLocaleDateString('en-US', { 
-                month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
-              })}
-            </div>
-          )}
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {event.year} {event.name}
+          </h1>
+          <p className="text-gray-400 max-w-md mx-auto">
+            {event.deadline && event.status === 'open' ? (
+              <span className="flex items-center justify-center">
+                <Clock size={14} className="mr-1 text-amber-400" />
+                Closes: {new Date(event.deadline).toLocaleDateString('en-US', { 
+                  month: 'short', day: 'numeric', year: 'numeric'
+                })}
+              </span>
+            ) : event.status === 'locked' ? (
+              <span className="flex items-center justify-center text-amber-500">
+                <Lock size={14} className="mr-1" />
+                Predictions Locked
+              </span>
+            ) : (
+              "Make your picks. See how your predictions stack up."
+            )}
+          </p>
+        </div>
+      </div>
 
-          {event.status === 'locked' && (
-            <div className="flex items-center text-amber-500 text-sm mt-4 bg-amber-500/10 px-3 py-2 rounded-lg">
-              <Lock size={14} className="mr-2" />
-              Predictions are locked. Results coming soon!
-            </div>
-          )}
-
-          {/* Who's Playing Section */}
-          <div className="mt-6 bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-white flex items-center">
-                <Users size={16} className="mr-2 text-purple-400" />
-                Who's Playing
-              </h3>
-              <button
-                onClick={() => navigate('/leaderboard?tab=games')}
-                className="text-xs text-purple-400 hover:text-purple-300 flex items-center"
-                data-testid="button-see-leaderboard"
-              >
-                See Leaderboard
-                <TrendingUp size={14} className="ml-1" />
-              </button>
-            </div>
-            
-            {participants?.friends && participants.friends.length > 0 ? (
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex -space-x-2">
-                  {participants.friends.slice(0, 5).map((friend, i) => (
-                    <div
-                      key={friend.user_id}
-                      className="w-8 h-8 rounded-full border-2 border-gray-800 overflow-hidden bg-purple-600 flex items-center justify-center"
-                      title={friend.display_name || 'Friend'}
-                    >
-                      {friend.avatar_url ? (
-                        <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xs text-white font-medium">
-                          {(friend.display_name || '?')[0].toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                  {participants.friends.length > 5 && (
-                    <div className="w-8 h-8 rounded-full border-2 border-gray-800 bg-gray-700 flex items-center justify-center">
-                      <span className="text-xs text-gray-300">+{participants.friends.length - 5}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : null}
-            
-            <p className="text-xs text-gray-400">
-              {participants?.friends?.length || 0} friend{(participants?.friends?.length || 0) !== 1 ? 's' : ''} playing
-              {participants?.totalCount ? ` • ${participants.totalCount} total ballot${participants.totalCount !== 1 ? 's' : ''}` : ''}
-            </p>
+      <div className="max-w-4xl mx-auto px-4 -mt-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Picks</p>
+            <p className="text-lg font-bold text-gray-900">{picksCount}/{totalCategories}</p>
           </div>
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Points</p>
+            <p className="text-lg font-bold text-purple-600">{event.points_per_correct * picksCount}</p>
+          </div>
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Status</p>
+            <p className="text-lg font-bold text-amber-600 capitalize">{event.status}</p>
+          </div>
+        </div>
+
+        {/* Who's Playing Section */}
+        <div className="mb-8 bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center">
+              <Users size={18} className="mr-2 text-purple-600" />
+              Who's Playing
+            </h3>
+            <button
+              onClick={() => navigate('/leaderboard?tab=games')}
+              className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center"
+              data-testid="button-see-leaderboard"
+            >
+              See Leaderboard
+              <TrendingUp size={14} className="ml-1" />
+            </button>
+          </div>
+          
+          {participants?.friends && participants.friends.length > 0 ? (
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {participants.friends.slice(0, 5).map((friend) => (
+                  <div
+                    key={friend.user_id}
+                    className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-purple-100 flex items-center justify-center"
+                    title={friend.display_name || 'Friend'}
+                  >
+                    {friend.avatar_url ? (
+                      <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs text-purple-600 font-bold">
+                        {(friend.display_name || '?')[0].toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {participants.friends.length > 5 && (
+                  <div className="w-10 h-10 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center">
+                    <span className="text-xs text-gray-500 font-bold">+{participants.friends.length - 5}</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 font-medium">
+                {participants.friends.length} friend{participants.friends.length !== 1 ? 's' : ''} playing
+                {participants.totalCount ? ` • ${participants.totalCount} total ballots` : ''}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 italic">No friends playing yet. Invite them to join!</p>
+          )}
         </div>
       </div>
 
       {/* Sticky Category Tabs */}
       <div 
         ref={tabsRef}
-        className="sticky top-0 z-40 bg-gray-950/95 backdrop-blur-md border-b border-gray-800"
+        className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm"
       >
         <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex px-4 py-3 space-x-2 min-w-max">
+          <div className="flex px-4 py-4 space-x-2 min-w-max">
             {event.categories.map(category => {
               const hasPick = localPicks.has(category.id);
               const isActive = activeCategory === category.id;
@@ -483,17 +498,17 @@ export default function AwardsPredictions() {
                 <button
                   key={category.id}
                   onClick={() => switchToCategory(category.id)}
-                  className={`relative flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                  className={`relative flex items-center px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
                     isActive 
-                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black' 
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      ? 'bg-purple-600 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                   data-testid={`tab-category-${category.id}`}
                 >
                   {category.short_name}
                   {hasPick && (
-                    <span className="ml-2 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                      <Check size={10} className="text-white" />
+                    <span className={`ml-2 w-4 h-4 rounded-full flex items-center justify-center ${isActive ? 'bg-white' : 'bg-green-500'}`}>
+                      <Check size={10} className={isActive ? 'text-purple-600' : 'text-white'} />
                     </span>
                   )}
                 </button>
@@ -504,23 +519,20 @@ export default function AwardsPredictions() {
       </div>
 
       {/* Active Category Panel */}
-      <div className="px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {event.categories.filter(c => c.id === activeCategory).map(category => {
           const userPickId = localPicks.get(category.id);
           
           return (
             <motion.div 
               key={category.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
             >
-              {/* Category Title */}
-              <h2 className="text-xl font-bold text-white mb-4">{category.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
 
-              {/* Nominee Cards */}
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-4">
                 {category.nominees.map(nominee => {
                   const isPicked = userPickId === nominee.id;
                   const isWinner = event.status === 'completed' && category.winner_nominee_id === nominee.id;
@@ -531,23 +543,21 @@ export default function AwardsPredictions() {
                       key={nominee.id}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handlePick(category.id, nominee.id)}
-                      className={`relative flex items-start p-4 rounded-xl cursor-pointer transition-all ${
+                      className={`relative flex items-center p-4 rounded-2xl cursor-pointer transition-all ${
                         isPicked 
-                          ? 'bg-gradient-to-r from-amber-900/40 to-amber-800/30 border-2 border-amber-500 shadow-lg shadow-amber-500/20' 
-                          : 'bg-gray-800/50 border border-gray-700 hover:border-gray-600'
+                          ? 'bg-purple-50 border-2 border-purple-500 shadow-md' 
+                          : 'bg-white border border-gray-200 hover:border-gray-300'
                       } ${event.status !== 'open' ? 'cursor-default' : ''}`}
                       data-testid={`card-nominee-${nominee.id}`}
                     >
-                      {/* Winner Badge */}
                       {isWinner && (
-                        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-400 to-amber-500 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center">
-                          <Trophy size={12} className="mr-1" />
-                          WINNER
+                        <div className="absolute -top-3 right-4 bg-amber-500 text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center shadow-sm uppercase tracking-wider">
+                          <Trophy size={10} className="mr-1" />
+                          Winner
                         </div>
                       )}
                       
-                      {/* Poster */}
-                      <div className="w-16 h-24 rounded-lg overflow-hidden shadow-lg flex-shrink-0 mr-4 bg-gray-700">
+                      <div className="w-16 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mr-4 bg-gray-100">
                         {nominee.poster_url ? (
                           <img 
                             src={nominee.poster_url} 
@@ -556,51 +566,43 @@ export default function AwardsPredictions() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Trophy size={24} className="text-gray-500" />
+                            <Trophy size={20} className="text-gray-300" />
                           </div>
                         )}
                       </div>
                       
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-white text-lg">{nominee.name}</h3>
+                      <div className="flex-1 min-w-0 pr-8">
+                        <h3 className={`font-bold text-lg ${isPicked ? 'text-purple-900' : 'text-gray-900'}`}>{nominee.name}</h3>
                         {nominee.title && (
-                          <p className="text-gray-400 text-sm truncate">{nominee.title}</p>
-                        )}
-                        {nominee.subtitle && (
-                          <p className="text-gray-500 text-xs">{nominee.subtitle}</p>
+                          <p className={`text-sm font-medium ${isPicked ? 'text-purple-700/80' : 'text-gray-500'}`}>{nominee.title}</p>
                         )}
                         
-                        {/* Result indicator */}
                         {event.status === 'completed' && isPicked && (
-                          <div className={`mt-2 flex items-center text-sm ${userWasCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                          <div className={`mt-1 flex items-center text-xs font-bold uppercase tracking-wide ${userWasCorrect ? 'text-green-600' : 'text-red-500'}`}>
                             {userWasCorrect ? (
                               <>
-                                <Check size={16} className="mr-1" />
-                                You got this right! (+{event.points_per_correct} pts)
+                                <Check size={12} className="mr-1" />
+                                Correct!
                               </>
                             ) : (
                               <>
-                                <X size={16} className="mr-1" />
-                                You missed this one.
+                                <X size={12} className="mr-1" />
+                                Incorrect
                               </>
                             )}
                           </div>
                         )}
                       </div>
                       
-                      {/* Pick Button */}
-                      <div className="flex-shrink-0 ml-4">
-                        {event.status === 'open' && (
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                            isPicked 
-                              ? 'border-amber-500 bg-amber-500' 
-                              : 'border-gray-500'
-                          }`}>
-                            {isPicked && <Check size={14} className="text-black" />}
-                          </div>
-                        )}
-                      </div>
+                      {event.status === 'open' && (
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                          isPicked 
+                            ? 'border-purple-500 bg-purple-500' 
+                            : 'border-gray-200'
+                        }`}>
+                          {isPicked && <Check size={14} className="text-white" />}
+                        </div>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -610,16 +612,18 @@ export default function AwardsPredictions() {
         })}
       </div>
 
-      {/* Sticky Ballot Button */}
-      <div className="fixed bottom-20 left-0 right-0 px-4 z-50">
-        <button
+      <div className="px-4 pb-12 flex justify-center">
+        <Button 
           onClick={() => setShowBallotModal(true)}
-          className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-4 rounded-xl font-semibold shadow-lg shadow-purple-500/30 flex items-center justify-center"
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full px-8 py-6 text-lg shadow-lg shadow-purple-200 flex items-center gap-2"
           data-testid="button-view-ballot"
         >
-          <Trophy size={20} className="mr-2" />
-          View My Ballot ({picksCount} / {totalCategories} Picks Made)
-        </button>
+          <Info size={20} />
+          View Your Ballot
+          <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+            {picksCount}/{totalCategories}
+          </span>
+        </Button>
       </div>
 
       {/* My Ballot Modal */}
@@ -638,40 +642,40 @@ export default function AwardsPredictions() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-lg bg-gradient-to-b from-gray-900 to-gray-950 rounded-t-3xl max-h-[80vh] overflow-hidden"
+              className="w-full max-w-lg bg-white rounded-t-3xl max-h-[80vh] overflow-hidden"
             >
               {/* Modal Header */}
-              <div className="sticky top-0 bg-gray-900 px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white flex items-center">
-                  <Trophy size={24} className="mr-2 text-amber-400" />
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                  <Trophy size={24} className="mr-2 text-amber-500" />
                   My {event.year} {event.name} Ballot
                 </h2>
-                <button onClick={() => setShowBallotModal(false)} className="text-gray-400 hover:text-white">
+                <button onClick={() => setShowBallotModal(false)} className="text-gray-400 hover:text-gray-600">
                   <X size={24} />
                 </button>
               </div>
               
               {/* Ballot Picks List */}
-              <div className="px-6 py-4 overflow-y-auto max-h-[50vh]">
+              <div className="px-6 py-4 overflow-y-auto max-h-[50vh] bg-gray-50">
                 {getBallotPicks().length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No picks yet. Start making your predictions!</p>
+                  <p className="text-gray-500 text-center py-8">No picks yet. Start making your predictions!</p>
                 ) : (
                   <div className="space-y-3">
                     {getBallotPicks().map(pick => (
                       <div 
                         key={pick.categoryId}
-                        className="flex items-center justify-between bg-gray-800/50 rounded-lg px-4 py-3"
+                        className="flex items-center justify-between bg-white border border-gray-200 shadow-sm rounded-xl px-4 py-3"
                       >
                         <div>
-                          <p className="text-gray-400 text-xs">{pick.categoryName}</p>
-                          <p className="text-white font-medium">{pick.nomineeName}</p>
+                          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">{pick.categoryName}</p>
+                          <p className="text-gray-900 font-bold">{pick.nomineeName}</p>
                         </div>
                         <button 
                           onClick={() => {
                             setShowBallotModal(false);
                             switchToCategory(pick.categoryId);
                           }}
-                          className="text-amber-400 text-sm hover:underline"
+                          className="text-purple-600 text-sm font-bold hover:underline"
                         >
                           Edit
                         </button>
@@ -682,10 +686,10 @@ export default function AwardsPredictions() {
               </div>
               
               {/* Modal Footer */}
-              <div className="sticky bottom-0 bg-gray-900 px-6 pt-4 pb-6 border-t border-gray-800 space-y-3">
-                <div className="flex items-center justify-between text-sm text-gray-400">
-                  <span>{picksCount} of {totalCategories} categories picked</span>
-                  <span className="text-amber-400">
+              <div className="sticky bottom-0 bg-white px-6 pt-4 pb-8 border-t border-gray-100 space-y-4">
+                <div className="flex items-center justify-between text-sm font-medium">
+                  <span className="text-gray-500">{picksCount} of {totalCategories} categories picked</span>
+                  <span className="text-purple-600 font-bold">
                     Potential: +{picksCount * event.points_per_correct} pts
                   </span>
                 </div>
@@ -694,7 +698,7 @@ export default function AwardsPredictions() {
                   <Button
                     onClick={handleShare}
                     variant="outline"
-                    className="flex-1 border-gray-600"
+                    className="flex-1 border-gray-200 font-bold"
                     disabled={picksCount === 0}
                     data-testid="button-share-ballot"
                   >
@@ -703,7 +707,7 @@ export default function AwardsPredictions() {
                   </Button>
                   <Button
                     onClick={() => setShowBallotModal(false)}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 text-black font-semibold"
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold"
                     data-testid="button-done-ballot"
                   >
                     <Check size={18} className="mr-2" />
@@ -716,7 +720,7 @@ export default function AwardsPredictions() {
         )}
       </AnimatePresence>
 
-      <Navigation />
+      <FeedbackFooter />
     </div>
   );
 }
