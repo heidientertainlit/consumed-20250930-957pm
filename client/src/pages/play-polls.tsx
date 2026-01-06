@@ -59,36 +59,41 @@ export default function PlayPollsPage() {
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['/api/predictions/polls', selectedCategory, searchQuery, selectedGenre],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedCategory) params.set('category', selectedCategory);
-      if (searchQuery) params.set('search', searchQuery);
-      if (selectedGenre) params.set('genre', selectedGenre);
+      try {
+        const params = new URLSearchParams();
+        if (selectedCategory) params.set('category', selectedCategory);
+        if (searchQuery) params.set('search', searchQuery);
+        if (selectedGenre) params.set('genre', selectedGenre);
 
-      const { data, error } = await supabase.functions.invoke('get-polls', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(Object.fromEntries(params)),
-      });
+        // Try to invoke the edge function
+        const queryString = params.toString();
+        const { data, error } = await supabase.functions.invoke(
+          queryString ? `get-polls?${queryString}` : 'get-polls',
+          { method: 'GET' }
+        );
 
-      if (error) {
-        // Fallback to direct client fetch if function fails
-        const { data: directPools, error: directError } = await supabase
-          .from('prediction_pools')
-          .select('*')
-          .eq('status', 'open')
-          .eq('type', 'vote')
-          .order('created_at', { ascending: false });
-        
-        if (directError) throw new Error('Failed to fetch games');
-        return (directPools || []).map((p: any) => ({
-          ...p,
-          isConsumed: p.id?.startsWith('consumed-poll-') || p.origin_type === 'consumed'
-        }));
+        if (error) {
+          console.error('Error invoking get-polls:', error);
+          // Fallback to direct client fetch if function fails
+          const { data: pools, error: directError } = await supabase
+            .from('prediction_pools')
+            .select('*')
+            .eq('status', 'open')
+            .eq('type', 'vote')
+            .order('created_at', { ascending: false });
+          
+          if (directError) throw new Error('Failed to fetch games');
+          return (pools || []).map((p: any) => ({
+            ...p,
+            isConsumed: p.id?.startsWith('consumed-poll-') || p.origin_type === 'consumed'
+          }));
+        }
+
+        return data.polls || [];
+      } catch (err) {
+        console.error('Fetch polls error:', err);
+        return [];
       }
-
-      return data.polls || [];
     },
   });
 
@@ -570,6 +575,15 @@ export default function PlayPollsPage() {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-2">
+                        {game.isConsumed ? (
+                          <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
+                            Consumed
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
+                            User
+                          </Badge>
+                        )}
                         <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium uppercase">
                           Poll
                         </Badge>
