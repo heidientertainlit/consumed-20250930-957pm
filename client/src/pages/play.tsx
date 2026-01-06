@@ -696,38 +696,38 @@ export default function PlayPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <Link href="/play/awards">
               <button
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 transition-colors w-full border border-amber-200"
+                className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 transition-colors w-full border border-amber-200"
                 data-testid="browse-predictions"
               >
-                <Award className="text-amber-600" size={24} />
-                <span className="text-xs font-medium text-amber-600">Predictions</span>
+                <span className="text-sm font-semibold text-amber-700">Predictions</span>
+                <span className="text-xs text-amber-600/80">Make your picks</span>
               </button>
             </Link>
             <Link href="/play/polls">
               <button
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors w-full"
+                className="flex flex-col items-start p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors w-full"
                 data-testid="browse-polls"
               >
-                <CheckSquare className="text-blue-600" size={24} />
-                <span className="text-xs font-medium text-blue-600">Polls</span>
+                <span className="text-sm font-semibold text-blue-700">Polls</span>
+                <span className="text-xs text-blue-600/80">Vote & share</span>
               </button>
             </Link>
             <Link href="/play/trivia">
               <button
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors w-full"
+                className="flex flex-col items-start p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors w-full"
                 data-testid="browse-trivia"
               >
-                <HelpCircle className="text-green-600" size={24} />
-                <span className="text-xs font-medium text-green-600">Trivia</span>
+                <span className="text-sm font-semibold text-green-700">Trivia</span>
+                <span className="text-xs text-green-600/80">Test your knowledge</span>
               </button>
             </Link>
             <Link href="/play/ranks">
               <button
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 transition-colors w-full border border-orange-200"
+                className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 transition-colors w-full border border-orange-200"
                 data-testid="browse-ranks"
               >
-                <Trophy className="text-orange-600" size={24} />
-                <span className="text-xs font-medium text-orange-600">Rank Challenge</span>
+                <span className="text-sm font-semibold text-orange-700">Rank Challenge</span>
+                <span className="text-xs text-orange-600/80">Order your favorites</span>
               </button>
             </Link>
           </div>
