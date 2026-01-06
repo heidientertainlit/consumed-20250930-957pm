@@ -3551,49 +3551,46 @@ export default function UserProfile() {
         {activeSection === 'collections' && (isOwnProfile || friendshipStatus === 'friends') && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              {/* Section Header with Track Media Button */}
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {isOwnProfile ? 'Your Collections' : 'Collections'}
-                </h2>
+              {/* Sub-tabs for Lists and History */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCollectionsSubTab('lists')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      collectionsSubTab === 'lists'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid="collections-tab-lists"
+                  >
+                    <List size={16} />
+                    Lists
+                  </button>
+                  <button
+                    onClick={() => setCollectionsSubTab('history')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      collectionsSubTab === 'history'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid="collections-tab-history"
+                  >
+                    <Clock size={16} />
+                    History
+                  </button>
+                </div>
+
                 {isOwnProfile && (
                   <Button
                     onClick={() => setIsTrackModalOpen(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full"
+                    size="sm"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full h-9"
                     data-testid="button-track-media"
                   >
                     <Plus size={16} className="mr-2" />
                     Track Media
                   </Button>
                 )}
-              </div>
-
-              {/* Sub-tabs for Lists and History */}
-              <div className="flex items-center gap-2 mb-6">
-                <button
-                  onClick={() => setCollectionsSubTab('lists')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    collectionsSubTab === 'lists'
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  data-testid="collections-tab-lists"
-                >
-                  <List size={16} />
-                  Lists
-                </button>
-                <button
-                  onClick={() => setCollectionsSubTab('history')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    collectionsSubTab === 'history'
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  data-testid="collections-tab-history"
-                >
-                  <Clock size={16} />
-                  History
-                </button>
               </div>
 
               {/* Lists Tab Content */}
@@ -3604,11 +3601,12 @@ export default function UserProfile() {
                     <div className="flex justify-end mb-4">
                       <Button
                         onClick={() => setShowCreateListDialog(true)}
-                        variant="outline"
-                        className="border-purple-300 text-purple-600 hover:bg-purple-50 rounded-full"
+                        variant="ghost"
+                        size="sm"
+                        className="text-purple-600 hover:bg-purple-50 hover:text-purple-700 rounded-full h-8"
                         data-testid="button-create-list"
                       >
-                        <Plus size={16} className="mr-2" />
+                        <Plus size={14} className="mr-1.5" />
                         Create List
                       </Button>
                     </div>
