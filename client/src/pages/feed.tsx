@@ -2710,10 +2710,10 @@ export default function Feed() {
                 </Link>
               </div>
 
-              {/* Single Quick Glimpse at the top - shows recent friend activities */}
+              {/* Single Quick Glimpse at the top - scrolls through recent friend activities */}
               {socialPosts && socialPosts.length > 0 && (() => {
-                // Get recent activities for Quick Glimpse (last 10 unique activities)
-                const recentActivities = socialPosts.slice(0, 15).map(post => {
+                // Get recent activities for Quick Glimpse
+                const allActivities = socialPosts.slice(0, 30).map(post => {
                   const postType = post.type?.toLowerCase() || '';
                   const user = post.user;
                   if (!user) return null;
@@ -2741,25 +2741,57 @@ export default function Feed() {
                     return null;
                   }
                   
-                  return { name: cleanName, action, postId: post.id };
-                }).filter(Boolean).slice(0, 8);
+                  return { name: cleanName, action, postId: post.id, odUserId: user.id };
+                }).filter(Boolean);
                 
-                if (recentActivities.length < 2) return null;
+                // Mingle users - don't show same user consecutively
+                const mingledActivities: any[] = [];
+                let lastUserId: string | null = null;
+                const remaining = [...allActivities];
+                
+                while (remaining.length > 0 && mingledActivities.length < 10) {
+                  // Find next activity from a different user
+                  let foundIdx = remaining.findIndex(a => a.odUserId !== lastUserId);
+                  if (foundIdx === -1) foundIdx = 0; // If all same user, just take first
+                  
+                  const activity = remaining.splice(foundIdx, 1)[0];
+                  mingledActivities.push(activity);
+                  lastUserId = activity.odUserId;
+                }
+                
+                if (mingledActivities.length < 2) return null;
                 
                 return (
-                  <div className="mb-4 bg-purple-50 rounded-2xl p-3 border border-purple-100 shadow-sm" data-testid="quick-glimpse-top">
+                  <div className="mb-4 bg-purple-50 rounded-2xl p-3 border border-purple-100 shadow-sm overflow-hidden" data-testid="quick-glimpse-top">
                     <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <span>✨</span>
                       Quick Glimpse
                     </p>
-                    <div className="space-y-1">
-                      {recentActivities.slice(0, 3).map((activity: any, idx: number) => (
-                        <div key={`glimpse-${activity.postId}-${idx}`} className="text-sm">
-                          <span className="font-medium text-gray-900">{activity.name}</span>
-                          <span className="text-gray-600"> {activity.action}</span>
-                        </div>
-                      ))}
+                    <div className="h-[72px] overflow-hidden">
+                      <div 
+                        className="flex flex-col"
+                        style={{
+                          animation: `scrollVerticalGlimpseTop ${mingledActivities.length * 3}s linear infinite`,
+                        }}
+                      >
+                        {/* Duplicate for seamless loop */}
+                        {[...mingledActivities, ...mingledActivities].map((activity: any, idx: number) => (
+                          <div 
+                            key={`glimpse-${activity.postId}-${idx}`}
+                            className="h-6 flex items-center text-sm whitespace-nowrap"
+                          >
+                            <span className="font-medium text-gray-900">{activity.name}</span>
+                            <span className="text-gray-600 ml-1 truncate">{activity.action}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+                    <style>{`
+                      @keyframes scrollVerticalGlimpseTop {
+                        0% { transform: translateY(0); }
+                        100% { transform: translateY(-${mingledActivities.length * 24}px); }
+                      }
+                    `}</style>
                   </div>
                 );
               })()}
