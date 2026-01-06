@@ -68,7 +68,7 @@ export default function PlayHotTakesPage() {
           media_type_category,
           users:user_id (
             display_name,
-            username,
+            user_name,
             avatar_url
           )
         `)
@@ -114,7 +114,7 @@ export default function PlayHotTakesPage() {
         downvotes: post.hot_take_downvotes || 0,
         comments_count: post.comments_count || 0,
         user_display_name: post.users?.display_name,
-        user_username: post.users?.username,
+        user_username: post.users?.user_name,
         user_avatar_url: post.users?.avatar_url,
         user_voted: userVotes[post.id] || null,
         heat_score: (post.hot_take_upvotes || 0) - (post.hot_take_downvotes || 0),
@@ -276,8 +276,7 @@ export default function PlayHotTakesPage() {
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="mb-2">
-            <h1 className="text-3xl font-semibold text-white flex items-center gap-2" data-testid="hot-takes-title">
-              <Flame className="text-orange-500" size={28} />
+            <h1 className="text-3xl font-semibold text-white" data-testid="hot-takes-title">
               Hot Takes
             </h1>
           </div>

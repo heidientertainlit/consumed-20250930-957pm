@@ -60,7 +60,7 @@ export default function PlayAskRecsPage() {
           comments_count,
           users:user_id (
             display_name,
-            username,
+            user_name,
             avatar_url
           )
         `)
@@ -92,7 +92,7 @@ export default function PlayAskRecsPage() {
         likes_count: post.likes_count || 0,
         comments_count: post.comments_count || 0,
         user_display_name: post.users?.display_name,
-        user_username: post.users?.username,
+        user_username: post.users?.user_name,
         user_avatar_url: post.users?.avatar_url,
       }));
     },
