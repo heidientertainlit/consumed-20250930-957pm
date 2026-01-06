@@ -281,11 +281,25 @@ export default function PlayTriviaPage() {
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
 
+  // Normalize category names to consistent format
+  const normalizeCategory = (cat: string): string => {
+    if (!cat) return 'Other';
+    const lower = cat.toLowerCase().trim();
+    if (lower === 'movies' || lower === 'movie') return 'Movies';
+    if (lower === 'tv' || lower === 'tv shows' || lower === 'tv-show' || lower === 'tv show') return 'TV';
+    if (lower === 'books' || lower === 'book') return 'Books';
+    if (lower === 'games' || lower === 'game') return 'Games';
+    if (lower === 'music') return 'Music';
+    if (lower === 'podcasts' || lower === 'podcast') return 'Podcasts';
+    if (lower === 'pop culture') return 'Pop Culture';
+    return cat; // Return original if no match
+  };
+
   // Group games by category for carousel display
   const gamesByCategory = useMemo(() => {
     const groups: Record<string, any[]> = {};
     lowStakesGames.forEach((game: any) => {
-      const category = game.category || 'Other';
+      const category = normalizeCategory(game.category);
       if (!groups[category]) {
         groups[category] = [];
       }
