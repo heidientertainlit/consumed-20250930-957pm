@@ -22,6 +22,7 @@ const DEFAULT_QUESTIONS: SurveyQuestion[] = [
   { id: 2, question_text: 'What would make you open Consumed again tomorrow?', question_order: 2, is_required: true, is_active: true },
   { id: 3, question_text: 'If Consumed disappeared tomorrow, what would you miss — if anything?', question_order: 3, is_required: false, is_active: true },
   { id: 4, question_text: 'How would you describe Consumed to a friend?', question_order: 4, is_required: false, is_active: true },
+  { id: 5, question_text: 'Anything else you want to add or tell us as feedback?', question_order: 5, is_required: false, is_active: true },
 ];
 
 export default function FeedbackSurveyPage() {
@@ -147,7 +148,7 @@ export default function FeedbackSurveyPage() {
         </button>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">4 Question Survey</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">5 Question Survey</h1>
           <p className="text-gray-600">
             Your honest answers help us build something you'll actually love.
           </p>
