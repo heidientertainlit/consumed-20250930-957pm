@@ -508,6 +508,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         </div>
       </div>
 
+      {/* Floating Feedback Button - Beta Testing */}
+      <button
+        onClick={() => toast({ title: "Feedback", description: "Feedback form coming soon!" })}
+        className="fixed bottom-24 right-4 z-50 flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-full shadow-lg transition-all hover:scale-105"
+        data-testid="feedback-button"
+      >
+        <MessageCircle size={18} />
+        <span className="text-sm font-medium">Feedback</span>
+      </button>
+
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
         <div className="flex justify-around items-center h-18 px-4 pt-3 pb-4">
