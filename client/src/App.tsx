@@ -148,10 +148,16 @@ function Router() {
             <CollectionsPage />
           </ProtectedRoute>
         </Route>
+        <Route path="/trivia">
+          <RedirectTo to="/play/trivia" />
+        </Route>
         <Route path="/play/trivia">
           <ProtectedRoute>
             <PlayTrivia />
           </ProtectedRoute>
+        </Route>
+        <Route path="/polls">
+          <RedirectTo to="/play/polls" />
         </Route>
         <Route path="/play/polls">
           <ProtectedRoute>
@@ -187,10 +193,16 @@ function Router() {
             <PlayHighStakes />
           </ProtectedRoute>
         </Route>
+        <Route path="/ranks">
+          <RedirectTo to="/play/ranks" />
+        </Route>
         <Route path="/play/ranks">
           <ProtectedRoute>
             <PlayRanks />
           </ProtectedRoute>
+        </Route>
+        <Route path="/predictions">
+          <RedirectTo to="/play/awards" />
         </Route>
         <Route path="/play/hot-takes">
           <ProtectedRoute>
