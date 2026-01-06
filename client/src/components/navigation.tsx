@@ -287,7 +287,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   return (
     <>
       {/* Top bar with logo and points */}
-      <div className="bg-gradient-to-r from-slate-900 to-purple-900 sticky top-0 z-50">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] sticky top-0 z-50">
         <div className="flex justify-between items-center h-16 px-4">
           <Link href="/" className="flex items-center space-x-2">
             <img
