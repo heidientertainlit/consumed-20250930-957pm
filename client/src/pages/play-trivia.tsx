@@ -294,16 +294,18 @@ export default function PlayTriviaPage() {
     return groups;
   }, [lowStakesGames]);
 
-  // Category display info
-  const categoryInfo: Record<string, { icon: string; label: string }> = {
-    'Movies': { icon: '🎬', label: 'Movies' },
-    'TV': { icon: '📺', label: 'TV Shows' },
-    'Music': { icon: '🎵', label: 'Music' },
-    'Books': { icon: '📚', label: 'Books' },
-    'Games': { icon: '🎮', label: 'Games' },
-    'Podcasts': { icon: '🎙️', label: 'Podcasts' },
-    'Pop Culture': { icon: '⭐', label: 'Pop Culture' },
-    'Other': { icon: '🧠', label: 'General' },
+  // Category display info - consistent labeling without emojis
+  const categoryInfo: Record<string, { label: string }> = {
+    'Movies': { label: 'Movies' },
+    'TV': { label: 'TV Shows' },
+    'tv': { label: 'TV Shows' },
+    'tv-show': { label: 'TV Shows' },
+    'Music': { label: 'Music' },
+    'Books': { label: 'Books' },
+    'Games': { label: 'Games' },
+    'Podcasts': { label: 'Podcasts' },
+    'Pop Culture': { label: 'Pop Culture' },
+    'Other': { label: 'General' },
   };
 
   // Auto-open game if gameId is in URL
@@ -528,7 +530,6 @@ export default function PlayTriviaPage() {
               <div key={category} className="mb-6">
                 {/* Category Header */}
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-2xl">{categoryInfo[category]?.icon || '🧠'}</span>
                   <h2 className="text-xl font-bold text-gray-900">{categoryInfo[category]?.label || category}</h2>
                   <span className="text-sm text-gray-500">({games.length})</span>
                 </div>
