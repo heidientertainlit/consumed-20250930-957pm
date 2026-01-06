@@ -494,6 +494,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             
             {!isSearchExpanded && (
               <>
+                <Link
+                  href="/leaderboard"
+                  className="hover:opacity-70 transition-opacity"
+                  data-testid="leaderboard-button"
+                >
+                  <Trophy className="text-amber-400" size={20} />
+                </Link>
                 <NotificationBell />
               </>
             )}
