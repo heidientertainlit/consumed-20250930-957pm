@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -345,12 +345,19 @@ export default function PlayPollsPage() {
             <span className="ml-1">Back</span>
           </button>
 
-          <div className="mb-4">
-            <div className="flex items-center justify-center space-x-2 mb-3">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
               <Vote className="text-blue-400" size={32} />
               <h1 className="text-3xl font-semibold text-white" data-testid="polls-title">Polls</h1>
             </div>
-            <p className="text-gray-400 text-center mb-6">
+            <Link href="/leaderboard?tab=games">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-bold text-white transition-all">
+                <Trophy size={14} className="text-amber-400" />
+                Leaderboard
+              </button>
+            </Link>
+          </div>
+          <p className="text-gray-400 text-center mb-6">
               Vote on trending topics and see how your opinions compare to others
             </p>
 

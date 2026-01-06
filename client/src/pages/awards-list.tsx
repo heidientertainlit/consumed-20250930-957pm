@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Trophy, ArrowLeft, Calendar, Clock, ChevronRight, Award, Sparkles, ChevronLeft, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -70,22 +70,30 @@ export default function AwardsList() {
       {/* Header Section with Gradient - Matching Polls/Trivia */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate('/play')}
-            className="flex items-center text-gray-300 hover:text-white mb-6"
-            data-testid="button-back-play"
-          >
-            <ChevronLeft size={20} />
-            <span className="ml-1">Back</span>
-          </button>
+          <div className="flex items-center justify-between mb-6">
+            <Link href="/play">
+              <button
+                className="flex items-center text-gray-300 hover:text-white transition-colors"
+                data-testid="button-back-play"
+              >
+                <ChevronLeft size={20} />
+                <span className="ml-1">Back</span>
+              </button>
+            </Link>
+            <Link href="/leaderboard?tab=games">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-bold text-white transition-all">
+                <Trophy size={14} className="text-amber-400" />
+                Leaderboard
+              </button>
+            </Link>
+          </div>
 
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-3">
               <Target className="text-amber-400" size={32} />
               <h1 className="text-3xl font-semibold text-white" data-testid="predictions-title">Predictions</h1>
             </div>
-            <p className="text-gray-400 max-w-lg mx-auto">
+            <p className="text-gray-400 text-center">
               Predict outcomes, earn points, and climb the leaderboard by showing off your expertise
             </p>
           </div>

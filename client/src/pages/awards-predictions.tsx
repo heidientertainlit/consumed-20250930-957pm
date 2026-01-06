@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLocation, useRoute } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Check, X, ChevronDown, ChevronUp, Share2, 
@@ -372,15 +372,25 @@ export default function AwardsPredictions() {
       
       {/* Hero Header - Matching Predictions List Page */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-4 text-center">
-          <button 
-            onClick={() => navigate('/play/awards')}
-            className="flex items-center text-gray-300 hover:text-white mb-6 transition-colors"
-            data-testid="button-back-awards"
-          >
-            <ChevronLeft size={20} />
-            <span className="ml-1">Back to Predictions</span>
-          </button>
+          <div className="max-w-4xl mx-auto px-4 pt-4">
+            <div className="flex items-center justify-between mb-6">
+              <Link href="/play/awards">
+                <button 
+                  className="flex items-center text-gray-300 hover:text-white transition-colors"
+                  data-testid="button-back-awards"
+                >
+                  <ChevronLeft size={20} />
+                  <span className="ml-1">Back</span>
+                </button>
+              </Link>
+              <Link href="/leaderboard?tab=games">
+                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-bold text-white transition-all">
+                  <Trophy size={14} className="text-amber-400" />
+                  Leaderboard
+                </button>
+              </Link>
+            </div>
+          </div>
           
           <div className="mb-4">
             <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
