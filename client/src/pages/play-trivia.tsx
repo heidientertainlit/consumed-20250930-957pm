@@ -383,11 +383,8 @@ export default function PlayTriviaPage() {
             <span className="ml-1">Back</span>
           </button>
 
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Brain className="text-purple-400" size={32} />
-              <h1 className="text-3xl font-semibold text-white" data-testid="trivia-title">Trivia</h1>
-            </div>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-semibold text-white" data-testid="trivia-title">Trivia</h1>
             <Link href="/leaderboard?tab=games">
               <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-bold text-white transition-all">
                 <Trophy size={14} className="text-amber-400" />
@@ -395,9 +392,9 @@ export default function PlayTriviaPage() {
               </button>
             </Link>
           </div>
-          <p className="text-gray-400 text-center mb-6">
-              Test your knowledge against friends on different entertainment topics
-            </p>
+          <p className="text-gray-400 text-left mb-6">
+            Test your knowledge against friends on different entertainment topics
+          </p>
 
             {/* Search Row */}
             <div className="relative mb-4">

@@ -88,12 +88,9 @@ export default function AwardsList() {
             </Link>
           </div>
 
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-2 mb-3">
-              <Target className="text-amber-400" size={32} />
-              <h1 className="text-3xl font-semibold text-white" data-testid="predictions-title">Predictions</h1>
-            </div>
-            <p className="text-gray-400 text-center">
+          <div>
+            <h1 className="text-3xl font-semibold text-white mb-2" data-testid="predictions-title">Predictions</h1>
+            <p className="text-gray-400 text-left">
               Predict outcomes, earn points, and climb the leaderboard by showing off your expertise
             </p>
           </div>
