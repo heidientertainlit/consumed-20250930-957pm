@@ -1724,7 +1724,7 @@ export default function UserProfile() {
   const handleShareListDirect = async (listId: string, listTitle: string) => {
     try {
       const listSlug = listTitle.toLowerCase().replace(/\s+/g, '-');
-      const userId = session?.user?.id || profileUser?.id;
+      const userId = session?.user?.id || viewingUserId;
       
       console.log('Sharing list:', { listId, listTitle, listSlug, userId });
       
@@ -2320,8 +2320,8 @@ export default function UserProfile() {
     }
 
     try {
-      // Use the session user ID or profile user ID
-      const userId = session?.user?.id || profileUser?.id;
+      // Use the session user ID or viewing user ID
+      const userId = session?.user?.id || viewingUserId;
       
       await copyLink({
         kind: 'edna',
@@ -3955,62 +3955,6 @@ export default function UserProfile() {
                           <div className="flex justify-between items-center text-xs text-gray-500">
                             <span>{bet.points} points at stake</span>
                             <span>{new Date(bet.created_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}                          ? 'Predict if your friends will love or hate media they added!' 
-                          : 'When friends bet on your reactions, they\'ll appear here'}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {userBets.map((bet) => (
-                        <div 
-                          key={bet.id} 
-                          className="bg-gray-50 rounded-xl p-4 border border-gray-200"
-                          data-testid={`bet-item-${bet.id}`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  bet.status === 'pending' 
-                                    ? 'bg-yellow-100 text-yellow-700' 
-                                    : bet.status === 'won' 
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-red-100 text-red-700'
-                                }`}>
-                                  {bet.status === 'pending' ? '⏳ Pending' : bet.status === 'won' ? '✅ Won' : '❌ Lost'}
-                                </span>
-                                {bet.points_won && (
-                                  <span className="text-xs text-green-600 font-medium">+{bet.points_won} pts</span>
-                                )}
-                              </div>
-                              <h4 className="font-medium text-gray-900">{bet.media_title}</h4>
-                              <p className="text-sm text-gray-600">
-                                {betsTab === 'placed' ? (
-                                  <>
-                                    You bet {bet.target_user?.display_name || bet.target_user?.user_name || 'someone'} will{' '}
-                                    <span className={bet.prediction === 'will_like' ? 'text-green-600' : 'text-red-600'}>
-                                      {bet.prediction === 'will_like' ? 'love it 💚' : 'not like it 👎'}
-                                    </span>
-                                  </>
-                                ) : (
-                                  <>
-                                    {bet.bettor?.display_name || bet.bettor?.user_name || 'Someone'} thinks you'll{' '}
-                                    <span className={bet.prediction === 'will_like' ? 'text-green-600' : 'text-red-600'}>
-                                      {bet.prediction === 'will_like' ? 'love it 💚' : 'not like it 👎'}
-                                    </span>
-                                  </>
-                                )}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-1">
-                                {new Date(bet.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
                           </div>
                         </div>
                       ))}
