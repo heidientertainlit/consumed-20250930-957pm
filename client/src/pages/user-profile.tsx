@@ -3550,33 +3550,29 @@ export default function UserProfile() {
         {/* Collections Section - Show for own profile or friends */}
         {activeSection === 'collections' && (isOwnProfile || friendshipStatus === 'friends') && (
           <div ref={listsRef} className="px-4 mb-8">
-            {/* Action Buttons - Only for own profile */}
-            {isOwnProfile && (
-              <div className="flex items-center justify-end gap-2 mb-3">
-                <Button
-                  onClick={() => setShowCreateListDialog(true)}
-                  variant="ghost"
-                  size="sm"
-                  className="text-purple-600 hover:bg-purple-50 hover:text-purple-700 rounded-full h-8 px-3"
-                  data-testid="button-create-list-top"
-                >
-                  <Plus size={14} className="mr-1.5" />
-                  Create List
-                </Button>
-                <Button
-                  onClick={() => setIsTrackModalOpen(true)}
-                  variant="ghost"
-                  size="sm"
-                  className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-full h-8 px-3"
-                  data-testid="button-track-media-top"
-                >
-                  <Plus size={14} className="mr-1.5" />
-                  Add Media
-                </Button>
-              </div>
-            )}
-
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+              {/* Action Buttons - Only for own profile */}
+              {isOwnProfile && (
+                <div className="flex items-center gap-6 mb-6">
+                  <button
+                    onClick={() => setShowCreateListDialog(true)}
+                    className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold transition-colors"
+                    data-testid="button-create-list-inline"
+                  >
+                    <Plus size={20} />
+                    <span className="text-sm">Create List</span>
+                  </button>
+                  <button
+                    onClick={() => setIsTrackModalOpen(true)}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition-colors"
+                    data-testid="button-add-media-inline"
+                  >
+                    <Plus size={20} />
+                    <span className="text-sm">Add Media</span>
+                  </button>
+                </div>
+              )}
+
               {/* Sub-tabs for Lists and History */}
               <div className="flex flex-col gap-4 mb-6">
                 <div className="flex items-center justify-between">
