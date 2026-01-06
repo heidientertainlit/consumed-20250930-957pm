@@ -901,6 +901,9 @@ serve(async (req) => {
         
         const hasMedia = post.media_title && post.media_title.trim() !== '';
         
+        // Determine if this is a text-only post (for hot takes filtering)
+        const isTextOnly = !hasMedia && !post.prediction_pool_id && !post.list_id && !post.rank_id && !post.media_external_id;
+        
         // Get rank data for rank_share posts
         const rankData = post.rank_id ? rankDataMap.get(post.rank_id) : null;
         
@@ -968,6 +971,7 @@ serve(async (req) => {
             totalCount: listData.totalCount
           } : null,
           recCategory: post.rec_category || null,
+          isTextOnly: isTextOnly,
           fireVotes: post.fire_votes || 0,
           iceVotes: post.ice_votes || 0,
           mediaItems: hasMedia ? [{

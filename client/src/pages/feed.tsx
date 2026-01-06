@@ -52,6 +52,8 @@ interface SocialPost {
   containsSpoilers?: boolean;
   rating?: number;
   progress?: string;
+  isTextOnly?: boolean;
+  recCategory?: string;
   listPreview?: Array<{
     id: string;
     title: string;
@@ -1408,16 +1410,18 @@ export default function Feed() {
     }
     
     if (feedFilter === 'hot-takes') {
-      // Hot takes = text-only posts (no media items) with substantial content
-      const hasNoMedia = !post.mediaItems || post.mediaItems.length === 0;
-      const hasContent = post.content && post.content.trim().length > 10;
+      // Hot takes = text-only posts with substantial content
+      // Use isTextOnly flag from backend if available, otherwise fallback to content check
+      const isHotTake = post.isTextOnly === true || 
+        ((!post.mediaItems || post.mediaItems.length === 0) && post.content && post.content.trim().length > 10);
       // Exclude special types that aren't opinion posts
       const isExcludedType = ['prediction', 'poll', 'trivia', 'rank_share'].includes(post.type?.toLowerCase() || '');
-      if (!hasNoMedia || !hasContent || isExcludedType) return false;
+      if (!isHotTake || isExcludedType) return false;
     }
     
     if (feedFilter === 'ask-for-recs') {
-      // Ask for recs = posts asking for recommendations
+      // Ask for recs = posts with recCategory set OR posts with recommendation keywords
+      const hasRecCategory = post.recCategory && post.recCategory.trim() !== '';
       const contentLower = (post.content || '').toLowerCase();
       const hasRecKeyword = 
         contentLower.includes('recommend') || 
@@ -1429,7 +1433,7 @@ export default function Feed() {
         contentLower.includes('any recs') ||
         contentLower.includes('recs?') ||
         contentLower.includes('ideas?');
-      if (!hasRecKeyword) return false;
+      if (!hasRecCategory && !hasRecKeyword) return false;
     }
     
     // Apply media type filter
