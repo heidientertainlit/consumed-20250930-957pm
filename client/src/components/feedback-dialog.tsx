@@ -69,21 +69,15 @@ export function FeedbackDialog({ isOpen, onClose }: FeedbackDialogProps) {
         </DialogHeader>
         
         <div className="space-y-4 pt-2">
-          <div className="text-gray-600 text-sm leading-relaxed space-y-3">
+          <div className="text-gray-600 text-sm leading-relaxed">
             <p>
-              We're still in beta, and your honest feedback helps shape what this becomes.
-            </p>
-            <p>
-              Tell us what's clicking, what's confusing, and what you wish existed.
-            </p>
-            <p className="font-medium text-gray-800">
-              Feedback = gold. You won't hurt our feelings.
+              We're still in beta, and your honest feedback helps shape what this becomes. Tell us what's clicking, what's confusing, and what you wish existed. Feedback = gold. You won't hurt our feelings.
             </p>
           </div>
 
           <div className="border-t border-gray-100 pt-4">
             <p className="text-sm text-gray-600 mb-3">
-              Submit openly below or take the 2-minute survey →
+              Submit any thoughts below or take the 2-minute survey here:
             </p>
             
             <Button 
