@@ -409,7 +409,7 @@ export default function PlayTriviaPage() {
               <div className="relative">
                 <button
                   onClick={() => setExpandedFilter(expandedFilter === 'type' ? null : 'type')}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded transition-all text-xs ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${
                     triviaType !== 'all'
                       ? 'text-purple-300'
                       : 'text-gray-400 hover:text-gray-200'
@@ -448,7 +448,7 @@ export default function PlayTriviaPage() {
               <div className="relative">
                 <button
                   onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded transition-all text-xs ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${
                     selectedCategory
                       ? 'text-purple-300'
                       : 'text-gray-400 hover:text-gray-200'
@@ -501,7 +501,7 @@ export default function PlayTriviaPage() {
               <div className="relative">
                 <button
                   onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded transition-all text-xs ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${
                     selectedGenre
                       ? 'text-purple-300'
                       : 'text-gray-400 hover:text-gray-200'
