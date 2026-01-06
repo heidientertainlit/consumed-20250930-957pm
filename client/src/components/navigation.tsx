@@ -498,7 +498,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               <div className="flex items-center gap-6">
                 <Link
                   href="/leaderboard"
-                  className="hover:opacity-70 transition-opacity ml-1"
+                  className="hover:opacity-70 transition-opacity ml-2"
                   data-testid="leaderboard-button"
                 >
                   <Trophy className="text-purple-400" size={20} />
