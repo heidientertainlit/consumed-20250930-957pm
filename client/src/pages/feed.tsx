@@ -1071,6 +1071,25 @@ export default function Feed() {
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
 
+  // Debug: Log post types for filter debugging
+  useEffect(() => {
+    if (socialPosts.length > 0 && feedFilter) {
+      const typeCounts = socialPosts.reduce((acc, post) => {
+        const t = post.type || 'unknown';
+        acc[t] = (acc[t] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log('🔍 Feed filter active:', feedFilter);
+      console.log('🔍 Post types in feed:', typeCounts);
+      console.log('🔍 Posts without media:', socialPosts.filter(p => !p.mediaItems || p.mediaItems.length === 0).length);
+      console.log('🔍 Hot take type posts:', socialPosts.filter(p => p.type?.toLowerCase() === 'hot_take').length);
+      console.log('🔍 Ask for recs posts:', socialPosts.filter(p => {
+        const content = (p.content || '').toLowerCase();
+        return p.type === 'ask_for_recs' || content.includes('recommend') || content.includes('suggestion');
+      }).length);
+    }
+  }, [feedFilter, socialPosts.length]);
+
   // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
   // Ratings consolidate if 2+ in same day, list adds go to Quick Glimpse (don't consolidate)
   const TIME_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours (same day)
@@ -2885,6 +2904,61 @@ export default function Feed() {
                   </div>
                 );
               })()}
+
+              {/* Empty state for filtered views */}
+              {feedFilter && filteredPosts.length === 0 && (
+                <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
+                  {feedFilter === 'hot-takes' && (
+                    <>
+                      <div className="text-4xl mb-3">🔥</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Hot Takes Yet</h3>
+                      <p className="text-gray-500 text-sm">Be the first to share a bold opinion!</p>
+                    </>
+                  )}
+                  {feedFilter === 'ask-for-recs' && (
+                    <>
+                      <div className="text-4xl mb-3">💡</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Recommendations Requests</h3>
+                      <p className="text-gray-500 text-sm">Ask your friends what to watch, read, or listen to next!</p>
+                    </>
+                  )}
+                  {feedFilter === 'predictions' && (
+                    <>
+                      <div className="text-4xl mb-3">🎯</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Predictions Yet</h3>
+                      <p className="text-gray-500 text-sm">Make your first prediction in the Play section!</p>
+                    </>
+                  )}
+                  {feedFilter === 'polls' && (
+                    <>
+                      <div className="text-4xl mb-3">📊</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Polls Yet</h3>
+                      <p className="text-gray-500 text-sm">Create a poll and get your friends' opinions!</p>
+                    </>
+                  )}
+                  {feedFilter === 'trivia' && (
+                    <>
+                      <div className="text-4xl mb-3">🧠</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Trivia Activity</h3>
+                      <p className="text-gray-500 text-sm">Play trivia and your scores will show up here!</p>
+                    </>
+                  )}
+                  {feedFilter === 'rate-review' && (
+                    <>
+                      <div className="text-4xl mb-3">⭐</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Ratings Yet</h3>
+                      <p className="text-gray-500 text-sm">Rate something you've consumed to see it here!</p>
+                    </>
+                  )}
+                  {feedFilter === 'friends' && (
+                    <>
+                      <div className="text-4xl mb-3">👥</div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Friend Activity</h3>
+                      <p className="text-gray-500 text-sm">Follow more friends to see their activity!</p>
+                    </>
+                  )}
+                </div>
+              )}
 
               {filteredPosts.filter((item: any) => {
                 // Filter out incorrectly formatted prediction posts
