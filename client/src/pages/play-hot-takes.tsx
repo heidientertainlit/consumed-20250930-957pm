@@ -544,13 +544,13 @@ export default function PlayHotTakesPage() {
                           <div className="flex items-center justify-between mb-2">
                             <Badge 
                               variant="outline" 
-                              className={`text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider ${
+                              className={`text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider ${
                                 take.isConsumed 
-                                  ? 'border-purple-500 text-purple-600 bg-purple-50' 
-                                  : 'border-gray-300 text-gray-500'
+                                  ? 'border-transparent bg-purple-600 text-white' 
+                                  : 'border-gray-300 text-gray-500 bg-transparent'
                               }`}
                             >
-                              {take.isConsumed ? '🏆 Consumed' : 'User'}
+                              {take.isConsumed ? 'CONSUMED' : 'User'}
                             </Badge>
                             <button
                               className="p-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors"
