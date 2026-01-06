@@ -61,7 +61,7 @@ export default function PlayAskRecsPage() {
           users:user_id (
             display_name,
             user_name,
-            avatar_url
+            avatar
           )
         `)
         .eq('post_type', 'ask_for_recs')
@@ -93,7 +93,7 @@ export default function PlayAskRecsPage() {
         comments_count: post.comments_count || 0,
         user_display_name: post.users?.display_name,
         user_username: post.users?.user_name,
-        user_avatar_url: post.users?.avatar_url,
+        user_avatar_url: post.users?.avatar,
       }));
     },
   });

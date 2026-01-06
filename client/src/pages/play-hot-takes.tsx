@@ -26,6 +26,7 @@ interface HotTake {
   user_voted?: 'up' | 'down' | null;
   heat_score?: number;
   media_type_category?: string;
+  isConsumed?: boolean;
 }
 
 export default function PlayHotTakesPage() {
@@ -46,6 +47,93 @@ export default function PlayHotTakesPage() {
     { id: 'Pop Culture', label: 'Pop Culture' },
   ];
 
+  const consumedHotTakes: HotTake[] = [
+    {
+      id: 'consumed-hot-take-1',
+      user_id: 'consumed',
+      content: "Friends is overrated. The laugh track does all the heavy lifting.",
+      created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 127,
+      downvotes: 89,
+      comments_count: 34,
+      user_display_name: 'Consumed',
+      user_username: 'consumed',
+      heat_score: 38,
+      media_type_category: 'TV',
+      isConsumed: true,
+    },
+    {
+      id: 'consumed-hot-take-2',
+      user_id: 'consumed',
+      content: "The Marvel Cinematic Universe peaked with Infinity War and it's been downhill ever since.",
+      created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 215,
+      downvotes: 142,
+      comments_count: 67,
+      user_display_name: 'Consumed',
+      user_username: 'consumed',
+      heat_score: 73,
+      media_type_category: 'Movies',
+      isConsumed: true,
+    },
+    {
+      id: 'consumed-hot-take-3',
+      user_id: 'consumed',
+      content: "Taylor Swift's best album is Folklore and it's not even close.",
+      created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 342,
+      downvotes: 98,
+      comments_count: 89,
+      user_display_name: 'Consumed',
+      user_username: 'consumed',
+      heat_score: 244,
+      media_type_category: 'Music',
+      isConsumed: true,
+    },
+    {
+      id: 'consumed-hot-take-4',
+      user_id: 'consumed',
+      content: "The book is NOT always better than the movie. Fight Club proves this.",
+      created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 189,
+      downvotes: 67,
+      comments_count: 45,
+      user_display_name: 'Consumed',
+      user_username: 'consumed',
+      heat_score: 122,
+      media_type_category: 'Books',
+      isConsumed: true,
+    },
+    {
+      id: 'consumed-hot-take-5',
+      user_id: 'consumed',
+      content: "The Office (US) became unwatchable after Michael Scott left.",
+      created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 276,
+      downvotes: 54,
+      comments_count: 78,
+      user_display_name: 'Consumed',
+      user_username: 'consumed',
+      heat_score: 222,
+      media_type_category: 'TV',
+      isConsumed: true,
+    },
+    {
+      id: 'consumed-hot-take-6',
+      user_id: 'consumed',
+      content: "Beyoncé is talented but overrated. There, I said it.",
+      created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      upvotes: 156,
+      downvotes: 234,
+      comments_count: 102,
+      user_display_name: 'Consumed',
+      user_username: 'consumed',
+      heat_score: -78,
+      media_type_category: 'Music',
+      isConsumed: true,
+    },
+  ];
+
   const handleTrackConsumption = () => {
     setIsTrackModalOpen(true);
   };
@@ -62,22 +150,22 @@ export default function PlayHotTakesPage() {
           user_id,
           content,
           created_at,
-          hot_take_upvotes,
-          hot_take_downvotes,
+          fire_votes,
+          ice_votes,
           comments_count,
-          media_type_category,
+          media_type,
           users:user_id (
             display_name,
             user_name,
-            avatar_url
+            avatar
           )
         `)
         .eq('post_type', 'hot_take')
-        .eq('is_hidden', false)
+        .eq('hidden', false)
         .order('created_at', { ascending: false });
 
       if (selectedCategory) {
-        query = query.eq('media_type_category', selectedCategory);
+        query = query.eq('media_type', selectedCategory);
       }
 
       if (searchQuery) {
@@ -110,15 +198,16 @@ export default function PlayHotTakesPage() {
         user_id: post.user_id,
         content: post.content,
         created_at: post.created_at,
-        upvotes: post.hot_take_upvotes || 0,
-        downvotes: post.hot_take_downvotes || 0,
+        upvotes: post.fire_votes || 0,
+        downvotes: post.ice_votes || 0,
         comments_count: post.comments_count || 0,
         user_display_name: post.users?.display_name,
         user_username: post.users?.user_name,
-        user_avatar_url: post.users?.avatar_url,
+        user_avatar_url: post.users?.avatar,
         user_voted: userVotes[post.id] || null,
-        heat_score: (post.hot_take_upvotes || 0) - (post.hot_take_downvotes || 0),
-        media_type_category: post.media_type_category
+        heat_score: (post.fire_votes || 0) - (post.ice_votes || 0),
+        media_type_category: post.media_type || 'Pop Culture',
+        isConsumed: false
       }));
     },
   });
@@ -136,10 +225,10 @@ export default function PlayHotTakesPage() {
           user_id: user.id,
           content: content,
           post_type: 'hot_take',
-          media_type_category: postCategory,
-          is_hidden: false,
-          hot_take_upvotes: 0,
-          hot_take_downvotes: 0,
+          media_type: postCategory,
+          hidden: false,
+          fire_votes: 0,
+          ice_votes: 0,
         })
         .select()
         .single();
@@ -173,7 +262,7 @@ export default function PlayHotTakesPage() {
 
       const { data: currentPost } = await supabase
         .from('social_posts')
-        .select('hot_take_upvotes, hot_take_downvotes')
+        .select('fire_votes, ice_votes')
         .eq('id', postId)
         .single();
 
@@ -181,34 +270,34 @@ export default function PlayHotTakesPage() {
         if (existingVote.vote_type === voteType) {
           await supabase.from('hot_take_votes').delete().eq('id', existingVote.id);
           const currentValue = voteType === 'up' 
-            ? (currentPost?.hot_take_upvotes || 0) 
-            : (currentPost?.hot_take_downvotes || 0);
+            ? (currentPost?.fire_votes || 0) 
+            : (currentPost?.ice_votes || 0);
           await supabase
             .from('social_posts')
             .update(voteType === 'up' 
-              ? { hot_take_upvotes: Math.max(0, currentValue - 1) }
-              : { hot_take_downvotes: Math.max(0, currentValue - 1) })
+              ? { fire_votes: Math.max(0, currentValue - 1) }
+              : { ice_votes: Math.max(0, currentValue - 1) })
             .eq('id', postId);
           return { action: 'removed', voteType };
         } else {
           await supabase.from('hot_take_votes').update({ vote_type: voteType }).eq('id', existingVote.id);
           const oldValue = existingVote.vote_type === 'up' 
-            ? (currentPost?.hot_take_upvotes || 0) 
-            : (currentPost?.hot_take_downvotes || 0);
+            ? (currentPost?.fire_votes || 0) 
+            : (currentPost?.ice_votes || 0);
           const newValue = voteType === 'up' 
-            ? (currentPost?.hot_take_upvotes || 0) 
-            : (currentPost?.hot_take_downvotes || 0);
+            ? (currentPost?.fire_votes || 0) 
+            : (currentPost?.ice_votes || 0);
           await supabase
             .from('social_posts')
             .update(existingVote.vote_type === 'up' 
-              ? { hot_take_upvotes: Math.max(0, oldValue - 1) }
-              : { hot_take_downvotes: Math.max(0, oldValue - 1) })
+              ? { fire_votes: Math.max(0, oldValue - 1) }
+              : { ice_votes: Math.max(0, oldValue - 1) })
             .eq('id', postId);
           await supabase
             .from('social_posts')
             .update(voteType === 'up' 
-              ? { hot_take_upvotes: newValue + 1 }
-              : { hot_take_downvotes: newValue + 1 })
+              ? { fire_votes: newValue + 1 }
+              : { ice_votes: newValue + 1 })
             .eq('id', postId);
           return { action: 'changed', voteType };
         }
@@ -219,13 +308,13 @@ export default function PlayHotTakesPage() {
           vote_type: voteType
         });
         const currentValue = voteType === 'up' 
-          ? (currentPost?.hot_take_upvotes || 0) 
-          : (currentPost?.hot_take_downvotes || 0);
+          ? (currentPost?.fire_votes || 0) 
+          : (currentPost?.ice_votes || 0);
         await supabase
           .from('social_posts')
           .update(voteType === 'up' 
-            ? { hot_take_upvotes: currentValue + 1 }
-            : { hot_take_downvotes: currentValue + 1 })
+            ? { fire_votes: currentValue + 1 }
+            : { ice_votes: currentValue + 1 })
           .eq('id', postId);
         return { action: 'added', voteType };
       }
@@ -238,9 +327,26 @@ export default function PlayHotTakesPage() {
     }
   });
 
+  const allHotTakes = useMemo(() => {
+    let filteredConsumed = consumedHotTakes;
+    
+    if (selectedCategory) {
+      filteredConsumed = filteredConsumed.filter(t => t.media_type_category === selectedCategory);
+    }
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filteredConsumed = filteredConsumed.filter(t => 
+        t.content.toLowerCase().includes(query)
+      );
+    }
+    
+    return [...filteredConsumed, ...hotTakes];
+  }, [hotTakes, selectedCategory, searchQuery]);
+
   const takesByCategory = useMemo(() => {
     const groups: Record<string, HotTake[]> = {};
-    hotTakes.forEach((take: HotTake) => {
+    allHotTakes.forEach((take: HotTake) => {
       const category = take.media_type_category || 'Pop Culture';
       if (!groups[category]) {
         groups[category] = [];
@@ -248,12 +354,12 @@ export default function PlayHotTakesPage() {
       groups[category].push(take);
     });
     return groups;
-  }, [hotTakes]);
+  }, [allHotTakes]);
 
   const hottestTake = useMemo(() => {
-    if (hotTakes.length === 0) return null;
-    return [...hotTakes].sort((a, b) => (b.heat_score || 0) - (a.heat_score || 0))[0];
-  }, [hotTakes]);
+    if (allHotTakes.length === 0) return null;
+    return [...allHotTakes].sort((a, b) => (b.heat_score || 0) - (a.heat_score || 0))[0];
+  }, [allHotTakes]);
 
   if (isLoading) {
     return (
@@ -415,7 +521,7 @@ export default function PlayHotTakesPage() {
         )}
 
         {/* Takes by Category */}
-        {hotTakes.length === 0 ? (
+        {allHotTakes.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
             <div className="text-4xl mb-3">🔥</div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Hot Takes Yet</h3>
@@ -436,8 +542,15 @@ export default function PlayHotTakesPage() {
                       <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden h-full" data-testid={`hot-take-${take.id}`}>
                         <CardHeader className="pb-2 pt-4 px-4">
                           <div className="flex items-center justify-between mb-2">
-                            <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
-                              User
+                            <Badge 
+                              variant="outline" 
+                              className={`text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider ${
+                                take.isConsumed 
+                                  ? 'border-purple-500 text-purple-600 bg-purple-50' 
+                                  : 'border-gray-300 text-gray-500'
+                              }`}
+                            >
+                              {take.isConsumed ? '🏆 Consumed' : 'User'}
                             </Badge>
                             <button
                               className="p-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors"
