@@ -2622,7 +2622,7 @@ export default function Feed() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       {/* Header Section with Daily Challenge */}
-      <div className="bg-gradient-to-r from-slate-900 to-purple-900 pb-6 -mt-px">
+      <div className="bg-gradient-to-b from-black via-[#1a1a2e] to-purple-900 pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
           <div className="text-center mb-5">
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
