@@ -2710,8 +2710,60 @@ export default function Feed() {
                 </Link>
               </div>
 
+              {/* Single Quick Glimpse at the top - shows recent friend activities */}
+              {socialPosts && socialPosts.length > 0 && (() => {
+                // Get recent activities for Quick Glimpse (last 10 unique activities)
+                const recentActivities = socialPosts.slice(0, 15).map(post => {
+                  const postType = post.type?.toLowerCase() || '';
+                  const user = post.user;
+                  if (!user) return null;
+                  
+                  const displayName = user.displayName || user.username || 'Someone';
+                  const cleanName = displayName.includes('+') 
+                    ? displayName.split('+').pop()?.split('@')[0] || displayName
+                    : displayName.split('@')[0] || displayName;
+                  
+                  let action = '';
+                  let mediaTitle = post.mediaItems?.[0]?.title || (post as any).listData?.title || '';
+                  
+                  if (postType === 'rating' || (post.rating && post.rating > 0)) {
+                    action = `gave ${mediaTitle} ${post.rating || post.mediaItems?.[0]?.rating || '?'} stars`;
+                  } else if (postType === 'finished') {
+                    action = `finished ${mediaTitle}`;
+                  } else if (postType.includes('list') && postType.includes('add')) {
+                    const listName = (post as any).listData?.title || 'a list';
+                    action = `added ${mediaTitle} to ${listName}`;
+                  } else if (postType === 'trivia') {
+                    action = `scored on ${mediaTitle} Trivia`;
+                  } else if (mediaTitle) {
+                    action = `added ${mediaTitle}`;
+                  } else {
+                    return null;
+                  }
+                  
+                  return { name: cleanName, action, postId: post.id };
+                }).filter(Boolean).slice(0, 8);
+                
+                if (recentActivities.length < 2) return null;
+                
+                return (
+                  <div className="mb-4 bg-purple-50 rounded-2xl p-3 border border-purple-100 shadow-sm" data-testid="quick-glimpse-top">
+                    <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <span>✨</span>
+                      Quick Glimpse
+                    </p>
+                    <div className="space-y-1">
+                      {recentActivities.slice(0, 3).map((activity: any, idx: number) => (
+                        <div key={`glimpse-${activity.postId}-${idx}`} className="text-sm">
+                          <span className="font-medium text-gray-900">{activity.name}</span>
+                          <span className="text-gray-600"> {activity.action}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
-              
               {filteredPosts.filter((item: any) => {
                 // Filter out incorrectly formatted prediction posts
                 if ('originalPostIds' in item) return true; // Keep consolidated activities
