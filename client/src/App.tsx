@@ -65,6 +65,7 @@ import AwardsPredictions from "@/pages/awards-predictions";
 import AwardsBallotShare from "@/pages/awards-ballot-share";
 import InvitePage from "@/pages/invite";
 import PublicProfilePage from "@/pages/public-profile";
+import FeedbackSurvey from "@/pages/feedback-survey";
 
 function Router() {
   return (
@@ -81,6 +82,11 @@ function Router() {
         </Route>
         <Route path="/about">
           <About />
+        </Route>
+        <Route path="/feedback-survey">
+          <ProtectedRoute>
+            <FeedbackSurvey />
+          </ProtectedRoute>
         </Route>
         <Route path="/invite/:userId">
           <InvitePage />

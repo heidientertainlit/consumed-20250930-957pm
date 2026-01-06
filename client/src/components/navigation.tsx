@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { QuickActionSheet } from "./quick-action-sheet";
+import { FeedbackDialog } from "./feedback-dialog";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -48,6 +49,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Auto-focus when search expands
   useEffect(() => {
@@ -510,13 +512,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Floating Feedback Button - Beta Testing */}
       <button
-        onClick={() => toast({ title: "Feedback", description: "Feedback form coming soon!" })}
+        onClick={() => setIsFeedbackOpen(true)}
         className="fixed bottom-24 right-4 z-50 flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-full shadow-lg transition-all hover:scale-105"
         data-testid="feedback-button"
       >
         <MessageCircle size={18} />
         <span className="text-sm font-medium">Feedback</span>
       </button>
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
