@@ -7,7 +7,6 @@ import { Flame, ThumbsDown, MessageCircle, Share2, Search, User, ChevronDown, Us
 import { Input } from '@/components/ui/input';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
-import FeedbackFooter from '@/components/feedback-footer';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
@@ -631,7 +630,6 @@ export default function PlayHotTakesPage() {
         ) : null}
       </div>
 
-      <FeedbackFooter />
       <ConsumptionTracker isOpen={isTrackModalOpen} onClose={() => setIsTrackModalOpen(false)} />
     </div>
   );

@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Star, ChevronLeft, Coins, Clock, Users, DollarSign } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
-import FeedbackFooter from '@/components/feedback-footer';
 
 const highStakesGames = [
   {
@@ -301,7 +300,6 @@ export default function PlayHighStakesPage() {
         onClose={() => setIsTrackModalOpen(false)} 
       />
 
-      <FeedbackFooter />
     </div>
   );
 }

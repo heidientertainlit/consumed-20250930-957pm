@@ -4,7 +4,6 @@ import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
-import FeedbackFooter from "@/components/feedback-footer";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
@@ -4658,7 +4657,6 @@ export default function Feed() {
         </div>
       </div>
 
-      <FeedbackFooter />
 
       <ConsumptionTracker
         isOpen={isTrackModalOpen}

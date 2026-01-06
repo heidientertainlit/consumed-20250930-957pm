@@ -49,7 +49,6 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import FeedbackFooter from "@/components/feedback-footer";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { DnfReasonDrawer } from "@/components/dnf-reason-drawer";
 
@@ -999,7 +998,6 @@ export default function CollectionsPage() {
         onClose={() => setIsQuickAddOpen(false)} 
       />
 
-      <FeedbackFooter />
     </div>
   );
 }

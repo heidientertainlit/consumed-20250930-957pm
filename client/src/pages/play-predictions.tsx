@@ -8,7 +8,6 @@ import { Trophy, Star, Users, UserPlus, ChevronLeft, Search, SlidersHorizontal }
 import { Input } from '@/components/ui/input';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
-import FeedbackFooter from '@/components/feedback-footer';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
 import GameShareModal from "@/components/game-share-modal";
 import { queryClient } from '@/lib/queryClient';
@@ -651,7 +650,6 @@ export default function PlayPredictionsPage() {
         />
       )}
 
-      <FeedbackFooter />
 
     </div>
   );

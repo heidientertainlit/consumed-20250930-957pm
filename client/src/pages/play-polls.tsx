@@ -8,7 +8,6 @@ import { Vote, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown, Trophy }
 import { Input } from '@/components/ui/input';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
-import FeedbackFooter from '@/components/feedback-footer';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import GameShareModal from "@/components/game-share-modal";
@@ -738,7 +737,6 @@ export default function PlayPollsPage() {
         onClose={() => setIsTrackModalOpen(false)}
       />
 
-      <FeedbackFooter />
 
     </div>
   );

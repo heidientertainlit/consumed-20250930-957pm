@@ -5,7 +5,6 @@ import { Trophy, ArrowLeft, Calendar, Clock, ChevronRight, Award, Sparkles, Chev
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import Navigation from "@/components/navigation";
-import FeedbackFooter from "@/components/feedback-footer";
 
 interface AwardsEvent {
   id: string;
@@ -198,7 +197,6 @@ export default function AwardsList() {
         </div>
       </div>
       
-      <FeedbackFooter />
     </div>
   );
 }

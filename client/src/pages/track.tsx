@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
-import FeedbackFooter from "@/components/feedback-footer";
 import ListShareModal from "@/components/list-share-modal";
 import CreateListDialog from "@/components/create-list-dialog";
 import { useAuth } from "@/lib/auth";
@@ -1062,7 +1061,6 @@ export default function Track() {
         onOpenChange={setIsCreateListDialogOpen}
       />
 
-      <FeedbackFooter />
 
     </div>
   );
