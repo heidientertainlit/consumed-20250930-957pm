@@ -2709,7 +2709,7 @@ export default function Feed() {
                     className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-hot-takes"
                   >
-                    🔥 Hot Takes
+                    Hot Takes
                   </button>
                 </Link>
                 <Link href="/play/ask-recs">
@@ -2717,7 +2717,7 @@ export default function Feed() {
                     className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     data-testid="pill-ask-recs"
                   >
-                    💡 Ask for Recs
+                    Ask for Recs
                   </button>
                 </Link>
               </div>
