@@ -1071,25 +1071,6 @@ export default function Feed() {
   // Flatten all pages into a single array
   const socialPosts = infinitePosts?.pages.flat() || [];
 
-  // Debug: Log post types for filter debugging
-  useEffect(() => {
-    if (socialPosts.length > 0 && feedFilter) {
-      const typeCounts = socialPosts.reduce((acc, post) => {
-        const t = post.type || 'unknown';
-        acc[t] = (acc[t] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      console.log('🔍 Feed filter active:', feedFilter);
-      console.log('🔍 Post types in feed:', typeCounts);
-      console.log('🔍 Posts without media:', socialPosts.filter(p => !p.mediaItems || p.mediaItems.length === 0).length);
-      console.log('🔍 Hot take type posts:', socialPosts.filter(p => p.type?.toLowerCase() === 'hot_take').length);
-      console.log('🔍 Ask for recs posts:', socialPosts.filter(p => {
-        const content = (p.content || '').toLowerCase();
-        return p.type === 'ask_for_recs' || content.includes('recommend') || content.includes('suggestion');
-      }).length);
-    }
-  }, [feedFilter, socialPosts.length]);
-
   // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
   // Ratings consolidate if 2+ in same day, list adds go to Quick Glimpse (don't consolidate)
   const TIME_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours (same day)
@@ -1389,18 +1370,10 @@ export default function Feed() {
 
   // Filter posts by detailed filters and feed filter
   const filteredPosts = tieredPosts.filter(item => {
-    // When a specific filter is active, hide grouped/consolidated items
-    // (they don't match specific content types like hot-takes or ask-for-recs)
-    if (feedFilter && feedFilter !== '' && feedFilter !== 'friends') {
-      // Hide FriendActivityBlock when filtering for specific content types
-      if ((item as any).type === 'friend_activity_block') return false;
-      // Hide ConsolidatedActivity when filtering for specific content types
-      if ('originalPostIds' in item) return false;
-    } else {
-      // No filter active - show these items
-      if ((item as any).type === 'friend_activity_block') return true;
-      if ('originalPostIds' in item) return true;
-    }
+    // Skip FriendActivityBlock from filtering
+    if ((item as any).type === 'friend_activity_block') return true;
+    // Skip ConsolidatedActivity items from filtering (they're already processed)
+    if ('originalPostIds' in item) return true;
     
     const post = item as SocialPost;
     
@@ -1414,63 +1387,16 @@ export default function Feed() {
     const isShortContent = post.content && post.content.length < 80 && !post.content.includes('\n');
     
     // If post has short content, no media, no list/rank data, and isn't a special type - hide it
-    // BUT allow through if we're filtering for hot-takes or ask-for-recs (these are text-based)
     if (isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType) {
-      if (feedFilter !== 'hot-takes' && feedFilter !== 'ask-for-recs') {
-        return false;
-      }
+      return false;
     }
-    // Apply main feed filter (All, Friends, Hot Take, Predictions, Polls, Rate/Review, Trivia)
+    
+    // Apply main feed filter (All, Friends)
     if (feedFilter === 'friends') {
       // Show only posts from friends (not own posts)
       if (!post.user || post.user.id === user?.id || !friendIds.has(post.user.id)) {
         return false;
       }
-    }
-    
-    if (feedFilter === 'hot-takes') {
-      // Show only posts without media items OR posts with type hot_take
-      const postType = post.type?.toLowerCase() || '';
-      const isHotTake = postType === 'hot_take' || (!post.mediaItems || post.mediaItems.length === 0);
-      if (!isHotTake) return false;
-    }
-    
-    if (feedFilter === 'predictions') {
-      const postType = post.type?.toLowerCase() || '';
-      if (postType !== 'prediction') return false;
-    }
-    
-    if (feedFilter === 'polls') {
-      const postType = post.type?.toLowerCase() || '';
-      if (postType !== 'poll' && postType !== 'vote') return false;
-    }
-    
-    if (feedFilter === 'trivia') {
-      const postType = post.type?.toLowerCase() || '';
-      if (postType !== 'trivia') return false;
-    }
-    
-    if (feedFilter === 'rate-review') {
-      // Show only posts with media items that have ratings/reviews
-      if (!post.mediaItems || post.mediaItems.length === 0) return false;
-      // At least one media item should have a rating
-      const hasRating = post.mediaItems.some(item => item.rating && item.rating > 0);
-      if (!hasRating) return false;
-    }
-    
-    if (feedFilter === 'ask-for-recs') {
-      // Show only posts that are asking for recommendations
-      const postType = post.type?.toLowerCase() || '';
-      const contentLower = (post.content || '').toLowerCase();
-      const isAskForRecs = postType === 'ask_for_recs' || 
-        contentLower.includes('recommend') || 
-        contentLower.includes('suggestion') ||
-        contentLower.includes('what should i watch') ||
-        contentLower.includes('what should i read') ||
-        contentLower.includes('what should i listen') ||
-        contentLower.includes('looking for') ||
-        contentLower.includes('any recs');
-      if (!isAskForRecs) return false;
     }
     
     // Apply media type filter
@@ -2778,24 +2704,6 @@ export default function Feed() {
                     Rank
                   </button>
                 </Link>
-                <button
-                  onClick={() => setFeedFilter(feedFilter === 'hot-takes' ? '' : 'hot-takes')}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    feedFilter === 'hot-takes' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="pill-hot-takes"
-                >
-                  🔥 Hot Takes
-                </button>
-                <button
-                  onClick={() => setFeedFilter(feedFilter === 'ask-for-recs' ? '' : 'ask-for-recs')}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    feedFilter === 'ask-for-recs' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="pill-ask-for-recs"
-                >
-                  Ask for Recs
-                </button>
               </div>
 
               {/* Single Quick Glimpse at the top - scrolls through recent friend activities */}
@@ -2916,48 +2824,6 @@ export default function Feed() {
               {/* Empty state for filtered views */}
               {feedFilter && filteredPosts.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
-                  {feedFilter === 'hot-takes' && (
-                    <>
-                      <div className="text-4xl mb-3">🔥</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Hot Takes Yet</h3>
-                      <p className="text-gray-500 text-sm">Be the first to share a bold opinion!</p>
-                    </>
-                  )}
-                  {feedFilter === 'ask-for-recs' && (
-                    <>
-                      <div className="text-4xl mb-3">💡</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Recommendations Requests</h3>
-                      <p className="text-gray-500 text-sm">Ask your friends what to watch, read, or listen to next!</p>
-                    </>
-                  )}
-                  {feedFilter === 'predictions' && (
-                    <>
-                      <div className="text-4xl mb-3">🎯</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Predictions Yet</h3>
-                      <p className="text-gray-500 text-sm">Make your first prediction in the Play section!</p>
-                    </>
-                  )}
-                  {feedFilter === 'polls' && (
-                    <>
-                      <div className="text-4xl mb-3">📊</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Polls Yet</h3>
-                      <p className="text-gray-500 text-sm">Create a poll and get your friends' opinions!</p>
-                    </>
-                  )}
-                  {feedFilter === 'trivia' && (
-                    <>
-                      <div className="text-4xl mb-3">🧠</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Trivia Activity</h3>
-                      <p className="text-gray-500 text-sm">Play trivia and your scores will show up here!</p>
-                    </>
-                  )}
-                  {feedFilter === 'rate-review' && (
-                    <>
-                      <div className="text-4xl mb-3">⭐</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Ratings Yet</h3>
-                      <p className="text-gray-500 text-sm">Rate something you've consumed to see it here!</p>
-                    </>
-                  )}
                   {feedFilter === 'friends' && (
                     <>
                       <div className="text-4xl mb-3">👥</div>
