@@ -65,7 +65,7 @@ export default function PlayAskRecsPage() {
           )
         `)
         .eq('post_type', 'ask_for_recs')
-        .eq('is_hidden', false)
+        .eq('hidden', false)
         .order('created_at', { ascending: false });
 
       if (selectedCategory) {
@@ -113,7 +113,7 @@ export default function PlayAskRecsPage() {
           post_type: 'ask_for_recs',
           rec_category: category,
           media_type_category: category,
-          is_hidden: false,
+          hidden: false,
         })
         .select()
         .single();
@@ -179,8 +179,7 @@ export default function PlayAskRecsPage() {
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="mb-2">
-            <h1 className="text-3xl font-semibold text-white flex items-center gap-2" data-testid="ask-recs-title">
-              <Lightbulb className="text-yellow-500" size={28} />
+            <h1 className="text-3xl font-semibold text-white" data-testid="ask-recs-title">
               Ask for Recs
             </h1>
           </div>
