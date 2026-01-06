@@ -26,6 +26,11 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback
+} from "@/components/ui/avatar";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -40,6 +45,7 @@ import { DNALevelBadge, DNAFeatureLock } from "@/components/dna-level-badge";
 import { FriendDNAComparison } from "@/components/friend-dna-comparison";
 import { FriendDNACompareButton } from "@/components/friend-dna-comparison";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
+import { supabase } from "@/lib/supabase";
 
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
@@ -191,14 +197,81 @@ export default function UserProfile() {
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('stats');
   const [collectionsSubTab, setCollectionsSubTab] = useState<'lists'>('lists');
-  const [activitySubFilter, setActivitySubFilter] = useState<'all' | 'history' | 'ratings' | 'posts' | 'games' | 'bets'>('all');
+  const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
+  // User activity state
   const [userActivity, setUserActivity] = useState<any[]>([]);
   const [isLoadingActivity, setIsLoadingActivity] = useState(false);
-  
-  // Bets state
-  const [userBets, setUserBets] = useState<any[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
+
+  const fetchUserActivity = async () => {
+    if (!viewingUserId) return;
+    setIsLoadingActivity(true);
+    try {
+      const { data, error } = await supabase
+        .from('social_posts')
+        .select(`
+          *,
+          user:users!social_posts_user_id_fkey(*),
+          mediaItems:social_post_media(*)
+        `)
+        .eq('user_id', viewingUserId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserActivity(data || []);
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+    } finally {
+      setIsLoadingActivity(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === 'activity' && activitySubFilter === 'posts') {
+      fetchUserActivity();
+    }
+  }, [activeSection, activitySubFilter, viewingUserId]);
+
+  const handleLike = async (postId: string) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setLikedPosts(prev => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+  };
+
+  const toggleComments = (postId: string) => setOpenCommentsPostId(openCommentsPostId === postId ? null : postId);
+
+  // GroupedActivityCard handler for delete
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      if (!session?.access_token) throw new Error("Not authenticated");
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-post`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ postId }),
+      });
+      if (!response.ok) throw new Error("Failed to delete post");
+      return response.json();
+    },
+    onSuccess: () => {
+      fetchUserActivity();
+      toast({ title: "Post deleted" });
+    },
+  });
+
   const [isLoadingBets, setIsLoadingBets] = useState(false);
   const [betsTab, setBetsTab] = useState<'placed' | 'received'>('placed');
+  const [userBets, setUserBets] = useState<any[]>([]);
   const [openFilter, setOpenFilter] = useState<'type' | 'year' | 'rating' | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportHelpOpen, setIsImportHelpOpen] = useState(false);
@@ -3608,12 +3681,9 @@ export default function UserProfile() {
               {/* Sub-filter Pills */}
               <div className="flex items-center gap-2 mb-6 overflow-x-auto">
                 {[
-                  { id: 'all', label: 'All', icon: Activity },
-                  { id: 'history', label: 'Media History', icon: Clock },
-                  { id: 'ratings', label: 'Ratings', icon: Star },
                   { id: 'posts', label: 'Posts', icon: MessageCircle },
-                  { id: 'games', label: 'Games', icon: Gamepad2 },
-                  ...(isOwnProfile ? [{ id: 'bets', label: 'My Bets', icon: Target }] : []),
+                  { id: 'history', label: 'Media History', icon: Clock },
+                  { id: 'bets', label: 'My Bets', icon: Target },
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
@@ -3643,8 +3713,65 @@ export default function UserProfile() {
                 </button>
               )}
 
-              {/* Activity Content - Media History */}
-              {(activitySubFilter === 'all' || activitySubFilter === 'history') && (
+              {/* Posts Section */}
+              {activitySubFilter === 'posts' && (
+                <div className="space-y-4">
+                  {isLoadingActivity ? (
+                    <div className="space-y-4">
+                      {[1, 2].map(n => (
+                        <div key={n} className="bg-gray-100 h-40 rounded-2xl animate-pulse" />
+                      ))}
+                    </div>
+                  ) : userActivity.length === 0 ? (
+                    <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
+                      <MessageCircle className="mx-auto mb-3 text-gray-300" size={48} />
+                      <p className="text-gray-600">No activity yet</p>
+                    </div>
+                  ) : (
+                    userActivity.map((post) => (
+                      <div key={post.id} className="mb-4">
+                        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                          <div className="flex items-center gap-3 mb-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={post.user?.avatar_url} />
+                              <AvatarFallback>{post.user?.username?.[0]}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-semibold">{post.user?.username}</p>
+                              <p className="text-xs text-gray-500">{new Date(post.created_at).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          {post.content && <p className="text-sm text-gray-800 mb-3">{post.content}</p>}
+                          {post.mediaItems?.length > 0 && (
+                            <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-xl mb-3">
+                              {post.mediaItems[0].image_url && (
+                                <img src={post.mediaItems[0].image_url} className="h-12 w-8 object-cover rounded" />
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{post.mediaItems[0].title}</p>
+                                <p className="text-xs text-gray-500">{post.mediaItems[0].media_type}</p>
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-4 text-gray-500">
+                            <button className="flex items-center gap-1 hover:text-purple-600 transition-colors">
+                              <Heart size={16} className={likedPosts.has(post.id) ? "fill-purple-600 text-purple-600" : ""} />
+                              <span className="text-xs">{post.likes_count || 0}</span>
+                            </button>
+                            <button className="flex items-center gap-1 hover:text-purple-600 transition-colors">
+                              <MessageCircle size={16} />
+                              <span className="text-xs">{post.comments_count || 0}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Media History Section */}
+              {activitySubFilter === 'history' && (
                 <>
                   {/* Filter buttons row for history */}
                   {activitySubFilter === 'history' && (
@@ -3760,26 +3887,8 @@ export default function UserProfile() {
                 </>
               )}
 
-              {/* Placeholder for other activity types */}
-              {activitySubFilter === 'ratings' && (
-                <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-                  <Star className="mx-auto mb-3 text-gray-300" size={48} />
-                  <p className="text-gray-600">Ratings activity coming soon</p>
-                </div>
-              )}
-              {activitySubFilter === 'posts' && (
-                <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-                  <MessageCircle className="mx-auto mb-3 text-gray-300" size={48} />
-                  <p className="text-gray-600">Posts activity coming soon</p>
-                </div>
-              )}
-              {activitySubFilter === 'games' && (
-                <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-                  <Gamepad2 className="mx-auto mb-3 text-gray-300" size={48} />
-                  <p className="text-gray-600">Games activity coming soon</p>
-                </div>
-              )}
-
+              {/* Ratings and Games Sections (Removed as per user request to simplify) */}
+              
               {/* Bets Section - Only for own profile */}
               {activitySubFilter === 'bets' && isOwnProfile && (
                 <div className="space-y-4">
@@ -3818,7 +3927,7 @@ export default function UserProfile() {
                         </div>
                       ))}
                     </div>
-                  ) : userBets.length === 0 ? (
+                  ) : (userBets || []).length === 0 ? (
                     <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
                       <Target className="mx-auto mb-3 text-gray-300" size={48} />
                       <p className="text-gray-600">
@@ -3826,7 +3935,33 @@ export default function UserProfile() {
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
                         {betsTab === 'placed' 
-                          ? 'Predict if your friends will love or hate media they added!' 
+                          ? "When you challenge friends on their predictions, they'll show up here." 
+                          : "When friends challenge your predictions, they'll show up here."}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(userBets || []).map((bet: any) => (
+                        <div key={bet.id} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-gray-900">{bet.media_title}</h4>
+                            <Badge variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'secondary'}>
+                              {bet.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            {betsTab === 'placed' ? `Bet on ${bet.target_user?.username}` : `Bet from ${bet.creator?.username}`}
+                          </p>
+                          <div className="flex justify-between items-center text-xs text-gray-500">
+                            <span>{bet.points} points at stake</span>
+                            <span>{new Date(bet.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}                          ? 'Predict if your friends will love or hate media they added!' 
                           : 'When friends bet on your reactions, they\'ll appear here'}
                       </p>
                     </div>
