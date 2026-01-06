@@ -36,28 +36,87 @@ export default function PlayRanks() {
   const { data: publicRanksData, isLoading: isLoadingPublic } = useQuery({
     queryKey: ['public-ranks', selectedCategory, searchQuery],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedCategory) params.set('topic', selectedCategory);
-      if (searchQuery.trim()) params.set('search', searchQuery.trim());
-      params.set('limit', '30');
-      
-      const response = await fetch(
-        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-ranks?${params.toString()}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      try {
+        const params = new URLSearchParams();
+        if (selectedCategory) params.set('topic', selectedCategory);
+        if (searchQuery.trim()) params.set('search', searchQuery.trim());
+        params.set('limit', '30');
+        
+        const response = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-ranks?${params.toString()}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (!response.ok) {
+          console.log('get-public-ranks not available, edge function may not be deployed');
+          return [];
         }
-      );
-      
-      if (!response.ok) {
-        console.error('Failed to fetch public ranks:', response.status);
+        
+        const data = await response.json();
+        console.log('Public ranks fetched:', data.ranks?.length || 0);
+        return data.ranks || [];
+      } catch (error) {
+        console.log('Error fetching public ranks:', error);
         return [];
       }
-      
-      const data = await response.json();
-      return data.ranks || [];
     },
+    staleTime: 30000,
+  });
+
+  // Fetch current user's ranks to show as examples
+  const { data: userRanksData } = useQuery({
+    queryKey: ['my-ranks-for-discovery'],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      
+      try {
+        const response = await fetch(
+          'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-ranks',
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (!response.ok) return [];
+        
+        const data = await response.json();
+        console.log('User ranks fetched:', data.ranks?.length || 0);
+        
+        // Transform user ranks to match the display format - only show public ones
+        return (data.ranks || [])
+          .filter((rank: any) => rank.visibility === 'public' && rank.items?.length > 0)
+          .map((rank: any) => ({
+            postId: rank.id,
+            rank: {
+              id: rank.id,
+              title: rank.title,
+              user_id: rank.user_id,
+              visibility: rank.visibility,
+              items: rank.items?.slice(0, 5) || [],
+            },
+            author: {
+              id: rank.user_id,
+              user_name: user?.user_metadata?.user_name || 'You',
+              display_name: user?.user_metadata?.display_name,
+            },
+            isConsumed: false,
+            createdAt: rank.created_at,
+            likesCount: 0,
+            commentsCount: 0,
+          }));
+      } catch (error) {
+        console.log('Error fetching user ranks:', error);
+        return [];
+      }
+    },
+    enabled: !!session?.access_token,
     staleTime: 30000,
   });
 
@@ -122,13 +181,16 @@ export default function PlayRanks() {
     },
   ];
 
-  // Combine Consumed showcase ranks with community public ranks
+  // Combine Consumed showcase ranks with community public ranks and user ranks
   const communityRanks = (publicRanksData || []).map((item: any) => ({
     ...item,
     postId: item.rank?.id,
     isConsumed: false,
   }));
-  const allRanks = [...consumedRanks, ...communityRanks];
+  const myRanks = userRanksData || [];
+  
+  // Consumed showcases first, then user's ranks, then community ranks
+  const allRanks = [...consumedRanks, ...myRanks, ...communityRanks];
 
   // Filter ranks
   const filteredRanks = useMemo(() => {
