@@ -281,6 +281,31 @@ export default function PlayTriviaPage() {
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
 
+  // Group games by category for carousel display
+  const gamesByCategory = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    lowStakesGames.forEach((game: any) => {
+      const category = game.category || 'Other';
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(game);
+    });
+    return groups;
+  }, [lowStakesGames]);
+
+  // Category display info
+  const categoryInfo: Record<string, { icon: string; label: string }> = {
+    'Movies': { icon: '🎬', label: 'Movies' },
+    'TV': { icon: '📺', label: 'TV Shows' },
+    'Music': { icon: '🎵', label: 'Music' },
+    'Books': { icon: '📚', label: 'Books' },
+    'Games': { icon: '🎮', label: 'Games' },
+    'Podcasts': { icon: '🎙️', label: 'Podcasts' },
+    'Pop Culture': { icon: '⭐', label: 'Pop Culture' },
+    'Other': { icon: '🧠', label: 'General' },
+  };
+
   // Auto-open game if gameId is in URL
   React.useEffect(() => {
     if (gameIdFromUrl && !selectedTriviaGame && triviaGames.length > 0) {
@@ -308,190 +333,294 @@ export default function PlayTriviaPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Back Button and Header */}
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          data-testid="back-button"
-        >
-          <ChevronLeft size={20} />
-          <span className="ml-1">Back</span>
-        </button>
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-4">
+          {/* Back Button */}
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center text-gray-300 hover:text-white mb-4"
+            data-testid="back-button"
+          >
+            <ChevronLeft size={20} />
+            <span className="ml-1">Back</span>
+          </button>
 
-        <div className="mb-6">
-          <div className="flex items-center justify-center space-x-2 mb-3">
-            <Brain className="text-purple-600" size={32} />
-            <h1 className="text-3xl font-semibold text-black" data-testid="trivia-title">Trivia</h1>
-          </div>
-          <p className="text-gray-600 text-center mb-6">
-            Test your knowledge against friends on different entertainment topics
-          </p>
+          <div className="mb-4">
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <Brain className="text-purple-400" size={32} />
+              <h1 className="text-3xl font-semibold text-white" data-testid="trivia-title">Trivia</h1>
+            </div>
+            <p className="text-gray-400 text-center mb-6">
+              Test your knowledge against friends on different entertainment topics
+            </p>
 
-          {/* Search Row */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              type="text"
-              placeholder="Search trivia..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white border-gray-200 rounded-xl"
-              data-testid="trivia-search-input"
-            />
-          </div>
-
-          {/* Filter Dropdowns Row */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {/* Type Filter Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setExpandedFilter(expandedFilter === 'type' ? null : 'type')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-                  triviaType !== 'all'
-                    ? 'bg-purple-50 border-purple-300 text-purple-700'
-                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                }`}
-                data-testid="type-filter-toggle"
-              >
-                <span className="text-sm font-medium">
-                  Type{triviaType !== 'all' ? `: ${triviaType === 'challenges' ? 'Challenges' : 'Quick'}` : ''}
-                </span>
-                <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'type' ? 'rotate-180' : ''}`} />
-              </button>
-              {expandedFilter === 'type' && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[140px]">
-                  {triviaTypeFilters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      onClick={() => {
-                        setTriviaType(filter.id as 'all' | 'challenges' | 'quick');
-                        setExpandedFilter(null);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                        triviaType === filter.id
-                          ? 'bg-purple-100 text-purple-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      data-testid={`type-filter-${filter.id}`}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* Search Row */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                type="text"
+                placeholder="Search trivia..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-gray-400"
+                data-testid="trivia-search-input"
+              />
             </div>
 
-            {/* Topic Filter Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-                  selectedCategory
-                    ? 'bg-purple-50 border-purple-300 text-purple-700'
-                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                }`}
-                data-testid="topic-filter-toggle"
-              >
-                <span className="text-sm font-medium">
-                  Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}
-                </span>
-                <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
-              </button>
-              {expandedFilter === 'topic' && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
-                  <button
-                    onClick={() => {
-                      setSelectedCategory(null);
-                      setExpandedFilter(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                      !selectedCategory
-                        ? 'bg-purple-100 text-purple-700 font-medium'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    data-testid="filter-all-topics"
-                  >
-                    All Topics
-                  </button>
-                  {categoryFilters.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategory(cat.id);
-                        setExpandedFilter(null);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                        selectedCategory === cat.id
-                          ? 'bg-purple-100 text-purple-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      data-testid={`filter-${cat.id}`}
-                    >
-                      {cat.icon} {cat.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Filter Dropdowns Row */}
+            <div className="flex flex-wrap gap-2">
+              {/* Type Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setExpandedFilter(expandedFilter === 'type' ? null : 'type')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                    triviaType !== 'all'
+                      ? 'bg-purple-600/30 border-purple-400 text-purple-200'
+                      : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
+                  }`}
+                  data-testid="type-filter-toggle"
+                >
+                  <span className="text-sm font-medium">
+                    Type{triviaType !== 'all' ? `: ${triviaType === 'challenges' ? 'Challenges' : 'Quick'}` : ''}
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'type' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedFilter === 'type' && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[140px]">
+                    {triviaTypeFilters.map((filter) => (
+                      <button
+                        key={filter.id}
+                        onClick={() => {
+                          setTriviaType(filter.id as 'all' | 'challenges' | 'quick');
+                          setExpandedFilter(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                          triviaType === filter.id
+                            ? 'bg-purple-100 text-purple-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        data-testid={`type-filter-${filter.id}`}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* Genre Filter Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-                  selectedGenre
-                    ? 'bg-purple-50 border-purple-300 text-purple-700'
-                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                }`}
-                data-testid="genre-filter-toggle"
-              >
-                <span className="text-sm font-medium">
-                  Genre{selectedGenre ? `: ${selectedGenre}` : ''}
-                </span>
-                <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
-              </button>
-              {expandedFilter === 'genre' && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[150px]">
-                  <button
-                    onClick={() => {
-                      setSelectedGenre(null);
-                      setExpandedFilter(null);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                      !selectedGenre
-                        ? 'bg-purple-100 text-purple-700 font-medium'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    data-testid="genre-filter-all"
-                  >
-                    All Genres
-                  </button>
-                  {genreFilters.map((genre) => (
+              {/* Topic Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                    selectedCategory
+                      ? 'bg-purple-600/30 border-purple-400 text-purple-200'
+                      : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
+                  }`}
+                  data-testid="topic-filter-toggle"
+                >
+                  <span className="text-sm font-medium">
+                    Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedFilter === 'topic' && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
                     <button
-                      key={genre.id}
                       onClick={() => {
-                        setSelectedGenre(genre.id);
+                        setSelectedCategory(null);
                         setExpandedFilter(null);
                       }}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                        selectedGenre === genre.id
+                        !selectedCategory
                           ? 'bg-purple-100 text-purple-700 font-medium'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
-                      data-testid={`genre-filter-${genre.id}`}
+                      data-testid="filter-all-topics"
                     >
-                      {genre.label}
+                      All Topics
                     </button>
-                  ))}
-                </div>
-              )}
+                    {categoryFilters.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setSelectedCategory(cat.id);
+                          setExpandedFilter(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                          selectedCategory === cat.id
+                            ? 'bg-purple-100 text-purple-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        data-testid={`filter-${cat.id}`}
+                      >
+                        {cat.icon} {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Genre Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                    selectedGenre
+                      ? 'bg-purple-600/30 border-purple-400 text-purple-200'
+                      : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
+                  }`}
+                  data-testid="genre-filter-toggle"
+                >
+                  <span className="text-sm font-medium">
+                    Genre{selectedGenre ? `: ${selectedGenre}` : ''}
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedFilter === 'genre' && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[150px]">
+                    <button
+                      onClick={() => {
+                        setSelectedGenre(null);
+                        setExpandedFilter(null);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                        !selectedGenre
+                          ? 'bg-purple-100 text-purple-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      data-testid="genre-filter-all"
+                    >
+                      All Genres
+                    </button>
+                    {genreFilters.map((genre) => (
+                      <button
+                        key={genre.id}
+                        onClick={() => {
+                          setSelectedGenre(genre.id);
+                          setExpandedFilter(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                          selectedGenre === genre.id
+                            ? 'bg-purple-100 text-purple-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        data-testid={`genre-filter-${genre.id}`}
+                      >
+                        {genre.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Trivia Games Section */}
-        {lowStakesGames.length > 0 && (
+      <div className="max-w-4xl mx-auto px-4 py-6">
+
+        {/* Trivia Games by Category */}
+        {Object.keys(gamesByCategory).length > 0 ? (
+          <div className="space-y-8">
+            {Object.entries(gamesByCategory).map(([category, games]) => (
+              <div key={category} className="mb-6">
+                {/* Category Header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">{categoryInfo[category]?.icon || '🧠'}</span>
+                  <h2 className="text-xl font-bold text-gray-900">{categoryInfo[category]?.label || category}</h2>
+                  <span className="text-sm text-gray-500">({games.length})</span>
+                </div>
+                
+                {/* Horizontal Scrolling Cards */}
+                <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {games.map((game: any) => (
+                    <div key={game.id} className="flex-shrink-0 w-72">
+                      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden h-full">
+                        <CardHeader className="pb-3 pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Star size={14} className="text-purple-600" />
+                              <span className="text-sm font-medium text-purple-600">{game.points || 10} pts</span>
+                            </div>
+                            <button
+                              onClick={() => handleInviteFriends(game)}
+                              className="p-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors"
+                              data-testid={`invite-${game.id}`}
+                            >
+                              <UserPlus size={14} className="text-purple-600" />
+                            </button>
+                          </div>
+
+                          <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 leading-tight">{game.title}</CardTitle>
+                          <p className="text-gray-500 text-xs mt-1 line-clamp-2">{game.description}</p>
+                        </CardHeader>
+
+                        <CardContent className="pt-0 pb-4 space-y-3">
+                          {allPredictions[game.id] || submissionResults[game.id] ? (
+                            submissionResults[game.id] ? (
+                              submissionResults[game.id].correct ? (
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                                  <div className="text-green-800 font-bold text-sm">✓ Correct!</div>
+                                  <div className="text-green-700 text-xs">+{submissionResults[game.id].points} pts</div>
+                                </div>
+                              ) : (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                                  <div className="text-blue-800 font-bold text-sm">💪 Keep Going!</div>
+                                </div>
+                              )
+                            ) : (
+                              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                                <div className="text-gray-600 text-sm font-medium">✓ Completed</div>
+                              </div>
+                            )
+                          ) : game.isLongForm ? (
+                            <Button 
+                              onClick={() => setSelectedTriviaGame(game)}
+                              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 text-sm"
+                              data-testid={`play-${game.id}`}
+                            >
+                              <Brain size={14} className="mr-2" />
+                              Play
+                            </Button>
+                          ) : (
+                            <>
+                              <div className="grid grid-cols-2 gap-2">
+                                {(game.options || []).slice(0, 2).map((option: string, index: number) => (
+                                  <button
+                                    key={`${game.id}-${index}`}
+                                    onClick={() => handleOptionSelect(game.id, option)}
+                                    className={`p-2 text-left rounded-lg border-2 transition-all text-xs ${
+                                      selectedAnswers[game.id] === option
+                                        ? 'border-purple-500 bg-purple-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                    data-testid={`option-${game.id}-${index}`}
+                                  >
+                                    <div className="font-medium text-gray-900 line-clamp-2">{option}</div>
+                                  </button>
+                                ))}
+                              </div>
+                              <Button 
+                                onClick={() => handleSubmitAnswer(game)}
+                                disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
+                                className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 rounded-xl py-2 text-sm"
+                                data-testid={`submit-${game.id}`}
+                              >
+                                {submitPrediction.isPending ? '...' : 'Submit'}
+                              </Button>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : lowStakesGames.length > 0 && (
           <div className="mb-8">
             <div className="space-y-4">
               {lowStakesGames.map((game: any) => (
