@@ -579,7 +579,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
     <>
       <CompletionDialog />
       <div 
-        className={cn("rounded-2xl shadow-sm overflow-hidden relative", className)} 
+        className={cn("rounded-2xl shadow-sm overflow-hidden relative bg-[#1a1a2e]", className)} 
         data-testid="inline-poll-card"
       >
         {/* Horizontal scroll container with snap */}
@@ -593,7 +593,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
         </div>
         
         {/* Static 3-dot visual indicator for swipe hint */}
-        <div className="flex items-center justify-center gap-1.5 py-3 bg-[#1a1a2e]" data-testid="poll-carousel-dots">
+        <div className="flex items-center justify-center gap-1.5 py-3 bg-[#1a1a2e] -mt-px" data-testid="poll-carousel-dots">
           <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-400" : "bg-purple-400/40")} />
           <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-400" : "bg-purple-400/40")} />
           <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-400" : "bg-purple-400/40")} />
