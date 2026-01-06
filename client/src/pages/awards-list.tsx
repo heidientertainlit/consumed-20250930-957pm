@@ -97,11 +97,7 @@ export default function AwardsList() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
-                Consumed
-              </Badge>
               <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Trophy size={20} className="text-amber-500" />
                 Awards Ballots
               </h2>
             </div>
@@ -141,6 +137,9 @@ export default function AwardsList() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2 mb-1">
+                            <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
+                              Consumed
+                            </Badge>
                             <h3 className={`text-lg font-bold transition-colors ${
                               comingSoon ? 'text-gray-400' : 'text-gray-900 group-hover:text-amber-600'
                             }`}>
