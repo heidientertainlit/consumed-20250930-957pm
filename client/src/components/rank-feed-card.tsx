@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowBigUp, ArrowBigDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic, Heart, MessageCircle, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowBigUp, ArrowBigDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic, Heart, MessageCircle, MoreHorizontal, Trash2, Award } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -343,6 +343,16 @@ export default function RankFeedCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Consumed Badge */}
+      {rank.user_id === '00000000-0000-0000-0000-000000000001' && (
+        <div className="px-4 pt-4 pb-2">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-600 text-white text-[10px] font-bold rounded uppercase tracking-wider">
+            <Award size={10} />
+            Consumed
+          </span>
+        </div>
+      )}
 
       {/* Rank Title */}
       <Link href={`/rank/${rank.id}`}>

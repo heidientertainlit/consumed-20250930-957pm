@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Plus, ChevronLeft, Search, ChevronDown, Loader2, Award } from "lucide-react";
+import { Trophy, Plus, ChevronLeft, Search, ChevronDown, Loader2, Award, ArrowBigUp, ArrowBigDown, Heart, MessageCircle } from "lucide-react";
 
 export default function PlayRanks() {
   const { user, session } = useAuth();
@@ -520,13 +520,13 @@ export default function PlayRanks() {
                 }`}>
                   {item.isConsumed && (
                     <div className="absolute -top-0 left-4 z-10">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-600 text-white text-xs font-medium rounded-b-lg">
-                        <Award size={12} />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-600 text-white text-[10px] font-bold rounded-b-lg uppercase tracking-wider">
+                        <Award size={10} />
                         Consumed
                       </span>
                     </div>
                   )}
-                  <div className="p-4 pt-5">
+                  <div className="p-4 pt-8">
                     {/* Author info for community ranks */}
                     {!item.isConsumed && item.author && (
                       <div className="flex items-center gap-2 mb-3">
@@ -555,11 +555,23 @@ export default function PlayRanks() {
                           }`}>
                             {rankItem.position || idx + 1}
                           </span>
-                          <div className="flex-1">
-                            <span className="text-sm font-medium text-gray-900">{rankItem.title}</span>
-                            {rankItem.creator && (
-                              <span className="text-xs text-gray-500 ml-2">{rankItem.creator}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{rankItem.title}</p>
+                            {rankItem.creator && rankItem.creator.toLowerCase() !== 'unknown' && (
+                              <p className="text-xs text-gray-500 truncate">{rankItem.creator}</p>
                             )}
+                          </div>
+                          
+                          {/* Add up/down votes for showcase preview */}
+                          <div className="flex items-center gap-2 ml-auto">
+                            <div className="flex items-center text-gray-400">
+                              <ArrowBigUp size={14} />
+                              <span className="text-[10px] font-medium ml-0.5">{rankItem.up_vote_count || 0}</span>
+                            </div>
+                            <div className="flex items-center text-gray-400">
+                              <ArrowBigDown size={14} />
+                              <span className="text-[10px] font-medium ml-0.5">{rankItem.down_vote_count || 0}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
