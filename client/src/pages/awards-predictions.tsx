@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import Navigation from "@/components/navigation";
+import FeedbackFooter from "@/components/feedback-footer";
 
 interface Nominee {
   id: string;
