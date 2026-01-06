@@ -306,13 +306,28 @@ export default function RankDetail() {
               <Button
                 size="sm"
                 variant="outline"
+                onClick={() => {
+                  const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rankData.id}?user=${session?.user?.id}`;
+                  navigator.clipboard.writeText(url);
+                  toast({ title: "Link copied!", description: "Share this link with anyone" });
+                }}
+                className="text-xs px-3 text-gray-600 border-gray-200 hover:bg-gray-50"
+                data-testid="button-copy-link"
+              >
+                <Link2 size={14} className="mr-1.5" />
+                Copy Link
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
                 disabled={shareRankMutation.isPending || !isPublic}
                 className="text-xs px-3 text-purple-600 border-purple-200 hover:bg-purple-50"
                 data-testid="button-share-rank-main"
               >
                 <Share2 size={14} className="mr-1.5" />
-                Share
+                Post to Feed
               </Button>
 
               <Button

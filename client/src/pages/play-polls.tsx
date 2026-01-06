@@ -23,7 +23,8 @@ export default function PlayPollsPage() {
   const [selectedPoll, setSelectedPoll] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [expandedFilter, setExpandedFilter] = useState<'topic' | null>(null);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [expandedFilter, setExpandedFilter] = useState<'topic' | 'genre' | null>(null);
 
   const categoryFilters = [
     { id: 'Movies', label: 'Movies' },
@@ -33,6 +34,18 @@ export default function PlayPollsPage() {
     { id: 'Sports', label: 'Sports' },
     { id: 'Podcasts', label: 'Podcasts' },
     { id: 'Pop Culture', label: 'Pop Culture' },
+  ];
+
+  const genreFilters = [
+    { id: 'True Crime', label: 'True Crime' },
+    { id: 'Comedy', label: 'Comedy' },
+    { id: 'Drama', label: 'Drama' },
+    { id: 'Sci-Fi', label: 'Sci-Fi' },
+    { id: 'Fantasy', label: 'Fantasy' },
+    { id: 'Horror', label: 'Horror' },
+    { id: 'Romance', label: 'Romance' },
+    { id: 'Action', label: 'Action' },
+    { id: 'Documentary', label: 'Documentary' },
   ];
 
   // Extract game ID from URL hash if present (format: /play/polls#game-id)
@@ -190,7 +203,7 @@ export default function PlayPollsPage() {
     };
   });
 
-  // Filter for poll/vote games with search and category
+  // Filter for poll/vote games with search, category, type, and genre
   const pollGames = React.useMemo(() => {
     let filtered = processedGames.filter((game: any) => game.type === 'vote');
     
@@ -209,6 +222,14 @@ export default function PlayPollsPage() {
       filtered = filtered.filter((game: any) => game.category === selectedCategory);
     }
     
+    // Apply genre filter (tags array)
+    if (selectedGenre) {
+      filtered = filtered.filter((game: any) => {
+        const tags = game.tags || [];
+        return tags.includes(selectedGenre);
+      });
+    }
+    
     // Sort: uncompleted polls first, completed polls at the bottom
     filtered.sort((a: any, b: any) => {
       const aCompleted = allPredictions[a.id] ? 1 : 0;
@@ -217,7 +238,7 @@ export default function PlayPollsPage() {
     });
     
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory, allPredictions]);
+  }, [processedGames, searchQuery, selectedCategory, selectedGenre, allPredictions]);
 
   // Normalize category names to consistent format
   const normalizeCategory = (cat: string): string => {
@@ -320,8 +341,9 @@ export default function PlayPollsPage() {
               />
             </div>
 
-            {/* Topic Filter Dropdown */}
+            {/* Filter Dropdowns Row */}
             <div className="flex flex-wrap gap-2">
+              {/* Topic Filter Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
@@ -368,6 +390,59 @@ export default function PlayPollsPage() {
                         data-testid={`filter-${cat.id}`}
                       >
                         {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Genre Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                    selectedGenre
+                      ? 'bg-purple-600/30 border-purple-400 text-purple-200'
+                      : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
+                  }`}
+                  data-testid="genre-filter-toggle"
+                >
+                  <span className="text-sm font-medium">
+                    Genre{selectedGenre ? `: ${selectedGenre}` : ''}
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
+                </button>
+                {expandedFilter === 'genre' && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[150px]">
+                    <button
+                      onClick={() => {
+                        setSelectedGenre(null);
+                        setExpandedFilter(null);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                        !selectedGenre
+                          ? 'bg-purple-100 text-purple-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      data-testid="genre-filter-all"
+                    >
+                      All Genres
+                    </button>
+                    {genreFilters.map((genre) => (
+                      <button
+                        key={genre.id}
+                        onClick={() => {
+                          setSelectedGenre(genre.id);
+                          setExpandedFilter(null);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
+                          selectedGenre === genre.id
+                            ? 'bg-purple-100 text-purple-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        data-testid={`genre-filter-${genre.id}`}
+                      >
+                        {genre.label}
                       </button>
                     ))}
                   </div>
