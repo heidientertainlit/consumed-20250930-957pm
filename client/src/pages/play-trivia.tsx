@@ -77,20 +77,41 @@ export default function PlayTriviaPage() {
 
   // Fetch trivia games directly from Supabase - only trivia type
   const { data: games = [], isLoading } = useQuery({
-    queryKey: ['/api/predictions/trivia'],
+    queryKey: ['/api/predictions/trivia', selectedCategory, searchQuery, selectedGenre],
     queryFn: async () => {
       const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      const { data: pools, error } = await supabase
-        .from('prediction_pools')
-        .select('*')
-        .eq('status', 'open')
-        .eq('type', 'trivia')
-        .order('created_at', { ascending: false });
-      if (error) throw new Error('Failed to fetch games');
-      return pools || [];
+
+      const params = new URLSearchParams();
+      if (selectedCategory) params.set('category', selectedCategory);
+      if (searchQuery) params.set('search', searchQuery);
+      if (selectedGenre) params.set('genre', selectedGenre);
+
+      const queryString = params.toString();
+      const { data, error } = await supabase.functions.invoke(
+        queryString ? `get-trivia?${queryString}` : 'get-trivia',
+        { method: 'GET' }
+      );
+
+      if (error) {
+        // Fallback to direct client fetch if function fails
+        const { data: pools, error: directError } = await supabase
+          .from('prediction_pools')
+          .select('*')
+          .eq('status', 'open')
+          .eq('type', 'trivia')
+          .order('created_at', { ascending: false });
+        
+        if (directError) throw new Error('Failed to fetch games');
+        return (pools || []).map((p: any) => ({
+          ...p,
+          isConsumed: p.id?.startsWith('consumed-trivia-') || p.origin_type === 'consumed'
+        }));
+      }
+
+      return data.trivia || [];
     },
   });
 
@@ -556,7 +577,15 @@ export default function PlayTriviaPage() {
                         <CardHeader className="pb-3 pt-4">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <Star size={14} className="text-purple-600" />
+                              {game.isConsumed ? (
+                                <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
+                                  Consumed
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
+                                  User
+                                </Badge>
+                              )}
                               <span className="text-sm font-medium text-purple-600">{game.points || 10} pts</span>
                             </div>
                             <button
@@ -643,6 +672,15 @@ export default function PlayTriviaPage() {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-2">
+                        {game.isConsumed ? (
+                          <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
+                            Consumed
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
+                            User
+                          </Badge>
+                        )}
                         <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase">
                           {game.isLongForm ? 'Trivia' : 'Quick Trivia'}
                         </Badge>
@@ -759,6 +797,15 @@ export default function PlayTriviaPage() {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-2">
+                        {game.isConsumed ? (
+                          <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
+                            Consumed
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
+                            User
+                          </Badge>
+                        )}
                         <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium uppercase">
                           High Stakes Trivia
                         </Badge>
