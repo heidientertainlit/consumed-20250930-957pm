@@ -495,10 +495,10 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             </div>
             
             {!isSearchExpanded && (
-              <>
+              <div className="flex items-center gap-6">
                 <Link
                   href="/leaderboard"
-                  className="hover:opacity-70 transition-opacity"
+                  className="hover:opacity-70 transition-opacity ml-1"
                   data-testid="leaderboard-button"
                 >
                   <Trophy className="text-purple-400" size={20} />
@@ -506,7 +506,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 <div className="flex items-center -mr-1">
                   <NotificationBell />
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
