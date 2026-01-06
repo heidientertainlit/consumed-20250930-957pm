@@ -131,23 +131,22 @@ export const getCurrentAppUserId = () => currentAppUserId;
 const formatUsername = (username?: string): string => {
   if (!username) return 'Unknown';
   let clean = username;
+  
   // Handle email-style usernames with + (e.g., "thinkhp+jordanrivers24")
   if (clean.includes('+')) {
     clean = clean.split('+').pop() || clean;
+    // For + style emails, also remove trailing numbers and format
+    clean = clean.replace(/\d+$/, '');
+    // Capitalize first letter
+    clean = clean.charAt(0).toUpperCase() + clean.slice(1);
   }
-  // Remove trailing numbers
-  clean = clean.replace(/\d+$/, '');
+  
   // Remove @ and domain if email
-  clean = clean.split('@')[0];
-  // Replace special chars with spaces
-  clean = clean.replace(/[@_.-]/g, ' ');
-  // Add space between camelCase
-  clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
-  // Capitalize each word
-  return clean.split(' ')
-    .filter(w => w.length > 0)
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(' ') || 'User';
+  if (clean.includes('@')) {
+    clean = clean.split('@')[0];
+  }
+  
+  return clean || 'User';
 };
 
 const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number; session: any }): Promise<SocialPost[]> => {

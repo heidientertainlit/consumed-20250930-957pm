@@ -19,17 +19,24 @@ interface GroupedUser {
 }
 
 const formatUsername = (username: string): string => {
+  if (!username) return 'Unknown';
   let clean = username;
+  
+  // Handle email-style usernames with + (e.g., "thinkhp+jordanrivers24")
   if (clean.includes('+')) {
     clean = clean.split('+').pop() || clean;
+    // For + style emails, also remove trailing numbers and format
+    clean = clean.replace(/\d+$/, '');
+    // Capitalize first letter
+    clean = clean.charAt(0).toUpperCase() + clean.slice(1);
   }
-  clean = clean.replace(/\d+$/, '');
-  clean = clean.replace(/[@_.-]/g, ' ');
-  clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
-  return clean.split(' ')
-    .filter(w => w.length > 0)
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(' ') || 'User';
+  
+  // Remove @ and domain if email
+  if (clean.includes('@')) {
+    clean = clean.split('@')[0];
+  }
+  
+  return clean || 'User';
 };
 
 const getAvatarInitial = (displayName?: string, username?: string): string => {
