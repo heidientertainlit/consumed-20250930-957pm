@@ -32,6 +32,53 @@ export default function PlayRanks() {
     { id: 'Podcasts', label: 'Podcasts' },
   ];
 
+  // Fetch Consumed-curated ranks from backend
+  const { data: consumedRanksData, isLoading: isLoadingConsumed } = useQuery({
+    queryKey: ['consumed-ranks'],
+    queryFn: async () => {
+      try {
+        const response = await fetch(
+          'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-consumed-ranks',
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (!response.ok) {
+          console.log('get-consumed-ranks not available, using fallback');
+          return null;
+        }
+        
+        const data = await response.json();
+        console.log('Consumed ranks fetched:', data.ranks?.length || 0);
+        
+        if (data.needsSeeding) {
+          console.log('Seeding Consumed ranks...');
+          await fetch(
+            'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-consumed-ranks?action=seed',
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+          const refetchResponse = await fetch(
+            'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-consumed-ranks',
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+          if (refetchResponse.ok) {
+            const refetchData = await refetchResponse.json();
+            return refetchData.ranks || null;
+          }
+        }
+        
+        return data.ranks || null;
+      } catch (error) {
+        console.log('Error fetching consumed ranks:', error);
+        return null;
+      }
+    },
+    staleTime: 60000,
+  });
+
   // Fetch public community ranks via edge function
   const { data: publicRanksData, isLoading: isLoadingPublic } = useQuery({
     queryKey: ['public-ranks', selectedCategory, searchQuery],
@@ -52,7 +99,7 @@ export default function PlayRanks() {
         );
         
         if (!response.ok) {
-          console.log('get-public-ranks not available, edge function may not be deployed');
+          console.log('get-public-ranks not available');
           return [];
         }
         
@@ -120,8 +167,8 @@ export default function PlayRanks() {
     staleTime: 30000,
   });
 
-  // Consumed-curated rank templates (hardcoded as inspiration)
-  const consumedRanks = [
+  // Fallback Consumed ranks if backend not available
+  const fallbackConsumedRanks = [
     {
       postId: 'consumed-best-90s-movies',
       rank: {
@@ -180,6 +227,9 @@ export default function PlayRanks() {
       commentsCount: 5,
     },
   ];
+
+  // Use backend Consumed ranks if available, otherwise fallback
+  const consumedRanks = consumedRanksData || fallbackConsumedRanks;
 
   // Combine Consumed showcase ranks with community public ranks and user ranks
   const communityRanks = (publicRanksData || []).map((item: any) => ({
@@ -268,7 +318,7 @@ export default function PlayRanks() {
     },
   });
 
-  const isLoading = isLoadingPublic;
+  const isLoading = isLoadingPublic || isLoadingConsumed;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
