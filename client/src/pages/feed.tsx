@@ -1389,10 +1389,18 @@ export default function Feed() {
 
   // Filter posts by detailed filters and feed filter
   const filteredPosts = tieredPosts.filter(item => {
-    // Skip FriendActivityBlock from filtering
-    if ((item as any).type === 'friend_activity_block') return true;
-    // Skip ConsolidatedActivity items from filtering (they're already processed)
-    if ('originalPostIds' in item) return true;
+    // When a specific filter is active, hide grouped/consolidated items
+    // (they don't match specific content types like hot-takes or ask-for-recs)
+    if (feedFilter && feedFilter !== '' && feedFilter !== 'friends') {
+      // Hide FriendActivityBlock when filtering for specific content types
+      if ((item as any).type === 'friend_activity_block') return false;
+      // Hide ConsolidatedActivity when filtering for specific content types
+      if ('originalPostIds' in item) return false;
+    } else {
+      // No filter active - show these items
+      if ((item as any).type === 'friend_activity_block') return true;
+      if ('originalPostIds' in item) return true;
+    }
     
     const post = item as SocialPost;
     
