@@ -543,7 +543,7 @@ function CurrentlyConsumingFeedCard({
   expandedComments,
   setExpandedComments,
   handleLike,
-  handleDeletePost,
+  handleHidePost,
   fetchComments,
   commentInputs,
   handleCommentInputChange,
@@ -565,7 +565,7 @@ function CurrentlyConsumingFeedCard({
   expandedComments: Set<string>;
   setExpandedComments: React.Dispatch<React.SetStateAction<Set<string>>>;
   handleLike: (postId: string) => void;
-  handleDeletePost: (postId: string) => void;
+  handleHidePost: (postId: string) => void;
   fetchComments: (postId: string) => Promise<any>;
   commentInputs: { [postId: string]: string };
   handleCommentInputChange: (postId: string, value: string) => void;
@@ -655,11 +655,12 @@ function CurrentlyConsumingFeedCard({
             </div>
             {isOwnPost && (
               <button
-                onClick={() => handleDeletePost(post.id)}
-                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                data-testid={`button-delete-currently-${post.id}`}
+                onClick={() => handleHidePost(post.id)}
+                className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                data-testid={`button-hide-currently-${post.id}`}
+                title="Hide from feed"
               >
-                <Trash2 size={16} />
+                <EyeOff size={16} />
               </button>
             )}
           </div>
@@ -2070,13 +2071,13 @@ export default function Feed() {
     commentMutation.mutate({ postId, content, parentCommentId });
   };
 
-  const handleDeletePost = (postId: string) => {
-    console.log('🗑️ handleDeletePost called for:', postId);
-    if (confirm('Are you sure you want to delete this post?')) {
-      console.log('✅ User confirmed delete');
+  const handleHidePost = (postId: string) => {
+    console.log('🙈 handleHidePost called for:', postId);
+    if (confirm('Hide this post from the feed? Your rating will still be saved.')) {
+      console.log('✅ User confirmed hide');
       deletePostMutation.mutate(postId);
     } else {
-      console.log('❌ User cancelled delete');
+      console.log('❌ User cancelled hide');
     }
   };
 
@@ -3179,11 +3180,12 @@ export default function Feed() {
                                 </div>
                                 {post.user.id === user?.id && (
                                   <button
-                                    onClick={() => handleDeletePost(post.id)}
-                                    className="text-gray-400 hover:text-red-500 transition-colors"
-                                    data-testid={`button-delete-hot-take-${post.id}`}
+                                    onClick={() => handleHidePost(post.id)}
+                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                    data-testid={`button-hide-hot-take-${post.id}`}
+                                    title="Hide from feed"
                                   >
-                                    <Trash2 size={16} />
+                                    <EyeOff size={16} />
                                   </button>
                                 )}
                               </div>
@@ -3381,11 +3383,12 @@ export default function Feed() {
                             </div>
                             {isOwnPost && (
                               <button
-                                onClick={() => handleDeletePost(post.id)}
-                                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                                data-testid={`button-delete-rewatch-${post.id}`}
+                                onClick={() => handleHidePost(post.id)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                                data-testid={`button-hide-rewatch-${post.id}`}
+                                title="Hide from feed"
                               >
-                                <Trash2 size={16} />
+                                <EyeOff size={16} />
                               </button>
                             )}
                           </div>
@@ -3475,7 +3478,7 @@ export default function Feed() {
                       expandedComments={expandedComments}
                       setExpandedComments={setExpandedComments}
                       handleLike={handleLike}
-                      handleDeletePost={handleDeletePost}
+                      handleHidePost={handleHidePost}
                       fetchComments={fetchComments}
                       commentInputs={commentInputs}
                       handleCommentInputChange={handleCommentInputChange}
@@ -3541,11 +3544,12 @@ export default function Feed() {
                                 </div>
                                 {isOwnPost && (
                                   <button
-                                    onClick={() => handleDeletePost(post.id)}
-                                    className="text-gray-400 hover:text-red-500 transition-colors"
-                                    data-testid={`button-delete-ask-recs-${post.id}`}
+                                    onClick={() => handleHidePost(post.id)}
+                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                    data-testid={`button-hide-ask-recs-${post.id}`}
+                                    title="Hide from feed"
                                   >
-                                    <Trash2 size={16} />
+                                    <EyeOff size={16} />
                                   </button>
                                 )}
                               </div>
@@ -3804,12 +3808,12 @@ export default function Feed() {
                       {/* Use currentAppUserId for matching since auth UID may differ from app user ID */}
                       {currentAppUserId && post.user.id === currentAppUserId && (
                         <button
-                          onClick={() => handleDeletePost(post.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
-                          data-testid={`button-delete-post-${post.id}`}
-                          title="Delete post"
+                          onClick={() => handleHidePost(post.id)}
+                          className="text-gray-400 hover:text-gray-600 transition-colors"
+                          data-testid={`button-hide-post-${post.id}`}
+                          title="Hide from feed"
                         >
-                          <Trash2 size={16} />
+                          <EyeOff size={16} />
                         </button>
                       )}
                     </div>
@@ -3963,15 +3967,15 @@ export default function Feed() {
                             <div className="flex-1">
                             </div>
                           )}
-                          {/* Show delete button if current user owns any activity in this post */}
+                          {/* Show hide button if current user owns any activity in this post */}
                           {myActivity && (
                             <button
-                              onClick={() => handleDeletePost(myActivity.postId)}
-                              className="text-gray-400 hover:text-red-500 transition-colors"
-                              data-testid={`button-delete-post-${post.id}`}
-                              title="Delete post"
+                              onClick={() => handleHidePost(myActivity.postId)}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                              data-testid={`button-hide-post-${post.id}`}
+                              title="Hide from feed"
                             >
-                              <Trash2 size={16} />
+                              <EyeOff size={16} />
                             </button>
                           )}
                         </div>

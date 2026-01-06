@@ -132,6 +132,7 @@ serve(async (req) => {
           fire_votes,
           ice_votes
         `)
+        .or('hidden.is.null,hidden.eq.false')
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
