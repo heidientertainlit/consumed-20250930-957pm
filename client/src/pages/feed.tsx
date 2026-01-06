@@ -2741,24 +2741,6 @@ export default function Feed() {
                     Rank
                   </button>
                 </Link>
-                <button
-                  onClick={() => setFeedFilter(feedFilter === 'hot-takes' ? '' : 'hot-takes')}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    feedFilter === 'hot-takes' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="pill-hot-takes"
-                >
-                  🔥 Hot Takes
-                </button>
-                <button
-                  onClick={() => setFeedFilter(feedFilter === 'ask-for-recs' ? '' : 'ask-for-recs')}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    feedFilter === 'ask-for-recs' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="pill-ask-for-recs"
-                >
-                  Ask for Recs
-                </button>
               </div>
 
               {/* Single Quick Glimpse at the top - scrolls through recent friend activities */}
