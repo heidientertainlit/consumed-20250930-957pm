@@ -4,7 +4,7 @@ import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Vote, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown } from 'lucide-react';
+import { Vote, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown, Trophy } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
@@ -482,7 +482,6 @@ export default function PlayPollsPage() {
                 )}
               </div>
             </div>
-          </div>
         </div>
       </div>
 

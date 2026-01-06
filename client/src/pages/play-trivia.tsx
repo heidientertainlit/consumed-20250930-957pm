@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Brain, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown } from 'lucide-react';
+import { Brain, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown, Trophy } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
@@ -559,7 +559,6 @@ export default function PlayTriviaPage() {
                 )}
               </div>
             </div>
-          </div>
         </div>
       </div>
 

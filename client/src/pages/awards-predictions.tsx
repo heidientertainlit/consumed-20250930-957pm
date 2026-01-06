@@ -422,7 +422,6 @@ export default function AwardsPredictions() {
               "Make your picks. See how your predictions stack up."
             )}
           </p>
-        </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-6">
