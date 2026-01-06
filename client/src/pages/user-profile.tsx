@@ -196,7 +196,7 @@ export default function UserProfile() {
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('stats');
-  const [collectionsSubTab, setCollectionsSubTab] = useState<'lists'>('lists');
+  const [collectionsSubTab, setCollectionsSubTab] = useState<'lists' | 'history'>('lists');
   const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
   // User activity state
   const [userActivity, setUserActivity] = useState<any[]>([]);
@@ -2946,19 +2946,6 @@ export default function UserProfile() {
                 Collections
               </button>
             )}
-            {(isOwnProfile || friendshipStatus === 'friends') && (
-              <button
-                onClick={() => setActiveSection('activity')}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeSection === 'activity'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-                data-testid="nav-activity"
-              >
-                Activity
-              </button>
-            )}
           </div>
         </div>
 
@@ -3560,24 +3547,65 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* Collections Section (Lists only) - Show for own profile or friends */}
+        {/* Collections Section - Show for own profile or friends */}
         {activeSection === 'collections' && (isOwnProfile || friendshipStatus === 'friends') && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              {/* Section Header */}
+              {/* Section Header with Track Media Button */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {isOwnProfile ? 'Your Lists' : 'Lists'}
+                  {isOwnProfile ? 'Your Collections' : 'Collections'}
                 </h2>
+                {isOwnProfile && (
+                  <Button
+                    onClick={() => setIsTrackModalOpen(true)}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full"
+                    data-testid="button-track-media"
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Track Media
+                  </Button>
+                )}
               </div>
 
-              {/* Lists Content */}
+              {/* Sub-tabs for Lists and History */}
+              <div className="flex items-center gap-2 mb-6">
+                <button
+                  onClick={() => setCollectionsSubTab('lists')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    collectionsSubTab === 'lists'
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  data-testid="collections-tab-lists"
+                >
+                  <List size={16} />
+                  Lists
+                </button>
+                <button
+                  onClick={() => setCollectionsSubTab('history')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    collectionsSubTab === 'history'
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  data-testid="collections-tab-history"
+                >
+                  <Clock size={16} />
+                  History
+                </button>
+              </div>
+
+              {/* Lists Tab Content */}
+              {collectionsSubTab === 'lists' && (
+                <>
                   {/* Create List Button - Only for own profile */}
                   {isOwnProfile && (
                     <div className="flex justify-end mb-4">
                       <Button
                         onClick={() => setShowCreateListDialog(true)}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full"
+                        variant="outline"
+                        className="border-purple-300 text-purple-600 hover:bg-purple-50 rounded-full"
                         data-testid="button-create-list"
                       >
                         <Plus size={16} className="mr-2" />
@@ -3594,61 +3622,60 @@ export default function UserProfile() {
                   ) : userLists && userLists.length > 0 ? (
                     <div className="space-y-2">
                       {userLists.map((list: any) => (
-                    <div
-                      key={list.id}
-                      className="border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
-                      onClick={() => {
-                        const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                        const userParam = !isOwnProfile && viewingUserId ? `?user=${viewingUserId}` : '';
-                        setLocation(`/list/${listSlug}${userParam}`);
-                      }}
-                    >
-                      <div className="px-4 py-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
-                            {list.is_default ? (
-                              list.title === 'Want to Watch' ? <Play className="text-purple-600" size={18} /> :
-                              list.title === 'Currently' ? <Clock className="text-blue-600" size={18} /> :
-                              list.title === 'Completed' ? <Trophy className="text-green-600" size={18} /> :
-                              <List className="text-gray-600" size={18} />
-                            ) : (
-                              <List className="text-purple-600" size={18} />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-gray-900">{getDisplayTitle(list.title)}</h3>
-                              {!list.is_default && list.visibility && (
-                                <Badge variant="outline" className="text-xs">
-                                  {list.visibility === 'private' ? <Lock size={10} className="mr-1" /> : <Users size={10} className="mr-1" />}
-                                  {list.visibility}
-                                </Badge>
-                              )}
+                        <div
+                          key={list.id}
+                          className="border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
+                          onClick={() => {
+                            const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                            const userParam = !isOwnProfile && viewingUserId ? `?user=${viewingUserId}` : '';
+                            setLocation(`/list/${listSlug}${userParam}`);
+                          }}
+                        >
+                          <div className="px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                                {list.is_default ? (
+                                  list.title === 'Want to Watch' ? <Play className="text-purple-600" size={18} /> :
+                                  list.title === 'Currently' ? <Clock className="text-blue-600" size={18} /> :
+                                  list.title === 'Completed' ? <Trophy className="text-green-600" size={18} /> :
+                                  <List className="text-gray-600" size={18} />
+                                ) : (
+                                  <List className="text-purple-600" size={18} />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold text-gray-900">{getDisplayTitle(list.title)}</h3>
+                                  {!list.is_default && list.visibility && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {list.visibility === 'private' ? <Lock size={10} className="mr-1" /> : <Users size={10} className="mr-1" />}
+                                      {list.visibility}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                  {list.items?.length || 0} {list.items?.length === 1 ? 'item' : 'items'}
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-sm text-gray-500">
-                              {list.items?.length || 0} {list.items?.length === 1 ? 'item' : 'items'}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleShareListDirect(list.id, list.title);
+                                }}
+                                data-testid={`button-share-list-${list.id}`}
+                              >
+                                <Share2 size={16} />
+                              </Button>
+                              <ChevronRight className="text-gray-400" size={18} />
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                              handleShareListDirect(list.id, list.title);
-                            }}
-                            data-testid={`button-share-list-${list.id}`}
-                          >
-                            <Share2 size={16} />
-                          </Button>
-                          <ChevronRight className="text-gray-400" size={18} />
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
                   ) : (
                     <div className="text-center py-8">
                       <List className="text-gray-300 mx-auto mb-3" size={48} />
@@ -3663,172 +3690,78 @@ export default function UserProfile() {
                       </Button>
                     </div>
                   )}
-            </div>
-          </div>
-        )}
-
-        {/* Activity Section - Show for own profile or friends */}
-        {activeSection === 'activity' && (isOwnProfile || friendshipStatus === 'friends') && (
-          <div ref={historyRef} className="px-4 mb-8">
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              {/* Section Header */}
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {isOwnProfile ? 'Your Activity' : 'Activity'}
-                </h2>
-              </div>
-
-              {/* Sub-filter Pills */}
-              <div className="flex items-center gap-2 mb-6 overflow-x-auto">
-                {[
-                  { id: 'posts', label: 'Posts', icon: MessageCircle },
-                  { id: 'history', label: 'Media History', icon: Clock },
-                  { id: 'bets', label: 'My Bets', icon: Target },
-                ].map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setActivitySubFilter(id as any)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                      activitySubFilter === id
-                        ? 'bg-purple-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid={`activity-filter-${id}`}
-                  >
-                    <Icon size={16} />
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Import Button - Only for own profile, only in history filter */}
-              {isOwnProfile && activitySubFilter === 'history' && (
-                <button
-                  onClick={() => setIsImportModalOpen(true)}
-                  className="w-full mb-4 px-4 py-3 rounded-xl border-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center gap-2 font-medium"
-                  data-testid="button-import-history"
-                >
-                  <Upload size={18} />
-                  Import Media History
-                </button>
+                </>
               )}
 
-              {/* Posts Section */}
-              {activitySubFilter === 'posts' && (
-                <div className="space-y-4">
-                  {isLoadingActivity ? (
-                    <div className="space-y-4">
-                      {[1, 2].map(n => (
-                        <div key={n} className="bg-gray-100 h-40 rounded-2xl animate-pulse" />
-                      ))}
-                    </div>
-                  ) : userActivity.length === 0 ? (
-                    <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-                      <MessageCircle className="mx-auto mb-3 text-gray-300" size={48} />
-                      <p className="text-gray-600">No activity yet</p>
-                    </div>
-                  ) : (
-                    userActivity.map((post) => (
-                      <div key={post.id} className="mb-4">
-                        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-                          <div className="flex items-center gap-3 mb-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={post.user?.avatar_url} />
-                              <AvatarFallback>{post.user?.username?.[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-semibold">{post.user?.username}</p>
-                              <p className="text-xs text-gray-500">{new Date(post.created_at).toLocaleDateString()}</p>
-                            </div>
-                          </div>
-                          {post.content && <p className="text-sm text-gray-800 mb-3">{post.content}</p>}
-                          {post.mediaItems?.length > 0 && (
-                            <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-xl mb-3">
-                              {post.mediaItems[0].image_url && (
-                                <img src={post.mediaItems[0].image_url} className="h-12 w-8 object-cover rounded" />
-                              )}
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">{post.mediaItems[0].title}</p>
-                                <p className="text-xs text-gray-500">{post.mediaItems[0].media_type}</p>
-                              </div>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-4 text-gray-500">
-                            <button className="flex items-center gap-1 hover:text-purple-600 transition-colors">
-                              <Heart size={16} className={likedPosts.has(post.id) ? "fill-purple-600 text-purple-600" : ""} />
-                              <span className="text-xs">{post.likes_count || 0}</span>
-                            </button>
-                            <button className="flex items-center gap-1 hover:text-purple-600 transition-colors">
-                              <MessageCircle size={16} />
-                              <span className="text-xs">{post.comments_count || 0}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* Media History Section */}
-              {activitySubFilter === 'history' && (
+              {/* History Tab Content */}
+              {collectionsSubTab === 'history' && (
                 <>
-                  {/* Filter buttons row for history */}
-                  {activitySubFilter === 'history' && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <div className="relative">
-                        <button
-                          onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                            mediaHistoryType !== 'all'
-                              ? 'bg-purple-600 text-white'
-                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                          }`}
-                          data-testid="filter-type-button"
-                        >
-                          <Film size={12} />
-                          {getTypeLabel()}
-                          <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
-                        </button>
-                        {openFilter === 'type' && (
-                          <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
-                            {[
-                              { value: 'all', label: 'All Types' },
-                              { value: 'movies', label: 'Movies', icon: Film },
-                              { value: 'tv', label: 'TV', icon: Tv },
-                              { value: 'books', label: 'Books', icon: BookOpen },
-                              { value: 'music', label: 'Music', icon: Music },
-                            ].map(({ value, label, icon: Icon }) => (
-                              <button
-                                key={value}
-                                onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
-                                className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${
-                                  mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
-                                }`}
-                              >
-                                {Icon && <Icon size={12} className="text-gray-600" />}
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  {/* Import Button - Only for own profile */}
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => setIsImportModalOpen(true)}
+                      className="w-full mb-4 px-4 py-3 rounded-xl border-2 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors flex items-center justify-center gap-2 font-medium"
+                      data-testid="button-import-history"
+                    >
+                      <Upload size={18} />
+                      Import Media History
+                    </button>
                   )}
+
+                  {/* Filter buttons row for history */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <div className="relative">
+                      <button
+                        onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                          mediaHistoryType !== 'all'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                        }`}
+                        data-testid="filter-type-button"
+                      >
+                        <Film size={12} />
+                        {getTypeLabel()}
+                        <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
+                      </button>
+                      {openFilter === 'type' && (
+                        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
+                          {[
+                            { value: 'all', label: 'All Types' },
+                            { value: 'movies', label: 'Movies', icon: Film },
+                            { value: 'tv', label: 'TV', icon: Tv },
+                            { value: 'books', label: 'Books', icon: BookOpen },
+                            { value: 'music', label: 'Music', icon: Music },
+                          ].map(({ value, label, icon: Icon }) => (
+                            <button
+                              key={value}
+                              onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
+                              className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${
+                                mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
+                              }`}
+                            >
+                              {Icon && <Icon size={12} className="text-gray-600" />}
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   {/* Search Bar */}
                   <div className="relative mb-4">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <Input
-                      placeholder="Search activity..."
+                      placeholder="Search history..."
                       value={mediaHistorySearch}
                       onChange={(e) => setMediaHistorySearch(e.target.value)}
                       className="pl-10 bg-white text-gray-900 border-gray-300"
-                      data-testid="input-activity-search"
+                      data-testid="input-history-search"
                     />
                   </div>
 
-                  {/* Activity Items */}
+                  {/* History Items */}
                   {isLoadingLists ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map((n) => (
@@ -3840,9 +3773,9 @@ export default function UserProfile() {
                     </div>
                   ) : filteredMediaHistory.length === 0 ? (
                     <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-                      <Activity className="mx-auto mb-3 text-gray-300" size={48} />
-                      <p className="text-gray-600">No activity yet</p>
-                      <p className="text-sm text-gray-500">Start tracking media to see your activity here</p>
+                      <Clock className="mx-auto mb-3 text-gray-300" size={48} />
+                      <p className="text-gray-600">No history yet</p>
+                      <p className="text-sm text-gray-500">Start tracking media to see your history here</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -3855,7 +3788,7 @@ export default function UserProfile() {
                               setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
                             }
                           }}
-                          data-testid={`activity-item-${index}`}
+                          data-testid={`history-item-${index}`}
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0">
@@ -3885,82 +3818,6 @@ export default function UserProfile() {
                     </div>
                   )}
                 </>
-              )}
-
-              {/* Ratings and Games Sections (Removed as per user request to simplify) */}
-              
-              {/* Bets Section - Only for own profile */}
-              {activitySubFilter === 'bets' && isOwnProfile && (
-                <div className="space-y-4">
-                  {/* Bets Toggle - Placed vs Received */}
-                  <div className="flex gap-2 mb-4">
-                    <button
-                      onClick={() => { setBetsTab('placed'); fetchBets('placed'); }}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        betsTab === 'placed' 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      data-testid="bets-tab-placed"
-                    >
-                      Bets You Placed
-                    </button>
-                    <button
-                      onClick={() => { setBetsTab('received'); fetchBets('received'); }}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        betsTab === 'received' 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      data-testid="bets-tab-received"
-                    >
-                      Bets on You
-                    </button>
-                  </div>
-
-                  {isLoadingBets ? (
-                    <div className="space-y-3">
-                      {[1, 2, 3].map((n) => (
-                        <div key={n} className="bg-gray-50 rounded-xl p-4 animate-pulse">
-                          <div className="h-5 bg-gray-200 rounded w-2/3 mb-2"></div>
-                          <div className="h-4 bg-gray-100 rounded w-1/3"></div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (userBets || []).length === 0 ? (
-                    <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-                      <Target className="mx-auto mb-3 text-gray-300" size={48} />
-                      <p className="text-gray-600">
-                        {betsTab === 'placed' ? 'No bets placed yet' : 'No one has bet on you yet'}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {betsTab === 'placed' 
-                          ? "When you challenge friends on their predictions, they'll show up here." 
-                          : "When friends challenge your predictions, they'll show up here."}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {(userBets || []).map((bet: any) => (
-                        <div key={bet.id} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-semibold text-gray-900">{bet.media_title}</h4>
-                            <Badge variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'secondary'}>
-                              {bet.status}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {betsTab === 'placed' ? `Bet on ${bet.target_user?.username}` : `Bet from ${bet.creator?.username}`}
-                          </p>
-                          <div className="flex justify-between items-center text-xs text-gray-500">
-                            <span>{bet.points} points at stake</span>
-                            <span>{new Date(bet.created_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               )}
             </div>
           </div>
