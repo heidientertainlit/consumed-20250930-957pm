@@ -402,6 +402,84 @@ export default function MediaDetail() {
 
   const customLists = userListsData?.lists?.filter((list: any) => list.isCustom) || [];
 
+  // Query to find which lists contain this media item
+  const { data: listsContainingMedia = [] } = useQuery({
+    queryKey: ['lists-containing-media', params?.source, params?.id],
+    queryFn: async () => {
+      if (!user?.id || !params?.id || !params?.source) return [];
+      
+      const { data, error } = await supabase
+        .from('list_items')
+        .select(`
+          id,
+          list_id,
+          title,
+          lists!inner (
+            id,
+            title,
+            is_system
+          )
+        `)
+        .eq('external_id', params.id)
+        .eq('external_source', params.source)
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching lists containing media:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    enabled: !!user?.id && !!params?.id && !!params?.source,
+  });
+
+  // Delete list item mutation
+  const deleteListItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!session?.access_token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/delete-list-item", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ itemId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to remove item: ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, itemId) => {
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
+      toast({
+        title: "Removed from list",
+        description: "Item has been removed from your list",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to remove",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRemoveFromList = (itemId: string, listTitle: string) => {
+    if (confirm(`Remove from "${listTitle}"?`)) {
+      deleteListItemMutation.mutate(itemId);
+    }
+  };
+
   // Delete review mutation
   const deleteReviewMutation = useMutation({
     mutationFn: async (postId: string) => {
@@ -756,6 +834,27 @@ export default function MediaDetail() {
                                 <Plus className="h-4 w-4 mr-2" />
                                 Create New List
                               </DropdownMenuItem>
+                              
+                              {/* Remove from List */}
+                              {listsContainingMedia.length > 0 && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
+                                    REMOVE FROM
+                                  </div>
+                                  {listsContainingMedia.map((item: any) => (
+                                    <DropdownMenuItem
+                                      key={item.id}
+                                      onClick={() => handleRemoveFromList(item.id, item.lists?.title || 'list')}
+                                      className="cursor-pointer pl-4 text-red-500 hover:text-red-600"
+                                      disabled={deleteListItemMutation.isPending}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      {item.lists?.title || 'Unknown List'}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
