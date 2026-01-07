@@ -687,11 +687,11 @@ export default function PlayPage() {
             Compete, predict, and earn rewards
           </p>
           
-          {/* Pills inside gradient */}
+          {/* Pills inside gradient - smaller, light gray */}
           <div className="flex flex-wrap gap-2">
             <Link href="/play/awards">
               <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                className="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300 transition-all"
                 data-testid="browse-predictions"
               >
                 Predictions
@@ -699,7 +699,7 @@ export default function PlayPage() {
             </Link>
             <Link href="/play/polls">
               <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                className="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300 transition-all"
                 data-testid="browse-polls"
               >
                 Polls
@@ -707,7 +707,7 @@ export default function PlayPage() {
             </Link>
             <Link href="/play/trivia">
               <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                className="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300 transition-all"
                 data-testid="browse-trivia"
               >
                 Trivia
@@ -715,7 +715,7 @@ export default function PlayPage() {
             </Link>
             <Link href="/play/ranks">
               <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                className="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300 transition-all"
                 data-testid="browse-ranks"
               >
                 Ranks
@@ -723,7 +723,7 @@ export default function PlayPage() {
             </Link>
             <Link href="/play/hot-takes">
               <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                className="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300 transition-all"
                 data-testid="browse-hot-takes"
               >
                 Hot Takes
@@ -731,7 +731,7 @@ export default function PlayPage() {
             </Link>
             <Link href="/play/ask-recs">
               <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                className="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300 transition-all"
                 data-testid="browse-ask-recs"
               >
                 Ask for Recs
