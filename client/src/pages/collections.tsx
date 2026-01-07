@@ -82,6 +82,9 @@ export default function CollectionsPage() {
   
   // Quick add modal state
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  
+  // Library action sheet state
+  const [isLibraryActionOpen, setIsLibraryActionOpen] = useState(false);
 
   // Fast metadata query - try lightweight endpoint first, fallback to full endpoint
   const { data: listsMetadata, isLoading: isLoadingMetadata } = useQuery({
@@ -560,50 +563,6 @@ export default function CollectionsPage() {
 
           {/* Lists Tab */}
           <TabsContent value="lists">
-            <div className="mb-4 flex justify-center">
-              <Dialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 px-8 py-2 rounded-full" data-testid="button-create-list">
-                    <Plus size={16} className="mr-2" />
-                    Create List
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-white">
-                  <DialogHeader>
-                    <DialogTitle className="text-gray-900">Create New List</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <Input
-                      placeholder="List name"
-                      value={newListName}
-                      onChange={(e) => setNewListName(e.target.value)}
-                      className="bg-white text-gray-900 border-gray-300"
-                      data-testid="input-list-name"
-                    />
-                    <Select value={newListVisibility} onValueChange={setNewListVisibility}>
-                      <SelectTrigger className="bg-white text-gray-900 border-gray-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border border-gray-200">
-                        <SelectItem value="private" className="text-gray-900">Private</SelectItem>
-                        <SelectItem value="friends" className="text-gray-900">Friends Only</SelectItem>
-                        <SelectItem value="public" className="text-gray-900">Public</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button 
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                      onClick={() => createListMutation.mutate()}
-                      disabled={!newListName.trim() || createListMutation.isPending}
-                      data-testid="button-submit-list"
-                    >
-                      {createListMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-                      Create List
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
             {/* Search Lists */}
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -982,15 +941,117 @@ export default function CollectionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Floating Action Button - Quick Add */}
+      {/* Floating Action Button - Opens Library Actions */}
       <button
-        onClick={() => setIsQuickAddOpen(true)}
+        onClick={() => setIsLibraryActionOpen(true)}
         className="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shadow-lg flex items-center justify-center text-white hover:from-purple-700 hover:to-blue-700 transition-all hover:scale-105 z-40"
-        data-testid="fab-quick-add"
-        aria-label="Quick add media"
+        data-testid="fab-library-action"
+        aria-label="Library actions"
       >
         <Plus size={24} />
       </button>
+
+      {/* Library Action Sheet */}
+      <Sheet open={isLibraryActionOpen} onOpenChange={setIsLibraryActionOpen}>
+        <SheetContent side="bottom" className="bg-white rounded-t-3xl">
+          <SheetHeader className="pb-4">
+            <SheetTitle className="text-xl font-bold text-gray-900">What would you like to do?</SheetTitle>
+          </SheetHeader>
+          
+          <div className="space-y-3 pb-8">
+            {/* Add Media */}
+            <button
+              onClick={() => {
+                setIsLibraryActionOpen(false);
+                setIsQuickAddOpen(true);
+              }}
+              className="w-full p-4 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-colors"
+              data-testid="library-action-add-media"
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Plus className="text-white" size={28} />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900 text-lg">Add Media</p>
+                <p className="text-sm text-gray-500">Track, rate, or add something to a list</p>
+              </div>
+            </button>
+            
+            {/* Create List */}
+            <button
+              onClick={() => {
+                setIsLibraryActionOpen(false);
+                setIsCreateListOpen(true);
+              }}
+              className="w-full p-4 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-colors"
+              data-testid="library-action-create-list"
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <List className="text-white" size={24} />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900 text-lg">Create List</p>
+                <p className="text-sm text-gray-500">Organize your media into custom lists</p>
+              </div>
+            </button>
+            
+            {/* Import History */}
+            <button
+              onClick={() => {
+                setIsLibraryActionOpen(false);
+                setIsImportModalOpen(true);
+              }}
+              className="w-full p-4 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-colors"
+              data-testid="library-action-import"
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <Upload className="text-white" size={24} />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900 text-lg">Import History</p>
+                <p className="text-sm text-gray-500">Import from Netflix, Spotify, and more</p>
+              </div>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Create List Dialog */}
+      <Dialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900">Create New List</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <Input
+              placeholder="List name"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              className="bg-white text-gray-900 border-gray-300"
+              data-testid="input-list-name"
+            />
+            <Select value={newListVisibility} onValueChange={setNewListVisibility}>
+              <SelectTrigger className="bg-white text-gray-900 border-gray-300">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-gray-200">
+                <SelectItem value="private" className="text-gray-900">Private</SelectItem>
+                <SelectItem value="friends" className="text-gray-900">Friends Only</SelectItem>
+                <SelectItem value="public" className="text-gray-900">Public</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button 
+              className="w-full bg-purple-600 hover:bg-purple-700"
+              onClick={() => createListMutation.mutate()}
+              disabled={!newListName.trim() || createListMutation.isPending}
+              data-testid="button-submit-list"
+            >
+              {createListMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              Create List
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Quick Add Modal */}
       <QuickAddModal 
