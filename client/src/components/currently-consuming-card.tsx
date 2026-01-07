@@ -6,7 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play, MoreHorizontal, Check, X, Clock, Trophy } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play, MoreHorizontal, Check, X, Clock, Trophy, Star } from 'lucide-react';
 import { DnfReasonDrawer } from '@/components/dnf-reason-drawer';
 
 interface CurrentlyConsumingCardProps {
@@ -23,6 +24,9 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
   const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
   const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
+  const [isRatingSheetOpen, setIsRatingSheetOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [thoughts, setThoughts] = useState('');
   
   const mediaType = (item.media_type || 'movie').toLowerCase();
   const isBook = mediaType === 'book';
@@ -129,6 +133,81 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     } catch (error) {
       console.error('Failed to save DNF reason:', error);
     }
+  };
+
+  const ratingMutation = useMutation({
+    mutationFn: async ({ rating, thoughts }: { rating: number; thoughts?: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/submit-rating',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            external_id: item.external_id,
+            external_source: item.external_source || 'tmdb',
+            media_type: item.media_type,
+            title: item.title,
+            image_url: item.image_url,
+            rating,
+            review: thoughts,
+          }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to submit rating');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rating saved!",
+        description: thoughts ? "Your rating and thoughts have been saved." : "Your rating has been saved.",
+      });
+    },
+    onError: (error) => {
+      console.error('Rating error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save rating. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFinishWithRating = () => {
+    setIsProgressSheetOpen(false);
+    setIsMoveSheetOpen(false);
+    setRating(0);
+    setThoughts('');
+    setIsRatingSheetOpen(true);
+  };
+
+  const handleSubmitRating = async () => {
+    onMoveToList('finished', 'Finished');
+    setIsRatingSheetOpen(false);
+    
+    if (rating > 0) {
+      try {
+        await ratingMutation.mutateAsync({
+          rating,
+          thoughts: thoughts.trim() || undefined,
+        });
+      } catch (error) {
+        console.error('Failed to save rating:', error);
+      }
+    }
+  };
+
+  const handleSkipRating = () => {
+    onMoveToList('finished', 'Finished');
+    setIsRatingSheetOpen(false);
   };
   
   const getProgressDisplay = () => {
@@ -501,10 +580,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             </Button>
             
             <button 
-              onClick={() => {
-                setIsProgressSheetOpen(false);
-                onMoveToList('finished', 'Finished');
-              }}
+              onClick={handleFinishWithRating}
               disabled={isUpdating}
               className="w-full text-center text-green-600 font-semibold text-sm hover:text-green-700 py-2"
             >
@@ -522,7 +598,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
           
           <div className="space-y-2 pb-6">
             <button
-              onClick={() => { onMoveToList('finished', 'Finished'); setIsMoveSheetOpen(false); }}
+              onClick={handleFinishWithRating}
               disabled={isUpdating}
               className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
               data-testid={`move-finished-${item.id}`}
@@ -580,6 +656,93 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
                 <p className="text-sm text-gray-500">Add to your favorites</p>
               </div>
             </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isRatingSheetOpen} onOpenChange={setIsRatingSheetOpen}>
+        <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
+          <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
+            <SheetTitle className="text-lg font-semibold text-gray-900">You finished it!</SheetTitle>
+          </div>
+          
+          <div className="px-4 py-4 space-y-5 pb-8">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.title} className="w-12 h-16 object-cover rounded-lg" />
+              ) : (
+                <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                  {getMediaIcon()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-gray-900 truncate">{item.title}</h4>
+                <p className="text-sm text-gray-500 capitalize">{mediaType}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">What would you rate this?</label>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    className="p-1 transition-transform hover:scale-110"
+                    data-testid={`rating-star-${star}`}
+                  >
+                    <Star 
+                      size={36} 
+                      className={`transition-colors ${
+                        star <= rating 
+                          ? 'fill-yellow-400 text-yellow-400' 
+                          : 'text-gray-300 hover:text-yellow-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {rating > 0 && (
+                <p className="text-center text-sm text-gray-500">
+                  {rating === 1 && "Not for me"}
+                  {rating === 2 && "It was okay"}
+                  {rating === 3 && "Pretty good"}
+                  {rating === 4 && "Really enjoyed it"}
+                  {rating === 5 && "Loved it!"}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Want to share your thoughts? (optional)</label>
+              <Textarea
+                placeholder="What did you think? Any highlights, favorite moments, or recommendations?"
+                value={thoughts}
+                onChange={(e) => setThoughts(e.target.value)}
+                className="min-h-[80px] bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400 resize-none"
+                data-testid="input-thoughts"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Button 
+                onClick={handleSubmitRating}
+                disabled={ratingMutation.isPending}
+                className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium"
+                data-testid="button-submit-rating"
+              >
+                {ratingMutation.isPending ? 'Saving...' : rating > 0 ? 'Save Rating' : 'Mark as Finished'}
+              </Button>
+              
+              <button 
+                onClick={handleSkipRating}
+                disabled={ratingMutation.isPending}
+                className="w-full text-center text-gray-500 text-sm hover:text-gray-700 py-2"
+                data-testid="button-skip-rating"
+              >
+                Skip for now
+              </button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
