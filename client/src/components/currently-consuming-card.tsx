@@ -650,6 +650,14 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             >
               I'm finished!
             </button>
+            
+            <button
+              onClick={handleRemoveFromLibrary}
+              disabled={isUpdating || deleteItemMutation.isPending}
+              className="w-full text-center text-gray-400 text-sm hover:text-red-500 py-2"
+            >
+              Remove from Library
+            </button>
           </div>
         </SheetContent>
       </Sheet>
