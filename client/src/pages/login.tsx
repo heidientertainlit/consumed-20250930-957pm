@@ -9,48 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { SiInstagram, SiTiktok } from "react-icons/si";
 import "./auth.css";
-
-import activityFeedImg from "@/assets/login-carousel/activity-feed.png";
-import pollsImg from "@/assets/login-carousel/polls.png";
-import profileImg from "@/assets/login-carousel/profile.png";
-import entertainmentDnaImg from "@/assets/login-carousel/entertainment-dna.png";
-import listsImg from "@/assets/login-carousel/lists.png";
-
-const carouselSlides = [
-  { image: activityFeedImg, title: "Activity Feed", description: "See what your friends are watching, reading, and listening to — plus get personalized recommendations based on their tastes and yours" },
-  { image: pollsImg, title: "Share & Engage", description: "Share your thoughts, create polls and predictions, and log what you're reading, watching, and listening to" },
-  { image: profileImg, title: "Your Profile", description: "Get your Entertainment DNA, add friends, create lists, and see your media history and stats" },
-  { image: entertainmentDnaImg, title: "Entertainment DNA", description: "Your engagement builds your unique entertainment personality — like Spotify Wrapped, but all the time and for all your media" },
-  { image: listsImg, title: "Lists & Logging", description: "Keep track of what you want to consume, what you've finished, what you loved, and what you didn't — and collaborate on lists with friends" },
-];
-
-function LoginCarousel() {
-  return (
-    <div className="overflow-x-auto scrollbar-hide pb-4">
-      <div className="flex gap-4 w-max px-2">
-        {carouselSlides.map((slide, index) => (
-          <div key={index} className="flex-shrink-0 w-64">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center h-full">
-              <img
-                src={slide.image}
-                alt={slide.title}
-                loading="lazy"
-                decoding="async"
-                className="w-44 h-auto mx-auto rounded-xl shadow-lg mb-4"
-                data-testid={`carousel-image-${index}`}
-              />
-              <h3 className="text-white font-semibold text-lg mb-1">{slide.title}</h3>
-              <p className="text-purple-200 text-sm">{slide.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -221,17 +182,19 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Logo and welcome section */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-2">
+        <div className="text-center mb-8 mt-8">
+          <div className="flex justify-center mb-3">
             <img 
               src="/consumed-logo-white.png" 
               alt="Consumed" 
               className="h-12 w-auto"
             />
           </div>
-          <p className="text-white text-lg max-w-xs mx-auto leading-relaxed">
-            Everyone's entertainment picks,<br />
-            all in one place.
+          <h1 className="text-white text-xl font-semibold mb-1">
+            Where entertainment comes together
+          </h1>
+          <p className="text-purple-200 text-base max-w-xs mx-auto">
+            Play, react, and keep up with what you love.
           </p>
         </div>
         
@@ -403,17 +366,6 @@ export default function LoginPage() {
               </form>
             </TabsContent>
           </Tabs>
-        </div>
-        
-        {/* See what you can do section */}
-        <div className="text-center mt-8">
-          <p className="text-purple-300 text-sm mb-2">See what you can do with consumed</p>
-          <ChevronDown className="w-6 h-6 text-purple-400 mx-auto animate-bounce" />
-        </div>
-        
-        {/* App Preview Carousel */}
-        <div className="mt-8">
-          <LoginCarousel />
         </div>
         
         {/* Footer with contact and social links */}
