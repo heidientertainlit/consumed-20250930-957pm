@@ -3586,23 +3586,23 @@ export default function UserProfile() {
                 </div>
               )}
 
-              {/* Sub-tabs for Lists and History */}
-              <div className="flex flex-col gap-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCollectionsSubTab('lists')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                        collectionsSubTab === 'lists'
-                          ? 'bg-purple-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      data-testid="collections-tab-lists"
-                    >
-                      <List size={16} />
-                      Lists
-                    </button>
-                    {isOwnProfile && (
+              {/* Sub-tabs for Lists and History - Only show for own profile */}
+              {isOwnProfile && (
+                <div className="flex flex-col gap-4 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCollectionsSubTab('lists')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                          collectionsSubTab === 'lists'
+                            ? 'bg-purple-600 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        data-testid="collections-tab-lists"
+                      >
+                        <List size={16} />
+                        Lists
+                      </button>
                       <button
                         onClick={() => setCollectionsSubTab('history')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
@@ -3615,13 +3615,13 @@ export default function UserProfile() {
                         <Clock size={16} />
                         History
                       </button>
-                    )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Lists Tab Content */}
-              {collectionsSubTab === 'lists' && (
+              {/* Lists Tab Content - Show for own profile when on lists tab, always show for friends */}
+              {(collectionsSubTab === 'lists' || !isOwnProfile) && (
                 <>
                   {isLoadingLists ? (
                     <div className="text-center py-8">
