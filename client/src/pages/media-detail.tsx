@@ -252,10 +252,11 @@ export default function MediaDetail() {
     }
   };
 
-  // Fetch media details from edge function
+  // Fetch media details from edge function with fallback to cached data
   const { data: mediaItem, isLoading } = useQuery({
     queryKey: ['media-detail', params?.type, params?.source, params?.id],
     queryFn: async () => {
+      // First try the main API
       const response = await fetch(
         `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${params?.source}&external_id=${params?.id}&media_type=${params?.type}`,
         {
@@ -265,13 +266,58 @@ export default function MediaDetail() {
           }
         }
       );
-      if (!response.ok) {
-        console.error('Failed to fetch media details:', response.status, await response.text());
-        throw new Error('Failed to fetch media details');
+      if (response.ok) {
+        return response.json();
       }
-      return response.json();
+      
+      // Fallback: Try to get cached info from media_item_lists table
+      console.log('API failed, trying fallback from cached media data...');
+      const { data: cachedMedia } = await supabase
+        .from('media_item_lists')
+        .select('media_title, media_type, media_creator, media_image_url, media_external_id, media_external_source')
+        .eq('media_external_id', params?.id)
+        .eq('media_external_source', params?.source)
+        .limit(1)
+        .single();
+      
+      if (cachedMedia) {
+        return {
+          title: cachedMedia.media_title,
+          media_type: cachedMedia.media_type || params?.type,
+          creator: cachedMedia.media_creator,
+          image_url: cachedMedia.media_image_url,
+          external_id: cachedMedia.media_external_id,
+          external_source: cachedMedia.media_external_source,
+          fromCache: true
+        };
+      }
+      
+      // Second fallback: Try to get info from social_posts
+      const { data: postMedia } = await supabase
+        .from('social_posts')
+        .select('media_title, media_type, media_image_url, media_external_id, media_external_source')
+        .eq('media_external_id', params?.id)
+        .eq('media_external_source', params?.source)
+        .not('media_title', 'is', null)
+        .limit(1)
+        .single();
+      
+      if (postMedia) {
+        return {
+          title: postMedia.media_title,
+          media_type: postMedia.media_type || params?.type,
+          image_url: postMedia.media_image_url,
+          external_id: postMedia.media_external_id,
+          external_source: postMedia.media_external_source,
+          fromCache: true
+        };
+      }
+      
+      console.error('Failed to fetch media details and no cached data found');
+      throw new Error('Media not found');
     },
-    enabled: !!params?.source && !!params?.id && !!session?.access_token
+    enabled: !!params?.source && !!params?.id && !!session?.access_token,
+    retry: false
   });
 
   // Fetch ALL social activity for this specific media
