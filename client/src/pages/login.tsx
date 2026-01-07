@@ -178,7 +178,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-purple-950 to-purple-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-purple-800 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Logo and welcome section */}
         <div className="text-center mb-8 mt-8">
@@ -186,13 +186,13 @@ export default function LoginPage() {
             <img 
               src="/consumed-logo-white.png" 
               alt="Consumed" 
-              className="h-12 w-auto"
+              className="h-16 w-auto"
             />
           </div>
-          <h1 className="text-white text-xl font-semibold mb-1">
+          <h1 className="text-white text-lg font-semibold mb-1">
             Where entertainment<br />comes together
           </h1>
-          <p className="text-purple-200 text-sm max-w-xs mx-auto">
+          <p className="text-purple-200 text-xs max-w-xs mx-auto">
             Play, react, and keep up<br />with what you love.
           </p>
         </div>
