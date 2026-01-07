@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2 } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,49 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
+
+  // Prefetch Collections data on hover/touch
+  const prefetchCollections = useCallback(async () => {
+    if (!session?.access_token || !user?.id) return;
+    
+    // Prefetch the metadata query (fast)
+    queryClient.prefetchQuery({
+      queryKey: ['user-lists-metadata', user.id],
+      queryFn: async () => {
+        const response = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-metadata?user_id=${user.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        if (response.ok) return response.json();
+        return { lists: [] };
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+    
+    // Also prefetch the full lists data (slower but cached)
+    queryClient.prefetchQuery({
+      queryKey: ['user-lists', user.id],
+      queryFn: async () => {
+        const response = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${user.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        if (response.ok) return response.json();
+        return { lists: [] };
+      },
+      staleTime: 2 * 60 * 1000,
+    });
+  }, [session?.access_token, user?.id, queryClient]);
 
   // Auto-focus when search expands
   useEffect(() => {
@@ -529,6 +573,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             href="/collections"
             className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/collections" ? "bg-white/15" : ""}`}
             data-testid="nav-collections"
+            onMouseEnter={prefetchCollections}
+            onTouchStart={prefetchCollections}
           >
             <Library className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Collections</span>
