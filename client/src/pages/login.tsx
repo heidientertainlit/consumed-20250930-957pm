@@ -192,7 +192,7 @@ export default function LoginPage() {
           <h1 className="text-white text-lg font-semibold mb-1 leading-tight">
             Where entertainment<br />comes together
           </h1>
-          <p className="text-gray-400 text-xs max-w-xs mx-auto">
+          <p className="text-gray-300 text-xs max-w-xs mx-auto">
             Play, react, and keep up<br />with what you love.
           </p>
         </div>
