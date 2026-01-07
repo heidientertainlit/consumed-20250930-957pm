@@ -1351,19 +1351,17 @@ export default function MediaDetail() {
                                 </div>
                               </div>
                             )}
-                            <div className={`absolute bottom-1 left-1 pr-1 flex items-center gap-1`}>
-                              <button
-                                onClick={handleAddClick}
-                                className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm"
-                                data-testid={`add-similar-${index}`}
-                              >
-                                <Plus size={14} className="text-purple-600" />
-                              </button>
-                              <div className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
-                                {getTypeIcon(item.type)}
-                                <span className="truncate max-w-[50px]">{item.type || 'Media'}</span>
-                              </div>
+                            <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
+                              {getTypeIcon(item.type)}
+                              <span className="truncate max-w-[50px]">{item.type || 'Media'}</span>
                             </div>
+                            <button
+                              onClick={handleAddClick}
+                              className="absolute bottom-1 right-1 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm"
+                              data-testid={`add-similar-${index}`}
+                            >
+                              <Plus size={14} className="text-purple-600" />
+                            </button>
                           </div>
                           <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors">
                             {item.title}
