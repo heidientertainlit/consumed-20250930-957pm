@@ -1562,7 +1562,7 @@ export default function MediaDetail() {
           setIsQuickAddOpen(false);
           setQuickAddMedia(null);
         }}
-        media={quickAddMedia}
+        preSelectedMedia={quickAddMedia}
       />
     </div>
   );

@@ -35,14 +35,23 @@ import {
   Folder
 } from "lucide-react";
 
+interface PreSelectedMedia {
+  title: string;
+  mediaType: string;
+  imageUrl?: string;
+  externalId?: string;
+  externalSource?: string;
+}
+
 interface QuickAddModalProps {
   isOpen: boolean;
   onClose: () => void;
+  preSelectedMedia?: PreSelectedMedia | null;
 }
 
 type Stage = "search" | "details";
 
-export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
+export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddModalProps) {
   const { user, session } = useAuth();
   const { toast } = useToast();
   
@@ -155,8 +164,20 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   useEffect(() => {
     if (!isOpen) {
       resetModal();
+    } else if (preSelectedMedia) {
+      // Pre-populate with provided media and skip to details
+      setSelectedMedia({
+        title: preSelectedMedia.title,
+        type: preSelectedMedia.mediaType,
+        image_url: preSelectedMedia.imageUrl,
+        poster_url: preSelectedMedia.imageUrl,
+        poster_path: preSelectedMedia.imageUrl,
+        external_id: preSelectedMedia.externalId,
+        external_source: preSelectedMedia.externalSource,
+      });
+      setStage("details");
     }
-  }, [isOpen]);
+  }, [isOpen, preSelectedMedia]);
 
   const resetModal = () => {
     setStage("search");
