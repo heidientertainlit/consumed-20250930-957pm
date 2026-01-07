@@ -178,7 +178,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-purple-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-black from-40% via-purple-950 via-80% to-purple-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Logo and welcome section */}
         <div className="text-center mb-8 mt-8">
