@@ -2695,33 +2695,35 @@ export default function UserProfile() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-start space-x-3 mt-4 md:mt-0 flex-wrap gap-2">
-                  {isOwnProfile ? (
-                    <>
-                      <Button 
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
-                        onClick={() => {
-                          setEditUsername(userProfileData?.user_name || '');
-                          setEditFirstName(userProfileData?.first_name || '');
-                          setEditLastName(userProfileData?.last_name || '');
-                          setIsEditProfileOpen(true);
-                        }}
-                        data-testid="button-edit-profile"
-                      >
-                        <Settings size={16} className="mr-2" />
-                        Edit Profile
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        className="border-purple-300 text-purple-600 hover:bg-purple-50"
-                        onClick={() => setIsFeedbackOpen(true)}
-                        data-testid="button-feedback"
-                      >
-                        <MessageCircle size={16} className="mr-2" />
-                        Feedback
-                      </Button>
-                    </>
-                  ) : null}
+                <div className="flex flex-col items-start gap-2 mt-4 md:mt-0">
+                  <div className="flex items-center gap-2">
+                    {isOwnProfile ? (
+                      <>
+                        <Button 
+                          className="bg-purple-600 hover:bg-purple-700 text-white"
+                          onClick={() => {
+                            setEditUsername(userProfileData?.user_name || '');
+                            setEditFirstName(userProfileData?.first_name || '');
+                            setEditLastName(userProfileData?.last_name || '');
+                            setIsEditProfileOpen(true);
+                          }}
+                          data-testid="button-edit-profile"
+                        >
+                          <Settings size={16} className="mr-2" />
+                          Edit Profile
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                          onClick={() => setIsFeedbackOpen(true)}
+                          data-testid="button-feedback"
+                        >
+                          <MessageCircle size={16} className="mr-2" />
+                          Feedback
+                        </Button>
+                      </>
+                    ) : null}
+                  </div>
                   <Button 
                     className="bg-purple-600 hover:bg-purple-700 text-white"
                     onClick={async () => {
