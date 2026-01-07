@@ -421,7 +421,7 @@ export default function Search() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action: 'sendRequest', targetUserId })
+        body: JSON.stringify({ action: 'sendRequest', friendId: targetUserId })
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
