@@ -267,7 +267,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white"
+                  className="w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 hover:from-gray-600 hover:via-gray-500 hover:to-gray-600 text-white"
                   disabled={submitting}
                   data-testid="button-signin"
                 >
@@ -355,7 +355,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white"
+                  className="w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 hover:from-gray-600 hover:via-gray-500 hover:to-gray-600 text-white"
                   disabled={submitting}
                   data-testid="button-signup"
                 >
