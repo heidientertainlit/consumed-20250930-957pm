@@ -200,22 +200,21 @@ export default function LoginPage() {
         {/* Auth form */}
         <div 
           id="auth"
-          className="bg-white rounded-2xl p-8 shadow-2xl border border-purple-200"
+          className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-200"
         >
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gradient-to-r from-purple-600 to-purple-800 relative">
+            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 rounded-lg p-1">
               <TabsTrigger 
                 value="signin" 
                 data-testid="tab-signin"
-                className="data-[state=active]:bg-purple-700 data-[state=active]:text-white data-[state=active]:opacity-100 data-[state=inactive]:opacity-50 text-white transition-opacity"
+                className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-500 rounded-md transition-all"
               >
                 Sign In
               </TabsTrigger>
-              <div className="absolute left-1/2 top-2 bottom-2 w-px bg-white/30"></div>
               <TabsTrigger 
                 value="signup" 
                 data-testid="tab-signup"
-                className="data-[state=active]:bg-purple-700 data-[state=active]:text-white data-[state=active]:opacity-100 data-[state=inactive]:opacity-50 text-white transition-opacity"
+                className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-500 rounded-md transition-all"
               >
                 Sign Up
               </TabsTrigger>
@@ -260,7 +259,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setIsForgotPasswordOpen(true)}
-                    className="text-sm text-purple-600 hover:text-purple-700 hover:underline"
+                    className="text-sm text-gray-600 hover:text-gray-800 hover:underline"
                     data-testid="link-forgot-password"
                   >
                     Forgot password?
@@ -268,7 +267,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  className="w-full bg-gray-900 hover:bg-gray-800 text-white"
                   disabled={submitting}
                   data-testid="button-signin"
                 >
@@ -356,7 +355,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  className="w-full bg-gray-900 hover:bg-gray-800 text-white"
                   disabled={submitting}
                   data-testid="button-signup"
                 >
