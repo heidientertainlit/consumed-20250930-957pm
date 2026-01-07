@@ -10,6 +10,7 @@ import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import RatingModal from "@/components/rating-modal";
 import CreateListDialog from "@/components/create-list-dialog";
+import { QuickAddModal } from "@/components/quick-add-modal";
 import { supabase } from "@/lib/supabase";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -38,6 +39,8 @@ export default function MediaDetail() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -1048,97 +1051,6 @@ export default function MediaDetail() {
               </div>
             </div>
 
-            {/* Similar Media Section */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-500" />
-                You Might Also Like
-              </h2>
-              
-              {isSimilarLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-                  <span className="ml-2 text-gray-500">Finding similar content...</span>
-                </div>
-              ) : similarMedia.length > 0 ? (
-                <div className="overflow-x-auto -mx-2">
-                  <div className="flex gap-3 px-2 pb-2" style={{ minWidth: 'max-content' }}>
-                    {similarMedia.map((item: any, index: number) => {
-                      const getTypeIcon = (type: string) => {
-                        const t = type?.toLowerCase();
-                        if (t?.includes('movie')) return <Film className="w-3 h-3" />;
-                        if (t?.includes('tv') || t?.includes('series')) return <Tv className="w-3 h-3" />;
-                        if (t?.includes('book')) return <BookOpen className="w-3 h-3" />;
-                        if (t?.includes('music') || t?.includes('album') || t?.includes('song')) return <Music className="w-3 h-3" />;
-                        if (t?.includes('podcast')) return <Mic className="w-3 h-3" />;
-                        return <Film className="w-3 h-3" />;
-                      };
-                      
-                      const getTypeColor = (type: string) => {
-                        const t = type?.toLowerCase();
-                        if (t?.includes('movie')) return 'bg-blue-100 text-blue-700';
-                        if (t?.includes('tv') || t?.includes('series')) return 'bg-purple-100 text-purple-700';
-                        if (t?.includes('book')) return 'bg-amber-100 text-amber-700';
-                        if (t?.includes('music') || t?.includes('album') || t?.includes('song')) return 'bg-green-100 text-green-700';
-                        if (t?.includes('podcast')) return 'bg-pink-100 text-pink-700';
-                        return 'bg-gray-100 text-gray-700';
-                      };
-
-                      const handleClick = () => {
-                        // Navigate to media detail if we have IDs, otherwise search
-                        if (item.external_id && item.external_source) {
-                          setLocation(`/media/${item.type || 'Movie'}/${item.external_source}/${item.external_id}`);
-                        } else {
-                          const searchTerm = item.title + (item.year ? ` ${item.year}` : '');
-                          setLocation(`/search?q=${encodeURIComponent(searchTerm)}`);
-                        }
-                      };
-
-                      return (
-                        <div
-                          key={`${item.title}-${index}`}
-                          onClick={handleClick}
-                          className="flex-shrink-0 w-28 cursor-pointer group"
-                          data-testid={`similar-media-${index}`}
-                        >
-                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 mb-2 shadow-sm group-hover:shadow-md transition-shadow">
-                            {item.poster_url ? (
-                              <img
-                                src={item.poster_url}
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200">
-                                <div className="text-purple-600 opacity-60">
-                                  {getTypeIcon(item.type)}
-                                </div>
-                              </div>
-                            )}
-                            <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
-                              {getTypeIcon(item.type)}
-                              <span className="truncate max-w-[60px]">{item.type || 'Media'}</span>
-                            </div>
-                          </div>
-                          <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                            {item.title}
-                          </p>
-                          {item.year && (
-                            <p className="text-[10px] text-gray-500">{item.year}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 text-gray-500">
-                  <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No recommendations available yet</p>
-                </div>
-              )}
-            </div>
-
             {/* Community Activity Section - Always shown */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -1213,6 +1125,116 @@ export default function MediaDetail() {
                 </div>
               </div>
             )}
+
+            {/* Similar Media Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+                You Might Also Like
+              </h2>
+              
+              {isSimilarLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                  <span className="ml-2 text-gray-500">Finding similar content...</span>
+                </div>
+              ) : similarMedia.length > 0 ? (
+                <div className="overflow-x-auto -mx-2">
+                  <div className="flex gap-3 px-2 pb-2" style={{ minWidth: 'max-content' }}>
+                    {similarMedia.map((item: any, index: number) => {
+                      const getTypeIcon = (type: string) => {
+                        const t = type?.toLowerCase();
+                        if (t?.includes('movie')) return <Film className="w-3 h-3" />;
+                        if (t?.includes('tv') || t?.includes('series')) return <Tv className="w-3 h-3" />;
+                        if (t?.includes('book')) return <BookOpen className="w-3 h-3" />;
+                        if (t?.includes('music') || t?.includes('album') || t?.includes('song')) return <Music className="w-3 h-3" />;
+                        if (t?.includes('podcast')) return <Mic className="w-3 h-3" />;
+                        return <Film className="w-3 h-3" />;
+                      };
+                      
+                      const getTypeColor = (type: string) => {
+                        const t = type?.toLowerCase();
+                        if (t?.includes('movie')) return 'bg-blue-100 text-blue-700';
+                        if (t?.includes('tv') || t?.includes('series')) return 'bg-purple-100 text-purple-700';
+                        if (t?.includes('book')) return 'bg-amber-100 text-amber-700';
+                        if (t?.includes('music') || t?.includes('album') || t?.includes('song')) return 'bg-green-100 text-green-700';
+                        if (t?.includes('podcast')) return 'bg-pink-100 text-pink-700';
+                        return 'bg-gray-100 text-gray-700';
+                      };
+
+                      const handleClick = () => {
+                        // Navigate to media detail if we have IDs, otherwise search
+                        if (item.external_id && item.external_source) {
+                          setLocation(`/media/${item.type || 'Movie'}/${item.external_source}/${item.external_id}`);
+                        } else {
+                          const searchTerm = item.title + (item.year ? ` ${item.year}` : '');
+                          setLocation(`/search?q=${encodeURIComponent(searchTerm)}`);
+                        }
+                      };
+
+                      const handleAddClick = (e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        setQuickAddMedia({
+                          title: item.title,
+                          mediaType: item.type || 'Movie',
+                          imageUrl: item.poster_url,
+                          externalId: item.external_id,
+                          externalSource: item.external_source,
+                        });
+                        setIsQuickAddOpen(true);
+                      };
+
+                      return (
+                        <div
+                          key={`${item.title}-${index}`}
+                          onClick={handleClick}
+                          className="flex-shrink-0 w-28 cursor-pointer group"
+                          data-testid={`similar-media-${index}`}
+                        >
+                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 mb-2 shadow-sm group-hover:shadow-md transition-shadow">
+                            {item.poster_url ? (
+                              <img
+                                src={item.poster_url}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200">
+                                <div className="text-purple-600 opacity-60">
+                                  {getTypeIcon(item.type)}
+                                </div>
+                              </div>
+                            )}
+                            <button
+                              onClick={handleAddClick}
+                              className="absolute top-1 right-1 w-6 h-6 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                              data-testid={`add-similar-${index}`}
+                            >
+                              <Plus size={14} className="text-purple-600" />
+                            </button>
+                            <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
+                              {getTypeIcon(item.type)}
+                              <span className="truncate max-w-[60px]">{item.type || 'Media'}</span>
+                            </div>
+                          </div>
+                          <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                            {item.title}
+                          </p>
+                          {item.year && (
+                            <p className="text-[10px] text-gray-500">{item.year}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No recommendations available yet</p>
+                </div>
+              )}
+            </div>
 
             {/* Polls */}
             {polls.length > 0 && (
@@ -1532,6 +1554,15 @@ export default function MediaDetail() {
             queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
           }
         }}
+      />
+      
+      <QuickAddModal
+        isOpen={isQuickAddOpen}
+        onClose={() => {
+          setIsQuickAddOpen(false);
+          setQuickAddMedia(null);
+        }}
+        media={quickAddMedia}
       />
     </div>
   );
