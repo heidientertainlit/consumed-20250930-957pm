@@ -506,11 +506,11 @@ export default function Search() {
 
 
   return (
-    <div className="min-h-screen bg-black pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      {/* Dark Header Section - matches Activity page */}
-      <div className="bg-black pt-8 pb-6 px-4">
+      {/* Dark Gradient Header Section - matches Activity page nav blend */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="text-center">
@@ -520,7 +520,7 @@ export default function Search() {
           </div>
 
           {/* Unified Search Bar with AI Mode Toggle */}
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3">
+          <div className="bg-zinc-900/60 border border-purple-900/30 rounded-2xl p-3">
             <div className="flex items-center gap-2">
               <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
               <Input
@@ -545,7 +545,7 @@ export default function Search() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
                   isAiMode 
                     ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white" 
-                    : "bg-zinc-800 text-gray-300 hover:bg-zinc-700"
+                    : "bg-zinc-800/80 text-gray-300 hover:bg-zinc-700"
                 }`}
                 data-testid="toggle-ai-mode"
               >
@@ -566,7 +566,7 @@ export default function Search() {
         </div>
       </div>
       
-      {/* Main Content Area */}
+      {/* Main Content Area - Light Background */}
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
         {/* AI Search Loading State */}
@@ -889,7 +889,7 @@ export default function Search() {
           <>
             {/* Just Browsing Header */}
             <div className="text-center pt-2">
-              <p className="text-gray-400 font-medium">Just browsing? Here's some ideas</p>
+              <p className="text-gray-600 font-medium">Just browsing? Here's some ideas</p>
             </div>
 
             {/* Trending Content Sections */}
