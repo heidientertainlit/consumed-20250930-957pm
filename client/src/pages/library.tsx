@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, ChevronDown, Lock, Users, Plus, TrendingUp, Edit3, Check, Upload, HelpCircle } from "lucide-react";
+import { Search, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, List as ListIcon, Library as LibraryIcon, ChevronRight, ChevronDown, Lock, Users, Plus, TrendingUp, Edit3, Check, Upload, HelpCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -242,6 +242,51 @@ export default function Library() {
   const handleUpdateProgress = (itemId: string, progress: number, total?: number, progressMode?: string) => {
     updateProgressMutation.mutate({ itemId, progress, total, progressMode });
     setEditingProgress(prev => ({ ...prev, [itemId]: false }));
+  };
+
+  // Delete list item mutation
+  const deleteListItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!session?.access_token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/delete-list-item", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ itemId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to remove item: ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-lists'] });
+      toast({
+        title: "Removed from list",
+        description: "Item has been removed from your list",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to remove",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRemoveFromList = (itemId: string, itemTitle: string) => {
+    if (confirm(`Remove "${itemTitle}" from this list?`)) {
+      deleteListItemMutation.mutate(itemId);
+    }
   };
 
   // Handle file upload for media import
@@ -774,21 +819,33 @@ export default function Library() {
                                             </div>
                                           )}
 
-                                          {/* Update Progress Button */}
+                                          {/* Update Progress & Remove Buttons */}
                                           {!isEditing && (
-                                            <Button
-                                              onClick={() => {
-                                                setEditingProgress(prev => ({ ...prev, [item.id]: true }));
-                                                setProgressValues(prev => ({ ...prev, [item.id]: currentProgress }));
-                                                setTotalValues(prev => ({ ...prev, [item.id]: currentTotal }));
-                                              }}
-                                              variant="outline"
-                                              size="sm"
-                                              className="mt-2 text-xs"
-                                            >
-                                              <Edit3 size={12} className="mr-1" />
-                                              Update Progress
-                                            </Button>
+                                            <div className="flex gap-2 mt-2">
+                                              <Button
+                                                onClick={() => {
+                                                  setEditingProgress(prev => ({ ...prev, [item.id]: true }));
+                                                  setProgressValues(prev => ({ ...prev, [item.id]: currentProgress }));
+                                                  setTotalValues(prev => ({ ...prev, [item.id]: currentTotal }));
+                                                }}
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs"
+                                              >
+                                                <Edit3 size={12} className="mr-1" />
+                                                Update Progress
+                                              </Button>
+                                              <Button
+                                                onClick={() => handleRemoveFromList(item.id, item.title)}
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs text-red-500 hover:text-red-600 hover:border-red-300"
+                                                disabled={deleteListItemMutation.isPending}
+                                              >
+                                                <Trash2 size={12} className="mr-1" />
+                                                Remove
+                                              </Button>
+                                            </div>
                                           )}
                                         </div>
                                       </div>
@@ -968,21 +1025,33 @@ export default function Library() {
                                             </div>
                                           )}
 
-                                          {/* Update Progress Button */}
+                                          {/* Update Progress & Remove Buttons */}
                                           {!isEditing && (
-                                            <Button
-                                              onClick={() => {
-                                                setEditingProgress(prev => ({ ...prev, [item.id]: true }));
-                                                setProgressValues(prev => ({ ...prev, [item.id]: currentProgress }));
-                                                setTotalValues(prev => ({ ...prev, [item.id]: currentTotal }));
-                                              }}
-                                              variant="outline"
-                                              size="sm"
-                                              className="mt-2 text-xs"
-                                            >
-                                              <Edit3 size={12} className="mr-1" />
-                                              Update Progress
-                                            </Button>
+                                            <div className="flex gap-2 mt-2">
+                                              <Button
+                                                onClick={() => {
+                                                  setEditingProgress(prev => ({ ...prev, [item.id]: true }));
+                                                  setProgressValues(prev => ({ ...prev, [item.id]: currentProgress }));
+                                                  setTotalValues(prev => ({ ...prev, [item.id]: currentTotal }));
+                                                }}
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs"
+                                              >
+                                                <Edit3 size={12} className="mr-1" />
+                                                Update Progress
+                                              </Button>
+                                              <Button
+                                                onClick={() => handleRemoveFromList(item.id, item.title)}
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs text-red-500 hover:text-red-600 hover:border-red-300"
+                                                disabled={deleteListItemMutation.isPending}
+                                              >
+                                                <Trash2 size={12} className="mr-1" />
+                                                Remove
+                                              </Button>
+                                            </div>
                                           )}
                                         </div>
                                       </div>

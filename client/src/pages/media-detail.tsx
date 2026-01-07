@@ -457,9 +457,10 @@ export default function MediaDetail() {
 
       return response.json();
     },
-    onSuccess: (_, itemId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
+      queryClient.invalidateQueries({ queryKey: ['lists-containing-media', params?.source, params?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-lists'] });
       toast({
         title: "Removed from list",
         description: "Item has been removed from your list",
