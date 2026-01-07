@@ -677,79 +677,71 @@ export default function PlayPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
-      {/* Dark Gradient Header */}
-      <div className="bg-gradient-to-b from-black via-purple-950 to-gray-50 pt-6 pb-16 px-4">
+      {/* Dark Hero Header with Pills */}
+      <div className="bg-gradient-to-b from-black to-purple-950 pt-6 pb-6 px-4">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Play
           </h1>
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 text-sm mb-5">
             Compete, predict, and earn rewards
           </p>
+          
+          {/* Pills inside hero */}
+          <div className="flex flex-wrap gap-2">
+            <Link href="/play/awards">
+              <button
+                className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-600 bg-transparent text-gray-300 text-sm font-medium hover:border-purple-400 hover:text-white transition-all"
+                data-testid="browse-predictions"
+              >
+                Predictions
+              </button>
+            </Link>
+            <Link href="/play/polls">
+              <button
+                className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-600 bg-transparent text-gray-300 text-sm font-medium hover:border-purple-400 hover:text-white transition-all"
+                data-testid="browse-polls"
+              >
+                Polls
+              </button>
+            </Link>
+            <Link href="/play/trivia">
+              <button
+                className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-600 bg-transparent text-gray-300 text-sm font-medium hover:border-purple-400 hover:text-white transition-all"
+                data-testid="browse-trivia"
+              >
+                Trivia
+              </button>
+            </Link>
+            <Link href="/play/ranks">
+              <button
+                className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-600 bg-transparent text-gray-300 text-sm font-medium hover:border-purple-400 hover:text-white transition-all"
+                data-testid="browse-ranks"
+              >
+                Ranks
+              </button>
+            </Link>
+            <Link href="/play/hot-takes">
+              <button
+                className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-600 bg-transparent text-gray-300 text-sm font-medium hover:border-purple-400 hover:text-white transition-all"
+                data-testid="browse-hot-takes"
+              >
+                Hot Takes
+              </button>
+            </Link>
+            <Link href="/play/ask-recs">
+              <button
+                className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-600 bg-transparent text-gray-300 text-sm font-medium hover:border-purple-400 hover:text-white transition-all"
+                data-testid="browse-ask-recs"
+              >
+                Ask for Recs
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-10">
-        {/* Quick Access Pills - Minimal Style */}
-        <div className="flex flex-wrap gap-2 justify-center mb-6">
-          <Link href="/play/awards">
-            <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:border-purple-400 hover:text-purple-600 transition-all"
-              data-testid="browse-predictions"
-            >
-              Predictions
-            </button>
-          </Link>
-          <Link href="/play/polls">
-            <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:border-purple-400 hover:text-purple-600 transition-all"
-              data-testid="browse-polls"
-            >
-              Polls
-            </button>
-          </Link>
-          <Link href="/play/trivia">
-            <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:border-purple-400 hover:text-purple-600 transition-all"
-              data-testid="browse-trivia"
-            >
-              Trivia
-            </button>
-          </Link>
-          <Link href="/play/ranks">
-            <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:border-purple-400 hover:text-purple-600 transition-all"
-              data-testid="browse-ranks"
-            >
-              Ranks
-            </button>
-          </Link>
-          <Link href="/play/hot-takes">
-            <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:border-purple-400 hover:text-purple-600 transition-all"
-              data-testid="browse-hot-takes"
-            >
-              Hot Takes
-            </button>
-          </Link>
-          <Link href="/play/ask-recs">
-            <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:border-purple-400 hover:text-purple-600 transition-all"
-              data-testid="browse-ask-recs"
-            >
-              Ask for Recs
-            </button>
-          </Link>
-          <Link href="/leaderboard">
-            <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-all"
-              data-testid="browse-leaderboard"
-            >
-              <Trophy size={14} />
-              Leaderboard
-            </button>
-          </Link>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 pt-6">
 
         {/* Leaders Section */}
         <div className="mb-6">
