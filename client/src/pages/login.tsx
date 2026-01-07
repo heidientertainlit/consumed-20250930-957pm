@@ -267,7 +267,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-purple-950 hover:bg-purple-900 text-white"
+                  className="w-full bg-black hover:bg-gray-900 text-white"
                   disabled={submitting}
                   data-testid="button-signin"
                 >
@@ -355,7 +355,7 @@ export default function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-purple-950 hover:bg-purple-900 text-white"
+                  className="w-full bg-black hover:bg-gray-900 text-white"
                   disabled={submitting}
                   data-testid="button-signup"
                 >
