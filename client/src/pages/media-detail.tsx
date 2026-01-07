@@ -756,265 +756,275 @@ export default function MediaDetail() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setLocation('/')}
-          className="mb-4 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          data-testid="button-back"
-        >
-          <ArrowLeft size={24} className="text-gray-600" />
-        </Button>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Media Header */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-48 h-48 rounded-2xl overflow-hidden shadow-lg flex-shrink-0">
-                  <img 
-                    src={mediaItem.artwork || mediaItem.image_url} 
-                    alt={mediaItem.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{mediaData.title}</h1>
-                    <p className="text-lg text-gray-600 mb-4">by {mediaData.creator}</p>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span className="font-medium">{mediaItem.rating}</span>
-                        <span className="text-xs text-gray-500 ml-1">avg</span>
-                      </div>
-                      {userReview?.rating && (
-                        <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-md">
-                          <Star className="w-4 h-4 text-purple-600 fill-current" />
-                          <span className="font-semibold text-purple-700">{userReview.rating}</span>
-                          <span className="text-xs text-purple-600 ml-1">your rating</span>
-                        </div>
-                      )}
-                      {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{new Date(mediaItem.releaseDate).getFullYear()}</span>
-                        </div>
-                      )}
-                      {(mediaItem.type === 'TV Show' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{mediaItem.totalEpisodes} episodes</span>
-                        </div>
-                      )}
-                      {mediaItem.averageLength && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>~{mediaItem.averageLength}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+      <div className="max-w-6xl mx-auto px-4 pt-2 pb-8">
+        {/* Compact Hero Header */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+          {/* Back button inline with content */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLocation('/')}
+            className="mb-3 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 h-8"
+            data-testid="button-back"
+          >
+            <ArrowLeft size={18} className="text-gray-600" />
+            <span className="ml-1 text-sm">Back</span>
+          </Button>
 
-                  <div className="flex flex-wrap gap-3">
-                    {session && (
-                      <>
-                        <div className="flex">
+          {/* Side-by-side layout on all screen sizes */}
+          <div className="flex gap-4">
+            {/* Poster - smaller and fixed width */}
+            <div className="w-28 h-40 md:w-36 md:h-52 rounded-xl overflow-hidden shadow-md flex-shrink-0">
+              <img 
+                src={mediaItem.artwork || mediaItem.image_url} 
+                alt={mediaItem.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            
+            {/* Info column */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-1">{mediaData.title}</h1>
+              <p className="text-sm text-gray-600 mb-2 truncate">by {mediaData.creator}</p>
+              
+              {/* Compact metadata chips */}
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 mb-3">
+                <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
+                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                  <span className="font-medium">{mediaItem.rating}</span>
+                  <span className="text-gray-500">avg</span>
+                </div>
+                {userReview?.rating && (
+                  <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-purple-600 fill-current" />
+                    <span className="font-semibold text-purple-700">{userReview.rating}</span>
+                    <span className="text-purple-500">you</span>
+                  </div>
+                )}
+                {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
+                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                    <Calendar className="w-3 h-3" />
+                    <span>{new Date(mediaItem.releaseDate).getFullYear()}</span>
+                  </div>
+                )}
+                {(mediaItem.type === 'TV Show' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 && (
+                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                    <Calendar className="w-3 h-3" />
+                    <span>{mediaItem.totalEpisodes} eps</span>
+                  </div>
+                )}
+                {mediaItem.averageLength && (
+                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                    <Clock className="w-3 h-3" />
+                    <span>~{mediaItem.averageLength}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons - compact for mobile */}
+              <div className="flex flex-wrap gap-2 mt-1">
+                {session && (
+                  <>
+                    <div className="flex">
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddMediaToList('queue')}
+                        disabled={addMediaToListMutation.isPending}
+                        className="rounded-r-none border-r-0 text-xs h-8"
+                        data-testid="button-quick-add"
+                      >
+                        <Plus size={14} className="mr-1" />
+                        {addMediaToListMutation.isPending ? "..." : "Add"}
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button 
-                            variant="outline"
-                            onClick={() => handleAddMediaToList('queue')}
+                            variant="outline" 
+                            size="sm"
+                            className="rounded-l-none px-1.5 h-8"
                             disabled={addMediaToListMutation.isPending}
-                            className="rounded-r-none border-r-0"
-                            data-testid="button-quick-add"
+                            data-testid="button-add-list-dropdown"
                           >
-                            <Plus size={16} className="mr-2" />
-                            {addMediaToListMutation.isPending ? "Adding..." : "Quick Add"}
+                            <ChevronDown size={14} />
                           </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                className="rounded-l-none px-2"
-                                disabled={addMediaToListMutation.isPending}
-                                data-testid="button-add-list-dropdown"
-                              >
-                                <ChevronDown size={16} />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuItem
-                                onClick={() => handleAddMediaToList('currently')}
-                                className="cursor-pointer"
-                                disabled={addMediaToListMutation.isPending}
-                              >
-                                Currently
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleAddMediaToList('queue')}
-                                className="cursor-pointer"
-                                disabled={addMediaToListMutation.isPending}
-                              >
-                                Want To
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleAddMediaToList('finished')}
-                                className="cursor-pointer"
-                                disabled={addMediaToListMutation.isPending}
-                              >
-                                Finished
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleAddMediaToList('dnf')}
-                                className="cursor-pointer"
-                                disabled={addMediaToListMutation.isPending}
-                              >
-                                Did Not Finish
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleAddMediaToList('favorites')}
-                                className="cursor-pointer"
-                                disabled={addMediaToListMutation.isPending}
-                              >
-                                Favorites
-                              </DropdownMenuItem>
-                              
-                              {/* Custom Lists */}
-                              {customLists.length > 0 && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
-                                    MY CUSTOM LISTS
-                                  </div>
-                                  {customLists.map((list: any) => (
-                                    <DropdownMenuItem
-                                      key={list.id}
-                                      onClick={() => handleAddMediaToList(list.id, true)}
-                                      className="cursor-pointer pl-4"
-                                      disabled={addMediaToListMutation.isPending}
-                                    >
-                                      <List className="text-purple-600 mr-2 h-4 w-4" />
-                                      {list.title}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </>
-                              )}
-                              
-                              {/* Create New List */}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem
+                            onClick={() => handleAddMediaToList('currently')}
+                            className="cursor-pointer"
+                            disabled={addMediaToListMutation.isPending}
+                          >
+                            Currently
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleAddMediaToList('queue')}
+                            className="cursor-pointer"
+                            disabled={addMediaToListMutation.isPending}
+                          >
+                            Want To
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleAddMediaToList('finished')}
+                            className="cursor-pointer"
+                            disabled={addMediaToListMutation.isPending}
+                          >
+                            Finished
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleAddMediaToList('dnf')}
+                            className="cursor-pointer"
+                            disabled={addMediaToListMutation.isPending}
+                          >
+                            Did Not Finish
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleAddMediaToList('favorites')}
+                            className="cursor-pointer"
+                            disabled={addMediaToListMutation.isPending}
+                          >
+                            Favorites
+                          </DropdownMenuItem>
+                          
+                          {/* Custom Lists */}
+                          {customLists.length > 0 && (
+                            <>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => setShowCreateListDialog(true)}
-                                className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
-                                disabled={addMediaToListMutation.isPending}
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Create New List
-                              </DropdownMenuItem>
-                              
-                              {/* Remove from List */}
-                              {listsContainingMedia.length > 0 && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
-                                    REMOVE FROM
-                                  </div>
-                                  {listsContainingMedia.map((item: any) => (
-                                    <DropdownMenuItem
-                                      key={item.id}
-                                      onClick={() => handleRemoveFromList(item.id, item.lists?.title || 'list')}
-                                      className="cursor-pointer pl-4 text-red-500 hover:text-red-600"
-                                      disabled={deleteListItemMutation.isPending}
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      {item.lists?.title || 'Unknown List'}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setShowRatingModal(true)}
-                          data-testid="button-add-rating"
-                        >
-                          <Star size={16} className="mr-2" />
-                          {userReview?.rating ? "Update My Rating" : "Add My Rating"}
-                        </Button>
-                      </>
-                    )}
-                    <Button 
-                      variant="outline"
-                      onClick={handleShare}
-                      data-testid="button-share"
-                    >
-                      <Share size={16} className="mr-2" />
-                      Share
-                    </Button>
-                  </div>
-
-                  {/* Find On Platforms */}
-                  {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-                    <div className="mt-6 pt-6 border-t border-gray-100">
-                      <h3 className="text-sm font-medium text-gray-700 mb-3">
-                        {mediaItem.type === 'Movie' || mediaItem.type === 'TV Show' 
-                          ? 'Watch On' 
-                          : mediaItem.type === 'Podcast' || mediaItem.type === 'Music' 
-                          ? 'Listen On' 
-                          : mediaItem.type === 'Book' 
-                          ? 'Read On' 
-                          : 'Find On'}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {mediaItem.platforms.map((platform: any, index: number) => (
-                          platform.url ? (
-                            <a
-                              key={index}
-                              href={platform.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                              data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
-                            >
-                              {platform.logo && (
-                                <img 
-                                  src={platform.logo} 
-                                  alt={platform.name}
-                                  className="w-4 h-4 object-contain"
-                                />
-                              )}
-                              <span className="font-medium text-gray-700">{platform.name}</span>
-                              <ExternalLink className="w-3 h-3 text-gray-400" />
-                            </a>
-                          ) : (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-sm"
-                              data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
-                            >
-                              {platform.logo && (
-                                <img 
-                                  src={platform.logo} 
-                                  alt={platform.name}
-                                  className="w-4 h-4 object-contain"
-                                />
-                              )}
-                              <span className="font-medium text-gray-700">{platform.name}</span>
-                            </div>
-                          )
-                        ))}
-                      </div>
+                              <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
+                                MY CUSTOM LISTS
+                              </div>
+                              {customLists.map((list: any) => (
+                                <DropdownMenuItem
+                                  key={list.id}
+                                  onClick={() => handleAddMediaToList(list.id, true)}
+                                  className="cursor-pointer pl-4"
+                                  disabled={addMediaToListMutation.isPending}
+                                >
+                                  <List className="text-purple-600 mr-2 h-4 w-4" />
+                                  {list.title}
+                                </DropdownMenuItem>
+                              ))}
+                            </>
+                          )}
+                          
+                          {/* Create New List */}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setShowCreateListDialog(true)}
+                            className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
+                            disabled={addMediaToListMutation.isPending}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create New List
+                          </DropdownMenuItem>
+                          
+                          {/* Remove from List */}
+                          {listsContainingMedia.length > 0 && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
+                                REMOVE FROM
+                              </div>
+                              {listsContainingMedia.map((item: any) => (
+                                <DropdownMenuItem
+                                  key={item.id}
+                                  onClick={() => handleRemoveFromList(item.id, item.lists?.title || 'list')}
+                                  className="cursor-pointer pl-4 text-red-500 hover:text-red-600"
+                                  disabled={deleteListItemMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  {item.lists?.title || 'Unknown List'}
+                                </DropdownMenuItem>
+                              ))}
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  )}
-                </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowRatingModal(true)}
+                      className="text-xs h-8"
+                      data-testid="button-add-rating"
+                    >
+                      <Star size={14} className="mr-1" />
+                      Rate
+                    </Button>
+                  </>
+                )}
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShare}
+                  className="text-xs h-8"
+                  data-testid="button-share"
+                >
+                  <Share size={14} className="mr-1" />
+                  Share
+                </Button>
               </div>
             </div>
+          </div>
 
-            {/* Description */}
+          {/* Find On Platforms - compact inline */}
+          {mediaItem.platforms && mediaItem.platforms.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-gray-100">
+              <h3 className="text-xs font-medium text-gray-500 mb-2">
+                {mediaItem.type === 'Movie' || mediaItem.type === 'TV Show' 
+                  ? 'Watch On' 
+                  : mediaItem.type === 'Podcast' || mediaItem.type === 'Music' 
+                  ? 'Listen On' 
+                  : mediaItem.type === 'Book' 
+                  ? 'Read On' 
+                  : 'Find On'}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {mediaItem.platforms.map((platform: any, index: number) => (
+                  platform.url ? (
+                    <a
+                      key={index}
+                      href={platform.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-xs"
+                      data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      {platform.logo && (
+                        <img 
+                          src={platform.logo} 
+                          alt={platform.name}
+                          className="w-3 h-3 object-contain"
+                        />
+                      )}
+                      <span className="font-medium text-gray-700">{platform.name}</span>
+                      <ExternalLink className="w-2.5 h-2.5 text-gray-400" />
+                    </a>
+                  ) : (
+                    <div
+                      key={index}
+                      className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg text-xs"
+                      data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      {platform.logo && (
+                        <img 
+                          src={platform.logo} 
+                          alt={platform.name}
+                          className="w-3 h-3 object-contain"
+                        />
+                      )}
+                      <span className="font-medium text-gray-700">{platform.name}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Content sections */}
+        <div className="space-y-4">
+          {/* Description */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
               <p className="text-gray-700 leading-relaxed mb-6">{mediaItem.description}</p>
@@ -1526,12 +1536,6 @@ export default function MediaDetail() {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Sidebar placeholder - can add future content here */}
-          </div>
         </div>
       </div>
       
