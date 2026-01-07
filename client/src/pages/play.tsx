@@ -677,83 +677,84 @@ export default function PlayPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-black mb-2 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            <Gamepad2 className="text-purple-600" size={32} />
+      {/* Purple Gradient Header */}
+      <div className="bg-gradient-to-b from-purple-600 via-purple-500 to-gray-50 pt-6 pb-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <Gamepad2 className="text-white" size={28} />
             Play
           </h1>
-          <p className="text-base text-gray-600">
+          <p className="text-purple-100 text-sm">
             Compete, predict, and earn rewards
           </p>
         </div>
+      </div>
 
-        {/* Quick Access to All Games */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-          <h3 className="text-base font-semibold text-gray-900 mb-4">What would you like to do</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div className="max-w-4xl mx-auto px-4 -mt-6">
+        {/* Quick Access Pills */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6 shadow-sm">
+          <div className="flex flex-wrap gap-2 justify-center mb-3">
             <Link href="/play/awards">
               <button
-                className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 transition-colors w-full border border-amber-200"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white text-sm font-medium transition-all shadow-sm"
                 data-testid="browse-predictions"
               >
-                <span className="text-sm font-semibold text-amber-700">Predictions</span>
-                <span className="text-xs text-amber-600/80">Make your picks</span>
+                <Target size={14} />
+                Predictions
               </button>
             </Link>
             <Link href="/play/polls">
               <button
-                className="flex flex-col items-start p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors w-full"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-sm font-medium transition-all shadow-sm"
                 data-testid="browse-polls"
               >
-                <span className="text-sm font-semibold text-blue-700">Polls</span>
-                <span className="text-xs text-blue-600/80">Vote & share</span>
+                <Vote size={14} />
+                Polls
               </button>
             </Link>
             <Link href="/play/trivia">
               <button
-                className="flex flex-col items-start p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-colors w-full"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white text-sm font-medium transition-all shadow-sm"
                 data-testid="browse-trivia"
               >
-                <span className="text-sm font-semibold text-green-700">Trivia</span>
-                <span className="text-xs text-green-600/80">Test your knowledge</span>
+                <Brain size={14} />
+                Trivia
               </button>
             </Link>
             <Link href="/play/ranks">
               <button
-                className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 transition-colors w-full border border-orange-200"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm font-medium transition-all shadow-sm"
                 data-testid="browse-ranks"
               >
-                <span className="text-sm font-semibold text-orange-700">Rank Challenge</span>
-                <span className="text-xs text-orange-600/80">Order your favorites</span>
+                <Medal size={14} />
+                Ranks
               </button>
             </Link>
             <Link href="/play/hot-takes">
               <button
-                className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100 transition-colors w-full border border-orange-200"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-sm font-medium transition-all shadow-sm"
                 data-testid="browse-hot-takes"
               >
-                <span className="text-sm font-semibold text-orange-600">Hot Takes</span>
-                <span className="text-xs text-orange-500/80">Share bold opinions</span>
+                <Flame size={14} />
+                Hot Takes
               </button>
             </Link>
             <Link href="/play/ask-recs">
               <button
-                className="flex flex-col items-start p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 transition-colors w-full border border-yellow-200"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium transition-all shadow-sm"
                 data-testid="browse-ask-recs"
               >
-                <span className="text-sm font-semibold text-yellow-700">Ask for Recs</span>
-                <span className="text-xs text-yellow-600/80">Get suggestions</span>
+                <HelpCircle size={14} />
+                Ask for Recs
               </button>
             </Link>
           </div>
           <Link href="/leaderboard">
             <button
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full bg-purple-600 hover:bg-purple-700 transition-colors"
               data-testid="browse-leaderboard"
             >
-              <Trophy className="text-white" size={20} />
+              <Trophy className="text-white" size={18} />
               <span className="text-sm font-semibold text-white">View Leaderboard</span>
             </button>
           </Link>
