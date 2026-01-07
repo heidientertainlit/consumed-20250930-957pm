@@ -423,15 +423,20 @@ export default function Search() {
         },
         body: JSON.stringify({ action: 'sendRequest', targetUserId })
       });
-      if (!response.ok) throw new Error('Failed to send friend request');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Friend request error:', errorData);
+        throw new Error(errorData.error || errorData.message || 'Failed to send friend request');
+      }
       return response.json();
     },
     onSuccess: () => {
       toast({ title: "Friend request sent!" });
       queryClient.invalidateQueries({ queryKey: ['quick-user-search'] });
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Could not send friend request", variant: "destructive" });
+    onError: (error) => {
+      toast({ title: "Error", description: error.message || "Could not send friend request", variant: "destructive" });
     },
   });
 
