@@ -577,7 +577,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             onTouchStart={prefetchCollections}
           >
             <Library className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Collections</span>
+            <span className="text-xs font-medium text-white">My Library</span>
           </Link>
 
           {/* Me */}
