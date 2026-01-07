@@ -34,6 +34,7 @@ export default function MediaDetail() {
   } : paramsStandard;
   const { session, user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -784,7 +785,16 @@ export default function MediaDetail() {
             
             {/* Info column */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-1">{mediaData.title}</h1>
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-1">{mediaData.title}</h1>
+                <button
+                  onClick={handleShare}
+                  className="flex-shrink-0 p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                  data-testid="button-share"
+                >
+                  <Share size={18} />
+                </button>
+              </div>
               <p className="text-sm text-gray-600 mb-2 truncate">by {mediaData.creator}</p>
               
               {/* Compact metadata chips */}
@@ -821,8 +831,8 @@ export default function MediaDetail() {
                 )}
               </div>
 
-              {/* Action buttons - purple gradient pills */}
-              <div className="flex flex-wrap gap-2 mt-2">
+              {/* Action buttons - side by side with strong gradient */}
+              <div className="flex gap-2 mt-2">
                 {session && (
                   <>
                     <DropdownMenu>
@@ -830,7 +840,7 @@ export default function MediaDetail() {
                         <Button 
                           size="sm"
                           disabled={addMediaToListMutation.isPending}
-                          className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white text-xs h-8 rounded-full px-4 shadow-sm"
+                          className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
                           data-testid="button-quick-add"
                         >
                           <Plus size={14} className="mr-1" />
@@ -932,7 +942,7 @@ export default function MediaDetail() {
                     <Button 
                       size="sm"
                       onClick={() => setShowRatingModal(true)}
-                      className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white text-xs h-8 rounded-full px-4 shadow-sm"
+                      className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
                       data-testid="button-add-rating"
                     >
                       <Star size={14} className="mr-1" />
@@ -940,15 +950,6 @@ export default function MediaDetail() {
                     </Button>
                   </>
                 )}
-                <Button 
-                  size="sm"
-                  onClick={handleShare}
-                  className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white text-xs h-8 rounded-full px-4 shadow-sm"
-                  data-testid="button-share"
-                >
-                  <Share size={14} className="mr-1" />
-                  Share
-                </Button>
               </div>
             </div>
           </div>
@@ -1006,47 +1007,62 @@ export default function MediaDetail() {
               </div>
             </div>
           )}
+
+          {/* About - expandable section */}
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <button
+              onClick={() => setShowAbout(!showAbout)}
+              className="flex items-center justify-between w-full text-left"
+              data-testid="button-toggle-about"
+            >
+              <span className="text-sm font-medium text-gray-700">About</span>
+              <ChevronDown 
+                size={16} 
+                className={`text-gray-400 transition-transform ${showAbout ? 'rotate-180' : ''}`} 
+              />
+            </button>
+            
+            {showAbout && (
+              <div className="mt-3 space-y-4">
+                <p className="text-sm text-gray-600 leading-relaxed">{mediaItem.description}</p>
+                
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-gray-400">Category</span>
+                    <p className="font-medium text-gray-700">{mediaItem.category}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Language</span>
+                    <p className="font-medium text-gray-700">{mediaItem.language}</p>
+                  </div>
+                  {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
+                    <div>
+                      <span className="text-gray-400">Release Year</span>
+                      <p className="font-medium text-gray-700">{new Date(mediaItem.releaseDate).getFullYear()}</p>
+                    </div>
+                  )}
+                  {(mediaItem.type === 'TV Show' || mediaItem.type === 'Podcast') && mediaItem.releaseDate && (
+                    <div>
+                      <span className="text-gray-400">Started</span>
+                      <p className="font-medium text-gray-700">
+                        {new Date(mediaItem.releaseDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                  )}
+                  {mediaItem.runtime && (
+                    <div>
+                      <span className="text-gray-400">Runtime</span>
+                      <p className="font-medium text-gray-700">{mediaItem.runtime} min</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Content sections */}
         <div className="space-y-4">
-          {/* Description */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
-              <p className="text-gray-700 leading-relaxed mb-6">{mediaItem.description}</p>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Category</span>
-                  <p className="font-medium text-gray-900">{mediaItem.category}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Language</span>
-                  <p className="font-medium text-gray-900">{mediaItem.language}</p>
-                </div>
-                {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
-                  <div>
-                    <span className="text-gray-500">Release Year</span>
-                    <p className="font-medium text-gray-900">{new Date(mediaItem.releaseDate).getFullYear()}</p>
-                  </div>
-                )}
-                {(mediaItem.type === 'TV Show' || mediaItem.type === 'Podcast') && mediaItem.releaseDate && (
-                  <div>
-                    <span className="text-gray-500">Started</span>
-                    <p className="font-medium text-gray-900">
-                      {new Date(mediaItem.releaseDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                    </p>
-                  </div>
-                )}
-                {mediaItem.runtime && (
-                  <div>
-                    <span className="text-gray-500">Runtime</span>
-                    <p className="font-medium text-gray-900">{mediaItem.runtime} min</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Reviews & Ratings - Always shown */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
