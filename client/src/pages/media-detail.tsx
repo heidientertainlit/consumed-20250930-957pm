@@ -405,17 +405,53 @@ export default function MediaDetail() {
       
       // Extract recommendations from AI response (may be in recommendations or results)
       const recs = result.recommendations || result.results || [];
-      // Map to consistent format with poster_url
-      return recs.slice(0, 8).map((item: any) => ({
-        title: item.title,
-        type: item.type || item.media_type,
-        poster_url: item.poster_url || item.poster || item.image_url,
-        year: item.year,
-        description: item.description,
-        external_id: item.external_id || item.id,
-        external_source: item.external_source || item.source,
-        searchTerm: item.searchTerm || item.title
-      }))
+      const limitedRecs = recs.slice(0, 6);
+      
+      // Enrich each recommendation with poster images by searching media-search
+      const enrichedRecs = await Promise.all(
+        limitedRecs.map(async (item: any) => {
+          const searchQuery = item.title + (item.year ? ` ${item.year}` : '');
+          try {
+            const searchResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ query: searchQuery, limit: 1 })
+            });
+            
+            if (searchResponse.ok) {
+              const searchData = await searchResponse.json();
+              const match = searchData.results?.[0];
+              if (match) {
+                return {
+                  title: match.title || item.title,
+                  type: match.type || item.type || item.media_type,
+                  poster_url: match.poster_url || match.image_url,
+                  year: match.year || item.year,
+                  external_id: match.external_id || match.id,
+                  external_source: match.external_source || match.source,
+                };
+              }
+            }
+          } catch (e) {
+            console.error('Failed to enrich recommendation:', e);
+          }
+          
+          // Fallback to original data
+          return {
+            title: item.title,
+            type: item.type || item.media_type,
+            poster_url: item.poster_url || item.poster || item.image_url,
+            year: item.year,
+            external_id: item.external_id || item.id,
+            external_source: item.external_source || item.source,
+          };
+        })
+      );
+      
+      return enrichedRecs;
     },
     enabled: !!session?.access_token && !!mediaItem?.title,
     staleTime: 1000 * 60 * 30, // Cache for 30 minutes
@@ -1049,9 +1085,13 @@ export default function MediaDetail() {
                       };
 
                       const handleClick = () => {
-                        // Navigate to search with the item title to find it
-                        const searchTerm = item.title + (item.year ? ` ${item.year}` : '');
-                        setLocation(`/search?q=${encodeURIComponent(searchTerm)}`);
+                        // Navigate to media detail if we have IDs, otherwise search
+                        if (item.external_id && item.external_source) {
+                          setLocation(`/media/${item.type || 'Movie'}/${item.external_source}/${item.external_id}`);
+                        } else {
+                          const searchTerm = item.title + (item.year ? ` ${item.year}` : '');
+                          setLocation(`/search?q=${encodeURIComponent(searchTerm)}`);
+                        }
                       };
 
                       return (
