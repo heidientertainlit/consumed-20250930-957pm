@@ -2695,7 +2695,7 @@ export default function UserProfile() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center space-x-3 mt-4 md:mt-0 flex-wrap gap-2">
+                <div className="flex items-center justify-start space-x-3 mt-4 md:mt-0 flex-wrap gap-2">
                   {isOwnProfile ? (
                     <>
                       <Button 
