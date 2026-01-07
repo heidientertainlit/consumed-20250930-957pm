@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -21,12 +21,14 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
   const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
   const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
   const [isRatingSheetOpen, setIsRatingSheetOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [thoughts, setThoughts] = useState('');
+  const [shareToFeed, setShareToFeed] = useState(false);
   
   const mediaType = (item.media_type || 'movie').toLowerCase();
   const isBook = mediaType === 'book';
@@ -136,11 +138,11 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   };
 
   const ratingMutation = useMutation({
-    mutationFn: async ({ rating, thoughts }: { rating: number; thoughts?: string }) => {
+    mutationFn: async ({ rating, thoughts, shareToFeed }: { rating: number; thoughts?: string; shareToFeed: boolean }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const response = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/submit-rating',
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-update',
         {
           method: 'POST',
           headers: {
@@ -148,13 +150,14 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            external_id: item.external_id,
-            external_source: item.external_source || 'tmdb',
+            content: thoughts || '',
+            media_title: item.title,
             media_type: item.media_type,
-            title: item.title,
-            image_url: item.image_url,
-            rating,
-            review: thoughts,
+            media_image_url: item.image_url,
+            media_external_id: item.external_id,
+            media_external_source: item.external_source || 'tmdb',
+            rating: rating > 0 ? rating : null,
+            is_private: !shareToFeed,
           }),
         }
       );
@@ -165,10 +168,17 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      if (variables.shareToFeed) {
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
+        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
       toast({
-        title: "Rating saved!",
-        description: thoughts ? "Your rating and thoughts have been saved." : "Your rating has been saved.",
+        title: variables.shareToFeed ? "Shared to feed!" : "Rating saved!",
+        description: variables.shareToFeed 
+          ? "Your rating and thoughts have been shared with friends." 
+          : "Your rating has been saved privately.",
       });
     },
     onError: (error) => {
@@ -186,6 +196,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     setIsMoveSheetOpen(false);
     setRating(0);
     setThoughts('');
+    setShareToFeed(false);
     setIsRatingSheetOpen(true);
   };
 
@@ -193,11 +204,12 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     onMoveToList('finished', 'Finished');
     setIsRatingSheetOpen(false);
     
-    if (rating > 0) {
+    if (rating > 0 || thoughts.trim()) {
       try {
         await ratingMutation.mutateAsync({
           rating,
           thoughts: thoughts.trim() || undefined,
+          shareToFeed,
         });
       } catch (error) {
         console.error('Failed to save rating:', error);
@@ -724,6 +736,26 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
               />
             </div>
 
+            {(rating > 0 || thoughts.trim()) && (
+              <button
+                onClick={() => setShareToFeed(!shareToFeed)}
+                className="flex items-center gap-3 w-full p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                data-testid="toggle-share-feed"
+              >
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                  shareToFeed 
+                    ? 'bg-purple-600 border-purple-600' 
+                    : 'border-gray-300 bg-white'
+                }`}>
+                  {shareToFeed && <Check size={14} className="text-white" />}
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-gray-900">Share to feed</p>
+                  <p className="text-xs text-gray-500">Let friends see your rating & thoughts</p>
+                </div>
+              </button>
+            )}
+
             <div className="space-y-2">
               <Button 
                 onClick={handleSubmitRating}
@@ -731,7 +763,9 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
                 className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium"
                 data-testid="button-submit-rating"
               >
-                {ratingMutation.isPending ? 'Saving...' : rating > 0 ? 'Save Rating' : 'Mark as Finished'}
+                {ratingMutation.isPending ? 'Saving...' : 
+                  shareToFeed ? 'Share to Feed' : 
+                  rating > 0 ? 'Save Rating' : 'Mark as Finished'}
               </Button>
               
               <button 
