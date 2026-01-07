@@ -111,7 +111,8 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
       }
 
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
       
       if (shouldShowFollowUp(listName)) {
         setAddedListName(listName);
@@ -153,7 +154,8 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
       }
 
       toast({ title: `Rated "${media.title}" ${selectedRating} stars!` });
-      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
       setStep('recommend');
     } catch (error: any) {
       toast({ title: error.message || "Failed to rate", variant: "destructive" });
