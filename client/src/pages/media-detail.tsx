@@ -403,9 +403,19 @@ export default function MediaDetail() {
       if (!response.ok) return [];
       const result = await response.json();
       
-      // Extract recommendations from AI response
-      const recs = result.recommendations || [];
-      return recs.slice(0, 8); // Limit to 8 items
+      // Extract recommendations from AI response (may be in recommendations or results)
+      const recs = result.recommendations || result.results || [];
+      // Map to consistent format with poster_url
+      return recs.slice(0, 8).map((item: any) => ({
+        title: item.title,
+        type: item.type || item.media_type,
+        poster_url: item.poster_url || item.poster || item.image_url,
+        year: item.year,
+        description: item.description,
+        external_id: item.external_id || item.id,
+        external_source: item.external_source || item.source,
+        searchTerm: item.searchTerm || item.title
+      }))
     },
     enabled: !!session?.access_token && !!mediaItem?.title,
     staleTime: 1000 * 60 * 30, // Cache for 30 minutes
@@ -1039,11 +1049,9 @@ export default function MediaDetail() {
                       };
 
                       const handleClick = () => {
-                        if (item.external_id && item.external_source) {
-                          setLocation(`/media/${item.type || 'Movie'}/${item.external_source}/${item.external_id}`);
-                        } else if (item.searchTerm || item.title) {
-                          setLocation(`/search?q=${encodeURIComponent(item.searchTerm || item.title)}`);
-                        }
+                        // Navigate to search with the item title to find it
+                        const searchTerm = item.title + (item.year ? ` ${item.year}` : '');
+                        setLocation(`/search?q=${encodeURIComponent(searchTerm)}`);
                       };
 
                       return (
@@ -1053,7 +1061,7 @@ export default function MediaDetail() {
                           className="flex-shrink-0 w-28 cursor-pointer group"
                           data-testid={`similar-media-${index}`}
                         >
-                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 mb-2 shadow-sm group-hover:shadow-md transition-shadow">
+                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100 mb-2 shadow-sm group-hover:shadow-md transition-shadow">
                             {item.poster_url ? (
                               <img
                                 src={item.poster_url}
@@ -1061,8 +1069,10 @@ export default function MediaDetail() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                {getTypeIcon(item.type)}
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200">
+                                <div className="text-purple-600 opacity-60">
+                                  {getTypeIcon(item.type)}
+                                </div>
                               </div>
                             )}
                             <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
@@ -1475,10 +1485,12 @@ export default function MediaDetail() {
       />
       
       <CreateListDialog 
-        isOpen={showCreateListDialog} 
-        onClose={() => setShowCreateListDialog(false)}
-        onListCreated={() => {
-          queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+        open={showCreateListDialog} 
+        onOpenChange={(open) => {
+          setShowCreateListDialog(open);
+          if (!open) {
+            queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+          }
         }}
       />
     </div>
