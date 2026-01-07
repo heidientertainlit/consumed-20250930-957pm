@@ -678,7 +678,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
                   onChange={(e) => setReviewText(e.target.value)}
                   onFocus={(e) => e.target.rows = 3}
                   onBlur={(e) => { if (!reviewText.trim()) e.target.rows = 1; }}
-                  className="bg-white border-gray-200 resize-none transition-all"
+                  className="bg-white border-gray-200 resize-none transition-all min-h-0"
+                  style={{ height: reviewText.trim() ? 'auto' : '40px' }}
                   rows={reviewText.trim() ? 3 : 1}
                   data-testid="quick-add-review"
                 />
