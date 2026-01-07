@@ -650,6 +650,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                   <option value="finished">Finished</option>
                   <option value="queue">Want To</option>
                   <option value="currently">Currently Consuming</option>
+                  <option value="dnf">Did Not Finish</option>
                   {userLists.filter((l: any) => !l.is_default).map((list: any) => (
                     <option key={list.id} value={list.id}>{list.title}</option>
                   ))}
