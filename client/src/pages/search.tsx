@@ -81,21 +81,11 @@ export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedMediaFilter, setSelectedMediaFilter] = useState<string>("all");
   const [isAiMode, setIsAiMode] = useState(false);
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const mediaFilters = [
-    { id: "all", label: "All" },
-    { id: "tv", label: "TV Shows" },
-    { id: "movie", label: "Movies" },
-    { id: "book", label: "Books" },
-    { id: "podcast", label: "Podcasts" },
-    { id: "game", label: "Gaming" },
-  ];
 
   // Fetch Netflix Top TV Shows
   const { data: netflixTVShows = [] } = useQuery({
@@ -568,7 +558,7 @@ export default function Search() {
           {isAiMode ? (
             <p>Ask for recommendations like "movies similar to Inception" or "uplifting podcasts"</p>
           ) : (
-            <p>Search for friends, movies, TV shows, books, and music. Use <span className="font-medium text-purple-600">AI Mode</span> for personalized recommendations.</p>
+            <p>Try <span className="font-medium text-purple-600">AI Mode</span> to ask things like "shows like The Bear" or "what are my friends watching"</p>
           )}
         </div>
 
@@ -722,13 +712,6 @@ export default function Search() {
               </div>
             )}
 
-            {/* Empty state for Quick Search */}
-            {!searchQuery.trim() && (
-              <div className="text-center py-8 text-gray-400">
-                <SearchIcon size={32} className="mx-auto mb-2 opacity-50" />
-                <p>Search for friends, movies, TV shows, books, and music</p>
-              </div>
-            )}
           </>
         )}
 
@@ -894,117 +877,105 @@ export default function Search() {
             </div>
           )}
 
-        {/* Media Type Filters - Only show when no search results */}
-        {!searchResults && (
+        {/* Trending Content - Only show when no search results and not in AI mode */}
+        {!isAiMode && !searchQuery.trim() && (
           <>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center">
-              {mediaFilters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setSelectedMediaFilter(filter.id)}
-                  className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors border ${
-                    selectedMediaFilter === filter.id
-                      ? 'bg-white text-purple-600 border-gray-200 shadow-sm'
-                      : 'bg-white text-gray-700 border-transparent hover:bg-gray-100'
-                  }`}
-                  data-testid={`filter-${filter.id}`}
-                >
-                  {filter.label}
-                </button>
-              ))}
+            {/* Just Browsing Header */}
+            <div className="text-center pt-2">
+              <p className="text-gray-600 font-medium">Just browsing? Here's some ideas</p>
             </div>
 
             {/* Trending Content Sections */}
             <div className="space-y-8">
-          {/* Personalized Recommendations - First Row */}
-          {recommendedContent.length > 0 && (selectedMediaFilter === "all") && (
-            <MediaCarousel
-              title="Recommended For You"
-              mediaType="mixed"
-              items={recommendedContent}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* Personalized Recommendations - First Row */}
+              {recommendedContent.length > 0 && (
+                <MediaCarousel
+                  title="Recommended For You"
+                  mediaType="mixed"
+                  items={recommendedContent}
+                  onItemClick={handleMediaClick}
+                />
+              )}
 
-          {/* Top Shows Across All Streaming Platforms - Second Row */}
-          {(netflixTVShows.length > 0 || hboTVShows.length > 0) && (selectedMediaFilter === "all" || selectedMediaFilter === "tv") && (
-            <MediaCarousel
-              title="Top Shows Across All Streaming Platforms"
-              mediaType="tv"
-              items={deduplicateMediaItems([...netflixTVShows.slice(0, 10), ...hboTVShows.slice(0, 10)])}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* Top Shows Across All Streaming Platforms - Second Row */}
+              {(netflixTVShows.length > 0 || hboTVShows.length > 0) && (
+                <MediaCarousel
+                  title="Top Shows Across All Streaming Platforms"
+                  mediaType="tv"
+                  items={deduplicateMediaItems([...netflixTVShows.slice(0, 10), ...hboTVShows.slice(0, 10)])}
+                  onItemClick={handleMediaClick}
+                />
+              )}
 
-          {/* Netflix Top Movies */}
-          {netflixMovies.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "movie") && (
-            <MediaCarousel
-              title="Top 10 Movies on Netflix"
-              mediaType="movie"
-              items={netflixMovies}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* Netflix Top Movies */}
+              {netflixMovies.length > 0 && (
+                <MediaCarousel
+                  title="Top 10 Movies on Netflix"
+                  mediaType="movie"
+                  items={netflixMovies}
+                  onItemClick={handleMediaClick}
+                />
+              )}
 
-          {/* Paramount+ Top Movies */}
-          {paramountMovies.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "movie") && (
-            <MediaCarousel
-              title="Top 10 Movies on Paramount+"
-              mediaType="movie"
-              items={paramountMovies}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* Paramount+ Top Movies */}
+              {paramountMovies.length > 0 && (
+                <MediaCarousel
+                  title="Top 10 Movies on Paramount+"
+                  mediaType="movie"
+                  items={paramountMovies}
+                  onItemClick={handleMediaClick}
+                />
+              )}
 
-          {/* Trending TV Shows */}
-          {trendingTVShows.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "tv") && (
-            <MediaCarousel
-              title="Trending TV Shows"
-              mediaType="tv"
-              items={trendingTVShows}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* Trending TV Shows */}
+              {trendingTVShows.length > 0 && (
+                <MediaCarousel
+                  title="Trending TV Shows"
+                  mediaType="tv"
+                  items={trendingTVShows}
+                  onItemClick={handleMediaClick}
+                />
+              )}
 
-          {/* Trending Movies */}
-          {trendingMovies.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "movie") && (
-            <MediaCarousel
-              title="Trending Movies"
-              mediaType="movie"
-              items={trendingMovies}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* Trending Movies */}
+              {trendingMovies.length > 0 && (
+                <MediaCarousel
+                  title="Trending Movies"
+                  mediaType="movie"
+                  items={trendingMovies}
+                  onItemClick={handleMediaClick}
+                />
+              )}
 
-          {/* Top Gaming */}
-          {topGames.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "game") && (
-            <MediaCarousel
-              title="Top Gaming"
-              mediaType="game"
-              items={topGames}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* Top Gaming */}
+              {topGames.length > 0 && (
+                <MediaCarousel
+                  title="Top Gaming"
+                  mediaType="game"
+                  items={topGames}
+                  onItemClick={handleMediaClick}
+                />
+              )}
 
-          {/* NY Times Bestsellers */}
-          {bestsellerBooks.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "book") && (
-            <MediaCarousel
-              title="NY Times Bestsellers"
-              mediaType="book"
-              items={bestsellerBooks}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* NY Times Bestsellers */}
+              {bestsellerBooks.length > 0 && (
+                <MediaCarousel
+                  title="NY Times Bestsellers"
+                  mediaType="book"
+                  items={bestsellerBooks}
+                  onItemClick={handleMediaClick}
+                />
+              )}
 
-          {/* Trending Podcasts */}
-          {trendingPodcasts.length > 0 && (selectedMediaFilter === "all" || selectedMediaFilter === "podcast") && (
-            <MediaCarousel
-              title="Trending Podcasts"
-              mediaType="podcast"
-              items={trendingPodcasts}
-              onItemClick={handleMediaClick}
-            />
-          )}
+              {/* Trending Podcasts */}
+              {trendingPodcasts.length > 0 && (
+                <MediaCarousel
+                  title="Trending Podcasts"
+                  mediaType="podcast"
+                  items={trendingPodcasts}
+                  onItemClick={handleMediaClick}
+                />
+              )}
             </div>
           </>
         )}
