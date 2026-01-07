@@ -1051,6 +1051,152 @@ export default function MediaDetail() {
               </div>
             </div>
 
+            {/* Reviews & Ratings - Always shown */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                Reviews & Ratings {reviews.length > 0 && `(${reviews.length})`}
+              </h2>
+              {reviews.length > 0 ? (
+                <div className="space-y-4">
+                  {reviews.map((review: any) => (
+                    <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2 flex-1">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <span className="text-purple-600 text-sm font-medium">
+                              {review.users?.display_name?.[0]?.toUpperCase() || review.users?.user_name?.[0]?.toUpperCase() || '?'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">
+                              {review.users?.user_name || review.users?.display_name || 'Anonymous'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(review.created_at).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {review.rating && (
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="font-medium text-gray-900">{review.rating}</span>
+                            </div>
+                          )}
+                          {user?.id === review.user_id && (
+                            <button
+                              onClick={() => handleDeleteReview(review.id)}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                              data-testid={`button-delete-review-${review.id}`}
+                              title="Delete review"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {review.content && (
+                        <p className="text-gray-700 text-sm leading-relaxed">{review.content}</p>
+                      )}
+                      {/* Like and Reply Actions */}
+                      <div className="flex items-center gap-4 mt-3 pt-2 border-t border-gray-50">
+                        <button
+                          onClick={() => handleLike(review.id)}
+                          className={`flex items-center gap-1 text-xs transition-colors ${
+                            likedPosts.has(review.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                          }`}
+                          data-testid={`button-like-review-${review.id}`}
+                        >
+                          <Heart size={14} className={likedPosts.has(review.id) ? 'fill-current' : ''} />
+                          <span>{review.likes_count || 0}</span>
+                        </button>
+                        <button
+                          onClick={() => toggleComments(review.id)}
+                          className={`flex items-center gap-1 text-xs transition-colors ${
+                            expandedComments[review.id] ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'
+                          }`}
+                          data-testid={`button-reply-review-${review.id}`}
+                        >
+                          <MessageCircle size={14} />
+                          <span>{review.comments_count || 0}</span>
+                        </button>
+                      </div>
+                      
+                      {/* Comments Section */}
+                      {(expandedComments[review.id] || replyingTo === review.id) && (
+                        <div className="mt-3 space-y-3">
+                          {/* Loading state */}
+                          {loadingComments.has(review.id) && (
+                            <p className="text-xs text-gray-400">Loading replies...</p>
+                          )}
+                          
+                          {/* Existing comments */}
+                          {expandedComments[review.id]?.length > 0 && (
+                            <div className="space-y-2 pl-4 border-l-2 border-gray-100">
+                              {expandedComments[review.id].map((comment: any) => (
+                                <div key={comment.id} className="text-sm group">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
+                                      <p className="text-gray-700">{comment.content}</p>
+                                      <span className="text-xs text-gray-400">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    {user?.id === comment.user_id && (
+                                      <button
+                                        onClick={() => handleDeleteComment(comment.id, review.id)}
+                                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
+                                        data-testid={`button-delete-comment-${comment.id}`}
+                                        title="Delete your comment"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Reply Input */}
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={replyContent}
+                              onChange={(e) => setReplyContent(e.target.value)}
+                              placeholder="Write a reply..."
+                              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              onKeyDown={(e) => e.key === 'Enter' && handleReply(review.id)}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleReply(review.id)}
+                              disabled={!replyContent.trim() || replyMutation.isPending}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Send size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl">
+                  <Star className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm mb-1">No reviews yet</p>
+                  <p className="text-gray-400 text-xs">Rate this title using the Quick Add button above</p>
+                </div>
+              )}
+            </div>
+
             {/* Community Activity Section - Always shown */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -1205,16 +1351,18 @@ export default function MediaDetail() {
                                 </div>
                               </div>
                             )}
-                            <button
-                              onClick={handleAddClick}
-                              className="absolute top-1 right-1 w-6 h-6 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                              data-testid={`add-similar-${index}`}
-                            >
-                              <Plus size={14} className="text-purple-600" />
-                            </button>
-                            <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
-                              {getTypeIcon(item.type)}
-                              <span className="truncate max-w-[60px]">{item.type || 'Media'}</span>
+                            <div className={`absolute bottom-1 left-1 pr-1 flex items-center gap-1`}>
+                              <button
+                                onClick={handleAddClick}
+                                className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm"
+                                data-testid={`add-similar-${index}`}
+                              >
+                                <Plus size={14} className="text-purple-600" />
+                              </button>
+                              <div className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
+                                {getTypeIcon(item.type)}
+                                <span className="truncate max-w-[50px]">{item.type || 'Media'}</span>
+                              </div>
                             </div>
                           </div>
                           <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors">
@@ -1266,152 +1414,6 @@ export default function MediaDetail() {
                 </div>
               </div>
             )}
-
-            {/* Reviews & Ratings - Always shown */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                Reviews & Ratings {reviews.length > 0 && `(${reviews.length})`}
-              </h2>
-              {reviews.length > 0 ? (
-                <div className="space-y-4">
-                  {reviews.map((review: any) => (
-                    <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2 flex-1">
-                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                            <span className="text-purple-600 text-sm font-medium">
-                              {review.users?.display_name?.[0]?.toUpperCase() || review.users?.user_name?.[0]?.toUpperCase() || '?'}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900">
-                              {review.users?.user_name || review.users?.display_name || 'Anonymous'}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(review.created_at).toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {review.rating && (
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                              <span className="font-medium text-gray-900">{review.rating}</span>
-                            </div>
-                          )}
-                          {user?.id === review.user_id && (
-                            <button
-                              onClick={() => handleDeleteReview(review.id)}
-                              className="text-gray-400 hover:text-red-500 transition-colors"
-                              data-testid={`button-delete-review-${review.id}`}
-                              title="Delete review"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      {review.content && (
-                        <p className="text-gray-700 text-sm leading-relaxed">{review.content}</p>
-                      )}
-                      {/* Like and Reply Actions */}
-                      <div className="flex items-center gap-4 mt-3 pt-2 border-t border-gray-50">
-                        <button
-                          onClick={() => handleLike(review.id)}
-                          className={`flex items-center gap-1 text-xs transition-colors ${
-                            likedPosts.has(review.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-                          }`}
-                          data-testid={`button-like-review-${review.id}`}
-                        >
-                          <Heart size={14} className={likedPosts.has(review.id) ? 'fill-current' : ''} />
-                          <span>{review.likes_count || 0}</span>
-                        </button>
-                        <button
-                          onClick={() => toggleComments(review.id)}
-                          className={`flex items-center gap-1 text-xs transition-colors ${
-                            expandedComments[review.id] ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'
-                          }`}
-                          data-testid={`button-reply-review-${review.id}`}
-                        >
-                          <MessageCircle size={14} />
-                          <span>{review.comments_count || 0}</span>
-                        </button>
-                      </div>
-                      
-                      {/* Comments Section */}
-                      {(expandedComments[review.id] || replyingTo === review.id) && (
-                        <div className="mt-3 space-y-3">
-                          {/* Loading state */}
-                          {loadingComments.has(review.id) && (
-                            <p className="text-xs text-gray-400">Loading replies...</p>
-                          )}
-                          
-                          {/* Existing comments */}
-                          {expandedComments[review.id]?.length > 0 && (
-                            <div className="space-y-2 pl-4 border-l-2 border-gray-100">
-                              {expandedComments[review.id].map((comment: any) => (
-                                <div key={comment.id} className="text-sm group">
-                                  <div className="flex items-start justify-between">
-                                    <div>
-                                      <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
-                                      <p className="text-gray-700">{comment.content}</p>
-                                      <span className="text-xs text-gray-400">
-                                        {new Date(comment.created_at).toLocaleDateString()}
-                                      </span>
-                                    </div>
-                                    {user?.id === comment.user_id && (
-                                      <button
-                                        onClick={() => handleDeleteComment(comment.id, review.id)}
-                                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
-                                        data-testid={`button-delete-comment-${comment.id}`}
-                                        title="Delete your comment"
-                                      >
-                                        <Trash2 size={12} />
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Reply Input */}
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={replyContent}
-                              onChange={(e) => setReplyContent(e.target.value)}
-                              placeholder="Write a reply..."
-                              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                              onKeyDown={(e) => e.key === 'Enter' && handleReply(review.id)}
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => handleReply(review.id)}
-                              disabled={!replyContent.trim() || replyMutation.isPending}
-                              className="bg-purple-600 hover:bg-purple-700"
-                            >
-                              <Send size={14} />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl">
-                  <Star className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm mb-1">No reviews yet</p>
-                  <p className="text-gray-400 text-xs">Rate this title using the Quick Add button above</p>
-                </div>
-              )}
-            </div>
 
             {/* General Posts/Conversations */}
             {conversations.length > 0 && (
