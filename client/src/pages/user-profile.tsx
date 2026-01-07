@@ -45,6 +45,7 @@ import { DNALevelBadge, DNAFeatureLock } from "@/components/dna-level-badge";
 import { FriendDNAComparison } from "@/components/friend-dna-comparison";
 import { FriendDNACompareButton } from "@/components/friend-dna-comparison";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 import { supabase } from "@/lib/supabase";
 
 export default function UserProfile() {
@@ -95,6 +96,7 @@ export default function UserProfile() {
   const [isSearchingFriends, setIsSearchingFriends] = useState(false);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Public profile - no restrictions for viewing
   const canViewProfile = true; // Always true for now - will add privacy settings later
@@ -2693,21 +2695,32 @@ export default function UserProfile() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center space-x-3 mt-4 md:mt-0">
+                <div className="flex items-center space-x-3 mt-4 md:mt-0 flex-wrap gap-2">
                   {isOwnProfile ? (
-                    <Button 
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                      onClick={() => {
-                        setEditUsername(userProfileData?.user_name || '');
-                        setEditFirstName(userProfileData?.first_name || '');
-                        setEditLastName(userProfileData?.last_name || '');
-                        setIsEditProfileOpen(true);
-                      }}
-                      data-testid="button-edit-profile"
-                    >
-                      <Settings size={16} className="mr-2" />
-                      Edit Profile
-                    </Button>
+                    <>
+                      <Button 
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        onClick={() => {
+                          setEditUsername(userProfileData?.user_name || '');
+                          setEditFirstName(userProfileData?.first_name || '');
+                          setEditLastName(userProfileData?.last_name || '');
+                          setIsEditProfileOpen(true);
+                        }}
+                        data-testid="button-edit-profile"
+                      >
+                        <Settings size={16} className="mr-2" />
+                        Edit Profile
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                        onClick={() => setIsFeedbackOpen(true)}
+                        data-testid="button-feedback"
+                      >
+                        <MessageCircle size={16} className="mr-2" />
+                        Feedback
+                      </Button>
+                    </>
                   ) : null}
                   <Button 
                     className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -4702,6 +4715,9 @@ export default function UserProfile() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </>
   );
 }
