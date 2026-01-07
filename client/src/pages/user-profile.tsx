@@ -2840,11 +2840,15 @@ export default function UserProfile() {
           const firstName = userProfileData?.first_name || userProfileData?.user_name || 'User';
           
           return currentlyItems.length > 0 ? (
-            <div className="px-4 mb-4">
-              <p className="text-sm text-gray-600 mb-2">
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2 px-4">
                 {firstName} is currently consuming...
               </p>
-              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2" style={{ width: 'max-content' }}>
+              <div 
+                className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 px-4"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+                onTouchStart={(e) => e.stopPropagation()}
+              >
                 {currentlyItems.map((item: any) => (
                   isOwnProfile ? (
                     <CurrentlyConsumingCard 
