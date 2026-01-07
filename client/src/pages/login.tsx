@@ -178,7 +178,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black from-40% via-purple-950 via-80% to-purple-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-black from-30% via-purple-950 via-70% to-purple-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Logo and welcome section */}
         <div className="text-center mb-8 mt-8">
@@ -192,7 +192,7 @@ export default function LoginPage() {
           <h1 className="text-white text-lg font-semibold mb-1 leading-tight">
             Where entertainment<br />comes together
           </h1>
-          <p className="text-purple-200 text-xs max-w-xs mx-auto">
+          <p className="text-gray-400 text-xs max-w-xs mx-auto">
             Play, react, and keep up<br />with what you love.
           </p>
         </div>
