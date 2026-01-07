@@ -678,7 +678,7 @@ export default function PlayPage() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
       {/* Dark Gradient Hero with Pills */}
-      <div className="bg-gradient-to-b from-black via-purple-950 to-purple-900 pt-6 pb-8 px-4">
+      <div className="bg-gradient-to-b from-[#0a0a0a] via-[#0d0a14] to-[#1a1225] pt-6 pb-8 px-4">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Play
