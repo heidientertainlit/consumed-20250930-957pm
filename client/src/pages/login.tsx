@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
-import { SiInstagram, SiTiktok } from "react-icons/si";
 import "./auth.css";
 
 export default function LoginPage() {
@@ -368,35 +367,6 @@ export default function LoginPage() {
           </Tabs>
         </div>
         
-        {/* Footer with contact and social links */}
-        <div className="mt-8 pb-8 text-center">
-          <p className="text-purple-200 text-sm mb-6">
-            Give feedback, get support, become a partner or get in touch by emailing{" "}
-            <span className="text-purple-300 font-medium">info@consumedapp.com</span>
-          </p>
-          <div className="flex justify-center gap-6 mt-2">
-            <a 
-              href="https://www.instagram.com/consumedapp" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-purple-300 hover:text-white transition-colors"
-              data-testid="link-instagram"
-              aria-label="Follow us on Instagram"
-            >
-              <SiInstagram className="w-6 h-6" />
-            </a>
-            <a 
-              href="https://www.tiktok.com/@consumedapp" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-purple-300 hover:text-white transition-colors"
-              data-testid="link-tiktok"
-              aria-label="Follow us on TikTok"
-            >
-              <SiTiktok className="w-6 h-6" />
-            </a>
-          </div>
-        </div>
       </div>
 
       {/* Forgot Password Modal */}
