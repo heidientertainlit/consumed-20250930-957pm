@@ -618,7 +618,7 @@ export default function MediaDetail() {
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-48 h-48 rounded-2xl overflow-hidden shadow-lg flex-shrink-0">
                   <img 
-                    src={mediaItem.artwork} 
+                    src={mediaItem.artwork || mediaItem.image_url} 
                     alt={mediaItem.title}
                     className="w-full h-full object-cover"
                   />
