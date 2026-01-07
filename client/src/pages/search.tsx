@@ -520,7 +520,7 @@ export default function Search() {
           </div>
 
           {/* Unified Search Bar with AI Mode Toggle */}
-          <div className="bg-zinc-900/60 border border-purple-900/30 rounded-2xl p-3">
+          <div className="bg-white rounded-2xl p-3 shadow-lg">
             <div className="flex items-center gap-2">
               <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
               <Input
@@ -533,7 +533,7 @@ export default function Search() {
                     handleSearch();
                   }
                 }}
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-white placeholder:text-gray-400"
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 placeholder:text-gray-400"
                 autoFocus
                 data-testid="unified-search-input"
               />
@@ -545,7 +545,7 @@ export default function Search() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
                   isAiMode 
                     ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white" 
-                    : "bg-zinc-800/80 text-gray-300 hover:bg-zinc-700"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
                 data-testid="toggle-ai-mode"
               >
