@@ -2700,7 +2700,7 @@ export default function UserProfile() {
                     {isOwnProfile ? (
                       <>
                         <Button 
-                          className="bg-purple-600 hover:bg-purple-700 text-white"
+                          className="bg-purple-600 hover:bg-purple-700 text-white min-w-[140px]"
                           onClick={() => {
                             setEditUsername(userProfileData?.user_name || '');
                             setEditFirstName(userProfileData?.first_name || '');
@@ -2725,7 +2725,7 @@ export default function UserProfile() {
                     ) : null}
                   </div>
                   <Button 
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    className="bg-purple-600 hover:bg-purple-700 text-white min-w-[140px]"
                     onClick={async () => {
                       const profileUserId = isOwnProfile ? user?.id : viewingUserId;
                       await copyLink({ 
