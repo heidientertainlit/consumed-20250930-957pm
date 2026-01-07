@@ -411,6 +411,30 @@ export default function Search() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Fetch current friends to check status
+  const { data: friendsData } = useQuery({
+    queryKey: ['friends-list-search'],
+    queryFn: async () => {
+      if (!session?.access_token) return { friends: [], pending: [] };
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'getFriends' })
+      });
+      if (!response.ok) return { friends: [], pending: [] };
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  // Create sets of friend IDs for quick lookup
+  const friendIds = new Set((friendsData?.friends || []).map((f: any) => f.id));
+  const pendingIds = new Set((friendsData?.pending || []).map((f: any) => f.id));
+
   // Send friend request mutation
   const sendFriendRequestMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
@@ -434,6 +458,7 @@ export default function Search() {
       toast({ title: "Friend request sent!" });
       queryClient.invalidateQueries({ queryKey: ['quick-user-search'] });
       queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ['friends-list-search'] });
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message || "Could not send friend request", variant: "destructive" });
@@ -645,17 +670,27 @@ export default function Search() {
                             </div>
                           </div>
                           {userResult.id !== user?.id && (
-                            <Button
-                              onClick={() => sendFriendRequestMutation.mutate(userResult.id)}
-                              size="sm"
-                              variant="outline"
-                              className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                              disabled={sendFriendRequestMutation.isPending}
-                              data-testid={`add-friend-${userResult.id}`}
-                            >
-                              <Plus size={14} className="mr-1" />
-                              Add
-                            </Button>
+                            friendIds.has(userResult.id) ? (
+                              <span className="text-sm text-green-600 font-medium px-3 py-1 bg-green-50 rounded-full">
+                                Friends
+                              </span>
+                            ) : pendingIds.has(userResult.id) ? (
+                              <span className="text-sm text-gray-500 font-medium px-3 py-1 bg-gray-100 rounded-full">
+                                Pending
+                              </span>
+                            ) : (
+                              <Button
+                                onClick={() => sendFriendRequestMutation.mutate(userResult.id)}
+                                size="sm"
+                                variant="outline"
+                                className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                                disabled={sendFriendRequestMutation.isPending}
+                                data-testid={`add-friend-${userResult.id}`}
+                              >
+                                <Plus size={14} className="mr-1" />
+                                Add
+                              </Button>
+                            )
                           )}
                         </div>
                       ))}
