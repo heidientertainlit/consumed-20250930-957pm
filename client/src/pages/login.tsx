@@ -189,7 +189,7 @@ export default function LoginPage() {
               className="h-16 w-auto"
             />
           </div>
-          <h1 className="text-white text-lg font-semibold mb-1 leading-tight">
+          <h1 className="text-white text-lg font-semibold mb-2 leading-tight">
             Where entertainment<br />comes together
           </h1>
           <p className="text-gray-300 text-xs max-w-xs mx-auto">
