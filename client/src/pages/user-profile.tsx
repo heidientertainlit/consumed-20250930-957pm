@@ -2956,7 +2956,7 @@ export default function UserProfile() {
                 }`}
                 data-testid="nav-collections"
               >
-                Collections
+                {isOwnProfile ? 'Your Library' : `${profileData?.display_name?.split(' ')[0] || 'Their'}'s Library`}
               </button>
             )}
           </div>
