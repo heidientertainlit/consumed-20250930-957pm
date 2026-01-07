@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MediaCarousel from "@/components/media-carousel";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -81,11 +79,10 @@ function deduplicateMediaItems<T extends { id: string; externalId?: string; exte
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [quickSearchQuery, setQuickSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedMediaFilter, setSelectedMediaFilter] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"ai" | "quick">("quick");
+  const [isAiMode, setIsAiMode] = useState(false);
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -382,45 +379,45 @@ export default function Search() {
     staleTime: 1000 * 60 * 60 * 6,
   });
 
-  // Quick search - media results
+  // Quick search - media results (only when NOT in AI mode)
   const { data: quickMediaResults = [], isLoading: isLoadingMedia } = useQuery({
-    queryKey: ['quick-media-search', quickSearchQuery],
+    queryKey: ['quick-media-search', searchQuery],
     queryFn: async () => {
-      if (!quickSearchQuery.trim() || !session?.access_token) return [];
+      if (!searchQuery.trim() || !session?.access_token) return [];
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query: quickSearchQuery })
+        body: JSON.stringify({ query: searchQuery })
       });
       if (!response.ok) return [];
       const data = await response.json();
       return data.results || [];
     },
-    enabled: !!quickSearchQuery.trim() && !!session?.access_token,
+    enabled: !isAiMode && !!searchQuery.trim() && !!session?.access_token,
     staleTime: 1000 * 60 * 5,
   });
 
-  // Quick search - user results
+  // Quick search - user results (only when NOT in AI mode)
   const { data: quickUserResults = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['quick-user-search', quickSearchQuery],
+    queryKey: ['quick-user-search', searchQuery],
     queryFn: async () => {
-      if (!quickSearchQuery.trim() || !session?.access_token) return [];
+      if (!searchQuery.trim() || !session?.access_token) return [];
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action: 'searchUsers', query: quickSearchQuery })
+        body: JSON.stringify({ action: 'searchUsers', query: searchQuery })
       });
       if (!response.ok) return [];
       const data = await response.json();
       return data.users || [];
     },
-    enabled: !!quickSearchQuery.trim() && !!session?.access_token,
+    enabled: !isAiMode && !!searchQuery.trim() && !!session?.access_token,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -517,6 +514,7 @@ export default function Search() {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
@@ -527,51 +525,84 @@ export default function Search() {
           <h1 className="text-3xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Search
           </h1>
-          <p className="text-base text-gray-600 max-w-md mx-auto">
-            Find friends, media, and get AI-powered recommendations
-          </p>
         </div>
 
-        {/* Tabs for Quick Search vs AI Search */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "ai" | "quick")} className="w-full">
-          <TabsList className="w-full mb-4 bg-white border border-gray-200 p-1 h-auto">
-            <TabsTrigger 
-              value="quick" 
-              className="flex-1 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              data-testid="tab-quick-search"
+        {/* Unified Search Bar with AI Mode Toggle */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3">
+          <div className="flex items-center gap-2">
+            <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
+            <Input
+              type="text"
+              placeholder={isAiMode ? "Ask AI for recommendations..." : "Search friends, movies, TV shows..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && isAiMode && !isSearching) {
+                  handleSearch();
+                }
+              }}
+              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 placeholder:text-gray-400"
+              autoFocus
+              data-testid="unified-search-input"
+            />
+            <button
+              onClick={() => {
+                setIsAiMode(!isAiMode);
+                setSearchResults(null); // Clear AI results when toggling
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
+                isAiMode 
+                  ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white" 
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+              data-testid="toggle-ai-mode"
             >
-              <SearchIcon size={16} className="mr-2" />
-              Quick Search
-            </TabsTrigger>
-            <TabsTrigger 
-              value="ai" 
-              className="flex-1 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              data-testid="tab-ai-search"
-            >
-              <Sparkles size={16} className="mr-2" />
-              AI Search
-            </TabsTrigger>
-          </TabsList>
+              <Sparkles size={14} />
+              AI Mode
+            </button>
+          </div>
+        </div>
 
-          {/* Quick Search Tab */}
-          <TabsContent value="quick">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6">
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <Input
-                  type="text"
-                  placeholder="Search for friends, movies, TV shows, books, music..."
-                  value={quickSearchQuery}
-                  onChange={(e) => setQuickSearchQuery(e.target.value)}
-                  className="pl-10 bg-gray-50 border-gray-200 rounded-xl"
-                  autoFocus
-                  data-testid="quick-search-input"
-                />
+        {/* Explanatory Text */}
+        <div className="text-center text-sm text-gray-500 -mt-2">
+          {isAiMode ? (
+            <p>Ask for recommendations like "movies similar to Inception" or "uplifting podcasts"</p>
+          ) : (
+            <p>Search for friends, movies, TV shows, books, and music. Use <span className="font-medium text-purple-600">AI Mode</span> for personalized recommendations.</p>
+          )}
+        </div>
+
+        {/* AI Search Loading State */}
+        {isAiMode && isSearching && (
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-100">
+            <div className="flex items-center gap-3">
+              <Loader2 className="animate-spin text-purple-600" size={20} />
+              <div>
+                <p className="font-semibold text-purple-900">AI is analyzing your request...</p>
+                <p className="text-purple-700 text-sm">This may take 10-30 seconds</p>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Quick Search Results */}
-            {quickSearchQuery.trim() && (
+        {/* AI Search Button (only show when in AI mode and has query) */}
+        {isAiMode && searchQuery.trim() && !isSearching && !searchResults && (
+          <div className="flex justify-center">
+            <Button
+              onClick={handleSearch}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6"
+              data-testid="ai-search-submit"
+            >
+              <Sparkles size={16} className="mr-2" />
+              Get AI Recommendations
+            </Button>
+          </div>
+        )}
+
+        {/* Quick Search Results */}
+        {!isAiMode && (
+          <>
+            {searchQuery.trim() && (
               <div className="space-y-6">
                 {/* Loading */}
                 {(isLoadingMedia || isLoadingUsers) && (
@@ -685,113 +716,52 @@ export default function Search() {
                 {!isLoadingMedia && !isLoadingUsers && quickMediaResults.length === 0 && quickUserResults.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <SearchIcon size={32} className="mx-auto mb-2 opacity-50" />
-                    <p>No results found for "{quickSearchQuery}"</p>
+                    <p>No results found for "{searchQuery}"</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Empty state */}
-            {!quickSearchQuery.trim() && (
+            {/* Empty state for Quick Search */}
+            {!searchQuery.trim() && (
               <div className="text-center py-8 text-gray-400">
                 <SearchIcon size={32} className="mx-auto mb-2 opacity-50" />
                 <p>Search for friends, movies, TV shows, books, and music</p>
               </div>
             )}
-          </TabsContent>
+          </>
+        )}
 
-          {/* AI Search Tab */}
-          <TabsContent value="ai">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200">
-              <div className="p-6">
-                <div className="flex gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white flex-shrink-0">
-                    <Sparkles size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <Textarea
-                      placeholder="Ask anything… from recs to what people are saying."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey && !isSearching) {
-                          e.preventDefault();
-                          handleSearch();
-                        }
-                      }}
-                      disabled={isSearching}
-                      className="border-none p-0 text-base resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 bg-white placeholder:text-base placeholder:text-gray-400 min-h-[100px]"
-                      data-testid="ai-search-input"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="px-6 pb-4 border-t border-gray-100 pt-4 flex justify-end">
-                <Button
-                  onClick={handleSearch}
-                  disabled={isSearching || !searchQuery.trim()}
-                  className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium disabled:opacity-50"
-                  data-testid="ai-search-submit"
+        {/* AI Search - Example Prompts (when no query/results) */}
+        {isAiMode && !searchResults && !isSearching && !searchQuery.trim() && (
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-gray-600 text-sm font-medium mb-3">Try asking:</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {[
+                "Shows like The Bear",
+                "What are people saying about Bridgerton?",
+                "Movies for a rainy Sunday",
+                "Did my friends like Project Hail Mary?",
+                "Hot takes on DWTS finale"
+              ].map((example) => (
+                <button
+                  key={example}
+                  onClick={() => {
+                    setSearchQuery(example);
+                  }}
+                  className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 text-sm transition-colors"
+                  data-testid={`example-query-${example.substring(0, 10)}`}
                 >
-                  {isSearching ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
-                      Searching...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={16} className="mr-2" />
-                      Search
-                    </>
-                  )}
-                </Button>
-              </div>
-              
-              {/* Try Asking Examples */}
-              {!searchResults && !isSearching && (
-                <div className="px-6 pb-4">
-                  <p className="text-gray-600 text-sm font-medium mb-3">Try asking:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {[
-                      "Shows like The Bear",
-                      "What are people saying about Bridgerton?",
-                      "Movies for a rainy Sunday",
-                      "Did my friends like Project Hail Mary?",
-                      "Hot takes on DWTS finale"
-                    ].map((example) => (
-                      <button
-                        key={example}
-                        onClick={() => {
-                          setSearchQuery(example);
-                          setTimeout(() => handleSearch(), 100);
-                        }}
-                        className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-700 text-sm transition-colors"
-                        data-testid={`example-query-${example.substring(0, 10)}`}
-                      >
-                        "{example}"
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Loading State Message */}
-              {isSearching && (
-                <div className="px-6 pb-4">
-                  <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <Loader2 className="animate-spin text-purple-600" size={20} />
-                    <div>
-                      <p className="text-purple-900 font-semibold">AI is analyzing your request...</p>
-                      <p className="text-purple-700 text-sm">This may take 10-30 seconds</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  "{example}"
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-        {/* Search Results - Simplified Two Section Layout */}
-        {searchResults && (
-          <div className="px-6 pb-6 space-y-6">
+        {/* AI Search Results */}
+        {isAiMode && searchResults && (
+          <div className="space-y-6">
               {searchResults.type === 'error' && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                   <p className="text-red-800">{searchResults.message}</p>
@@ -923,9 +893,6 @@ export default function Search() {
               })()}
             </div>
           )}
-            </div>
-          </TabsContent>
-        </Tabs>
 
         {/* Media Type Filters - Only show when no search results */}
         {!searchResults && (
