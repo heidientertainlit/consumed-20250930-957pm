@@ -191,10 +191,10 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-white text-xl font-semibold mb-1">
-            Where entertainment comes together
+            Where entertainment<br />comes together
           </h1>
-          <p className="text-purple-200 text-base max-w-xs mx-auto">
-            Play, react, and keep up with what you love.
+          <p className="text-purple-200 text-sm max-w-xs mx-auto">
+            Play, react, and keep up<br />with what you love.
           </p>
         </div>
         
