@@ -658,9 +658,12 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 <textarea
                   value={contentText}
                   onChange={(e) => setContentText(e.target.value)}
+                  onFocus={(e) => e.target.rows = 3}
+                  onBlur={(e) => { if (!contentText.trim()) e.target.rows = 1; }}
                   placeholder="What did you think?"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg resize-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  rows={3}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg resize-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  rows={contentText.trim() ? 3 : 1}
+                  style={{ minHeight: contentText.trim() ? 'auto' : '42px' }}
                   data-testid="track-review-input"
                 />
               </div>
