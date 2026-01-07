@@ -3560,68 +3560,17 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* Collections Section - Show for own profile or friends */}
+        {/* Collections Section - Simple read-only library view for everyone */}
         {activeSection === 'collections' && (isOwnProfile || friendshipStatus === 'friends') && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              {/* Action Buttons - Only for own profile */}
-              {isOwnProfile && (
-                <div className="flex items-center gap-6 mb-6">
-                  <button
-                    onClick={() => setShowCreateListDialog(true)}
-                    className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold transition-colors"
-                    data-testid="button-create-list-inline"
-                  >
-                    <Plus size={20} />
-                    <span className="text-sm">Create List</span>
-                  </button>
-                  <button
-                    onClick={() => setIsTrackModalOpen(true)}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition-colors"
-                    data-testid="button-add-media-inline"
-                  >
-                    <Plus size={20} />
-                    <span className="text-sm">Add Media</span>
-                  </button>
-                </div>
-              )}
+              {/* Header */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {isOwnProfile ? 'Your Library' : `${profileData?.display_name || 'Their'}'s Library`}
+              </h3>
 
-              {/* Sub-tabs for Lists and History - Only show for own profile */}
-              {isOwnProfile && (
-                <div className="flex flex-col gap-4 mb-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setCollectionsSubTab('lists')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                          collectionsSubTab === 'lists'
-                            ? 'bg-purple-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        data-testid="collections-tab-lists"
-                      >
-                        <List size={16} />
-                        Lists
-                      </button>
-                      <button
-                        onClick={() => setCollectionsSubTab('history')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                          collectionsSubTab === 'history'
-                            ? 'bg-purple-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        data-testid="collections-tab-history"
-                      >
-                        <Clock size={16} />
-                        History
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Lists Tab Content - Show for own profile when on lists tab, always show for friends */}
-              {(collectionsSubTab === 'lists' || !isOwnProfile) && (
+              {/* Lists Content */}
+              {(
                 <>
                   {isLoadingLists ? (
                     <div className="text-center py-8">
@@ -3688,146 +3637,7 @@ export default function UserProfile() {
                   ) : (
                     <div className="text-center py-8">
                       <List className="text-gray-300 mx-auto mb-3" size={48} />
-                      <p className="text-gray-500 mb-4">No lists yet</p>
-                      <Button
-                        onClick={() => setShowCreateListDialog(true)}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                        data-testid="button-get-started-lists"
-                      >
-                        <Plus size={16} className="mr-2" />
-                        Create Your First List
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* History Tab Content - Only for own profile */}
-              {collectionsSubTab === 'history' && isOwnProfile && (
-                <>
-                  {/* Import Button - Only for own profile */}
-                  {isOwnProfile && (
-                    <div className="flex items-center justify-end gap-2 mb-4">
-                      <Button
-                        onClick={() => setIsImportModalOpen(true)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-purple-600 hover:bg-purple-50 hover:text-purple-700 rounded-full h-8 px-3"
-                        data-testid="button-import-history-sub"
-                      >
-                        <Upload size={14} className="mr-1.5" />
-                        Import
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Filter buttons row for history */}
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <div className="relative">
-                      <button
-                        onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                          mediaHistoryType !== 'all'
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                        }`}
-                        data-testid="filter-type-button"
-                      >
-                        <Film size={12} />
-                        {getTypeLabel()}
-                        <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
-                      </button>
-                      {openFilter === 'type' && (
-                        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
-                          {[
-                            { value: 'all', label: 'All Types' },
-                            { value: 'movies', label: 'Movies', icon: Film },
-                            { value: 'tv', label: 'TV', icon: Tv },
-                            { value: 'books', label: 'Books', icon: BookOpen },
-                            { value: 'music', label: 'Music', icon: Music },
-                          ].map(({ value, label, icon: Icon }) => (
-                            <button
-                              key={value}
-                              onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
-                              className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${
-                                mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
-                              }`}
-                            >
-                              {Icon && <Icon size={12} className="text-gray-600" />}
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Search Bar */}
-                  <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <Input
-                      placeholder="Search history..."
-                      value={mediaHistorySearch}
-                      onChange={(e) => setMediaHistorySearch(e.target.value)}
-                      className="pl-10 bg-white text-gray-900 border-gray-300"
-                      data-testid="input-history-search"
-                    />
-                  </div>
-
-                  {/* History Items */}
-                  {isLoadingLists ? (
-                    <div className="space-y-3">
-                      {[1, 2, 3].map((n) => (
-                        <div key={n} className="bg-gray-50 rounded-xl p-4 animate-pulse">
-                          <div className="h-5 bg-gray-200 rounded w-2/3 mb-2"></div>
-                          <div className="h-4 bg-gray-100 rounded w-1/3"></div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : filteredMediaHistory.length === 0 ? (
-                    <div className="bg-gray-50 rounded-2xl border border-gray-200 p-8 text-center">
-                      <Clock className="mx-auto mb-3 text-gray-300" size={48} />
-                      <p className="text-gray-600">No history yet</p>
-                      <p className="text-sm text-gray-500">Start tracking media to see your history here</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredMediaHistory.map((item: any, index: number) => (
-                        <div
-                          key={`${item.id}-${index}`}
-                          className="bg-gray-50 border border-gray-200 rounded-xl p-3 hover:border-purple-300 transition-colors cursor-pointer"
-                          onClick={() => {
-                            if (item.external_id && item.external_source) {
-                              setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
-                            }
-                          }}
-                          data-testid={`history-item-${index}`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                              {item.image_url ? (
-                                <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  {getMediaIcon(item.media_type)}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 truncate">{item.title}</h4>
-                              <div className="flex items-center gap-2 text-xs text-gray-500">
-                                {getMediaIcon(item.media_type)}
-                                <span>{item.media_type}</span>
-                                <span>•</span>
-                                <span>{item.listName}</span>
-                              </div>
-                              <p className="text-xs text-gray-400">
-                                {new Date(item.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                      <p className="text-gray-500">No lists yet</p>
                     </div>
                   )}
                 </>
