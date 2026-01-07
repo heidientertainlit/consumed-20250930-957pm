@@ -364,12 +364,12 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             </button>
           </div>
           
-          <div className="p-5 pt-4">
-            <h3 className="text-xl font-bold text-white mb-2">{game.title}</h3>
+          <div className="p-5 pt-3 pb-4">
+            <h3 className="text-xl font-bold text-white mb-1">{game.title}</h3>
             {game.description && (
-              <p className="text-purple-200/80 text-sm mb-4">{game.description}</p>
+              <p className="text-purple-200/80 text-sm mb-3">{game.description}</p>
             )}
-            <div className="flex items-center gap-4 text-sm text-purple-200/70 mb-5">
+            <div className="flex items-center gap-4 text-sm text-purple-200/70 mb-4">
               <span className="text-amber-400 font-medium">☆ You Earn: {game.points_reward} pts</span>
               <span className="flex items-center gap-1">
                 <Users size={14} />
@@ -379,7 +379,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             
             <Link href={`/play/trivia#${game.id}`}>
               <Button
-                className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-full py-4"
+                className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-full py-3"
                 data-testid="button-play-trivia"
               >
                 <Brain size={18} className="mr-2" />
@@ -417,7 +417,7 @@ export default function InlineGameCard({ className, gameIndex = 0, gameType = 'a
             </div>
             
             {/* Swipe indicator dots */}
-            <div className="flex items-center justify-center gap-1.5 py-4" data-testid="trivia-preview-carousel-dots">
+            <div className="flex items-center justify-center gap-1.5 py-2" data-testid="trivia-preview-carousel-dots">
               <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 0 ? "bg-purple-400" : "bg-purple-400/40")} />
               <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 1 ? "bg-purple-400" : "bg-purple-400/40")} />
               <div className={cn("w-1.5 h-1.5 rounded-full", currentGameOffset % 3 === 2 ? "bg-purple-400" : "bg-purple-400/40")} />
