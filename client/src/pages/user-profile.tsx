@@ -3602,18 +3602,20 @@ export default function UserProfile() {
                       <List size={16} />
                       Lists
                     </button>
-                    <button
-                      onClick={() => setCollectionsSubTab('history')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                        collectionsSubTab === 'history'
-                          ? 'bg-purple-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      data-testid="collections-tab-history"
-                    >
-                      <Clock size={16} />
-                      History
-                    </button>
+                    {isOwnProfile && (
+                      <button
+                        onClick={() => setCollectionsSubTab('history')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                          collectionsSubTab === 'history'
+                            ? 'bg-purple-600 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        data-testid="collections-tab-history"
+                      >
+                        <Clock size={16} />
+                        History
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3700,8 +3702,8 @@ export default function UserProfile() {
                 </>
               )}
 
-              {/* History Tab Content */}
-              {collectionsSubTab === 'history' && (
+              {/* History Tab Content - Only for own profile */}
+              {collectionsSubTab === 'history' && isOwnProfile && (
                 <>
                   {/* Import Button - Only for own profile */}
                   {isOwnProfile && (

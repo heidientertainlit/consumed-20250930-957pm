@@ -149,10 +149,13 @@ function Router() {
             <Play />
           </ProtectedRoute>
         </Route>
-        <Route path="/collections">
+        <Route path="/my-library">
           <ProtectedRoute>
             <CollectionsPage />
           </ProtectedRoute>
+        </Route>
+        <Route path="/collections">
+          <RedirectTo to="/my-library" />
         </Route>
         <Route path="/trivia">
           <RedirectTo to="/play/trivia" />

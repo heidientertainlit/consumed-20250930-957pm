@@ -568,10 +568,10 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xs font-medium text-white">Play</span>
           </Link>
 
-          {/* Collections */}
+          {/* My Library */}
           <Link
-            href="/collections"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/collections" ? "bg-white/15" : ""}`}
+            href="/my-library"
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/my-library" || location === "/collections" ? "bg-white/15" : ""}`}
             data-testid="nav-collections"
             onMouseEnter={prefetchCollections}
             onTouchStart={prefetchCollections}
