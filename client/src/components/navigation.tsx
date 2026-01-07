@@ -532,27 +532,27 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           <Link
             href="/activity"
             className={`flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+            data-testid="nav-activity"
           >
             <Activity className="text-white" size={26} />
             <span className="text-xs font-medium text-white">Activity</span>
           </Link>
 
-          {/* Center Add - subtle circle within nav */}
-          <button
-            onClick={() => setIsQuickActionOpen(true)}
-            className="flex flex-col items-center gap-1"
-            data-testid="quick-action-button"
+          {/* Collections */}
+          <Link
+            href="/collections"
+            className={`flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-colors ${location === "/collections" ? "bg-white/15" : ""}`}
+            data-testid="nav-collections"
           >
-            <div className="h-10 w-10 bg-white/15 hover:bg-white/25 rounded-full flex items-center justify-center transition-colors">
-              <Plus className="text-white" size={20} strokeWidth={2} />
-            </div>
-            <span className="text-xs font-medium text-white">Add</span>
-          </button>
+            <Library className="text-white" size={26} />
+            <span className="text-xs font-medium text-white">Collections</span>
+          </Link>
 
           {/* Me */}
           <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
             className={`flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-colors ${location.includes("/user/") ? "bg-white/15" : ""}`}
+            data-testid="nav-me"
           >
             <div className="relative">
               <User className="text-white" size={26} />
