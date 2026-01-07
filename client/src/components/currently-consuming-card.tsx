@@ -204,16 +204,21 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     onMoveToList('finished', 'Finished');
     setIsRatingSheetOpen(false);
     
-    if (rating > 0 || thoughts.trim()) {
+    if (shareToFeed && (rating > 0 || thoughts.trim())) {
       try {
         await ratingMutation.mutateAsync({
           rating,
           thoughts: thoughts.trim() || undefined,
-          shareToFeed,
+          shareToFeed: true,
         });
       } catch (error) {
         console.error('Failed to save rating:', error);
       }
+    } else if (rating > 0) {
+      toast({
+        title: "Finished!",
+        description: `You rated "${item.title}" ${rating} stars.`,
+      });
     }
   };
 
@@ -763,9 +768,9 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
                 className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium"
                 data-testid="button-submit-rating"
               >
-                {ratingMutation.isPending ? 'Saving...' : 
+                {ratingMutation.isPending ? 'Sharing...' : 
                   shareToFeed ? 'Share to Feed' : 
-                  rating > 0 ? 'Save Rating' : 'Mark as Finished'}
+                  'Mark as Finished'}
               </Button>
               
               <button 
