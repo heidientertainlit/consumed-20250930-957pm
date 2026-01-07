@@ -506,12 +506,12 @@ export default function Search() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-black pb-24">
       <Navigation />
       
-      {/* Gradient Header Section */}
-      <div className="bg-gradient-to-b from-black via-purple-950 to-purple-900 pt-6 pb-8 px-4">
-        <div className="max-w-7xl mx-auto space-y-4">
+      {/* Dark Header Section - matches Activity page */}
+      <div className="bg-black pt-8 pb-6 px-4">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="text-center">
             <h1 className="text-3xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -520,7 +520,7 @@ export default function Search() {
           </div>
 
           {/* Unified Search Bar with AI Mode Toggle */}
-          <div className="bg-white rounded-2xl shadow-sm p-3">
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3">
             <div className="flex items-center gap-2">
               <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
               <Input
@@ -533,7 +533,7 @@ export default function Search() {
                     handleSearch();
                   }
                 }}
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 placeholder:text-gray-400"
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-white placeholder:text-gray-400"
                 autoFocus
                 data-testid="unified-search-input"
               />
@@ -545,7 +545,7 @@ export default function Search() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
                   isAiMode 
                     ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white" 
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-zinc-800 text-gray-300 hover:bg-zinc-700"
                 }`}
                 data-testid="toggle-ai-mode"
               >
@@ -556,11 +556,11 @@ export default function Search() {
           </div>
 
           {/* Explanatory Text */}
-          <div className="text-center text-sm text-purple-200">
+          <div className="text-center text-sm text-gray-400">
             {isAiMode ? (
               <p>Ask for recommendations like "movies similar to Inception" or "uplifting podcasts"</p>
             ) : (
-              <p>Try <span className="font-medium text-white">AI Mode</span> to ask things like "shows like The Bear" or "what are my friends watching"</p>
+              <p>Try <span className="font-medium text-purple-400">AI Mode</span> to ask things like "shows like The Bear" or "what are my friends watching"</p>
             )}
           </div>
         </div>
@@ -889,7 +889,7 @@ export default function Search() {
           <>
             {/* Just Browsing Header */}
             <div className="text-center pt-2">
-              <p className="text-gray-600 font-medium">Just browsing? Here's some ideas</p>
+              <p className="text-gray-400 font-medium">Just browsing? Here's some ideas</p>
             </div>
 
             {/* Trending Content Sections */}
