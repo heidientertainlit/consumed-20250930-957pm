@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2 } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { QuickActionSheet } from "./quick-action-sheet";
-import { FeedbackDialog } from "./feedback-dialog";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -49,7 +48,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Auto-focus when search expands
   useEffect(() => {
@@ -512,51 +510,48 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         </div>
       </div>
 
-      {/* Floating Feedback Button - Beta Testing */}
-      <button
-        onClick={() => setIsFeedbackOpen(true)}
-        className="fixed bottom-24 right-4 z-50 flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-full shadow-lg transition-all hover:scale-105"
-        data-testid="feedback-button"
-      >
-        <MessageCircle size={18} />
-        <span className="text-sm font-medium">Feedback</span>
-      </button>
-
-      {/* Feedback Dialog */}
-      <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
-
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
         <div className="flex justify-around items-center h-18 px-4 pt-3 pb-4">
           {/* Activity */}
           <Link
             href="/activity"
-            className={`flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
             data-testid="nav-activity"
           >
-            <Activity className="text-white" size={26} />
+            <Activity className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Activity</span>
+          </Link>
+
+          {/* Play */}
+          <Link
+            href="/play"
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/play" ? "bg-white/15" : ""}`}
+            data-testid="nav-play"
+          >
+            <Gamepad2 className="text-white" size={24} />
+            <span className="text-xs font-medium text-white">Play</span>
           </Link>
 
           {/* Collections */}
           <Link
             href="/collections"
-            className={`flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-colors ${location === "/collections" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/collections" ? "bg-white/15" : ""}`}
             data-testid="nav-collections"
           >
-            <Library className="text-white" size={26} />
+            <Library className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Collections</span>
           </Link>
 
           {/* Me */}
           <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
-            className={`flex flex-col items-center gap-1 py-2 px-5 rounded-xl transition-colors ${location.includes("/user/") ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location.includes("/user/") ? "bg-white/15" : ""}`}
             data-testid="nav-me"
           >
             <div className="relative">
-              <User className="text-white" size={26} />
-              <Dna className="text-white absolute -right-1.5 -bottom-0.5" size={11} />
+              <User className="text-white" size={24} />
+              <Dna className="text-white absolute -right-1.5 -bottom-0.5" size={10} />
             </div>
             <span className="text-xs font-medium text-white">Me</span>
           </Link>

@@ -11,7 +11,8 @@ import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown } from "lucide-react";
+import { QuickActionSheet } from "@/components/quick-action-sheet";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3 } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -937,6 +938,7 @@ export default function Feed() {
     mediaType?: string;
   } | null>(null); // Bet modal state
   const [isPlacingBet, setIsPlacingBet] = useState(false);
+  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -4879,6 +4881,21 @@ export default function Feed() {
           </div>
         </div>
       )}
+
+      {/* Floating Action Button for Posting */}
+      <button
+        onClick={() => setIsQuickActionOpen(true)}
+        className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
+        data-testid="fab-post"
+      >
+        <Edit3 size={24} />
+      </button>
+
+      {/* Quick Action Sheet */}
+      <QuickActionSheet
+        isOpen={isQuickActionOpen}
+        onClose={() => setIsQuickActionOpen(false)}
+      />
 
       </div>
     </div>
