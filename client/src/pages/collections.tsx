@@ -45,7 +45,8 @@ import {
   X,
   Share2,
   Check,
-  MoreHorizontal
+  MoreHorizontal,
+  Trash2
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -1078,6 +1079,54 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
   const [isMoveSheetOpen, setIsMoveSheetOpen] = useState(false);
   const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
+
+  // Delete/remove from library mutation
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/delete-list-item',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ itemId }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to remove item: ${errorText}`);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      queryClient.invalidateQueries({ queryKey: ['user-lists'] });
+      toast({
+        title: "Removed from library",
+        description: "Item has been removed from your library",
+      });
+      setIsProgressSheetOpen(false);
+      setIsMoveSheetOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to remove",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRemoveFromLibrary = () => {
+    if (confirm(`Are you sure you want to remove "${item.title}" from your library?`)) {
+      deleteItemMutation.mutate(item.id);
+    }
+  };
   
   const mediaType = (item.media_type || 'movie').toLowerCase();
   const isBook = mediaType === 'book';
@@ -1612,6 +1661,14 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
             >
               I'm finished!
             </button>
+            
+            <button
+              onClick={handleRemoveFromLibrary}
+              disabled={isUpdating || deleteItemMutation.isPending}
+              className="w-full text-center text-gray-400 text-sm hover:text-red-500 py-2"
+            >
+              Remove from Library
+            </button>
           </div>
         </SheetContent>
       </Sheet>
@@ -1683,6 +1740,23 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                 <p className="text-sm text-gray-500">Add to your favorites</p>
               </div>
             </button>
+
+            <div className="border-t border-gray-100 my-2 pt-2">
+              <button
+                onClick={handleRemoveFromLibrary}
+                disabled={isUpdating || deleteItemMutation.isPending}
+                className="w-full p-4 text-left rounded-lg hover:bg-red-50 flex items-center gap-3 transition-colors"
+                data-testid={`remove-item-${item.id}`}
+              >
+                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Trash2 className="text-gray-500" size={20} />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Remove from Library</p>
+                  <p className="text-sm text-gray-500">Delete from all your lists</p>
+                </div>
+              </button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
