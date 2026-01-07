@@ -270,24 +270,24 @@ export default function MediaDetail() {
         return response.json();
       }
       
-      // Fallback: Try to get cached info from media_item_lists table
+      // Fallback: Try to get cached info from list_items table
       console.log('API failed, trying fallback from cached media data...');
       const { data: cachedMedia } = await supabase
-        .from('media_item_lists')
-        .select('media_title, media_type, media_creator, media_image_url, media_external_id, media_external_source')
-        .eq('media_external_id', params?.id)
-        .eq('media_external_source', params?.source)
+        .from('list_items')
+        .select('title, media_type, creator, image_url, external_id, external_source')
+        .eq('external_id', params?.id)
+        .eq('external_source', params?.source)
         .limit(1)
         .single();
       
       if (cachedMedia) {
         return {
-          title: cachedMedia.media_title,
+          title: cachedMedia.title,
           media_type: cachedMedia.media_type || params?.type,
-          creator: cachedMedia.media_creator,
-          image_url: cachedMedia.media_image_url,
-          external_id: cachedMedia.media_external_id,
-          external_source: cachedMedia.media_external_source,
+          creator: cachedMedia.creator,
+          image_url: cachedMedia.image_url,
+          external_id: cachedMedia.external_id,
+          external_source: cachedMedia.external_source,
           fromCache: true
         };
       }
@@ -295,7 +295,7 @@ export default function MediaDetail() {
       // Second fallback: Try to get info from social_posts
       const { data: postMedia } = await supabase
         .from('social_posts')
-        .select('media_title, media_type, media_image_url, media_external_id, media_external_source')
+        .select('media_title, media_type, media_creator, image_url, media_external_id, media_external_source')
         .eq('media_external_id', params?.id)
         .eq('media_external_source', params?.source)
         .not('media_title', 'is', null)
@@ -306,7 +306,8 @@ export default function MediaDetail() {
         return {
           title: postMedia.media_title,
           media_type: postMedia.media_type || params?.type,
-          image_url: postMedia.media_image_url,
+          creator: postMedia.media_creator,
+          image_url: postMedia.image_url,
           external_id: postMedia.media_external_id,
           external_source: postMedia.media_external_source,
           fromCache: true
