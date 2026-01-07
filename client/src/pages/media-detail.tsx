@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -381,6 +381,35 @@ export default function MediaDetail() {
   const predictions = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'prediction');
   const polls = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'poll');
   const conversations = socialActivity.filter((post: any) => !post.rating && !post.prediction_pool_id);
+
+  // Fetch similar media across different types using AI
+  const { data: similarMedia = [], isLoading: isSimilarLoading } = useQuery({
+    queryKey: ['similar-media', mediaItem?.title, mediaItem?.type],
+    queryFn: async () => {
+      if (!session?.access_token || !mediaItem?.title) return [];
+      
+      const mediaType = mediaItem.type || mediaItem.media_type || params?.type;
+      const prompt = `Find me media similar to "${mediaItem.title}" (${mediaType}). Include: other ${mediaType === 'TV Show' ? 'TV shows' : mediaType === 'Movie' ? 'movies' : mediaType?.toLowerCase() + 's'} like it, soundtrack music, books it's based on or similar books, related podcasts, and any connected media. Mix of types please.`;
+      
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/conversational-search', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: prompt })
+      });
+      
+      if (!response.ok) return [];
+      const result = await response.json();
+      
+      // Extract recommendations from AI response
+      const recs = result.recommendations || [];
+      return recs.slice(0, 8); // Limit to 8 items
+    },
+    enabled: !!session?.access_token && !!mediaItem?.title,
+    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+  });
 
   // Fetch user's lists (including custom lists)
   const { data: userListsData } = useQuery({
@@ -971,6 +1000,93 @@ export default function MediaDetail() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Similar Media Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+                You Might Also Like
+              </h2>
+              
+              {isSimilarLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                  <span className="ml-2 text-gray-500">Finding similar content...</span>
+                </div>
+              ) : similarMedia.length > 0 ? (
+                <div className="overflow-x-auto -mx-2">
+                  <div className="flex gap-3 px-2 pb-2" style={{ minWidth: 'max-content' }}>
+                    {similarMedia.map((item: any, index: number) => {
+                      const getTypeIcon = (type: string) => {
+                        const t = type?.toLowerCase();
+                        if (t?.includes('movie')) return <Film className="w-3 h-3" />;
+                        if (t?.includes('tv') || t?.includes('series')) return <Tv className="w-3 h-3" />;
+                        if (t?.includes('book')) return <BookOpen className="w-3 h-3" />;
+                        if (t?.includes('music') || t?.includes('album') || t?.includes('song')) return <Music className="w-3 h-3" />;
+                        if (t?.includes('podcast')) return <Mic className="w-3 h-3" />;
+                        return <Film className="w-3 h-3" />;
+                      };
+                      
+                      const getTypeColor = (type: string) => {
+                        const t = type?.toLowerCase();
+                        if (t?.includes('movie')) return 'bg-blue-100 text-blue-700';
+                        if (t?.includes('tv') || t?.includes('series')) return 'bg-purple-100 text-purple-700';
+                        if (t?.includes('book')) return 'bg-amber-100 text-amber-700';
+                        if (t?.includes('music') || t?.includes('album') || t?.includes('song')) return 'bg-green-100 text-green-700';
+                        if (t?.includes('podcast')) return 'bg-pink-100 text-pink-700';
+                        return 'bg-gray-100 text-gray-700';
+                      };
+
+                      const handleClick = () => {
+                        if (item.external_id && item.external_source) {
+                          setLocation(`/media/${item.type || 'Movie'}/${item.external_source}/${item.external_id}`);
+                        } else if (item.searchTerm || item.title) {
+                          setLocation(`/search?q=${encodeURIComponent(item.searchTerm || item.title)}`);
+                        }
+                      };
+
+                      return (
+                        <div
+                          key={`${item.title}-${index}`}
+                          onClick={handleClick}
+                          className="flex-shrink-0 w-28 cursor-pointer group"
+                          data-testid={`similar-media-${index}`}
+                        >
+                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 mb-2 shadow-sm group-hover:shadow-md transition-shadow">
+                            {item.poster_url ? (
+                              <img
+                                src={item.poster_url}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                {getTypeIcon(item.type)}
+                              </div>
+                            )}
+                            <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
+                              {getTypeIcon(item.type)}
+                              <span className="truncate max-w-[60px]">{item.type || 'Media'}</span>
+                            </div>
+                          </div>
+                          <p className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                            {item.title}
+                          </p>
+                          {item.year && (
+                            <p className="text-[10px] text-gray-500">{item.year}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No recommendations available yet</p>
+                </div>
+              )}
             </div>
 
             {/* Community Activity Section - Always shown */}
