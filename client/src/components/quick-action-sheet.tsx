@@ -319,7 +319,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         
         toast({ title: `Tracked ${selectedMedia.title}!` });
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-        queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         
       } else if (selectedAction === "post" || selectedAction === "hot_take") {
         if (!contentText.trim()) {
@@ -347,7 +348,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         if (!response.ok) throw new Error('Failed to create post');
         
         toast({ title: selectedAction === "hot_take" ? "Hot Take posted! 🔥" : "Post created!" });
-        queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         
       } else if (selectedAction === "poll") {
         const validOptions = pollOptions.filter(o => o.trim());
@@ -379,7 +381,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         if (!response.ok) throw new Error('Failed to create poll');
         
         toast({ title: "Poll created!" });
-        queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         
       } else if (selectedAction === "ask_for_recs") {
         if (!contentText.trim()) {
@@ -403,7 +406,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         if (!response.ok) throw new Error('Failed to post');
         
         toast({ title: "Rec request posted!" });
-        queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         
       } else if (selectedAction === "rank") {
         if (!selectedMedia || !selectedRankId) {

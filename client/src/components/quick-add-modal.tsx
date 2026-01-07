@@ -407,7 +407,8 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['media-ratings'] });
       
       onClose();
@@ -669,14 +670,16 @@ export function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quick Review (optional)
+                  Review (optional)
                 </label>
                 <Textarea
                   placeholder="What did you think?"
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
-                  className="bg-white border-gray-200 resize-none"
-                  rows={3}
+                  onFocus={(e) => e.target.rows = 3}
+                  onBlur={(e) => { if (!reviewText.trim()) e.target.rows = 1; }}
+                  className="bg-white border-gray-200 resize-none transition-all"
+                  rows={reviewText.trim() ? 3 : 1}
                   data-testid="quick-add-review"
                 />
               </div>
