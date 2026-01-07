@@ -73,7 +73,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const [recCategory, setRecCategory] = useState<string>("");
   
   const [addToList, setAddToList] = useState(false);
-  const [selectedListId, setSelectedListId] = useState<string>("");
+  const [selectedListId, setSelectedListId] = useState<string>("currently");
+  const [privateMode, setPrivateMode] = useState(false);
   const [selectedRankId, setSelectedRankId] = useState<string>("");
   
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
@@ -233,7 +234,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     setPollOptions(["", ""]);
     setRecCategory("");
     setAddToList(false);
-    setSelectedListId("");
+    setSelectedListId("currently");
+    setPrivateMode(false);
     setSelectedRankId("");
     setSelectedSeason(null);
     setSelectedEpisode(null);
@@ -301,10 +303,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               externalId: selectedMedia.external_id,
               externalSource: selectedMedia.external_source || 'tmdb',
             },
-            listType: selectedListId || 'finished',
+            listType: selectedListId || 'currently',
             rating: ratingValue > 0 ? ratingValue : undefined,
             review: contentText || undefined,
             containsSpoilers,
+            privateMode,
             rewatchCount: rewatchCount > 1 ? rewatchCount : undefined,
             seasonNumber: selectedSeason || undefined,
             episodeNumber: selectedEpisode || undefined,
@@ -671,6 +674,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               <label className="flex items-center gap-2 text-sm text-gray-600">
                 <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
                 Contains spoilers
+              </label>
+              
+              <label className="flex items-center gap-2 text-sm text-gray-600 pt-2 border-t border-gray-100">
+                <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
+                Don't post to feed (keep private)
               </label>
             </div>
           )}
