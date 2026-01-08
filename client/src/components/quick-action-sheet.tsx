@@ -457,7 +457,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     { 
       id: "capture" as IntentType, 
       label: "Add Media", 
-      icon: Star, 
+      icon: Plus, 
       iconColor: "text-white", 
       bgColor: "bg-gradient-to-br from-violet-500 to-purple-700", 
       desc: "Track, rate, or review something" 

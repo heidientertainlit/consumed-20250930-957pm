@@ -537,8 +537,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white w-[calc(100%-32px)] max-w-md p-0 overflow-hidden max-h-[80vh] flex flex-col rounded-xl border border-gray-100 shadow-xl left-1/2 -translate-x-1/2 [&>button]:hidden">
+    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="bg-white rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {stage === "search" ? (
           <>
             {/* Header */}
@@ -890,8 +890,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             </div>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
 
     {/* List Selection Drawer */}
     <Drawer open={isListDrawerOpen} onOpenChange={setIsListDrawerOpen}>
