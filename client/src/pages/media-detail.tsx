@@ -36,6 +36,8 @@ export default function MediaDetail() {
   const { session, user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showReviews, setShowReviews] = useState(true);
+  const [showConversations, setShowConversations] = useState(true);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -968,14 +970,25 @@ export default function MediaDetail() {
 
         {/* Content sections */}
         <div className="space-y-4">
-            {/* Reviews & Ratings - Always shown */}
+            {/* Reviews & Ratings - Collapsible */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                Reviews & Ratings {reviews.length > 0 && `(${reviews.length})`}
-              </h2>
-              {reviews.length > 0 ? (
-                <div className="space-y-4">
+              <button
+                onClick={() => setShowReviews(!showReviews)}
+                className="flex items-center justify-between w-full text-left"
+                data-testid="button-toggle-reviews"
+              >
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-500" />
+                  Reviews & Ratings {reviews.length > 0 && `(${reviews.length})`}
+                </h2>
+                <ChevronDown 
+                  size={20} 
+                  className={`text-gray-400 transition-transform ${showReviews ? 'rotate-180' : ''}`} 
+                />
+              </button>
+              {showReviews && (
+                reviews.length > 0 ? (
+                <div className="space-y-4 mt-4">
                   {reviews.map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                       <div className="flex items-start justify-between mb-2">
@@ -1106,12 +1119,12 @@ export default function MediaDetail() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl">
+                <div className="text-center py-6 mt-4 border border-dashed border-gray-200 rounded-xl">
                   <Star className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                   <p className="text-gray-500 text-sm mb-1">No reviews yet</p>
                   <p className="text-gray-400 text-xs">Rate this title using the Quick Add button above</p>
                 </div>
-              )}
+              ))}
             </div>
 
             {/* Predictions */}
@@ -1145,14 +1158,25 @@ export default function MediaDetail() {
               </div>
             )}
 
-            {/* General Posts/Conversations */}
+            {/* General Posts/Conversations - Collapsible */}
             {conversations.length > 0 && (
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5 text-gray-500" />
-                  Conversations ({conversations.length})
-                </h2>
-                <div className="space-y-4">
+                <button
+                  onClick={() => setShowConversations(!showConversations)}
+                  className="flex items-center justify-between w-full text-left"
+                  data-testid="button-toggle-conversations"
+                >
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-gray-500" />
+                    Conversations ({conversations.length})
+                  </h2>
+                  <ChevronDown 
+                    size={20} 
+                    className={`text-gray-400 transition-transform ${showConversations ? 'rotate-180' : ''}`} 
+                  />
+                </button>
+                {showConversations && (
+                <div className="space-y-4 mt-4">
                   {conversations.map((post: any) => (
                     <div key={post.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                       <div className="flex items-start gap-3">
@@ -1251,6 +1275,7 @@ export default function MediaDetail() {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             )}
 
