@@ -154,6 +154,7 @@ export const predictionPools = pgTable("prediction_pools", {
   rotationType: text("rotation_type"), // 'evergreen', 'trending', 'seasonal'
   difficulty: text("difficulty"), // 'easy', 'medium', 'chaotic' (for trivia)
   socialPrompt: text("social_prompt"), // Shown after vote/answer, e.g. "Tag the friend who'd argue this"
+  publishAt: timestamp("publish_at"), // When the item should go live (null = immediately)
   createdAt: timestamp("created_at"),
 });
 
