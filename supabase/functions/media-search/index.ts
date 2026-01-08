@@ -14,6 +14,53 @@ function isContentAppropriate(item: any, type: string): boolean {
   return true;
 }
 
+// Levenshtein distance for fuzzy matching
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+  
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  
+  return matrix[b.length][a.length];
+}
+
+// Calculate fuzzy match score (0-1, higher is better)
+function fuzzyMatchScore(query: string, title: string): number {
+  const q = query.toLowerCase().trim();
+  const t = title.toLowerCase().trim();
+  
+  // Exact match
+  if (t === q) return 1.0;
+  
+  // Contains match
+  if (t.includes(q) || q.includes(t)) return 0.9;
+  
+  // Levenshtein-based similarity
+  const distance = levenshteinDistance(q, t);
+  const maxLen = Math.max(q.length, t.length);
+  const similarity = 1 - (distance / maxLen);
+  
+  return similarity;
+}
+
 // Fetch with timeout helper
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 5000): Promise<Response> {
   const controller = new AbortController();
@@ -458,6 +505,14 @@ serve(async (req) => {
       const creator = safeLower(item.creator);
       const description = safeLower(item.description);
       let score = 0;
+      
+      // 0. Fuzzy match score - helps with typos like "nuremburg" → "nuremberg"
+      const fuzzyScore = fuzzyMatchScore(queryLower, title);
+      if (fuzzyScore >= 0.8) {
+        score += Math.floor(fuzzyScore * 50);  // Up to 50 points for good fuzzy match
+      } else if (fuzzyScore >= 0.6) {
+        score += Math.floor(fuzzyScore * 30);  // Partial fuzzy match
+      }
       
       // 1. Title vs query - strongest signal
       if (title === queryLower) {
