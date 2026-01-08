@@ -2583,7 +2583,7 @@ export default function UserProfile() {
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <h1 className="text-3xl font-semibold text-black">
                       {userProfileData?.first_name && userProfileData?.last_name 
                         ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
@@ -2601,10 +2601,11 @@ export default function UserProfile() {
                           description: "Share this profile with your friends",
                         });
                       }}
-                      className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-purple-600 flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                      className="px-3 py-1 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-purple-600 flex items-center gap-1.5 shadow-md hover:shadow-lg hover:scale-105 transition-all"
                       data-testid="button-share-profile-inline"
                     >
-                      <CornerUpRight size={16} className="text-white" />
+                      <span className="text-white text-xs font-medium">share profile</span>
+                      <CornerUpRight size={12} className="text-white" />
                     </button>
                   </div>
                   <div className="flex items-center space-x-2 mb-2">
