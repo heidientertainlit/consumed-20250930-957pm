@@ -124,7 +124,7 @@ serve(async (req) => {
 
     // Parse the request body
     const requestBody = await req.json();
-    const { media, rating, review, listType, skip_social_post, rewatchCount } = requestBody;
+    const { media, rating, review, listType, skip_social_post, rewatchCount, containsSpoilers, privateMode } = requestBody;
     const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle } = media || {};
 
     let targetList = null;
@@ -269,9 +269,12 @@ serve(async (req) => {
         };
         
         // Generate content based on post type
-        // For simple add-to-list, leave content empty - the header already shows "added to → List"
+        // Use user's review if provided, otherwise generate appropriate content
         let content: string | null;
-        if (isRewatch) {
+        if (review && review.trim()) {
+          // User provided a review - use it as the content
+          content = review.trim();
+        } else if (isRewatch) {
           content = `is consuming ${title} for the ${getOrdinalSuffix(rewatchCount)} time`;
         } else {
           // No redundant text for simple list additions - the media card is enough
@@ -291,7 +294,8 @@ serve(async (req) => {
             image_url: imageUrl,
             media_external_id: externalId,
             media_external_source: externalSource,
-            rating: rating || null
+            rating: rating || null,
+            contains_spoilers: containsSpoilers || false
           });
         
         if (postError) {
