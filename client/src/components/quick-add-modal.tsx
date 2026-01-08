@@ -280,7 +280,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         title: selectedMedia.title,
         mediaType: selectedMedia.type || 'movie',
         creator: selectedMedia.creator || selectedMedia.artist || '',
-        imageUrl: selectedMedia.image_url || selectedMedia.poster_path,
+        imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
         externalId: String(externalId),
         externalSource,
       };
@@ -362,7 +362,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                 media_external_source: externalSource,
                 media_title: selectedMedia.title,
                 media_type: selectedMedia.type || 'movie',
-                media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
+                media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
                 rating: rating,
                 skip_social_post: privateMode,
               }),
@@ -397,7 +397,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                   media_type: selectedMedia.type,
                   external_id: externalId,
                   external_source: externalSource,
-                  image_url: selectedMedia.image_url || selectedMedia.poster_path,
+                  image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
                 },
               }),
             }
@@ -431,7 +431,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                 media_type: selectedMedia.type,
                 media_external_id: externalId,
                 media_external_source: externalSource,
-                media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
+                media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
                 contains_spoilers: containsSpoilers,
               }),
             }
