@@ -657,6 +657,34 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 </select>
               </div>
               
+              <div className="flex items-center gap-3 text-sm">
+                <label className="flex items-center gap-2 text-gray-600">
+                  <Checkbox 
+                    checked={rewatchCount > 1} 
+                    onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} 
+                    data-testid="rewatch-toggle"
+                  />
+                  Repeat consumption?
+                </label>
+                {rewatchCount > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-500">Time #</span>
+                    <input
+                      type="number"
+                      min="2"
+                      max="99"
+                      value={rewatchCount}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val));
+                      }}
+                      className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      data-testid="rewatch-count-input"
+                    />
+                  </div>
+                )}
+              </div>
+              
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Review (optional)</label>
                 <textarea
