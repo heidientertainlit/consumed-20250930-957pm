@@ -104,14 +104,13 @@ serve(async (req) => {
                 if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type)) {
                   const releaseDate = item.release_date || item.first_air_date || '';
                   const year = releaseDate ? releaseDate.substring(0, 4) : '';
-                  const typeLabel = item.media_type === 'movie' ? 'Movie' : 'TV Series';
-                  const creatorDisplay = year ? `${typeLabel} (${year})` : typeLabel;
                   
                   movieTvResults.push({
                     title: item.title || item.name,
                     type: item.media_type === 'movie' ? 'movie' : 'tv',
                     media_subtype: item.media_type === 'tv' ? 'series' : null,
-                    creator: creatorDisplay,
+                    creator: '', // Director requires extra API call - leave empty
+                    year: year || null,
                     poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
                     external_id: item.id?.toString(),
                     external_source: 'tmdb',
