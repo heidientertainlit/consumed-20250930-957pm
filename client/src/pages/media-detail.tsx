@@ -388,7 +388,7 @@ export default function MediaDetail() {
   const reviews = socialActivity.filter((post: any) => post.rating);
   const predictions = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'prediction');
   const polls = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'poll');
-  const conversations = socialActivity.filter((post: any) => !post.rating && !post.prediction_pool_id);
+  const conversations = socialActivity.filter((post: any) => !post.rating && !post.prediction_pool_id && post.content && post.content.trim());
 
   // Fetch similar media across different types using AI
   const { data: similarMedia = [], isLoading: isSimilarLoading } = useQuery({
