@@ -4003,33 +4003,24 @@ export default function Feed() {
                   {(() => {
                     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
                     const contentLower = (post.content || '').toLowerCase();
-                    // Check if content is just the media title - if so, don't display it separately
                     const contentIsJustTitle = hasMediaItems && post.mediaItems[0]?.title && 
                       (post.content || '').toLowerCase().trim() === post.mediaItems[0].title.toLowerCase().trim();
                     
-                    // For rated posts: show stars first, then review text if present
+                    // Check if there's actual review text (not just "rated X", not empty, not just the title)
+                    const hasReviewText = post.content && 
+                      post.content.trim().length > 0 &&
+                      !contentIsJustTitle && 
+                      !contentLower.startsWith('rated ') &&
+                      !contentLower.startsWith('added ');
+                    
+                    // For rated posts: show stars, then review if exists
                     const isRatedPost = post.rating && post.rating > 0;
                     
                     if (isRatedPost) {
-                      // Check if there's actual review content (not just "rated X" or empty)
-                      const hasReviewText = post.content && 
-                        !contentIsJustTitle && 
-                        !contentLower.startsWith('rated ') &&
-                        post.content.trim().length > 0;
-                      
                       return (
                         <div className="mb-2">
                           {/* Show rating stars */}
-                          <div className="flex items-center gap-1 mb-2">
-                            <span className="text-sm font-medium text-gray-600 mr-1">Rated</span>
-                            <Link 
-                              href={hasMediaItems && post.mediaItems[0].externalId && post.mediaItems[0].externalSource 
-                                ? `/media/${post.mediaItems[0].mediaType?.toLowerCase()}/${post.mediaItems[0].externalSource}/${post.mediaItems[0].externalId}`
-                                : '#'}
-                              className="text-sm font-medium text-purple-600 hover:text-purple-700 mr-2"
-                            >
-                              {hasMediaItems ? post.mediaItems[0].title : ''}
-                            </Link>
+                          <div className="flex items-center gap-1 flex-wrap">
                             {[1, 2, 3, 4, 5].map((star) => {
                               const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
                               return (
@@ -4041,11 +4032,11 @@ export default function Feed() {
                                 </span>
                               );
                             })}
-                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}</span>
+                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}/5</span>
                           </div>
                           {/* Show review text if present */}
                           {hasReviewText && (
-                            <div className="text-gray-800 text-sm">
+                            <div className="text-gray-800 text-sm mt-2">
                               {post.containsSpoilers && !revealedSpoilers.has(post.id) ? (
                                 <div className="relative">
                                   <p className="blur-md select-none">{post.content}</p>
@@ -4072,9 +4063,7 @@ export default function Feed() {
                     // Non-rated posts
                     if (!post.content) return null;
                     if (contentIsJustTitle) return null;
-                    // Hide "Added X to Y" style content (legacy posts) - matches "Added [title] to [list]"
                     if (contentLower.startsWith('added ') && contentLower.includes(' to ') && hasMediaItems) return null;
-                    // For posts with short content and no media, content is shown in header, skip here
                     const isShortContentNoMedia = !hasMediaItems && post.content.length < 60 && !post.content.includes('\n');
                     if (isShortContentNoMedia) return null;
                     
@@ -4097,23 +4086,6 @@ export default function Feed() {
                         ) : (
                           <div className="text-gray-800 text-sm">
                             {renderPostWithRating(post.content)}
-                          </div>
-                        )}
-                        {/* Show rating stars below review text if post has a rating */}
-                        {post.rating && post.rating > 0 && (
-                          <div className="flex items-center gap-1 mt-2">
-                            {[1, 2, 3, 4, 5].map((star) => {
-                              const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
-                              return (
-                                <span key={star} className="relative inline-block w-4 h-4">
-                                  <Star size={16} className="absolute text-gray-300" />
-                                  <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
-                                    <Star size={16} className="fill-yellow-400 text-yellow-400" />
-                                  </span>
-                                </span>
-                              );
-                            })}
-                            <span className="ml-1 text-sm font-semibold text-gray-700">{post.rating}/5</span>
                           </div>
                         )}
                       </div>
