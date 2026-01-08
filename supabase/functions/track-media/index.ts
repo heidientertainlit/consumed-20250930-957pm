@@ -281,7 +281,8 @@ serve(async (req) => {
           content = null;
         }
         
-        const { error: postError } = await supabase
+        // Use admin client to bypass RLS for social post creation (matching add-media-to-list pattern)
+        const { error: postError } = await supabaseAdmin
           .from('social_posts')
           .insert({
             user_id: appUser.id,
@@ -302,7 +303,7 @@ serve(async (req) => {
           console.error('Failed to create social post:', postError);
           // Don't fail the whole request if post creation fails
         } else {
-          console.log('Created social post for list addition with post_type:', postType);
+          console.log('Created social post for list addition with post_type:', postType, 'content:', content ? 'yes' : 'no');
         }
       } catch (postCreateError) {
         console.error('Error creating social post:', postCreateError);
