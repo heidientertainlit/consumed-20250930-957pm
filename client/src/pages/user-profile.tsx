@@ -2601,10 +2601,10 @@ export default function UserProfile() {
                           description: "Share this profile with your friends",
                         });
                       }}
-                      className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors"
+                      className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-purple-600 flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all"
                       data-testid="button-share-profile-inline"
                     >
-                      Share Profile ↗
+                      <CornerUpRight size={16} className="text-white" />
                     </button>
                   </div>
                   <div className="flex items-center space-x-2 mb-2">
