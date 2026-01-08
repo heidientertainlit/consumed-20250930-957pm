@@ -176,7 +176,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <span className="text-xs font-medium text-purple-300 uppercase tracking-wide">Daily Challenge</span>
-              <h3 className="text-base font-semibold mt-1">{dailyChallenge.icon} {dailyChallenge.title}</h3>
+              <h3 className="text-base font-semibold mt-1">{dailyChallenge.title}</h3>
             </div>
             <div className="text-purple-300 hover:text-white transition-colors">
               {isExpanded ? <ChevronUp size={28} /> : <Play size={28} fill="currentColor" />}
