@@ -618,21 +618,29 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 ))}
                 {/* Custom lists dropdown pill */}
                 {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                  <select
-                    value={['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? '' : selectedListId}
-                    onChange={(e) => { if (e.target.value) setSelectedListId(e.target.value); }}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors appearance-none cursor-pointer ${
-                      !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid="custom-list-dropdown"
-                  >
-                    <option value="" disabled>Custom...</option>
-                    {userLists.filter((l: any) => !l.is_default).map((list: any) => (
-                      <option key={list.id} value={list.id}>{list.title}</option>
-                    ))}
-                  </select>
+                  <div className="relative inline-block">
+                    <select
+                      value={['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? '' : selectedListId}
+                      onChange={(e) => { if (e.target.value) setSelectedListId(e.target.value); }}
+                      className={`pl-3 pr-7 py-1.5 rounded-full text-sm font-medium transition-colors appearance-none cursor-pointer ${
+                        !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      data-testid="custom-list-dropdown"
+                    >
+                      <option value="" disabled>Custom</option>
+                      {userLists.filter((l: any) => !l.is_default).map((list: any) => (
+                        <option key={list.id} value={list.id}>{list.title}</option>
+                      ))}
+                    </select>
+                    <ChevronDown 
+                      size={14} 
+                      className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
+                        !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? 'text-white' : 'text-gray-500'
+                      }`} 
+                    />
+                  </div>
                 )}
               </div>
               
