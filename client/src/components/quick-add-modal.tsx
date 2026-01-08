@@ -346,7 +346,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       // Track partial failures
       const failures: string[] = [];
       
-      // Step 2: Add rating if provided
+      // Step 2: Add rating if provided (include review content so it's all in one post)
       if (rating > 0) {
         try {
           const rateResponse = await fetch(
@@ -365,6 +365,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                 media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
                 rating: rating,
                 skip_social_post: privateMode,
+                review_content: reviewText.trim() || null,
+                contains_spoilers: containsSpoilers,
               }),
             }
           );
@@ -412,8 +414,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         }
       }
       
-      // Step 4: Post review if provided (use inline-post Edge Function)
-      if (reviewText.trim()) {
+      // Step 4: Post standalone review (only if there's NO rating - reviews with ratings are handled in step 2)
+      if (reviewText.trim() && rating === 0) {
         try {
           const reviewResponse = await fetch(
             `${supabaseUrl}/functions/v1/inline-post`,
@@ -426,7 +428,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               body: JSON.stringify({
                 content: reviewText.trim(),
                 type: 'review',
-                rating: rating > 0 ? rating : null,
                 media_title: selectedMedia.title,
                 media_type: selectedMedia.type,
                 media_external_id: externalId,

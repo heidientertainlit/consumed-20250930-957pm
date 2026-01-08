@@ -94,7 +94,9 @@ serve(async (req) => {
       media_title,
       media_type,
       rating,
-      skip_social_post
+      skip_social_post,
+      review_content,
+      contains_spoilers
     } = body;
 
     console.log('Rating request:', {
@@ -268,12 +270,16 @@ serve(async (req) => {
     // Create a social post for this rating (skip if user chose private mode)
     if (!skip_social_post) {
       try {
+        // If review content is provided, use it as the post content
+        // Otherwise, leave content empty (no "Rated X" text for rating-only posts)
+        const postContent = review_content?.trim() || null;
+        
         const { error: postError } = await supabase
           .from('social_posts')
           .insert({
             user_id: appUser.id,
             post_type: 'rate-review',
-            content: `Rated ${media_title}`,
+            content: postContent,
             media_title: media_title,
             media_type: media_type,
             media_external_id: media_external_id,
@@ -281,13 +287,13 @@ serve(async (req) => {
             image_url: body.media_image_url || null,
             rating: rating,
             visibility: 'public',
-            contains_spoilers: false
+            contains_spoilers: contains_spoilers || false
           });
         
         if (postError) {
           console.error('Failed to create social post for rating:', postError);
         } else {
-          console.log('Created social post for rating');
+          console.log('Created social post for rating', postContent ? 'with review' : 'without review');
         }
       } catch (postCreateError) {
         console.error('Error creating social post:', postCreateError);
