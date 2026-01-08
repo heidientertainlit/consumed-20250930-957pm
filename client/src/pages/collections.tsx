@@ -954,27 +954,27 @@ export default function CollectionsPage() {
 
       {/* Library Action Sheet */}
       <Sheet open={isLibraryActionOpen} onOpenChange={setIsLibraryActionOpen}>
-        <SheetContent side="bottom" className="bg-white rounded-t-3xl">
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto !bg-white border-t border-gray-100" style={{ backgroundColor: 'white' }}>
           <SheetHeader className="pb-4">
-            <SheetTitle className="text-xl font-bold text-gray-900">What would you like to do?</SheetTitle>
+            <SheetTitle className="text-center text-gray-900 text-xl font-semibold">What would you like to do?</SheetTitle>
           </SheetHeader>
           
-          <div className="space-y-3 pb-8">
+          <div className="flex flex-col gap-3 pb-6 px-4">
             {/* Add Media */}
             <button
               onClick={() => {
                 setIsLibraryActionOpen(false);
                 setIsQuickAddOpen(true);
               }}
-              className="w-full p-4 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-colors"
+              className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
               data-testid="library-action-add-media"
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <Plus className="text-white" size={28} />
+              <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-700 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                <Plus className="text-white" size={24} />
               </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900 text-lg">Add Media</p>
-                <p className="text-sm text-gray-500">Track, rate, or add something to a list</p>
+              <div className="text-left flex-1">
+                <p className="font-semibold text-gray-900 text-base">Add Media</p>
+                <p className="text-sm text-gray-500 mt-0.5">Track, rate, or add something to a list</p>
               </div>
             </button>
             
@@ -984,15 +984,15 @@ export default function CollectionsPage() {
                 setIsLibraryActionOpen(false);
                 setIsCreateListOpen(true);
               }}
-              className="w-full p-4 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-colors"
+              className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
               data-testid="library-action-create-list"
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
                 <List className="text-white" size={24} />
               </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900 text-lg">Create List</p>
-                <p className="text-sm text-gray-500">Organize your media into custom lists</p>
+              <div className="text-left flex-1">
+                <p className="font-semibold text-gray-900 text-base">Create List</p>
+                <p className="text-sm text-gray-500 mt-0.5">Organize your media into custom lists</p>
               </div>
             </button>
             
@@ -1002,15 +1002,15 @@ export default function CollectionsPage() {
                 setIsLibraryActionOpen(false);
                 setIsImportModalOpen(true);
               }}
-              className="w-full p-4 rounded-xl hover:bg-gray-50 flex items-center gap-4 transition-colors"
+              className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
               data-testid="library-action-import"
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
                 <Upload className="text-white" size={24} />
               </div>
-              <div className="text-left">
-                <p className="font-semibold text-gray-900 text-lg">Import History</p>
-                <p className="text-sm text-gray-500">Import from Netflix, Spotify, and more</p>
+              <div className="text-left flex-1">
+                <p className="font-semibold text-gray-900 text-base">Import History</p>
+                <p className="text-sm text-gray-500 mt-0.5">Import from Netflix, Spotify, and more</p>
               </div>
             </button>
           </div>
