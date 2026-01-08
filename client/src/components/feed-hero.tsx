@@ -28,16 +28,29 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   });
 
   const { data: dailyChallengeData } = useQuery<any>({
-    queryKey: ['daily-challenge'],
+    queryKey: ['daily-challenge-pool'],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
+      // Get a trivia from prediction_pools as the daily challenge
       const { data, error } = await supabase
-        .from('daily_challenges')
+        .from('prediction_pools')
         .select('*')
-        .eq('scheduled_date', today)
+        .eq('type', 'trivia')
+        .eq('status', 'open')
+        .eq('origin_type', 'consumed')
+        .limit(1)
         .single();
       
-      if (error || !data) return null;
+      if (error || !data) {
+        console.log('🎯 No trivia found, trying any poll');
+        const result = await supabase
+          .from('prediction_pools')
+          .select('*')
+          .eq('status', 'open')
+          .eq('origin_type', 'consumed')
+          .limit(1)
+          .single();
+        return result.data || null;
+      }
       return data;
     },
   });
