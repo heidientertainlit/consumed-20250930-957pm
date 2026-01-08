@@ -343,87 +343,126 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         }
       }
       
+      // Track partial failures
+      const failures: string[] = [];
+      
       // Step 2: Add rating if provided
       if (rating > 0) {
-        await fetch(
-          `${supabaseUrl}/functions/v1/rate-media`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              media_external_id: externalId,
-              media_external_source: externalSource,
-              media_title: selectedMedia.title,
-              media_type: selectedMedia.type || 'movie',
-              media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
-              rating: rating,
-              skip_social_post: privateMode,
-            }),
+        try {
+          const rateResponse = await fetch(
+            `${supabaseUrl}/functions/v1/rate-media`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                media_external_id: externalId,
+                media_external_source: externalSource,
+                media_title: selectedMedia.title,
+                media_type: selectedMedia.type || 'movie',
+                media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
+                rating: rating,
+                skip_social_post: privateMode,
+              }),
+            }
+          );
+          if (!rateResponse.ok) {
+            console.error('Rating failed:', await rateResponse.text().catch(() => 'unknown'));
+            failures.push('rating');
           }
-        );
+        } catch (err) {
+          console.error('Rating error:', err);
+          failures.push('rating');
+        }
       }
       
       // Step 3: Add to rank if selected
       if (selectedRankId && selectedRankId !== "none") {
-        await fetch(
-          `${supabaseUrl}/functions/v1/manage-ranks`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              action: 'add_item',
-              rank_id: selectedRankId,
-              item: {
-                title: selectedMedia.title,
-                media_type: selectedMedia.type,
-                external_id: externalId,
-                external_source: externalSource,
-                image_url: selectedMedia.image_url || selectedMedia.poster_path,
+        try {
+          const rankResponse = await fetch(
+            `${supabaseUrl}/functions/v1/manage-ranks`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
               },
-            }),
+              body: JSON.stringify({
+                action: 'add_item',
+                rank_id: selectedRankId,
+                item: {
+                  title: selectedMedia.title,
+                  media_type: selectedMedia.type,
+                  external_id: externalId,
+                  external_source: externalSource,
+                  image_url: selectedMedia.image_url || selectedMedia.poster_path,
+                },
+              }),
+            }
+          );
+          if (!rankResponse.ok) {
+            console.error('Rank failed:', await rankResponse.text().catch(() => 'unknown'));
+            failures.push('rank');
           }
-        );
+        } catch (err) {
+          console.error('Rank error:', err);
+          failures.push('rank');
+        }
       }
       
       // Step 4: Post review if provided
       if (reviewText.trim()) {
-        await fetch(
-          `${supabaseUrl}/functions/v1/create-activity-post`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content: reviewText.trim(),
-              content_type: 'review',
-              media_title: selectedMedia.title,
-              media_type: selectedMedia.type,
-              media_external_id: externalId,
-              media_external_source: externalSource,
-              media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
-              contains_spoilers: containsSpoilers,
-            }),
+        try {
+          const reviewResponse = await fetch(
+            `${supabaseUrl}/functions/v1/create-activity-post`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content: reviewText.trim(),
+                content_type: 'review',
+                media_title: selectedMedia.title,
+                media_type: selectedMedia.type,
+                media_external_id: externalId,
+                media_external_source: externalSource,
+                media_image_url: selectedMedia.image_url || selectedMedia.poster_path,
+                contains_spoilers: containsSpoilers,
+              }),
+            }
+          );
+          if (!reviewResponse.ok) {
+            console.error('Review failed:', await reviewResponse.text().catch(() => 'unknown'));
+            failures.push('review');
           }
-        );
+        } catch (err) {
+          console.error('Review error:', err);
+          failures.push('review');
+        }
       }
       
       // Build success message based on what was done
       let successMessage = `${selectedMedia.title} has been added`;
-      if (rating > 0) successMessage += ` with ${rating}/5 rating`;
-      if (selectedRankId && selectedRankId !== "none") successMessage += ` to your rank`;
+      if (rating > 0 && !failures.includes('rating')) successMessage += ` with ${rating}/5 rating`;
+      if (selectedRankId && selectedRankId !== "none" && !failures.includes('rank')) successMessage += ` to your rank`;
       
-      toast({
-        title: "Added!",
-        description: successMessage,
-      });
+      // Show appropriate toast based on failures
+      if (failures.length > 0) {
+        toast({
+          title: "Partially added",
+          description: `${selectedMedia.title} was added, but ${failures.join(', ')} couldn't be saved. Try again later.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Added!",
+          description: successMessage,
+        });
+      }
       
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
@@ -437,7 +476,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       console.error("Error adding media:", error);
       toast({
         title: "Error",
-        description: "There was an issue adding this media. Some features may not have been applied.",
+        description: "There was a problem adding this media. Please try again.",
         variant: "destructive",
       });
     } finally {
