@@ -922,9 +922,9 @@ export default function MediaDetail() {
               className="flex items-center justify-between w-full text-left"
               data-testid="button-toggle-about"
             >
-              <span className="text-sm font-medium text-gray-700">About</span>
+              <span className="text-base font-semibold text-gray-900">About</span>
               <ChevronDown 
-                size={16} 
+                size={18} 
                 className={`text-gray-400 transition-transform ${showAbout ? 'rotate-180' : ''}`} 
               />
             </button>
@@ -966,29 +966,26 @@ export default function MediaDetail() {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Content sections */}
-        <div className="space-y-4">
-            {/* Reviews & Ratings - Collapsible */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <button
-                onClick={() => setShowReviews(!showReviews)}
-                className="flex items-center justify-between w-full text-left"
-                data-testid="button-toggle-reviews"
-              >
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <Star className="w-5 h-5 text-yellow-500" />
-                  Reviews & Ratings {reviews.length > 0 && `(${reviews.length})`}
-                </h2>
-                <ChevronDown 
-                  size={20} 
-                  className={`text-gray-400 transition-transform ${showReviews ? 'rotate-180' : ''}`} 
-                />
-              </button>
-              {showReviews && (
-                reviews.length > 0 ? (
-                <div className="space-y-4 mt-4">
+          {/* Reviews & Ratings - stacked collapsible */}
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <button
+              onClick={() => setShowReviews(!showReviews)}
+              className="flex items-center justify-between w-full text-left"
+              data-testid="button-toggle-reviews"
+            >
+              <span className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <Star className="w-4 h-4 text-yellow-500" />
+                Reviews & Ratings {reviews.length > 0 && `(${reviews.length})`}
+              </span>
+              <ChevronDown 
+                size={18} 
+                className={`text-gray-400 transition-transform ${showReviews ? 'rotate-180' : ''}`} 
+              />
+            </button>
+            {showReviews && (
+              reviews.length > 0 ? (
+              <div className="space-y-4 mt-3">
                   {reviews.map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                       <div className="flex items-start justify-between mb-2">
@@ -1125,8 +1122,132 @@ export default function MediaDetail() {
                   <p className="text-gray-400 text-xs">Rate this title using the Quick Add button above</p>
                 </div>
               ))}
-            </div>
+          </div>
 
+          {/* Conversations - stacked collapsible */}
+          {conversations.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <button
+              onClick={() => setShowConversations(!showConversations)}
+              className="flex items-center justify-between w-full text-left"
+              data-testid="button-toggle-conversations"
+            >
+              <span className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-gray-500" />
+                Conversations ({conversations.length})
+              </span>
+              <ChevronDown 
+                size={18} 
+                className={`text-gray-400 transition-transform ${showConversations ? 'rotate-180' : ''}`} 
+              />
+            </button>
+            {showConversations && (
+            <div className="space-y-4 mt-3">
+              {conversations.map((post: any) => (
+                <div key={post.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-gray-600 text-sm font-medium">
+                        {post.users?.display_name?.[0]?.toUpperCase() || post.users?.user_name?.[0]?.toUpperCase() || '?'}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">
+                        {post.users?.user_name || post.users?.display_name || 'Anonymous'}
+                      </p>
+                      <p className="text-gray-700 text-sm leading-relaxed mt-1">{post.content}</p>
+                      <div className="flex items-center gap-4 mt-3">
+                        <button
+                          onClick={() => handleLike(post.id)}
+                          className={`flex items-center gap-1 text-xs transition-colors ${
+                            likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                          }`}
+                          data-testid={`button-like-post-${post.id}`}
+                        >
+                          <Heart size={14} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
+                          <span>{post.likes_count || 0}</span>
+                        </button>
+                        <button
+                          onClick={() => toggleComments(post.id)}
+                          className={`flex items-center gap-1 text-xs transition-colors ${
+                            expandedComments[post.id] ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'
+                          }`}
+                          data-testid={`button-reply-post-${post.id}`}
+                        >
+                          <MessageCircle size={14} />
+                          <span>{post.comments_count || 0}</span>
+                        </button>
+                        <span className="text-xs text-gray-400">
+                          {new Date(post.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      {(expandedComments[post.id] || replyingTo === post.id) && (
+                        <div className="mt-3 space-y-3">
+                          {loadingComments.has(post.id) && (
+                            <p className="text-xs text-gray-400">Loading replies...</p>
+                          )}
+                          
+                          {expandedComments[post.id]?.length > 0 && (
+                            <div className="space-y-2 pl-4 border-l-2 border-gray-100">
+                              {expandedComments[post.id].map((comment: any) => (
+                                <div key={comment.id} className="text-sm group">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
+                                      <p className="text-gray-700">{comment.content}</p>
+                                      <span className="text-xs text-gray-400">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    {user?.id === comment.user_id && (
+                                      <button
+                                        onClick={() => handleDeleteComment(comment.id, post.id)}
+                                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
+                                        data-testid={`button-delete-comment-${comment.id}`}
+                                        title="Delete your comment"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={replyContent}
+                              onChange={(e) => setReplyContent(e.target.value)}
+                              placeholder="Write a reply..."
+                              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleReply(post.id)}
+                              disabled={!replyContent.trim() || replyMutation.isPending}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Send size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            )}
+          </div>
+          )}
+        </div>
+
+        {/* Content sections */}
+        <div className="space-y-4">
             {/* Predictions */}
             {predictions.length > 0 && (
               <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -1155,127 +1276,6 @@ export default function MediaDetail() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* General Posts/Conversations - Collapsible */}
-            {conversations.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <button
-                  onClick={() => setShowConversations(!showConversations)}
-                  className="flex items-center justify-between w-full text-left"
-                  data-testid="button-toggle-conversations"
-                >
-                  <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-gray-500" />
-                    Conversations ({conversations.length})
-                  </h2>
-                  <ChevronDown 
-                    size={20} 
-                    className={`text-gray-400 transition-transform ${showConversations ? 'rotate-180' : ''}`} 
-                  />
-                </button>
-                {showConversations && (
-                <div className="space-y-4 mt-4">
-                  {conversations.map((post: any) => (
-                    <div key={post.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-gray-600 text-sm font-medium">
-                            {post.users?.display_name?.[0]?.toUpperCase() || post.users?.user_name?.[0]?.toUpperCase() || '?'}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">
-                            {post.users?.user_name || post.users?.display_name || 'Anonymous'}
-                          </p>
-                          <p className="text-gray-700 text-sm leading-relaxed mt-1">{post.content}</p>
-                          <div className="flex items-center gap-4 mt-3">
-                            <button
-                              onClick={() => handleLike(post.id)}
-                              className={`flex items-center gap-1 text-xs transition-colors ${
-                                likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-                              }`}
-                              data-testid={`button-like-post-${post.id}`}
-                            >
-                              <Heart size={14} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
-                              <span>{post.likes_count || 0}</span>
-                            </button>
-                            <button
-                              onClick={() => toggleComments(post.id)}
-                              className={`flex items-center gap-1 text-xs transition-colors ${
-                                expandedComments[post.id] ? 'text-purple-600' : 'text-gray-400 hover:text-purple-600'
-                              }`}
-                              data-testid={`button-reply-post-${post.id}`}
-                            >
-                              <MessageCircle size={14} />
-                              <span>{post.comments_count || 0}</span>
-                            </button>
-                            <span className="text-xs text-gray-400">
-                              {new Date(post.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          
-                          {(expandedComments[post.id] || replyingTo === post.id) && (
-                            <div className="mt-3 space-y-3">
-                              {loadingComments.has(post.id) && (
-                                <p className="text-xs text-gray-400">Loading replies...</p>
-                              )}
-                              
-                              {expandedComments[post.id]?.length > 0 && (
-                                <div className="space-y-2 pl-4 border-l-2 border-gray-100">
-                                  {expandedComments[post.id].map((comment: any) => (
-                                    <div key={comment.id} className="text-sm group">
-                                      <div className="flex items-start justify-between">
-                                        <div>
-                                          <span className="font-medium text-gray-900">{comment.username || 'User'}</span>
-                                          <p className="text-gray-700">{comment.content}</p>
-                                          <span className="text-xs text-gray-400">
-                                            {new Date(comment.created_at).toLocaleDateString()}
-                                          </span>
-                                        </div>
-                                        {user?.id === comment.user_id && (
-                                          <button
-                                            onClick={() => handleDeleteComment(comment.id, post.id)}
-                                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
-                                            data-testid={`button-delete-comment-${comment.id}`}
-                                            title="Delete your comment"
-                                          >
-                                            <Trash2 size={12} />
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  value={replyContent}
-                                  onChange={(e) => setReplyContent(e.target.value)}
-                                  placeholder="Write a reply..."
-                                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                  onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleReply(post.id)}
-                                  disabled={!replyContent.trim() || replyMutation.isPending}
-                                  className="bg-purple-600 hover:bg-purple-700"
-                                >
-                                  <Send size={14} />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                )}
               </div>
             )}
 
