@@ -134,8 +134,7 @@ for (const item of data) {
   
   sql += `INSERT INTO prediction_pools (
   id, title, description, type, points_reward, deadline, status, category, icon, options,
-  correct_answer, origin_type, rotation_type, difficulty, social_prompt, publish_at,
-  media_external_id, media_external_source, tags, created_at
+  correct_answer, origin_type, media_external_id, media_external_source, featured_date, publish_at
 ) VALUES (
   ${escapeSQL(item.id)},
   ${escapeSQL(item.title)},
@@ -149,19 +148,16 @@ for (const item of data) {
   ${formatJSONB(item.options)},
   ${escapeSQL(correctAnswer)},
   ${escapeSQL(item.origin_type || 'consumed')},
-  ${escapeSQL(item.rotation_type)},
-  ${escapeSQL(item.difficulty)},
-  ${escapeSQL(item.social_prompt)},
-  ${formatTimestamp(item.publish_at)},
   ${escapeSQL(item.media_external_id)},
   ${escapeSQL(item.media_external_source)},
-  ${formatTextArray(item.tags)},
-  NOW()
+  ${formatTimestamp(item.featured_date)},
+  ${formatTimestamp(item.publish_at)}
 ) ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   description = EXCLUDED.description,
   options = EXCLUDED.options,
   correct_answer = EXCLUDED.correct_answer,
+  featured_date = EXCLUDED.featured_date,
   publish_at = EXCLUDED.publish_at,
   status = EXCLUDED.status;
 

@@ -134,6 +134,8 @@ export const predictionPools = pgTable("prediction_pools", {
   status: text("status").notNull().default('open'), // "open", "locked", "completed"
   category: text("category").notNull(),
   icon: text("icon"),
+  featuredDate: text("featured_date"), // Date when this is the Daily Challenge (YYYY-MM-DD)
+  publishAt: text("publish_at"), // When to make available (ISO timestamp)
   options: jsonb("options"), // Array of options
   correctAnswer: text("correct_answer"), // For trivia: stores the correct answer
   inline: boolean("inline"),

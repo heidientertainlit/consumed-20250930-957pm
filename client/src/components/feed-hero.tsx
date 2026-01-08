@@ -24,17 +24,30 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   const { data: dailyChallengeData } = useQuery<any>({
     queryKey: ['daily-challenge-pool'],
     queryFn: async () => {
-      // Get any open challenge (trivia or poll)
+      // Get today's featured challenge from prediction_pools
+      const today = new Date().toISOString().split('T')[0];
+      
       const { data, error } = await supabase
         .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
-        .eq('origin_type', 'consumed')
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('featured_date', today)
         .single();
       
-      return data || null;
+      // Fallback: if no featured challenge for today, get latest open one
+      if (!data || error) {
+        const { data: fallback } = await supabase
+          .from('prediction_pools')
+          .select('*')
+          .eq('status', 'open')
+          .eq('origin_type', 'consumed')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        return fallback || null;
+      }
+      
+      return data;
     },
   });
 

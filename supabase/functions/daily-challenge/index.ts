@@ -32,10 +32,12 @@ serve(async (req) => {
     if (action === 'getToday') {
       const today = new Date().toISOString().split('T')[0];
       
+      // Query prediction_pools with featured_date = today
       const { data: challenge, error } = await supabaseAdmin
-        .from('daily_challenges')
-        .select('id, scheduled_date, challenge_type, title, description, options, points_reward, status, category, icon, created_at')
-        .eq('scheduled_date', today)
+        .from('prediction_pools')
+        .select('id, featured_date, type, title, description, options, points_reward, status, category, icon, correct_answer')
+        .eq('featured_date', today)
+        .eq('status', 'open')
         .single();
 
       if (error) {
@@ -44,7 +46,14 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ challenge }), {
+      // Map to expected format (challenge_type -> type)
+      const mappedChallenge = challenge ? {
+        ...challenge,
+        challenge_type: challenge.type,
+        scheduled_date: challenge.featured_date
+      } : null;
+
+      return new Response(JSON.stringify({ challenge: mappedChallenge }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -60,10 +69,11 @@ serve(async (req) => {
 
       const { challengeId } = params;
       
+      // Check user_predictions (unified with Play page)
       const { data: response, error } = await supabaseAdmin
-        .from('daily_challenge_responses')
+        .from('user_predictions')
         .select('*')
-        .eq('challenge_id', challengeId)
+        .eq('pool_id', challengeId)
         .eq('user_id', user.id)
         .single();
 
@@ -87,11 +97,13 @@ serve(async (req) => {
       const { challengeId, response } = params;
       const today = new Date().toISOString().split('T')[0];
 
+      // Query prediction_pools instead of daily_challenges
       const { data: challenge, error: challengeError } = await supabaseAdmin
-        .from('daily_challenges')
+        .from('prediction_pools')
         .select('*')
         .eq('id', challengeId)
-        .eq('scheduled_date', today)
+        .eq('featured_date', today)
+        .eq('status', 'open')
         .single();
 
       if (challengeError || !challenge) {
@@ -104,20 +116,23 @@ serve(async (req) => {
       let pointsEarned = 0;
       let isCorrect = false;
 
-      if (challenge.challenge_type === 'trivia' && challenge.correct_answer) {
+      // Use 'type' instead of 'challenge_type'
+      if (challenge.type === 'trivia' && challenge.correct_answer) {
         isCorrect = response.answer === challenge.correct_answer;
         pointsEarned = isCorrect ? challenge.points_reward : 0;
       } else {
         pointsEarned = challenge.points_reward;
       }
 
+      // Insert into user_predictions (unified with Play page)
       const { error: insertError } = await supabaseAdmin
-        .from('daily_challenge_responses')
+        .from('user_predictions')
         .insert({
-          challenge_id: challengeId,
+          pool_id: challengeId,
           user_id: user.id,
-          response: response,
-          points_earned: pointsEarned
+          prediction: response.answer || response,
+          points_earned: pointsEarned,
+          created_at: new Date().toISOString()
         });
 
       if (insertError) {
@@ -152,7 +167,7 @@ serve(async (req) => {
         success: true,
         pointsEarned,
         isCorrect,
-        correctAnswer: challenge.challenge_type === 'trivia' ? challenge.correct_answer : null
+        correctAnswer: challenge.type === 'trivia' ? challenge.correct_answer : null
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
