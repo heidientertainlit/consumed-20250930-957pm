@@ -216,10 +216,14 @@ serve(async (req) => {
       .select()
       .single();
 
+    // Variable to track if we should create a social post
+    let shouldCreatePost = true;
+    let actualMediaItem = mediaItem;
+    
     if (mediaError) {
       // Handle duplicate key error gracefully (23505 = duplicate key violation)
       if (mediaError.code === '23505') {
-        console.log('Media item already exists in this list, returning success');
+        console.log('Media item already exists in this list');
         
         // Fetch the existing item
         const { data: existingItem } = await supabase
@@ -231,29 +235,35 @@ serve(async (req) => {
           .eq('external_source', externalSource)
           .maybeSingle();
         
+        actualMediaItem = existingItem;
+        // Still create a social post if user is adding a review/rating
+        // Only skip if there's no new content to post
+        if (!review && !rating) {
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'Item already in list',
+            item: existingItem
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        console.log('Item exists but user is adding review/rating, will create social post');
+      } else {
+        console.error('Error adding media item:', mediaError);
         return new Response(JSON.stringify({
-          success: true,
-          message: 'Item already in list',
-          item: existingItem
+          error: 'Failed to add media item: ' + mediaError.message
         }), {
-          status: 200,
+          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      
-      console.error('Error adding media item:', mediaError);
-      return new Response(JSON.stringify({
-        error: 'Failed to add media item: ' + mediaError.message
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
     }
 
-    console.log('Successfully added media item:', mediaItem);
+    console.log('Successfully processed media item:', actualMediaItem);
 
     // Create a social post for this addition (skip if caller will handle it, e.g. when rating is also being added)
-    if (mediaItem && !skip_social_post) {
+    if (actualMediaItem && !skip_social_post) {
       try {
         // Determine post type based on rewatch count
         // Note: We use 'add-to-list' even when rating is provided - rating is included in the post data
