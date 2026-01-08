@@ -2601,10 +2601,10 @@ export default function UserProfile() {
                           description: "Share this profile with your friends",
                         });
                       }}
-                      className="text-gray-400 hover:text-purple-600 transition-colors p-1"
+                      className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors"
                       data-testid="button-share-profile-inline"
                     >
-                      <Share2 size={18} />
+                      Share Profile ↗
                     </button>
                   </div>
                   <div className="flex items-center space-x-2 mb-2">
