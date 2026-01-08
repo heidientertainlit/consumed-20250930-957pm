@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Play, Flame, Trophy, Swords, ChevronRight, Zap, TrendingUp } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 interface FeedHeroProps {
   onPlayChallenge?: () => void;
@@ -29,18 +30,15 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   const { data: dailyChallengeData } = useQuery<any>({
     queryKey: ['daily-challenge'],
     queryFn: async () => {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const response = await fetch(`${supabaseUrl}/functions/v1/daily-challenge`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || ''}` 
-        },
-        body: JSON.stringify({ action: 'getToday' })
-      });
-      if (!response.ok) return null;
-      const data = await response.json();
-      return data.challenge || null;
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('daily_challenges')
+        .select('*')
+        .eq('scheduled_date', today)
+        .single();
+      
+      if (error || !data) return null;
+      return data;
     },
   });
 
