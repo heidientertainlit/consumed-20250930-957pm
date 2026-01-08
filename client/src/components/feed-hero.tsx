@@ -18,7 +18,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [justSubmitted, setJustSubmitted] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<{ isCorrect?: boolean; correctAnswer?: string } | null>(null);
 
   const { data: dailyChallengeData } = useQuery<any>({
@@ -42,6 +42,28 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
       return data;
     },
   });
+
+  // Check if user has already completed today's challenge
+  const { data: existingSubmission } = useQuery({
+    queryKey: ['daily-challenge-submission', dailyChallengeData?.id, user?.id],
+    queryFn: async () => {
+      if (!dailyChallengeData?.id || !user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .select('*')
+        .eq('pool_id', dailyChallengeData.id)
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error || !data) return null;
+      return data;
+    },
+    enabled: !!dailyChallengeData?.id && !!user?.id,
+  });
+
+  // Determine if challenge is completed (either from DB or just submitted)
+  const hasCompleted = !!existingSubmission || justSubmitted;
 
   // Return null if no challenge is scheduled for today
   if (!dailyChallengeData) {
@@ -118,9 +140,10 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
       };
     },
     onSuccess: (result) => {
-      setHasSubmitted(true);
+      setJustSubmitted(true);
       setSubmissionResult(result);
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-pool'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-challenge-submission'] });
       queryClient.invalidateQueries({ queryKey: ['user-stats'] });
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
@@ -179,11 +202,18 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
         >
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <span className="text-xs font-medium text-purple-300 uppercase tracking-wide">Daily Challenge</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-purple-300 uppercase tracking-wide">Daily Challenge</span>
+                {hasCompleted && (
+                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Done
+                  </span>
+                )}
+              </div>
               <h3 className="text-base font-semibold mt-1">{dailyChallenge.title}</h3>
             </div>
             <div className="text-purple-300 hover:text-white transition-colors">
-              {isExpanded ? <ChevronUp size={28} /> : <Play size={28} fill="currentColor" />}
+              {hasCompleted ? <CheckCircle size={28} className="text-green-400" /> : (isExpanded ? <ChevronUp size={28} /> : <Play size={28} fill="currentColor" />)}
             </div>
           </div>
           
@@ -192,17 +222,17 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
               {isNestedTrivia && currentQuestion !== dailyChallenge.title && (
                 <p className="text-sm text-purple-200 mb-2">{currentQuestion}</p>
               )}
-              {hasSubmitted ? (
+              {hasCompleted ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 p-3 bg-green-500/20 rounded-lg border border-green-500/30">
                     <CheckCircle className="w-5 h-5 text-green-400" />
                     <div>
                       <p className="text-green-300 font-medium">
-                        {submissionResult?.isCorrect ? "Correct! 🎉" : "Submitted!"}
+                        {justSubmitted && submissionResult?.isCorrect ? "Correct! 🎉" : "Challenge Complete!"}
                       </p>
-                      {submissionResult?.isCorrect === false && (
-                        <p className="text-xs text-gray-400">Correct: {submissionResult.correctAnswer}</p>
-                      )}
+                      <p className="text-xs text-gray-400">
+                        {justSubmitted ? "Great job!" : "You've already completed today's challenge"}
+                      </p>
                     </div>
                   </div>
                   <Link href="/play">
@@ -264,11 +294,16 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
             <div className="flex items-center gap-2 mb-1">
               <Zap size={16} className="text-yellow-300" />
               <span className="text-xs font-medium text-purple-200 uppercase tracking-wide">Daily Challenge</span>
+              {hasCompleted && (
+                <span className="text-xs bg-green-500/30 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Done
+                </span>
+              )}
             </div>
             <h3 className="text-lg font-bold">{dailyChallenge.icon} {dailyChallenge.title}</h3>
           </div>
           <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors">
-            {isExpanded ? <ChevronUp size={24} className="text-white" /> : <Play size={24} fill="white" className="text-white" />}
+            {hasCompleted ? <CheckCircle size={24} className="text-green-300" /> : (isExpanded ? <ChevronUp size={24} className="text-white" /> : <Play size={24} fill="white" className="text-white" />)}
           </div>
         </div>
         
@@ -277,17 +312,17 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
             {isNestedTrivia && currentQuestion !== dailyChallenge.title && (
               <p className="text-sm text-purple-100 mb-2 font-medium">{currentQuestion}</p>
             )}
-            {hasSubmitted ? (
+            {hasCompleted ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 p-3 bg-white/20 rounded-lg border border-white/30">
                   <CheckCircle className="w-5 h-5 text-green-300" />
                   <div>
                     <p className="text-white font-medium">
-                      {submissionResult?.isCorrect ? "Correct! 🎉" : "Submitted!"}
+                      {justSubmitted && submissionResult?.isCorrect ? "Correct! 🎉" : "Challenge Complete!"}
                     </p>
-                    {submissionResult?.isCorrect === false && (
-                      <p className="text-xs text-purple-200">Correct: {submissionResult.correctAnswer}</p>
-                    )}
+                    <p className="text-xs text-purple-200">
+                      {justSubmitted ? "Great job!" : "You've already completed today's challenge"}
+                    </p>
                   </div>
                 </div>
                 <Link href="/play">
