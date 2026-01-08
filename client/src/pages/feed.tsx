@@ -3199,12 +3199,16 @@ export default function Feed() {
                                 </div>
                                 {post.user.id === user?.id && (
                                   <button
-                                    onClick={() => handleHidePost(post.id)}
-                                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                                    data-testid={`button-hide-hot-take-${post.id}`}
-                                    title="Hide from feed"
+                                    onClick={() => {
+                                      if (confirm('Delete this Hot Take?')) {
+                                        deletePostMutation.mutate(post.id);
+                                      }
+                                    }}
+                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                    data-testid={`button-delete-hot-take-${post.id}`}
+                                    title="Delete Hot Take"
                                   >
-                                    <EyeOff size={16} />
+                                    <Trash2 size={16} />
                                   </button>
                                 )}
                               </div>
