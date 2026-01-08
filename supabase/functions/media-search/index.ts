@@ -100,20 +100,25 @@ serve(async (req) => {
             );
             if (tmdbResponse.ok) {
               const tmdbData = await tmdbResponse.json();
-              tmdbData.results?.slice(0, 10).forEach((item: any) => {
+              tmdbData.results?.slice(0, 15).forEach((item: any) => {
                 if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type)) {
+                  const releaseDate = item.release_date || item.first_air_date || '';
+                  const year = releaseDate ? releaseDate.substring(0, 4) : '';
+                  const typeLabel = item.media_type === 'movie' ? 'Movie' : 'TV Series';
+                  const creatorDisplay = year ? `${typeLabel} (${year})` : typeLabel;
+                  
                   movieTvResults.push({
                     title: item.title || item.name,
                     type: item.media_type === 'movie' ? 'movie' : 'tv',
-                    media_subtype: item.media_type === 'tv' ? 'series' : null, // series for tv shows
-                    creator: item.media_type === 'movie' ? 'Unknown' : 'TV Show',
+                    media_subtype: item.media_type === 'tv' ? 'series' : null,
+                    creator: creatorDisplay,
                     poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
                     external_id: item.id?.toString(),
                     external_source: 'tmdb',
                     description: item.overview,
                     popularity: item.popularity ?? 0,
                     vote_count: item.vote_count ?? 0,
-                    release_date: item.release_date || item.first_air_date || null
+                    release_date: releaseDate || null
                   });
                 }
               });
@@ -531,7 +536,18 @@ serve(async (req) => {
         const yearMatch = String(releaseDate).match(/^(\d{4})/);
         if (yearMatch) {
           const year = parseInt(yearMatch[1], 10);
-          const age = 2025 - year;
+          const currentYear = new Date().getFullYear();
+          const age = currentYear - year;
+          
+          // NEW: Recency boost for recent releases (within last 2 years)
+          // Helps new movies/shows appear when users search for them
+          if (age <= 0) {
+            score += 20;  // Upcoming or current year release
+          } else if (age === 1) {
+            score += 15;  // Last year's release
+          } else if (age === 2) {
+            score += 10;  // 2 years old
+          }
           
           // Old AND popular = classic (books from 1900s still popular today)
           if (age > 50 && (voteCount > 100 || ratingsCount > 10 || editionCount > 20)) {
