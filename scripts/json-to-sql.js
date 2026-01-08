@@ -145,7 +145,7 @@ for (const item of data) {
   ${formatTimestamp(item.deadline)},
   ${escapeSQL(item.status || 'open')},
   ${escapeSQL(item.category)},
-  ${escapeSQL(item.icon || 'gamepad')},
+  ${item.icon ? escapeSQL(item.icon) : 'NULL'},
   ${formatJSONB(item.options)},
   ${escapeSQL(correctAnswer)},
   ${escapeSQL(item.origin_type || 'consumed')},

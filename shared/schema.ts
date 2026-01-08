@@ -133,7 +133,7 @@ export const predictionPools = pgTable("prediction_pools", {
   deadline: text("deadline"), // Optional - null for open-ended predictions
   status: text("status").notNull().default('open'), // "open", "locked", "completed"
   category: text("category").notNull(),
-  icon: text("icon").notNull(),
+  icon: text("icon"),
   options: jsonb("options"), // Array of options
   correctAnswer: text("correct_answer"), // For trivia: stores the correct answer
   inline: boolean("inline"),
