@@ -11,6 +11,8 @@ export const users = pgTable("users", {
   totalWinnings: integer("total_winnings").notNull().default(0),
   referredBy: varchar("referred_by"),
   referralRewarded: boolean("referral_rewarded").default(false),
+  isPersona: boolean("is_persona").default(false),
+  personaConfig: jsonb("persona_config"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -463,6 +465,37 @@ export const insertDnfReasonSchema = createInsertSchema(dnfReasons).omit({
   createdAt: true,
 });
 
+// Scheduled Persona Posts - staging table for pre-generated bot content
+// This table is completely isolated from social_posts until content is published
+export const scheduledPersonaPosts = pgTable("scheduled_persona_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  personaUserId: varchar("persona_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  postType: text("post_type").notNull().default("update"), // 'update', 'rate_review', 'hot_take'
+  content: text("content").notNull(),
+  rating: real("rating"),
+  mediaTitle: text("media_title"),
+  mediaType: text("media_type"),
+  mediaCreator: text("media_creator"),
+  imageUrl: text("image_url"),
+  mediaExternalId: text("media_external_id"),
+  mediaExternalSource: text("media_external_source"),
+  mediaDescription: text("media_description"),
+  containsSpoilers: boolean("contains_spoilers").default(false),
+  scheduledFor: timestamp("scheduled_for").notNull(),
+  posted: boolean("posted").notNull().default(false),
+  postedAt: timestamp("posted_at"),
+  resultingPostId: varchar("resulting_post_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertScheduledPersonaPostSchema = createInsertSchema(scheduledPersonaPosts).omit({
+  id: true,
+  posted: true,
+  postedAt: true,
+  resultingPostId: true,
+  createdAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
@@ -505,3 +538,5 @@ export type DnfReason = typeof dnfReasons.$inferSelect;
 export type InsertDnfReason = z.infer<typeof insertDnfReasonSchema>;
 export type Bet = typeof bets.$inferSelect;
 export type InsertBet = z.infer<typeof insertBetSchema>;
+export type ScheduledPersonaPost = typeof scheduledPersonaPosts.$inferSelect;
+export type InsertScheduledPersonaPost = z.infer<typeof insertScheduledPersonaPostSchema>;
