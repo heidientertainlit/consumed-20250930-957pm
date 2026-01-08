@@ -618,26 +618,25 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 ))}
                 {/* Custom lists dropdown pill */}
                 {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                  <div className="relative inline-flex">
+                  <div className="relative">
                     <select
                       value={['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? '' : selectedListId}
                       onChange={(e) => { if (e.target.value) setSelectedListId(e.target.value); }}
-                      className={`pl-3 pr-6 py-1.5 rounded-full text-sm font-medium transition-colors appearance-none cursor-pointer w-auto ${
+                      className={`pl-2 pr-5 py-1.5 rounded-full text-xs font-medium transition-colors appearance-none cursor-pointer ${
                         !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
                           ? 'bg-purple-600 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
-                      style={{ minWidth: 'auto', width: 'auto' }}
                       data-testid="custom-list-dropdown"
                     >
-                      <option value="" disabled>Custom</option>
+                      <option value="" disabled>Other</option>
                       {userLists.filter((l: any) => !l.is_default).map((list: any) => (
                         <option key={list.id} value={list.id}>{list.title}</option>
                       ))}
                     </select>
                     <ChevronDown 
-                      size={12} 
-                      className={`absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none ${
+                      size={10} 
+                      className={`absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none ${
                         !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? 'text-white' : 'text-gray-500'
                       }`} 
                     />
