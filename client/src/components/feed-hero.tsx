@@ -24,28 +24,17 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   const { data: dailyChallengeData } = useQuery<any>({
     queryKey: ['daily-challenge-pool'],
     queryFn: async () => {
-      // Get a poll (simpler format with string options) as the daily challenge
+      // Get any open challenge (trivia or poll)
       const { data, error } = await supabase
         .from('prediction_pools')
         .select('*')
-        .eq('type', 'vote')
         .eq('status', 'open')
         .eq('origin_type', 'consumed')
+        .order('created_at', { ascending: false })
         .limit(1)
         .single();
       
-      if (error || !data) {
-        // Fallback to any open game
-        const result = await supabase
-          .from('prediction_pools')
-          .select('*')
-          .eq('status', 'open')
-          .eq('origin_type', 'consumed')
-          .limit(1)
-          .single();
-        return result.data || null;
-      }
-      return data;
+      return data || null;
     },
   });
 
@@ -54,18 +43,31 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
     category: "Play",
     icon: "🎯",
     options: [],
+    type: 'vote',
   };
 
-  // Options can be strings or objects - normalize them
+  // Parse options - handle both simple strings and nested trivia format
   const rawOptions = Array.isArray(dailyChallenge.options) ? dailyChallenge.options : [];
-  const options: string[] = rawOptions.map((opt: any) => {
-    if (typeof opt === 'string') return opt;
-    if (opt && typeof opt === 'object' && opt.options) {
-      // Multi-question trivia format - skip for now
-      return null;
-    }
-    return String(opt);
-  }).filter(Boolean) as string[];
+  
+  // Check if this is a multi-question trivia (nested format)
+  const isNestedTrivia = rawOptions.length > 0 && 
+    typeof rawOptions[0] === 'object' && 
+    rawOptions[0]?.question;
+  
+  // For nested trivia, use the first question's options
+  // For simple format, use options directly
+  let options: string[] = [];
+  let currentQuestion = dailyChallenge.title;
+  let correctAnswer = dailyChallenge.correct_answer;
+  
+  if (isNestedTrivia) {
+    const firstQ = rawOptions[0];
+    currentQuestion = firstQ.question || dailyChallenge.title;
+    options = Array.isArray(firstQ.options) ? firstQ.options : [];
+    correctAnswer = firstQ.answer || firstQ.correct;
+  } else {
+    options = rawOptions.filter((opt: any) => typeof opt === 'string');
+  }
 
   const submitMutation = useMutation({
     mutationFn: async (answer: string) => {
@@ -88,11 +90,11 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
       const data = await response.json();
       
       const isTrivia = dailyChallenge.type === 'trivia';
-      const isCorrect = isTrivia ? answer === dailyChallenge.correct_answer : undefined;
+      const isCorrect = isTrivia ? answer === correctAnswer : undefined;
       
       return { 
         isCorrect,
-        correctAnswer: dailyChallenge.correct_answer,
+        correctAnswer: correctAnswer,
         pointsEarned: dailyChallenge.points_reward || 2
       };
     },
@@ -163,6 +165,9 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
           
           {isExpanded && options.length > 0 && (
             <div className="mt-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+              {isNestedTrivia && currentQuestion !== dailyChallenge.title && (
+                <p className="text-sm text-purple-200 mb-2">{currentQuestion}</p>
+              )}
               {hasSubmitted ? (
                 <div className="flex items-center gap-2 p-3 bg-green-500/20 rounded-lg border border-green-500/30">
                   <CheckCircle className="w-5 h-5 text-green-400" />
@@ -231,6 +236,9 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
         
         {isExpanded && options.length > 0 && (
           <div className="mt-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+            {isNestedTrivia && currentQuestion !== dailyChallenge.title && (
+              <p className="text-sm text-purple-100 mb-2 font-medium">{currentQuestion}</p>
+            )}
             {hasSubmitted ? (
               <div className="flex items-center gap-2 p-3 bg-white/20 rounded-lg border border-white/30">
                 <CheckCircle className="w-5 h-5 text-green-300" />
