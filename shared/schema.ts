@@ -149,6 +149,9 @@ export const predictionPools = pgTable("prediction_pools", {
   resolvedAt: timestamp("resolved_at"), // when prediction was resolved
   resolvedBy: text("resolved_by"), // 'creator', 'crowd', or 'system'
   tags: text("tags").array(), // Genre/topic tags like "True Crime", "Comedy", "Documentary"
+  rotationType: text("rotation_type"), // 'evergreen', 'trending', 'seasonal'
+  difficulty: text("difficulty"), // 'easy', 'medium', 'chaotic' (for trivia)
+  socialPrompt: text("social_prompt"), // Shown after vote/answer, e.g. "Tag the friend who'd argue this"
   createdAt: timestamp("created_at"),
 });
 
