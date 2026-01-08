@@ -1380,15 +1380,34 @@ export default function Feed() {
     
     // Hide malformed posts: short content (looks like just a title), no media items, 
     // and not a special post type (prediction/poll/trivia/rank_share/hot_take)
-    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'hot_take', 'media_group', 'added_to_list', 'rewatch', 'ask_for_recs', 'friend_list_group'];
+    // Note: 'add-to-list' (from track-media) is also a valid type
+    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'hot_take', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'friend_list_group'];
     const isSpecialType = specialTypes.includes(post.type || '');
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
     const hasRankData = !!(post as any).rankData;
     const isShortContent = post.content && post.content.length < 80 && !post.content.includes('\n');
+    const hasRating = post.rating && post.rating > 0;
     
-    // If post has short content, no media, no list/rank data, and isn't a special type - hide it
-    if (isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType) {
+    // Debug: Log posts that might be filtered out
+    if (post.content && post.rating) {
+      console.log('🔍 FILTER DEBUG:', { 
+        id: post.id, 
+        type: post.type,
+        content: post.content?.substring(0, 50),
+        rating: post.rating,
+        hasMediaItems,
+        hasListData,
+        hasRankData,
+        isSpecialType,
+        isShortContent,
+        willFilter: isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType && !hasRating
+      });
+    }
+    
+    // If post has short content, no media, no list/rank data, not a special type, and no rating - hide it
+    // Posts with ratings should always be shown
+    if (isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType && !hasRating) {
       return false;
     }
     
