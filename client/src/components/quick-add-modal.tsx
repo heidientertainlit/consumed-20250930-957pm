@@ -412,11 +412,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         }
       }
       
-      // Step 4: Post review if provided
+      // Step 4: Post review if provided (use inline-post Edge Function)
       if (reviewText.trim()) {
         try {
           const reviewResponse = await fetch(
-            `${supabaseUrl}/functions/v1/create-activity-post`,
+            `${supabaseUrl}/functions/v1/inline-post`,
             {
               method: 'POST',
               headers: {
@@ -425,7 +425,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               },
               body: JSON.stringify({
                 content: reviewText.trim(),
-                content_type: 'review',
+                type: 'review',
+                rating: rating > 0 ? rating : null,
                 media_title: selectedMedia.title,
                 media_type: selectedMedia.type,
                 media_external_id: externalId,
