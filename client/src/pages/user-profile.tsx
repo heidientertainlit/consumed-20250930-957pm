@@ -2578,23 +2578,35 @@ export default function UserProfile() {
         <div className="max-w-4xl mx-auto">
         {/* Profile Header */}
         <div className="relative px-4 pb-6 pt-6">
-          <div className="flex flex-col md:flex-row md:items-end md:space-x-6">
-            {/* Avatar */}
-            <div className="relative">
-              <div className="w-32 h-32 bg-gray-200 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                <User size={48} className="text-gray-600" />
-              </div>
-            </div>
-
+          <div className="flex flex-col md:flex-row md:items-start md:space-x-6">
             {/* Profile Info */}
-            <div className="mt-4 md:mt-0 flex-1">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="flex-1">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h1 className="text-3xl font-semibold text-black mb-1">
-                    {userProfileData?.first_name && userProfileData?.last_name 
-                      ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
-                      : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
-                  </h1>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-3xl font-semibold text-black">
+                      {userProfileData?.first_name && userProfileData?.last_name 
+                        ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
+                        : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
+                    </h1>
+                    <button
+                      onClick={async () => {
+                        const profileUserId = isOwnProfile ? user?.id : viewingUserId;
+                        await copyLink({ 
+                          kind: 'profile',
+                          id: profileUserId
+                        });
+                        toast({
+                          title: "Link Copied!",
+                          description: "Share this profile with your friends",
+                        });
+                      }}
+                      className="text-gray-400 hover:text-purple-600 transition-colors p-1"
+                      data-testid="button-share-profile-inline"
+                    >
+                      <Share2 size={18} />
+                    </button>
+                  </div>
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-gray-600">
                       @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
@@ -2695,54 +2707,31 @@ export default function UserProfile() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col items-start gap-2 mt-4 md:mt-0">
-                  <div className="flex items-center gap-2">
-                    {isOwnProfile ? (
-                      <>
-                        <Button 
-                          className="bg-purple-600 hover:bg-purple-700 text-white w-[145px] justify-center"
-                          onClick={() => {
-                            setEditUsername(userProfileData?.user_name || '');
-                            setEditFirstName(userProfileData?.first_name || '');
-                            setEditLastName(userProfileData?.last_name || '');
-                            setIsEditProfileOpen(true);
-                          }}
-                          data-testid="button-edit-profile"
-                        >
-                          <Settings size={16} className="mr-2" />
-                          Edit Profile
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          className="border-purple-300 text-purple-600 hover:bg-purple-50"
-                          onClick={() => setIsFeedbackOpen(true)}
-                          data-testid="button-feedback"
-                        >
-                          <MessageCircle size={16} className="mr-2" />
-                          Feedback
-                        </Button>
-                      </>
-                    ) : null}
+                {isOwnProfile && (
+                  <div className="flex items-center gap-3 mt-4 md:mt-0">
+                    <button 
+                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-5 py-2.5 rounded-full font-medium flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+                      onClick={() => {
+                        setEditUsername(userProfileData?.user_name || '');
+                        setEditFirstName(userProfileData?.first_name || '');
+                        setEditLastName(userProfileData?.last_name || '');
+                        setIsEditProfileOpen(true);
+                      }}
+                      data-testid="button-edit-profile"
+                    >
+                      <Settings size={16} />
+                      Edit Profile
+                    </button>
+                    <button 
+                      className="bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white px-5 py-2.5 rounded-full font-medium flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+                      onClick={() => setIsFeedbackOpen(true)}
+                      data-testid="button-feedback"
+                    >
+                      <MessageCircle size={16} />
+                      Feedback
+                    </button>
                   </div>
-                  <Button 
-                    className="bg-purple-600 hover:bg-purple-700 text-white w-[145px] justify-center"
-                    onClick={async () => {
-                      const profileUserId = isOwnProfile ? user?.id : viewingUserId;
-                      await copyLink({ 
-                        kind: 'profile',
-                        id: profileUserId
-                      });
-                      toast({
-                        title: "Link Copied!",
-                        description: "Share this profile with your friends",
-                      });
-                    }}
-                    data-testid="button-share-profile"
-                  >
-                    <Share2 size={16} className="mr-2" />
-                    Share Profile
-                  </Button>
-                </div>
+                )}
               </div>
             </div>
           </div>
