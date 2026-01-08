@@ -616,23 +616,26 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                     {list.label}
                   </button>
                 ))}
-                {/* Custom lists dropdown pill - inline with other pills */}
+                {/* Custom lists dropdown pill */}
                 {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                  <select
-                    value={['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? '' : selectedListId}
-                    onChange={(e) => { if (e.target.value) setSelectedListId(e.target.value); }}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                      !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid="custom-list-dropdown"
-                  >
-                    <option value="" disabled>Custom Lists</option>
-                    {userLists.filter((l: any) => !l.is_default).map((list: any) => (
-                      <option key={list.id} value={list.id}>{list.title}</option>
-                    ))}
-                  </select>
+                  <span className="inline-block">
+                    <select
+                      value={['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? '' : selectedListId}
+                      onChange={(e) => { if (e.target.value) setSelectedListId(e.target.value); }}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer border-0 outline-none ${
+                        !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                      style={{ width: 'fit-content', maxWidth: '140px' }}
+                      data-testid="custom-list-dropdown"
+                    >
+                      <option value="" disabled>Custom Lists</option>
+                      {userLists.filter((l: any) => !l.is_default).map((list: any) => (
+                        <option key={list.id} value={list.id}>{list.title}</option>
+                      ))}
+                    </select>
+                  </span>
                 )}
               </div>
               
