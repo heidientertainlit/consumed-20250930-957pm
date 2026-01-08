@@ -618,24 +618,35 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 ))}
                 {/* Custom lists dropdown pill */}
                 {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                  <span className="inline-block">
-                    <select
-                      value={['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? '' : selectedListId}
-                      onChange={(e) => { if (e.target.value) setSelectedListId(e.target.value); }}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer border-0 outline-none ${
-                        !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      style={{ width: 'fit-content', maxWidth: '140px' }}
-                      data-testid="custom-list-dropdown"
-                    >
-                      <option value="" disabled>Custom Lists</option>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
+                          !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        data-testid="custom-list-dropdown"
+                      >
+                        {!['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) 
+                          ? userLists.find((l: any) => l.id === selectedListId)?.title || 'Custom'
+                          : 'Custom'
+                        }
+                        <ChevronDown size={14} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
                       {userLists.filter((l: any) => !l.is_default).map((list: any) => (
-                        <option key={list.id} value={list.id}>{list.title}</option>
+                        <DropdownMenuItem
+                          key={list.id}
+                          onClick={() => setSelectedListId(list.id)}
+                          className="cursor-pointer"
+                        >
+                          {list.title}
+                        </DropdownMenuItem>
                       ))}
-                    </select>
-                  </span>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
               
