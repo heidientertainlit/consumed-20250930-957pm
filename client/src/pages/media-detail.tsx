@@ -830,129 +830,124 @@ export default function MediaDetail() {
                   </div>
                 )}
               </div>
-
-              {/* Action buttons - side by side with strong gradient */}
-              <div className="flex gap-2 mt-2">
-                {session && (
-                  <>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          size="sm"
-                          disabled={addMediaToListMutation.isPending}
-                          className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
-                          data-testid="button-quick-add"
-                        >
-                          <Plus size={14} className="mr-1" />
-                          {addMediaToListMutation.isPending ? "..." : "Add"}
-                          <ChevronDown size={12} className="ml-1" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem
-                            onClick={() => handleAddMediaToList('currently')}
-                            className="cursor-pointer"
-                            disabled={addMediaToListMutation.isPending}
-                          >
-                            Currently
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAddMediaToList('queue')}
-                            className="cursor-pointer"
-                            disabled={addMediaToListMutation.isPending}
-                          >
-                            Want To
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAddMediaToList('finished')}
-                            className="cursor-pointer"
-                            disabled={addMediaToListMutation.isPending}
-                          >
-                            Finished
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAddMediaToList('dnf')}
-                            className="cursor-pointer"
-                            disabled={addMediaToListMutation.isPending}
-                          >
-                            Did Not Finish
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleAddMediaToList('favorites')}
-                            className="cursor-pointer"
-                            disabled={addMediaToListMutation.isPending}
-                          >
-                            Favorites
-                          </DropdownMenuItem>
-                          
-                          {/* Custom Lists */}
-                          {customLists.length > 0 && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
-                                MY CUSTOM LISTS
-                              </div>
-                              {customLists.map((list: any) => (
-                                <DropdownMenuItem
-                                  key={list.id}
-                                  onClick={() => handleAddMediaToList(list.id, true)}
-                                  className="cursor-pointer pl-4"
-                                  disabled={addMediaToListMutation.isPending}
-                                >
-                                  <List className="text-purple-600 mr-2 h-4 w-4" />
-                                  {list.title}
-                                </DropdownMenuItem>
-                              ))}
-                            </>
-                          )}
-                          
-                          {/* Create New List */}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setShowCreateListDialog(true)}
-                            className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
-                            disabled={addMediaToListMutation.isPending}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create New List
-                          </DropdownMenuItem>
-                          
-                          {/* Remove from List */}
-                          {listsContainingMedia.length > 0 && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
-                                REMOVE FROM
-                              </div>
-                              {listsContainingMedia.map((item: any) => (
-                                <DropdownMenuItem
-                                  key={item.id}
-                                  onClick={() => handleRemoveFromList(item.id, item.lists?.title || 'list')}
-                                  className="cursor-pointer pl-4 text-red-500 hover:text-red-600"
-                                  disabled={deleteListItemMutation.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  {item.lists?.title || 'Unknown List'}
-                                </DropdownMenuItem>
-                              ))}
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button 
-                      size="sm"
-                      onClick={() => setShowRatingModal(true)}
-                      className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
-                      data-testid="button-add-rating"
-                    >
-                      <Star size={14} className="mr-1" />
-                      Rate
-                    </Button>
-                  </>
-                )}
-              </div>
             </div>
           </div>
+
+          {/* Action buttons - below poster, full width row */}
+          {session && (
+            <div className="flex gap-2 mt-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    size="sm"
+                    disabled={addMediaToListMutation.isPending}
+                    className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                    data-testid="button-quick-add"
+                  >
+                    <Plus size={14} className="mr-1" />
+                    {addMediaToListMutation.isPending ? "..." : "Add"}
+                    <ChevronDown size={12} className="ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuItem
+                    onClick={() => handleAddMediaToList('currently')}
+                    className="cursor-pointer"
+                    disabled={addMediaToListMutation.isPending}
+                  >
+                    Currently
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAddMediaToList('queue')}
+                    className="cursor-pointer"
+                    disabled={addMediaToListMutation.isPending}
+                  >
+                    Want To
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAddMediaToList('finished')}
+                    className="cursor-pointer"
+                    disabled={addMediaToListMutation.isPending}
+                  >
+                    Finished
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAddMediaToList('dnf')}
+                    className="cursor-pointer"
+                    disabled={addMediaToListMutation.isPending}
+                  >
+                    Did Not Finish
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleAddMediaToList('favorites')}
+                    className="cursor-pointer"
+                    disabled={addMediaToListMutation.isPending}
+                  >
+                    Favorites
+                  </DropdownMenuItem>
+                  
+                  {customLists.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
+                        MY CUSTOM LISTS
+                      </div>
+                      {customLists.map((list: any) => (
+                        <DropdownMenuItem
+                          key={list.id}
+                          onClick={() => handleAddMediaToList(list.id, true)}
+                          className="cursor-pointer pl-4"
+                          disabled={addMediaToListMutation.isPending}
+                        >
+                          <List className="text-purple-600 mr-2 h-4 w-4" />
+                          {list.title}
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
+                  
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setShowCreateListDialog(true)}
+                    className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
+                    disabled={addMediaToListMutation.isPending}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New List
+                  </DropdownMenuItem>
+                  
+                  {listsContainingMedia.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
+                        REMOVE FROM
+                      </div>
+                      {listsContainingMedia.map((item: any) => (
+                        <DropdownMenuItem
+                          key={item.id}
+                          onClick={() => handleRemoveFromList(item.id, item.lists?.title || 'list')}
+                          className="cursor-pointer pl-4 text-red-500 hover:text-red-600"
+                          disabled={deleteListItemMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {item.lists?.title || 'Unknown List'}
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button 
+                size="sm"
+                onClick={() => setShowRatingModal(true)}
+                className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                data-testid="button-add-rating"
+              >
+                <Star size={14} className="mr-1" />
+                Rate
+              </Button>
+            </div>
+          )}
 
           {/* Find On Platforms - compact inline */}
           {mediaItem.platforms && mediaItem.platforms.length > 0 && (
