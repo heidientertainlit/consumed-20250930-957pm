@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import RatingModal from "@/components/rating-modal";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { QuickActionSheet } from "@/components/quick-action-sheet";
 import { supabase } from "@/lib/supabase";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -42,6 +43,7 @@ export default function MediaDetail() {
   const [replyContent, setReplyContent] = useState("");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
+  const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -836,107 +838,15 @@ export default function MediaDetail() {
           {/* Action buttons - below poster, full width row */}
           {session && (
             <div className="flex gap-2 mt-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    size="sm"
-                    disabled={addMediaToListMutation.isPending}
-                    className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
-                    data-testid="button-quick-add"
-                  >
-                    <Plus size={14} className="mr-1" />
-                    {addMediaToListMutation.isPending ? "..." : "Add"}
-                    <ChevronDown size={12} className="ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuItem
-                    onClick={() => handleAddMediaToList('currently')}
-                    className="cursor-pointer"
-                    disabled={addMediaToListMutation.isPending}
-                  >
-                    Currently
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleAddMediaToList('queue')}
-                    className="cursor-pointer"
-                    disabled={addMediaToListMutation.isPending}
-                  >
-                    Want To
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleAddMediaToList('finished')}
-                    className="cursor-pointer"
-                    disabled={addMediaToListMutation.isPending}
-                  >
-                    Finished
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleAddMediaToList('dnf')}
-                    className="cursor-pointer"
-                    disabled={addMediaToListMutation.isPending}
-                  >
-                    Did Not Finish
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleAddMediaToList('favorites')}
-                    className="cursor-pointer"
-                    disabled={addMediaToListMutation.isPending}
-                  >
-                    Favorites
-                  </DropdownMenuItem>
-                  
-                  {customLists.length > 0 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
-                        MY CUSTOM LISTS
-                      </div>
-                      {customLists.map((list: any) => (
-                        <DropdownMenuItem
-                          key={list.id}
-                          onClick={() => handleAddMediaToList(list.id, true)}
-                          className="cursor-pointer pl-4"
-                          disabled={addMediaToListMutation.isPending}
-                        >
-                          <List className="text-purple-600 mr-2 h-4 w-4" />
-                          {list.title}
-                        </DropdownMenuItem>
-                      ))}
-                    </>
-                  )}
-                  
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setShowCreateListDialog(true)}
-                    className="cursor-pointer text-purple-400 hover:text-purple-300 pl-4"
-                    disabled={addMediaToListMutation.isPending}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New List
-                  </DropdownMenuItem>
-                  
-                  {listsContainingMedia.length > 0 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <div className="px-2 py-1.5 text-xs text-gray-400 font-semibold">
-                        REMOVE FROM
-                      </div>
-                      {listsContainingMedia.map((item: any) => (
-                        <DropdownMenuItem
-                          key={item.id}
-                          onClick={() => handleRemoveFromList(item.id, item.lists?.title || 'list')}
-                          className="cursor-pointer pl-4 text-red-500 hover:text-red-600"
-                          disabled={deleteListItemMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {item.lists?.title || 'Unknown List'}
-                        </DropdownMenuItem>
-                      ))}
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button 
+                size="sm"
+                onClick={() => setIsActionSheetOpen(true)}
+                className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                data-testid="button-quick-add"
+              >
+                <Plus size={14} className="mr-1" />
+                Add
+              </Button>
               <Button 
                 size="sm"
                 onClick={() => setShowRatingModal(true)}
@@ -1200,50 +1110,6 @@ export default function MediaDetail() {
                   <Star className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                   <p className="text-gray-500 text-sm mb-1">No reviews yet</p>
                   <p className="text-gray-400 text-xs">Rate this title using the Quick Add button above</p>
-                </div>
-              )}
-            </div>
-
-            {/* Community Activity Section - Always shown */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Community Activity
-              </h2>
-              {socialActivity.length > 0 ? (
-                <div className="flex flex-wrap gap-4 text-sm">
-                  {reviews.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-yellow-500" />
-                      <span className="font-semibold text-gray-900">{reviews.length}</span>
-                      <span className="text-gray-600">Reviews</span>
-                    </div>
-                  )}
-                  {predictions.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-purple-500" />
-                      <span className="font-semibold text-gray-900">{predictions.length}</span>
-                      <span className="text-gray-600">Predictions</span>
-                    </div>
-                  )}
-                  {polls.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <MessageCircle className="w-4 h-4 text-blue-500" />
-                      <span className="font-semibold text-gray-900">{polls.length}</span>
-                      <span className="text-gray-600">Polls</span>
-                    </div>
-                  )}
-                  {conversations.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <MessageCircle className="w-4 h-4 text-gray-500" />
-                      <span className="font-semibold text-gray-900">{conversations.length}</span>
-                      <span className="text-gray-600">Posts</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-gray-500 text-sm mb-3">No community activity yet</p>
-                  <p className="text-gray-400 text-xs">Be the first to share your thoughts about this title!</p>
                 </div>
               )}
             </div>
@@ -1560,6 +1426,19 @@ export default function MediaDetail() {
           setQuickAddMedia(null);
         }}
         preSelectedMedia={quickAddMedia}
+      />
+      
+      <QuickActionSheet
+        isOpen={isActionSheetOpen}
+        onClose={() => setIsActionSheetOpen(false)}
+        preselectedMedia={{
+          title: mediaItem?.title || mediaData.title,
+          mediaType: mediaItem?.type || mediaData.type,
+          imageUrl: mediaItem?.artwork || mediaData.artwork,
+          externalId: params?.id,
+          externalSource: params?.source,
+          creator: mediaItem?.creator || mediaData.creator,
+        }}
       />
     </div>
   );
