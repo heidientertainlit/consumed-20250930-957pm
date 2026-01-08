@@ -75,6 +75,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   const [dnfReason, setDnfReason] = useState<{ reason: string; otherReason?: string } | null>(null);
   const [pendingDnfListId, setPendingDnfListId] = useState<string>("");
   const [rewatchCount, setRewatchCount] = useState<number>(1);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
 
   const { data: listsData } = useQuery({
     queryKey: ['user-lists-metadata', user?.id],
@@ -615,18 +616,40 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
           </>
         ) : (
           <>
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <button onClick={handleBack} className="text-gray-400 hover:text-gray-600">
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <button onClick={handleBack} className="text-gray-600 hover:text-gray-900">
                   <ChevronLeft size={20} />
                 </button>
-                <h2 className="text-lg font-semibold text-gray-900 flex-1">Add Details</h2>
+                <h2 className="text-lg font-bold text-gray-900">Add</h2>
+                <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                  <X size={20} />
+                </button>
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Search bar */}
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search for a movie, show, book..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (e.target.value.trim()) {
+                      setStage("search");
+                    }
+                  }}
+                  className="pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400"
+                  data-testid="quick-add-search-details"
+                />
+              </div>
+
+              {/* Selected media card */}
               {selectedMedia && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
                   {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path) ? (
                     <img
                       src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path}
@@ -640,112 +663,38 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900">{selectedMedia.title}</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      {getMediaIcon(selectedMedia.type)}
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
                       <span className="capitalize">{selectedMedia.type}</span>
                       {selectedMedia.year && <span>• {selectedMedia.year}</span>}
                     </div>
                   </div>
+                  <button
+                    onClick={() => {
+                      setSelectedMedia(null);
+                      setStage("search");
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+              {/* Rating */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Rating:</span>
                 {renderStars()}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Which time is this? (optional)</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {[1, 2, 3, 4, 5].map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => setRewatchCount(count)}
-                      className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                        rewatchCount === count
-                          ? 'bg-purple-600 text-white border-purple-600'
-                          : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
-                      }`}
-                      data-testid={`quick-add-rewatch-${count}`}
-                    >
-                      {count === 1 ? '1st' : count === 2 ? '2nd' : count === 3 ? '3rd' : `${count}th`}
-                    </button>
-                  ))}
-                  <input
-                    type="number"
-                    min="6"
-                    max="99"
-                    value={rewatchCount > 5 ? rewatchCount : ''}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (!isNaN(val) && val >= 6) setRewatchCount(val);
-                      else if (e.target.value === '') setRewatchCount(1);
-                    }}
-                    onFocus={() => { if (rewatchCount <= 5) setRewatchCount(6); }}
-                    placeholder="6+"
-                    className={`w-12 h-8 text-center rounded-lg border text-xs font-medium transition-colors ${
-                      rewatchCount > 5
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
-                    }`}
-                    data-testid="quick-add-rewatch-custom"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <List size={14} className="inline mr-1" />
-                  Add to List (optional)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsListDrawerOpen(true)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-left hover:border-purple-300 transition-colors"
-                  data-testid="select-list-trigger"
-                >
-                  <span className={selectedListId && selectedListId !== "none" ? "text-gray-900" : "text-gray-400"}>
-                    {getSelectedListName()}
-                  </span>
-                  <ChevronDown size={16} className="text-gray-400" />
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Trophy size={14} className="inline mr-1" />
-                  Add to Rank (optional)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsRankDrawerOpen(true)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-left hover:border-purple-300 transition-colors"
-                  data-testid="select-rank-trigger"
-                >
-                  <span className={selectedRankId && selectedRankId !== "none" ? "text-gray-900" : "text-gray-400"}>
-                    {getSelectedRankName()}
-                  </span>
-                  <ChevronDown size={16} className="text-gray-400" />
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Review (optional)
-                </label>
-                <Textarea
-                  placeholder="What did you think?"
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  onFocus={(e) => e.target.rows = 3}
-                  onBlur={(e) => { if (!reviewText.trim()) e.target.rows = 1; }}
-                  className="bg-white border-gray-200 resize-none transition-all min-h-0"
-                  style={{ height: reviewText.trim() ? 'auto' : '40px' }}
-                  rows={reviewText.trim() ? 3 : 1}
-                  data-testid="quick-add-review"
-                />
-              </div>
+              {/* Review textarea */}
+              <Textarea
+                placeholder="Add a review (optional)..."
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                className="bg-white border-gray-200 resize-none min-h-[80px]"
+                rows={3}
+                data-testid="quick-add-review"
+              />
 
               {reviewText.trim() && (
                 <div className="flex items-center gap-2">
@@ -760,25 +709,174 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                   </label>
                 </div>
               )}
-              
-              <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                <Checkbox
-                  id="private-mode"
-                  checked={privateMode}
-                  onCheckedChange={(checked) => setPrivateMode(checked as boolean)}
-                  data-testid="checkbox-private-mode"
-                />
-                <label htmlFor="private-mode" className="text-sm text-gray-600">
-                  Don't add to feed (keep private)
-                </label>
+
+              {/* List selection pill buttons */}
+              <div className="flex flex-wrap gap-2">
+                {(() => {
+                  const systemLists = userLists.filter((list: any) => {
+                    const lower = list.name?.toLowerCase() || '';
+                    return lower.includes('finished') || lower.includes('currently') || 
+                           lower.includes('queue') || lower.includes('want') || 
+                           lower.includes('dnf') || lower.includes('not finish');
+                  });
+                  const customLists = userLists.filter((list: any) => {
+                    const lower = list.name?.toLowerCase() || '';
+                    return !(lower.includes('finished') || lower.includes('currently') || 
+                             lower.includes('queue') || lower.includes('want') || 
+                             lower.includes('dnf') || lower.includes('not finish') ||
+                             lower.includes('favorite'));
+                  });
+                  
+                  const getListButton = (list: any, label: string) => {
+                    const isSelected = selectedListId === list.id;
+                    const lower = list.name?.toLowerCase() || '';
+                    const isDnf = lower.includes('dnf') || lower.includes('not finish');
+                    
+                    return (
+                      <button
+                        key={list.id}
+                        type="button"
+                        onClick={() => {
+                          if (isDnf) {
+                            setPendingDnfListId(list.id);
+                            setIsDnfDrawerOpen(true);
+                          } else {
+                            setSelectedListId(isSelected ? "" : list.id);
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
+                          isSelected
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
+                        }`}
+                        data-testid={`list-pill-${label.toLowerCase().replace(/\s/g, '-')}`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  };
+
+                  return (
+                    <>
+                      {systemLists.map((list: any) => {
+                        const lower = list.name?.toLowerCase() || '';
+                        let label = list.name;
+                        if (lower.includes('finished')) label = 'Finished';
+                        else if (lower.includes('currently')) label = 'Currently';
+                        else if (lower.includes('queue') || lower.includes('want')) label = 'Want To';
+                        else if (lower.includes('dnf') || lower.includes('not finish')) label = 'DNF';
+                        return getListButton(list, label);
+                      })}
+                      {customLists.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsListDrawerOpen(true)}
+                          className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors flex items-center gap-1 ${
+                            customLists.some((l: any) => l.id === selectedListId)
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
+                          }`}
+                          data-testid="list-pill-custom"
+                        >
+                          Custom <ChevronDown size={14} />
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
+
+              {/* More options expandable */}
+              <button
+                type="button"
+                onClick={() => setShowMoreOptions(!showMoreOptions)}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                data-testid="more-options-toggle"
+              >
+                <ChevronDown size={14} className={`transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} />
+                More options
+              </button>
+
+              {showMoreOptions && (
+                <div className="space-y-4 pl-2 border-l-2 border-gray-100">
+                  {/* Rewatch count */}
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Which time is this?</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[1, 2, 3, 4, 5].map((count) => (
+                        <button
+                          key={count}
+                          type="button"
+                          onClick={() => setRewatchCount(count)}
+                          className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                            rewatchCount === count
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
+                          }`}
+                          data-testid={`quick-add-rewatch-${count}`}
+                        >
+                          {count === 1 ? '1st' : count === 2 ? '2nd' : count === 3 ? '3rd' : `${count}th`}
+                        </button>
+                      ))}
+                      <input
+                        type="number"
+                        min="6"
+                        max="99"
+                        value={rewatchCount > 5 ? rewatchCount : ''}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 6) setRewatchCount(val);
+                          else if (e.target.value === '') setRewatchCount(1);
+                        }}
+                        onFocus={() => { if (rewatchCount <= 5) setRewatchCount(6); }}
+                        placeholder="6+"
+                        className={`w-12 h-8 text-center rounded-lg border text-xs font-medium transition-colors ${
+                          rewatchCount > 5
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
+                        }`}
+                        data-testid="quick-add-rewatch-custom"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Add to Rank */}
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">Add to Rank</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsRankDrawerOpen(true)}
+                      className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-left hover:border-purple-300 transition-colors"
+                      data-testid="select-rank-trigger"
+                    >
+                      <span className={selectedRankId && selectedRankId !== "none" ? "text-gray-900" : "text-gray-400"}>
+                        {getSelectedRankName()}
+                      </span>
+                      <ChevronDown size={16} className="text-gray-400" />
+                    </button>
+                  </div>
+
+                  {/* Private mode */}
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="private-mode"
+                      checked={privateMode}
+                      onCheckedChange={(checked) => setPrivateMode(checked as boolean)}
+                      data-testid="checkbox-private-mode"
+                    />
+                    <label htmlFor="private-mode" className="text-sm text-gray-600">
+                      Don't add to feed (keep private)
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
             
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-gray-100">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                disabled={isSubmitting || !selectedMedia}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
                 data-testid="quick-add-submit"
               >
                 {isSubmitting ? (
@@ -787,7 +885,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     Adding...
                   </>
                 ) : (
-                  'Add to Collections'
+                  'Add'
                 )}
               </Button>
             </div>
