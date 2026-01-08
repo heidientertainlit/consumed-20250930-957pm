@@ -24,16 +24,18 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   const { data: dailyChallengeData } = useQuery<any>({
     queryKey: ['daily-challenge-pool'],
     queryFn: async () => {
+      // Get a poll (simpler format with string options) as the daily challenge
       const { data, error } = await supabase
         .from('prediction_pools')
         .select('*')
-        .eq('type', 'trivia')
+        .eq('type', 'vote')
         .eq('status', 'open')
         .eq('origin_type', 'consumed')
         .limit(1)
         .single();
       
       if (error || !data) {
+        // Fallback to any open game
         const result = await supabase
           .from('prediction_pools')
           .select('*')
@@ -54,7 +56,16 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
     options: [],
   };
 
-  const options = Array.isArray(dailyChallenge.options) ? dailyChallenge.options : [];
+  // Options can be strings or objects - normalize them
+  const rawOptions = Array.isArray(dailyChallenge.options) ? dailyChallenge.options : [];
+  const options: string[] = rawOptions.map((opt: any) => {
+    if (typeof opt === 'string') return opt;
+    if (opt && typeof opt === 'object' && opt.options) {
+      // Multi-question trivia format - skip for now
+      return null;
+    }
+    return String(opt);
+  }).filter(Boolean) as string[];
 
   const submitMutation = useMutation({
     mutationFn: async (answer: string) => {
