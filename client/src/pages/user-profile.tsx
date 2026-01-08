@@ -2583,8 +2583,8 @@ export default function UserProfile() {
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                 <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <h1 className="text-3xl font-semibold text-black">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h1 className="text-2xl font-semibold text-black">
                       {userProfileData?.first_name && userProfileData?.last_name 
                         ? `${userProfileData.first_name} ${userProfileData.last_name}`.trim()
                         : userProfileData?.first_name || userProfileData?.user_name || user?.user_metadata?.user_name || user?.user_metadata?.first_name || 'User'}
@@ -2601,98 +2601,97 @@ export default function UserProfile() {
                           description: "Share this profile with your friends",
                         });
                       }}
-                      className="px-3 py-1 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-purple-600 flex items-center gap-1.5 shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                      className="text-gray-400 hover:text-purple-600 transition-colors"
                       data-testid="button-share-profile-inline"
                     >
-                      <span className="text-white text-xs font-medium">share profile</span>
-                      <CornerUpRight size={12} className="text-white" />
+                      <CornerUpRight size={20} />
                     </button>
                   </div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-gray-600">
+                  <div className="mb-1.5">
+                    <span className="text-sm text-gray-500">
                       @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
                     </span>
                   </div>
 
-                  {/* Stats Grid - Consistent styling */}
-                  <div className="flex flex-col gap-y-2 mt-1">
+                  {/* Stats Grid - Condensed styling */}
+                  <div className="flex flex-col gap-y-0.5">
                     {/* Total Points - Clickable to see breakdown */}
                     {isLoadingPoints ? (
-                      <div className="flex items-center space-x-2">
-                        <Trophy className="text-amber-500" size={18} />
-                        <span className="text-sm text-gray-500">Loading points...</span>
+                      <div className="flex items-center space-x-1.5">
+                        <Trophy className="text-amber-500" size={14} />
+                        <span className="text-xs text-gray-500">Loading...</span>
                       </div>
                     ) : userPoints ? (
                       <button
                         onClick={() => setLocation('/points')}
-                        className="flex items-center space-x-2 hover:bg-gray-100 -ml-2 px-2 py-1 rounded-lg transition-colors group"
+                        className="flex items-center space-x-1.5 hover:bg-gray-100 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group"
                         data-testid="points-breakdown-link"
                       >
-                        <Trophy className="text-amber-500" size={18} />
-                        <span className="text-base font-bold text-gray-800">{userPoints.all_time || 0}</span>
-                        <span className="text-sm text-gray-600 group-hover:text-purple-600">total points →</span>
+                        <Trophy className="text-amber-500" size={14} />
+                        <span className="text-sm font-semibold text-gray-800">{userPoints.all_time || 0}</span>
+                        <span className="text-xs text-gray-500 group-hover:text-purple-600">total points →</span>
                       </button>
                     ) : null}
 
                     {/* Global Rank - Clickable to leaderboard */}
                     {isOwnProfile && (
                       <Link href="/leaderboard">
-                        <div className="flex items-center space-x-2 hover:bg-gray-100 -ml-2 px-2 py-1 rounded-lg transition-colors group cursor-pointer">
-                          <Medal className="text-purple-500" size={18} />
+                        <div className="flex items-center space-x-1.5 hover:bg-gray-100 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group cursor-pointer">
+                          <Medal className="text-purple-500" size={14} />
                           {userRank ? (
                             <>
-                              <span className="text-base font-bold text-gray-800">#{userRank.global}</span>
-                              <span className="text-sm text-gray-600 group-hover:text-purple-600">View Leaderboard →</span>
+                              <span className="text-sm font-semibold text-gray-800">#{userRank.global}</span>
+                              <span className="text-xs text-gray-500 group-hover:text-purple-600">View Leaderboard →</span>
                             </>
                           ) : (
-                            <span className="text-sm text-gray-600 group-hover:text-purple-600">View Leaderboard →</span>
+                            <span className="text-xs text-gray-500 group-hover:text-purple-600">View Leaderboard →</span>
                           )}
                         </div>
                       </Link>
                     )}
                     {!isOwnProfile && userRank && (
-                      <div className="flex items-center space-x-2">
-                        <Medal className="text-purple-500" size={18} />
-                        <span className="text-base font-bold text-gray-800">#{userRank.global}</span>
-                        <span className="text-sm text-gray-600">global rank</span>
+                      <div className="flex items-center space-x-1.5">
+                        <Medal className="text-purple-500" size={14} />
+                        <span className="text-sm font-semibold text-gray-800">#{userRank.global}</span>
+                        <span className="text-xs text-gray-500">global rank</span>
                       </div>
                     )}
 
-                    {/* Items Logged - WORKING */}
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className="text-blue-500" size={18} />
-                      <span className="text-base font-bold text-gray-800">{totalItemsLogged}</span>
-                      <span className="text-sm text-gray-600">items logged</span>
+                    {/* Items Logged */}
+                    <div className="flex items-center space-x-1.5 -ml-1.5 px-1.5 py-0.5">
+                      <TrendingUp className="text-blue-500" size={14} />
+                      <span className="text-sm font-semibold text-gray-800">{totalItemsLogged}</span>
+                      <span className="text-xs text-gray-500">items logged</span>
                     </div>
 
                     {/* Mostly Into - Calculated from media type counts */}
                     {mostlyIntoTypes && mostlyIntoTypes.length > 0 && (
-                      <div className="flex items-center space-x-2">
-                        <BarChart3 className="text-green-500" size={18} />
-                        <span className="text-sm text-gray-600">Mostly Into:</span>
-                        <span className="text-sm font-medium text-gray-800">{mostlyIntoTypes.join(', ')}</span>
+                      <div className="flex items-center space-x-1.5 -ml-1.5 px-1.5 py-0.5">
+                        <BarChart3 className="text-green-500" size={14} />
+                        <span className="text-xs text-gray-500">Mostly Into:</span>
+                        <span className="text-xs font-medium text-gray-700">{mostlyIntoTypes.join(', ')}</span>
                       </div>
                     )}
 
                     {/* Badges Link */}
                     <button
                       onClick={() => setActiveSection('badges')}
-                      className="flex items-center space-x-2 hover:bg-gray-100 -ml-2 px-2 py-1 rounded-lg transition-colors group"
+                      className="flex items-center space-x-1.5 hover:bg-gray-100 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group"
                       data-testid="badges-link"
                     >
-                      <Medal className="text-rose-500" size={18} />
-                      <span className="text-sm text-gray-600 group-hover:text-purple-600">badges →</span>
+                      <Medal className="text-rose-500" size={14} />
+                      <span className="text-xs text-gray-500 group-hover:text-purple-600">badges →</span>
                     </button>
 
                     {/* Badges */}
                     {userBadges.length > 0 && (
-                      <div className="flex items-center space-x-2 flex-wrap gap-1">
-                        <Medal className="text-amber-500" size={18} />
-                        <span className="text-sm text-gray-600">Badges:</span>
+                      <div className="flex items-center space-x-1.5 flex-wrap gap-1 -ml-1.5 px-1.5 py-0.5">
+                        <Medal className="text-amber-500" size={14} />
+                        <span className="text-xs text-gray-500">Badges:</span>
                         {userBadges.map((badge: any) => (
                           <span 
                             key={badge.id}
-                            className="text-sm font-medium px-2 py-0.5 rounded-full"
+                            className="text-xs font-medium px-1.5 py-0.5 rounded-full"
                             style={{ 
                               backgroundColor: `${badge.theme_color}15`,
                               color: badge.theme_color 
