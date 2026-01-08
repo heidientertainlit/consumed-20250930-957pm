@@ -73,29 +73,44 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
     mutationFn: async (answer: string) => {
       if (!dailyChallenge?.id || !user?.id) throw new Error('Missing data');
       
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const response = await fetch(`${supabaseUrl}/functions/v1/vote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({
-          pool_id: dailyChallenge.id,
+      // Determine points to award (same logic as Play page)
+      const gameType = dailyChallenge.type;
+      let immediatePoints = 0;
+      
+      if (gameType === 'vote' || gameType === 'trivia') {
+        immediatePoints = dailyChallenge.points_reward || 2;
+      }
+      
+      // Insert directly into user_predictions table (same as Play page)
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .insert({
           user_id: user.id,
-          vote: answer
+          pool_id: dailyChallenge.id,
+          prediction: answer,
+          points_earned: immediatePoints,
+          created_at: new Date().toISOString()
         })
-      });
+        .select()
+        .single();
       
-      const data = await response.json();
+      if (error) {
+        console.error('❌ Error saving prediction:', error);
+        if (error.code === '23505') {
+          throw new Error('Already submitted');
+        }
+        throw new Error('Failed to save prediction');
+      }
       
-      const isTrivia = dailyChallenge.type === 'trivia';
+      console.log('✅ Daily challenge answer saved:', data);
+      
+      const isTrivia = gameType === 'trivia';
       const isCorrect = isTrivia ? answer === correctAnswer : undefined;
       
       return { 
         isCorrect,
         correctAnswer: correctAnswer,
-        pointsEarned: dailyChallenge.points_reward || 2
+        pointsEarned: immediatePoints
       };
     },
     onSuccess: (result) => {
@@ -103,6 +118,8 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
       setSubmissionResult(result);
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-pool'] });
       queryClient.invalidateQueries({ queryKey: ['user-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
       
       if (dailyChallenge.type === 'trivia') {
         if (result.isCorrect) {
@@ -123,10 +140,13 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
         });
       }
     },
-    onError: () => {
+    onError: (error: Error) => {
+      const isAlreadySubmitted = error.message === 'Already submitted';
       toast({
-        title: "Error",
-        description: "Failed to submit. You may have already answered this.",
+        title: isAlreadySubmitted ? "Already answered" : "Error",
+        description: isAlreadySubmitted 
+          ? "You've already submitted an answer for this challenge." 
+          : "Failed to submit. Please try again.",
         variant: "destructive"
       });
     }
