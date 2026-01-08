@@ -585,8 +585,18 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 )}
               </div>
               
-              {/* List selection - horizontal pills */}
-              <div className="flex flex-wrap gap-2">
+              {/* Review - right under rating */}
+              <textarea
+                value={contentText}
+                onChange={(e) => setContentText(e.target.value)}
+                placeholder="Add a review (optional)..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
+                rows={2}
+                data-testid="track-review-input"
+              />
+              
+              {/* List selection - horizontal pills with custom list dropdown */}
+              <div className="flex flex-wrap items-center gap-2">
                 {[
                   { id: 'finished', label: 'Finished' },
                   { id: 'currently', label: 'Currently' },
@@ -606,6 +616,24 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                     {list.label}
                   </button>
                 ))}
+                {/* Custom lists dropdown pill */}
+                {userLists.filter((l: any) => !l.is_default).length > 0 && (
+                  <select
+                    value={['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) ? '' : selectedListId}
+                    onChange={(e) => { if (e.target.value) setSelectedListId(e.target.value); }}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors appearance-none cursor-pointer ${
+                      !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid="custom-list-dropdown"
+                  >
+                    <option value="" disabled>Custom...</option>
+                    {userLists.filter((l: any) => !l.is_default).map((list: any) => (
+                      <option key={list.id} value={list.id}>{list.title}</option>
+                    ))}
+                  </select>
+                )}
               </div>
               
               {/* More options toggle */}
@@ -691,16 +719,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                     )}
                   </div>
                   
-                  {/* Review */}
-                  <textarea
-                    value={contentText}
-                    onChange={(e) => setContentText(e.target.value)}
-                    placeholder="Add a review..."
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
-                    rows={2}
-                    data-testid="track-review-input"
-                  />
-                  
                   {/* Privacy options - combined row */}
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <label className="flex items-center gap-1.5">
@@ -709,26 +727,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                     </label>
                     <label className="flex items-center gap-1.5">
                       <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
-                      Private
+                      Don't post to feed
                     </label>
                   </div>
-                  
-                  {/* Custom lists */}
-                  {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase mb-1">Custom list</p>
-                      <select
-                        value={selectedListId}
-                        onChange={(e) => setSelectedListId(e.target.value)}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
-                      >
-                        <option value={selectedListId}>Default lists only</option>
-                        {userLists.filter((l: any) => !l.is_default).map((list: any) => (
-                          <option key={list.id} value={list.id}>{list.title}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
