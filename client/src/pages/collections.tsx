@@ -50,7 +50,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import ConsumptionTracker from "@/components/consumption-tracker";
+import { QuickAddModal } from "@/components/quick-add-modal";
 import { DnfReasonDrawer } from "@/components/dnf-reason-drawer";
 
 export default function CollectionsPage() {
@@ -1055,7 +1055,7 @@ export default function CollectionsPage() {
       </Dialog>
 
       {/* Quick Add Modal */}
-      <ConsumptionTracker 
+      <QuickAddModal 
         isOpen={isQuickAddOpen} 
         onClose={() => setIsQuickAddOpen(false)} 
       />
