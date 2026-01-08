@@ -1389,22 +1389,6 @@ export default function Feed() {
     const isShortContent = post.content && post.content.length < 80 && !post.content.includes('\n');
     const hasRating = post.rating && post.rating > 0;
     
-    // Debug: Log posts that might be filtered out
-    if (post.content && post.rating) {
-      console.log('🔍 FILTER DEBUG:', { 
-        id: post.id, 
-        type: post.type,
-        content: post.content?.substring(0, 50),
-        rating: post.rating,
-        hasMediaItems,
-        hasListData,
-        hasRankData,
-        isSpecialType,
-        isShortContent,
-        willFilter: isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType && !hasRating
-      });
-    }
-    
     // If post has short content, no media, no list/rank data, not a special type, and no rating - hide it
     // Posts with ratings should always be shown
     if (isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType && !hasRating) {
