@@ -34,30 +34,21 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
         .eq('featured_date', today)
         .single();
       
-      // Fallback: if no featured challenge for today, get latest open one
+      // Only return if there's a properly scheduled challenge for today
       if (!data || error) {
-        const { data: fallback } = await supabase
-          .from('prediction_pools')
-          .select('*')
-          .eq('status', 'open')
-          .eq('origin_type', 'consumed')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        return fallback || null;
+        return null;
       }
       
       return data;
     },
   });
 
-  const dailyChallenge = dailyChallengeData || {
-    title: "Daily Challenge",
-    category: "Play",
-    icon: "🎯",
-    options: [],
-    type: 'vote',
-  };
+  // Return null if no challenge is scheduled for today
+  if (!dailyChallengeData) {
+    return null;
+  }
+
+  const dailyChallenge = dailyChallengeData;
 
   // Parse options - handle both simple strings and nested trivia format
   const rawOptions = Array.isArray(dailyChallenge.options) ? dailyChallenge.options : [];
