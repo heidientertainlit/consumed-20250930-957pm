@@ -541,14 +541,29 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       <DialogContent className="bg-white w-[calc(100%-32px)] max-w-md p-0 overflow-hidden max-h-[80vh] flex flex-col rounded-xl border border-gray-100 shadow-xl left-1/2 -translate-x-1/2 [&>button]:hidden">
         {stage === "search" ? (
           <>
+            {/* Header */}
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <button onClick={onClose} className="text-gray-600 hover:text-gray-900">
+                  <ChevronLeft size={20} />
+                </button>
+                <h2 className="text-lg font-bold text-gray-900">Add</h2>
+                <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Search input */}
             <div className="p-4 pb-3">
               <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search movies, shows, books, music"
+                  placeholder="Search for a movie, show, book..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-3 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:border-gray-200 focus:ring-0 focus:outline-none outline-none ring-0 shadow-none"
+                  className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:border-gray-200 focus:ring-0 focus:outline-none outline-none ring-0 shadow-none"
                   autoFocus
                   data-testid="quick-add-search"
                 />
@@ -563,7 +578,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4">
+            {/* Search results */}
+            <div className="flex-1 overflow-y-auto px-4">
               {isSearching ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="animate-spin text-purple-600" size={24} />
@@ -612,12 +628,18 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                 <div className="text-center py-8 text-gray-500">
                   No results found for "{searchQuery}"
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-400">
-                  <Search size={32} className="mx-auto mb-2 opacity-50" />
-                  <p>Search for movies, TV shows, books, music, and more</p>
-                </div>
-              )}
+              ) : null}
+            </div>
+            
+            {/* Add button (disabled) */}
+            <div className="p-4 border-t border-gray-100">
+              <Button
+                disabled
+                className="w-full bg-purple-400 text-white opacity-60 cursor-not-allowed"
+                data-testid="quick-add-submit-disabled"
+              >
+                Add
+              </Button>
             </div>
           </>
         ) : (
