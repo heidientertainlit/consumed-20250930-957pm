@@ -83,6 +83,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   
   const episodeCache = useRef<Record<string, any[]>>({});
 
@@ -543,172 +544,193 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           )}
           
           {selectedMedia && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+            <div className="space-y-3">
+              {/* Selected media card - compact */}
+              <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg">
                 {selectedMedia.image && (
-                  <img src={selectedMedia.image} alt={selectedMedia.title} className="w-12 h-16 object-cover rounded" />
+                  <img src={selectedMedia.image} alt={selectedMedia.title} className="w-10 h-14 object-cover rounded" />
                 )}
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">{selectedMedia.title}</p>
-                  <p className="text-sm text-gray-600">{selectedMedia.type} {selectedMedia.year && `• ${selectedMedia.year}`}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 truncate">{selectedMedia.title}</p>
+                  <p className="text-xs text-gray-600">{selectedMedia.type} {selectedMedia.year && `• ${selectedMedia.year}`}</p>
                 </div>
                 <button onClick={() => setSelectedMedia(null)} className="p-1 hover:bg-purple-100 rounded">
-                  <X size={18} className="text-gray-500" />
+                  <X size={16} className="text-gray-500" />
                 </button>
               </div>
               
-              {selectedMedia.type === 'tv' && (
-                <div className="space-y-3 p-3 bg-gray-50 rounded-xl">
-                  <p className="text-sm font-medium text-gray-700">Track specific episode (optional)</p>
-                  {isLoadingSeasons ? (
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Loader2 className="animate-spin" size={16} />
-                      Loading seasons...
-                    </div>
-                  ) : seasons.length > 0 ? (
-                    <div className="flex gap-2">
-                      <select
-                        value={selectedSeason || ""}
-                        onChange={(e) => setSelectedSeason(Number(e.target.value) || null)}
-                        className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              {/* Rating - simplified inline */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Rating:</span>
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const fillPercent = Math.min(Math.max(ratingValue - (star - 1), 0), 1) * 100;
+                    return (
+                      <button
+                        key={star}
+                        onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
+                        className="focus:outline-none relative"
+                        data-testid={`rating-star-${star}`}
                       >
-                        <option value="">All seasons</option>
-                        {seasons.map((s) => (
-                          <option key={s.seasonNumber || s.season_number} value={s.seasonNumber || s.season_number}>
-                            Season {s.seasonNumber || s.season_number}
-                          </option>
-                        ))}
-                      </select>
-                      
-                      {selectedSeason && (
-                        <select
-                          value={selectedEpisode || ""}
-                          onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)}
-                          className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          disabled={isLoadingEpisodes}
-                        >
-                          <option value="">{isLoadingEpisodes ? "Loading..." : "All episodes"}</option>
-                          {episodes.map((ep) => (
-                            <option key={ep.episodeNumber || ep.episode_number} value={ep.episodeNumber || ep.episode_number}>
-                              Ep {ep.episodeNumber || ep.episode_number}: {ep.name || ep.title}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">No season data available</p>
-                  )}
+                        <Star className="w-6 h-6 text-gray-300" />
+                        <div className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
+                          <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-              
-              <div className="space-y-3 p-3 bg-gray-50 rounded-xl">
-                <label className="text-sm font-medium text-gray-700 block">Rating (optional)</label>
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((star) => {
-                      const fillPercent = Math.min(Math.max(ratingValue - (star - 1), 0), 1) * 100;
-                      return (
-                        <button
-                          key={star}
-                          onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
-                          className="focus:outline-none relative"
-                          data-testid={`rating-star-${star}`}
-                        >
-                          <Star className="w-7 h-7 text-gray-300" />
-                          <div className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
-                            <Star className="w-7 h-7 fill-yellow-400 text-yellow-400" />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <input
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={ratingValue || ""}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      if (isNaN(val)) setRatingValue(0);
-                      else setRatingValue(Math.min(5, Math.max(0, val)));
-                    }}
-                    placeholder="0.0"
-                    className="w-14 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center bg-white"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Add to list</label>
-                <select
-                  value={selectedListId}
-                  onChange={(e) => setSelectedListId(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="finished">Finished</option>
-                  <option value="queue">Want To</option>
-                  <option value="currently">Currently Consuming</option>
-                  <option value="dnf">Did Not Finish</option>
-                  {userLists.filter((l: any) => !l.is_default).map((list: any) => (
-                    <option key={list.id} value={list.id}>{list.title}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="flex items-center gap-3 text-sm">
-                <label className="flex items-center gap-2 text-gray-600">
-                  <Checkbox 
-                    checked={rewatchCount > 1} 
-                    onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} 
-                    data-testid="rewatch-toggle"
-                  />
-                  Repeat consumption?
-                </label>
-                {rewatchCount > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-500">Time #</span>
-                    <input
-                      type="number"
-                      min="2"
-                      max="99"
-                      value={rewatchCount}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val));
-                      }}
-                      className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      data-testid="rewatch-count-input"
-                    />
-                  </div>
+                {ratingValue > 0 && (
+                  <span className="text-sm font-medium text-gray-700">{ratingValue.toFixed(1)}</span>
                 )}
               </div>
               
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Review (optional)</label>
-                <textarea
-                  value={contentText}
-                  onChange={(e) => setContentText(e.target.value)}
-                  onFocus={(e) => e.target.rows = 3}
-                  onBlur={(e) => { if (!contentText.trim()) e.target.rows = 1; }}
-                  placeholder="What did you think?"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg resize-none bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  rows={contentText.trim() ? 3 : 1}
-                  style={{ minHeight: contentText.trim() ? 'auto' : '42px' }}
-                  data-testid="track-review-input"
-                />
+              {/* List selection - horizontal pills */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: 'finished', label: 'Finished' },
+                  { id: 'currently', label: 'Currently' },
+                  { id: 'queue', label: 'Want To' },
+                  { id: 'dnf', label: 'DNF' },
+                ].map((list) => (
+                  <button
+                    key={list.id}
+                    onClick={() => setSelectedListId(list.id)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedListId === list.id
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid={`list-pill-${list.id}`}
+                  >
+                    {list.label}
+                  </button>
+                ))}
               </div>
               
-              <label className="flex items-center gap-2 text-sm text-gray-600">
-                <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
-                Contains spoilers
-              </label>
+              {/* More options toggle */}
+              <button
+                onClick={() => setShowMoreOptions(!showMoreOptions)}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 py-1"
+                data-testid="more-options-toggle"
+              >
+                <ChevronDown 
+                  size={16} 
+                  className={`transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} 
+                />
+                {showMoreOptions ? 'Less options' : 'More options'}
+              </button>
               
-              <label className="flex items-center gap-2 text-sm text-gray-600 pt-2 border-t border-gray-100">
-                <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
-                Don't post to feed (keep private)
-              </label>
+              {/* Collapsible advanced options */}
+              {showMoreOptions && (
+                <div className="space-y-3 pt-2 border-t border-gray-100">
+                  {/* TV episode picker */}
+                  {selectedMedia.type === 'tv' && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Episode</p>
+                      {isLoadingSeasons ? (
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Loader2 className="animate-spin" size={14} />
+                          Loading...
+                        </div>
+                      ) : seasons.length > 0 ? (
+                        <div className="flex gap-2">
+                          <select
+                            value={selectedSeason || ""}
+                            onChange={(e) => setSelectedSeason(Number(e.target.value) || null)}
+                            className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
+                          >
+                            <option value="">All seasons</option>
+                            {seasons.map((s) => (
+                              <option key={s.seasonNumber || s.season_number} value={s.seasonNumber || s.season_number}>
+                                S{s.seasonNumber || s.season_number}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedSeason && (
+                            <select
+                              value={selectedEpisode || ""}
+                              onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)}
+                              className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
+                              disabled={isLoadingEpisodes}
+                            >
+                              <option value="">{isLoadingEpisodes ? "..." : "All eps"}</option>
+                              {episodes.map((ep) => (
+                                <option key={ep.episodeNumber || ep.episode_number} value={ep.episodeNumber || ep.episode_number}>
+                                  E{ep.episodeNumber || ep.episode_number}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                  
+                  {/* Repeat consumption */}
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      checked={rewatchCount > 1} 
+                      onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} 
+                      data-testid="rewatch-toggle"
+                    />
+                    <span className="text-sm text-gray-600">Repeat?</span>
+                    {rewatchCount > 1 && (
+                      <input
+                        type="number"
+                        min="2"
+                        max="99"
+                        value={rewatchCount}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val));
+                        }}
+                        className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center"
+                        data-testid="rewatch-count-input"
+                      />
+                    )}
+                  </div>
+                  
+                  {/* Review */}
+                  <textarea
+                    value={contentText}
+                    onChange={(e) => setContentText(e.target.value)}
+                    placeholder="Add a review..."
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
+                    rows={2}
+                    data-testid="track-review-input"
+                  />
+                  
+                  {/* Privacy options - combined row */}
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <label className="flex items-center gap-1.5">
+                      <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
+                      Spoilers
+                    </label>
+                    <label className="flex items-center gap-1.5">
+                      <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
+                      Private
+                    </label>
+                  </div>
+                  
+                  {/* Custom lists */}
+                  {userLists.filter((l: any) => !l.is_default).length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase mb-1">Custom list</p>
+                      <select
+                        value={selectedListId}
+                        onChange={(e) => setSelectedListId(e.target.value)}
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
+                      >
+                        <option value={selectedListId}>Default lists only</option>
+                        {userLists.filter((l: any) => !l.is_default).map((list: any) => (
+                          <option key={list.id} value={list.id}>{list.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
