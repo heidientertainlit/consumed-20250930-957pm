@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Play, Zap, CheckCircle, Loader2, ChevronUp } from "lucide-react";
+import { Play, Zap, CheckCircle, Loader2, ChevronUp, ArrowRight, Gamepad2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -193,14 +193,28 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
                 <p className="text-sm text-purple-200 mb-2">{currentQuestion}</p>
               )}
               {hasSubmitted ? (
-                <div className="flex items-center gap-2 p-3 bg-green-500/20 rounded-lg border border-green-500/30">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <div>
-                    <p className="text-green-300 font-medium">Submitted!</p>
-                    {submissionResult?.isCorrect === false && (
-                      <p className="text-xs text-gray-400">Correct: {submissionResult.correctAnswer}</p>
-                    )}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-3 bg-green-500/20 rounded-lg border border-green-500/30">
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                    <div>
+                      <p className="text-green-300 font-medium">
+                        {submissionResult?.isCorrect ? "Correct! 🎉" : "Submitted!"}
+                      </p>
+                      {submissionResult?.isCorrect === false && (
+                        <p className="text-xs text-gray-400">Correct: {submissionResult.correctAnswer}</p>
+                      )}
+                    </div>
                   </div>
+                  <Link href="/play">
+                    <Button 
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                      data-testid="keep-playing-cta"
+                    >
+                      <Gamepad2 className="w-4 h-4 mr-2" />
+                      Keep Playing
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
                 </div>
               ) : (
                 <>
@@ -264,14 +278,28 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
               <p className="text-sm text-purple-100 mb-2 font-medium">{currentQuestion}</p>
             )}
             {hasSubmitted ? (
-              <div className="flex items-center gap-2 p-3 bg-white/20 rounded-lg border border-white/30">
-                <CheckCircle className="w-5 h-5 text-green-300" />
-                <div>
-                  <p className="text-white font-medium">Submitted!</p>
-                  {submissionResult?.isCorrect === false && (
-                    <p className="text-xs text-purple-200">Correct: {submissionResult.correctAnswer}</p>
-                  )}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-3 bg-white/20 rounded-lg border border-white/30">
+                  <CheckCircle className="w-5 h-5 text-green-300" />
+                  <div>
+                    <p className="text-white font-medium">
+                      {submissionResult?.isCorrect ? "Correct! 🎉" : "Submitted!"}
+                    </p>
+                    {submissionResult?.isCorrect === false && (
+                      <p className="text-xs text-purple-200">Correct: {submissionResult.correctAnswer}</p>
+                    )}
+                  </div>
                 </div>
+                <Link href="/play">
+                  <Button 
+                    className="w-full bg-white text-purple-700 hover:bg-purple-100 font-semibold"
+                    data-testid="keep-playing-cta"
+                  >
+                    <Gamepad2 className="w-4 h-4 mr-2" />
+                    Keep Playing
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
               </div>
             ) : (
               <>
