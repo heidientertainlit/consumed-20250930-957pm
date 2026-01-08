@@ -35,7 +35,7 @@ export default function MediaDetail() {
   } : paramsStandard;
   const { session, user } = useAuth();
   const [showRatingModal, setShowRatingModal] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
+  const [showAbout, setShowAbout] = useState(true);
   const [showReviews, setShowReviews] = useState(true);
   const [showConversations, setShowConversations] = useState(true);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
