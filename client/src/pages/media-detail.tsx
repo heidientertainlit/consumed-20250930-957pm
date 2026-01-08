@@ -1125,7 +1125,6 @@ export default function MediaDetail() {
           </div>
 
           {/* Conversations - stacked collapsible */}
-          {conversations.length > 0 && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             <button
               onClick={() => setShowConversations(!showConversations)}
@@ -1142,6 +1141,7 @@ export default function MediaDetail() {
               />
             </button>
             {showConversations && (
+              conversations.length > 0 ? (
             <div className="space-y-4 mt-3">
               {conversations.map((post: any) => (
                 <div key={post.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
@@ -1241,9 +1241,15 @@ export default function MediaDetail() {
                 </div>
               ))}
             </div>
+              ) : (
+                <div className="text-center py-6 mt-3 border border-dashed border-gray-200 rounded-xl">
+                  <MessageCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm mb-1">No conversations yet</p>
+                  <p className="text-gray-400 text-xs">Be the first to start a discussion</p>
+                </div>
+              )
             )}
           </div>
-          )}
         </div>
 
         {/* Content sections */}
