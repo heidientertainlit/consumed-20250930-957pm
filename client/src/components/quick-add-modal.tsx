@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -710,163 +716,134 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                 </div>
               )}
 
-              {/* List selection pill buttons */}
-              <div className="flex flex-wrap gap-2">
-                {(() => {
-                  const systemLists = userLists.filter((list: any) => {
-                    const lower = list.name?.toLowerCase() || '';
-                    return lower.includes('finished') || lower.includes('currently') || 
-                           lower.includes('queue') || lower.includes('want') || 
-                           lower.includes('dnf') || lower.includes('not finish');
-                  });
-                  const customLists = userLists.filter((list: any) => {
-                    const lower = list.name?.toLowerCase() || '';
-                    return !(lower.includes('finished') || lower.includes('currently') || 
-                             lower.includes('queue') || lower.includes('want') || 
-                             lower.includes('dnf') || lower.includes('not finish') ||
-                             lower.includes('favorite'));
-                  });
-                  
-                  const getListButton = (list: any, label: string) => {
-                    const isSelected = selectedListId === list.id;
-                    const lower = list.name?.toLowerCase() || '';
-                    const isDnf = lower.includes('dnf') || lower.includes('not finish');
-                    
-                    return (
+              {/* List selection - horizontal pills with custom list dropdown */}
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { id: 'finished', label: 'Finished' },
+                  { id: 'currently', label: 'Currently' },
+                  { id: 'queue', label: 'Want To' },
+                  { id: 'dnf', label: 'DNF' },
+                ].map((list) => (
+                  <button
+                    key={list.id}
+                    type="button"
+                    onClick={() => {
+                      if (list.id === 'dnf') {
+                        setPendingDnfListId(list.id);
+                        setIsDnfDrawerOpen(true);
+                      } else {
+                        setSelectedListId(selectedListId === list.id ? "" : list.id);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedListId === list.id
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid={`list-pill-${list.id}`}
+                  >
+                    {list.label}
+                  </button>
+                ))}
+                {/* Custom lists dropdown pill */}
+                {userLists.filter((l: any) => !l.is_default).length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                       <button
-                        key={list.id}
                         type="button"
-                        onClick={() => {
-                          if (isDnf) {
-                            setPendingDnfListId(list.id);
-                            setIsDnfDrawerOpen(true);
-                          } else {
-                            setSelectedListId(isSelected ? "" : list.id);
-                          }
-                        }}
-                        className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
-                          isSelected
-                            ? 'bg-purple-600 text-white border-purple-600'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
+                          !['finished', 'currently', 'queue', 'dnf', ''].includes(selectedListId)
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
-                        data-testid={`list-pill-${label.toLowerCase().replace(/\s/g, '-')}`}
+                        data-testid="custom-list-dropdown"
                       >
-                        {label}
+                        {!['finished', 'currently', 'queue', 'dnf', ''].includes(selectedListId) 
+                          ? userLists.find((l: any) => l.id === selectedListId)?.title || userLists.find((l: any) => l.id === selectedListId)?.name || 'Custom'
+                          : 'Custom'
+                        }
+                        <ChevronDown size={14} />
                       </button>
-                    );
-                  };
-
-                  return (
-                    <>
-                      {systemLists.map((list: any) => {
-                        const lower = list.name?.toLowerCase() || '';
-                        let label = list.name;
-                        if (lower.includes('finished')) label = 'Finished';
-                        else if (lower.includes('currently')) label = 'Currently';
-                        else if (lower.includes('queue') || lower.includes('want')) label = 'Want To';
-                        else if (lower.includes('dnf') || lower.includes('not finish')) label = 'DNF';
-                        return getListButton(list, label);
-                      })}
-                      {customLists.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setIsListDrawerOpen(true)}
-                          className={`px-4 py-2 rounded-full border text-sm font-medium transition-colors flex items-center gap-1 ${
-                            customLists.some((l: any) => l.id === selectedListId)
-                              ? 'bg-purple-600 text-white border-purple-600'
-                              : 'bg-white text-gray-700 border-gray-300 hover:border-purple-400'
-                          }`}
-                          data-testid="list-pill-custom"
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-gray-900 text-white border-gray-800">
+                      {userLists.filter((l: any) => !l.is_default).map((list: any) => (
+                        <DropdownMenuItem
+                          key={list.id}
+                          onClick={() => setSelectedListId(list.id)}
+                          className="cursor-pointer hover:bg-gray-800 focus:bg-gray-800"
                         >
-                          Custom <ChevronDown size={14} />
-                        </button>
-                      )}
-                    </>
-                  );
-                })()}
+                          {list.title || list.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
 
-              {/* More options expandable */}
+              {/* More options toggle */}
               <button
                 type="button"
                 onClick={() => setShowMoreOptions(!showMoreOptions)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 py-1"
                 data-testid="more-options-toggle"
               >
                 <ChevronDown size={14} className={`transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} />
-                More options
+                {showMoreOptions ? 'Less options' : 'More options'}
               </button>
 
+              {/* Collapsible advanced options */}
               {showMoreOptions && (
-                <div className="space-y-4 pl-2 border-l-2 border-gray-100">
-                  {/* Rewatch count */}
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">Which time is this?</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[1, 2, 3, 4, 5].map((count) => (
-                        <button
-                          key={count}
-                          type="button"
-                          onClick={() => setRewatchCount(count)}
-                          className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                            rewatchCount === count
-                              ? 'bg-purple-600 text-white border-purple-600'
-                              : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
-                          }`}
-                          data-testid={`quick-add-rewatch-${count}`}
-                        >
-                          {count === 1 ? '1st' : count === 2 ? '2nd' : count === 3 ? '3rd' : `${count}th`}
-                        </button>
-                      ))}
-                      <input
-                        type="number"
-                        min="6"
-                        max="99"
-                        value={rewatchCount > 5 ? rewatchCount : ''}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value);
-                          if (!isNaN(val) && val >= 6) setRewatchCount(val);
-                          else if (e.target.value === '') setRewatchCount(1);
-                        }}
-                        onFocus={() => { if (rewatchCount <= 5) setRewatchCount(6); }}
-                        placeholder="6+"
-                        className={`w-12 h-8 text-center rounded-lg border text-xs font-medium transition-colors ${
-                          rewatchCount > 5
-                            ? 'bg-purple-600 text-white border-purple-600'
-                            : 'bg-white text-gray-700 border-gray-200 hover:border-purple-400'
-                        }`}
-                        data-testid="quick-add-rewatch-custom"
-                      />
+                <div className="space-y-3 pt-2 border-t border-gray-100">
+                  {/* TV episode picker */}
+                  {selectedMedia?.type === 'tv' && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Episode</p>
+                      <select
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
+                        data-testid="episode-select"
+                      >
+                        <option value="">All seasons</option>
+                      </select>
                     </div>
-                  </div>
-
-                  {/* Add to Rank */}
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">Add to Rank</label>
-                    <button
-                      type="button"
-                      onClick={() => setIsRankDrawerOpen(true)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-left hover:border-purple-300 transition-colors"
-                      data-testid="select-rank-trigger"
-                    >
-                      <span className={selectedRankId && selectedRankId !== "none" ? "text-gray-900" : "text-gray-400"}>
-                        {getSelectedRankName()}
-                      </span>
-                      <ChevronDown size={16} className="text-gray-400" />
-                    </button>
-                  </div>
-
-                  {/* Private mode */}
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="private-mode"
-                      checked={privateMode}
-                      onCheckedChange={(checked) => setPrivateMode(checked as boolean)}
-                      data-testid="checkbox-private-mode"
-                    />
-                    <label htmlFor="private-mode" className="text-sm text-gray-600">
-                      Don't add to feed (keep private)
-                    </label>
+                  )}
+                  
+                  {/* Checkboxes row */}
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="repeat-checkbox"
+                        checked={rewatchCount > 1}
+                        onCheckedChange={(checked) => setRewatchCount(checked ? 2 : 1)}
+                        data-testid="checkbox-repeat"
+                      />
+                      <label htmlFor="repeat-checkbox" className="text-sm text-gray-600">
+                        Repeat?
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="spoilers-checkbox"
+                        checked={containsSpoilers}
+                        onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+                        data-testid="checkbox-spoilers"
+                      />
+                      <label htmlFor="spoilers-checkbox" className="text-sm text-gray-600">
+                        Spoilers
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="private-mode"
+                        checked={privateMode}
+                        onCheckedChange={(checked) => setPrivateMode(checked as boolean)}
+                        data-testid="checkbox-private-mode"
+                      />
+                      <label htmlFor="private-mode" className="text-sm text-gray-600">
+                        Don't post to feed
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}
