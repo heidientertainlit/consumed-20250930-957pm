@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
-import { QuickAddModal } from "@/components/quick-add-modal";
+import ConsumptionTracker from "@/components/consumption-tracker";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
@@ -4679,7 +4679,7 @@ export default function Feed() {
       </div>
 
 
-      <QuickAddModal
+      <ConsumptionTracker
         isOpen={isTrackModalOpen}
         onClose={() => setIsTrackModalOpen(false)}
       />
