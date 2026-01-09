@@ -557,13 +557,13 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             {/* Search input */}
             <div className="p-4 pb-3">
               <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
                   type="text"
                   placeholder="Search for a movie, show, book..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:border-gray-200 focus:ring-0 focus:outline-none outline-none ring-0 shadow-none"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:outline-none"
                   autoFocus
                   data-testid="quick-add-search"
                 />
@@ -635,7 +635,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             <div className="p-4 border-t border-gray-100">
               <Button
                 disabled
-                className="w-full bg-purple-400 text-white opacity-60 cursor-not-allowed"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 opacity-60 cursor-not-allowed"
                 data-testid="quick-add-submit-disabled"
               >
                 Add Media
