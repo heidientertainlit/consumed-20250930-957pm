@@ -528,8 +528,9 @@ export default function ListDetail() {
       {/* Compact Sticky Header */}
       <div className="sticky top-16 z-40 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Row 1: Back arrow + Full name + More menu */}
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-3 flex-1">
               <button
                 onClick={() => setLocation("/collections")}
                 className="p-1.5 text-gray-700 hover:text-black transition-colors"
@@ -538,76 +539,90 @@ export default function ListDetail() {
               >
                 <ArrowLeft size={20} />
               </button>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 truncate">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
-                <p className="text-xs text-gray-500">{listData?.totalItems} items</p>
-              </div>
+              <h1 className="text-xl font-bold text-gray-900">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
             </div>
-
-            <div className="flex items-center gap-2">
-              {/* Privacy badge/toggle - compact */}
-              {!sharedUserId && session ? (
-                <Badge 
-                  onClick={() => {
-                    if (!privacyMutation.isPending && listData) {
-                      privacyMutation.mutate(!listData.isPublic);
-                    }
-                  }}
-                  variant="secondary" 
-                  className="cursor-pointer hover:bg-gray-200 text-xs px-2 py-1"
-                  data-testid="toggle-list-privacy"
-                >
-                  {listData?.isPublic ? (
-                    <><Globe size={12} className="mr-1 text-purple-600" /> Public</>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" className="px-2">
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleShare}>
+                  {copied ? (
+                    <><Check size={14} className="mr-2" /> Copied!</>
                   ) : (
-                    <><Lock size={12} className="mr-1" /> Private</>
+                    <><Share2 size={14} className="mr-2" /> Share List</>
                   )}
-                </Badge>
-              ) : null}
-
-              <Button
-                size="sm"
-                onClick={() => setIsTrackModalOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-xs px-3 py-1.5"
-                data-testid="button-add-item"
-              >
-                <Plus size={14} className="mr-1" />
-                Add
-              </Button>
-
+                </DropdownMenuItem>
+                {!sharedUserId && session && !sharedListData?.is_default && (
+                  <>
+                    <DropdownMenuItem onClick={() => setIsCollaboratorsDialogOpen(true)}>
+                      <Users size={14} className="mr-2" />
+                      Manage Collaborators {collaborators.length > 0 && `(${collaborators.length})`}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleDeleteList}
+                      disabled={deleteListMutation.isPending}
+                      className="text-red-600"
+                    >
+                      <Trash2 size={14} className="mr-2" />
+                      {deleteListMutation.isPending ? 'Deleting...' : 'Delete List'}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
+          {/* Row 2: Item count + Privacy dropdown + Add Items button */}
+          <div className="flex items-center gap-3 pl-10">
+            <span className="text-sm text-gray-500">{listData?.totalItems} items</span>
+            
+            {/* Privacy dropdown pill */}
+            {!sharedUserId && session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="px-2">
-                    <MoreVertical size={16} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={handleShare}>
-                    {copied ? (
-                      <><Check size={14} className="mr-2" /> Copied!</>
+                  <button 
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
+                    data-testid="toggle-list-privacy"
+                  >
+                    {listData?.isPublic ? (
+                      <><Globe size={14} className="text-purple-600" /> Public</>
                     ) : (
-                      <><Share2 size={14} className="mr-2" /> Share List</>
+                      <><Lock size={14} /> Private</>
                     )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-36">
+                  <DropdownMenuItem 
+                    onClick={() => !listData?.isPublic && privacyMutation.mutate(true)}
+                    className={listData?.isPublic ? 'bg-purple-50' : ''}
+                  >
+                    <Globe size={14} className="mr-2 text-purple-600" /> Public
+                    {listData?.isPublic && <Check size={14} className="ml-auto" />}
                   </DropdownMenuItem>
-                  {!sharedUserId && session && !sharedListData?.is_default && (
-                    <>
-                      <DropdownMenuItem onClick={() => setIsCollaboratorsDialogOpen(true)}>
-                        <Users size={14} className="mr-2" />
-                        Manage Collaborators {collaborators.length > 0 && `(${collaborators.length})`}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={handleDeleteList}
-                        disabled={deleteListMutation.isPending}
-                        className="text-red-600"
-                      >
-                        <Trash2 size={14} className="mr-2" />
-                        {deleteListMutation.isPending ? 'Deleting...' : 'Delete List'}
-                      </DropdownMenuItem>
-                    </>
-                  )}
+                  <DropdownMenuItem 
+                    onClick={() => listData?.isPublic && privacyMutation.mutate(false)}
+                    className={!listData?.isPublic ? 'bg-purple-50' : ''}
+                  >
+                    <Lock size={14} className="mr-2" /> Private
+                    {!listData?.isPublic && <Check size={14} className="ml-auto" />}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            ) : null}
+
+            {/* Add Items pill button */}
+            <button
+              onClick={() => setIsTrackModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white transition-colors"
+              data-testid="button-add-item"
+            >
+              <Plus size={14} />
+              Add Items
+            </button>
           </div>
         </div>
       </div>
