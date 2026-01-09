@@ -252,7 +252,6 @@ export default function CollectionsPage() {
       return response.json();
     },
     onSuccess: (data) => {
-      toast({ title: "List created!", description: `"${newListName}" has been created.` });
       const listTitle = newListName.trim();
       setNewListName("");
       setNewListItems([]);
