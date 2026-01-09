@@ -224,16 +224,10 @@ export function DailyChallengeCard() {
         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
-            <Play className="w-5 h-5 text-white fill-white" />
-          </div>
+          <Play className="w-6 h-6 text-purple-400 fill-purple-400" />
           <div className="text-left">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-white">Daily Challenge</span>
-              <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-400">
-                <Trophy className="w-3 h-3 mr-1" />
-                {displayChallenge.points_reward} pts
-              </Badge>
               {alreadyCompleted && (
                 <CheckCircle className="w-4 h-4 text-green-400" />
               )}
@@ -241,12 +235,7 @@ export function DailyChallengeCard() {
             <p className="text-xs text-gray-400 line-clamp-1">{displayChallenge.title}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {displayChallenge.category && (
-            <Badge variant="secondary" className="text-xs">
-              {displayChallenge.category}
-            </Badge>
-          )}
+        <div className="flex items-center">
           {isExpanded ? (
             <ChevronUp className="w-5 h-5 text-gray-400" />
           ) : (
