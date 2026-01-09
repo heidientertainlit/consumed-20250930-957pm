@@ -6,6 +6,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+// Helper function to fetch poster URL from TMDB when not provided
+async function fetchTmdbPosterUrl(externalId: string | null, externalSource: string | null, mediaType?: string): Promise<string | null> {
+  if (!externalId || (externalSource !== 'tmdb' && externalSource !== 'movie' && externalSource !== 'tv')) return null;
+  
+  const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
+  if (!tmdbApiKey) {
+    console.log('TMDB_API_KEY not available for poster fetch');
+    return null;
+  }
+  
+  try {
+    // Determine which endpoint to try first based on mediaType
+    const tryMovie = !mediaType || mediaType === 'movie';
+    const tryTv = !mediaType || mediaType === 'tv';
+    
+    if (tryMovie) {
+      const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.poster_path) {
+          return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+        }
+      }
+    }
+    
+    if (tryTv) {
+      const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.poster_path) {
+          return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching TMDB poster:', error);
+  }
+  
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -291,6 +332,16 @@ serve(async (req) => {
           content = null;
         }
         
+        // Ensure we have a poster URL - fetch from TMDB if missing
+        let finalImageUrl = imageUrl || null;
+        if (!finalImageUrl && externalId && (externalSource === 'tmdb' || !externalSource)) {
+          console.log('No imageUrl provided, fetching from TMDB...');
+          finalImageUrl = await fetchTmdbPosterUrl(externalId, externalSource || 'tmdb', mediaType);
+          if (finalImageUrl) {
+            console.log('Fetched TMDB poster:', finalImageUrl);
+          }
+        }
+        
         // Use admin client to bypass RLS for social post creation (matching add-media-to-list pattern)
         const { error: postError } = await supabaseAdmin
           .from('social_posts')
@@ -302,7 +353,7 @@ serve(async (req) => {
             media_title: title,
             media_type: mediaType,
             media_creator: creator,
-            image_url: imageUrl,
+            image_url: finalImageUrl,
             media_external_id: externalId,
             media_external_source: externalSource,
             rating: rating || null,

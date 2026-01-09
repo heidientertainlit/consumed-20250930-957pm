@@ -6,6 +6,43 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+// Helper function to fetch poster URL from TMDB when not provided
+async function fetchTmdbPosterUrl(externalId: string | null, externalSource: string | null, mediaType?: string): Promise<string | null> {
+  if (!externalId || (externalSource !== 'tmdb' && externalSource !== 'movie' && externalSource !== 'tv')) return null;
+  
+  const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
+  if (!tmdbApiKey) return null;
+  
+  try {
+    const tryMovie = !mediaType || mediaType === 'movie';
+    const tryTv = !mediaType || mediaType === 'tv';
+    
+    if (tryMovie) {
+      const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.poster_path) {
+          return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+        }
+      }
+    }
+    
+    if (tryTv) {
+      const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.poster_path) {
+          return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching TMDB poster:', error);
+  }
+  
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -274,6 +311,16 @@ serve(async (req) => {
         // Otherwise, leave content empty (no "Rated X" text for rating-only posts)
         const postContent = review_content?.trim() || null;
         
+        // Ensure we have a poster URL - fetch from TMDB if missing
+        let finalImageUrl = body.media_image_url || null;
+        if (!finalImageUrl && media_external_id && (media_external_source === 'tmdb' || !media_external_source)) {
+          console.log('No image URL provided for rating, fetching from TMDB...');
+          finalImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source || 'tmdb', media_type);
+          if (finalImageUrl) {
+            console.log('Fetched TMDB poster for rating:', finalImageUrl);
+          }
+        }
+        
         const { error: postError } = await supabase
           .from('social_posts')
           .insert({
@@ -284,7 +331,7 @@ serve(async (req) => {
             media_type: media_type,
             media_external_id: media_external_id,
             media_external_source: media_external_source,
-            image_url: body.media_image_url || null,
+            image_url: finalImageUrl,
             rating: rating,
             visibility: 'public',
             contains_spoilers: contains_spoilers || false
