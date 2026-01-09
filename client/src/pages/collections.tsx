@@ -192,17 +192,22 @@ export default function CollectionsPage() {
       setIsSearchingForList(true);
       try {
         const response = await fetch(
-          `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search?q=${encodeURIComponent(newListSearchQuery)}`,
+          'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
           {
+            method: 'POST',
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
               'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ query: newListSearchQuery.trim() }),
           }
         );
         if (response.ok) {
           const data = await response.json();
+          console.log('Search results:', data);
           setListSearchResults(data.results || []);
+        } else {
+          console.error('Search failed:', response.status);
         }
       } catch (error) {
         console.error('Search error:', error);
