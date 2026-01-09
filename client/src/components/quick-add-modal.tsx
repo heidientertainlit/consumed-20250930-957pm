@@ -26,7 +26,7 @@ import {
   Headphones, 
   Gamepad2,
   Loader2,
-  ChevronLeft,
+  ArrowLeft,
   List,
   Trophy,
   AlertTriangle,
@@ -538,16 +538,16 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   return (
     <>
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="bg-white rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DrawerContent className="bg-white rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col [&>div:first-child]:hidden">
         {stage === "search" ? (
           <>
             {/* Header */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <button onClick={onClose} className="text-gray-600 hover:text-gray-900">
-                  <ChevronLeft size={20} />
+                  <ArrowLeft size={20} />
                 </button>
-                <h2 className="text-lg font-bold text-gray-900">Add</h2>
+                <h2 className="text-lg font-bold text-gray-900">Add Media</h2>
                 <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                   <X size={20} />
                 </button>
@@ -638,7 +638,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                 className="w-full bg-purple-400 text-white opacity-60 cursor-not-allowed"
                 data-testid="quick-add-submit-disabled"
               >
-                Add
+                Add Media
               </Button>
             </div>
           </>
@@ -647,9 +647,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <button onClick={handleBack} className="text-gray-600 hover:text-gray-900">
-                  <ChevronLeft size={20} />
+                  <ArrowLeft size={20} />
                 </button>
-                <h2 className="text-lg font-bold text-gray-900">Add</h2>
+                <h2 className="text-lg font-bold text-gray-900">Add Media</h2>
                 <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                   <X size={20} />
                 </button>
@@ -884,7 +884,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     Adding...
                   </>
                 ) : (
-                  'Add'
+                  'Add Media'
                 )}
               </Button>
             </div>
