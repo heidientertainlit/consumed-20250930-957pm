@@ -526,129 +526,133 @@ export default function ListDetail() {
       <Navigation onTrackConsumption={() => {}} />
 
       {/* Compact Sticky Header */}
-      <div className="sticky top-16 z-40 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 shadow-sm">
+      <div className="sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 py-3">
-          {/* Row 1: Back arrow + Full name + More menu */}
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-3 flex-1">
-              <button
-                onClick={() => setLocation("/collections")}
-                className="p-1.5 text-gray-700 hover:text-black transition-colors"
-                data-testid="button-back"
-                aria-label="Back"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <h1 className="text-xl font-bold text-gray-900">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
+          {/* Row 1: Back arrow + Full name */}
+          <div className="flex items-center gap-3 mb-2">
+            <button
+              onClick={() => setLocation("/collections")}
+              className="p-1 text-gray-500 hover:text-gray-900 transition-colors"
+              data-testid="button-back"
+              aria-label="Back"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
+          </div>
+          
+          {/* Row 2: Controls - aligned under title */}
+          <div className="flex items-center justify-between pl-8">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">{listData?.totalItems} items</span>
+              
+              {/* Privacy dropdown */}
+              {!sharedUserId && session ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button 
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                      data-testid="toggle-list-privacy"
+                    >
+                      {listData?.isPublic ? (
+                        <><Globe size={12} className="text-purple-500" /> Public</>
+                      ) : (
+                        <><Lock size={12} /> Private</>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-32">
+                    <DropdownMenuItem 
+                      onClick={() => !listData?.isPublic && privacyMutation.mutate(true)}
+                      className={listData?.isPublic ? 'bg-purple-50' : ''}
+                    >
+                      <Globe size={12} className="mr-2 text-purple-500" /> Public
+                      {listData?.isPublic && <Check size={12} className="ml-auto" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => listData?.isPublic && privacyMutation.mutate(false)}
+                      className={!listData?.isPublic ? 'bg-purple-50' : ''}
+                    >
+                      <Lock size={12} className="mr-2" /> Private
+                      {!listData?.isPublic && <Check size={12} className="ml-auto" />}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
             </div>
             
-          </div>
-          
-          {/* Row 2: Item count + Privacy dropdown + Add Items button */}
-          <div className="flex items-center gap-3 pl-10">
-            <span className="text-sm text-gray-500">{listData?.totalItems} items</span>
-            
-            {/* Privacy dropdown pill */}
-            {!sharedUserId && session ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button 
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
-                    data-testid="toggle-list-privacy"
-                  >
-                    {listData?.isPublic ? (
-                      <><Globe size={14} className="text-purple-600" /> Public</>
-                    ) : (
-                      <><Lock size={14} /> Private</>
-                    )}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-36">
-                  <DropdownMenuItem 
-                    onClick={() => !listData?.isPublic && privacyMutation.mutate(true)}
-                    className={listData?.isPublic ? 'bg-purple-50' : ''}
-                  >
-                    <Globe size={14} className="mr-2 text-purple-600" /> Public
-                    {listData?.isPublic && <Check size={14} className="ml-auto" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => listData?.isPublic && privacyMutation.mutate(false)}
-                    className={!listData?.isPublic ? 'bg-purple-50' : ''}
-                  >
-                    <Lock size={14} className="mr-2" /> Private
-                    {!listData?.isPublic && <Check size={14} className="ml-auto" />}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : null}
-
-            {/* Add Items pill button */}
-            <button
-              onClick={() => setIsTrackModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white transition-colors"
-              data-testid="button-add-item"
-            >
-              <Plus size={14} />
-              Add Items
-            </button>
-          </div>
-          
-          {/* Row 3: Collaborators, Share, Delete, View toggle */}
-          <div className="flex items-center justify-between gap-3 pl-10 mt-3">
-            <div className="flex items-center gap-2">
-              {/* Manage Collaborators */}
+            {/* Right side actions */}
+            <div className="flex items-center gap-1">
+              {/* View Toggle */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-0.5 mr-2">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  data-testid="view-mode-list"
+                  aria-label="List view"
+                >
+                  <List size={14} />
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  data-testid="view-mode-grid"
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid size={14} />
+                </button>
+              </div>
+              
+              {/* Icon buttons */}
+              <button
+                onClick={handleShare}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                data-testid="button-share-list"
+                aria-label="Share"
+              >
+                {copied ? <Check size={16} className="text-green-500" /> : <Share2 size={16} />}
+              </button>
+              
               {!sharedUserId && session && !sharedListData?.is_default && (
                 <button
                   onClick={() => setIsCollaboratorsDialogOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                   data-testid="button-manage-collaborators"
+                  aria-label="Collaborators"
                 >
-                  <Users size={14} />
-                  Collaborators {collaborators.length > 0 && `(${collaborators.length})`}
+                  <Users size={16} />
                 </button>
               )}
               
-              {/* Share List */}
-              <button
-                onClick={handleShare}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
-                data-testid="button-share-list"
-              >
-                {copied ? <Check size={14} className="text-green-600" /> : <Share2 size={14} />}
-                {copied ? 'Copied!' : 'Share'}
-              </button>
-              
-              {/* Delete List */}
+              {/* More menu for destructive actions */}
               {!sharedUserId && session && !sharedListData?.is_default && (
-                <button
-                  onClick={handleDeleteList}
-                  disabled={deleteListMutation.isPending}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-sm font-medium text-red-600 transition-colors disabled:opacity-50"
-                  data-testid="button-delete-list"
-                >
-                  <Trash2 size={14} />
-                  {deleteListMutation.isPending ? 'Deleting...' : 'Delete'}
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                      <MoreVertical size={16} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem 
+                      onClick={handleDeleteList}
+                      disabled={deleteListMutation.isPending}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 size={14} className="mr-2" />
+                      {deleteListMutation.isPending ? 'Deleting...' : 'Delete List'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
-            </div>
-            
-            {/* View Toggle */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+              
+              {/* Add Items button */}
               <button
-                onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                data-testid="view-mode-list"
-                aria-label="List view"
+                onClick={() => setIsTrackModalOpen(true)}
+                className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-xs font-medium text-white transition-colors"
+                data-testid="button-add-item"
               >
-                <List size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                data-testid="view-mode-grid"
-                aria-label="Grid view"
-              >
-                <LayoutGrid size={16} />
+                <Plus size={14} />
+                Add
               </button>
             </div>
           </div>
