@@ -445,8 +445,7 @@ export default function PlayRanks() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-gray-200">
-                        <SelectItem value="public" className="text-gray-900">Public (anyone can see)</SelectItem>
-                        <SelectItem value="friends" className="text-gray-900">Friends Only</SelectItem>
+                        <SelectItem value="public" className="text-gray-900">Public</SelectItem>
                         <SelectItem value="private" className="text-gray-900">Private</SelectItem>
                       </SelectContent>
                     </Select>

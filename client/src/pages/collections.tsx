@@ -1037,7 +1037,6 @@ export default function CollectionsPage() {
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200">
                 <SelectItem value="private" className="text-gray-900">Private</SelectItem>
-                <SelectItem value="friends" className="text-gray-900">Friends Only</SelectItem>
                 <SelectItem value="public" className="text-gray-900">Public</SelectItem>
               </SelectContent>
             </Select>
