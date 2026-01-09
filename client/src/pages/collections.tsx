@@ -183,7 +183,7 @@ export default function CollectionsPage() {
       if (!session?.access_token || !newListName.trim()) return;
       
       const response = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/manage-user-lists',
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/create-custom-list',
         {
           method: 'POST',
           headers: {
@@ -191,7 +191,6 @@ export default function CollectionsPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            action: 'create',
             title: newListName.trim(),
             visibility: newListVisibility,
           }),
