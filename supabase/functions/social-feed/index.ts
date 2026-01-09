@@ -165,8 +165,48 @@ serve(async (req) => {
 
       console.log('Prediction pools loaded:', predictionPoolMap.size);
 
+      // Helper function to fetch poster URL from TMDB
+      const fetchTmdbPosterUrl = async (externalId: string, mediaType?: string): Promise<string | null> => {
+        const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
+        if (!tmdbApiKey) return null;
+        
+        try {
+          const tryMovie = !mediaType || mediaType === 'movie';
+          const tryTv = !mediaType || mediaType === 'tv';
+          
+          if (tryMovie) {
+            const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.poster_path) {
+                return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+              }
+            }
+          }
+          
+          if (tryTv) {
+            const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.poster_path) {
+                return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching TMDB poster:', error);
+        }
+        
+        return null;
+      };
+
       // Helper function to ensure image URL is present and properly formatted
-      const ensureImageUrl = (imageUrl: string | null, externalId: string | null, externalSource: string | null): string => {
+      const ensureImageUrl = (imageUrl: string | null, externalId: string | null, externalSource: string | null, postId?: string): string => {
+        // First check if we fetched this image from TMDB
+        if (postId && fetchedImages.has(postId)) {
+          return fetchedImages.get(postId)!;
+        }
+        
         if (!imageUrl) return '';
         
         // If it's already a full URL, return as-is
@@ -181,6 +221,44 @@ serve(async (req) => {
         
         return imageUrl;
       };
+      
+      // Fetch missing poster URLs for posts that have external_id but no image
+      const postsNeedingImages = posts?.filter(p => 
+        !p.image_url && p.media_external_id && 
+        (p.media_external_source === 'tmdb' || !p.media_external_source)
+      ) || [];
+      
+      const fetchedImages = new Map<string, string>();
+      if (postsNeedingImages.length > 0) {
+        console.log('Fetching missing poster images for', postsNeedingImages.length, 'posts');
+        
+        // Fetch in parallel (limit to 5 concurrent to avoid rate limits)
+        const batchSize = 5;
+        for (let i = 0; i < postsNeedingImages.length; i += batchSize) {
+          const batch = postsNeedingImages.slice(i, i + batchSize);
+          const results = await Promise.all(
+            batch.map(async (post) => {
+              const posterUrl = await fetchTmdbPosterUrl(post.media_external_id, post.media_type);
+              if (posterUrl) {
+                // Also update the database so future requests don't need to fetch
+                await supabaseAdmin
+                  .from('social_posts')
+                  .update({ image_url: posterUrl })
+                  .eq('id', post.id);
+              }
+              return { postId: post.id, posterUrl };
+            })
+          );
+          
+          results.forEach(({ postId, posterUrl }) => {
+            if (posterUrl) {
+              fetchedImages.set(postId, posterUrl);
+            }
+          });
+        }
+        
+        console.log('Fetched', fetchedImages.size, 'missing poster images');
+      }
 
       // Create mapping from pool_id to media data from associated social_posts
       // Fall back to prediction_pools.media_title if social_posts.media_title is null or matches question
@@ -212,7 +290,7 @@ serve(async (req) => {
             mediaType: post.media_type,
             externalId: post.media_external_id || pool?.media_external_id,
             externalSource: post.media_external_source || pool?.media_external_source,
-            imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source),
+            imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source, post.id),
             creator: post.media_creator
           });
         }
@@ -671,7 +749,7 @@ serve(async (req) => {
               title: post.media_title || '',
               creator: post.media_creator || '',
               mediaType: post.media_type || 'unknown',
-              imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source),
+              imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source, post.id),
               rating: post.rating,
               externalId: post.media_external_id || '',
               externalSource: post.media_external_source || ''
@@ -729,7 +807,7 @@ serve(async (req) => {
               title: firstPost.media_title || '',
               creator: firstPost.media_creator || '',
               mediaType: firstPost.media_type || 'unknown',
-              imageUrl: ensureImageUrl(firstPost.image_url, firstPost.media_external_id, firstPost.media_external_source),
+              imageUrl: ensureImageUrl(firstPost.image_url, firstPost.media_external_id, firstPost.media_external_source, firstPost.id),
               externalId: firstPost.media_external_id || '',
               externalSource: firstPost.media_external_source || ''
             }],
@@ -822,7 +900,7 @@ serve(async (req) => {
             title: post.media_title,
             creator: post.media_creator || '',
             mediaType: post.media_type || '',
-            imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source),
+            imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source, post.id),
             rating: post.rating,
             externalId: post.media_external_id || '',
             externalSource: post.media_external_source || '',
