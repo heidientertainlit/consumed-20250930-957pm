@@ -165,12 +165,50 @@ serve(async (req) => {
 
       console.log('Prediction pools loaded:', predictionPoolMap.size);
 
-      // Helper function to fetch poster URL from TMDB
-      const fetchTmdbPosterUrl = async (externalId: string, mediaType?: string): Promise<string | null> => {
-        const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
-        if (!tmdbApiKey) return null;
-        
+      // Helper function to fetch poster URL from various sources based on media type
+      const fetchPosterUrl = async (externalId: string, mediaType?: string, externalSource?: string, mediaTitle?: string): Promise<string | null> => {
         try {
+          // For books - try Google Books first, then Open Library
+          if (mediaType === 'book' || externalSource === 'google_books' || externalSource === 'openlibrary') {
+            // If we have a Google Books ID
+            if (externalSource === 'google_books' && externalId) {
+              const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+              const url = googleBooksApiKey 
+                ? `https://www.googleapis.com/books/v1/volumes/${externalId}?key=${googleBooksApiKey}`
+                : `https://www.googleapis.com/books/v1/volumes/${externalId}`;
+              const response = await fetch(url);
+              if (response.ok) {
+                const data = await response.json();
+                if (data.volumeInfo?.imageLinks?.thumbnail) {
+                  return data.volumeInfo.imageLinks.thumbnail.replace('http://', 'https://');
+                }
+              }
+            }
+            
+            // If we have an Open Library ID or need to search by title
+            if (externalSource === 'openlibrary' && externalId) {
+              return `https://covers.openlibrary.org/b/olid/${externalId}-M.jpg`;
+            }
+            
+            // Fallback: search by title
+            if (mediaTitle) {
+              const searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(mediaTitle)}&maxResults=1`;
+              const response = await fetch(searchUrl);
+              if (response.ok) {
+                const data = await response.json();
+                if (data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail) {
+                  return data.items[0].volumeInfo.imageLinks.thumbnail.replace('http://', 'https://');
+                }
+              }
+            }
+            
+            return null;
+          }
+          
+          // For movies/TV - use TMDB
+          const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
+          if (!tmdbApiKey) return null;
+          
           const tryMovie = !mediaType || mediaType === 'movie';
           const tryTv = !mediaType || mediaType === 'tv';
           
@@ -194,7 +232,7 @@ serve(async (req) => {
             }
           }
         } catch (error) {
-          console.error('Error fetching TMDB poster:', error);
+          console.error('Error fetching poster:', error);
         }
         
         return null;
@@ -222,10 +260,9 @@ serve(async (req) => {
         return imageUrl;
       };
       
-      // Fetch missing poster URLs for posts that have external_id but no image
+      // Fetch missing poster URLs for posts that have external_id or title but no image
       const postsNeedingImages = posts?.filter(p => 
-        !p.image_url && p.media_external_id && 
-        (p.media_external_source === 'tmdb' || !p.media_external_source)
+        !p.image_url && (p.media_external_id || p.media_title)
       ) || [];
       
       const fetchedImages = new Map<string, string>();
@@ -238,7 +275,7 @@ serve(async (req) => {
           const batch = postsNeedingImages.slice(i, i + batchSize);
           const results = await Promise.all(
             batch.map(async (post) => {
-              const posterUrl = await fetchTmdbPosterUrl(post.media_external_id, post.media_type);
+              const posterUrl = await fetchPosterUrl(post.media_external_id, post.media_type, post.media_external_source, post.media_title);
               if (posterUrl) {
                 // Also update the database so future requests don't need to fetch
                 await supabaseAdmin
