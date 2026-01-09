@@ -528,66 +528,61 @@ export default function ListDetail() {
       {/* Compact Sticky Header */}
       <div className="sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 py-3">
-          {/* Row 1: Back arrow + Full name */}
-          <div className="flex items-center gap-3 mb-2">
+          {/* Row 1: Back arrow + Full name + Add button */}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <button
+                onClick={() => setLocation("/collections")}
+                className="p-1 text-gray-500 hover:text-gray-900 transition-colors flex-shrink-0"
+                data-testid="button-back"
+                aria-label="Back"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h1 className="text-lg font-semibold text-gray-900 truncate">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
+            </div>
             <button
-              onClick={() => setLocation("/collections")}
-              className="p-1 text-gray-500 hover:text-gray-900 transition-colors"
-              data-testid="button-back"
-              aria-label="Back"
+              onClick={() => setIsTrackModalOpen(true)}
+              className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-xs font-medium text-white transition-colors"
+              data-testid="button-add-item"
             >
-              <ArrowLeft size={20} />
+              <Plus size={14} />
+              Add
             </button>
-            <h1 className="text-xl font-semibold text-gray-900">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
           </div>
           
-          {/* Row 2: Controls - aligned under title */}
-          <div className="flex items-center justify-between pl-8">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">{listData?.totalItems} items</span>
-              
-              {/* Privacy dropdown */}
+          {/* Row 2: Meta info + actions */}
+          <div className="flex items-center justify-between pl-7">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span>{listData?.totalItems} items</span>
+              <span className="text-gray-300">·</span>
+              {/* Privacy toggle */}
               {!sharedUserId && session ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button 
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-                      data-testid="toggle-list-privacy"
-                    >
-                      {listData?.isPublic ? (
-                        <><Globe size={12} className="text-purple-500" /> Public</>
-                      ) : (
-                        <><Lock size={12} /> Private</>
-                      )}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-32">
-                    <DropdownMenuItem 
-                      onClick={() => !listData?.isPublic && privacyMutation.mutate(true)}
-                      className={listData?.isPublic ? 'bg-purple-50' : ''}
-                    >
-                      <Globe size={12} className="mr-2 text-purple-500" /> Public
-                      {listData?.isPublic && <Check size={12} className="ml-auto" />}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => listData?.isPublic && privacyMutation.mutate(false)}
-                      className={!listData?.isPublic ? 'bg-purple-50' : ''}
-                    >
-                      <Lock size={12} className="mr-2" /> Private
-                      {!listData?.isPublic && <Check size={12} className="ml-auto" />}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : null}
+                <button 
+                  onClick={() => listData && privacyMutation.mutate(!listData.isPublic)}
+                  className="inline-flex items-center gap-1 hover:text-gray-700 transition-colors"
+                  data-testid="toggle-list-privacy"
+                >
+                  {listData?.isPublic ? (
+                    <><Globe size={12} className="text-purple-500" /> Public</>
+                  ) : (
+                    <><Lock size={12} /> Private</>
+                  )}
+                </button>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <Globe size={12} /> Public
+                </span>
+              )}
             </div>
             
             {/* Right side actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               {/* View Toggle */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-0.5 mr-2">
+              <div className="flex items-center bg-gray-100 rounded p-0.5 mr-1">
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`p-1 rounded transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400'}`}
                   data-testid="view-mode-list"
                   aria-label="List view"
                 >
@@ -595,7 +590,7 @@ export default function ListDetail() {
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`p-1 rounded transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400'}`}
                   data-testid="view-mode-grid"
                   aria-label="Grid view"
                 >
@@ -603,10 +598,9 @@ export default function ListDetail() {
                 </button>
               </div>
               
-              {/* Icon buttons */}
               <button
                 onClick={handleShare}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors"
                 data-testid="button-share-list"
                 aria-label="Share"
               >
@@ -614,46 +608,34 @@ export default function ListDetail() {
               </button>
               
               {!sharedUserId && session && !sharedListData?.is_default && (
-                <button
-                  onClick={() => setIsCollaboratorsDialogOpen(true)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                  data-testid="button-manage-collaborators"
-                  aria-label="Collaborators"
-                >
-                  <Users size={16} />
-                </button>
+                <>
+                  <button
+                    onClick={() => setIsCollaboratorsDialogOpen(true)}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                    data-testid="button-manage-collaborators"
+                    aria-label="Collaborators"
+                  >
+                    <Users size={16} />
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors">
+                        <MoreVertical size={16} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36">
+                      <DropdownMenuItem 
+                        onClick={handleDeleteList}
+                        disabled={deleteListMutation.isPending}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 size={14} className="mr-2" />
+                        {deleteListMutation.isPending ? 'Deleting...' : 'Delete'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               )}
-              
-              {/* More menu for destructive actions */}
-              {!sharedUserId && session && !sharedListData?.is_default && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-                      <MoreVertical size={16} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem 
-                      onClick={handleDeleteList}
-                      disabled={deleteListMutation.isPending}
-                      className="text-red-600 focus:text-red-600"
-                    >
-                      <Trash2 size={14} className="mr-2" />
-                      {deleteListMutation.isPending ? 'Deleting...' : 'Delete List'}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              
-              {/* Add Items button */}
-              <button
-                onClick={() => setIsTrackModalOpen(true)}
-                className="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-xs font-medium text-white transition-colors"
-                data-testid="button-add-item"
-              >
-                <Plus size={14} />
-                Add
-              </button>
             </div>
           </div>
         </div>
