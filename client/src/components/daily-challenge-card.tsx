@@ -156,8 +156,42 @@ export function DailyChallengeCard() {
     }
   });
 
+  const fallbackChallenge: DailyChallenge = {
+    id: 'fallback-daily',
+    scheduled_date: new Date().toISOString().split('T')[0],
+    challenge_type: 'trivia',
+    title: 'Which streaming service originally aired Squid Game?',
+    description: 'Test your entertainment knowledge!',
+    options: ['Netflix', 'Amazon Prime', 'Hulu', 'Disney+'],
+    correct_answer: 'Netflix',
+    points_reward: 10,
+    category: 'TV',
+    icon: '🎬',
+    status: 'active'
+  };
+
+  const displayChallenge = challenge || fallbackChallenge;
+  const isFallback = !challenge;
+
   const handleSubmit = () => {
-    if (challenge?.challenge_type === 'custom') {
+    if (isFallback) {
+      const isCorrect = selectedOption === fallbackChallenge.correct_answer;
+      setHasSubmitted(true);
+      if (isCorrect) {
+        toast({
+          title: "Correct! 🎉",
+          description: `You earned ${fallbackChallenge.points_reward} points!`
+        });
+      } else {
+        toast({
+          title: "Not quite!",
+          description: `The correct answer was: ${fallbackChallenge.correct_answer}`
+        });
+      }
+      return;
+    }
+    
+    if (displayChallenge.challenge_type === 'custom') {
       if (!customResponse.trim()) return;
       submitMutation.mutate({ text: customResponse });
     } else {
@@ -176,10 +210,6 @@ export function DailyChallengeCard() {
     );
   }
 
-  if (!challenge) {
-    return null;
-  }
-
   const alreadyCompleted = !!existingResponse || hasSubmitted;
 
   return (
@@ -189,31 +219,31 @@ export function DailyChallengeCard() {
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{challenge.icon}</span>
+          <span className="text-2xl">{displayChallenge.icon}</span>
           <div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-purple-300">Daily Challenge</span>
               <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-400">
                 <Trophy className="w-3 h-3 mr-1" />
-                {challenge.points_reward} pts
+                {displayChallenge.points_reward} pts
               </Badge>
             </div>
             <div className="flex items-center gap-1 text-xs text-gray-400">
               <Calendar className="w-3 h-3" />
-              {new Date(challenge.scheduled_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              {new Date(displayChallenge.scheduled_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </div>
           </div>
         </div>
-        {challenge.category && (
+        {displayChallenge.category && (
           <Badge variant="secondary" className="text-xs">
-            {challenge.category}
+            {displayChallenge.category}
           </Badge>
         )}
       </div>
 
-      <h3 className="text-lg font-bold text-white mb-2">{challenge.title}</h3>
-      {challenge.description && (
-        <p className="text-sm text-gray-300 mb-4">{challenge.description}</p>
+      <h3 className="text-lg font-bold text-white mb-2">{displayChallenge.title}</h3>
+      {displayChallenge.description && (
+        <p className="text-sm text-gray-300 mb-4">{displayChallenge.description}</p>
       )}
 
       {alreadyCompleted ? (
@@ -230,7 +260,7 @@ export function DailyChallengeCard() {
         </div>
       ) : (
         <>
-          {challenge.challenge_type === 'custom' ? (
+          {displayChallenge.challenge_type === 'custom' ? (
             <div className="space-y-3">
               <Textarea
                 value={customResponse}
@@ -252,9 +282,9 @@ export function DailyChallengeCard() {
                 Submit Response
               </Button>
             </div>
-          ) : challenge.options ? (
+          ) : displayChallenge.options ? (
             <div className="space-y-2">
-              {challenge.options.map((option, idx) => (
+              {displayChallenge.options.map((option, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedOption(option)}
