@@ -253,7 +253,7 @@ export default function CollectionsPage() {
     },
     onSuccess: (data) => {
       toast({ title: "List created!", description: `"${newListName}" has been created.` });
-      const listName = newListName;
+      const listTitle = newListName.trim();
       setNewListName("");
       setNewListItems([]);
       setNewListSearchQuery("");
@@ -261,9 +261,10 @@ export default function CollectionsPage() {
       setIsCreateListOpen(false);
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
-      // Navigate to the new list
-      if (data?.list?.id) {
-        setLocation(`/list/${data.list.id}`);
+      // Navigate to the new list using slug format
+      if (listTitle) {
+        const slug = listTitle.toLowerCase().replace(/\s+/g, '-');
+        setLocation(`/list/${encodeURIComponent(slug)}`);
       }
     },
     onError: () => {
@@ -1178,6 +1179,7 @@ export default function CollectionsPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
                           <p className="text-xs text-gray-500 capitalize">{result.type} {result.year ? `• ${result.year}` : ''}</p>
+                          {result.creator && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
                         </div>
                         {isAdded && <Check size={16} className="text-green-600" />}
                       </button>
