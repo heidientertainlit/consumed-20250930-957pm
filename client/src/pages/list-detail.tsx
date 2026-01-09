@@ -542,38 +542,6 @@ export default function ListDetail() {
               <h1 className="text-xl font-bold text-gray-900">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
             </div>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline" className="px-2">
-                  <MoreVertical size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleShare}>
-                  {copied ? (
-                    <><Check size={14} className="mr-2" /> Copied!</>
-                  ) : (
-                    <><Share2 size={14} className="mr-2" /> Share List</>
-                  )}
-                </DropdownMenuItem>
-                {!sharedUserId && session && !sharedListData?.is_default && (
-                  <>
-                    <DropdownMenuItem onClick={() => setIsCollaboratorsDialogOpen(true)}>
-                      <Users size={14} className="mr-2" />
-                      Manage Collaborators {collaborators.length > 0 && `(${collaborators.length})`}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={handleDeleteList}
-                      disabled={deleteListMutation.isPending}
-                      className="text-red-600"
-                    >
-                      <Trash2 size={14} className="mr-2" />
-                      {deleteListMutation.isPending ? 'Deleting...' : 'Delete List'}
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
           
           {/* Row 2: Item count + Privacy dropdown + Add Items button */}
@@ -623,6 +591,66 @@ export default function ListDetail() {
               <Plus size={14} />
               Add Items
             </button>
+          </div>
+          
+          {/* Row 3: Collaborators, Share, Delete, View toggle */}
+          <div className="flex items-center justify-between gap-3 pl-10 mt-3">
+            <div className="flex items-center gap-2">
+              {/* Manage Collaborators */}
+              {!sharedUserId && session && !sharedListData?.is_default && (
+                <button
+                  onClick={() => setIsCollaboratorsDialogOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
+                  data-testid="button-manage-collaborators"
+                >
+                  <Users size={14} />
+                  Collaborators {collaborators.length > 0 && `(${collaborators.length})`}
+                </button>
+              )}
+              
+              {/* Share List */}
+              <button
+                onClick={handleShare}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
+                data-testid="button-share-list"
+              >
+                {copied ? <Check size={14} className="text-green-600" /> : <Share2 size={14} />}
+                {copied ? 'Copied!' : 'Share'}
+              </button>
+              
+              {/* Delete List */}
+              {!sharedUserId && session && !sharedListData?.is_default && (
+                <button
+                  onClick={handleDeleteList}
+                  disabled={deleteListMutation.isPending}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-sm font-medium text-red-600 transition-colors disabled:opacity-50"
+                  data-testid="button-delete-list"
+                >
+                  <Trash2 size={14} />
+                  {deleteListMutation.isPending ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
+            </div>
+            
+            {/* View Toggle */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                data-testid="view-mode-list"
+                aria-label="List view"
+              >
+                <List size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+                data-testid="view-mode-grid"
+                aria-label="Grid view"
+              >
+                <LayoutGrid size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
