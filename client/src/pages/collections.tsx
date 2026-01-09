@@ -62,7 +62,11 @@ export default function CollectionsPage() {
   // Lists state
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [newListName, setNewListName] = useState("");
-  const [newListVisibility, setNewListVisibility] = useState("private");
+  const [newListVisibility, setNewListVisibility] = useState("public");
+  const [newListItems, setNewListItems] = useState<any[]>([]);
+  const [newListSearchQuery, setNewListSearchQuery] = useState("");
+  const [isSearchingForList, setIsSearchingForList] = useState(false);
+  const [listSearchResults, setListSearchResults] = useState<any[]>([]);
   const [listSearch, setListSearch] = useState("");
   
   
@@ -177,6 +181,40 @@ export default function CollectionsPage() {
   const userListsMetadata = listsMetadata?.lists || [];
   const userListsFull = listsData?.lists || [];
 
+  // Search for media to add to new list
+  useEffect(() => {
+    const searchMedia = async () => {
+      if (!newListSearchQuery.trim() || !session?.access_token) {
+        setListSearchResults([]);
+        return;
+      }
+      
+      setIsSearchingForList(true);
+      try {
+        const response = await fetch(
+          `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search?q=${encodeURIComponent(newListSearchQuery)}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setListSearchResults(data.results || []);
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsSearchingForList(false);
+      }
+    };
+    
+    const debounce = setTimeout(searchMedia, 300);
+    return () => clearTimeout(debounce);
+  }, [newListSearchQuery, session?.access_token]);
+
   // Create list mutation
   const createListMutation = useMutation({
     mutationFn: async () => {
@@ -193,6 +231,14 @@ export default function CollectionsPage() {
           body: JSON.stringify({
             title: newListName.trim(),
             visibility: newListVisibility,
+            items: newListItems.map(item => ({
+              title: item.title,
+              mediaType: item.type || item.media_type,
+              creator: item.creator,
+              imageUrl: item.poster_url || item.image_url,
+              externalId: item.external_id,
+              externalSource: item.external_source,
+            })),
           }),
         }
       );
@@ -200,12 +246,20 @@ export default function CollectionsPage() {
       if (!response.ok) throw new Error('Failed to create list');
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({ title: "List created!", description: `"${newListName}" has been created.` });
+      const listName = newListName;
       setNewListName("");
+      setNewListItems([]);
+      setNewListSearchQuery("");
+      setListSearchResults([]);
       setIsCreateListOpen(false);
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
+      // Navigate to the new list
+      if (data?.list?.id) {
+        setLocation(`/list/${data.list.id}`);
+      }
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to create list", variant: "destructive" });
@@ -1017,12 +1071,19 @@ export default function CollectionsPage() {
       </Sheet>
 
       {/* Create List Dialog */}
-      <Dialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen}>
-        <DialogContent className="bg-white">
+      <Dialog open={isCreateListOpen} onOpenChange={(open) => {
+        setIsCreateListOpen(open);
+        if (!open) {
+          setNewListItems([]);
+          setNewListSearchQuery("");
+          setListSearchResults([]);
+        }
+      }}>
+        <DialogContent className="bg-white max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Create New List</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-4 flex-1 overflow-y-auto">
             <Input
               placeholder="List name"
               value={newListName}
@@ -1035,10 +1096,92 @@ export default function CollectionsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200">
-                <SelectItem value="private" className="text-gray-900">Private</SelectItem>
                 <SelectItem value="public" className="text-gray-900">Public</SelectItem>
+                <SelectItem value="private" className="text-gray-900">Private</SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Added items */}
+            {newListItems.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">{newListItems.length} item{newListItems.length !== 1 ? 's' : ''} added</p>
+                <div className="flex flex-wrap gap-2">
+                  {newListItems.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-purple-50 rounded-full px-3 py-1.5">
+                      <span className="text-sm text-gray-900 truncate max-w-[150px]">{item.title}</span>
+                      <button
+                        onClick={() => setNewListItems(prev => prev.filter((_, i) => i !== idx))}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Search to add items */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">Add media to list</p>
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search movies, shows, books..."
+                  value={newListSearchQuery}
+                  onChange={(e) => setNewListSearchQuery(e.target.value)}
+                  className="pl-9 bg-white text-gray-900 border-gray-300"
+                  data-testid="input-list-search"
+                />
+              </div>
+              
+              {/* Search results */}
+              {isSearchingForList ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="animate-spin text-purple-600" size={20} />
+                </div>
+              ) : listSearchResults.length > 0 ? (
+                <div className="max-h-48 overflow-y-auto space-y-1 border border-gray-200 rounded-lg">
+                  {listSearchResults.slice(0, 5).map((result, idx) => {
+                    const isAdded = newListItems.some(item => 
+                      item.external_id === result.external_id && item.external_source === result.external_source
+                    );
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          if (!isAdded) {
+                            setNewListItems(prev => [...prev, result]);
+                            setNewListSearchQuery("");
+                            setListSearchResults([]);
+                          }
+                        }}
+                        disabled={isAdded}
+                        className={`w-full flex items-center gap-3 p-2 hover:bg-gray-50 transition-colors text-left ${isAdded ? 'opacity-50' : ''}`}
+                      >
+                        {result.poster_url || result.image_url ? (
+                          <img
+                            src={result.poster_url || result.image_url}
+                            alt={result.title}
+                            className="w-8 h-12 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-8 h-12 bg-gray-100 rounded flex items-center justify-center">
+                            <Film size={16} className="text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
+                          <p className="text-xs text-gray-500 capitalize">{result.type} {result.year ? `• ${result.year}` : ''}</p>
+                        </div>
+                        {isAdded && <Check size={16} className="text-green-600" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+            
             <Button 
               className="w-full bg-purple-600 hover:bg-purple-700"
               onClick={() => createListMutation.mutate()}
