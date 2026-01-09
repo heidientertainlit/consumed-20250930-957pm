@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
-import { Calendar, Trophy, CheckCircle, Loader2, Send } from 'lucide-react';
+import { Calendar, Trophy, CheckCircle, Loader2, Send, Play, ChevronDown, ChevronUp } from 'lucide-react';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -40,6 +40,7 @@ export function DailyChallengeCard() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [customResponse, setCustomResponse] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { data: challenge, isLoading: challengeLoading } = useQuery({
     queryKey: ['daily-challenge'],
@@ -214,104 +215,127 @@ export function DailyChallengeCard() {
 
   return (
     <Card 
-      className="p-4 bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-purple-500/30 overflow-hidden"
+      className="bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-purple-500/30 overflow-hidden"
       data-testid="daily-challenge-card"
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{displayChallenge.icon}</span>
-          <div>
+      {/* Collapsed Header - Always visible */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
+            <Play className="w-5 h-5 text-white fill-white" />
+          </div>
+          <div className="text-left">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-purple-300">Daily Challenge</span>
+              <span className="text-sm font-semibold text-white">Daily Challenge</span>
               <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-400">
                 <Trophy className="w-3 h-3 mr-1" />
                 {displayChallenge.points_reward} pts
               </Badge>
+              {alreadyCompleted && (
+                <CheckCircle className="w-4 h-4 text-green-400" />
+              )}
             </div>
-            <div className="flex items-center gap-1 text-xs text-gray-400">
-              <Calendar className="w-3 h-3" />
-              {new Date(displayChallenge.scheduled_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-            </div>
+            <p className="text-xs text-gray-400 line-clamp-1">{displayChallenge.title}</p>
           </div>
         </div>
-        {displayChallenge.category && (
-          <Badge variant="secondary" className="text-xs">
-            {displayChallenge.category}
-          </Badge>
-        )}
-      </div>
-
-      <h3 className="text-lg font-bold text-white mb-2">{displayChallenge.title}</h3>
-      {displayChallenge.description && (
-        <p className="text-sm text-gray-300 mb-4">{displayChallenge.description}</p>
-      )}
-
-      {alreadyCompleted ? (
-        <div className="flex items-center gap-2 p-3 bg-green-500/20 rounded-lg border border-green-500/30">
-          <CheckCircle className="w-5 h-5 text-green-400" />
-          <div>
-            <p className="text-green-300 font-medium">Challenge Complete!</p>
-            {existingResponse && (
-              <p className="text-xs text-green-400/70">
-                You earned {existingResponse.points_earned} points
-              </p>
-            )}
-          </div>
+        <div className="flex items-center gap-2">
+          {displayChallenge.category && (
+            <Badge variant="secondary" className="text-xs">
+              {displayChallenge.category}
+            </Badge>
+          )}
+          {isExpanded ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
         </div>
-      ) : (
-        <>
-          {displayChallenge.challenge_type === 'custom' ? (
-            <div className="space-y-3">
-              <Textarea
-                value={customResponse}
-                onChange={(e) => setCustomResponse(e.target.value)}
-                placeholder="Share your answer..."
-                className="min-h-[80px] bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-              />
-              <Button
-                onClick={handleSubmit}
-                disabled={!customResponse.trim() || submitMutation.isPending}
-                className="w-full bg-purple-600 hover:bg-purple-700"
-                data-testid="submit-custom-challenge"
-              >
-                {submitMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Send className="w-4 h-4 mr-2" />
+      </button>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="px-4 pb-4 pt-0 border-t border-purple-500/20">
+          <div className="flex items-center gap-1 text-xs text-gray-400 mt-3 mb-3">
+            <Calendar className="w-3 h-3" />
+            {new Date(displayChallenge.scheduled_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          </div>
+          
+          <h3 className="text-lg font-bold text-white mb-2">{displayChallenge.title}</h3>
+          {displayChallenge.description && (
+            <p className="text-sm text-gray-300 mb-4">{displayChallenge.description}</p>
+          )}
+
+          {alreadyCompleted ? (
+            <div className="flex items-center gap-2 p-3 bg-green-500/20 rounded-lg border border-green-500/30">
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              <div>
+                <p className="text-green-300 font-medium">Challenge Complete!</p>
+                {existingResponse && (
+                  <p className="text-xs text-green-400/70">
+                    You earned {existingResponse.points_earned} points
+                  </p>
                 )}
-                Submit Response
-              </Button>
+              </div>
             </div>
-          ) : displayChallenge.options ? (
-            <div className="space-y-2">
-              {displayChallenge.options.map((option, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedOption(option)}
-                  className={`w-full p-3 rounded-lg text-left transition-all ${
-                    selectedOption === option
-                      ? 'bg-purple-600 text-white border-2 border-purple-400'
-                      : 'bg-white/10 text-gray-200 border-2 border-transparent hover:bg-white/20'
-                  }`}
-                  data-testid={`challenge-option-${idx}`}
-                >
-                  {option}
-                </button>
-              ))}
-              <Button
-                onClick={handleSubmit}
-                disabled={!selectedOption || submitMutation.isPending}
-                className="w-full mt-3 bg-purple-600 hover:bg-purple-700"
-                data-testid="submit-challenge"
-              >
-                {submitMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
-                Submit Answer
-              </Button>
-            </div>
-          ) : null}
-        </>
+          ) : (
+            <>
+              {displayChallenge.challenge_type === 'custom' ? (
+                <div className="space-y-3">
+                  <Textarea
+                    value={customResponse}
+                    onChange={(e) => setCustomResponse(e.target.value)}
+                    placeholder="Share your answer..."
+                    className="min-h-[80px] bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  />
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!customResponse.trim() || submitMutation.isPending}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    data-testid="submit-custom-challenge"
+                  >
+                    {submitMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Send className="w-4 h-4 mr-2" />
+                    )}
+                    Submit Response
+                  </Button>
+                </div>
+              ) : displayChallenge.options ? (
+                <div className="space-y-2">
+                  {displayChallenge.options.map((option, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedOption(option)}
+                      className={`w-full p-3 rounded-lg text-left transition-all ${
+                        selectedOption === option
+                          ? 'bg-purple-600 text-white border-2 border-purple-400'
+                          : 'bg-white/10 text-gray-200 border-2 border-transparent hover:bg-white/20'
+                      }`}
+                      data-testid={`challenge-option-${idx}`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!selectedOption || submitMutation.isPending}
+                    className="w-full mt-3 bg-purple-600 hover:bg-purple-700"
+                    data-testid="submit-challenge"
+                  >
+                    {submitMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    Submit Answer
+                  </Button>
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
       )}
     </Card>
   );
