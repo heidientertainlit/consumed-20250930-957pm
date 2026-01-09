@@ -193,7 +193,7 @@ export default function LoginPage() {
             Where entertainment<br />comes together
           </h1>
           <p className="text-gray-300 text-xs max-w-xs mx-auto">
-            Play, react, and keep up<br />with what you (and your friends) love.
+            Play, react, and keep up<br />with what you love.
           </p>
         </div>
         

@@ -2606,7 +2606,7 @@ export default function Feed() {
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
               Where entertainment<br />comes together
             </h1>
-            <p className="text-gray-400 text-sm mt-2 max-w-[260px] mx-auto">Play, react, and keep up<br />with what you (and your friends) love.</p>
+            <p className="text-gray-400 text-sm mt-2 max-w-[260px] mx-auto">Play, react, and keep up<br />with what you love.</p>
           </div>
           <FeedHero variant="header" />
           
