@@ -65,15 +65,10 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   // Determine if challenge is completed (either from DB or just submitted)
   const hasCompleted = !!existingSubmission || justSubmitted;
 
-  // Return null if no challenge is scheduled for today
-  if (!dailyChallengeData) {
-    return null;
-  }
-
   const dailyChallenge = dailyChallengeData;
 
   // Parse options - handle both simple strings and nested trivia format
-  const rawOptions = Array.isArray(dailyChallenge.options) ? dailyChallenge.options : [];
+  const rawOptions = dailyChallenge ? (Array.isArray(dailyChallenge.options) ? dailyChallenge.options : []) : [];
   
   // Check if this is a multi-question trivia (nested format)
   const isNestedTrivia = rawOptions.length > 0 && 
@@ -83,12 +78,12 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
   // For nested trivia, use the first question's options
   // For simple format, use options directly
   let options: string[] = [];
-  let currentQuestion = dailyChallenge.title;
-  let correctAnswer = dailyChallenge.correct_answer;
+  let currentQuestion = dailyChallenge?.title || '';
+  let correctAnswer = dailyChallenge?.correct_answer;
   
   if (isNestedTrivia) {
     const firstQ = rawOptions[0];
-    currentQuestion = firstQ.question || dailyChallenge.title;
+    currentQuestion = firstQ.question || dailyChallenge?.title || '';
     options = Array.isArray(firstQ.options) ? firstQ.options : [];
     correctAnswer = firstQ.answer || firstQ.correct;
   } else {
@@ -148,7 +143,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
       
-      if (dailyChallenge.type === 'trivia') {
+      if (dailyChallenge?.type === 'trivia') {
         if (result.isCorrect) {
           toast({
             title: "Correct! 🎉",
@@ -178,6 +173,11 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
       });
     }
   });
+
+  // Return null if no challenge is scheduled for today (after all hooks)
+  if (!dailyChallengeData) {
+    return null;
+  }
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.preventDefault();
