@@ -211,7 +211,7 @@ interface LeaderboardEntry {
   detail?: string;
 }
 
-export default function PlayPage() {
+export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' | 'predictions' | 'trivia' | 'hot_takes' }) {
   const [, setLocation] = useLocation();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
@@ -229,7 +229,7 @@ export default function PlayPage() {
   const [leaderboardActiveTab, setLeaderboardActiveTab] = useState<string>('engagement');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [topTab, setTopTab] = useState<'play' | 'leaderboard'>('play');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'polls' | 'predictions' | 'trivia' | 'hot_takes'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'polls' | 'predictions' | 'trivia' | 'hot_takes'>(initialTab || 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
 
@@ -340,7 +340,6 @@ export default function PlayPage() {
     setIsTrackModalOpen(true);
   };
 
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
   const [selectedPredictionGame, setSelectedPredictionGame] = useState<any>(null);
 
