@@ -799,10 +799,10 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
                       </div>
                       <h3 className="font-semibold text-gray-900 mb-3">{game.title}</h3>
                       
-                      {userPredictionsData.predictions[game.id] ? (
+                      {userPredictionsData?.predictions?.[game.id] ? (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
                           <div className="text-green-800 font-medium text-sm">✓ Voted</div>
-                          <div className="text-green-700 text-xs">"{userPredictionsData.predictions[game.id]}"</div>
+                          <div className="text-green-700 text-xs">"{userPredictionsData?.predictions?.[game.id]}"</div>
                         </div>
                       ) : (
                         <>
@@ -870,10 +870,10 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
                       </div>
                       <h3 className="font-semibold text-gray-900 mb-3">{game.title}</h3>
                       
-                      {userPredictionsData.predictions[game.id] ? (
+                      {userPredictionsData?.predictions?.[game.id] ? (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
                           <div className="text-green-800 font-medium text-sm">✓ Predicted</div>
-                          <div className="text-green-700 text-xs">"{userPredictionsData.predictions[game.id]}"</div>
+                          <div className="text-green-700 text-xs">"{userPredictionsData?.predictions?.[game.id]}"</div>
                         </div>
                       ) : (
                         <Button
@@ -966,8 +966,22 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
         <TriviaGameModal
           poolId={selectedTriviaGame.id}
           title={selectedTriviaGame.title}
-          questions={selectedTriviaGame.options}
-          pointsReward={selectedTriviaGame.points}
+          questions={
+            Array.isArray(selectedTriviaGame.options) && selectedTriviaGame.options.length > 0
+              ? typeof selectedTriviaGame.options[0] === 'string'
+                ? [{ 
+                    question: selectedTriviaGame.title || 'Trivia Question', 
+                    options: selectedTriviaGame.options as string[], 
+                    correct: selectedTriviaGame.correct_answer || selectedTriviaGame.answer || selectedTriviaGame.options[0] || '' 
+                  }]
+                : selectedTriviaGame.options.map((q: any) => ({
+                    question: q.question || q.text || 'Question',
+                    options: Array.isArray(q.options) ? q.options : [],
+                    correct: q.correct || q.answer || ''
+                  }))
+              : [{ question: selectedTriviaGame.title || 'Trivia', options: [], correct: '' }]
+          }
+          pointsReward={selectedTriviaGame.points || 15}
           isOpen={!!selectedTriviaGame}
           onClose={() => {
             setSelectedTriviaGame(null);

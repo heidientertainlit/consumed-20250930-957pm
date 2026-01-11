@@ -137,16 +137,30 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
     }
   });
 
+  // Normalize questions to handle various data formats - ensure at least 1 question with at least 1 option
+  const fallbackQuestion = { question: title || 'Trivia Question', options: ['No options available'], correct: '' };
+  const safeQuestions = questions && questions.length > 0 
+    ? questions.map(q => ({
+        question: q?.question || title || 'Question',
+        options: Array.isArray(q?.options) && q.options.length > 0 ? q.options : ['No options'],
+        correct: q?.correct || (q as any)?.answer || ''
+      }))
+    : [fallbackQuestion];
+  const questionsCount = Math.max(1, safeQuestions.length);
+  const progress = ((currentQuestion + 1) / questionsCount) * 100;
+  const currentQ = safeQuestions[currentQuestion] || fallbackQuestion;
+  const pointsPerQuestion = Math.floor(pointsReward / questionsCount);
+
   // Helper to get correct answer (database uses 'answer', interface expects 'correct')
   const getCorrectAnswer = (question: any): string => {
-    return question.correct || question.answer || '';
+    return question?.correct || question?.answer || '';
   };
 
   const handleNext = () => {
     if (!selectedAnswer) return;
 
     // Handle both 'correct' and 'answer' field names (database uses 'answer')
-    const correctAnswer = getCorrectAnswer(questions[currentQuestion]);
+    const correctAnswer = getCorrectAnswer(safeQuestions[currentQuestion]);
     const isCorrect = selectedAnswer === correctAnswer;
     const newAnswers = [...userAnswers, selectedAnswer];
     setUserAnswers(newAnswers);
@@ -155,14 +169,13 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
       setScore(score + 1);
     }
 
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < safeQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer("");
     } else {
       // Game complete
       setIsComplete(true);
       const finalScore = isCorrect ? score + 1 : score;
-      const pointsPerQuestion = Math.floor(pointsReward / questions.length);
       const totalPointsEarned = finalScore * pointsPerQuestion;
       
       submitPrediction.mutate({
@@ -182,7 +195,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
       } else {
         toast({
           title: "Trivia Complete!",
-          description: `You scored ${finalScore}/${questions.length} correct.`,
+          description: `You scored ${finalScore}/${safeQuestions.length} correct.`,
         });
       }
     }
@@ -195,11 +208,6 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
     setScore(0);
     setIsComplete(false);
   };
-
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
-  const currentQ = questions[currentQuestion];
-
-  const pointsPerQuestion = Math.floor(pointsReward / questions.length);
   const totalPointsEarned = score * pointsPerQuestion;
 
   if (isComplete) {
@@ -216,7 +224,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
 
             <div className="text-center py-6">
               <div className="text-5xl font-bold text-purple-600 mb-3">
-                {score}/{questions.length}
+                {score}/{safeQuestions.length}
               </div>
               <div className="text-xl text-gray-700 mb-2">
                 {score} Correct × {pointsPerQuestion} pts each
@@ -230,7 +238,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
               <Button
                 variant="outline"
                 className={`w-full max-w-xs border-purple-500 ${hasSharedToFeed ? 'bg-green-50 text-green-700 border-green-500' : 'text-purple-700 hover:bg-purple-50'}`}
-                onClick={() => shareToFeed.mutate({ title, score, total: questions.length, points: totalPointsEarned })}
+                onClick={() => shareToFeed.mutate({ title, score, total: safeQuestions.length, points: totalPointsEarned })}
                 disabled={hasSharedToFeed || shareToFeed.isPending}
                 data-testid="button-share-to-feed"
               >
@@ -284,7 +292,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
             <DialogTitle className="text-lg font-bold text-gray-900">{title}</DialogTitle>
             <div className="flex items-center justify-between mt-3">
               <Badge variant="outline" className="text-xs text-gray-900 border-gray-300">
-                Question {currentQuestion + 1} of {questions.length}
+                Question {currentQuestion + 1} of {safeQuestions.length}
               </Badge>
               <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs">
                 Score: {score}/{currentQuestion}
@@ -299,7 +307,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
             </div>
 
             <div className="space-y-2">
-              {currentQ.options.map((option, index) => (
+              {(currentQ.options || []).map((option, index) => (
                 <button
                   key={`${currentQuestion}-${index}`}
                   onClick={() => setSelectedAnswer(option)}
@@ -312,6 +320,9 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
                   <div className="font-medium">{option}</div>
                 </button>
               ))}
+              {(!currentQ.options || currentQ.options.length === 0) && (
+                <p className="text-gray-500 text-center py-4">No answer options available</p>
+              )}
             </div>
           </div>
 
@@ -322,7 +333,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
               disabled={!selectedAnswer}
               onClick={handleNext}
             >
-              {currentQuestion < questions.length - 1 ? 'Next Question' : 'Finish'}
+              {currentQuestion < safeQuestions.length - 1 ? 'Next Question' : 'Finish'}
             </Button>
           </div>
         </DialogContent>
