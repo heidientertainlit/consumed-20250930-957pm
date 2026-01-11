@@ -2627,13 +2627,16 @@ export default function Feed() {
   });
 
   // Suggested quick adds - personalized from recommendations or trending
+  // TODO: Add friend-activity sourcing as top priority (requires new backend query)
+  // Priority should be: 1. Friends' recent activity → 2. DNA recommendations → 3. Trending content
   const suggestedQuickAdds = useMemo(() => {
-    // Priority 1: Use personalized recommendations if available
+    // Priority 1 (future): Source from friends' recent tracked items
+    // Priority 2: Use personalized DNA recommendations if available
     if (recommendedContent && recommendedContent.length >= 2) {
       const startIdx = (suggestedRotation * 2) % Math.max(recommendedContent.length - 1, 1);
       return recommendedContent.slice(startIdx, startIdx + 2);
     }
-    // Priority 2: Mix trending TV and books
+    // Priority 3: Mix trending TV and books
     const allTrending = [...(trendingTVShows || []), ...(bestsellerBooks || [])];
     if (allTrending.length >= 2) {
       const startIdx = (suggestedRotation * 2) % Math.max(allTrending.length - 1, 1);
