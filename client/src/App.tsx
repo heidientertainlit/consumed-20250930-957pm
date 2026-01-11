@@ -31,6 +31,7 @@ import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
+import BlendedFeed from "@/pages/blended-feed";
 import FriendsUpdates from "@/pages/friendsupdates";
 import Search from "@/pages/search";
 import Conversations from "@/pages/conversations";
@@ -114,6 +115,11 @@ function Router() {
         <Route path="/quick-log">
           <ProtectedRoute>
             <QuickLog />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/blended">
+          <ProtectedRoute>
+            <BlendedFeed />
           </ProtectedRoute>
         </Route>
         <Route path="/track">
