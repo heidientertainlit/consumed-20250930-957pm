@@ -526,20 +526,34 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
       .slice(0, 3);
   }, [userPredictionsList]);
 
-  // Get trivia games for "Trivia Challenges"
+  // Helper function to sort games: unplayed first, played at bottom
+  const sortByPlayedStatus = (games: any[]) => {
+    return [...games].sort((a: any, b: any) => {
+      const aPlayed = !!allPredictions[a.id];
+      const bPlayed = !!allPredictions[b.id];
+      if (aPlayed && !bPlayed) return 1;
+      if (!aPlayed && bPlayed) return -1;
+      return 0;
+    });
+  };
+
+  // Get trivia games for "Trivia Challenges" - unplayed first
   const triviaGames = useMemo(() => {
-    return allGames.filter((game: any) => game.type === 'trivia').slice(0, 5);
-  }, [allGames]);
+    const filtered = allGames.filter((game: any) => game.type === 'trivia');
+    return sortByPlayedStatus(filtered).slice(0, 5);
+  }, [allGames, allPredictions]);
 
-  // Get polls for carousel
+  // Get polls for carousel - unplayed first
   const pollGames = useMemo(() => {
-    return allGames.filter((game: any) => game.type === 'vote').slice(0, 5);
-  }, [allGames]);
+    const filtered = allGames.filter((game: any) => game.type === 'vote');
+    return sortByPlayedStatus(filtered).slice(0, 5);
+  }, [allGames, allPredictions]);
 
-  // Get predictions for carousel
+  // Get predictions for carousel - unplayed first
   const predictionGames = useMemo(() => {
-    return allGames.filter((game: any) => game.type === 'predict').slice(0, 5);
-  }, [allGames]);
+    const filtered = allGames.filter((game: any) => game.type === 'predict');
+    return sortByPlayedStatus(filtered).slice(0, 5);
+  }, [allGames, allPredictions]);
 
   // Extract total consumption leaders array from leaderboard data (API returns object with categories)
   const totalConsumptionLeaders = leaderboardData?.categories?.total_consumption || [];
