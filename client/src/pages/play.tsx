@@ -227,6 +227,7 @@ export default function PlayPage() {
   const [leaderboardActiveTab, setLeaderboardActiveTab] = useState<string>('engagement');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [topTab, setTopTab] = useState<'play' | 'leaderboard'>('play');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'polls' | 'predictions' | 'trivia' | 'hot_takes'>('all');
 
   const toggleExpanded = (categoryName: string) => {
     setExpandedCategories(prev => {
@@ -686,9 +687,6 @@ export default function PlayPage() {
       </div>
     );
   }
-
-  // Filter state for play types
-  const [activeFilter, setActiveFilter] = useState<'all' | 'polls' | 'predictions' | 'trivia' | 'hot_takes'>('all');
 
   return (
     <div className="min-h-screen bg-white pb-20">
