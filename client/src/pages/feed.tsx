@@ -2659,8 +2659,16 @@ export default function Feed() {
         <div className="max-w-4xl mx-auto px-4 pt-10">
           <div className="text-center mb-6">
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight leading-snug">
-              What are you watching, reading,<br />listening to, or playing?
+              What are you
             </h1>
+            <div className="h-10 overflow-hidden relative">
+              <div className="animate-scroll-words">
+                <span className="block h-10 leading-10 text-2xl md:text-3xl font-bold text-purple-400">watching?</span>
+                <span className="block h-10 leading-10 text-2xl md:text-3xl font-bold text-blue-400">reading?</span>
+                <span className="block h-10 leading-10 text-2xl md:text-3xl font-bold text-green-400">listening to?</span>
+                <span className="block h-10 leading-10 text-2xl md:text-3xl font-bold text-orange-400">playing?</span>
+              </div>
+            </div>
             <p className="text-gray-400 text-sm mt-3">Track it. Share it. Play with it.</p>
           </div>
           
