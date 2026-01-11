@@ -2608,6 +2608,14 @@ export default function Feed() {
             </h1>
             <p className="text-gray-400 text-sm mt-2 max-w-[260px] mx-auto">Play, react, and keep up<br />with what you love.</p>
           </div>
+          <div className="flex justify-center mb-6">
+            <Link href="/quick-log">
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 rounded-2xl px-8 h-14 text-lg font-bold shadow-lg shadow-purple-500/20 flex items-center gap-2">
+                <Plus className="w-6 h-6" />
+                Quick Log Media
+              </Button>
+            </Link>
+          </div>
           {/* Daily Challenge */}
           <div className="mt-4">
             <DailyChallengeCard />
