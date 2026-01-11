@@ -687,35 +687,64 @@ export default function PlayPage() {
     );
   }
 
+  // Filter state for play types
+  const [activeFilter, setActiveFilter] = useState<'all' | 'polls' | 'predictions' | 'trivia' | 'hot_takes'>('all');
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
-      {/* Minimal Header */}
-      <div className="bg-white border-b border-gray-100 px-4 pt-4 pb-3 -mt-px">
+      {/* Hero Section with Purple Gradient */}
+      <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a1a2e] to-[#2d1f4e] px-4 pt-4 pb-6 -mt-px">
         <div className="max-w-4xl mx-auto">
           {/* Page Title */}
-          <h1 className="text-2xl font-bold text-gray-900">Play</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Play</h1>
+          <p className="text-gray-400 text-sm mb-6">Compete, predict, and prove your expertise</p>
+          
+          {/* Daily Challenge inside hero */}
+          <DailyChallengeCard />
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6">
-        <div className="space-y-8">
-            {/* Create Button - Minimal */}
-            <button
-              onClick={() => setIsQuickActionOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl text-white font-medium transition-all"
-              data-testid="create-play-button"
-            >
-              <Edit3 size={18} />
-              Create Poll, Hot Take, or Ask for Recs
-            </button>
+        {/* Create Play Button - Dark gradient pill */}
+        <button
+          onClick={() => setIsQuickActionOpen(true)}
+          className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#0a0a0f] via-[#1a1a2e] to-[#7c3aed] hover:opacity-90 rounded-full text-white font-medium transition-all mb-6"
+          data-testid="create-play-button"
+        >
+          <Edit3 size={18} />
+          Create Play
+        </button>
 
-            {/* Daily Challenge */}
-            <DailyChallengeCard />
+        {/* Minimal Filter Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'polls', label: 'Polls' },
+            { key: 'predictions', label: 'Predictions' },
+            { key: 'trivia', label: 'Trivia' },
+            { key: 'hot_takes', label: 'Hot Takes' },
+          ].map((filter) => (
+            <button
+              key={filter.key}
+              onClick={() => setActiveFilter(filter.key as any)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                activeFilter === filter.key
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              data-testid={`filter-${filter.key}`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-8">
 
             {/* Polls Carousel */}
-            {pollGames.length > 0 && (
+            {pollGames.length > 0 && (activeFilter === 'all' || activeFilter === 'polls') && (
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-semibold text-gray-900">Polls</h2>
@@ -743,7 +772,7 @@ export default function PlayPage() {
             )}
 
             {/* Predictions Carousel */}
-            {predictionGames.length > 0 && (
+            {predictionGames.length > 0 && (activeFilter === 'all' || activeFilter === 'predictions') && (
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-semibold text-gray-900">Predictions</h2>
@@ -771,7 +800,7 @@ export default function PlayPage() {
             )}
 
             {/* Trivia Carousel */}
-            {triviaGames.length > 0 && (
+            {triviaGames.length > 0 && (activeFilter === 'all' || activeFilter === 'trivia') && (
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-semibold text-gray-900">Trivia</h2>
