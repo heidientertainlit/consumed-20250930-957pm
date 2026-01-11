@@ -45,7 +45,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   
-  // Set preselected media and auto-select track action when provided
+  // Set preselected media but show action choices instead of jumping to track
   useEffect(() => {
     if (isOpen && preselectedMedia) {
       setSelectedMedia({
@@ -56,9 +56,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         external_source: preselectedMedia.externalSource,
         creator: preselectedMedia.creator,
       });
-      setSelectedIntent("capture");
-      setSelectedAction("track");
-      setAddToList(true);
+      // Don't auto-select action - let user choose what to do with this media
+      setSelectedIntent(null);
+      setSelectedAction(null);
     }
   }, [isOpen, preselectedMedia]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -266,7 +266,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   };
 
   const handleBack = () => {
-    if (selectedAction && selectedIntent === "play") {
+    if (selectedAction && selectedMedia && preselectedMedia) {
+      // Go back to action choices when we came from header search
+      setSelectedAction(null);
+      setSelectedIntent(null);
+    } else if (selectedAction && selectedIntent === "play") {
       setSelectedAction(null);
     } else if (selectedIntent) {
       setSelectedIntent(null);
@@ -496,7 +500,70 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     { id: "challenge" as ActionType, label: "Challenge", icon: Swords, iconColor: "text-pink-500", bgColor: "bg-pink-50", desc: "Challenge a friend" },
   ];
 
+  const mediaActions = [
+    { id: "track" as ActionType, intent: "capture" as IntentType, label: "Add to List", icon: Plus, iconColor: "text-purple-500", bgColor: "bg-purple-50", desc: "Track, rate, or review" },
+    { id: "post" as ActionType, intent: "say" as IntentType, label: "Post", icon: MessageSquare, iconColor: "text-blue-500", bgColor: "bg-blue-50", desc: "Share a thought" },
+    { id: "hot_take" as ActionType, intent: "say" as IntentType, label: "Hot Take", icon: Flame, iconColor: "text-orange-500", bgColor: "bg-orange-50", desc: "Drop a spicy opinion 🔥" },
+    { id: "poll" as ActionType, intent: "play" as IntentType, label: "Create Poll", icon: Vote, iconColor: "text-indigo-500", bgColor: "bg-indigo-50", desc: "Ask your friends" },
+  ];
+
   const renderActionContent = () => {
+    // Show action choices when media is selected but no action chosen yet
+    if (selectedMedia && !selectedAction) {
+      return (
+        <div className="space-y-4">
+          {/* Selected media card */}
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+            {(selectedMedia.image || selectedMedia.image_url) ? (
+              <img 
+                src={selectedMedia.image || selectedMedia.image_url} 
+                alt={selectedMedia.title} 
+                className="w-12 h-16 object-cover rounded-lg shadow-sm" 
+              />
+            ) : (
+              <div className="w-12 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                <Star className="w-5 h-5 text-gray-400" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-gray-900 truncate">{selectedMedia.title}</p>
+              <p className="text-xs text-gray-500 uppercase">{selectedMedia.type} {selectedMedia.year && `• ${selectedMedia.year}`}</p>
+            </div>
+            <button 
+              onClick={() => setSelectedMedia(null)} 
+              className="p-1.5 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              <X size={16} className="text-gray-400" />
+            </button>
+          </div>
+          
+          {/* Action choices */}
+          <div>
+            <p className="text-sm font-medium text-gray-600 mb-3">What do you want to do?</p>
+            <div className="grid grid-cols-2 gap-3">
+              {mediaActions.map((action) => (
+                <button
+                  key={action.id}
+                  onClick={() => {
+                    setSelectedIntent(action.intent);
+                    setSelectedAction(action.id);
+                    if (action.id === "hot_take") {
+                      setSayMode("hot_take");
+                    }
+                  }}
+                  className={`p-4 rounded-xl ${action.bgColor} hover:opacity-90 transition-all text-left border border-gray-100`}
+                >
+                  <action.icon className={`w-6 h-6 ${action.iconColor} mb-2`} />
+                  <p className="font-semibold text-gray-900 text-sm">{action.label}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{action.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
     if (selectedAction === "track") {
       return (
         <div className="space-y-4">
