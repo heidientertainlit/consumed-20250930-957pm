@@ -49,13 +49,13 @@ export default function QuickLog() {
     : mockResults;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e]">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-white/10">
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] border-b border-white/10">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <button 
             onClick={() => setLocation('/')}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-300 hover:text-white transition-colors"
           >
             Cancel
           </button>
@@ -69,27 +69,34 @@ export default function QuickLog() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
-        {/* Main Question */}
-        <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2 leading-tight">
-          What are you watching /<br />reading / listening to?
-        </h1>
-        <p className="text-gray-500 text-center text-sm mb-8">Track it. Share it. Play with it.</p>
+      {/* Dark Header Section */}
+      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] px-4 pt-6 pb-8">
+        <div className="max-w-lg mx-auto">
+          {/* Main Question */}
+          <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2 leading-tight">
+            What are you watching /<br />reading / listening to?
+          </h1>
+          <p className="text-gray-500 text-center text-sm mb-6">Track it. Share it. Play with it.</p>
 
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
-          <Input 
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search movies, shows, books, music..." 
-            className="w-full h-14 pl-12 pr-4 bg-white/10 border-white/20 text-white placeholder:text-gray-500 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg"
-          />
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search movies, shows, books, music..." 
+              className="w-full h-14 pl-12 pr-4 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg"
+            />
+          </div>
         </div>
+      </div>
+
+      {/* White Content Section */}
+      <div className="max-w-lg mx-auto px-4 py-6 -mt-2">
 
         {/* Selected Item */}
         {selectedItem && (
-          <div className="bg-white rounded-2xl p-4 mb-6 shadow-xl">
+          <div className="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-200">
             <div className="flex items-center gap-4">
               <img 
                 src={selectedItem.image} 
@@ -122,15 +129,15 @@ export default function QuickLog() {
               <button
                 key={item.id}
                 onClick={() => setSelectedItem(item)}
-                className="w-full flex items-center gap-4 p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-purple-500/30 text-left"
+                className="w-full flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 text-left"
               >
                 <img 
                   src={item.image} 
                   alt={item.title}
-                  className="w-12 h-16 rounded-xl object-cover"
+                  className="w-12 h-16 rounded-xl object-cover shadow-sm"
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-white">{item.title}</h3>
+                  <h3 className="font-semibold text-gray-900">{item.title}</h3>
                   <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
                     {getTypeIcon(item.type)}
                     <span className="uppercase text-xs">{item.type}</span>
@@ -147,7 +154,7 @@ export default function QuickLog() {
         {selectedItem && (
           <>
             {/* What do you want to say? */}
-            <div className="bg-white rounded-2xl p-4 mb-6 shadow-xl">
+            <div className="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-200">
               <label className="block text-gray-900 font-semibold mb-1">
                 What do you want to say?
               </label>
@@ -161,7 +168,7 @@ export default function QuickLog() {
             </div>
 
             {/* Status Pills */}
-            <div className="bg-white rounded-2xl p-4 shadow-xl">
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                   <span className="text-white text-lg">👤</span>
@@ -203,7 +210,7 @@ export default function QuickLog() {
 
             {/* Points hint */}
             <p className="text-center text-gray-500 text-sm mt-6">
-              Post to earn <span className="text-purple-400 font-semibold">+10 XP</span> and unlock games for this title
+              Post to earn <span className="text-purple-600 font-semibold">+10 XP</span> and unlock games for this title
             </p>
           </>
         )}
