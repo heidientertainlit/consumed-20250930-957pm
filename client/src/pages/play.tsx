@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle, Medal, Award, Globe, TrendingUp, BookOpen, Headphones, Share2, ChevronDown, ChevronUp, Flame, Edit3 } from "lucide-react";
+import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle, Medal, Award, Globe, TrendingUp, BookOpen, Headphones, Share2, ChevronDown, ChevronUp, Flame, Edit3, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { QuickActionSheet } from "@/components/quick-action-sheet";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -228,6 +230,8 @@ export default function PlayPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [topTab, setTopTab] = useState<'play' | 'leaderboard'>('play');
   const [activeFilter, setActiveFilter] = useState<'all' | 'polls' | 'predictions' | 'trivia' | 'hot_takes'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
 
   const toggleExpanded = (categoryName: string) => {
     setExpandedCategories(prev => {
@@ -708,48 +712,249 @@ export default function PlayPage() {
         {/* Create Play Button - Dark gradient pill */}
         <button
           onClick={() => setIsQuickActionOpen(true)}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#0a0a0f] via-[#1a1a2e] to-[#7c3aed] hover:opacity-90 rounded-full text-white font-medium transition-all mb-6"
+          className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-[#0a0a0f] via-[#1a1a2e] to-[#7c3aed] hover:opacity-90 rounded-full text-white font-medium transition-all mb-4"
           data-testid="create-play-button"
         >
           <Edit3 size={18} />
           Create Play
         </button>
 
-        {/* Minimal Filter Tabs */}
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input
+            type="text"
+            placeholder="Search games..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-white border-gray-200 rounded-xl"
+            data-testid="games-search-input"
+          />
+        </div>
+
+        {/* Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
           {[
-            { key: 'all', label: 'All', href: null },
-            { key: 'polls', label: 'Polls', href: '/play/polls' },
-            { key: 'predictions', label: 'Predictions', href: '/play/awards' },
-            { key: 'trivia', label: 'Trivia', href: '/play/trivia' },
-            { key: 'hot_takes', label: 'Hot Takes', href: null },
+            { key: 'all', label: 'All' },
+            { key: 'polls', label: 'Polls' },
+            { key: 'predictions', label: 'Predictions' },
+            { key: 'trivia', label: 'Trivia' },
+            { key: 'hot_takes', label: 'Hot Takes' },
           ].map((filter) => (
-            filter.href ? (
-              <Link
-                key={filter.key}
-                href={filter.href}
-                className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200"
-                data-testid={`filter-${filter.key}`}
-              >
-                {filter.label}
-              </Link>
-            ) : (
-              <button
-                key={filter.key}
-                onClick={() => setActiveFilter(filter.key as any)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeFilter === filter.key
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                data-testid={`filter-${filter.key}`}
-              >
-                {filter.label}
-              </button>
-            )
+            <button
+              key={filter.key}
+              onClick={() => setActiveFilter(filter.key as any)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                activeFilter === filter.key
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              data-testid={`filter-${filter.key}`}
+            >
+              {filter.label}
+            </button>
           ))}
         </div>
 
+        {/* Games Content */}
+        <div className="space-y-4 pb-6">
+          {/* Polls Section */}
+          {(activeFilter === 'all' || activeFilter === 'polls') && pollGames.filter((g: any) => 
+            !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())
+          ).length > 0 && (
+            <div>
+              {activeFilter === 'all' && (
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Polls</h2>
+                  <button 
+                    onClick={() => setActiveFilter('polls')}
+                    className="text-sm text-purple-600 font-medium"
+                  >
+                    See all →
+                  </button>
+                </div>
+              )}
+              <div className="space-y-3">
+                {pollGames
+                  .filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .slice(0, activeFilter === 'all' ? 3 : undefined)
+                  .map((game: any) => (
+                  <Card key={game.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-purple-600 text-white text-[10px] py-0 px-1.5">
+                            {game.points || 10} pts
+                          </Badge>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const url = `${window.location.origin}/play?game=${game.id}`;
+                            navigator.clipboard.writeText(url);
+                            toast({ title: "Link copied!", description: "Share with friends" });
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-gray-100"
+                        >
+                          <UserPlus size={14} className="text-gray-500" />
+                        </button>
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-3">{game.title}</h3>
+                      
+                      {userPredictionsData.predictions[game.id] ? (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                          <div className="text-green-800 font-medium text-sm">✓ Voted</div>
+                          <div className="text-green-700 text-xs">"{userPredictionsData.predictions[game.id]}"</div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex flex-col gap-2 mb-3">
+                            {(game.options || []).slice(0, 4).map((option: any, idx: number) => {
+                              const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => setSelectedAnswers(prev => ({ ...prev, [game.id]: optionText }))}
+                                  className={`w-full px-3 py-2 text-center rounded-full border-2 text-sm font-medium transition-all ${
+                                    selectedAnswers[game.id] === optionText
+                                      ? 'border-purple-500 bg-purple-600 text-white'
+                                      : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+                                  }`}
+                                >
+                                  {optionText}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <Button
+                            onClick={() => handleSubmitAnswer(game)}
+                            disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full"
+                          >
+                            Vote
+                          </Button>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Predictions Section */}
+          {(activeFilter === 'all' || activeFilter === 'predictions') && predictionGames.filter((g: any) => 
+            !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())
+          ).length > 0 && (
+            <div>
+              {activeFilter === 'all' && (
+                <div className="flex items-center justify-between mb-3 mt-6">
+                  <h2 className="text-lg font-semibold text-gray-900">Predictions</h2>
+                  <button 
+                    onClick={() => setActiveFilter('predictions')}
+                    className="text-sm text-purple-600 font-medium"
+                  >
+                    See all →
+                  </button>
+                </div>
+              )}
+              <div className="space-y-3">
+                {predictionGames
+                  .filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .slice(0, activeFilter === 'all' ? 3 : undefined)
+                  .map((game: any) => (
+                  <Card key={game.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <Badge className="bg-green-600 text-white text-[10px] py-0 px-1.5">
+                          {game.points || 50} pts
+                        </Badge>
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-3">{game.title}</h3>
+                      
+                      {userPredictionsData.predictions[game.id] ? (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                          <div className="text-green-800 font-medium text-sm">✓ Predicted</div>
+                          <div className="text-green-700 text-xs">"{userPredictionsData.predictions[game.id]}"</div>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => setSelectedPredictionGame(game)}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full"
+                        >
+                          Make Prediction
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Trivia Section */}
+          {(activeFilter === 'all' || activeFilter === 'trivia') && triviaGames.filter((g: any) => 
+            !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())
+          ).length > 0 && (
+            <div>
+              {activeFilter === 'all' && (
+                <div className="flex items-center justify-between mb-3 mt-6">
+                  <h2 className="text-lg font-semibold text-gray-900">Trivia</h2>
+                  <button 
+                    onClick={() => setActiveFilter('trivia')}
+                    className="text-sm text-purple-600 font-medium"
+                  >
+                    See all →
+                  </button>
+                </div>
+              )}
+              <div className="space-y-3">
+                {triviaGames
+                  .filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .slice(0, activeFilter === 'all' ? 3 : undefined)
+                  .map((game: any) => (
+                  <Card key={game.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <Badge className="bg-yellow-500 text-white text-[10px] py-0 px-1.5">
+                          {game.points || 15} pts
+                        </Badge>
+                        <Brain size={18} className="text-yellow-500" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-3">{game.title}</h3>
+                      
+                      <Button
+                        onClick={() => setSelectedTriviaGame(game)}
+                        className="w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-full"
+                      >
+                        Play Trivia
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {activeFilter !== 'all' && activeFilter !== 'hot_takes' && (
+            (activeFilter === 'polls' && pollGames.filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0) ||
+            (activeFilter === 'predictions' && predictionGames.filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0) ||
+            (activeFilter === 'trivia' && triviaGames.filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0)
+          ) && (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No {activeFilter} found{searchQuery ? ` for "${searchQuery}"` : ''}</p>
+            </div>
+          )}
+
+          {/* Hot Takes Placeholder */}
+          {activeFilter === 'hot_takes' && (
+            <div className="text-center py-12">
+              <Flame size={48} className="mx-auto mb-3 text-orange-400" />
+              <p className="text-gray-600 font-medium">Hot Takes coming soon!</p>
+              <p className="text-sm text-gray-500">Share your spiciest opinions</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <ConsumptionTracker 
