@@ -676,107 +676,146 @@ export default function PlayPage() {
     );
   }
 
+  // Top-level tab state
+  const [topTab, setTopTab] = useState<'play' | 'leaderboard'>('play');
+  
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
-      {/* Dark Gradient Hero with Pills - matches nav gradient */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-8 -mt-px px-4 pt-6">
+      {/* Dark Gradient Hero */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px px-4 pt-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Play
           </h1>
-          <p className="text-gray-400 text-sm mb-6">
+          <p className="text-gray-400 text-sm mb-4">
             Compete, predict, and earn rewards
           </p>
           
-          {/* Pills inside gradient */}
-          <div className="flex flex-wrap gap-2">
-            <Link href="/play/awards">
-              <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                data-testid="browse-predictions"
-              >
-                Predictions
-              </button>
-            </Link>
-            <Link href="/play/polls">
-              <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                data-testid="browse-polls"
-              >
-                Polls
-              </button>
-            </Link>
-            <Link href="/play/trivia">
-              <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                data-testid="browse-trivia"
-              >
-                Trivia
-              </button>
-            </Link>
-            <Link href="/play/ranks">
-              <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                data-testid="browse-ranks"
-              >
-                Ranks
-              </button>
-            </Link>
-            <Link href="/play/hot-takes">
-              <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                data-testid="browse-hot-takes"
-              >
-                Hot Takes
-              </button>
-            </Link>
-            <Link href="/play/ask-recs">
-              <button
-                className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                data-testid="browse-ask-recs"
-              >
-                Ask for Recs
-              </button>
-            </Link>
+          {/* Top-level Tab Pills */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setTopTab('play')}
+              className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all ${
+                topTab === 'play'
+                  ? 'bg-white text-gray-900'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+              data-testid="tab-play"
+            >
+              <Gamepad2 size={16} className="inline mr-2" />
+              Play
+            </button>
+            <button
+              onClick={() => setTopTab('leaderboard')}
+              className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all ${
+                topTab === 'leaderboard'
+                  ? 'bg-white text-gray-900'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+              data-testid="tab-leaderboard"
+            >
+              <Trophy size={16} className="inline mr-2" />
+              Leaderboard
+            </button>
           </div>
           
-          {/* Create Button */}
-          <button
-            onClick={() => setIsQuickActionOpen(true)}
-            className="mt-6 w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 rounded-2xl text-white font-semibold text-lg shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
-            data-testid="create-play-button"
-          >
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              <Edit3 size={20} />
-            </div>
-            <div className="text-left">
-              <span className="block">Create</span>
-              <span className="text-xs font-normal text-white/80">Poll, Hot Take, Ask for Recs</span>
-            </div>
-          </button>
+          {/* Play Tab Hero Content */}
+          {topTab === 'play' && (
+            <>
+              {/* Pills inside gradient */}
+              <div className="flex flex-wrap gap-2">
+                <Link href="/play/awards">
+                  <button
+                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                    data-testid="browse-predictions"
+                  >
+                    Predictions
+                  </button>
+                </Link>
+                <Link href="/play/polls">
+                  <button
+                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                    data-testid="browse-polls"
+                  >
+                    Polls
+                  </button>
+                </Link>
+                <Link href="/play/trivia">
+                  <button
+                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                    data-testid="browse-trivia"
+                  >
+                    Trivia
+                  </button>
+                </Link>
+                <Link href="/play/ranks">
+                  <button
+                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                    data-testid="browse-ranks"
+                  >
+                    Ranks
+                  </button>
+                </Link>
+                <Link href="/play/hot-takes">
+                  <button
+                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                    data-testid="browse-hot-takes"
+                  >
+                    Hot Takes
+                  </button>
+                </Link>
+                <Link href="/play/ask-recs">
+                  <button
+                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
+                    data-testid="browse-ask-recs"
+                  >
+                    Ask for Recs
+                  </button>
+                </Link>
+              </div>
+              
+              {/* Create Button */}
+              <button
+                onClick={() => setIsQuickActionOpen(true)}
+                className="mt-6 w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 rounded-2xl text-white font-semibold text-lg shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
+                data-testid="create-play-button"
+              >
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <Edit3 size={20} />
+                </div>
+                <div className="text-left">
+                  <span className="block">Create</span>
+                  <span className="text-xs font-normal text-white/80">Poll, Hot Take, Ask for Recs</span>
+                </div>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6">
-        {/* Daily Challenge */}
-        <div className="mb-6">
-          <DailyChallengeCard />
-        </div>
-
-        {/* Leaders Section */}
-        <div className="mb-6">
-          <div className="mb-4 text-center">
-            <h2 className="text-xl font-semibold text-black mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Leaders
-            </h2>
-            <p className="text-sm text-gray-600">
-              Most active fans and top contributors
-            </p>
+        {/* Play Tab Content */}
+        {topTab === 'play' && (
+          <div className="mb-6">
+            <DailyChallengeCard />
           </div>
+        )}
+        
+        {/* Leaderboard Tab Content */}
+        {topTab === 'leaderboard' && (
+          <div className="mb-6">
+            <div className="mb-4 text-center">
+              <h2 className="text-xl font-semibold text-black mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                Leaders
+              </h2>
+              <p className="text-sm text-gray-600">
+                Most active fans and top contributors
+              </p>
+            </div>
 
-          <div className="flex justify-center gap-2 mb-4">
+            <div className="flex justify-center gap-2 mb-4">
             <Button
               size="sm"
               variant={leaderboardScope === 'global' ? 'default' : 'outline'}
@@ -925,7 +964,8 @@ export default function PlayPage() {
               </TabsContent>
             </Tabs>
           )}
-        </div>
+          </div>
+        )}
 
       </div>
 
