@@ -18,7 +18,6 @@ import { PredictionGameModal } from "@/components/prediction-game-modal";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
-import { PlayCreateSection } from "@/components/play-create-section";
 
 // All game data now comes from the database via API
 
@@ -744,9 +743,6 @@ export default function PlayPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6">
-        {/* Create Section - Hot Takes, Polls, etc */}
-        <PlayCreateSection />
-        
         {/* Daily Challenge */}
         <div className="mb-6">
           <DailyChallengeCard />
