@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
@@ -940,6 +940,7 @@ export default function Feed() {
   } | null>(null); // Bet modal state
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+  const [suggestedRotation, setSuggestedRotation] = useState(0);
   const [headerSearchResults, setHeaderSearchResults] = useState<any[]>([]);
   const [isHeaderSearching, setIsHeaderSearching] = useState(false);
   const [showHeaderResults, setShowHeaderResults] = useState(false);
@@ -2625,6 +2626,30 @@ export default function Feed() {
     retry: false,
   });
 
+  // Suggested quick adds - personalized from recommendations or trending
+  const suggestedQuickAdds = useMemo(() => {
+    // Priority 1: Use personalized recommendations if available
+    if (recommendedContent && recommendedContent.length >= 2) {
+      const startIdx = (suggestedRotation * 2) % Math.max(recommendedContent.length - 1, 1);
+      return recommendedContent.slice(startIdx, startIdx + 2);
+    }
+    // Priority 2: Mix trending TV and books
+    const allTrending = [...(trendingTVShows || []), ...(bestsellerBooks || [])];
+    if (allTrending.length >= 2) {
+      const startIdx = (suggestedRotation * 2) % Math.max(allTrending.length - 1, 1);
+      return allTrending.slice(startIdx, startIdx + 2);
+    }
+    return [];
+  }, [recommendedContent, trendingTVShows, bestsellerBooks, suggestedRotation]);
+
+  // Rotate suggestions every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSuggestedRotation(prev => prev + 1);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleMediaClick = (item: any) => {
     console.log("Clicked media item:", item);
     
@@ -2721,6 +2746,53 @@ export default function Feed() {
               </div>
             )}
           </div>
+
+          {/* Suggested Quick Adds */}
+          {suggestedQuickAdds.length >= 2 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide">Quick add</p>
+              <div className="grid grid-cols-2 gap-3">
+                {suggestedQuickAdds.slice(0, 2).map((item: any) => (
+                  <div
+                    key={item.id || item.externalId}
+                    onClick={() => {
+                      setQuickAddMedia({
+                        title: item.title,
+                        type: item.mediaType || item.type || 'movie',
+                        image_url: item.imageUrl || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
+                        external_id: item.externalId || item.id,
+                        external_source: item.externalSource || 'tmdb',
+                        year: item.year || (item.first_air_date ? new Date(item.first_air_date).getFullYear() : null)
+                      });
+                      setIsQuickAddOpen(true);
+                    }}
+                    className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-colors border border-white/10"
+                    data-testid={`quick-add-${item.id || item.externalId}`}
+                  >
+                    {(item.imageUrl || item.poster_path) ? (
+                      <img
+                        src={item.imageUrl || `https://image.tmdb.org/t/p/w200${item.poster_path}`}
+                        alt={item.title}
+                        className="w-12 h-16 rounded-lg object-cover shadow-sm flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-16 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <Film className="w-5 h-5 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-white text-sm truncate">{item.title}</h4>
+                      <p className="text-xs text-gray-400 uppercase flex items-center gap-1">
+                        {item.mediaType === 'tv' ? <Tv2 size={10} /> : item.mediaType === 'book' ? <Book size={10} /> : <Film size={10} />}
+                        <span>{item.mediaType || 'movie'}</span>
+                        {item.year && <span>• {item.year}</span>}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
