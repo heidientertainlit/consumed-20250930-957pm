@@ -741,6 +741,21 @@ export default function PlayPage() {
               </button>
             </Link>
           </div>
+          
+          {/* Create Button */}
+          <button
+            onClick={() => setIsQuickActionOpen(true)}
+            className="mt-6 w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 rounded-2xl text-white font-semibold text-lg shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
+            data-testid="create-play-button"
+          >
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+              <Edit3 size={20} />
+            </div>
+            <div className="text-left">
+              <span className="block">Create</span>
+              <span className="text-xs font-normal text-white/80">Poll, Hot Take, Ask for Recs</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -946,15 +961,6 @@ export default function PlayPage() {
           }}
         />
       )}
-
-      {/* Floating Action Button for Creating */}
-      <button
-        onClick={() => setIsQuickActionOpen(true)}
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
-        data-testid="fab-create"
-      >
-        <Edit3 size={24} />
-      </button>
 
       {/* Quick Action Sheet */}
       <QuickActionSheet
