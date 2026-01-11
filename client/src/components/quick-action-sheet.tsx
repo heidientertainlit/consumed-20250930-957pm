@@ -35,8 +35,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const { session, user } = useAuth();
   const { toast } = useToast();
   
-  const [selectedIntent, setSelectedIntent] = useState<IntentType>(null);
-  const [selectedAction, setSelectedAction] = useState<ActionType>(null);
+  const [selectedIntent, setSelectedIntent] = useState<IntentType>("capture");
+  const [selectedAction, setSelectedAction] = useState<ActionType>("track");
   const [sayMode, setSayMode] = useState<"thought" | "hot_take" | "ask">("thought");
   const [isPosting, setIsPosting] = useState(false);
   
@@ -222,8 +222,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   };
 
   const resetAll = () => {
-    setSelectedIntent(null);
-    setSelectedAction(null);
+    setSelectedIntent("capture");
+    setSelectedAction("track");
     setSayMode("thought");
     setContentText("");
     setContainsSpoilers(false);
@@ -242,7 +242,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     setSelectedEpisode(null);
     setSeasons([]);
     setEpisodes([]);
-    setTrackPostType("thought");
   };
 
   const handleClose = () => {
@@ -290,7 +289,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           return;
         }
         
-        // First track the media
         const trackResponse = await fetch(`${supabaseUrl}/functions/v1/track-media`, {
           method: 'POST',
           headers: {
@@ -308,7 +306,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             },
             listType: selectedListId || 'currently',
             rating: ratingValue > 0 ? ratingValue : undefined,
-            review: trackPostType === 'thought' ? contentText : undefined,
+            review: contentText.trim() || undefined,
             containsSpoilers,
             privateMode,
             rewatchCount: rewatchCount > 1 ? rewatchCount : undefined,
@@ -323,50 +321,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           throw new Error(errorData.error || 'Failed to track media');
         }
         
-        // Also create a hot take or poll if selected
-        if (trackPostType === 'hot_take' && contentText.trim()) {
-          await fetch(`${supabaseUrl}/functions/v1/create-post`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content: contentText,
-              type: 'hot_take',
-              containsSpoilers,
-              mediaId: selectedMedia.external_id,
-              mediaType: selectedMedia.type,
-              mediaTitle: selectedMedia.title,
-              mediaImage: selectedMedia.image || selectedMedia.image_url,
-            }),
-          });
-          toast({ title: `Tracked ${selectedMedia.title} + Hot Take posted! 🔥` });
-        } else if (trackPostType === 'poll' && contentText.trim()) {
-          const validOptions = pollOptions.filter(o => o.trim());
-          if (validOptions.length >= 2) {
-            await fetch(`${supabaseUrl}/functions/v1/create-poll`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                question: contentText,
-                options: validOptions,
-                containsSpoilers,
-                mediaId: selectedMedia.external_id,
-                mediaType: selectedMedia.type,
-                mediaTitle: selectedMedia.title,
-              }),
-            });
-            toast({ title: `Tracked ${selectedMedia.title} + Poll created!` });
-          } else {
-            toast({ title: `Tracked ${selectedMedia.title}!` });
-          }
-        } else {
-          toast({ title: `Tracked ${selectedMedia.title}!` });
-        }
+        toast({ title: `Tracked ${selectedMedia.title}!` });
         
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
@@ -634,92 +589,15 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 )}
               </div>
               
-              {/* Post type toggle - Thought, Hot Take, Poll */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setTrackPostType("thought")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    trackPostType === "thought"
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Thought
-                </button>
-                <button
-                  onClick={() => setTrackPostType("hot_take")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                    trackPostType === "hot_take"
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Flame size={14} className={trackPostType === "hot_take" ? 'text-white' : 'text-orange-500'} />
-                  Hot Take
-                </button>
-                <button
-                  onClick={() => setTrackPostType("poll")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                    trackPostType === "poll"
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Vote size={14} className={trackPostType === "poll" ? 'text-white' : 'text-purple-500'} />
-                  Poll
-                </button>
-              </div>
-              
-              {/* Review/Content - right under post type */}
+              {/* Review text - simple and optional */}
               <textarea
                 value={contentText}
                 onChange={(e) => setContentText(e.target.value)}
-                placeholder={
-                  trackPostType === 'thought' ? "Add a review (optional)..." :
-                  trackPostType === 'hot_take' ? "Drop your hot take... 🔥" :
-                  "Ask a question for your poll..."
-                }
+                placeholder="Add a review (optional)..."
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
                 rows={2}
                 data-testid="track-review-input"
               />
-              
-              {/* Poll options - only show when poll is selected */}
-              {trackPostType === 'poll' && (
-                <div className="space-y-2">
-                  {pollOptions.map((option, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={option}
-                        onChange={(e) => {
-                          const newOptions = [...pollOptions];
-                          newOptions[idx] = e.target.value;
-                          setPollOptions(newOptions);
-                        }}
-                        placeholder={`Option ${idx + 1}`}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                      />
-                      {pollOptions.length > 2 && (
-                        <button
-                          onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
-                          className="p-1 text-gray-400 hover:text-red-500"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {pollOptions.length < 4 && (
-                    <button
-                      onClick={() => setPollOptions([...pollOptions, ""])}
-                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-                    >
-                      + Add option
-                    </button>
-                  )}
-                </div>
-              )}
               
               {/* List selection - horizontal pills with custom list dropdown */}
               <div className="flex flex-wrap items-center gap-2">
@@ -1406,73 +1284,27 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto !bg-white border-t border-gray-100" style={{ backgroundColor: 'white' }}>
-        {!selectedIntent ? (
-          <>
-            <SheetHeader className="pb-4">
-              <SheetTitle className="text-center text-gray-900 text-xl font-semibold">What's on your mind?</SheetTitle>
-            </SheetHeader>
-            
-            <div className="flex flex-col gap-3 pb-6 px-4">
-              {intents.map((intent) => (
-                <button
-                  key={intent.id}
-                  onClick={() => handleIntentSelect(intent.id)}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
-                  data-testid={`intent-${intent.id}`}
-                >
-                  <div className={`w-14 h-14 rounded-xl ${intent.bgColor} flex items-center justify-center shadow-md flex-shrink-0`}>
-                    <intent.icon size={24} className="text-white" />
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-semibold text-gray-900 text-base">{intent.label}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{intent.desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <SheetHeader className="pb-4">
-              <div className="relative flex items-center justify-center">
-                <button onClick={handleBack} className="absolute left-0 p-2 hover:bg-gray-100 rounded-full" data-testid="back-button">
-                  <ArrowLeft size={20} className="text-gray-600" />
-                </button>
-                <SheetTitle className="text-gray-900 text-lg font-semibold">
-                  {getSheetTitle()}
-                </SheetTitle>
-              </div>
-            </SheetHeader>
-            
-            {selectedIntent === "play" && !selectedAction ? (
-              renderPlayHub()
-            ) : selectedIntent === "say" && selectedAction !== "poll" && selectedAction !== "rank" ? (
-              renderSayContent()
-            ) : (
-              renderActionContent()
-            )}
-            
-            {selectedAction && selectedAction !== "challenge" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
-              <div className="pt-4 pb-2">
-                <Button
-                  onClick={handlePost}
-                  disabled={!canPost() || isPosting}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6"
-                  data-testid="submit-action"
-                >
-                  {isPosting ? (
-                    <Loader2 className="animate-spin" size={20} />
-                  ) : (
-                    selectedAction === "track" ? "Add Media" : 
-                    selectedAction === "rank" ? "Add to Rank" : 
-                    sayMode === "hot_take" ? "Drop It 🔥" :
-                    sayMode === "ask" ? "Ask" :
-                    "Share"
-                  )}
-                </Button>
-              </div>
-            )}
-          </>
+        <SheetHeader className="pb-4">
+          <SheetTitle className="text-center text-gray-900 text-xl font-semibold">Add Media</SheetTitle>
+        </SheetHeader>
+        
+        {renderActionContent()}
+        
+        {selectedAction === "track" && (
+          <div className="pt-4 pb-2">
+            <Button
+              onClick={handlePost}
+              disabled={!canPost() || isPosting}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6"
+              data-testid="submit-action"
+            >
+              {isPosting ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                "Add Media"
+              )}
+            </Button>
+          </div>
         )}
       </SheetContent>
     </Sheet>
