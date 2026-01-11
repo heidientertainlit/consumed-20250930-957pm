@@ -46,6 +46,7 @@ import { FriendDNAComparison } from "@/components/friend-dna-comparison";
 import { FriendDNACompareButton } from "@/components/friend-dna-comparison";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { QuickAddModal } from "@/components/quick-add-modal";
 import { supabase } from "@/lib/supabase";
 
 export default function UserProfile() {
@@ -97,6 +98,7 @@ export default function UserProfile() {
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   // Public profile - no restrictions for viewing
   const canViewProfile = true; // Always true for now - will add privacy settings later
@@ -3560,9 +3562,22 @@ export default function UserProfile() {
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               {/* Header */}
-              <h3 className="text-lg font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                {isOwnProfile ? 'Your Library' : `${profileData?.display_name || 'Their'}'s Library`}
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {isOwnProfile ? 'Your Library' : `${profileData?.display_name || 'Their'}'s Library`}
+                </h3>
+                {isOwnProfile && (
+                  <Button
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={() => setIsQuickAddOpen(true)}
+                    data-testid="button-quick-add-library"
+                  >
+                    <Plus size={16} className="mr-1" />
+                    Add
+                  </Button>
+                )}
+              </div>
 
               {/* Lists Content */}
               {(
@@ -4525,6 +4540,12 @@ export default function UserProfile() {
 
       {/* Feedback Dialog */}
       <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+
+      {/* Quick Add Modal */}
+      <QuickAddModal 
+        isOpen={isQuickAddOpen} 
+        onClose={() => setIsQuickAddOpen(false)} 
+      />
     </>
   );
 }
