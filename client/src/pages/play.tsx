@@ -226,6 +226,7 @@ export default function PlayPage() {
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
   const [leaderboardActiveTab, setLeaderboardActiveTab] = useState<string>('engagement');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [topTab, setTopTab] = useState<'play' | 'leaderboard'>('play');
 
   const toggleExpanded = (categoryName: string) => {
     setExpandedCategories(prev => {
@@ -676,9 +677,6 @@ export default function PlayPage() {
     );
   }
 
-  // Top-level tab state
-  const [topTab, setTopTab] = useState<'play' | 'leaderboard'>('play');
-  
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
