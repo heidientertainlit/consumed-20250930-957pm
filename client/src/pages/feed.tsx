@@ -2610,14 +2610,15 @@ export default function Feed() {
           </div>
           
           {/* Search Bar */}
-          <Link href="/quick-log">
-            <div className="relative mb-4 cursor-pointer">
-              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <div className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-xl flex items-center text-gray-400 text-base hover:border-purple-400 transition-colors shadow-sm">
-                Search for something...
-              </div>
+          <div 
+            onClick={() => setIsQuickActionOpen(true)}
+            className="relative mb-4 cursor-pointer"
+          >
+            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-xl flex items-center text-gray-400 text-base hover:border-purple-400 transition-colors shadow-sm">
+              Search for something...
             </div>
-          </Link>
+          </div>
         </div>
       </div>
       
@@ -2625,48 +2626,50 @@ export default function Feed() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="space-y-2">
-            <Link href="/quick-log">
-              <div className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer">
-                <img 
-                  src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=150&fit=crop" 
-                  alt="The Bear"
-                  className="w-12 h-16 rounded-xl object-cover shadow-sm"
-                />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">The Bear</h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                    <Tv2 className="w-4 h-4" />
-                    <span className="uppercase text-xs">TV</span>
-                    <span>•</span>
-                    <span>2022</span>
-                  </div>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gray-200 hover:bg-purple-500 flex items-center justify-center transition-colors group-hover:bg-purple-500">
-                  <Plus className="w-5 h-5 text-gray-500 group-hover:text-white" />
+            <div 
+              onClick={() => setIsQuickActionOpen(true)}
+              className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer"
+            >
+              <img 
+                src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=150&fit=crop" 
+                alt="The Bear"
+                className="w-12 h-16 rounded-xl object-cover shadow-sm"
+              />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900">The Bear</h3>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+                  <Tv2 className="w-4 h-4" />
+                  <span className="uppercase text-xs">TV</span>
+                  <span>•</span>
+                  <span>2022</span>
                 </div>
               </div>
-            </Link>
-            <Link href="/quick-log">
-              <div className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer">
-                <img 
-                  src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop" 
-                  alt="Gladiator II"
-                  className="w-12 h-16 rounded-xl object-cover shadow-sm"
-                />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">Gladiator II</h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                    <Film className="w-4 h-4" />
-                    <span className="uppercase text-xs">MOVIE</span>
-                    <span>•</span>
-                    <span>2024</span>
-                  </div>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gray-200 hover:bg-purple-500 flex items-center justify-center transition-colors">
-                  <Plus className="w-5 h-5 text-gray-500" />
+              <div className="w-10 h-10 rounded-full bg-gray-200 hover:bg-purple-500 flex items-center justify-center transition-colors">
+                <Plus className="w-5 h-5 text-gray-500" />
+              </div>
+            </div>
+            <div 
+              onClick={() => setIsQuickActionOpen(true)}
+              className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer"
+            >
+              <img 
+                src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop" 
+                alt="Gladiator II"
+                className="w-12 h-16 rounded-xl object-cover shadow-sm"
+              />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900">Gladiator II</h3>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+                  <Film className="w-4 h-4" />
+                  <span className="uppercase text-xs">MOVIE</span>
+                  <span>•</span>
+                  <span>2024</span>
                 </div>
               </div>
-            </Link>
+              <div className="w-10 h-10 rounded-full bg-gray-200 hover:bg-purple-500 flex items-center justify-center transition-colors">
+                <Plus className="w-5 h-5 text-gray-500" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
