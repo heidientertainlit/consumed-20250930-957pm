@@ -2603,8 +2603,8 @@ export default function Feed() {
       <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
           <div className="text-center mb-4">
-            <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
-              What are you watching /<br />reading / listening to?
+            <h1 className="text-white text-xl md:text-2xl font-bold tracking-tight leading-tight">
+              What are you watching, reading,<br />listening to, or playing?
             </h1>
             <p className="text-gray-500 text-sm mt-2">Track it. Share it. Play with it.</p>
           </div>
@@ -2613,8 +2613,8 @@ export default function Feed() {
           <Link href="/quick-log">
             <div className="relative mb-4 cursor-pointer">
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <div className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-2xl flex items-center text-gray-400 text-lg hover:border-purple-400 transition-colors">
-                Search movies, shows, books, music...
+              <div className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-xl flex items-center text-gray-400 text-base hover:border-purple-400 transition-colors shadow-sm">
+                Search for something...
               </div>
             </div>
           </Link>
