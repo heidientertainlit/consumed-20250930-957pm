@@ -2625,7 +2625,7 @@ export default function Feed() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="space-y-2">
-            <Link href="/media/tv/tmdb/241259">
+            <Link href="/quick-log">
               <div className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer">
                 <img 
                   src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=150&fit=crop" 
@@ -2641,9 +2641,12 @@ export default function Feed() {
                     <span>2022</span>
                   </div>
                 </div>
+                <div className="w-10 h-10 rounded-full bg-gray-200 hover:bg-purple-500 flex items-center justify-center transition-colors group-hover:bg-purple-500">
+                  <Plus className="w-5 h-5 text-gray-500 group-hover:text-white" />
+                </div>
               </div>
             </Link>
-            <Link href="/media/movie/tmdb/558449">
+            <Link href="/quick-log">
               <div className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer">
                 <img 
                   src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop" 
@@ -2658,6 +2661,9 @@ export default function Feed() {
                     <span>•</span>
                     <span>2024</span>
                   </div>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-gray-200 hover:bg-purple-500 flex items-center justify-center transition-colors">
+                  <Plus className="w-5 h-5 text-gray-500" />
                 </div>
               </div>
             </Link>
