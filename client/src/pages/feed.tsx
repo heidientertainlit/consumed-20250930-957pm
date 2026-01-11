@@ -939,6 +939,12 @@ export default function Feed() {
   } | null>(null); // Bet modal state
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
+  const [preselectedMediaForAction, setPreselectedMediaForAction] = useState<any>(null);
+  const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+  const [headerSearchResults, setHeaderSearchResults] = useState<any[]>([]);
+  const [isHeaderSearching, setIsHeaderSearching] = useState(false);
+  const [showHeaderResults, setShowHeaderResults] = useState(false);
+  const headerSearchRef = useRef<HTMLDivElement>(null);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -952,10 +958,70 @@ export default function Feed() {
     const interval = setInterval(() => {
       index = (index + 1) % verbs.length;
       setCurrentVerb(verbs[index]);
-    }, 3000); // Change every 3 seconds
+    }, 3000);
     
     return () => clearInterval(interval);
   }, []);
+  
+  // Header search - debounced media search
+  useEffect(() => {
+    if (!session?.access_token || !headerSearchQuery.trim()) {
+      setHeaderSearchResults([]);
+      return;
+    }
+    
+    const timer = setTimeout(async () => {
+      setIsHeaderSearching(true);
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+        const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query: headerSearchQuery })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setHeaderSearchResults(data.results || []);
+          setShowHeaderResults(true);
+        }
+      } catch (error) {
+        console.error('Header search error:', error);
+      } finally {
+        setIsHeaderSearching(false);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [headerSearchQuery, session?.access_token]);
+  
+  // Close header search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (headerSearchRef.current && !headerSearchRef.current.contains(event.target as Node)) {
+        setShowHeaderResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  // Handle selecting a media item from header search
+  const handleSelectHeaderMedia = (item: any) => {
+    setPreselectedMediaForAction({
+      title: item.title,
+      mediaType: item.type,
+      imageUrl: item.image_url,
+      externalId: item.external_id,
+      externalSource: item.external_source,
+    });
+    setHeaderSearchQuery("");
+    setHeaderSearchResults([]);
+    setShowHeaderResults(false);
+    setIsQuickActionOpen(true);
+  };
   
   // Check for URL parameters to scroll to specific post/comment (reactive to URL changes)
   const searchString = useSearch();
@@ -2609,67 +2675,54 @@ export default function Feed() {
             <p className="text-gray-500 text-sm mt-2">Track it. Share it. Play with it.</p>
           </div>
           
-          {/* Search Bar */}
-          <div 
-            onClick={() => setIsQuickActionOpen(true)}
-            className="relative mb-4 cursor-pointer"
-          >
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <div className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-xl flex items-center text-gray-400 text-base hover:border-purple-400 transition-colors shadow-sm">
-              Search for something...
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Trending Media - White Section */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="space-y-2">
-            <div 
-              onClick={() => setIsQuickActionOpen(true)}
-              className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer"
-            >
-              <img 
-                src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=150&fit=crop" 
-                alt="The Bear"
-                className="w-12 h-16 rounded-xl object-cover shadow-sm"
-              />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">The Bear</h3>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                  <Tv2 className="w-4 h-4" />
-                  <span className="uppercase text-xs">TV</span>
-                  <span>•</span>
-                  <span>2022</span>
-                </div>
+          {/* Search Bar with Inline Results */}
+          <div ref={headerSearchRef} className="relative mb-4">
+            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+            <input
+              type="text"
+              value={headerSearchQuery}
+              onChange={(e) => setHeaderSearchQuery(e.target.value)}
+              onFocus={() => headerSearchResults.length > 0 && setShowHeaderResults(true)}
+              placeholder="Search for something..."
+              className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-xl text-gray-900 text-base placeholder:text-gray-400 hover:border-purple-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-colors shadow-sm"
+            />
+            {isHeaderSearching && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
               </div>
-              <div className="w-10 h-10 rounded-full bg-gray-200 hover:bg-purple-500 flex items-center justify-center transition-colors">
-                <Plus className="w-5 h-5 text-gray-500" />
+            )}
+            
+            {/* Search Results Dropdown */}
+            {showHeaderResults && headerSearchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 max-h-80 overflow-y-auto z-50">
+                {headerSearchResults.slice(0, 6).map((item: any, idx: number) => (
+                  <div
+                    key={`${item.external_id}-${idx}`}
+                    onClick={() => handleSelectHeaderMedia(item)}
+                    className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  >
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url} 
+                        alt={item.title}
+                        className="w-10 h-14 rounded-lg object-cover shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-10 h-14 rounded-lg bg-gray-200 flex items-center justify-center">
+                        <Film className="w-5 h-5 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 truncate">{item.title}</h4>
+                      <p className="text-xs text-gray-500 uppercase">{item.type} {item.year ? `• ${item.year}` : ''}</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-purple-600" />
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div 
-              onClick={() => setIsQuickActionOpen(true)}
-              className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer"
-            >
-              <img 
-                src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop" 
-                alt="Gladiator II"
-                className="w-12 h-16 rounded-xl object-cover shadow-sm"
-              />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">Gladiator II</h3>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
-                  <Film className="w-4 h-4" />
-                  <span className="uppercase text-xs">MOVIE</span>
-                  <span>•</span>
-                  <span>2024</span>
-                </div>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-gray-200 hover:bg-purple-500 flex items-center justify-center transition-colors">
-                <Plus className="w-5 h-5 text-gray-500" />
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -4909,7 +4962,11 @@ export default function Feed() {
       {/* Quick Action Sheet */}
       <QuickActionSheet
         isOpen={isQuickActionOpen}
-        onClose={() => setIsQuickActionOpen(false)}
+        onClose={() => {
+          setIsQuickActionOpen(false);
+          setPreselectedMediaForAction(null);
+        }}
+        preselectedMedia={preselectedMediaForAction}
       />
 
       </div>
