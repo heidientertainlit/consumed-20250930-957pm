@@ -3,156 +3,209 @@ import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { 
   Search, 
-  Plus, 
-  History, 
-  Zap, 
-  Film, 
-  Tv, 
-  Book, 
-  Headphones, 
-  Star, 
-  Flame,
-  Check,
-  ChevronRight,
-  Sparkles
+  X, 
+  ChevronLeft,
+  Film,
+  Tv,
+  Book,
+  Headphones,
+  Music
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function QuickLog() {
+  const [, setLocation] = useLocation();
   const [query, setQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [logged, setLogged] = useState(false);
+  const [status, setStatus] = useState<'watching' | 'finished' | 'want'>('watching');
+  const [thought, setThought] = useState("");
 
-  // Mock results for visualization
   const mockResults = [
-    { id: 1, title: "Gladiator II", type: "movie", year: "2024", image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop" },
-    { id: 2, title: "The Penguin", type: "tv", year: "2024", image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=100&h=150&fit=crop" },
-    { id: 3, title: "Dune: Part Two", type: "movie", year: "2024", image: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=100&h=150&fit=crop" },
+    { id: 1, title: "The Bear", type: "tv", year: "2022", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=150&fit=crop" },
+    { id: 2, title: "Gladiator II", type: "movie", year: "2024", image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop" },
+    { id: 3, title: "The Penguin", type: "tv", year: "2024", image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=100&h=150&fit=crop" },
+    { id: 4, title: "Dune: Part Two", type: "movie", year: "2024", image: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=100&h=150&fit=crop" },
   ];
 
-  const handleLog = () => {
-    setLogged(true);
-    setTimeout(() => {
-      setSelectedItem(null);
-      setLogged(false);
-      setQuery("");
-    }, 2000);
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'movie': return <Film className="w-4 h-4" />;
+      case 'tv': return <Tv className="w-4 h-4" />;
+      case 'book': return <Book className="w-4 h-4" />;
+      case 'podcast': return <Headphones className="w-4 h-4" />;
+      case 'music': return <Music className="w-4 h-4" />;
+      default: return <Film className="w-4 h-4" />;
+    }
   };
 
+  const handlePost = () => {
+    setLocation('/');
+  };
+
+  const filteredResults = query 
+    ? mockResults.filter(m => m.title.toLowerCase().includes(query.toLowerCase()))
+    : mockResults;
+
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white pb-32">
-      <Navigation onTrackConsumption={() => {}} />
-
-      <div className="max-w-md mx-auto px-4 pt-12">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-black tracking-tighter mb-2 italic">QUICK LOG</h1>
-          <p className="text-gray-500">Track in seconds, play in minutes.</p>
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e]">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-white/10">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <button 
+            onClick={() => setLocation('/')}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <Button 
+            onClick={handlePost}
+            disabled={!selectedItem}
+            className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-full px-6 font-semibold"
+          >
+            Post
+          </Button>
         </div>
+      </div>
 
-        {/* The Search "One-Tap" Bar */}
-        <div className="relative mb-8">
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* Main Question */}
+        <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2 leading-tight">
+          What are you watching /<br />reading / listening to?
+        </h1>
+        <p className="text-gray-500 text-center text-sm mb-8">Track it. Share it. Play with it.</p>
+
+        {/* Search Bar */}
+        <div className="relative mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
           <Input 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search anything..." 
-            className="w-full h-16 pl-12 pr-4 bg-[#12121f] border-none text-xl rounded-2xl focus:ring-2 focus:ring-purple-500"
+            placeholder="Search movies, shows, books, music..." 
+            className="w-full h-14 pl-12 pr-4 bg-white/10 border-white/20 text-white placeholder:text-gray-500 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg"
           />
         </div>
 
-        {/* Results / Suggestion Grid */}
-        <div className="space-y-3">
-          {!query && (
-            <div className="flex items-center gap-2 mb-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
-              <History className="w-3 h-3" /> Recent & Trending
-            </div>
-          )}
-          
-          {(query ? mockResults : mockResults).map((item) => (
-            <div 
-              key={item.id}
-              onClick={() => setSelectedItem(item)}
-              className="group flex items-center gap-4 p-3 bg-[#12121f]/50 hover:bg-purple-500/10 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-purple-500/20"
-            >
-              <img src={item.image} className="w-12 h-16 rounded-lg object-crop shadow-lg" alt={item.title} />
-              <div className="flex-1">
-                <h3 className="font-bold text-lg leading-tight">{item.title}</h3>
-                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                  {item.type === 'movie' ? <Film className="w-3 h-3" /> : <Tv className="w-3 h-3" />}
-                  <span>{item.type.toUpperCase()}</span>
-                  <span>•</span>
-                  <span>{item.year}</span>
-                </div>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                <Plus className="w-6 h-6" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Contextual Action Overlay */}
+        {/* Selected Item */}
         {selectedItem && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-            <div className="bg-[#1a1a2e] w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-white/10 animate-in fade-in slide-in-from-bottom-10">
-              <div className="flex gap-4 mb-6">
-                <img src={selectedItem.image} className="w-20 h-28 rounded-xl object-crop shadow-xl" alt={selectedItem.title} />
-                <div className="flex-1 pt-2">
-                  <h2 className="text-2xl font-bold leading-none mb-2">{selectedItem.title}</h2>
-                  <div className="flex gap-1 text-yellow-500 mb-4">
-                    {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
-                  </div>
+          <div className="bg-white rounded-2xl p-4 mb-6 shadow-xl">
+            <div className="flex items-center gap-4">
+              <img 
+                src={selectedItem.image} 
+                alt={selectedItem.title}
+                className="w-16 h-20 rounded-xl object-cover shadow-md"
+              />
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 text-lg">{selectedItem.title}</h3>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                  {getTypeIcon(selectedItem.type)}
+                  <span className="uppercase text-xs font-medium">{selectedItem.type}</span>
+                  <span>•</span>
+                  <span>{selectedItem.year}</span>
                 </div>
               </div>
-
-              {!logged ? (
-                <div className="space-y-3">
-                  <Button 
-                    onClick={handleLog}
-                    className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-lg font-bold rounded-2xl flex items-center justify-center gap-2"
-                  >
-                    <Zap className="fill-current w-5 h-5" />
-                    Log & Earn 10 Pts
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => setSelectedItem(null)}
-                    className="w-full h-12 text-gray-400 hover:text-white"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-4 animate-in zoom-in">
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Check className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-1 text-green-400">LOGGED!</h3>
-                  <div className="flex items-center justify-center gap-2 text-yellow-500 font-bold">
-                    <Zap className="fill-current w-4 h-4" /> +10 XP UNLOCKED
-                  </div>
-                  
-                  <div className="mt-8 pt-6 border-t border-white/5">
-                    <p className="text-sm text-gray-400 mb-4 font-medium flex items-center justify-center gap-2 uppercase tracking-tighter">
-                      <Sparkles className="w-4 h-4 text-purple-400" />
-                      Wait! Since you watched this...
-                    </p>
-                    <div className="bg-purple-500/10 p-4 rounded-2xl border border-purple-500/20 text-left hover:bg-purple-500/20 transition-all cursor-pointer">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-bold text-purple-400">Play Trivia</h4>
-                          <p className="text-xs text-gray-500">How well do you know {selectedItem.title}?</p>
-                        </div>
-                        <ChevronRight className="text-purple-500" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <button 
+                onClick={() => setSelectedItem(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
             </div>
           </div>
+        )}
+
+        {/* Search Results (when no item selected) */}
+        {!selectedItem && (
+          <div className="space-y-2 mb-6">
+            {filteredResults.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setSelectedItem(item)}
+                className="w-full flex items-center gap-4 p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-transparent hover:border-purple-500/30 text-left"
+              >
+                <img 
+                  src={item.image} 
+                  alt={item.title}
+                  className="w-12 h-16 rounded-xl object-cover"
+                />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white">{item.title}</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+                    {getTypeIcon(item.type)}
+                    <span className="uppercase text-xs">{item.type}</span>
+                    <span>•</span>
+                    <span>{item.year}</span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Status & Thought (only when item selected) */}
+        {selectedItem && (
+          <>
+            {/* What do you want to say? */}
+            <div className="bg-white rounded-2xl p-4 mb-6 shadow-xl">
+              <label className="block text-gray-900 font-semibold mb-1">
+                What do you want to say?
+              </label>
+              <p className="text-gray-500 text-sm mb-3">(share a thought, moment, or update)</p>
+              <Textarea 
+                value={thought}
+                onChange={(e) => setThought(e.target.value)}
+                placeholder="This show is incredible..."
+                className="w-full min-h-[80px] border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Status Pills */}
+            <div className="bg-white rounded-2xl p-4 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <span className="text-white text-lg">👤</span>
+                </div>
+                <div className="flex gap-2 flex-1">
+                  <button
+                    onClick={() => setStatus('watching')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      status === 'watching'
+                        ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {status === 'watching' && '✓ '}Watching
+                  </button>
+                  <button
+                    onClick={() => setStatus('finished')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      status === 'finished'
+                        ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {status === 'finished' && '✓ '}Finished
+                  </button>
+                  <button
+                    onClick={() => setStatus('want')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      status === 'want'
+                        ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {status === 'want' && '✓ '}Want to
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Points hint */}
+            <p className="text-center text-gray-500 text-sm mt-6">
+              Post to earn <span className="text-purple-400 font-semibold">+10 XP</span> and unlock games for this title
+            </p>
+          </>
         )}
       </div>
     </div>
