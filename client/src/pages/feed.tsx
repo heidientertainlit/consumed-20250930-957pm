@@ -2758,39 +2758,42 @@ export default function Feed() {
                 {suggestedQuickAdds.slice(0, 2).map((item: any) => (
                   <div
                     key={item.id || item.externalId}
-                    onClick={() => {
-                      setQuickAddMedia({
-                        title: item.title,
-                        type: item.mediaType || item.type || 'movie',
-                        image_url: item.imageUrl || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
-                        external_id: item.externalId || item.id,
-                        external_source: item.externalSource || 'tmdb',
-                        year: item.year || (item.first_air_date ? new Date(item.first_air_date).getFullYear() : null)
-                      });
-                      setIsQuickAddOpen(true);
-                    }}
-                    className="bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-colors border border-white/10"
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-3 flex items-center gap-3 border border-white/10"
                     data-testid={`quick-add-${item.id || item.externalId}`}
                   >
                     {(item.imageUrl || item.poster_path) ? (
                       <img
                         src={item.imageUrl || `https://image.tmdb.org/t/p/w200${item.poster_path}`}
                         alt={item.title}
-                        className="w-12 h-16 rounded-lg object-cover shadow-sm flex-shrink-0"
+                        className="w-10 h-14 rounded-lg object-cover shadow-sm flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-12 h-16 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <Film className="w-5 h-5 text-gray-400" />
+                      <div className="w-10 h-14 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <Film className="w-4 h-4 text-gray-400" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-white text-sm truncate">{item.title}</h4>
-                      <p className="text-xs text-gray-400 uppercase flex items-center gap-1">
-                        {item.mediaType === 'tv' ? <Tv2 size={10} /> : item.mediaType === 'book' ? <Book size={10} /> : <Film size={10} />}
-                        <span>{item.mediaType || 'movie'}</span>
-                        {item.year && <span>• {item.year}</span>}
+                      <h4 className="font-medium text-white text-sm truncate leading-tight">{item.title}</h4>
+                      <p className="text-xs text-gray-400 uppercase mt-0.5">
+                        {item.mediaType || 'movie'}
                       </p>
                     </div>
+                    <button
+                      onClick={() => {
+                        setQuickAddMedia({
+                          title: item.title,
+                          type: item.mediaType || item.type || 'movie',
+                          image_url: item.imageUrl || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
+                          external_id: item.externalId || item.id,
+                          external_source: item.externalSource || 'tmdb',
+                          year: item.year || (item.first_air_date ? new Date(item.first_air_date).getFullYear() : null)
+                        });
+                        setIsQuickAddOpen(true);
+                      }}
+                      className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center flex-shrink-0 transition-colors"
+                    >
+                      <Plus className="w-4 h-4 text-white" />
+                    </button>
                   </div>
                 ))}
               </div>
