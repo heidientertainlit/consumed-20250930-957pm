@@ -442,9 +442,10 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
           typeof pool.options[0] === 'object' &&
           pool.options[0].category;
         
-        // Quick games have exactly 2 string options
+        // Quick games have string options (2-4 options typical)
         const isQuickGame = Array.isArray(pool.options) && 
-          pool.options.length === 2 && 
+          pool.options.length >= 2 && 
+          pool.options.length <= 6 &&
           typeof pool.options[0] === 'string';
         
         return isMultiQuestionTrivia || isMultiCategoryPrediction || isQuickGame;
@@ -475,6 +476,7 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
           icon: pool.icon,
           mediaType: pool.category,
           options: pool.options,
+          correct_answer: pool.correct_answer,
           isLongForm: isLongFormTrivia,
           isMultiCategory: isMultiCategoryPrediction
         };
@@ -984,27 +986,14 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
         onClose={() => setIsTrackModalOpen(false)} 
       />
 
-      {/* Trivia Game Modal */}
+      {/* Trivia Game Modal - pass options directly, modal handles normalization */}
       {selectedTriviaGame && (
         <TriviaGameModal
           poolId={selectedTriviaGame.id}
           title={selectedTriviaGame.title}
-          questions={
-            Array.isArray(selectedTriviaGame.options) && selectedTriviaGame.options.length > 0
-              ? typeof selectedTriviaGame.options[0] === 'string'
-                ? [{ 
-                    question: selectedTriviaGame.title || 'Trivia Question', 
-                    options: selectedTriviaGame.options as string[], 
-                    correct: selectedTriviaGame.correct_answer || selectedTriviaGame.answer || selectedTriviaGame.options[0] || '' 
-                  }]
-                : selectedTriviaGame.options.map((q: any) => ({
-                    question: q.question || q.text || 'Question',
-                    options: Array.isArray(q.options) ? q.options : [],
-                    correct: q.correct || q.answer || ''
-                  }))
-              : [{ question: selectedTriviaGame.title || 'Trivia', options: [], correct: '' }]
-          }
+          questions={selectedTriviaGame.options}
           pointsReward={selectedTriviaGame.points || 15}
+          correctAnswer={selectedTriviaGame.correct_answer}
           isOpen={!!selectedTriviaGame}
           onClose={() => {
             setSelectedTriviaGame(null);

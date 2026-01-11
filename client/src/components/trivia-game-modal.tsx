@@ -19,13 +19,14 @@ interface TriviaQuestion {
 interface TriviaGameModalProps {
   poolId: string;
   title: string;
-  questions: TriviaQuestion[];
+  questions: TriviaQuestion[] | string[] | any[];
   pointsReward: number;
   isOpen: boolean;
   onClose: () => void;
+  correctAnswer?: string;
 }
 
-export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen, onClose }: TriviaGameModalProps) {
+export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen, onClose, correctAnswer }: TriviaGameModalProps) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
@@ -138,14 +139,35 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
   });
 
   // Normalize questions to handle various data formats - ensure at least 1 question with at least 1 option
+  // Formats:
+  // 1. String array (quick trivia): ["Option A", "Option B", ...] - entire array is options for single question
+  // 2. Object array (long-form): [{ question: "...", options: [...], correct: "..." }]
   const fallbackQuestion = { question: title || 'Trivia Question', options: ['No options available'], correct: '' };
-  const safeQuestions = questions && questions.length > 0 
-    ? questions.map(q => ({
-        question: q?.question || title || 'Question',
-        options: Array.isArray(q?.options) && q.options.length > 0 ? q.options : ['No options'],
-        correct: q?.correct || (q as any)?.answer || ''
-      }))
-    : [fallbackQuestion];
+  
+  const normalizeQuestions = (): TriviaQuestion[] => {
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      return [fallbackQuestion];
+    }
+    
+    // Check if first element is a string - this means it's a quick trivia with string array options
+    if (typeof questions[0] === 'string') {
+      // String array = single question with title as question text, array as options
+      return [{
+        question: title || 'Trivia Question',
+        options: questions as string[],
+        correct: correctAnswer || '' // Use correctAnswer prop for quick trivia
+      }];
+    }
+    
+    // Object array - map each to TriviaQuestion format
+    return questions.map((q: any) => ({
+      question: q?.question || q?.text || title || 'Question',
+      options: Array.isArray(q?.options) && q.options.length > 0 ? q.options : ['No options'],
+      correct: q?.correct || q?.answer || ''
+    }));
+  };
+  
+  const safeQuestions = normalizeQuestions();
   const questionsCount = Math.max(1, safeQuestions.length);
   const progress = ((currentQuestion + 1) / questionsCount) * 100;
   const currentQ = safeQuestions[currentQuestion] || fallbackQuestion;
