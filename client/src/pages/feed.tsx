@@ -2599,14 +2599,68 @@ export default function Feed() {
       <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      {/* Header Section with Daily Challenge */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-4 -mt-px">
+      {/* Header Section - Track First */}
+      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
-          <div className="text-center mb-5">
+          <div className="text-center mb-4">
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight">
-              Where entertainment<br />comes together
+              What are you watching /<br />reading / listening to?
             </h1>
-            <p className="text-gray-400 text-sm mt-2 max-w-[260px] mx-auto">Play, react, and keep up<br />with what you love.</p>
+            <p className="text-gray-500 text-sm mt-2">Track it. Share it. Play with it.</p>
+          </div>
+          
+          {/* Search Bar */}
+          <Link href="/quick-log">
+            <div className="relative mb-4 cursor-pointer">
+              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <div className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-2xl flex items-center text-gray-400 text-lg hover:border-purple-400 transition-colors">
+                Search movies, shows, books, music...
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
+      
+      {/* Trending Media - White Section */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="space-y-2">
+            <Link href="/media/tv/tmdb/241259">
+              <div className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer">
+                <img 
+                  src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=150&fit=crop" 
+                  alt="The Bear"
+                  className="w-12 h-16 rounded-xl object-cover shadow-sm"
+                />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">The Bear</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+                    <Tv2 className="w-4 h-4" />
+                    <span className="uppercase text-xs">TV</span>
+                    <span>•</span>
+                    <span>2022</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+            <Link href="/media/movie/tmdb/558449">
+              <div className="flex items-center gap-4 p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all border border-gray-200 hover:border-purple-500/50 cursor-pointer">
+                <img 
+                  src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&h=150&fit=crop" 
+                  alt="Gladiator II"
+                  className="w-12 h-16 rounded-xl object-cover shadow-sm"
+                />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">Gladiator II</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+                    <Film className="w-4 h-4" />
+                    <span className="uppercase text-xs">MOVIE</span>
+                    <span>•</span>
+                    <span>2024</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
