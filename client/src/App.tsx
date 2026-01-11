@@ -30,6 +30,7 @@ import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 import Track from "@/pages/track";
 import Feed from "@/pages/feed";
 import GameFirstFeed from "@/pages/game-first-feed";
+import QuickLog from "@/pages/quick-log";
 import FriendsUpdates from "@/pages/friendsupdates";
 import Search from "@/pages/search";
 import Conversations from "@/pages/conversations";
@@ -108,6 +109,11 @@ function Router() {
         <Route path="/">
           <ProtectedRoute>
             <Feed />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/quick-log">
+          <ProtectedRoute>
+            <QuickLog />
           </ProtectedRoute>
         </Route>
         <Route path="/track">
