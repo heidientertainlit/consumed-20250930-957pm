@@ -2655,7 +2655,7 @@ export default function Feed() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       {/* Header Section - Track First */}
-      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-gray-50 pb-8 -mt-px">
+      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-8 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-10">
           <div className="text-center mb-6">
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight leading-snug">
@@ -4341,30 +4341,6 @@ export default function Feed() {
                   ) : (
                     !post.content && post.mediaItems && post.mediaItems.length > 0 && (
                       <div className="mb-2">
-                        {/* Show rating stars if present */}
-                        {post.rating && (
-                          <div className="text-gray-800 text-sm mb-3">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span>Rated</span>
-                              <span className="font-semibold text-purple-600">{post.mediaItems[0].title}</span>
-                              <div className="flex items-center gap-0.5">
-                                {[1, 2, 3, 4, 5].map((star) => {
-                                  const fillPercent = Math.min(Math.max((post.rating || 0) - (star - 1), 0), 1) * 100;
-                                  return (
-                                    <span key={star} className="relative inline-block w-3.5 h-3.5">
-                                      <Star size={14} className="absolute text-gray-300" />
-                                      <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
-                                        <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                                      </span>
-                                    </span>
-                                  );
-                                })}
-                                <span className="ml-1 text-sm font-medium text-gray-700">{post.rating}</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        
                         {/* List Preview Card for posts - show compact format even without listData */}
                         {(post.type === 'added_to_list' || (post.type === 'rate-review' && (post as any).listData)) && post.mediaItems && post.mediaItems.length > 0 ? (
                           <div className="bg-white rounded-lg p-3 mb-2 border border-gray-100">
