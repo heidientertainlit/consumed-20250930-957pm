@@ -515,7 +515,17 @@ export default function PlayPage() {
 
   // Get trivia games for "Trivia Challenges"
   const triviaGames = useMemo(() => {
-    return allGames.filter((game: any) => game.type === 'trivia').slice(0, 3);
+    return allGames.filter((game: any) => game.type === 'trivia').slice(0, 5);
+  }, [allGames]);
+
+  // Get polls for carousel
+  const pollGames = useMemo(() => {
+    return allGames.filter((game: any) => game.type === 'vote').slice(0, 5);
+  }, [allGames]);
+
+  // Get predictions for carousel
+  const predictionGames = useMemo(() => {
+    return allGames.filter((game: any) => game.type === 'predict').slice(0, 5);
   }, [allGames]);
 
   // Extract total consumption leaders array from leaderboard data (API returns object with categories)
@@ -678,126 +688,140 @@ export default function PlayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-white pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
       
-      {/* Dark Gradient Hero */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px px-4 pt-6">
+      {/* Minimal Header */}
+      <div className="bg-white border-b border-gray-100 px-4 pt-4 pb-3 -mt-px">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Play
-          </h1>
-          <p className="text-gray-400 text-sm mb-4">
-            Compete, predict, and earn rewards
-          </p>
-          
-          {/* Top-level Tab Pills */}
-          <div className="flex gap-2 mb-4">
+          {/* Simple Tab Navigation */}
+          <div className="flex gap-6 border-b border-gray-200">
             <button
               onClick={() => setTopTab('play')}
-              className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all ${
+              className={`pb-3 text-lg font-semibold transition-all border-b-2 ${
                 topTab === 'play'
-                  ? 'bg-white text-gray-900'
-                  : 'bg-white/10 text-white hover:bg-white/20'
+                  ? 'text-purple-600 border-purple-600'
+                  : 'text-gray-400 border-transparent hover:text-gray-600'
               }`}
               data-testid="tab-play"
             >
-              <Gamepad2 size={16} className="inline mr-2" />
               Play
             </button>
             <button
               onClick={() => setTopTab('leaderboard')}
-              className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all ${
+              className={`pb-3 text-lg font-semibold transition-all border-b-2 ${
                 topTab === 'leaderboard'
-                  ? 'bg-white text-gray-900'
-                  : 'bg-white/10 text-white hover:bg-white/20'
+                  ? 'text-purple-600 border-purple-600'
+                  : 'text-gray-400 border-transparent hover:text-gray-600'
               }`}
               data-testid="tab-leaderboard"
             >
-              <Trophy size={16} className="inline mr-2" />
               Leaderboard
             </button>
           </div>
-          
-          {/* Play Tab Hero Content */}
-          {topTab === 'play' && (
-            <>
-              {/* Pills inside gradient */}
-              <div className="flex flex-wrap gap-2">
-                <Link href="/play/awards">
-                  <button
-                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                    data-testid="browse-predictions"
-                  >
-                    Predictions
-                  </button>
-                </Link>
-                <Link href="/play/polls">
-                  <button
-                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                    data-testid="browse-polls"
-                  >
-                    Polls
-                  </button>
-                </Link>
-                <Link href="/play/trivia">
-                  <button
-                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                    data-testid="browse-trivia"
-                  >
-                    Trivia
-                  </button>
-                </Link>
-                <Link href="/play/ranks">
-                  <button
-                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                    data-testid="browse-ranks"
-                  >
-                    Ranks
-                  </button>
-                </Link>
-                <Link href="/play/hot-takes">
-                  <button
-                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                    data-testid="browse-hot-takes"
-                  >
-                    Hot Takes
-                  </button>
-                </Link>
-                <Link href="/play/ask-recs">
-                  <button
-                    className="inline-flex items-center px-4 py-2 rounded-full border border-purple-400/50 bg-transparent text-white text-sm font-medium hover:bg-purple-800/30 hover:border-purple-300 transition-all"
-                    data-testid="browse-ask-recs"
-                  >
-                    Ask for Recs
-                  </button>
-                </Link>
-              </div>
-              
-              {/* Create Button */}
-              <button
-                onClick={() => setIsQuickActionOpen(true)}
-                className="mt-6 w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 rounded-2xl text-white font-semibold text-lg shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
-                data-testid="create-play-button"
-              >
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <Edit3 size={20} />
-                </div>
-                <div className="text-left">
-                  <span className="block">Create</span>
-                  <span className="text-xs font-normal text-white/80">Poll, Hot Take, Ask for Recs</span>
-                </div>
-              </button>
-            </>
-          )}
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6">
         {/* Play Tab Content */}
         {topTab === 'play' && (
-          <div className="mb-6">
+          <div className="space-y-8">
+            {/* Create Button - Minimal */}
+            <button
+              onClick={() => setIsQuickActionOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl text-white font-medium transition-all"
+              data-testid="create-play-button"
+            >
+              <Edit3 size={18} />
+              Create Poll, Hot Take, or Ask for Recs
+            </button>
+
+            {/* Daily Challenge */}
             <DailyChallengeCard />
+
+            {/* Polls Carousel */}
+            {pollGames.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Polls</h2>
+                  <Link href="/play/polls" className="text-sm text-purple-600 font-medium hover:text-purple-700">
+                    See all →
+                  </Link>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  {pollGames.map((game: any) => (
+                    <Link key={game.id} href={`/play/polls?highlight=${game.id}`}>
+                      <div
+                        className="flex-shrink-0 w-64 bg-gray-50 border border-gray-200 rounded-xl p-4 hover:border-purple-300 transition-colors cursor-pointer"
+                        data-testid={`poll-card-${game.id}`}
+                      >
+                        <p className="font-medium text-gray-900 text-sm line-clamp-2 mb-2">{game.title}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Vote size={12} />
+                          <span>{game.options?.length || 0} options</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Predictions Carousel */}
+            {predictionGames.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Predictions</h2>
+                  <Link href="/play/awards" className="text-sm text-purple-600 font-medium hover:text-purple-700">
+                    See all →
+                  </Link>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  {predictionGames.map((game: any) => (
+                    <Link key={game.id} href={`/play/awards?highlight=${game.id}`}>
+                      <div
+                        className="flex-shrink-0 w-64 bg-gray-50 border border-gray-200 rounded-xl p-4 hover:border-purple-300 transition-colors cursor-pointer"
+                        data-testid={`prediction-card-${game.id}`}
+                      >
+                        <p className="font-medium text-gray-900 text-sm line-clamp-2 mb-2">{game.title}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Target size={12} />
+                          <span>{game.options?.length || 0} options</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trivia Carousel */}
+            {triviaGames.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Trivia</h2>
+                  <Link href="/play/trivia" className="text-sm text-purple-600 font-medium hover:text-purple-700">
+                    See all →
+                  </Link>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  {triviaGames.map((game: any) => (
+                    <Link key={game.id} href={`/play/trivia?highlight=${game.id}`}>
+                      <div
+                        className="flex-shrink-0 w-64 bg-gray-50 border border-gray-200 rounded-xl p-4 hover:border-purple-300 transition-colors cursor-pointer"
+                        data-testid={`trivia-card-${game.id}`}
+                      >
+                        <p className="font-medium text-gray-900 text-sm line-clamp-2 mb-2">{game.title}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Brain size={12} />
+                          <span>{game.points || 10} pts</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
         
