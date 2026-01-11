@@ -528,33 +528,33 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
       .slice(0, 3);
   }, [userPredictionsList]);
 
-  // Helper function to sort games: unplayed first, played at bottom
-  const sortByPlayedStatus = (games: any[]) => {
-    return [...games].sort((a: any, b: any) => {
-      const aPlayed = !!allPredictions[a.id];
-      const bPlayed = !!allPredictions[b.id];
-      if (aPlayed && !bPlayed) return 1;
-      if (!aPlayed && bPlayed) return -1;
-      return 0;
-    });
+  // Helper function to prioritize unplayed games: show unplayed first, then pad with played if needed
+  const getUnplayedFirst = (games: any[], limit: number) => {
+    const unplayed = games.filter((g: any) => !allPredictions[g.id]);
+    const played = games.filter((g: any) => !!allPredictions[g.id]);
+    
+    // Return unplayed first, pad with played games if we don't have enough unplayed
+    const result = [...unplayed, ...played].slice(0, limit);
+    return result;
   };
 
   // Get trivia games for "Trivia Challenges" - unplayed first
   const triviaGames = useMemo(() => {
     const filtered = allGames.filter((game: any) => game.type === 'trivia');
-    return sortByPlayedStatus(filtered).slice(0, 5);
+    console.log('🎯 Trivia games for Play page:', filtered.slice(0, 3).map((g: any) => ({ id: g.id, title: g.title })));
+    return getUnplayedFirst(filtered, 5);
   }, [allGames, allPredictions]);
 
   // Get polls for carousel - unplayed first
   const pollGames = useMemo(() => {
     const filtered = allGames.filter((game: any) => game.type === 'vote');
-    return sortByPlayedStatus(filtered).slice(0, 5);
+    return getUnplayedFirst(filtered, 5);
   }, [allGames, allPredictions]);
 
   // Get predictions for carousel - unplayed first
   const predictionGames = useMemo(() => {
     const filtered = allGames.filter((game: any) => game.type === 'predict');
-    return sortByPlayedStatus(filtered).slice(0, 5);
+    return getUnplayedFirst(filtered, 5);
   }, [allGames, allPredictions]);
 
   // Extract total consumption leaders array from leaderboard data (API returns object with categories)
@@ -947,7 +947,10 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
                       <h3 className="font-semibold text-gray-900 mb-3">{game.title}</h3>
                       
                       <Button
-                        onClick={() => setSelectedTriviaGame(game)}
+                        onClick={() => {
+                          console.log('🎮 Opening trivia game:', { id: game.id, title: game.title, options: game.options });
+                          setSelectedTriviaGame(game);
+                        }}
                         className="w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-full"
                       >
                         Play Trivia
