@@ -2787,67 +2787,6 @@ export default function Feed() {
                 );
               })()}
 
-              {/* Play Pills - Clean minimal design */}
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                <button
-                  onClick={() => setFeedFilter(feedFilter === '' ? '' : '')}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    feedFilter === '' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  data-testid="pill-all"
-                >
-                  All
-                </button>
-                <Link href="/play/trivia">
-                  <button
-                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                    data-testid="pill-trivia"
-                  >
-                    Trivia
-                  </button>
-                </Link>
-                <Link href="/play/polls">
-                  <button
-                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                    data-testid="pill-polls"
-                  >
-                    Polls
-                  </button>
-                </Link>
-                <Link href="/play/predictions">
-                  <button
-                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                    data-testid="pill-predict"
-                  >
-                    Predict
-                  </button>
-                </Link>
-                <Link href="/play/ranks">
-                  <button
-                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                    data-testid="pill-rank"
-                  >
-                    Rank
-                  </button>
-                </Link>
-                <Link href="/play/hot-takes">
-                  <button
-                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                    data-testid="pill-hot-takes"
-                  >
-                    Hot Takes
-                  </button>
-                </Link>
-                <Link href="/play/ask-recs">
-                  <button
-                    className="px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                    data-testid="pill-ask-recs"
-                  >
-                    Ask for Recs
-                  </button>
-                </Link>
-              </div>
-
               {/* Empty state for filtered views */}
               {feedFilter && filteredPosts.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
