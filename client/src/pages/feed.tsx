@@ -11,7 +11,6 @@ import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
-import { QuickActionSheet } from "@/components/quick-action-sheet";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3 } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -892,6 +891,8 @@ function CurrentlyConsumingFeedCard({
 }
 
 export default function Feed() {
+  const [, setLocation] = useLocation();
+  
   // Load Inter font for this page only
   useEffect(() => {
     const link = document.createElement('link');
@@ -938,8 +939,6 @@ export default function Feed() {
     mediaType?: string;
   } | null>(null); // Bet modal state
   const [isPlacingBet, setIsPlacingBet] = useState(false);
-  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
-  const [preselectedMediaForAction, setPreselectedMediaForAction] = useState<any>(null);
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
   const [headerSearchResults, setHeaderSearchResults] = useState<any[]>([]);
   const [isHeaderSearching, setIsHeaderSearching] = useState(false);
@@ -1008,19 +1007,13 @@ export default function Feed() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  // Handle selecting a media item from header search
+  // Handle selecting a media item from header search - navigate to play page
   const handleSelectHeaderMedia = (item: any) => {
-    setPreselectedMediaForAction({
-      title: item.title,
-      mediaType: item.type,
-      imageUrl: item.image_url,
-      externalId: item.external_id,
-      externalSource: item.external_source,
-    });
     setHeaderSearchQuery("");
     setHeaderSearchResults([]);
     setShowHeaderResults(false);
-    setIsQuickActionOpen(true);
+    // Navigate to play page to use the full editor
+    setLocation('/play');
   };
   
   // Check for URL parameters to scroll to specific post/comment (reactive to URL changes)
@@ -1085,10 +1078,6 @@ export default function Feed() {
 
     checkDNAProfile();
   }, [session?.access_token, user?.id, toast]);
-  // Using window.location.assign for navigation as we are not using react-router-dom
-  const setLocation = (path: string) => {
-    window.location.assign(path);
-  };
 
   // Fetch user's friends list for filtering
   const { data: friendsData = [] } = useQuery({
@@ -4950,24 +4939,6 @@ export default function Feed() {
         </div>
       )}
 
-      {/* Floating Action Button for Posting */}
-      <button
-        onClick={() => setIsQuickActionOpen(true)}
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
-        data-testid="fab-post"
-      >
-        <Edit3 size={24} />
-      </button>
-
-      {/* Quick Action Sheet */}
-      <QuickActionSheet
-        isOpen={isQuickActionOpen}
-        onClose={() => {
-          setIsQuickActionOpen(false);
-          setPreselectedMediaForAction(null);
-        }}
-        preselectedMedia={preselectedMediaForAction}
-      />
 
       </div>
     </div>

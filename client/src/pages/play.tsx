@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle, Medal, Award, Globe, TrendingUp, BookOpen, Headphones, Share2, ChevronDown, ChevronUp, Flame } from "lucide-react";
+import { Play, Trophy, Brain, Gamepad2, Vote, Star, Users, Clock, UserPlus, Film, Tv, Music, Book, Dumbbell, Target, CheckSquare, HelpCircle, Medal, Award, Globe, TrendingUp, BookOpen, Headphones, Share2, ChevronDown, ChevronUp, Flame, Edit3 } from "lucide-react";
+import { QuickActionSheet } from "@/components/quick-action-sheet";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -211,6 +212,7 @@ interface LeaderboardEntry {
 export default function PlayPage() {
   const [, setLocation] = useLocation();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const { data: predictionPools = [], isLoading } = usePredictionPools();
   const { data: userPredictionsData = { predictions: {}, fullData: [] } } = useUserPredictions();
@@ -945,6 +947,20 @@ export default function PlayPage() {
         />
       )}
 
+      {/* Floating Action Button for Creating */}
+      <button
+        onClick={() => setIsQuickActionOpen(true)}
+        className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
+        data-testid="fab-create"
+      >
+        <Edit3 size={24} />
+      </button>
+
+      {/* Quick Action Sheet */}
+      <QuickActionSheet
+        isOpen={isQuickActionOpen}
+        onClose={() => setIsQuickActionOpen(false)}
+      />
 
     </div>
   );
