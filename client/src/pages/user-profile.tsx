@@ -200,7 +200,7 @@ export default function UserProfile() {
   const friendsRef = useRef<HTMLDivElement>(null);
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
-  const [activeSection, setActiveSection] = useState<string>('stats');
+  const [activeSection, setActiveSection] = useState<string>('dna');
   const [collectionsSubTab, setCollectionsSubTab] = useState<'lists' | 'history'>('lists');
   const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
   const [listSearch, setListSearch] = useState("");
@@ -2900,17 +2900,6 @@ export default function UserProfile() {
         <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             <button
-              onClick={() => setActiveSection('stats')}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeSection === 'stats'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-              }`}
-              data-testid="nav-stats"
-            >
-              Stats
-            </button>
-            <button
               onClick={() => setActiveSection('dna')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeSection === 'dna'
@@ -2961,10 +2950,11 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Your Stats */}
-        {activeSection === 'stats' && (
-        <div ref={statsRef} className="px-4 mb-8">
-          <div className="mt-6">
+        {/* My Entertainment DNA (includes Stats) */}
+        {activeSection === 'dna' && (
+        <div ref={dnaRef} className="px-4 mb-8">
+          {/* Stats Section */}
+          <div className="mb-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>{isOwnProfile ? 'Your' : 'Their'} Stats</h3>
             {isLoadingStats ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
@@ -3024,14 +3014,7 @@ export default function UserProfile() {
                 </div>
               </div>
             )}
-            
-                      </div>
-        </div>
-        )}
-
-        {/* My Entertainment DNA */}
-        {activeSection === 'dna' && (
-        <div ref={dnaRef} className="px-4 mb-8">
+          </div>
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
             {/* Responsive Header: Stack on mobile, horizontal on larger screens */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
