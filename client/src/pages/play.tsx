@@ -694,38 +694,13 @@ export default function PlayPage() {
       {/* Minimal Header */}
       <div className="bg-white border-b border-gray-100 px-4 pt-4 pb-3 -mt-px">
         <div className="max-w-4xl mx-auto">
-          {/* Simple Tab Navigation */}
-          <div className="flex gap-6 border-b border-gray-200">
-            <button
-              onClick={() => setTopTab('play')}
-              className={`pb-3 text-lg font-semibold transition-all border-b-2 ${
-                topTab === 'play'
-                  ? 'text-purple-600 border-purple-600'
-                  : 'text-gray-400 border-transparent hover:text-gray-600'
-              }`}
-              data-testid="tab-play"
-            >
-              Play
-            </button>
-            <button
-              onClick={() => setTopTab('leaderboard')}
-              className={`pb-3 text-lg font-semibold transition-all border-b-2 ${
-                topTab === 'leaderboard'
-                  ? 'text-purple-600 border-purple-600'
-                  : 'text-gray-400 border-transparent hover:text-gray-600'
-              }`}
-              data-testid="tab-leaderboard"
-            >
-              Leaderboard
-            </button>
-          </div>
+          {/* Page Title */}
+          <h1 className="text-2xl font-bold text-gray-900">Play</h1>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6">
-        {/* Play Tab Content */}
-        {topTab === 'play' && (
-          <div className="space-y-8">
+        <div className="space-y-8">
             {/* Create Button - Minimal */}
             <button
               onClick={() => setIsQuickActionOpen(true)}
@@ -822,173 +797,7 @@ export default function PlayPage() {
                 </div>
               </div>
             )}
-          </div>
-        )}
-        
-        {/* Leaderboard Tab Content */}
-        {topTab === 'leaderboard' && (
-          <div className="mb-6">
-            <div className="mb-4 text-center">
-              <h2 className="text-xl font-semibold text-black mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Leaders
-              </h2>
-              <p className="text-sm text-gray-600">
-                Most active fans and top contributors
-              </p>
-            </div>
-
-            <div className="flex justify-center gap-2 mb-4">
-            <Button
-              size="sm"
-              variant={leaderboardScope === 'global' ? 'default' : 'outline'}
-              onClick={() => setLeaderboardScope('global')}
-              className={leaderboardScope === 'global' ? 'bg-purple-600 hover:bg-purple-700' : ''}
-              data-testid="button-scope-global"
-            >
-              <Globe size={14} className="mr-1" />
-              Global
-            </Button>
-            <Button
-              size="sm"
-              variant={leaderboardScope === 'friends' ? 'default' : 'outline'}
-              onClick={() => setLeaderboardScope('friends')}
-              className={leaderboardScope === 'friends' ? 'bg-purple-600 hover:bg-purple-700' : ''}
-              data-testid="button-scope-friends"
-            >
-              <Users size={14} className="mr-1" />
-              Friends
-            </Button>
-          </div>
-
-          <div className="flex justify-center gap-2 mb-6">
-            {(['weekly', 'monthly', 'all_time'] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => setLeaderboardPeriod(p)}
-                className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                  leaderboardPeriod === p 
-                    ? 'bg-purple-100 text-purple-700 font-medium' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-                data-testid={`button-period-${p}`}
-              >
-                {p === 'weekly' ? 'This Week' : p === 'monthly' ? 'This Month' : 'All Time'}
-              </button>
-            ))}
-          </div>
-
-          {isLeaderboardLoading ? (
-            <div className="space-y-4">
-              {[1, 2].map((n) => (
-                <div key={n} className="bg-white rounded-2xl p-6 animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-                        <div className="flex-1">
-                          <div className="h-4 bg-gray-200 rounded w-1/4 mb-1"></div>
-                          <div className="h-3 bg-gray-100 rounded w-1/6"></div>
-                        </div>
-                        <div className="h-6 bg-gray-200 rounded w-12"></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Tabs value={leaderboardActiveTab} onValueChange={setLeaderboardActiveTab} className="w-full">
-              <TabsList className="w-full mb-4 bg-white border border-gray-200 p-1 h-auto flex flex-wrap justify-center gap-1">
-                <TabsTrigger 
-                  value="engagement" 
-                  className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
-                  data-testid="tab-engagement"
-                >
-                  <TrendingUp size={14} className="mr-1" />
-                  Engagers
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="games" 
-                  className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
-                  data-testid="tab-games"
-                >
-                  <Target size={14} className="mr-1" />
-                  Games
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="consumption" 
-                  className="data-[state=active]:bg-purple-600 data-[state=active]:text-white px-3 py-1.5 text-sm"
-                  data-testid="tab-consumption"
-                >
-                  <Star size={14} className="mr-1" />
-                  Media
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="engagement">
-                {renderCategoryCard(
-                  'Top Engagers',
-                  TrendingUp,
-                  leaderboardFullData?.categories?.overall,
-                  'Top Engagers',
-                  'Start posting and engaging to appear here!',
-                  'from-purple-600 to-pink-600'
-                )}
-              </TabsContent>
-
-              <TabsContent value="games">
-                {renderCategoryCard(
-                  'Trivia Champions',
-                  Brain,
-                  leaderboardFullData?.categories?.trivia,
-                  'Trivia',
-                  'No trivia results yet. Play some trivia!',
-                  'from-yellow-500 to-orange-500',
-                  { label: 'Play Trivia', href: '/play/trivia' },
-                  true
-                )}
-                
-                {renderCategoryCard(
-                  'Poll Masters',
-                  Target,
-                  leaderboardFullData?.categories?.polls,
-                  'Polls',
-                  'No poll activity yet. Vote on some polls!',
-                  'from-blue-500 to-cyan-500',
-                  { label: 'Do Polls', href: '/play/polls' },
-                  true
-                )}
-                
-                {renderCategoryCard(
-                  'Prediction Pros',
-                  Trophy,
-                  leaderboardFullData?.categories?.predictions,
-                  'Predictions',
-                  'No predictions resolved yet. Make some predictions!',
-                  'from-green-500 to-emerald-500',
-                  { label: 'Do Predictions', href: '/play/awards' },
-                  true
-                )}
-              </TabsContent>
-
-              <TabsContent value="consumption">
-                <div className="mb-4">
-                  {renderCategoryCard(
-                    'Total Consumption Leaders',
-                    Star,
-                    leaderboardFullData?.categories?.total_consumption,
-                    'Total Consumption',
-                    'Track some media to appear here!',
-                    'from-purple-600 to-blue-600'
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-          </div>
-        )}
-
+        </div>
       </div>
 
       <ConsumptionTracker 
