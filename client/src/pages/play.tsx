@@ -419,6 +419,15 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
       .filter((pool: any) => {
         if (pool.status !== 'open' || !pool.options) return false;
         
+        // For PREDICTIONS: Only show Consumed-created content (not user-created)
+        // Polls and Trivia show both user and consumed content
+        if (pool.type === 'predict') {
+          const isConsumed = pool.origin_type === 'consumed' || 
+            pool.id?.startsWith('consumed-') || 
+            pool.id?.startsWith('consumed-prediction-');
+          if (!isConsumed) return false;
+        }
+        
         // Multi-question trivia games have array of question objects
         const isMultiQuestionTrivia = pool.type === 'trivia' && 
           Array.isArray(pool.options) && 
