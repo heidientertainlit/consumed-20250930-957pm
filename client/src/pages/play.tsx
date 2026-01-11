@@ -718,24 +718,35 @@ export default function PlayPage() {
         {/* Minimal Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
           {[
-            { key: 'all', label: 'All' },
-            { key: 'polls', label: 'Polls' },
-            { key: 'predictions', label: 'Predictions' },
-            { key: 'trivia', label: 'Trivia' },
-            { key: 'hot_takes', label: 'Hot Takes' },
+            { key: 'all', label: 'All', href: null },
+            { key: 'polls', label: 'Polls', href: '/play/polls' },
+            { key: 'predictions', label: 'Predictions', href: '/play/awards' },
+            { key: 'trivia', label: 'Trivia', href: '/play/trivia' },
+            { key: 'hot_takes', label: 'Hot Takes', href: null },
           ].map((filter) => (
-            <button
-              key={filter.key}
-              onClick={() => setActiveFilter(filter.key as any)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                activeFilter === filter.key
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              data-testid={`filter-${filter.key}`}
-            >
-              {filter.label}
-            </button>
+            filter.href ? (
+              <Link
+                key={filter.key}
+                href={filter.href}
+                className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200"
+                data-testid={`filter-${filter.key}`}
+              >
+                {filter.label}
+              </Link>
+            ) : (
+              <button
+                key={filter.key}
+                onClick={() => setActiveFilter(filter.key as any)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeFilter === filter.key
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                data-testid={`filter-${filter.key}`}
+              >
+                {filter.label}
+              </button>
+            )
           ))}
         </div>
 
