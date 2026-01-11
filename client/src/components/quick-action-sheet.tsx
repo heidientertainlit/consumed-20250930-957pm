@@ -45,7 +45,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   
-  // Set preselected media but show action choices instead of jumping to track
+  // Set preselected media and go to track form
   useEffect(() => {
     if (isOpen && preselectedMedia) {
       setSelectedMedia({
@@ -56,9 +56,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         external_source: preselectedMedia.externalSource,
         creator: preselectedMedia.creator,
       });
-      // Don't auto-select action - let user choose what to do with this media
-      setSelectedIntent(null);
-      setSelectedAction(null);
+      setSelectedIntent("capture");
+      setSelectedAction("track");
+      setAddToList(true);
     }
   }, [isOpen, preselectedMedia]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -242,6 +242,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     setSelectedEpisode(null);
     setSeasons([]);
     setEpisodes([]);
+    setTrackPostType("thought");
   };
 
   const handleClose = () => {
@@ -266,11 +267,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   };
 
   const handleBack = () => {
-    if (selectedAction && selectedMedia && preselectedMedia) {
-      // Go back to action choices when we came from header search
-      setSelectedAction(null);
-      setSelectedIntent(null);
-    } else if (selectedAction && selectedIntent === "play") {
+    if (selectedAction && selectedIntent === "play") {
       setSelectedAction(null);
     } else if (selectedIntent) {
       setSelectedIntent(null);
@@ -293,7 +290,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           return;
         }
         
-        const response = await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+        // First track the media
+        const trackResponse = await fetch(`${supabaseUrl}/functions/v1/track-media`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -310,7 +308,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             },
             listType: selectedListId || 'currently',
             rating: ratingValue > 0 ? ratingValue : undefined,
-            review: contentText || undefined,
+            review: trackPostType === 'thought' ? contentText : undefined,
             containsSpoilers,
             privateMode,
             rewatchCount: rewatchCount > 1 ? rewatchCount : undefined,
@@ -319,13 +317,57 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           }),
         });
         
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Track media error:', response.status, errorData);
+        if (!trackResponse.ok) {
+          const errorData = await trackResponse.json().catch(() => ({}));
+          console.error('Track media error:', trackResponse.status, errorData);
           throw new Error(errorData.error || 'Failed to track media');
         }
         
-        toast({ title: `Tracked ${selectedMedia.title}!` });
+        // Also create a hot take or poll if selected
+        if (trackPostType === 'hot_take' && contentText.trim()) {
+          await fetch(`${supabaseUrl}/functions/v1/create-post`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: contentText,
+              type: 'hot_take',
+              containsSpoilers,
+              mediaId: selectedMedia.external_id,
+              mediaType: selectedMedia.type,
+              mediaTitle: selectedMedia.title,
+              mediaImage: selectedMedia.image || selectedMedia.image_url,
+            }),
+          });
+          toast({ title: `Tracked ${selectedMedia.title} + Hot Take posted! 🔥` });
+        } else if (trackPostType === 'poll' && contentText.trim()) {
+          const validOptions = pollOptions.filter(o => o.trim());
+          if (validOptions.length >= 2) {
+            await fetch(`${supabaseUrl}/functions/v1/create-poll`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                question: contentText,
+                options: validOptions,
+                containsSpoilers,
+                mediaId: selectedMedia.external_id,
+                mediaType: selectedMedia.type,
+                mediaTitle: selectedMedia.title,
+              }),
+            });
+            toast({ title: `Tracked ${selectedMedia.title} + Poll created!` });
+          } else {
+            toast({ title: `Tracked ${selectedMedia.title}!` });
+          }
+        } else {
+          toast({ title: `Tracked ${selectedMedia.title}!` });
+        }
+        
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
@@ -500,70 +542,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     { id: "challenge" as ActionType, label: "Challenge", icon: Swords, iconColor: "text-pink-500", bgColor: "bg-pink-50", desc: "Challenge a friend" },
   ];
 
-  const mediaActions = [
-    { id: "track" as ActionType, intent: "capture" as IntentType, label: "Add to List", icon: Plus, iconColor: "text-purple-500", bgColor: "bg-purple-50", desc: "Track, rate, or review" },
-    { id: "post" as ActionType, intent: "say" as IntentType, label: "Post", icon: MessageSquare, iconColor: "text-blue-500", bgColor: "bg-blue-50", desc: "Share a thought" },
-    { id: "hot_take" as ActionType, intent: "say" as IntentType, label: "Hot Take", icon: Flame, iconColor: "text-orange-500", bgColor: "bg-orange-50", desc: "Drop a spicy opinion 🔥" },
-    { id: "poll" as ActionType, intent: "play" as IntentType, label: "Create Poll", icon: Vote, iconColor: "text-indigo-500", bgColor: "bg-indigo-50", desc: "Ask your friends" },
-  ];
+  // Post type state for the inline toggle in track form
+  const [trackPostType, setTrackPostType] = useState<"thought" | "hot_take" | "poll">("thought");
 
   const renderActionContent = () => {
-    // Show action choices when media is selected but no action chosen yet
-    if (selectedMedia && !selectedAction) {
-      return (
-        <div className="space-y-4">
-          {/* Selected media card */}
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-            {(selectedMedia.image || selectedMedia.image_url) ? (
-              <img 
-                src={selectedMedia.image || selectedMedia.image_url} 
-                alt={selectedMedia.title} 
-                className="w-12 h-16 object-cover rounded-lg shadow-sm" 
-              />
-            ) : (
-              <div className="w-12 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                <Star className="w-5 h-5 text-gray-400" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 truncate">{selectedMedia.title}</p>
-              <p className="text-xs text-gray-500 uppercase">{selectedMedia.type} {selectedMedia.year && `• ${selectedMedia.year}`}</p>
-            </div>
-            <button 
-              onClick={() => setSelectedMedia(null)} 
-              className="p-1.5 hover:bg-gray-200 rounded-full transition-colors"
-            >
-              <X size={16} className="text-gray-400" />
-            </button>
-          </div>
-          
-          {/* Action choices */}
-          <div>
-            <p className="text-sm font-medium text-gray-600 mb-3">What do you want to do?</p>
-            <div className="grid grid-cols-2 gap-3">
-              {mediaActions.map((action) => (
-                <button
-                  key={action.id}
-                  onClick={() => {
-                    setSelectedIntent(action.intent);
-                    setSelectedAction(action.id);
-                    if (action.id === "hot_take") {
-                      setSayMode("hot_take");
-                    }
-                  }}
-                  className={`p-4 rounded-xl ${action.bgColor} hover:opacity-90 transition-all text-left border border-gray-100`}
-                >
-                  <action.icon className={`w-6 h-6 ${action.iconColor} mb-2`} />
-                  <p className="font-semibold text-gray-900 text-sm">{action.label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{action.desc}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    }
-    
     if (selectedAction === "track") {
       return (
         <div className="space-y-4">
@@ -652,15 +634,92 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 )}
               </div>
               
-              {/* Review - right under rating */}
+              {/* Post type toggle - Thought, Hot Take, Poll */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setTrackPostType("thought")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    trackPostType === "thought"
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Thought
+                </button>
+                <button
+                  onClick={() => setTrackPostType("hot_take")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    trackPostType === "hot_take"
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Flame size={14} className={trackPostType === "hot_take" ? 'text-white' : 'text-orange-500'} />
+                  Hot Take
+                </button>
+                <button
+                  onClick={() => setTrackPostType("poll")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    trackPostType === "poll"
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Vote size={14} className={trackPostType === "poll" ? 'text-white' : 'text-purple-500'} />
+                  Poll
+                </button>
+              </div>
+              
+              {/* Review/Content - right under post type */}
               <textarea
                 value={contentText}
                 onChange={(e) => setContentText(e.target.value)}
-                placeholder="Add a review (optional)..."
+                placeholder={
+                  trackPostType === 'thought' ? "Add a review (optional)..." :
+                  trackPostType === 'hot_take' ? "Drop your hot take... 🔥" :
+                  "Ask a question for your poll..."
+                }
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
                 rows={2}
                 data-testid="track-review-input"
               />
+              
+              {/* Poll options - only show when poll is selected */}
+              {trackPostType === 'poll' && (
+                <div className="space-y-2">
+                  {pollOptions.map((option, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...pollOptions];
+                          newOptions[idx] = e.target.value;
+                          setPollOptions(newOptions);
+                        }}
+                        placeholder={`Option ${idx + 1}`}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      />
+                      {pollOptions.length > 2 && (
+                        <button
+                          onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                          className="p-1 text-gray-400 hover:text-red-500"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {pollOptions.length < 4 && (
+                    <button
+                      onClick={() => setPollOptions([...pollOptions, ""])}
+                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                    >
+                      + Add option
+                    </button>
+                  )}
+                </div>
+              )}
               
               {/* List selection - horizontal pills with custom list dropdown */}
               <div className="flex flex-wrap items-center gap-2">
