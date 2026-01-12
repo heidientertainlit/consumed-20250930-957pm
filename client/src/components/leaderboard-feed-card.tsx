@@ -46,7 +46,7 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
       if (!session?.access_token) return [];
       
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=week`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=weekly`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
