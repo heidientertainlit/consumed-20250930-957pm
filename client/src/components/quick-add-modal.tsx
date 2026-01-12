@@ -1253,7 +1253,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       <DrawerContent className="bg-white rounded-t-2xl">
         <DrawerHeader className="text-center pb-2 border-b border-gray-100">
           <DrawerTitle className="text-lg font-semibold text-gray-900">
-            {isQuickAddMode ? 'Quick Add to List' : 'Select a List'}
+            {isQuickAddMode ? 'Add to List' : 'Select a List'}
           </DrawerTitle>
           {isQuickAddMode && selectedMedia && (
             <p className="text-sm text-gray-500 mt-1">{selectedMedia.title}</p>
@@ -1264,6 +1264,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             onClick={() => {
               setSelectedListId("none");
               setIsListDrawerOpen(false);
+              if (isQuickAddMode) {
+                setIsQuickAddMode(false);
+                setSelectedMedia(null);
+              }
             }}
             className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
             data-testid="list-option-none"
@@ -1272,10 +1276,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               <X className="text-gray-500" size={20} />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-gray-900">None</p>
-              <p className="text-sm text-gray-500">Don't add to a list</p>
+              <p className="font-medium text-gray-900">{isQuickAddMode ? 'Cancel' : 'None'}</p>
+              <p className="text-sm text-gray-500">{isQuickAddMode ? 'Go back' : "Don't add to a list"}</p>
             </div>
-            {(!selectedListId || selectedListId === "none") && (
+            {!isQuickAddMode && (!selectedListId || selectedListId === "none") && (
               <Check size={20} className="text-purple-600" />
             )}
           </button>
