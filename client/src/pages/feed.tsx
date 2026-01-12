@@ -1012,6 +1012,7 @@ export default function Feed() {
         });
         if (response.ok) {
           const data = await response.json();
+          console.log('🔍 Feed search results:', data.results?.slice(0, 5).map((r: any) => ({ title: r.title, score: r._score, type: r.type })));
           setHeaderSearchResults(data.results || []);
           setShowHeaderResults(true);
         }
