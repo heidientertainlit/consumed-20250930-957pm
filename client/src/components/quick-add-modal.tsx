@@ -766,8 +766,15 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     return (
                     <div
                       key={`${result.external_id || result.id}-${index}`}
-                      onClick={() => handleSelectMedia(result)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        console.log('🎯 Row clicked:', result.title);
+                        handleSelectMedia(result);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSelectMedia(result)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors cursor-pointer select-none"
+                      style={{ pointerEvents: 'auto' }}
                       data-testid={`search-result-${index}`}
                     >
                       {/* Media poster */}
