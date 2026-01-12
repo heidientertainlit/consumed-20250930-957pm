@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DnfReasonDrawer } from "./dnf-reason-drawer";
-import { CustomListDrawer } from "./custom-list-drawer";
 import { 
   Search, 
   Star, 
@@ -84,7 +83,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   const [isQuickAddMode, setIsQuickAddMode] = useState(false);
   const [isRankDrawerOpen, setIsRankDrawerOpen] = useState(false);
   const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
-  const [isCustomListDrawerOpen, setIsCustomListDrawerOpen] = useState(false);
   const [dnfReason, setDnfReason] = useState<{ reason: string; otherReason?: string } | null>(null);
   const [pendingDnfListId, setPendingDnfListId] = useState<string>("");
   const [rewatchCount, setRewatchCount] = useState<number>(1);
@@ -1085,11 +1083,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     {list.label}
                   </button>
                 ))}
-                {/* Custom lists pill - opens bottom drawer */}
+                {/* Custom lists pill - opens the main list drawer */}
                 {userLists.filter((l: any) => !l.is_default).length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setIsCustomListDrawerOpen(true)}
+                    onClick={() => setIsListDrawerOpen(true)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
                       !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
                         ? 'bg-purple-600 text-white'
@@ -1409,16 +1407,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         </div>
       </DrawerContent>
     </Drawer>
-
-    {/* Custom List Drawer */}
-    <CustomListDrawer
-      isOpen={isCustomListDrawerOpen}
-      onOpenChange={setIsCustomListDrawerOpen}
-      lists={userLists}
-      selectedListId={selectedListId}
-      onSelectList={setSelectedListId}
-      mediaTitle={selectedMedia?.title}
-    />
 
     {/* DNF Reason Drawer */}
     <DnfReasonDrawer

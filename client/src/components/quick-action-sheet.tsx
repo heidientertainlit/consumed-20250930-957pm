@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { CustomListDrawer } from "./custom-list-drawer";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check } from "lucide-react";
+import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -85,7 +85,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
-  const [isCustomListDrawerOpen, setIsCustomListDrawerOpen] = useState(false);
+  const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
   
   const episodeCache = useRef<Record<string, any[]>>({});
 
@@ -748,7 +748,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 {/* Custom lists pill - opens bottom drawer */}
                 {userLists.filter((l: any) => !l.is_default).length > 0 && (
                   <button
-                    onClick={() => setIsCustomListDrawerOpen(true)}
+                    onClick={() => setIsListDrawerOpen(true)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
                       !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
                         ? 'bg-purple-600 text-white'
@@ -1467,15 +1467,80 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
       </SheetContent>
     </Sheet>
 
-    {/* Custom List Drawer */}
-    <CustomListDrawer
-      isOpen={isCustomListDrawerOpen}
-      onOpenChange={setIsCustomListDrawerOpen}
-      lists={userLists}
-      selectedListId={selectedListId}
-      onSelectList={setSelectedListId}
-      mediaTitle={selectedMedia?.title}
-    />
+    {/* List Selection Drawer */}
+    <Drawer open={isListDrawerOpen} onOpenChange={setIsListDrawerOpen}>
+      <DrawerContent className="bg-white rounded-t-2xl">
+        <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+          <DrawerTitle className="text-lg font-semibold text-gray-900">Add to List</DrawerTitle>
+          {selectedMedia && (
+            <p className="text-sm text-gray-500 mt-1">{selectedMedia.title}</p>
+          )}
+        </DrawerHeader>
+        <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">
+          <button
+            onClick={() => setIsListDrawerOpen(false)}
+            className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+          >
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <X className="text-gray-500" size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">Cancel</p>
+              <p className="text-sm text-gray-500">Go back</p>
+            </div>
+          </button>
+          {userLists.map((list: any) => {
+            const getListStyle = (title: string) => {
+              const lower = title.toLowerCase();
+              if (lower.includes('currently') || lower.includes('watching') || lower.includes('reading')) {
+                return { bg: 'bg-purple-100', icon: <Play className="text-purple-600" size={20} /> };
+              }
+              if (lower.includes('queue') || lower.includes('want')) {
+                return { bg: 'bg-blue-100', icon: <Clock className="text-blue-600" size={20} /> };
+              }
+              if (lower.includes('finished') || lower.includes('complete')) {
+                return { bg: 'bg-green-100', icon: <Check className="text-green-600" size={20} /> };
+              }
+              if (lower.includes('dnf') || lower.includes('not finish')) {
+                return { bg: 'bg-red-100', icon: <Ban className="text-red-600" size={20} /> };
+              }
+              if (lower.includes('favorite')) {
+                return { bg: 'bg-yellow-100', icon: <Heart className="text-yellow-600" size={20} /> };
+              }
+              return { bg: 'bg-purple-100', icon: <Folder className="text-purple-600" size={20} /> };
+            };
+            const style = getListStyle(list.title);
+            const desc = list.title.toLowerCase().includes('currently') ? 'Currently consuming' :
+                         list.title.toLowerCase().includes('queue') || list.title.toLowerCase().includes('want') ? 'Save for later' :
+                         list.title.toLowerCase().includes('finished') ? 'Completed media' :
+                         list.title.toLowerCase().includes('dnf') ? 'Stopped watching/reading' :
+                         list.title.toLowerCase().includes('favorite') ? 'Your favorites' : 'Custom list';
+            
+            return (
+              <button
+                key={list.id}
+                onClick={() => {
+                  setSelectedListId(list.id);
+                  setIsListDrawerOpen(false);
+                }}
+                className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <div className={`w-10 h-10 ${style.bg} rounded-full flex items-center justify-center`}>
+                  {style.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{list.title}</p>
+                  <p className="text-sm text-gray-500">{desc}</p>
+                </div>
+                {selectedListId === list.id && (
+                  <Check size={20} className="text-purple-600" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </DrawerContent>
+    </Drawer>
     </>
   );
 }
