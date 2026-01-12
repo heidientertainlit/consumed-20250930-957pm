@@ -603,7 +603,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               ) : searchResults.length > 0 ? (
                 <div className="space-y-2">
                   {searchResults.map((result, index) => {
-                    const posterImage = result.poster_url || result.image_url || result.poster_path || result.image;
+                    const posterImage = result.poster_url || result.image_url;
                     return (
                     <button
                       key={`${result.external_id || result.id}-${index}`}
