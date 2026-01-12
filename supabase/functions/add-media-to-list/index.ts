@@ -13,6 +13,75 @@ const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { persistSession: false }
 });
 
+// Helper function to fetch poster URL from TMDB when not provided
+async function fetchTmdbPosterUrl(externalId: string | null, externalSource: string | null, mediaType?: string, title?: string): Promise<string | null> {
+  const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
+  if (!tmdbApiKey) {
+    console.log('TMDB_API_KEY not available for poster fetch');
+    return null;
+  }
+  
+  try {
+    const isTmdbSource = !externalSource || externalSource === 'tmdb' || externalSource === 'movie' || externalSource === 'tv';
+    const tryMovie = !mediaType || mediaType === 'movie';
+    const tryTv = !mediaType || mediaType === 'tv';
+    
+    // Try by external ID first if we have one
+    if (externalId && isTmdbSource) {
+      if (tryMovie) {
+        const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.poster_path) {
+            return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+          }
+        }
+      }
+      
+      if (tryTv) {
+        const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.poster_path) {
+            return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+          }
+        }
+      }
+    }
+    
+    // Fallback: search by title if no externalId or ID lookup failed
+    if (title && isTmdbSource) {
+      console.log('TMDB title search for:', title);
+      
+      if (tryTv) {
+        const response = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${tmdbApiKey}&query=${encodeURIComponent(title)}&page=1`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.results?.[0]?.poster_path) {
+            console.log('Found TV poster for:', title);
+            return `https://image.tmdb.org/t/p/w300${data.results[0].poster_path}`;
+          }
+        }
+      }
+      
+      if (tryMovie) {
+        const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(title)}&page=1`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.results?.[0]?.poster_path) {
+            console.log('Found movie poster for:', title);
+            return `https://image.tmdb.org/t/p/w300${data.results[0].poster_path}`;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching TMDB poster:', error);
+  }
+  
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -166,6 +235,19 @@ serve(async (req) => {
       });
     }
 
+    // CRITICAL: Ensure we have a poster image URL before inserting
+    // This prevents the "random stock image" bug in the activity feed
+    let finalImageUrl = media_image_url || null;
+    if (!finalImageUrl) {
+      console.log('No image URL provided, fetching from TMDB for:', media_title);
+      finalImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source, media_type, media_title);
+      if (finalImageUrl) {
+        console.log('Fetched poster URL:', finalImageUrl);
+      } else {
+        console.log('Could not fetch poster URL for:', media_title);
+      }
+    }
+
     const { data: mediaItem, error: mediaError } = await adminClient
       .from('list_items')
       .insert({
@@ -174,7 +256,7 @@ serve(async (req) => {
         title: media_title || 'Untitled',
         media_type: media_type || 'mixed',
         creator: media_creator || '',
-        image_url: media_image_url || null,
+        image_url: finalImageUrl,
         external_id: media_external_id || null,
         external_source: media_external_source || 'tmdb'
       })
@@ -205,6 +287,7 @@ serve(async (req) => {
           : `Added ${media_title} to ${list.title}`;
         
         // Match the exact structure used by inline-post (which works)
+        // Use finalImageUrl which was fetched if missing
         const postData = {
           user_id: appUser?.id,
           content: content,
@@ -213,7 +296,7 @@ serve(async (req) => {
           media_title: media_title || null,
           media_type: media_type || null,
           media_creator: media_creator || null,
-          image_url: media_image_url || null,
+          image_url: finalImageUrl,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,
           visibility: 'public',

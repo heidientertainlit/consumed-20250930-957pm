@@ -241,6 +241,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // CRITICAL: Ensure we have a poster image URL before inserting
+    // This prevents the "random stock image" bug in the activity feed
+    let finalImageUrl = imageUrl || null;
+    if (!finalImageUrl) {
+      console.log('No image URL provided, fetching from TMDB for:', title);
+      finalImageUrl = await fetchTmdbPosterUrl(externalId, externalSource, mediaType);
+      if (finalImageUrl) {
+        console.log('Fetched poster URL:', finalImageUrl);
+      } else {
+        console.log('Could not fetch poster URL for:', title);
+      }
+    }
+
     // Insert the media item with core columns only (matching add-media-to-list)
     const { data: mediaItem, error: mediaError } = await supabaseAdmin
       .from('list_items')
@@ -250,7 +263,7 @@ serve(async (req) => {
         title: title || 'Untitled',
         media_type: mediaType || 'mixed',
         creator: creator || '',
-        image_url: imageUrl || null,
+        image_url: finalImageUrl,
         external_id: externalId || null,
         external_source: externalSource || 'tmdb'
       })

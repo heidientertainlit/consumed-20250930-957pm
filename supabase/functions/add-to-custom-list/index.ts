@@ -141,6 +141,19 @@ serve(async (req) => {
       });
     }
 
+    // CRITICAL: Ensure we have a poster image URL before inserting
+    // This prevents the "random stock image" bug in the activity feed
+    let finalImageUrl = imageUrl || null;
+    if (!finalImageUrl) {
+      console.log('No image URL provided, fetching from TMDB for:', title);
+      finalImageUrl = await fetchTmdbPosterUrl(externalId, externalSource, mediaType);
+      if (finalImageUrl) {
+        console.log('Fetched poster URL:', finalImageUrl);
+      } else {
+        console.log('Could not fetch poster URL for:', title);
+      }
+    }
+
     // Insert the media item with core columns only
     const { data: mediaItem, error: mediaError } = await supabase
       .from('list_items')
@@ -150,7 +163,7 @@ serve(async (req) => {
         title: title || 'Untitled',
         media_type: mediaType || 'mixed',
         creator: creator || '',
-        image_url: imageUrl || null,
+        image_url: finalImageUrl,
         external_id: externalId || null,
         external_source: externalSource || null,
         rewatch_count: rewatchCount || 1
@@ -220,13 +233,7 @@ serve(async (req) => {
           content = `Added ${title} to ${customList.title}`;
         }
         
-        // Ensure we have a poster URL - fetch from TMDB if missing
-        let finalImageUrl = imageUrl || null;
-        if (!finalImageUrl && externalId && (externalSource === 'tmdb' || !externalSource)) {
-          console.log('No imageUrl provided, fetching from TMDB...');
-          finalImageUrl = await fetchTmdbPosterUrl(externalId, externalSource || 'tmdb', mediaType);
-        }
-        
+        // Use finalImageUrl from earlier fetch (already populated before list_items insert)
         const { error: postError } = await supabase
           .from('social_posts')
           .insert({
