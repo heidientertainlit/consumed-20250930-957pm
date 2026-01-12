@@ -565,16 +565,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xs font-medium text-white">Activity</span>
           </Link>
 
-          {/* Play */}
-          <Link
-            href="/play"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/play" ? "bg-white/15" : ""}`}
-            data-testid="nav-play"
-          >
-            <Gamepad2 className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Play</span>
-          </Link>
-
           {/* Me */}
           <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
