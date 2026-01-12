@@ -1008,7 +1008,7 @@ export default function Feed() {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query: headerSearchQuery })
+          body: JSON.stringify({ query: headerSearchQuery.trim() })
         });
         if (response.ok) {
           const data = await response.json();
