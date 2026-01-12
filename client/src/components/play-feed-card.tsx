@@ -58,14 +58,13 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
         .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
+        .in('type', ['vote', 'trivia'])
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
       if (error) throw new Error('Failed to fetch games');
       return (pools || []).filter((game: any) => {
         if (!game.id || !game.title || !game.type) return false;
-        if (game.type === 'predict') return false;
-        const isConsumedContent = game.id.startsWith('consumed-') || game.id.startsWith('trivia-') || game.id.startsWith('poll-');
-        if (!isConsumedContent) return false;
+        if (!game.options || game.options.length < 2) return false;
         if (variant === 'polls' && game.type !== 'vote') return false;
         if (variant === 'trivia' && game.type !== 'trivia') return false;
         return true;
@@ -488,7 +487,7 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
             </Badge>
           </div>
           <span className="text-purple-300/70 text-xs">
-            {currentGameIndex + 1} / {Math.min(availableGames.length, 5)}
+            {currentGameIndex + 1} / {Math.min(availableGames.length, 30)}
           </span>
         </div>
       </div>
@@ -499,11 +498,11 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
         className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
         style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
       >
-        {availableGames.slice(0, 5).map((game, index) => renderGameCard(game, index))}
+        {availableGames.slice(0, 30).map((game, index) => renderGameCard(game, index))}
       </div>
 
       <div className="flex items-center justify-center gap-1.5 pb-4">
-        {availableGames.slice(0, 5).map((_, idx) => (
+        {availableGames.slice(0, Math.min(availableGames.length, 10)).map((_, idx) => (
           <div 
             key={idx} 
             className={cn(
