@@ -1523,6 +1523,25 @@ export default function Feed() {
       if (!detailedFilters.engagementTypes.includes(mappedType)) return false;
     }
 
+    // Apply selected filter (games, trivia, polls, predictions, hot_takes)
+    if (selectedFilter && selectedFilter !== 'All' && selectedFilter !== 'all') {
+      const postType = post.type?.toLowerCase() || '';
+      
+      if (selectedFilter === 'games') {
+        // Show all game types: trivia, poll, prediction
+        const gameTypes = ['trivia', 'poll', 'prediction', 'vote'];
+        if (!gameTypes.includes(postType)) return false;
+      } else if (selectedFilter === 'trivia') {
+        if (postType !== 'trivia') return false;
+      } else if (selectedFilter === 'polls') {
+        if (postType !== 'poll' && postType !== 'vote') return false;
+      } else if (selectedFilter === 'predictions') {
+        if (postType !== 'prediction') return false;
+      } else if (selectedFilter === 'hot_takes') {
+        if (postType !== 'hot_take') return false;
+      }
+    }
+
     return true;
   });
 
@@ -3030,6 +3049,32 @@ export default function Feed() {
                 );
               })()}
 
+              {/* Feed Filter Pills */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
+                {[
+                  { id: 'all', label: 'All', icon: '✨' },
+                  { id: 'games', label: 'Play', icon: '🎮' },
+                  { id: 'trivia', label: 'Trivia', icon: '❓' },
+                  { id: 'polls', label: 'Polls', icon: '📊' },
+                  { id: 'predictions', label: 'Predictions', icon: '🔮' },
+                  { id: 'hot_takes', label: 'Hot Takes', icon: '🔥' },
+                ].map((filter) => (
+                  <button
+                    key={filter.id}
+                    onClick={() => setSelectedFilter(filter.id === selectedFilter ? 'All' : filter.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      (filter.id === 'all' && selectedFilter === 'All') || filter.id === selectedFilter
+                        ? 'bg-purple-600 text-white shadow-sm'
+                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                    }`}
+                    data-testid={`feed-filter-${filter.id}`}
+                  >
+                    <span>{filter.icon}</span>
+                    <span>{filter.label}</span>
+                  </button>
+                ))}
+              </div>
+
               {/* Empty state for filtered views */}
               {feedFilter && filteredPosts.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
@@ -3040,6 +3085,36 @@ export default function Feed() {
                       <p className="text-gray-500 text-sm">Follow more friends to see their activity!</p>
                     </>
                   )}
+                </div>
+              )}
+
+              {/* Show available games when game filter is active */}
+              {(selectedFilter === 'games' || selectedFilter === 'trivia' || selectedFilter === 'polls' || selectedFilter === 'predictions') && (
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">🎮</span>
+                    <h3 className="font-semibold text-gray-900">Available Games</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {selectedFilter === 'games' && (
+                      <>
+                        <InlineGameCard gameType="vote" gameIndex={0} />
+                        <InlineGameCard gameType="trivia" gameIndex={0} />
+                      </>
+                    )}
+                    {selectedFilter === 'trivia' && (
+                      <>
+                        <InlineGameCard gameType="trivia" gameIndex={0} />
+                        <InlineGameCard gameType="trivia" gameIndex={1} />
+                      </>
+                    )}
+                    {(selectedFilter === 'polls' || selectedFilter === 'predictions') && (
+                      <>
+                        <InlineGameCard gameType="vote" gameIndex={0} />
+                        <InlineGameCard gameType="vote" gameIndex={1} />
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 
