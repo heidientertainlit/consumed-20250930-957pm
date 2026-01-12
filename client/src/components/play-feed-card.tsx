@@ -494,6 +494,18 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     );
   };
 
+  // For mixed variant, show the current game's type dynamically
+  const currentGame = availableGames[currentGameIndex];
+  const getCurrentLabel = () => {
+    if (variant !== 'mixed' || !currentGame) return getVariantLabel();
+    return currentGame.type === 'trivia' ? 'Trivia' : 'Poll';
+  };
+  const getCurrentIcon = () => {
+    if (variant !== 'mixed' || !currentGame) return VariantIcon;
+    return currentGame.type === 'trivia' ? Brain : Vote;
+  };
+  const CurrentIcon = getCurrentIcon();
+
   return (
     <div className={cn(
       "bg-gradient-to-br from-[#0a0a1a] via-[#1a1a3e] to-[#2d1f5e] rounded-2xl shadow-xl border border-purple-700/30 overflow-hidden",
@@ -502,8 +514,8 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
       <div className="p-4 pb-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <VariantIcon className="text-purple-400" size={18} />
-            <span className="text-purple-300 text-sm font-medium">{getVariantLabel()}</span>
+            <CurrentIcon className="text-purple-400" size={18} />
+            <span className="text-purple-300 text-sm font-medium">{getCurrentLabel()}</span>
             <Badge className="bg-purple-600/50 text-purple-200 text-xs border-0">
               +{availableGames[currentGameIndex]?.points_reward || 0} pts
             </Badge>
