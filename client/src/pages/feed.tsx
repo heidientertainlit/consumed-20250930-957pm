@@ -1045,7 +1045,7 @@ export default function Feed() {
     setTrackModalPreSelectedMedia({
       title: item.title,
       mediaType: item.type || item.mediaType || 'movie',
-      imageUrl: item.image_url || item.imageUrl || item.posterPath,
+      imageUrl: item.poster_url || item.image_url || item.imageUrl || item.posterPath,
       externalId: item.external_id || item.externalId || item.id,
       externalSource: item.external_source || item.externalSource || 'tmdb',
       creator: item.creator || item.author,
@@ -2762,9 +2762,9 @@ export default function Feed() {
                     onClick={() => handleSelectHeaderMedia(item)}
                     className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                   >
-                    {item.image_url ? (
+                    {(item.poster_url || item.image_url) ? (
                       <img 
-                        src={item.image_url} 
+                        src={item.poster_url || item.image_url} 
                         alt={item.title}
                         className="w-10 h-14 rounded-lg object-cover shadow-sm"
                       />
@@ -2776,6 +2776,7 @@ export default function Feed() {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-gray-900 truncate">{item.title}</h4>
                       <p className="text-xs text-gray-500 uppercase">{item.type} {item.year ? `• ${item.year}` : ''}</p>
+                      {item.creator && <p className="text-xs text-gray-400 truncate">{item.creator}</p>}
                     </div>
                     <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
                       <Plus className="w-4 h-4 text-purple-600" />
