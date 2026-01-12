@@ -556,6 +556,14 @@ serve(async (req) => {
       if (queryHasMusic && item.type === 'music') score += 40;
       if (queryHasTv && item.type === 'tv') score += 40;
       
+      // 4b. DEFAULT boost for TV/movies when no type hint detected
+      // Most users searching are looking for TV shows and movies
+      const hasAnyTypeHint = queryHasBook || queryHasMovie || queryHasMusic || queryHasTv;
+      if (!hasAnyTypeHint && !type) {
+        if (item.type === 'tv') score += 25;
+        if (item.type === 'movie') score += 20;
+      }
+      
       // 5. Type filter boost - if caller passed a specific type
       if (type && item.type === type) {
         score += 25;
