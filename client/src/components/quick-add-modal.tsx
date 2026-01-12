@@ -82,6 +82,13 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   const [pendingDnfListId, setPendingDnfListId] = useState<string>("");
   const [rewatchCount, setRewatchCount] = useState<number>(1);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  
+  // TV-specific options
+  const [tvSeason, setTvSeason] = useState<string>("");
+  const [tvEpisode, setTvEpisode] = useState<string>("");
+  
+  // Music-specific options
+  const [musicFormat, setMusicFormat] = useState<"album" | "single" | "track">("album");
 
   const { data: listsData } = useQuery({
     queryKey: ['user-lists-metadata', user?.id],
@@ -203,6 +210,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
     setIsDnfDrawerOpen(false);
     setDnfReason(null);
     setPendingDnfListId("");
+    setTvSeason("");
+    setTvEpisode("");
+    setMusicFormat("album");
   };
   
   const getSelectedListName = () => {
@@ -267,6 +277,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
     setSelectedRankId("");
     setReviewText("");
     setContainsSpoilers(false);
+    setTvSeason("");
+    setTvEpisode("");
+    setMusicFormat("album");
   };
 
   const handleSubmit = async () => {
@@ -295,6 +308,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image || '',
         externalId: String(externalId),
         externalSource,
+        // TV-specific data
+        ...(tvSeason && { season: parseInt(tvSeason) }),
+        ...(tvEpisode && { episode: parseInt(tvEpisode) }),
+        // Music-specific data
+        ...((selectedMedia.type === 'music' || selectedMedia.media_type === 'music') && { musicFormat }),
       };
       
       console.log('🎯 QuickAdd: Adding media', { mediaData, selectedListId, rating, selectedRankId });
@@ -837,16 +855,69 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               {/* Collapsible advanced options */}
               {showMoreOptions && (
                 <div className="space-y-3 pt-2 border-t border-gray-100">
-                  {/* TV episode picker */}
-                  {selectedMedia?.type === 'tv' && (
+                  {/* TV season/episode picker */}
+                  {(selectedMedia?.type === 'tv' || selectedMedia?.media_type === 'tv') && (
                     <div className="space-y-2">
-                      <p className="text-xs font-medium text-gray-500 uppercase">Episode</p>
-                      <select
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
-                        data-testid="episode-select"
-                      >
-                        <option value="">All seasons</option>
-                      </select>
+                      <p className="text-xs font-medium text-gray-500 uppercase">Season & Episode</p>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <select
+                            value={tvSeason}
+                            onChange={(e) => {
+                              setTvSeason(e.target.value);
+                              if (!e.target.value) setTvEpisode("");
+                            }}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
+                            data-testid="season-select"
+                          >
+                            <option value="">All Seasons</option>
+                            {Array.from({ length: 20 }, (_, i) => (
+                              <option key={i + 1} value={String(i + 1)}>Season {i + 1}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <select
+                            value={tvEpisode}
+                            onChange={(e) => setTvEpisode(e.target.value)}
+                            disabled={!tvSeason}
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white disabled:opacity-50 disabled:bg-gray-50"
+                            data-testid="episode-select"
+                          >
+                            <option value="">All Episodes</option>
+                            {Array.from({ length: 30 }, (_, i) => (
+                              <option key={i + 1} value={String(i + 1)}>Episode {i + 1}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Music format picker */}
+                  {(selectedMedia?.type === 'music' || selectedMedia?.media_type === 'music') && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Format</p>
+                      <div className="flex gap-2">
+                        {[
+                          { value: 'album', label: 'Album' },
+                          { value: 'single', label: 'Single' },
+                          { value: 'track', label: 'Track' }
+                        ].map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setMusicFormat(option.value as "album" | "single" | "track")}
+                            className={`flex-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                              musicFormat === option.value
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                   
