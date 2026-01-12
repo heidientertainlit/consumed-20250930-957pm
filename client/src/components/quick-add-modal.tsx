@@ -83,6 +83,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   const [isQuickAddMode, setIsQuickAddMode] = useState(false);
   const [isRankDrawerOpen, setIsRankDrawerOpen] = useState(false);
   const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
+  const [isCustomListDrawerOpen, setIsCustomListDrawerOpen] = useState(false);
   const [dnfReason, setDnfReason] = useState<{ reason: string; otherReason?: string } | null>(null);
   const [pendingDnfListId, setPendingDnfListId] = useState<string>("");
   const [rewatchCount, setRewatchCount] = useState<number>(1);
@@ -1083,38 +1084,24 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     {list.label}
                   </button>
                 ))}
-                {/* Custom lists dropdown pill */}
+                {/* Custom lists pill - opens bottom drawer */}
                 {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
-                          !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        data-testid="custom-list-dropdown"
-                      >
-                        {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId) 
-                          ? userLists.find((l: any) => l.id === selectedListId)?.title || userLists.find((l: any) => l.id === selectedListId)?.name || 'Custom'
-                          : 'Custom'
-                        }
-                        <ChevronDown size={14} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-gray-900 text-white border-gray-800">
-                      {userLists.filter((l: any) => !l.is_default).map((list: any) => (
-                        <DropdownMenuItem
-                          key={list.id}
-                          onClick={() => setSelectedListId(list.id)}
-                          className="cursor-pointer hover:bg-gray-800 focus:bg-gray-800"
-                        >
-                          {list.title || list.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomListDrawerOpen(true)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
+                      !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid="custom-list-dropdown"
+                  >
+                    {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId) 
+                      ? userLists.find((l: any) => l.id === selectedListId)?.title || userLists.find((l: any) => l.id === selectedListId)?.name || 'Custom'
+                      : 'Custom'
+                    }
+                    <ChevronDown size={14} />
+                  </button>
                 )}
               </div>
 
@@ -1414,6 +1401,56 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                 <p className="text-sm text-gray-500">Add to ranked list</p>
               </div>
               {selectedRankId === rank.id && (
+                <Check size={20} className="text-purple-600" />
+              )}
+            </button>
+          ))}
+        </div>
+      </DrawerContent>
+    </Drawer>
+
+    {/* Custom List Drawer */}
+    <Drawer open={isCustomListDrawerOpen} onOpenChange={setIsCustomListDrawerOpen}>
+      <DrawerContent className="max-h-[85vh]">
+        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 my-3" />
+        <DrawerHeader className="text-center pb-2">
+          <DrawerTitle className="text-lg font-semibold">Add to List</DrawerTitle>
+          {selectedMedia && (
+            <p className="text-sm text-gray-500">{selectedMedia.title}</p>
+          )}
+        </DrawerHeader>
+        <div className="px-4 pb-6 space-y-1 max-h-[60vh] overflow-y-auto">
+          <button
+            onClick={() => {
+              setIsCustomListDrawerOpen(false);
+            }}
+            className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+          >
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <X className="text-gray-500" size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">Cancel</p>
+              <p className="text-sm text-gray-500">Go back</p>
+            </div>
+          </button>
+          {userLists.filter((l: any) => !l.is_default).map((list: any) => (
+            <button
+              key={list.id}
+              onClick={() => {
+                setSelectedListId(list.id);
+                setIsCustomListDrawerOpen(false);
+              }}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+            >
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <Folder className="text-purple-600" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">{list.title || list.name}</p>
+                <p className="text-sm text-gray-500">Custom list</p>
+              </div>
+              {selectedListId === list.id && (
                 <Check size={20} className="text-purple-600" />
               )}
             </button>
