@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords } from "lucide-react";
+import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -84,6 +85,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [isCustomListDrawerOpen, setIsCustomListDrawerOpen] = useState(false);
   
   const episodeCache = useRef<Record<string, any[]>>({});
 
@@ -721,12 +723,13 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 </div>
               )}
               
-              {/* List selection - horizontal pills with custom list dropdown */}
+              {/* List selection - horizontal pills with custom list drawer */}
               <div className="flex flex-wrap items-center gap-2">
                 {[
                   { id: 'finished', label: 'Finished' },
                   { id: 'currently', label: 'Currently' },
                   { id: 'queue', label: 'Want To' },
+                  { id: 'favorites', label: 'Favorites' },
                   { id: 'dnf', label: 'DNF' },
                 ].map((list) => (
                   <button
@@ -742,37 +745,23 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                     {list.label}
                   </button>
                 ))}
-                {/* Custom lists dropdown pill */}
+                {/* Custom lists pill - opens bottom drawer */}
                 {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
-                          !['finished', 'currently', 'queue', 'dnf'].includes(selectedListId)
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        data-testid="custom-list-dropdown"
-                      >
-                        {!['finished', 'currently', 'queue', 'dnf'].includes(selectedListId) 
-                          ? userLists.find((l: any) => l.id === selectedListId)?.title || 'Custom'
-                          : 'Custom'
-                        }
-                        <ChevronDown size={14} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      {userLists.filter((l: any) => !l.is_default).map((list: any) => (
-                        <DropdownMenuItem
-                          key={list.id}
-                          onClick={() => setSelectedListId(list.id)}
-                          className="cursor-pointer"
-                        >
-                          {list.title}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <button
+                    onClick={() => setIsCustomListDrawerOpen(true)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
+                      !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid="custom-list-dropdown"
+                  >
+                    {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId) 
+                      ? userLists.find((l: any) => l.id === selectedListId)?.title || 'Custom'
+                      : 'Custom'
+                    }
+                    <ChevronDown size={14} />
+                  </button>
                 )}
               </div>
               
@@ -1404,6 +1393,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   };
 
   return (
+    <>
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto !bg-white border-t border-gray-100" style={{ backgroundColor: 'white' }}>
         {!selectedIntent ? (
@@ -1476,5 +1466,54 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         )}
       </SheetContent>
     </Sheet>
+
+    {/* Custom List Drawer */}
+    <Drawer open={isCustomListDrawerOpen} onOpenChange={setIsCustomListDrawerOpen}>
+      <DrawerContent className="max-h-[85vh]">
+        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 my-3" />
+        <DrawerHeader className="text-center pb-2">
+          <DrawerTitle className="text-lg font-semibold">Add to List</DrawerTitle>
+          {selectedMedia && (
+            <p className="text-sm text-gray-500">{selectedMedia.title}</p>
+          )}
+        </DrawerHeader>
+        <div className="px-4 pb-6 space-y-1 max-h-[60vh] overflow-y-auto">
+          <button
+            onClick={() => setIsCustomListDrawerOpen(false)}
+            className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+          >
+            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <X className="text-gray-500" size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">Cancel</p>
+              <p className="text-sm text-gray-500">Go back</p>
+            </div>
+          </button>
+          {userLists.filter((l: any) => !l.is_default).map((list: any) => (
+            <button
+              key={list.id}
+              onClick={() => {
+                setSelectedListId(list.id);
+                setIsCustomListDrawerOpen(false);
+              }}
+              className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+            >
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <Folder className="text-purple-600" size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">{list.title || list.name}</p>
+                <p className="text-sm text-gray-500">Custom list</p>
+              </div>
+              {selectedListId === list.id && (
+                <Check size={20} className="text-purple-600" />
+              )}
+            </button>
+          ))}
+        </div>
+      </DrawerContent>
+    </Drawer>
+    </>
   );
 }
