@@ -57,17 +57,18 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
       
       if (!response.ok) throw new Error('Failed to fetch leaderboard');
       const data = await response.json();
-      return data?.leaderboard || data || [];
+      // Use trivia category or overall for the feed card
+      return data?.categories?.trivia || data?.categories?.overall || [];
     },
     enabled: !!session?.access_token,
   });
 
-  const entries: LeaderboardEntry[] = leaderboard.map((entry: any, index: number) => ({
-    rank: index + 1,
+  const entries: LeaderboardEntry[] = (leaderboard || []).map((entry: any, index: number) => ({
+    rank: entry.rank || index + 1,
     userId: entry.user_id || entry.id,
-    username: entry.username || entry.display_name || 'Unknown',
+    username: entry.display_name || entry.username || 'Unknown',
     avatarUrl: entry.avatar_url,
-    points: entry.total_points || entry.points || 0,
+    points: entry.score || entry.total_points || entry.points || 0,
     isCurrentUser: currentUser?.id === (entry.user_id || entry.id),
   }));
 
