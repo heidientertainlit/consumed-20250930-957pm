@@ -2779,9 +2779,23 @@ export default function Feed() {
                       <p className="text-xs text-gray-500 uppercase">{item.type} {item.year ? `• ${item.year}` : ''}</p>
                       {item.creator && <p className="text-xs text-gray-400 truncate">{item.creator}</p>}
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Plus className="w-4 h-4 text-purple-600" />
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuickAddMedia({
+                          title: item.title,
+                          mediaType: item.type || 'movie',
+                          imageUrl: item.poster_url || item.image_url,
+                          externalId: item.external_id || item.id,
+                          externalSource: item.external_source || 'tmdb',
+                          creator: item.creator,
+                        });
+                        setIsQuickAddOpen(true);
+                      }}
+                      className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center transition-colors"
+                    >
+                      <Plus className="w-4 h-4 text-white" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -2796,7 +2810,18 @@ export default function Feed() {
                 {suggestedQuickAdds.slice(0, 2).map((item: any) => (
                   <div
                     key={item.id || item.externalId}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-3 border border-white/10"
+                    onClick={() => {
+                      setTrackModalPreSelectedMedia({
+                        title: item.title,
+                        type: item.mediaType || item.type || 'movie',
+                        poster_url: item.imageUrl || item.poster_url || item.image_url || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
+                        external_id: item.externalId || item.id,
+                        external_source: item.externalSource || 'tmdb',
+                        year: item.year || (item.first_air_date ? new Date(item.first_air_date).getFullYear() : null)
+                      });
+                      setIsTrackModalOpen(true);
+                    }}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-3 border border-white/10 cursor-pointer hover:bg-white/20 transition-colors"
                     data-testid={`quick-add-${item.id || item.externalId}`}
                   >
                     {(item.imageUrl || item.poster_url || item.image_url || item.poster_path) ? (
@@ -2817,14 +2842,15 @@ export default function Feed() {
                       </p>
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setQuickAddMedia({
                           title: item.title,
-                          type: item.mediaType || item.type || 'movie',
-                          image_url: item.imageUrl || item.poster_url || item.image_url || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
-                          external_id: item.externalId || item.id,
-                          external_source: item.externalSource || 'tmdb',
-                          year: item.year || (item.first_air_date ? new Date(item.first_air_date).getFullYear() : null)
+                          mediaType: item.mediaType || item.type || 'movie',
+                          imageUrl: item.imageUrl || item.poster_url || item.image_url || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
+                          externalId: item.externalId || item.id,
+                          externalSource: item.externalSource || 'tmdb',
+                          creator: item.creator,
                         });
                         setIsQuickAddOpen(true);
                       }}
