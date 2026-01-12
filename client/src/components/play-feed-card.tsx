@@ -1,12 +1,11 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Brain, Vote, Sparkles, Gamepad2 } from 'lucide-react';
+import { Brain, Vote, Sparkles, Gamepad2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Link } from 'wouter';
 
 interface TriviaQuestion {
   question: string;
@@ -26,6 +25,13 @@ interface Game {
   correct_answer?: string;
 }
 
+interface VoteResult {
+  option: string;
+  count: number;
+  percentage: number;
+  isUserChoice: boolean;
+}
+
 interface PlayFeedCardProps {
   variant: 'mixed' | 'polls' | 'trivia';
   className?: string;
@@ -38,6 +44,9 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   const [submittedGames, setSubmittedGames] = useState<Set<string>>(new Set());
   const [triviaQuestionIndex, setTriviaQuestionIndex] = useState(0);
   const [triviaScore, setTriviaScore] = useState(0);
+  const [showingResults, setShowingResults] = useState<string | null>(null);
+  const [voteResults, setVoteResults] = useState<VoteResult[]>([]);
+  const [userVotedOption, setUserVotedOption] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -86,6 +95,33 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     return true;
   });
 
+  const fetchVoteResults = async (poolId: string, options: string[], userChoice: string) => {
+    const { data: votes } = await supabase
+      .from('user_predictions')
+      .select('prediction')
+      .eq('pool_id', poolId);
+    
+    const voteCounts: Record<string, number> = {};
+    options.forEach(opt => voteCounts[opt] = 0);
+    
+    (votes || []).forEach((v: any) => {
+      if (voteCounts[v.prediction] !== undefined) {
+        voteCounts[v.prediction]++;
+      }
+    });
+    
+    const totalVotes = Object.values(voteCounts).reduce((a, b) => a + b, 0);
+    
+    const results: VoteResult[] = options.map(opt => ({
+      option: opt,
+      count: voteCounts[opt],
+      percentage: totalVotes > 0 ? Math.round((voteCounts[opt] / totalVotes) * 100) : 0,
+      isUserChoice: opt === userChoice
+    }));
+    
+    return results.sort((a, b) => b.count - a.count);
+  };
+
   const submitAnswer = useMutation({
     mutationFn: async ({ poolId, answer, score, game }: { poolId: string; answer: string; score?: number; game: Game }) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -110,7 +146,7 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   });
 
   const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
+    if (!scrollContainerRef.current || showingResults) return;
     const container = scrollContainerRef.current;
     const scrollLeft = container.scrollLeft;
     const cardWidth = container.offsetWidth;
@@ -160,23 +196,36 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   const handleVoteSubmit = async (game: Game) => {
     if (!selectedAnswer) return;
     setIsSubmitting(true);
+    const userChoice = selectedAnswer;
     try {
       await submitAnswer.mutateAsync({
         poolId: game.id,
         answer: selectedAnswer,
         game: game,
       });
-      setSubmittedGames(prev => new Set([...prev, game.id]));
+      
       toast({
-        title: `Success! +${game.points_reward} points`,
+        title: `+${game.points_reward} points`,
         duration: 1500,
       });
-      setSelectedAnswer(null);
+      
+      const options = getGameOptions(game);
+      const results = await fetchVoteResults(game.id, options, userChoice);
+      setVoteResults(results);
+      setUserVotedOption(userChoice);
+      setShowingResults(game.id);
+      setSubmittedGames(prev => new Set([...prev, game.id]));
+      
       setTimeout(() => {
+        setShowingResults(null);
+        setVoteResults([]);
+        setUserVotedOption(null);
+        setSelectedAnswer(null);
         if (currentGameIndex < availableGames.length - 1) {
           scrollToGame(currentGameIndex + 1);
         }
-      }, 200);
+      }, 2500);
+      
     } finally {
       setIsSubmitting(false);
     }
@@ -191,7 +240,7 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     if (isCorrect) setTriviaScore(newScore);
     
     toast({
-      title: isCorrect ? `Correct! +${earnedPoints} points` : `Wrong! Answer: ${triviaQuestion.correct}`,
+      title: isCorrect ? `Correct! +${earnedPoints} pts` : `Wrong! Answer: ${triviaQuestion.correct}`,
       duration: 1500,
     });
     
@@ -215,7 +264,7 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
           if (currentGameIndex < availableGames.length - 1) {
             scrollToGame(currentGameIndex + 1);
           }
-        }, 200);
+        }, 500);
       } finally {
         setIsSubmitting(false);
       }
@@ -259,6 +308,47 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
 
   const VariantIcon = getVariantIcon();
 
+  const renderResultsView = (game: Game) => (
+    <div 
+      key={`results-${game.id}`}
+      className="min-w-full snap-center px-4 py-4"
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <Check className="text-green-400" size={20} />
+        <span className="text-green-400 font-medium">Voted!</span>
+      </div>
+      <h3 className="text-white font-semibold text-lg leading-tight mb-4">
+        {game.title}
+      </h3>
+      <div className="space-y-3">
+        {voteResults.map((result, idx) => (
+          <div key={idx} className="relative">
+            <div 
+              className={cn(
+                "absolute inset-0 rounded-xl transition-all",
+                result.isUserChoice ? "bg-purple-600/40" : "bg-white/10"
+              )}
+              style={{ width: `${result.percentage}%` }}
+            />
+            <div className={cn(
+              "relative flex items-center justify-between p-3.5 rounded-xl border",
+              result.isUserChoice ? "border-purple-400" : "border-purple-700/30"
+            )}>
+              <span className="font-medium text-white flex items-center gap-2">
+                {result.option}
+                {result.isUserChoice && <Check size={16} className="text-purple-300" />}
+              </span>
+              <span className="text-purple-300 font-semibold">{result.percentage}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-center text-purple-300/60 text-xs mt-4">
+        Next game in a moment...
+      </p>
+    </div>
+  );
+
   const renderGameCard = (game: Game, index: number) => {
     const isActive = index === currentGameIndex;
     const options = getGameOptions(game);
@@ -269,6 +359,10 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
       : 1;
     const displayOptions = isTrivia && triviaQuestion ? triviaQuestion.options : options;
     const displayQuestion = isTrivia && triviaQuestion ? triviaQuestion.question : game.title;
+
+    if (showingResults === game.id) {
+      return renderResultsView(game);
+    }
 
     return (
       <div 
@@ -303,26 +397,16 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
           ))}
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            onClick={() => isTrivia && triviaQuestion 
-              ? handleTriviaAnswer(game, triviaQuestion, totalTriviaQuestions) 
-              : handleVoteSubmit(game)
-            }
-            disabled={!selectedAnswer || isSubmitting || !isActive}
-            className="flex-1 bg-purple-600 hover:bg-purple-500 text-white rounded-xl py-3 font-medium disabled:opacity-50"
-          >
-            {isSubmitting ? 'Submitting...' : isTrivia ? 'Answer' : 'Vote'}
-          </Button>
-          <Link href="/play">
-            <Button
-              variant="outline"
-              className="border-purple-600/50 text-purple-300 hover:bg-purple-600/20 rounded-xl px-4"
-            >
-              See All
-            </Button>
-          </Link>
-        </div>
+        <Button
+          onClick={() => isTrivia && triviaQuestion 
+            ? handleTriviaAnswer(game, triviaQuestion, totalTriviaQuestions) 
+            : handleVoteSubmit(game)
+          }
+          disabled={!selectedAnswer || isSubmitting || !isActive}
+          className="w-full bg-purple-600 hover:bg-purple-500 text-white rounded-xl py-3 font-medium disabled:opacity-50"
+        >
+          {isSubmitting ? 'Submitting...' : isTrivia ? 'Answer' : 'Vote'}
+        </Button>
       </div>
     );
   };
