@@ -89,11 +89,26 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     },
   });
 
-  const availableGames = games.filter((game) => {
-    if (userPredictions[game.id] || submittedGames.has(game.id)) return false;
-    if (game.type === 'vote' && (!game.options || game.options.length < 2)) return false;
-    return true;
+  // Deduplicate games by title, prioritizing unplayed games
+  const seenTitles = new Set<string>();
+  const unplayedGames: Game[] = [];
+  const playedGames: Game[] = [];
+  
+  games.forEach((game) => {
+    if (seenTitles.has(game.title)) return;
+    if (game.type === 'vote' && (!game.options || game.options.length < 2)) return;
+    seenTitles.add(game.title);
+    
+    const isPlayed = userPredictions[game.id] || submittedGames.has(game.id);
+    if (isPlayed) {
+      playedGames.push(game);
+    } else {
+      unplayedGames.push(game);
+    }
   });
+  
+  // Show unplayed first, then played games
+  const availableGames = [...unplayedGames, ...playedGames];
 
   const fetchVoteResults = async (poolId: string, options: string[], userChoice: string) => {
     const { data: votes } = await supabase
@@ -308,46 +323,55 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
 
   const VariantIcon = getVariantIcon();
 
-  const renderResultsView = (game: Game) => (
-    <div 
-      key={`results-${game.id}`}
-      className="min-w-full snap-center px-4 py-4"
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <Check className="text-green-400" size={20} />
-        <span className="text-green-400 font-medium">Voted!</span>
-      </div>
-      <h3 className="text-white font-semibold text-lg leading-tight mb-4">
-        {game.title}
-      </h3>
-      <div className="space-y-3">
-        {voteResults.map((result, idx) => (
-          <div key={idx} className="relative">
-            <div 
-              className={cn(
-                "absolute inset-0 rounded-xl transition-all",
-                result.isUserChoice ? "bg-purple-600/40" : "bg-white/10"
-              )}
-              style={{ width: `${result.percentage}%` }}
-            />
-            <div className={cn(
-              "relative flex items-center justify-between p-3.5 rounded-xl border",
-              result.isUserChoice ? "border-purple-400" : "border-purple-700/30"
-            )}>
-              <span className="font-medium text-white flex items-center gap-2">
-                {result.option}
-                {result.isUserChoice && <Check size={16} className="text-purple-300" />}
-              </span>
-              <span className="text-purple-300 font-semibold">{result.percentage}%</span>
+  const renderResultsView = (game: Game) => {
+    const totalVotes = voteResults.reduce((sum, r) => sum + r.count, 0);
+    
+    return (
+      <div 
+        key={`results-${game.id}`}
+        className="min-w-full snap-center px-4 py-4"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <Check className="text-green-400" size={20} />
+          <span className="text-green-400 font-medium">Voted!</span>
+          <span className="text-purple-300/60 text-xs ml-auto">
+            {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <h3 className="text-white font-semibold text-lg leading-tight mb-4">
+          {game.title}
+        </h3>
+        <div className="space-y-3">
+          {voteResults.map((result, idx) => (
+            <div key={idx} className="relative">
+              <div 
+                className={cn(
+                  "absolute inset-0 rounded-xl transition-all",
+                  result.isUserChoice ? "bg-purple-600/40" : "bg-white/10"
+                )}
+                style={{ width: `${Math.max(result.percentage, 2)}%` }}
+              />
+              <div className={cn(
+                "relative flex items-center justify-between p-3.5 rounded-xl border",
+                result.isUserChoice ? "border-purple-400" : "border-purple-700/30"
+              )}>
+                <span className="font-medium text-white flex items-center gap-2">
+                  {result.option}
+                  {result.isUserChoice && <Check size={16} className="text-purple-300" />}
+                </span>
+                <span className="text-purple-300 font-semibold">
+                  {totalVotes > 0 ? `${result.percentage}%` : '-'}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <p className="text-center text-purple-300/60 text-xs mt-4">
+          {totalVotes <= 1 ? "You're the first to vote!" : "Next game in a moment..."}
+        </p>
       </div>
-      <p className="text-center text-purple-300/60 text-xs mt-4">
-        Next game in a moment...
-      </p>
-    </div>
-  );
+    );
+  };
 
   const renderGameCard = (game: Game, index: number) => {
     const isActive = index === currentGameIndex;
@@ -359,9 +383,47 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
       : 1;
     const displayOptions = isTrivia && triviaQuestion ? triviaQuestion.options : options;
     const displayQuestion = isTrivia && triviaQuestion ? triviaQuestion.question : game.title;
+    const isAlreadyPlayed = userPredictions[game.id] !== undefined;
 
     if (showingResults === game.id) {
       return renderResultsView(game);
+    }
+
+    // Show completed state for already played games
+    if (isAlreadyPlayed) {
+      return (
+        <div 
+          key={game.id}
+          className="min-w-full snap-center px-4 py-4 opacity-60"
+          style={{ scrollSnapAlign: 'center' }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Check className="text-green-400" size={18} />
+            <span className="text-green-400 text-sm font-medium">Already played</span>
+          </div>
+          <h3 className="text-white font-semibold text-lg leading-tight mb-3">
+            {displayQuestion}
+          </h3>
+          <div className="space-y-2">
+            {displayOptions.map((option: string, idx: number) => (
+              <div
+                key={idx}
+                className={cn(
+                  "w-full p-3.5 rounded-xl text-left border",
+                  userPredictions[game.id] === option
+                    ? "bg-purple-600/30 border-purple-400"
+                    : "bg-white/5 border-purple-700/30"
+                )}
+              >
+                <span className="font-medium text-white/70 flex items-center gap-2">
+                  {option}
+                  {userPredictions[game.id] === option && <Check size={14} className="text-purple-300" />}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
     }
 
     return (
