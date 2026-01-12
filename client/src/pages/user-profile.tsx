@@ -2944,7 +2944,7 @@ export default function UserProfile() {
                 }`}
                 data-testid="nav-collections"
               >
-                {isOwnProfile ? 'Your Library' : `${profileData?.display_name?.split(' ')[0] || 'Their'}'s Library`}
+                {isOwnProfile ? 'Media History' : `${profileData?.display_name?.split(' ')[0] || 'Their'}'s Media History`}
               </button>
             )}
           </div>
@@ -3549,7 +3549,7 @@ export default function UserProfile() {
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {isOwnProfile ? 'Your Library' : `${profileData?.display_name || 'Their'}'s Library`}
+                  {isOwnProfile ? 'Media History' : `${profileData?.display_name || 'Their'}'s Media History`}
                 </h3>
                 {isOwnProfile && (
                   <Button
