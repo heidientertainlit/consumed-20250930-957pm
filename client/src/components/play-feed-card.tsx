@@ -54,21 +54,37 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['play-feed-games', variant],
     queryFn: async () => {
-      const { data: pools, error } = await supabase
+      // Build query based on variant to get more targeted results
+      let query = supabase
         .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
-        .in('type', ['vote', 'trivia'])
         .order('created_at', { ascending: false })
-        .limit(100);
-      if (error) throw new Error('Failed to fetch games');
-      return (pools || []).filter((game: any) => {
+        .limit(200);
+      
+      // Filter by type at query level for better results
+      if (variant === 'polls') {
+        query = query.eq('type', 'vote');
+      } else if (variant === 'trivia') {
+        query = query.eq('type', 'trivia');
+      } else {
+        query = query.in('type', ['vote', 'trivia']);
+      }
+      
+      const { data: pools, error } = await query;
+      if (error) {
+        console.error('PlayFeedCard query error:', error);
+        throw new Error('Failed to fetch games');
+      }
+      
+      const filtered = (pools || []).filter((game: any) => {
         if (!game.id || !game.title || !game.type) return false;
         if (!game.options || game.options.length < 2) return false;
-        if (variant === 'polls' && game.type !== 'vote') return false;
-        if (variant === 'trivia' && game.type !== 'trivia') return false;
         return true;
       }) as Game[];
+      
+      console.log(`🎮 PlayFeedCard [${variant}]: Fetched ${pools?.length || 0}, filtered to ${filtered.length}`);
+      return filtered;
     },
   });
 
