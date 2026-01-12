@@ -7,11 +7,12 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
+import PlayFeedCard from "@/components/play-feed-card";
 import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3 } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -3052,12 +3053,12 @@ export default function Feed() {
               {/* Feed Filter Pills */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
                 {[
-                  { id: 'all', label: 'All', icon: '✨' },
-                  { id: 'games', label: 'Play', icon: '🎮' },
-                  { id: 'trivia', label: 'Trivia', icon: '❓' },
-                  { id: 'polls', label: 'Polls', icon: '📊' },
-                  { id: 'predictions', label: 'Predictions', icon: '🔮' },
-                  { id: 'hot_takes', label: 'Hot Takes', icon: '🔥' },
+                  { id: 'all', label: 'All', Icon: Sparkles },
+                  { id: 'games', label: 'Play', Icon: Gamepad2 },
+                  { id: 'trivia', label: 'Trivia', Icon: Brain },
+                  { id: 'polls', label: 'Polls', Icon: BarChart },
+                  { id: 'predictions', label: 'Predictions', Icon: Target },
+                  { id: 'hot_takes', label: 'Hot Takes', Icon: Flame },
                 ].map((filter) => (
                   <button
                     key={filter.id}
@@ -3069,7 +3070,7 @@ export default function Feed() {
                     }`}
                     data-testid={`feed-filter-${filter.id}`}
                   >
-                    <span>{filter.icon}</span>
+                    <filter.Icon size={14} />
                     <span>{filter.label}</span>
                   </button>
                 ))}
@@ -3088,33 +3089,16 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Show available games when game filter is active */}
+              {/* Featured Play card when game filter is active */}
               {(selectedFilter === 'games' || selectedFilter === 'trivia' || selectedFilter === 'polls' || selectedFilter === 'predictions') && (
                 <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">🎮</span>
-                    <h3 className="font-semibold text-gray-900">Available Games</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {selectedFilter === 'games' && (
-                      <>
-                        <InlineGameCard gameType="vote" gameIndex={0} />
-                        <InlineGameCard gameType="trivia" gameIndex={0} />
-                      </>
-                    )}
-                    {selectedFilter === 'trivia' && (
-                      <>
-                        <InlineGameCard gameType="trivia" gameIndex={0} />
-                        <InlineGameCard gameType="trivia" gameIndex={1} />
-                      </>
-                    )}
-                    {(selectedFilter === 'polls' || selectedFilter === 'predictions') && (
-                      <>
-                        <InlineGameCard gameType="vote" gameIndex={0} />
-                        <InlineGameCard gameType="vote" gameIndex={1} />
-                      </>
-                    )}
-                  </div>
+                  <PlayFeedCard 
+                    variant={
+                      selectedFilter === 'trivia' ? 'trivia' : 
+                      selectedFilter === 'polls' || selectedFilter === 'predictions' ? 'polls' : 
+                      'mixed'
+                    }
+                  />
                 </div>
               )}
 
@@ -3232,29 +3216,42 @@ export default function Feed() {
                   ? post.groupedActivities[0].postId 
                   : post.id;
                 
-                // Carousel logic FIRST - before any early returns to ensure carousels always render at correct positions
-                // Show polls carousel at positions 1, 9, 17, 25... (every 8 posts starting at 1)
-                // FEED STRUCTURE (cycle of 6 posts for maximum game exposure):
-                // Position 0: Post
-                // Position 1: Poll Carousel (GAME) 
-                // Position 2: Post
-                // Position 3: Trivia Carousel (GAME)
-                // Position 4: Post + Recommendations (first time only)
-                // Position 5: Post
-                // Then repeat every 6 posts
+                // NEW FEED STRUCTURE: Play content every 4th card with rotation
+                // Position 3: Mixed PlayFeedCard (polls + trivia)
+                // Position 7: Polls-only PlayFeedCard
+                // Position 11: Trivia-only PlayFeedCard
+                // Position 15: Mixed again... and repeat (cycle of 12)
                 
-                // Polls at positions 1, 7, 13, 19... (every 6 posts starting at 1)
-                const shouldShowPollsCarousel = postIndex === 1 || (postIndex > 1 && (postIndex - 1) % 6 === 0);
-                // Trivia at positions 3, 9, 15, 21... (every 6 posts starting at 3)
-                const shouldShowTriviaCarousel = postIndex === 3 || (postIndex > 3 && (postIndex - 3) % 6 === 0);
-                // Game/Predictions carousel at positions 11, 23, 35... (every 12 posts starting at 11)
-                const shouldShowGameCarousel = postIndex === 11 || (postIndex > 11 && (postIndex - 11) % 12 === 0);
+                // PlayFeedCard appears every 4th position (3, 7, 11, 15, 19...)
+                const isPlayPosition = (postIndex + 1) % 4 === 0;
+                const playRotationIndex = isPlayPosition ? Math.floor((postIndex + 1) / 4) - 1 : 0;
+                const playVariants: Array<'mixed' | 'polls' | 'trivia'> = ['mixed', 'polls', 'trivia'];
+                const playVariant = playVariants[Math.max(0, playRotationIndex) % 3];
+                
+                // Only increase frequency for game-related filters
+                const isGameFilterActive = selectedFilter === 'games' || selectedFilter === 'trivia' || 
+                  selectedFilter === 'polls' || selectedFilter === 'predictions';
+                const shouldShowPlayCard = isGameFilterActive 
+                  ? (postIndex + 1) % 2 === 0 // Every 2nd when game filter active
+                  : isPlayPosition;
+                
+                // Determine variant based on filter
+                const getFilterVariant = (): 'mixed' | 'polls' | 'trivia' => {
+                  if (selectedFilter === 'trivia') return 'trivia';
+                  if (selectedFilter === 'polls' || selectedFilter === 'predictions') return 'polls';
+                  if (selectedFilter === 'games') return playVariant;
+                  return playVariant;
+                };
+                
+                // Check if any filter is active (for hiding other elements)
+                const isFilterActive = selectedFilter && selectedFilter !== 'All' && selectedFilter !== 'all';
+                
                 // Points achievement at positions 5, 17, 29... (every 12 posts starting at 5)
                 const shouldShowPointsAchievements = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 12 === 0);
-                // Media carousel at positions 8, 20, 32... (every 12 posts starting at 8)
-                const shouldShowMediaCarousel = postIndex === 8 || (postIndex > 8 && (postIndex - 8) % 12 === 0);
-                // Recommendations only at position 4 (early in feed)
-                const shouldShowRecommendations = postIndex === 4 && recommendedContent && recommendedContent.length > 0;
+                // Media carousel at positions 9, 21, 33... (every 12 posts starting at 9)
+                const shouldShowMediaCarousel = postIndex === 9 || (postIndex > 9 && (postIndex - 9) % 12 === 0);
+                // Recommendations only at position 2 (early in feed)
+                const shouldShowRecommendations = postIndex === 2 && recommendedContent && recommendedContent.length > 0;
                 
                 // Rotate through different carousel types
                 const carouselTypes = [
@@ -3297,24 +3294,16 @@ export default function Feed() {
                         </div>
                       </div>
                     )}
-                    {shouldShowPollsCarousel && (
+                    {shouldShowPlayCard && (
                       <div className="mb-4">
-                        <InlineGameCard gameType="vote" />
+                        <PlayFeedCard 
+                          variant={isGameFilterActive ? getFilterVariant() : playVariant}
+                        />
                       </div>
                     )}
-                    {shouldShowTriviaCarousel && (
-                      <div className="mb-4">
-                        <InlineGameCard gameType="trivia" />
-                      </div>
-                    )}
-                    {shouldShowPointsAchievements && (
+                    {shouldShowPointsAchievements && !isFilterActive && (
                       <div className="mb-4">
                         <PointsAchievementCard cardIndex={Math.floor((postIndex - 3) / 8)} />
-                      </div>
-                    )}
-                    {shouldShowGameCarousel && (
-                      <div className="mb-4">
-                        <GameCarousel />
                       </div>
                     )}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
