@@ -32,17 +32,34 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
     },
   });
 
-  const { data: leaderboard = [], isLoading } = useQuery({
-    queryKey: ['weekly-leaderboard-feed'],
+  const { data: session } = useQuery({
+    queryKey: ['session-for-leaderboard'],
     queryFn: async () => {
-      // Use existing get-leaderboards edge function
-      const { data, error } = await supabase.functions.invoke('get-leaderboards', {
-        body: { category: 'all_time', limit: 10 }
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    },
+  });
+
+  const { data: leaderboard = [], isLoading } = useQuery({
+    queryKey: ['weekly-leaderboard-feed', session?.access_token],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
       
-      if (error) throw error;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=week`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) throw new Error('Failed to fetch leaderboard');
+      const data = await response.json();
       return data?.leaderboard || data || [];
     },
+    enabled: !!session?.access_token,
   });
 
   const entries: LeaderboardEntry[] = leaderboard.map((entry: any, index: number) => ({
