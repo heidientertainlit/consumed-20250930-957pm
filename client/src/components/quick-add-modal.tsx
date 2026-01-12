@@ -772,7 +772,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                       {/* Main card area - opens composer */}
                       <button
                         onClick={() => handleSelectMedia(result)}
-                        className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                        className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer active:bg-purple-100 rounded-lg p-1 -m-1"
                       >
                         {posterImage ? (
                           <img
