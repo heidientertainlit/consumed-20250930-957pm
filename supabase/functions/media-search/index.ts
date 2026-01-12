@@ -192,14 +192,33 @@ serve(async (req) => {
           if (googleResponse.ok) {
             const googleData = await googleResponse.json();
             console.log('Google Books items count:', googleData.items?.length || 0);
-            googleData.items?.slice(0, 5).forEach((item: any) => {
+            for (const item of googleData.items?.slice(0, 5) || []) {
               const volumeInfo = item.volumeInfo;
               if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
+                let posterUrl = volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || '';
+                
+                // If no cover from Google Books, try Open Library as fallback
+                if (!posterUrl && volumeInfo.title) {
+                  try {
+                    const olSearchUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(volumeInfo.title)}&limit=1`;
+                    const olRes = await fetchWithTimeout(olSearchUrl, {}, 2000);
+                    if (olRes.ok) {
+                      const olData = await olRes.json();
+                      const coverId = olData.docs?.[0]?.cover_i;
+                      if (coverId) {
+                        posterUrl = `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`;
+                      }
+                    }
+                  } catch (e) {
+                    // Ignore fallback errors
+                  }
+                }
+                
                 bookResults.push({
                   title: volumeInfo.title,
                   type: 'book',
                   creator: volumeInfo.authors?.[0] || 'Unknown Author',
-                  poster_url: volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || '',
+                  poster_url: posterUrl,
                   external_id: item.id,
                   external_source: 'googlebooks',
                   description: volumeInfo.description?.substring(0, 200) || '',
@@ -208,7 +227,7 @@ serve(async (req) => {
                 });
                 foundBooks = true;
               }
-            });
+            }
             console.log('Books added to results:', foundBooks);
           }
         } catch (error) {
