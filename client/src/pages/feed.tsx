@@ -1035,13 +1035,21 @@ export default function Feed() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  // Handle selecting a media item from header search - navigate to play page
+  // Handle selecting a media item from header search - open QuickAdd modal
   const handleSelectHeaderMedia = (item: any) => {
     setHeaderSearchQuery("");
     setHeaderSearchResults([]);
     setShowHeaderResults(false);
-    // Navigate to play page to use the full editor
-    setLocation('/play');
+    // Open QuickAdd modal with the selected media
+    setQuickAddMedia({
+      title: item.title,
+      mediaType: item.type || item.mediaType || 'movie',
+      imageUrl: item.image_url || item.imageUrl || item.posterPath,
+      externalId: item.external_id || item.externalId || item.id,
+      externalSource: item.external_source || item.externalSource || 'tmdb',
+      creator: item.creator || item.author,
+    });
+    setIsQuickAddOpen(true);
   };
   
   // Check for URL parameters to scroll to specific post/comment (reactive to URL changes)
