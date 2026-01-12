@@ -288,7 +288,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         title: selectedMedia.title,
         mediaType: selectedMedia.type || 'movie',
         creator: selectedMedia.creator || selectedMedia.artist || '',
-        imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
+        imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image || '',
         externalId: String(externalId),
         externalSource,
       };
@@ -603,7 +603,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               ) : searchResults.length > 0 ? (
                 <div className="space-y-2">
                   {searchResults.map((result, index) => {
-                    const posterImage = result.poster_url || result.image_url || result.poster_path;
+                    const posterImage = result.poster_url || result.image_url || result.poster_path || result.image;
                     return (
                     <button
                       key={`${result.external_id || result.id}-${index}`}
