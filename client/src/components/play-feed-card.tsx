@@ -38,9 +38,35 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   const [submittedGames, setSubmittedGames] = useState<Set<string>>(new Set());
   const [triviaQuestionIndex, setTriviaQuestionIndex] = useState(0);
   const [triviaScore, setTriviaScore] = useState(0);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe && currentGameIndex < availableGames.length - 1) {
+      goToNextGame();
+    } else if (isRightSwipe && currentGameIndex > 0) {
+      goToPrevGame();
+    }
+  };
 
   const { data: games = [], isLoading } = useQuery({
     queryKey: ['play-feed-games', variant],
@@ -267,16 +293,21 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     return null;
   }
 
-  const Icon = getGameIcon(activeGame.type);
   const VariantIcon = getVariantIcon();
 
   return (
-    <div className={cn(
-      "bg-gradient-to-br from-[#0a0a1a] via-[#1a1a3e] to-[#2d1f5e] rounded-2xl shadow-xl border border-purple-700/30 overflow-hidden",
-      className
-    )}>
+    <div 
+      ref={cardRef}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      className={cn(
+        "bg-gradient-to-br from-[#0a0a1a] via-[#1a1a3e] to-[#2d1f5e] rounded-2xl shadow-xl border border-purple-700/30 overflow-hidden touch-pan-y",
+        className
+      )}
+    >
       <div className="p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <VariantIcon className="text-purple-400" size={18} />
             <span className="text-purple-300 text-sm font-medium">{getVariantLabel()}</span>
@@ -305,28 +336,18 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
           </div>
         </div>
 
-        <div className="flex items-start gap-2 mb-4">
-          <div className="p-2 bg-purple-600/30 rounded-xl">
-            <Icon className="text-purple-300" size={20} />
-          </div>
-          <div className="flex-1">
-            <Badge className="bg-purple-500/30 text-purple-200 text-xs mb-1 border-0">
-              {getGameLabel(activeGame.type)}
-            </Badge>
-            <h3 className="text-white font-semibold text-lg leading-tight">
-              {activeGame.type === 'trivia' && triviaQuestion 
-                ? triviaQuestion.question 
-                : activeGame.title}
-            </h3>
-            {activeGame.type === 'trivia' && totalTriviaQuestions > 1 && (
-              <p className="text-purple-300/70 text-xs mt-1">
-                Question {triviaQuestionIndex + 1} of {totalTriviaQuestions}
-              </p>
-            )}
-          </div>
-        </div>
+        <h3 className="text-white font-semibold text-lg leading-tight mb-3">
+          {activeGame.type === 'trivia' && triviaQuestion 
+            ? triviaQuestion.question 
+            : activeGame.title}
+        </h3>
+        {activeGame.type === 'trivia' && totalTriviaQuestions > 1 && (
+          <p className="text-purple-300/70 text-xs mb-3">
+            Question {triviaQuestionIndex + 1} of {totalTriviaQuestions}
+          </p>
+        )}
 
-        <div className="space-y-2 mb-4" ref={scrollContainerRef}>
+        <div className="space-y-2 mb-4">
           {activeGame.type === 'vote' ? (
             activeGame.options.map((option: string, idx: number) => (
               <button
