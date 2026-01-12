@@ -222,13 +222,16 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
     
     setIsSearching(true);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      // Use POST method like CollectionsPage does (this works correctly)
       const response = await fetch(
-        `${supabaseUrl}/functions/v1/media-search?query=${encodeURIComponent(query)}`,
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
         {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({ query: query.trim() }),
         }
       );
       
@@ -237,6 +240,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         console.log('🔍 Search results:', data.results?.slice(0, 3).map((r: any) => ({ title: r.title, poster_url: r.poster_url, image_url: r.image_url })));
         setSearchResults(data.results || []);
       } else {
+        console.error('Search failed:', response.status);
         setSearchResults([]);
       }
     } catch (error) {
