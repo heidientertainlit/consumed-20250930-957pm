@@ -365,8 +365,58 @@ Return ONLY valid JSON:
               }
             }
             
-            // For music/podcasts - could add Spotify API here
-            // For now, return without image for unsupported types
+            // For music - use Spotify API
+            else if (type.includes('music') || type.includes('album') || type.includes('song')) {
+              const spotifyClientId = Deno.env.get('SPOTIFY_CLIENT_ID');
+              const spotifyClientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
+              
+              if (spotifyClientId && spotifyClientSecret) {
+                try {
+                  // Get Spotify access token
+                  const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/x-www-form-urlencoded',
+                      'Authorization': 'Basic ' + btoa(`${spotifyClientId}:${spotifyClientSecret}`)
+                    },
+                    body: 'grant_type=client_credentials'
+                  });
+                  
+                  if (tokenRes.ok) {
+                    const tokenData = await tokenRes.json();
+                    const searchQuery = rec.creator ? `${rec.title} ${rec.creator}` : rec.title;
+                    
+                    const spotifyRes = await fetch(
+                      `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=album&limit=1`,
+                      {
+                        headers: {
+                          'Authorization': `Bearer ${tokenData.access_token}`
+                        }
+                      }
+                    );
+                    
+                    if (spotifyRes.ok) {
+                      const spotifyData = await spotifyRes.json();
+                      const album = spotifyData.albums?.items?.[0];
+                      if (album) {
+                        return {
+                          ...rec,
+                          media_type: 'music',
+                          image_url: album.images?.[0]?.url || '',
+                          external_id: album.id,
+                          external_source: 'spotify'
+                        };
+                      }
+                    }
+                  }
+                } catch (spotifyError) {
+                  console.error('Spotify API error:', spotifyError);
+                }
+              }
+              return { ...rec, external_source: 'spotify', external_id: '', image_url: '' };
+            }
+            
+            // For unsupported types, return without image
             console.warn(`No API configured for type: ${type}`);
             return { ...rec, external_source: '', external_id: '', image_url: '' };
             

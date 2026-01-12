@@ -2799,9 +2799,9 @@ export default function Feed() {
                     className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-3 border border-white/10"
                     data-testid={`quick-add-${item.id || item.externalId}`}
                   >
-                    {(item.imageUrl || item.poster_path) ? (
+                    {(item.imageUrl || item.poster_url || item.image_url || item.poster_path) ? (
                       <img
-                        src={item.imageUrl || `https://image.tmdb.org/t/p/w200${item.poster_path}`}
+                        src={item.imageUrl || item.poster_url || item.image_url || `https://image.tmdb.org/t/p/w200${item.poster_path}`}
                         alt={item.title}
                         className="w-8 h-11 rounded-md object-cover shadow-sm flex-shrink-0"
                       />
@@ -2821,7 +2821,7 @@ export default function Feed() {
                         setQuickAddMedia({
                           title: item.title,
                           type: item.mediaType || item.type || 'movie',
-                          image_url: item.imageUrl || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
+                          image_url: item.imageUrl || item.poster_url || item.image_url || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
                           external_id: item.externalId || item.id,
                           external_source: item.externalSource || 'tmdb',
                           year: item.year || (item.first_air_date ? new Date(item.first_air_date).getFullYear() : null)
