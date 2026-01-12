@@ -475,22 +475,12 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         }
       }
       
-      // Build success message based on what was done
-      let successMessage = `${selectedMedia.title} has been added`;
-      if (rating > 0 && !failures.includes('rating')) successMessage += ` with ${rating}/5 rating`;
-      if (selectedRankId && selectedRankId !== "none" && !failures.includes('rank')) successMessage += ` to your rank`;
-      
-      // Show appropriate toast based on failures
+      // Only show toast if there were failures (let user see success in the feed)
       if (failures.length > 0) {
         toast({
           title: "Partially added",
           description: `${selectedMedia.title} was added, but ${failures.join(', ')} couldn't be saved. Try again later.`,
           variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Added!",
-          description: successMessage,
         });
       }
       
