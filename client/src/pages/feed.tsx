@@ -2832,15 +2832,10 @@ export default function Feed() {
                   <div
                     key={item.id || item.externalId}
                     onClick={() => {
-                      setTrackModalPreSelectedMedia({
-                        title: item.title,
-                        type: item.mediaType || item.type || 'movie',
-                        poster_url: item.imageUrl || item.poster_url || item.image_url || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
-                        external_id: item.externalId || item.id,
-                        external_source: item.externalSource || 'tmdb',
-                        year: item.year || (item.first_air_date ? new Date(item.first_air_date).getFullYear() : null)
-                      });
-                      setIsTrackModalOpen(true);
+                      const mediaType = item.mediaType || item.type || 'movie';
+                      const externalId = item.externalId || item.id;
+                      const externalSource = item.externalSource || 'tmdb';
+                      setLocation(`/media/${mediaType}/${externalSource}/${externalId}`);
                     }}
                     className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-3 border border-white/10 cursor-pointer hover:bg-white/20 transition-colors"
                     data-testid={`quick-add-${item.id || item.externalId}`}
