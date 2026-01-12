@@ -57,8 +57,8 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
       
       if (!response.ok) throw new Error('Failed to fetch leaderboard');
       const data = await response.json();
-      // Use trivia category or overall for the feed card
-      return data?.categories?.trivia || data?.categories?.overall || [];
+      // Use trivia category only to match the leaderboard page
+      return data?.categories?.trivia || [];
     },
     enabled: !!session?.access_token,
   });
@@ -113,7 +113,7 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Trophy className="text-amber-500" size={18} />
-            <span className="font-semibold text-gray-800 text-sm">WEEKLY LEADERBOARD</span>
+            <span className="font-semibold text-gray-800 text-sm">TRIVIA CHAMPIONS</span>
           </div>
           <Link href="/leaderboard" className="text-purple-600 text-sm font-medium flex items-center gap-0.5 hover:underline">
             View All <ChevronRight size={16} />
@@ -157,7 +157,7 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
             </span>
             
             <span className="font-semibold text-gray-700">
-              {entry.points.toLocaleString()} XP
+              {entry.points.toLocaleString()}
             </span>
           </div>
         ))}
