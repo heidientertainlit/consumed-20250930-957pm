@@ -14,10 +14,12 @@ import { useToast } from '@/hooks/use-toast';
 import { copyLink } from "@/lib/share";
 import GameShareModal from "@/components/game-share-modal";
 import CelebrationModal from '@/components/celebration-modal';
+import { useFirstSessionHooks } from '@/components/first-session-hooks';
 
 export default function PlayTriviaPage() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { markTrivia } = useFirstSessionHooks();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
@@ -217,6 +219,8 @@ export default function PlayTriviaPage() {
         }, 3000);
         setCelebrationTimer(timer);
       }
+      
+      markTrivia();
     } catch (error) {
       console.error('Error submitting answer:', error);
       toast({

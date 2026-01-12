@@ -1,55 +1,41 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Dna, Loader2, Download } from "lucide-react";
+import { Check, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import html2canvas from "html2canvas";
 
-interface SurveyAnswer {
-  questionId: string;
-  answer: string | string[];
-}
+const CATEGORIES = [
+  { id: "tv", label: "TV", emoji: "📺" },
+  { id: "movies", label: "Movies", emoji: "🎬" },
+  { id: "books", label: "Books", emoji: "📚" },
+  { id: "music", label: "Music", emoji: "🎵" },
+  { id: "podcasts", label: "Podcasts", emoji: "🎙️" },
+  { id: "gaming", label: "Gaming", emoji: "🎮" },
+  { id: "sports", label: "Sports", emoji: "⚽" },
+];
 
-interface DNAProfile {
-  title: string;
-  description: string;
-  superpowers: string[];
-  meaning: string;
-}
-
-interface SurveyQuestion {
+interface MediaItem {
   id: string;
-  question_text: string;
-  question_type: string;
-  options?: string[];
-  display_order: number;
-  is_required: boolean;
-  depends_on_option?: string | null;
+  title: string;
+  type: string;
+  image_url?: string;
+  external_id: string;
+  external_source: string;
 }
 
 export default function OnboardingPage() {
   const { session, loading } = useAuth();
   const [, setLocation] = useLocation();
-  const [answers, setAnswers] = useState<SurveyAnswer[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [dnaProfile, setDNAProfile] = useState<DNAProfile | null>(null);
-  const [surveyQuestions, setSurveyQuestions] = useState<SurveyQuestion[]>([]);
-  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("Analyzing your responses...");
-  const [isDownloading, setIsDownloading] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const getAnswer = (questionId: string) => {
-    return answers.find(a => a.questionId === questionId)?.answer;
-  };
-
-  // 5 essential questions: gender, entertainment types, genres, favorites, drivers
-  const questions = useMemo(() => {
-    return surveyQuestions
-      .filter(q => [1, 2, 3, 4, 6].includes(q.display_order))
-      .filter(q => !q.depends_on_option);
-  }, [surveyQuestions]);
+  const [step, setStep] = useState(1);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [addedItems, setAddedItems] = useState<MediaItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<MediaItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [pointsEarned, setPointsEarned] = useState(0);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [activeSearchCategory, setActiveSearchCategory] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -57,400 +43,369 @@ export default function OnboardingPage() {
     }
   }, [loading, session, setLocation]);
 
-  useEffect(() => {
-    if (!session?.access_token) return;
-    
-    const fetchSurveyQuestions = async () => {
-      try {
-        const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_questions?select=*&order=display_order.asc', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (response.ok) {
-          const questions = await response.json();
-          setSurveyQuestions(questions);
-        } else {
-          console.error('Failed to fetch survey questions');
-        }
-      } catch (error) {
-        console.error('Error fetching survey questions:', error);
-      } finally {
-        setIsLoadingQuestions(false);
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(c => c !== categoryId);
       }
-    };
-
-    fetchSurveyQuestions();
-  }, [session?.access_token]);
-
-  const handleAnswer = (questionId: string, value: string | string[]) => {
-    const newAnswers = answers.filter(a => a.questionId !== questionId);
-    newAnswers.push({ questionId, answer: value });
-    setAnswers(newAnswers);
+      if (prev.length >= 3) {
+        return prev;
+      }
+      return [...prev, categoryId];
+    });
   };
 
-  const generateDNA = async () => {
-    setIsGenerating(true);
-    
-    const messages = [
-      "Analyzing your responses...",
-      "Mapping your entertainment preferences...",
-      "Discovering your unique patterns...",
-      "Crafting your DNA profile...",
-      "Almost there, adding the finishing touches..."
-    ];
-    
-    let messageIndex = 0;
-    const messageInterval = setInterval(() => {
-      messageIndex = (messageIndex + 1) % messages.length;
-      setLoadingMessage(messages[messageIndex]);
-    }, 6000);
-    
-    try {
-      for (const answer of answers) {
-        await fetch('https://mahpgcogwpawvviapqza.supabase.co/rest/v1/edna_responses', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            user_id: session?.user?.id,
-            question_id: answer.questionId,
-            answer_text: Array.isArray(answer.answer) ? answer.answer.join(', ') : answer.answer
-          })
-        });
-      }
-
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-dna-profile', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: session?.user?.id }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate DNA profile');
-      }
-
-      const aiProfile = await response.json();
-      
-      setDNAProfile({
-        title: aiProfile.label || 'Entertainment Enthusiast',
-        description: aiProfile.tagline || '',
-        superpowers: aiProfile.flavor_notes || [],
-        meaning: aiProfile.profile_text || ''
-      });
-      
-      fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-media-recommendations', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-      }).catch(() => {});
-      
-      clearInterval(messageInterval);
-      setShowResults(true);
-    } catch (error) {
-      console.error('Error generating DNA profile:', error);
-      clearInterval(messageInterval);
-      setDNAProfile({
-        title: 'Entertainment Enthusiast',
-        description: 'Your unique entertainment personality',
-        superpowers: ['Diverse taste', 'Open to discovery', 'Engaged viewer'],
-        meaning: 'You have a wonderful appreciation for entertainment across different formats and genres.'
-      });
-      setShowResults(true);
-    } finally {
-      setIsGenerating(false);
+  const getMediaTypeFromCategory = (categoryId: string) => {
+    switch (categoryId) {
+      case 'tv': return 'tv';
+      case 'movies': return 'movie';
+      case 'books': return 'book';
+      case 'music': return 'music';
+      case 'podcasts': return 'podcast';
+      case 'gaming': return 'game';
+      case 'sports': return 'movie';
+      default: return 'movie';
     }
   };
 
-  const isComplete = () => {
-    const requiredQuestions = questions.filter(q => q.is_required);
-    return requiredQuestions.every(q => {
-      const answer = getAnswer(q.id);
-      if (!answer) return false;
-      if (Array.isArray(answer)) return answer.length > 0;
-      return answer.trim().length > 0;
-    });
+  const searchMedia = async (query: string, categoryId?: string) => {
+    if (!query.trim() || !session?.access_token) return;
+    
+    setIsSearching(true);
+    try {
+      const searchCategory = categoryId || activeSearchCategory || selectedCategories[0] || 'movies';
+      const mediaType = getMediaTypeFromCategory(searchCategory);
+      
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search?q=${encodeURIComponent(query)}&type=${mediaType}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data.results?.slice(0, 6) || []);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!activeSearchCategory && selectedCategories.length > 0) {
+      setActiveSearchCategory(selectedCategories[0]);
+    }
+  }, [selectedCategories, activeSearchCategory]);
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (searchQuery.length >= 2) {
+        searchMedia(searchQuery, activeSearchCategory || undefined);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery, activeSearchCategory]);
+
+  const addItem = (item: MediaItem) => {
+    if (addedItems.length >= 3) return;
+    if (addedItems.some(i => i.external_id === item.external_id)) return;
+    
+    setAddedItems(prev => [...prev, item]);
+    setPointsEarned(prev => prev + 10);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  const removeItem = (itemId: string) => {
+    setAddedItems(prev => prev.filter(i => i.id !== itemId));
+    setPointsEarned(prev => Math.max(0, prev - 10));
+  };
+
+  const completeOnboarding = async () => {
+    setIsCompleting(true);
+    setError(null);
+    
+    try {
+      const failedItems: string[] = [];
+      
+      for (const item of addedItems) {
+        try {
+          const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              external_id: item.external_id,
+              external_source: item.external_source,
+              title: item.title,
+              media_type: item.type,
+              image_url: item.image_url,
+              list_type: 'finished',
+            }),
+          });
+          
+          if (!response.ok) {
+            failedItems.push(item.title);
+          }
+        } catch {
+          failedItems.push(item.title);
+        }
+      }
+      
+      if (failedItems.length > 0) {
+        if (failedItems.length === addedItems.length) {
+          setError("Failed to save your items. Please try again.");
+        } else {
+          setError(`Failed to save: ${failedItems.join(", ")}. Please try again.`);
+        }
+        return;
+      }
+      
+      setStep(3);
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   if (loading || !session) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Loader2 className="text-white animate-spin" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h1>
-          <p className="text-gray-600">Checking your account...</p>
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-white animate-spin mx-auto" />
+          <p className="text-white mt-4">Loading...</p>
         </div>
       </div>
     );
   }
 
-  if (isLoadingQuestions) {
+  if (step === 1) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Loader2 className="text-white animate-spin" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading Your Entertainment DNA Survey</h1>
-          <p className="text-gray-600">Preparing your personalized questions...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isGenerating) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-            <Dna className="text-white animate-spin" size={40} style={{ animationDuration: '3s' }} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">Discovering Your Entertainment DNA</h1>
-          <p className="text-gray-700 mb-6 text-lg font-medium animate-pulse">{loadingMessage}</p>
-          <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-2.5 mb-4">
-            <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 h-2.5 rounded-full animate-pulse" style={{ width: '85%' }}></div>
-          </div>
-          <p className="text-sm text-gray-600">This usually takes 30-60 seconds</p>
-          <div className="mt-8 flex justify-center space-x-2">
-            <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (showResults && dnaProfile) {
-    const handleDownload = async () => {
-      if (!cardRef.current) return;
-      setIsDownloading(true);
-      
-      try {
-        const canvas = await html2canvas(cardRef.current, {
-          scale: 3,
-          useCORS: true,
-          backgroundColor: null,
-        });
-        
-        const link = document.createElement('a');
-        link.download = 'my-entertainment-dna.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      } catch (error) {
-        console.error('Error downloading image:', error);
-      } finally {
-        setIsDownloading(false);
-      }
-    };
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
-        {/* Shareable Card - Instagram Story optimized (9:16 aspect ratio) */}
-        <div 
-          ref={cardRef}
-          className="w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl"
-          style={{ aspectRatio: '9/16' }}
-        >
-          {/* Gradient top border */}
-          <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"></div>
-          
-          <div className="p-5 flex flex-col h-full">
-            {/* Header */}
-            <div className="text-center mb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Dna className="text-white" size={24} />
-              </div>
-              <h1 className="text-base font-bold text-gray-900">Your Entertainment DNA</h1>
-              <div className="w-10 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full mt-1"></div>
-            </div>
-
-            {/* DNA Label & Tagline */}
-            <div className="text-center mb-3">
-              <h2 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                {dnaProfile.title}
-              </h2>
-              <p className="text-gray-600 text-sm">{dnaProfile.description}</p>
-            </div>
-
-            {/* Flavor Notes */}
-            {dnaProfile.superpowers && dnaProfile.superpowers.length > 0 && (
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-3 mb-3">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1 flex items-center">
-                  <Sparkles className="mr-1.5 text-purple-600" size={14} />
-                  Your Flavor Notes:
-                </h3>
-                <ul>
-                  {dnaProfile.superpowers.slice(0, 3).map((power, index) => (
-                    <li key={index} className="text-gray-700 text-xs leading-tight">• {power}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* DNA Bio */}
-            {dnaProfile.meaning && (
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3 flex-1 overflow-hidden">
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">🔮 Your Entertainment DNA Profile:</h3>
-                <p className="text-gray-700 text-xs leading-relaxed">{dnaProfile.meaning}</p>
-              </div>
-            )}
-
-            {/* Footer */}
-            <div className="text-center mt-3 pt-2 border-t border-gray-100">
-              <p className="text-purple-600 text-xs font-medium">@consumedapp</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons - Outside the shareable card */}
-        <div className="mt-6 flex flex-col gap-3 w-[320px]">
-          <Button 
-            onClick={handleDownload}
-            disabled={isDownloading}
-            className="bg-white/20 hover:bg-white/30 text-white border border-white/30 px-6 py-2.5 rounded-full shadow-lg text-sm flex items-center justify-center gap-2"
-            data-testid="download-dna-button"
-          >
-            <Download size={18} />
-            {isDownloading ? 'Saving...' : 'Save to Share'}
-          </Button>
-          
-          <Button 
-            onClick={() => window.location.href = '/activity'}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-sm"
-            data-testid="complete-onboarding-button"
-          >
-            Start Exploring Consumed!
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const renderQuestion = (question: SurveyQuestion) => {
-    const currentAnswer = getAnswer(question.id);
-    
-    return (
-      <div key={question.id} className="mb-8" data-testid={`question-${question.id}`}>
-        <h3 className="text-lg font-semibold text-gray-900 mb-3 leading-relaxed">
-          {question.question_text}
-          {!question.is_required && <span className="text-gray-400 text-sm font-normal ml-2">(optional)</span>}
-        </h3>
-
-        {question.question_type === 'text' && (
-          <textarea
-            value={(currentAnswer as string) || ""}
-            onChange={(e) => handleAnswer(question.id, e.target.value)}
-            placeholder="Share your thoughts..."
-            className="w-full p-3 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[100px] resize-vertical text-black bg-white placeholder:text-gray-400 text-sm"
-            data-testid={`text-input-${question.id}`}
-          />
-        )}
-
-        {question.question_type === 'select' && (
-          <div className="flex flex-wrap gap-2">
-            {question.options?.map((option, index) => {
-              const isSelected = currentAnswer === option;
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(question.id, option)}
-                  className={`px-4 py-2 rounded-full border-2 transition-all text-sm ${
-                    isSelected
-                      ? 'border-purple-600 bg-purple-600 text-white font-medium'
-                      : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
-                  }`}
-                  data-testid={`option-${question.id}-${option}`}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {question.question_type === 'multi-select' && (
-          <div className="flex flex-wrap gap-2">
-            {question.options?.map((option, index) => {
-              const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
-              const isChecked = currentAnswers.includes(option);
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => {
-                    const updatedAnswers = isChecked
-                      ? currentAnswers.filter(a => a !== option)
-                      : [...currentAnswers, option];
-                    handleAnswer(question.id, updatedAnswers);
-                  }}
-                  className={`px-4 py-2 rounded-full border-2 transition-all text-sm ${
-                    isChecked
-                      ? 'border-purple-600 bg-purple-600 text-white font-medium'
-                      : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
-                  }`}
-                  data-testid={`multi-option-${question.id}-${option}`}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black p-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-3xl p-6 shadow-2xl">
-          {/* Header */}
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Dna className="text-white" size={28} />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Discover Your Entertainment DNA</h1>
-            <p className="text-gray-600 text-sm">Answer a few questions to unlock your personalized entertainment profile</p>
-            <button
-              onClick={() => window.location.href = '/activity'}
-              className="text-xs text-gray-400 hover:text-gray-500 mt-3 underline"
-            >
-              Skip for now
-            </button>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">What do you consume most?</h1>
+            <p className="text-gray-600 text-sm">Select up to 3</p>
           </div>
 
-          {/* DNA Questions */}
-          <div className="mb-6">
-            {questions.map(renderQuestion)}
+          <div className="flex flex-wrap gap-3 justify-center mb-8">
+            {CATEGORIES.map(category => {
+              const isSelected = selectedCategories.includes(category.id);
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => toggleCategory(category.id)}
+                  className={`px-4 py-2.5 rounded-full border-2 transition-all flex items-center gap-2 ${
+                    isSelected
+                      ? 'border-purple-600 bg-purple-600 text-white'
+                      : 'border-gray-200 hover:border-purple-300 text-gray-700'
+                  }`}
+                >
+                  <span>{category.emoji}</span>
+                  <span className="font-medium">{category.label}</span>
+                  {isSelected && <Check size={16} />}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Action Button */}
-          <div className="border-t border-gray-100 pt-6">
-            <Button
-              onClick={generateDNA}
-              disabled={!isComplete()}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              data-testid="get-dna-button"
-            >
-              <Sparkles size={18} className="mr-2" />
-              Discover Your Entertainment DNA
-            </Button>
-          </div>
+          <Button
+            onClick={() => setStep(2)}
+            disabled={selectedCategories.length === 0}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-3"
+          >
+            Continue
+          </Button>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (step === 2) {
+    const activeCategoryLabel = CATEGORIES.find(c => c.id === activeSearchCategory)?.label.toLowerCase() || 'things';
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Add 3 things you've enjoyed
+            </h1>
+            <p className="text-gray-600 text-sm">{addedItems.length}/3 added</p>
+          </div>
+
+          {selectedCategories.length > 1 && addedItems.length < 3 && (
+            <div className="flex gap-2 justify-center mb-4 flex-wrap">
+              {selectedCategories.map(catId => {
+                const cat = CATEGORIES.find(c => c.id === catId);
+                if (!cat) return null;
+                return (
+                  <button
+                    key={catId}
+                    onClick={() => {
+                      setActiveSearchCategory(catId);
+                      setSearchQuery("");
+                      setSearchResults([]);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      activeSearchCategory === catId
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {cat.emoji} {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center">
+              {error}
+            </div>
+          )}
+
+          {addedItems.length < 3 && (
+            <div className="mb-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search for ${activeCategoryLabel}...`}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-purple-500 focus:ring-purple-500 text-black"
+              />
+              
+              {isSearching && (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+                </div>
+              )}
+              
+              {searchResults.length > 0 && (
+                <div className="mt-2 bg-gray-50 rounded-xl p-2 max-h-48 overflow-y-auto">
+                  {searchResults.map((result, index) => (
+                    <button
+                      key={`${result.external_id}-${index}`}
+                      onClick={() => addItem(result)}
+                      className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors text-left"
+                    >
+                      {result.image_url ? (
+                        <img 
+                          src={result.image_url} 
+                          alt={result.title}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">No img</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{result.title}</p>
+                        <p className="text-xs text-gray-500 capitalize">{result.type}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {addedItems.length > 0 && (
+            <div className="space-y-2 mb-6">
+              {addedItems.map((item) => (
+                <div 
+                  key={item.external_id}
+                  className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl"
+                >
+                  {item.image_url ? (
+                    <img 
+                      src={item.image_url} 
+                      alt={item.title}
+                      className="w-12 h-12 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-purple-200 rounded flex items-center justify-center">
+                      <Check className="text-purple-600" size={20} />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{item.title}</p>
+                    <p className="text-xs text-purple-600">+10 points</p>
+                  </div>
+                  <button 
+                    onClick={() => removeItem(item.id)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Button
+            onClick={completeOnboarding}
+            disabled={addedItems.length === 0 || isCompleting}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-3"
+          >
+            {isCompleting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Saving...
+              </>
+            ) : (
+              `Continue ${addedItems.length > 0 ? `(+${pointsEarned} points)` : ''}`
+            )}
+          </Button>
+          
+          <button
+            onClick={() => setStep(1)}
+            className="w-full text-gray-500 text-sm mt-3 hover:text-gray-700"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Sparkles className="text-white" size={40} />
+          </div>
+          
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">You earned</h1>
+          <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+            {pointsEarned} points!
+          </div>
+          <p className="text-gray-600 mb-8">Great start! Keep tracking to earn more.</p>
+
+          <Button
+            onClick={() => setLocation('/activity')}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full py-3"
+          >
+            Let's Go!
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }

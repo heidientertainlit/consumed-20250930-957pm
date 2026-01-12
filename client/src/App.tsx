@@ -60,6 +60,7 @@ import CollectionsPage from "@/pages/collections";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
 import OnboardingPage from "./pages/onboarding";
+import EntertainmentDNAPage from "./pages/entertainment-dna";
 import NotFoundPage from "./pages/not-found";
 import About from "@/pages/about";
 import PointsBreakdown from "@/pages/points-breakdown";
@@ -100,6 +101,11 @@ function Router() {
         <Route path="/onboarding">
           <ProtectedRoute>
             <OnboardingPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/entertainment-dna">
+          <ProtectedRoute>
+            <EntertainmentDNAPage />
           </ProtectedRoute>
         </Route>
         <Route path="/game-first">
