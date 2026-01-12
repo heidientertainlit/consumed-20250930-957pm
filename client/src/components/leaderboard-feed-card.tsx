@@ -61,6 +61,8 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
       return data?.categories?.trivia || [];
     },
     enabled: !!session?.access_token,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in memory for 10 minutes
   });
 
   const entries: LeaderboardEntry[] = (leaderboard || []).map((entry: any, index: number) => ({
