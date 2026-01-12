@@ -489,12 +489,16 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         });
       }
       
-      queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['feed'] });
-      queryClient.invalidateQueries({ queryKey: ['media-ratings'] });
+      // Invalidate all relevant queries and refetch feed immediately
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['media-ratings'] }),
+      ]);
+      
+      // Force refetch social feed to show new post immediately
+      await queryClient.refetchQueries({ queryKey: ['social-feed'] });
       
       onClose();
     } catch (error) {
