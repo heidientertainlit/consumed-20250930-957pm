@@ -87,8 +87,44 @@ When adding media to lists, ranks, or social posts, the following fields are REQ
 
 **Key edge functions handling media creation:**
 - `add-to-list` - when adding items to lists
-- `unified-search` - when searching for media (should return full image URLs)
+- `media-search` - when searching for media (should return full image URLs)
+- `track-media` - when tracking media to lists
 - `create-social-post` - when creating posts with media attachments
+
+### CRITICAL: Media Search Display Requirements (DO NOT BREAK)
+The `media-search` edge function MUST return these fields for search results to display properly:
+- `poster_url` - Full HTTPS URL to the poster/cover image
+- `image` - Alias of poster_url for frontend compatibility
+- `creator` - Author name for books, director for movies, artist for music
+- `title` - Media title
+- `type` - Media type (movie, tv, book, music, podcast)
+- `year` - Release year (extracted from release_date)
+- `external_id` - Source API's unique ID
+- `external_source` - Source name (tmdb, googlebooks, spotify)
+
+**Frontend fields used in QuickAddModal search results:**
+```javascript
+const posterImage = result.poster_url || result.image_url || result.poster_path;
+// Shows: result.title, result.type, result.year, result.creator
+```
+
+**If search results show placeholder icons instead of posters**: The deployed Supabase edge function is likely outdated. Re-deploy the `media-search` function.
+
+### Supabase Edge Function Deployment
+Edge functions in `supabase/functions/` are NOT automatically deployed. Changes to these files require manual deployment:
+```bash
+supabase functions deploy <function-name>
+```
+Or deploy all functions:
+```bash
+supabase functions deploy
+```
+
+**Common symptoms of outdated edge functions:**
+- Search results showing placeholder icons instead of posters
+- Missing author/creator names on books
+- Wrong media types being returned
+- New features not working despite code being correct
 
 ## External Dependencies
 
