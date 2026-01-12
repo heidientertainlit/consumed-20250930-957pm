@@ -35,29 +35,23 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
   const { data: leaderboard = [], isLoading } = useQuery({
     queryKey: ['weekly-leaderboard-feed'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_points')
-        .select(`
-          user_id,
-          points,
-          user_profiles!inner(id, username, avatar_url)
-        `)
-        .eq('category', 'all_time')
-        .order('points', { ascending: false })
-        .limit(10);
+      // Use existing get-leaderboards edge function
+      const { data, error } = await supabase.functions.invoke('get-leaderboards', {
+        body: { category: 'all_time', limit: 10 }
+      });
       
       if (error) throw error;
-      return data || [];
+      return data?.leaderboard || data || [];
     },
   });
 
   const entries: LeaderboardEntry[] = leaderboard.map((entry: any, index: number) => ({
     rank: index + 1,
-    userId: entry.user_id,
-    username: entry.user_profiles?.username || 'Unknown',
-    avatarUrl: entry.user_profiles?.avatar_url,
-    points: entry.points || 0,
-    isCurrentUser: currentUser?.id === entry.user_id,
+    userId: entry.user_id || entry.id,
+    username: entry.username || entry.display_name || 'Unknown',
+    avatarUrl: entry.avatar_url,
+    points: entry.total_points || entry.points || 0,
+    isCurrentUser: currentUser?.id === (entry.user_id || entry.id),
   }));
 
   const top3 = entries.slice(0, 3);
