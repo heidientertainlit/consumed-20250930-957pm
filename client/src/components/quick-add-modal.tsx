@@ -766,40 +766,38 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     return (
                     <div
                       key={`${result.external_id || result.id}-${index}`}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors"
+                      onClick={() => handleSelectMedia(result)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors cursor-pointer"
                       data-testid={`search-result-${index}`}
                     >
-                      {/* Main card area - opens composer */}
-                      <button
-                        onClick={() => handleSelectMedia(result)}
-                        className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer active:bg-purple-100 rounded-lg p-1 -m-1"
-                      >
-                        {posterImage ? (
-                          <img
-                            src={posterImage}
-                            alt={result.title}
-                            className="w-12 h-16 object-cover rounded-lg"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center ${posterImage ? 'hidden' : ''}`}>
+                      {/* Media poster */}
+                      {posterImage ? (
+                        <img
+                          src={posterImage}
+                          alt={result.title}
+                          className="w-12 h-16 object-cover rounded-lg shrink-0"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center shrink-0 ${posterImage ? 'hidden' : ''}`}>
+                        {getMediaIcon(result.type)}
+                      </div>
+                      
+                      {/* Media info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{result.title}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
                           {getMediaIcon(result.type)}
+                          <span className="capitalize">{result.type}</span>
+                          {result.year && <span>• {result.year}</span>}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{result.title}</p>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            {getMediaIcon(result.type)}
-                            <span className="capitalize">{result.type}</span>
-                            {result.year && <span>• {result.year}</span>}
-                          </div>
-                          {result.creator && (
-                            <p className="text-xs text-gray-400 truncate">{result.creator}</p>
-                          )}
-                        </div>
-                      </button>
+                        {result.creator && (
+                          <p className="text-xs text-gray-400 truncate">{result.creator}</p>
+                        )}
+                      </div>
                       
                       {/* Quick add "+" button - opens list drawer for immediate add */}
                       <button
