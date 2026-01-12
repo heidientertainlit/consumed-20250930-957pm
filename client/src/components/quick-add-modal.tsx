@@ -38,7 +38,8 @@ import {
   Heart,
   Ban,
   Bookmark,
-  Folder
+  Folder,
+  Plus
 } from "lucide-react";
 
 interface PreSelectedMedia {
@@ -77,6 +78,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   const [privateMode, setPrivateMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
+  const [isQuickAddMode, setIsQuickAddMode] = useState(false);
   const [isRankDrawerOpen, setIsRankDrawerOpen] = useState(false);
   const [isDnfDrawerOpen, setIsDnfDrawerOpen] = useState(false);
   const [dnfReason, setDnfReason] = useState<{ reason: string; otherReason?: string } | null>(null);
@@ -578,6 +580,57 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
     }
   };
   
+  // Helper function for quick add (directly adds media to list from "+" button)
+  const quickAddToList = async (listId: string, media: any) => {
+    if (!session?.access_token || !media) return;
+    
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    
+    // Determine external source based on media type
+    let externalSource = media.source || media.external_source || 'tmdb';
+    const externalId = String(media.external_id || media.id);
+    
+    if (!media.source && !media.external_source) {
+      if (media.type === 'book') {
+        externalSource = 'openlibrary';
+      } else if (media.type === 'podcast' || media.type === 'music') {
+        externalSource = 'spotify';
+      }
+    }
+    
+    const mediaData = {
+      title: media.title,
+      mediaType: media.type || 'movie',
+      creator: media.creator || media.artist || '',
+      imageUrl: media.poster_url || media.image_url || media.poster_path || media.image || '',
+      externalId,
+      externalSource,
+    };
+    
+    console.log('🚀 Quick add to list:', { listId, mediaData });
+    
+    // Track media to the selected list
+    await trackMediaToList(supabaseUrl, session.access_token, mediaData, listId, false, 1, null);
+    
+    // Invalidate queries to refresh data
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] }),
+      queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] }),
+    ]);
+    await queryClient.refetchQueries({ queryKey: ['social-feed'] });
+    
+    toast({
+      title: "Added!",
+      description: `${media.title} added to your list.`,
+    });
+    
+    // Close everything
+    setIsListDrawerOpen(false);
+    setIsQuickAddMode(false);
+    setSelectedMedia(null);
+    onClose();
+  };
+
   // Helper function to add rating
   const addRating = async (
     supabaseUrl: string, 
@@ -711,38 +764,57 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                   {searchResults.map((result, index) => {
                     const posterImage = result.poster_url || result.image_url;
                     return (
-                    <button
+                    <div
                       key={`${result.external_id || result.id}-${index}`}
-                      onClick={() => handleSelectMedia(result)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors"
                       data-testid={`search-result-${index}`}
                     >
-                      {posterImage ? (
-                        <img
-                          src={posterImage}
-                          alt={result.title}
-                          className="w-12 h-16 object-cover rounded-lg"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null}
-                      <div className={`w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center ${posterImage ? 'hidden' : ''}`}>
-                        {getMediaIcon(result.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{result.title}</p>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                      {/* Main card area - opens composer */}
+                      <button
+                        onClick={() => handleSelectMedia(result)}
+                        className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                      >
+                        {posterImage ? (
+                          <img
+                            src={posterImage}
+                            alt={result.title}
+                            className="w-12 h-16 object-cover rounded-lg"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center ${posterImage ? 'hidden' : ''}`}>
                           {getMediaIcon(result.type)}
-                          <span className="capitalize">{result.type}</span>
-                          {result.year && <span>• {result.year}</span>}
                         </div>
-                        {result.creator && (
-                          <p className="text-xs text-gray-400 truncate">{result.creator}</p>
-                        )}
-                      </div>
-                    </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{result.title}</p>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            {getMediaIcon(result.type)}
+                            <span className="capitalize">{result.type}</span>
+                            {result.year && <span>• {result.year}</span>}
+                          </div>
+                          {result.creator && (
+                            <p className="text-xs text-gray-400 truncate">{result.creator}</p>
+                          )}
+                        </div>
+                      </button>
+                      
+                      {/* Quick add "+" button - opens list drawer for immediate add */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMedia(result);
+                          setIsQuickAddMode(true);
+                          setIsListDrawerOpen(true);
+                        }}
+                        className="w-10 h-10 rounded-full border-2 border-purple-200 flex items-center justify-center text-purple-400 hover:bg-purple-100 hover:text-purple-600 hover:border-purple-400 transition-colors shrink-0"
+                        data-testid={`quick-add-${index}`}
+                      >
+                        <Plus size={20} />
+                      </button>
+                    </div>
                   );
                   })}
                 </div>
@@ -1174,10 +1246,18 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
     </Drawer>
 
     {/* List Selection Drawer */}
-    <Drawer open={isListDrawerOpen} onOpenChange={setIsListDrawerOpen}>
+    <Drawer open={isListDrawerOpen} onOpenChange={(open) => {
+      setIsListDrawerOpen(open);
+      if (!open) setIsQuickAddMode(false);
+    }}>
       <DrawerContent className="bg-white rounded-t-2xl">
         <DrawerHeader className="text-center pb-2 border-b border-gray-100">
-          <DrawerTitle className="text-lg font-semibold text-gray-900">Select a List</DrawerTitle>
+          <DrawerTitle className="text-lg font-semibold text-gray-900">
+            {isQuickAddMode ? 'Quick Add to List' : 'Select a List'}
+          </DrawerTitle>
+          {isQuickAddMode && selectedMedia && (
+            <p className="text-sm text-gray-500 mt-1">{selectedMedia.title}</p>
+          )}
         </DrawerHeader>
         <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">
           <button
@@ -1224,15 +1304,27 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             return (
               <button
                 key={list.id}
-                onClick={() => {
-                  if (style.isDnf) {
-                    setPendingDnfListId(list.id);
-                    setIsListDrawerOpen(false);
-                    setIsDnfDrawerOpen(true);
+                onClick={async () => {
+                  if (isQuickAddMode && selectedMedia) {
+                    // Quick add mode - immediately add to list
+                    if (style.isDnf) {
+                      setPendingDnfListId(list.id);
+                      setIsListDrawerOpen(false);
+                      setIsDnfDrawerOpen(true);
+                    } else {
+                      await quickAddToList(list.id, selectedMedia);
+                    }
                   } else {
-                    setSelectedListId(list.id);
-                    setDnfReason(null);
-                    setIsListDrawerOpen(false);
+                    // Normal mode - just select the list
+                    if (style.isDnf) {
+                      setPendingDnfListId(list.id);
+                      setIsListDrawerOpen(false);
+                      setIsDnfDrawerOpen(true);
+                    } else {
+                      setSelectedListId(list.id);
+                      setDnfReason(null);
+                      setIsListDrawerOpen(false);
+                    }
                   }
                 }}
                 className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
