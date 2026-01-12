@@ -106,8 +106,17 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     }
   });
   
-  // Show unplayed first, then played games
-  const availableGames = [...unplayedGames, ...playedGames];
+  // Offset games by variant so each Play card shows different content first
+  const variantOffset = variant === 'mixed' ? 0 : variant === 'polls' ? 3 : 6;
+  const rotateArray = <T,>(arr: T[], offset: number): T[] => {
+    if (arr.length === 0) return arr;
+    const realOffset = offset % arr.length;
+    return [...arr.slice(realOffset), ...arr.slice(0, realOffset)];
+  };
+  
+  // Show unplayed first (rotated by variant), then played games
+  const rotatedUnplayed = rotateArray(unplayedGames, variantOffset);
+  const availableGames = [...rotatedUnplayed, ...playedGames];
 
   const fetchVoteResults = async (poolId: string, options: string[], userChoice: string) => {
     const { data: votes } = await supabase
