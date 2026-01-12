@@ -69,6 +69,27 @@ Preferred communication style: Simple, everyday language.
 - Edge Functions: Adhere to schema, handle user auto-creation, accept `user_id`.
 - Privacy Toggle System: Controls list visibility.
 
+### CRITICAL: Media Data Requirements (DO NOT BREAK)
+When adding media to lists, ranks, or social posts, the following fields are REQUIRED:
+- `image_url` - Full HTTPS URL to the poster image (from TMDB, Spotify, etc.)
+- `external_id` - The source's unique ID (e.g., TMDB ID, Spotify track ID)
+- `external_source` - The data source (e.g., 'tmdb', 'spotify', 'googlebooks')
+- `title` - The media title
+
+**Why this matters**: Empty `image_url` causes the activity feed to show random stock photos instead of actual posters. This has broken multiple times.
+
+**Edge functions that add media MUST:**
+1. Capture image_url from the API response at insert time
+2. Convert relative TMDB paths (like `/xyz.jpg`) to full URLs (`https://image.tmdb.org/t/p/w300/xyz.jpg`)
+3. Never insert media without at minimum: title, external_id, external_source, and image_url
+
+**Safety net**: `supabase/functions/social-feed/index.ts` has a TMDB title-search fallback that repairs missing images, but this is a backup - not the primary solution. The fix should happen at data creation.
+
+**Key edge functions handling media creation:**
+- `add-to-list` - when adding items to lists
+- `unified-search` - when searching for media (should return full image URLs)
+- `create-social-post` - when creating posts with media attachments
+
 ## External Dependencies
 
 -   **Database & Backend**: Supabase (PostgreSQL + Edge Functions)
