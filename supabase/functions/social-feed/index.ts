@@ -252,7 +252,9 @@ serve(async (req) => {
         
         // If it's already a full URL, ensure it's https for TMDB
         if (imageUrl.startsWith('http://image.tmdb.org')) {
-          return imageUrl.replace('http://', 'https://');
+          const fixed = imageUrl.replace('http://', 'https://');
+          console.log('Fixed http TMDB URL:', imageUrl, '->', fixed);
+          return fixed;
         }
         if (imageUrl.startsWith('https://')) {
           return imageUrl;
@@ -262,15 +264,13 @@ serve(async (req) => {
         }
         
         // If it's a relative TMDB path (starts with /), convert to full URL
-        if (imageUrl.startsWith('/') && isTmdbSource) {
-          return `https://image.tmdb.org/t/p/w500${imageUrl}`;
+        if (imageUrl.startsWith('/')) {
+          const fullUrl = `https://image.tmdb.org/t/p/w500${imageUrl}`;
+          console.log('Converted relative path:', imageUrl, '->', fullUrl, 'source:', externalSource);
+          return fullUrl;
         }
         
-        // Fallback: if it looks like a TMDB path but source wasn't detected
-        if (imageUrl.startsWith('/') && imageUrl.includes('.jpg')) {
-          return `https://image.tmdb.org/t/p/w500${imageUrl}`;
-        }
-        
+        console.log('Unhandled imageUrl format:', imageUrl, 'source:', externalSource);
         return imageUrl;
       };
       
@@ -788,7 +788,7 @@ serve(async (req) => {
                 title: item.title,
                 mediaType: item.media_type,
                 creator: item.creator,
-                imageUrl: item.image_url,
+                imageUrl: ensureImageUrl(item.image_url, item.external_id, item.external_source),
                 externalId: item.external_id,
                 externalSource: item.external_source
               })),
@@ -939,7 +939,7 @@ serve(async (req) => {
               title: item.title,
               mediaType: item.media_type,
               creator: item.creator,
-              imageUrl: item.image_url,
+              imageUrl: ensureImageUrl(item.image_url, item.external_id, item.external_source),
               externalId: item.external_id,
               externalSource: item.external_source
             })),
