@@ -30,8 +30,8 @@ const CATEGORY_CONFIG: Record<LeaderboardVariant, {
     icon: Brain,
     gradientFrom: 'from-amber-50',
     gradientTo: 'to-orange-50',
-    ctaLabel: 'Play Trivia',
-    ctaHref: '/play/trivia',
+    ctaLabel: 'View Leaderboard',
+    ctaHref: '/leaderboard',
   },
   overall: {
     title: 'TOP ENGAGERS',
@@ -39,7 +39,7 @@ const CATEGORY_CONFIG: Record<LeaderboardVariant, {
     icon: TrendingUp,
     gradientFrom: 'from-purple-50',
     gradientTo: 'to-pink-50',
-    ctaLabel: 'View All',
+    ctaLabel: 'View Leaderboard',
     ctaHref: '/leaderboard',
   },
   consumption: {
@@ -48,8 +48,8 @@ const CATEGORY_CONFIG: Record<LeaderboardVariant, {
     icon: Library,
     gradientFrom: 'from-blue-50',
     gradientTo: 'to-indigo-50',
-    ctaLabel: 'Track Media',
-    ctaHref: '/track',
+    ctaLabel: 'View Leaderboard',
+    ctaHref: '/leaderboard',
   },
   polls: {
     title: 'POLL MASTERS',
@@ -57,8 +57,8 @@ const CATEGORY_CONFIG: Record<LeaderboardVariant, {
     icon: Target,
     gradientFrom: 'from-cyan-50',
     gradientTo: 'to-blue-50',
-    ctaLabel: 'Do Polls',
-    ctaHref: '/play/polls',
+    ctaLabel: 'View Leaderboard',
+    ctaHref: '/leaderboard',
   },
   predictions: {
     title: 'PREDICTION PROS',
@@ -66,8 +66,8 @@ const CATEGORY_CONFIG: Record<LeaderboardVariant, {
     icon: Trophy,
     gradientFrom: 'from-green-50',
     gradientTo: 'to-emerald-50',
-    ctaLabel: 'Make Predictions',
-    ctaHref: '/play/predictions',
+    ctaLabel: 'View Leaderboard',
+    ctaHref: '/leaderboard',
   },
 };
 
