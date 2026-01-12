@@ -3251,6 +3251,10 @@ export default function Feed() {
                 const shouldShowPointsAchievements = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 12 === 0);
                 // Leaderboard at positions 1, 13, 25... (every 12 posts starting at 1)
                 const shouldShowLeaderboard = postIndex === 1 || (postIndex > 1 && (postIndex - 1) % 12 === 0);
+                // Rotate through leaderboard variants
+                const leaderboardVariants = ['trivia', 'overall', 'consumption', 'polls', 'predictions'] as const;
+                const leaderboardOccurrence = shouldShowLeaderboard ? Math.floor((postIndex - 1) / 12) : 0;
+                const leaderboardVariant = leaderboardVariants[leaderboardOccurrence % leaderboardVariants.length];
                 // Media carousel at positions 9, 21, 33... (every 12 posts starting at 9)
                 const shouldShowMediaCarousel = postIndex === 9 || (postIndex > 9 && (postIndex - 9) % 12 === 0);
                 // Recommendations only at position 2 (early in feed)
@@ -3311,7 +3315,7 @@ export default function Feed() {
                     )}
                     {shouldShowLeaderboard && !isFilterActive && (
                       <div className="mb-4">
-                        <LeaderboardFeedCard />
+                        <LeaderboardFeedCard variant={leaderboardVariant} />
                       </div>
                     )}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (

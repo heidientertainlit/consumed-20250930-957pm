@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Trophy, ChevronRight } from 'lucide-react';
+import { Trophy, ChevronRight, Brain, Target, TrendingUp, Library } from 'lucide-react';
 import { Link } from 'wouter';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -13,11 +13,73 @@ interface LeaderboardEntry {
   isCurrentUser: boolean;
 }
 
+type LeaderboardVariant = 'trivia' | 'overall' | 'consumption' | 'polls' | 'predictions';
+
+const CATEGORY_CONFIG: Record<LeaderboardVariant, {
+  title: string;
+  apiCategory: string;
+  icon: typeof Trophy;
+  gradientFrom: string;
+  gradientTo: string;
+  ctaLabel: string;
+  ctaHref: string;
+}> = {
+  trivia: {
+    title: 'TRIVIA CHAMPIONS',
+    apiCategory: 'trivia',
+    icon: Brain,
+    gradientFrom: 'from-amber-50',
+    gradientTo: 'to-orange-50',
+    ctaLabel: 'Play Trivia',
+    ctaHref: '/play/trivia',
+  },
+  overall: {
+    title: 'TOP ENGAGERS',
+    apiCategory: 'overall',
+    icon: TrendingUp,
+    gradientFrom: 'from-purple-50',
+    gradientTo: 'to-pink-50',
+    ctaLabel: 'View All',
+    ctaHref: '/leaderboard',
+  },
+  consumption: {
+    title: 'MEDIA LEADERS',
+    apiCategory: 'total_consumption',
+    icon: Library,
+    gradientFrom: 'from-blue-50',
+    gradientTo: 'to-indigo-50',
+    ctaLabel: 'Track Media',
+    ctaHref: '/track',
+  },
+  polls: {
+    title: 'POLL MASTERS',
+    apiCategory: 'polls',
+    icon: Target,
+    gradientFrom: 'from-cyan-50',
+    gradientTo: 'to-blue-50',
+    ctaLabel: 'Do Polls',
+    ctaHref: '/play/polls',
+  },
+  predictions: {
+    title: 'PREDICTION PROS',
+    apiCategory: 'predictions',
+    icon: Trophy,
+    gradientFrom: 'from-green-50',
+    gradientTo: 'to-emerald-50',
+    ctaLabel: 'Make Predictions',
+    ctaHref: '/play/predictions',
+  },
+};
+
 interface LeaderboardFeedCardProps {
   className?: string;
+  variant?: LeaderboardVariant;
 }
 
-export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardProps) {
+export default function LeaderboardFeedCard({ className, variant = 'trivia' }: LeaderboardFeedCardProps) {
+  const config = CATEGORY_CONFIG[variant];
+  const IconComponent = config.icon;
+
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
@@ -41,7 +103,7 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
   });
 
   const { data: leaderboard = [], isLoading } = useQuery({
-    queryKey: ['weekly-leaderboard-feed', session?.access_token],
+    queryKey: ['leaderboard-feed', variant, session?.access_token],
     queryFn: async () => {
       if (!session?.access_token) return [];
       
@@ -57,8 +119,8 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
       
       if (!response.ok) throw new Error('Failed to fetch leaderboard');
       const data = await response.json();
-      // Use trivia category only to match the leaderboard page
-      return data?.categories?.trivia || [];
+      // Get the specific category from the response
+      return data?.categories?.[config.apiCategory] || [];
     },
     enabled: !!session?.access_token,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
@@ -108,17 +170,19 @@ export default function LeaderboardFeedCard({ className }: LeaderboardFeedCardPr
 
   return (
     <div className={cn(
-      "bg-gradient-to-b from-amber-50 to-orange-50 rounded-2xl border border-amber-200/50 overflow-hidden",
+      "bg-gradient-to-b rounded-2xl border border-gray-200/50 overflow-hidden",
+      config.gradientFrom,
+      config.gradientTo,
       className
     )}>
       <div className="p-4 pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Trophy className="text-amber-500" size={18} />
-            <span className="font-semibold text-gray-800 text-sm">TRIVIA CHAMPIONS</span>
+            <IconComponent className="text-amber-500" size={18} />
+            <span className="font-semibold text-gray-800 text-sm">{config.title}</span>
           </div>
-          <Link href="/leaderboard" className="text-purple-600 text-sm font-medium flex items-center gap-0.5 hover:underline">
-            View All <ChevronRight size={16} />
+          <Link href={config.ctaHref} className="text-purple-600 text-sm font-medium flex items-center gap-0.5 hover:underline">
+            {config.ctaLabel} <ChevronRight size={16} />
           </Link>
         </div>
       </div>
