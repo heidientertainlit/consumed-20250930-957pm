@@ -183,6 +183,33 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
   if (data && typeof data === 'object' && !Array.isArray(data) && 'posts' in data && 'currentUserId' in data) {
     currentAppUserId = data.currentUserId;
     console.log('📌 Current app user ID set to:', currentAppUserId);
+    
+    // Debug: Log posts with missing or problematic imageUrls
+    data.posts.forEach((post: any, idx: number) => {
+      if (post.mediaItems?.length > 0) {
+        const media = post.mediaItems[0];
+        if (!media.imageUrl || media.imageUrl === '' || !media.imageUrl.startsWith('http')) {
+          console.log(`🖼️ POST ${idx} (${post.user?.username}) missing/bad imageUrl:`, {
+            title: media.title,
+            imageUrl: media.imageUrl,
+            externalSource: media.externalSource,
+            externalId: media.externalId
+          });
+        }
+      }
+      if (post.listData?.items?.length > 0) {
+        post.listData.items.forEach((item: any, itemIdx: number) => {
+          if (!item.imageUrl || item.imageUrl === '' || !item.imageUrl.startsWith('http')) {
+            console.log(`🖼️ LIST ITEM ${idx}/${itemIdx} missing/bad imageUrl:`, {
+              title: item.title,
+              imageUrl: item.imageUrl,
+              externalSource: item.externalSource
+            });
+          }
+        });
+      }
+    });
+    
     return data.posts;
   }
   
