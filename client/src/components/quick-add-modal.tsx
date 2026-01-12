@@ -410,17 +410,14 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
           }
         }
         
-        // If media is attached, track it to history (even if no list selected)
-        if (selectedMedia && mediaData) {
-          const listToUse = (selectedListId && selectedListId !== '' && selectedListId !== 'none') 
-            ? selectedListId 
-            : 'finished'; // Default to finished list for tracking
-          await trackMediaToList(supabaseUrl, session.access_token, mediaData, listToUse);
+        // If media is attached AND user selected a list, track it
+        if (selectedMedia && mediaData && selectedListId && selectedListId !== '' && selectedListId !== 'none') {
+          await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, privateMode, rewatchCount, dnfReason);
         }
         
-        // If rating is provided, add it
+        // If rating is provided, add it (with review content and spoiler flag)
         if (selectedMedia && rating > 0) {
-          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!);
+          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, privateMode);
         }
         
       } else if (postType === 'poll') {
@@ -505,9 +502,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
           throw new Error(errorData.error || 'Failed to add to ranked list');
         }
         
-        // Also track the media to history
-        if (mediaData) {
-          await trackMediaToList(supabaseUrl, session.access_token, mediaData, 'finished');
+        // Track media to the user's selected list (or skip if no list selected)
+        if (mediaData && selectedListId && selectedListId !== '' && selectedListId !== 'none') {
+          await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, true, rewatchCount, dnfReason);
         }
       }
       
@@ -535,7 +532,15 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   };
   
   // Helper function to track media to a list
-  const trackMediaToList = async (supabaseUrl: string, accessToken: string, mediaData: any, listId: string) => {
+  const trackMediaToList = async (
+    supabaseUrl: string, 
+    accessToken: string, 
+    mediaData: any, 
+    listId: string,
+    skipSocialPost: boolean = true,
+    rewatchNum: number = 1,
+    dnfData?: { reason: string; otherReason?: string } | null
+  ) => {
     const systemListTitles = ['finished', 'in progress', 'wishlist', 'paused', 'dropped', 'currently', 'favorites', 'queue', 'dnf'];
     const selectedList = userLists.find((l: any) => l.id === listId);
     const isSystemListById = systemListTitles.includes(listId?.toLowerCase());
@@ -549,20 +554,41 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       await fetch(`${supabaseUrl}/functions/v1/add-to-custom-list`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ media: mediaData, customListId: listId, skip_social_post: true }),
+        body: JSON.stringify({ 
+          media: mediaData, 
+          customListId: listId, 
+          skip_social_post: skipSocialPost,
+          rewatchCount: rewatchNum > 1 ? rewatchNum : null,
+          ...(dnfData && { dnf_reason: dnfData.reason, dnf_other_reason: dnfData.otherReason }),
+        }),
       });
     } else {
       let listType = isSystemListById ? listId.toLowerCase() : (selectedList?.title?.toLowerCase().replace(/\s+/g, '_') || 'finished');
       await fetch(`${supabaseUrl}/functions/v1/track-media`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ media: mediaData, listType, skip_social_post: true }),
+        body: JSON.stringify({ 
+          media: mediaData, 
+          listType, 
+          skip_social_post: skipSocialPost,
+          rewatchCount: rewatchNum > 1 ? rewatchNum : null,
+          ...(dnfData && { dnf_reason: dnfData.reason, dnf_other_reason: dnfData.otherReason }),
+        }),
       });
     }
   };
   
   // Helper function to add rating
-  const addRating = async (supabaseUrl: string, accessToken: string, media: any, externalId: string, externalSource: string) => {
+  const addRating = async (
+    supabaseUrl: string, 
+    accessToken: string, 
+    media: any, 
+    externalId: string, 
+    externalSource: string,
+    reviewContent?: string,
+    hasSpoilers: boolean = false,
+    isPrivate: boolean = false
+  ) => {
     await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -573,7 +599,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         media_type: media.type || 'movie',
         media_image_url: media.poster_url || media.image_url || media.poster_path || media.image,
         rating: rating,
-        skip_social_post: true,
+        skip_social_post: isPrivate,
+        review_content: reviewContent || null,
+        contains_spoilers: hasSpoilers,
       }),
     });
   };
