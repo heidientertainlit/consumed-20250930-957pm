@@ -234,6 +234,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 Search results:', data.results?.slice(0, 3).map((r: any) => ({ title: r.title, poster_url: r.poster_url, image_url: r.image_url })));
         setSearchResults(data.results || []);
       } else {
         setSearchResults([]);
