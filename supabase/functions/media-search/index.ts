@@ -498,6 +498,10 @@ serve(async (req) => {
     // Helper for safe string lowercasing
     const safeLower = (val: any) => (typeof val === 'string' ? val : '').toLowerCase();
     
+    // Helper to normalize titles by stripping leading articles (the, a, an)
+    // This helps "night manager" match "The Night Manager" as exact match
+    const normalizeTitle = (s: string) => s.replace(/^(the|a|an)\s+/i, '').trim();
+    
     // queryHasBook, queryHasMovie, etc. were already detected at the top before stripping
     
     const scoredResults = allResults.map(item => {
@@ -506,22 +510,27 @@ serve(async (req) => {
       const description = safeLower(item.description);
       let score = 0;
       
+      // Normalized versions for better matching
+      const normalizedTitle = normalizeTitle(title);
+      const normalizedQuery = normalizeTitle(queryLower);
+      
       // 0. Fuzzy match score - helps with typos like "nuremburg" → "nuremberg"
-      const fuzzyScore = fuzzyMatchScore(queryLower, title);
+      const fuzzyScore = fuzzyMatchScore(normalizedQuery, normalizedTitle);
       if (fuzzyScore >= 0.8) {
         score += Math.floor(fuzzyScore * 50);  // Up to 50 points for good fuzzy match
       } else if (fuzzyScore >= 0.6) {
         score += Math.floor(fuzzyScore * 30);  // Partial fuzzy match
       }
       
-      // 1. Title vs query - strongest signal
-      if (title === queryLower) {
-        score += 100;  // Exact match
-      } else if (title.startsWith(queryLower)) {
+      // 1. Title vs query - strongest signal (use both normalized and raw comparisons)
+      if (title === queryLower || normalizedTitle === normalizedQuery) {
+        score += 100;  // Exact match (with or without "The/A/An")
+      } else if (title.startsWith(queryLower) || normalizedTitle.startsWith(normalizedQuery)) {
         score += 80;   // Title starts with query
-      } else if (queryLower.startsWith(title) && title.length > 0) {
+      } else if ((queryLower.startsWith(title) && title.length > 0) || 
+                 (normalizedQuery.startsWith(normalizedTitle) && normalizedTitle.length > 0)) {
         score += 70;   // User still typing full title
-      } else if (title.includes(queryLower)) {
+      } else if (title.includes(queryLower) || normalizedTitle.includes(normalizedQuery)) {
         score += 60;   // Query appears in title
       } else {
         // Word overlap in title
@@ -555,14 +564,6 @@ serve(async (req) => {
       if (queryHasMovie && item.type === 'movie') score += 40;
       if (queryHasMusic && item.type === 'music') score += 40;
       if (queryHasTv && item.type === 'tv') score += 40;
-      
-      // 4b. DEFAULT boost for TV/movies when no type hint detected
-      // Most users searching are looking for TV shows and movies
-      const hasAnyTypeHint = queryHasBook || queryHasMovie || queryHasMusic || queryHasTv;
-      if (!hasAnyTypeHint && !type) {
-        if (item.type === 'tv') score += 25;
-        if (item.type === 'movie') score += 20;
-      }
       
       // 5. Type filter boost - if caller passed a specific type
       if (type && item.type === type) {
