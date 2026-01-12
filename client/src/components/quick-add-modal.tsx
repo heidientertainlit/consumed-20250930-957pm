@@ -299,192 +299,89 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   };
 
   const handleSubmit = async () => {
-    if (!selectedMedia || !session?.access_token) return;
+    if (!session?.access_token) return;
+    
+    // For rank posts, require media selection
+    if (postType === 'rank' && !selectedMedia) {
+      toast({
+        title: "Select media",
+        description: "Please attach media to add to your ranked list.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // For other posts, require text content
+    if (postType !== 'rank' && !reviewText.trim()) {
+      toast({
+        title: "Add content",
+        description: "Please write something for your post.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // For polls, validate options
+    if (postType === 'poll') {
+      const validOptions = pollOptions.filter(o => o.trim());
+      if (validOptions.length < 2) {
+        toast({
+          title: "Add poll options",
+          description: "Please add at least 2 options for your poll.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
     
     setIsSubmitting(true);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       
-      // Determine external source based on media type
-      let externalSource = selectedMedia.source || selectedMedia.external_source || 'tmdb';
-      const externalId = selectedMedia.external_id || selectedMedia.id;
+      // Prepare media data if media is selected
+      let mediaData: any = null;
+      let externalSource: string | undefined;
+      let externalId: string | undefined;
       
-      if (!selectedMedia.source && !selectedMedia.external_source) {
-        if (selectedMedia.type === 'book') {
-          externalSource = 'openlibrary';
-        } else if (selectedMedia.type === 'podcast' || selectedMedia.type === 'music') {
-          externalSource = 'spotify';
-        }
-      }
-      
-      const mediaData = {
-        title: selectedMedia.title,
-        mediaType: selectedMedia.type || 'movie',
-        creator: selectedMedia.creator || selectedMedia.artist || '',
-        imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image || '',
-        externalId: String(externalId),
-        externalSource,
-        // TV-specific data
-        ...(tvSeason && { season: parseInt(tvSeason) }),
-        ...(tvEpisode && { episode: parseInt(tvEpisode) }),
-        // Music-specific data
-        ...((selectedMedia.type === 'music' || selectedMedia.media_type === 'music') && { musicFormat }),
-      };
-      
-      console.log('🎯 QuickAdd: Adding media', { mediaData, selectedListId, rating, selectedRankId });
-      
-      // Step 1: Track media to history (always happens)
-      // Skip social post if: user chose private mode, OR if there's a rating (rate-media creates the post)
-      const skipSocialPost = privateMode || rating > 0;
-      
-      // System/default list titles that should use track-media instead of add-to-custom-list
-      const systemListTitles = ['finished', 'in progress', 'wishlist', 'paused', 'dropped', 'currently', 'favorites', 'queue', 'dnf'];
-      
-      // Check if selected list is a system list (by checking list properties OR if it's one of the pill IDs)
-      const selectedList = selectedListId ? userLists.find((l: any) => l.id === selectedListId) : null;
-      const isSystemListById = systemListTitles.includes(selectedListId?.toLowerCase());
-      const isSystemList = isSystemListById || (selectedList && (
-        selectedList.is_default === true || 
-        selectedList.user_id === null ||
-        systemListTitles.includes(selectedList.title?.toLowerCase())
-      ));
-      
-      if (selectedListId && selectedListId !== "none" && !isSystemList) {
-        // Add to custom list (user-created list with UUID)
-        console.log('🎯 QuickAdd: Adding to custom list:', selectedListId);
-        const response = await fetch(
-          `${supabaseUrl}/functions/v1/add-to-custom-list`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              media: mediaData,
-              customListId: selectedListId,
-              skip_social_post: skipSocialPost,
-              rewatchCount: rewatchCount > 1 ? rewatchCount : null,
-              ...(dnfReason && { dnf_reason: dnfReason.reason, dnf_other_reason: dnfReason.otherReason }),
-            }),
-          }
-        );
+      if (selectedMedia) {
+        externalSource = selectedMedia.source || selectedMedia.external_source || 'tmdb';
+        externalId = String(selectedMedia.external_id || selectedMedia.id);
         
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Failed to add to list:', errorData);
-          // Don't throw - try to continue with rating/rank if list fails
-        }
-      } else {
-        // System list or no list selected - use track-media with listType
-        // Use the selectedListId directly if it's a system list ID, otherwise derive from list title
-        let listType = 'finished';
-        if (isSystemListById) {
-          listType = selectedListId.toLowerCase();
-        } else if (selectedList?.title) {
-          listType = selectedList.title.toLowerCase().replace(/\s+/g, '_');
-        }
-        console.log('🎯 QuickAdd: Tracking to system list:', listType);
-        const response = await fetch(
-          `${supabaseUrl}/functions/v1/track-media`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              media: mediaData,
-              listType: listType,
-              skip_social_post: skipSocialPost,
-              rewatchCount: rewatchCount > 1 ? rewatchCount : null,
-              ...(dnfReason && { dnf_reason: dnfReason.reason, dnf_other_reason: dnfReason.otherReason }),
-            }),
+        if (!selectedMedia.source && !selectedMedia.external_source) {
+          if (selectedMedia.type === 'book') {
+            externalSource = 'openlibrary';
+          } else if (selectedMedia.type === 'podcast' || selectedMedia.type === 'music') {
+            externalSource = 'spotify';
           }
-        );
+        }
         
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Failed to track media:', errorData);
-          // Don't throw - try to continue with rating if track fails
-        }
+        mediaData = {
+          title: selectedMedia.title,
+          mediaType: selectedMedia.type || 'movie',
+          creator: selectedMedia.creator || selectedMedia.artist || '',
+          imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image || '',
+          externalId,
+          externalSource,
+          ...(tvSeason && { season: parseInt(tvSeason) }),
+          ...(tvEpisode && { episode: parseInt(tvEpisode) }),
+          ...((selectedMedia.type === 'music' || selectedMedia.media_type === 'music') && { musicFormat }),
+        };
       }
       
-      // Track partial failures
-      const failures: string[] = [];
+      console.log('🎯 Composer: Posting', { postType, hasMedia: !!selectedMedia, mediaData, reviewText: reviewText.substring(0, 50) });
       
-      // Step 2: Add rating if provided (include review content so it's all in one post)
-      if (rating > 0) {
-        try {
-          const rateResponse = await fetch(
-            `${supabaseUrl}/functions/v1/rate-media`,
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                media_external_id: externalId,
-                media_external_source: externalSource,
-                media_title: selectedMedia.title,
-                media_type: selectedMedia.type || 'movie',
-                media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
-                rating: rating,
-                skip_social_post: privateMode,
-                review_content: reviewText.trim() || null,
-                contains_spoilers: containsSpoilers,
-              }),
-            }
-          );
-          if (!rateResponse.ok) {
-            console.error('Rating failed:', await rateResponse.text().catch(() => 'unknown'));
-            failures.push('rating');
-          }
-        } catch (err) {
-          console.error('Rating error:', err);
-          failures.push('rating');
-        }
-      }
-      
-      // Step 3: Add to rank if selected
-      if (selectedRankId && selectedRankId !== "none") {
-        try {
-          const rankResponse = await fetch(
-            `${supabaseUrl}/functions/v1/manage-ranks`,
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                action: 'add_item',
-                rank_id: selectedRankId,
-                item: {
-                  title: selectedMedia.title,
-                  media_type: selectedMedia.type,
-                  external_id: externalId,
-                  external_source: externalSource,
-                  image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
-                },
-              }),
-            }
-          );
-          if (!rankResponse.ok) {
-            console.error('Rank failed:', await rankResponse.text().catch(() => 'unknown'));
-            failures.push('rank');
-          }
-        } catch (err) {
-          console.error('Rank error:', err);
-          failures.push('rank');
-        }
-      }
-      
-      // Step 4: Post standalone review (only if there's NO rating - reviews with ratings are handled in step 2)
-      if (reviewText.trim() && rating === 0) {
-        try {
-          const reviewResponse = await fetch(
+      // Handle based on post type
+      if (postType === 'thought' || postType === 'hot_take' || postType === 'ask') {
+        // Map post types to API types
+        const typeMap: Record<string, string> = {
+          'thought': 'thought',
+          'hot_take': 'hot_take',
+          'ask': 'ask_for_rec',
+        };
+        
+        // Create the social post (unless private mode is enabled)
+        if (!privateMode) {
+          const response = await fetch(
             `${supabaseUrl}/functions/v1/inline-post`,
             {
               method: 'POST',
@@ -494,36 +391,127 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               },
               body: JSON.stringify({
                 content: reviewText.trim(),
-                type: 'review',
+                type: typeMap[postType],
+                ...(selectedMedia && {
+                  media_title: selectedMedia.title,
+                  media_type: selectedMedia.type,
+                  media_external_id: externalId,
+                  media_external_source: externalSource,
+                  media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
+                }),
+                contains_spoilers: containsSpoilers,
+              }),
+            }
+          );
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to create post');
+          }
+        }
+        
+        // If media is attached, track it to history (even if no list selected)
+        if (selectedMedia && mediaData) {
+          const listToUse = (selectedListId && selectedListId !== '' && selectedListId !== 'none') 
+            ? selectedListId 
+            : 'finished'; // Default to finished list for tracking
+          await trackMediaToList(supabaseUrl, session.access_token, mediaData, listToUse);
+        }
+        
+        // If rating is provided, add it
+        if (selectedMedia && rating > 0) {
+          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!);
+        }
+        
+      } else if (postType === 'poll') {
+        // Create poll using existing poll endpoint
+        const validOptions = pollOptions.filter(o => o.trim());
+        
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/create-poll`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              question: reviewText.trim(),
+              options: validOptions,
+              is_private: privateMode,
+              contains_spoilers: containsSpoilers,
+              ...(selectedMedia && {
                 media_title: selectedMedia.title,
                 media_type: selectedMedia.type,
                 media_external_id: externalId,
                 media_external_source: externalSource,
                 media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
-                contains_spoilers: containsSpoilers,
               }),
-            }
-          );
-          if (!reviewResponse.ok) {
-            console.error('Review failed:', await reviewResponse.text().catch(() => 'unknown'));
-            failures.push('review');
+            }),
           }
-        } catch (err) {
-          console.error('Review error:', err);
-          failures.push('review');
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to create poll');
+        }
+        
+      } else if (postType === 'rank') {
+        // Add to ranked list - requires media and a selected rank
+        if (!selectedMedia) {
+          toast({
+            title: "Select media",
+            description: "Please attach media to add to your ranked list.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (!selectedRankId) {
+          toast({
+            title: "Select a list",
+            description: "Please select a ranked list to add this media to.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/manage-ranks`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'add_item',
+              rank_id: selectedRankId,
+              item: {
+                title: selectedMedia.title,
+                media_type: selectedMedia.type || 'movie',
+                external_id: externalId,
+                external_source: externalSource,
+                image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image || '',
+              },
+            }),
+          }
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to add to ranked list');
+        }
+        
+        // Also track the media to history
+        if (mediaData) {
+          await trackMediaToList(supabaseUrl, session.access_token, mediaData, 'finished');
         }
       }
       
-      // Only show toast if there were failures (let user see success in the feed)
-      if (failures.length > 0) {
-        toast({
-          title: "Partially added",
-          description: `${selectedMedia.title} was added, but ${failures.join(', ')} couldn't be saved. Try again later.`,
-          variant: "destructive",
-        });
-      }
-      
-      // Invalidate all relevant queries and refetch feed immediately
+      // Invalidate queries and refetch feed
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] }),
         queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] }),
@@ -531,20 +519,63 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         queryClient.invalidateQueries({ queryKey: ['media-ratings'] }),
       ]);
       
-      // Force refetch social feed to show new post immediately
       await queryClient.refetchQueries({ queryKey: ['social-feed'] });
       
       onClose();
-    } catch (error) {
-      console.error("Error adding media:", error);
+    } catch (error: any) {
+      console.error("Error posting:", error);
       toast({
         title: "Error",
-        description: "There was a problem adding this media. Please try again.",
+        description: error.message || "There was a problem creating your post. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  // Helper function to track media to a list
+  const trackMediaToList = async (supabaseUrl: string, accessToken: string, mediaData: any, listId: string) => {
+    const systemListTitles = ['finished', 'in progress', 'wishlist', 'paused', 'dropped', 'currently', 'favorites', 'queue', 'dnf'];
+    const selectedList = userLists.find((l: any) => l.id === listId);
+    const isSystemListById = systemListTitles.includes(listId?.toLowerCase());
+    const isSystemList = isSystemListById || (selectedList && (
+      selectedList.is_default === true || 
+      selectedList.user_id === null ||
+      systemListTitles.includes(selectedList.title?.toLowerCase())
+    ));
+    
+    if (!isSystemList) {
+      await fetch(`${supabaseUrl}/functions/v1/add-to-custom-list`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ media: mediaData, customListId: listId, skip_social_post: true }),
+      });
+    } else {
+      let listType = isSystemListById ? listId.toLowerCase() : (selectedList?.title?.toLowerCase().replace(/\s+/g, '_') || 'finished');
+      await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ media: mediaData, listType, skip_social_post: true }),
+      });
+    }
+  };
+  
+  // Helper function to add rating
+  const addRating = async (supabaseUrl: string, accessToken: string, media: any, externalId: string, externalSource: string) => {
+    await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        media_external_id: externalId,
+        media_external_source: externalSource,
+        media_title: media.title,
+        media_type: media.type || 'movie',
+        media_image_url: media.poster_url || media.image_url || media.poster_path || media.image,
+        rating: rating,
+        skip_social_post: true,
+      }),
+    });
   };
 
   const getMediaIcon = (type: string) => {
