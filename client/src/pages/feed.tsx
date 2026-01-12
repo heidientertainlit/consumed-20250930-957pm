@@ -933,6 +933,7 @@ export default function Feed() {
   }, []);
 
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [trackModalPreSelectedMedia, setTrackModalPreSelectedMedia] = useState<any>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -1035,13 +1036,13 @@ export default function Feed() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  // Handle selecting a media item from header search - open QuickAdd modal
+  // Handle selecting a media item from header search - open post composer modal
   const handleSelectHeaderMedia = (item: any) => {
     setHeaderSearchQuery("");
     setHeaderSearchResults([]);
     setShowHeaderResults(false);
-    // Open QuickAdd modal with the selected media
-    setQuickAddMedia({
+    // Open QuickAddModal (post composer) with the selected media pre-filled
+    setTrackModalPreSelectedMedia({
       title: item.title,
       mediaType: item.type || item.mediaType || 'movie',
       imageUrl: item.image_url || item.imageUrl || item.posterPath,
@@ -1049,7 +1050,7 @@ export default function Feed() {
       externalSource: item.external_source || item.externalSource || 'tmdb',
       creator: item.creator || item.author,
     });
-    setIsQuickAddOpen(true);
+    setIsTrackModalOpen(true);
   };
   
   // Check for URL parameters to scroll to specific post/comment (reactive to URL changes)
@@ -4816,7 +4817,11 @@ export default function Feed() {
 
       <QuickAddModal
         isOpen={isTrackModalOpen}
-        onClose={() => setIsTrackModalOpen(false)}
+        onClose={() => {
+          setIsTrackModalOpen(false);
+          setTrackModalPreSelectedMedia(null);
+        }}
+        preSelectedMedia={trackModalPreSelectedMedia}
       />
 
       <QuickAddListSheet
