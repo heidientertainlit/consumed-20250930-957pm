@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,7 @@ type PostType = "thought" | "hot_take" | "ask" | "poll" | "rank";
 export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddModalProps) {
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   const [stage, setStage] = useState<Stage>("search");
   const [searchQuery, setSearchQuery] = useState("");
@@ -767,12 +769,24 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     <div
                       key={`${result.external_id || result.id}-${index}`}
                       onClick={() => {
-                        console.log('🎯 Row clicked:', result.title);
-                        handleSelectMedia(result);
+                        console.log('🎯 Row clicked - navigating to media:', result.title);
+                        onClose();
+                        const mediaType = result.type || 'movie';
+                        const externalId = result.external_id || result.id;
+                        const externalSource = result.external_source || 'tmdb';
+                        setLocation(`/media/${mediaType}/${externalSource}/${externalId}`);
                       }}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSelectMedia(result)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          onClose();
+                          const mediaType = result.type || 'movie';
+                          const externalId = result.external_id || result.id;
+                          const externalSource = result.external_source || 'tmdb';
+                          setLocation(`/media/${mediaType}/${externalSource}/${externalId}`);
+                        }
+                      }}
                       className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors cursor-pointer select-none"
                       style={{ pointerEvents: 'auto' }}
                       data-testid={`search-result-${index}`}
