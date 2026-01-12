@@ -247,13 +247,27 @@ serve(async (req) => {
         
         if (!imageUrl) return '';
         
-        // If it's already a full URL, return as-is
-        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        // Check if this is a TMDB source (handles 'tmdb', 'tmdb_movie', 'tmdb_tv', 'movie', 'tv')
+        const isTmdbSource = externalSource?.includes('tmdb') || externalSource === 'movie' || externalSource === 'tv';
+        
+        // If it's already a full URL, ensure it's https for TMDB
+        if (imageUrl.startsWith('http://image.tmdb.org')) {
+          return imageUrl.replace('http://', 'https://');
+        }
+        if (imageUrl.startsWith('https://')) {
           return imageUrl;
+        }
+        if (imageUrl.startsWith('http://')) {
+          return imageUrl; // Non-TMDB http URL, return as-is
         }
         
         // If it's a relative TMDB path (starts with /), convert to full URL
-        if (imageUrl.startsWith('/') && (externalSource === 'tmdb' || externalSource === 'movie' || externalSource === 'tv')) {
+        if (imageUrl.startsWith('/') && isTmdbSource) {
+          return `https://image.tmdb.org/t/p/w500${imageUrl}`;
+        }
+        
+        // Fallback: if it looks like a TMDB path but source wasn't detected
+        if (imageUrl.startsWith('/') && imageUrl.includes('.jpg')) {
           return `https://image.tmdb.org/t/p/w500${imageUrl}`;
         }
         
