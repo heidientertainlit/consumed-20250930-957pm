@@ -120,7 +120,8 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   });
   
   // Offset games by variant so each Play card shows different content first
-  const variantOffset = variant === 'mixed' ? 0 : variant === 'polls' ? 3 : 6;
+  // Use larger offsets to ensure truly different starting points
+  const variantOffset = variant === 'mixed' ? 0 : variant === 'polls' ? 10 : 20;
   const rotateArray = <T,>(arr: T[], offset: number): T[] => {
     if (arr.length === 0) return arr;
     const realOffset = offset % arr.length;
@@ -175,9 +176,11 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
       if (error) throw error;
       return { pointsEarned };
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['play-feed-user-predictions'] });
       queryClient.invalidateQueries({ queryKey: ['inline-user-predictions'] });
+      queryClient.invalidateQueries({ queryKey: ['user-points'] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
     },
   });
 
