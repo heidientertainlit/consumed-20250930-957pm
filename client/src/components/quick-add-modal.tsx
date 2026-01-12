@@ -299,15 +299,16 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       const skipSocialPost = privateMode || rating > 0;
       
       // System/default list titles that should use track-media instead of add-to-custom-list
-      const systemListTitles = ['finished', 'in progress', 'wishlist', 'paused', 'dropped', 'currently'];
+      const systemListTitles = ['finished', 'in progress', 'wishlist', 'paused', 'dropped', 'currently', 'favorites', 'queue', 'dnf'];
       
-      // Check if selected list is a system list (by checking list properties)
+      // Check if selected list is a system list (by checking list properties OR if it's one of the pill IDs)
       const selectedList = selectedListId ? userLists.find((l: any) => l.id === selectedListId) : null;
-      const isSystemList = selectedList && (
+      const isSystemListById = systemListTitles.includes(selectedListId?.toLowerCase());
+      const isSystemList = isSystemListById || (selectedList && (
         selectedList.is_default === true || 
         selectedList.user_id === null ||
         systemListTitles.includes(selectedList.title?.toLowerCase())
-      );
+      ));
       
       if (selectedListId && selectedListId !== "none" && !isSystemList) {
         // Add to custom list (user-created list with UUID)
@@ -337,9 +338,13 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         }
       } else {
         // System list or no list selected - use track-media with listType
-        const listType = isSystemList && selectedList?.title 
-          ? selectedList.title.toLowerCase().replace(/\s+/g, '_')
-          : 'finished';
+        // Use the selectedListId directly if it's a system list ID, otherwise derive from list title
+        let listType = 'finished';
+        if (isSystemListById) {
+          listType = selectedListId.toLowerCase();
+        } else if (selectedList?.title) {
+          listType = selectedList.title.toLowerCase().replace(/\s+/g, '_');
+        }
         console.log('🎯 QuickAdd: Tracking to system list:', listType);
         const response = await fetch(
           `${supabaseUrl}/functions/v1/track-media`,
@@ -764,6 +769,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                   { id: 'finished', label: 'Finished' },
                   { id: 'currently', label: 'Currently' },
                   { id: 'queue', label: 'Want To' },
+                  { id: 'favorites', label: 'Favorites' },
                   { id: 'dnf', label: 'DNF' },
                 ].map((list) => (
                   <button
