@@ -295,12 +295,23 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       console.log('🎯 QuickAdd: Adding media', { mediaData, selectedListId, rating, selectedRankId });
       
       // Step 1: Track media to history (always happens)
-      // Use track-media for default "Finished" list, or add-to-custom-list for specific lists
       // Skip social post if: user chose private mode, OR if there's a rating (rate-media creates the post)
       const skipSocialPost = privateMode || rating > 0;
       
-      if (selectedListId && selectedListId !== "none") {
-        // Add to specific custom list
+      // System/default list titles that should use track-media instead of add-to-custom-list
+      const systemListTitles = ['finished', 'in progress', 'wishlist', 'paused', 'dropped', 'currently'];
+      
+      // Check if selected list is a system list (by checking list properties)
+      const selectedList = selectedListId ? userLists.find((l: any) => l.id === selectedListId) : null;
+      const isSystemList = selectedList && (
+        selectedList.is_default === true || 
+        selectedList.user_id === null ||
+        systemListTitles.includes(selectedList.title?.toLowerCase())
+      );
+      
+      if (selectedListId && selectedListId !== "none" && !isSystemList) {
+        // Add to custom list (user-created list with UUID)
+        console.log('🎯 QuickAdd: Adding to custom list:', selectedListId);
         const response = await fetch(
           `${supabaseUrl}/functions/v1/add-to-custom-list`,
           {
@@ -325,7 +336,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
           // Don't throw - try to continue with rating/rank if list fails
         }
       } else {
-        // No list selected - add to "Finished" as default to track consumption
+        // System list or no list selected - use track-media with listType
+        const listType = isSystemList && selectedList?.title 
+          ? selectedList.title.toLowerCase().replace(/\s+/g, '_')
+          : 'finished';
+        console.log('🎯 QuickAdd: Tracking to system list:', listType);
         const response = await fetch(
           `${supabaseUrl}/functions/v1/track-media`,
           {
@@ -336,9 +351,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             },
             body: JSON.stringify({
               media: mediaData,
-              listType: 'finished',
+              listType: listType,
               skip_social_post: skipSocialPost,
               rewatchCount: rewatchCount > 1 ? rewatchCount : null,
+              ...(dnfReason && { dnf_reason: dnfReason.reason, dnf_other_reason: dnfReason.otherReason }),
             }),
           }
         );
