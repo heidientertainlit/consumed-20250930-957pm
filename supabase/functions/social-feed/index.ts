@@ -212,22 +212,55 @@ serve(async (req) => {
           const tryMovie = !mediaType || mediaType === 'movie';
           const tryTv = !mediaType || mediaType === 'tv';
           
-          if (tryMovie) {
-            const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.poster_path) {
-                return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+          // Try by external ID first if we have one
+          if (externalId) {
+            if (tryMovie) {
+              const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
+              if (response.ok) {
+                const data = await response.json();
+                if (data.poster_path) {
+                  return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+                }
+              }
+            }
+            
+            if (tryTv) {
+              const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
+              if (response.ok) {
+                const data = await response.json();
+                if (data.poster_path) {
+                  return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+                }
               }
             }
           }
           
-          if (tryTv) {
-            const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data.poster_path) {
-                return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+          // Fallback: search by title if no externalId or ID lookup failed
+          if (mediaTitle) {
+            console.log('TMDB title search for:', mediaTitle, 'mediaType:', mediaType);
+            
+            // Try TV search first (more common for shows), then movie
+            if (tryTv) {
+              const searchUrl = `https://api.themoviedb.org/3/search/tv?api_key=${tmdbApiKey}&query=${encodeURIComponent(mediaTitle)}&page=1`;
+              const response = await fetch(searchUrl);
+              if (response.ok) {
+                const data = await response.json();
+                if (data.results?.[0]?.poster_path) {
+                  console.log('TMDB title search found TV:', mediaTitle, '->', data.results[0].poster_path);
+                  return `https://image.tmdb.org/t/p/w300${data.results[0].poster_path}`;
+                }
+              }
+            }
+            
+            if (tryMovie) {
+              const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(mediaTitle)}&page=1`;
+              const response = await fetch(searchUrl);
+              if (response.ok) {
+                const data = await response.json();
+                if (data.results?.[0]?.poster_path) {
+                  console.log('TMDB title search found movie:', mediaTitle, '->', data.results[0].poster_path);
+                  return `https://image.tmdb.org/t/p/w300${data.results[0].poster_path}`;
+                }
               }
             }
           }
@@ -508,6 +541,50 @@ serve(async (req) => {
         if (itemsError) {
           console.error('Error fetching list items:', itemsError);
         }
+        
+        // Fetch missing poster URLs for list items that have title but no image
+        const listItemsNeedingImages = allListItems?.filter(item => 
+          !item.image_url && item.title && (item.external_source === 'tmdb' || item.media_type === 'movie' || item.media_type === 'tv' || !item.external_source)
+        ) || [];
+        
+        const fetchedListItemImages = new Map<string, string>();
+        if (listItemsNeedingImages.length > 0) {
+          console.log('Fetching missing poster images for', listItemsNeedingImages.length, 'list items');
+          
+          // Fetch in parallel (limit to 5 concurrent to avoid rate limits)
+          const batchSize = 5;
+          for (let i = 0; i < listItemsNeedingImages.length; i += batchSize) {
+            const batch = listItemsNeedingImages.slice(i, i + batchSize);
+            const results = await Promise.all(
+              batch.map(async (item) => {
+                const posterUrl = await fetchPosterUrl(item.external_id, item.media_type, item.external_source, item.title);
+                if (posterUrl) {
+                  // Also update the database so future requests don't need to fetch
+                  await supabaseAdmin
+                    .from('list_items')
+                    .update({ image_url: posterUrl })
+                    .eq('id', item.id);
+                }
+                return { itemId: item.id, posterUrl };
+              })
+            );
+            
+            results.forEach(({ itemId, posterUrl }) => {
+              if (posterUrl) {
+                fetchedListItemImages.set(itemId, posterUrl);
+              }
+            });
+          }
+          
+          console.log('Fetched', fetchedListItemImages.size, 'missing list item poster images');
+        }
+        
+        // Apply fetched images to list items
+        allListItems?.forEach(item => {
+          if (!item.image_url && fetchedListItemImages.has(item.id)) {
+            item.image_url = fetchedListItemImages.get(item.id);
+          }
+        });
         
         // Get total counts per list
         const itemCountsByList: { [key: string]: number } = {};
