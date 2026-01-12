@@ -88,15 +88,12 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     },
   });
 
-  // Deduplicate games by title, prioritizing unplayed games
-  const seenTitles = new Set<string>();
+  // Separate unplayed and played games (no deduplication - each game is unique by ID)
   const unplayedGames: Game[] = [];
   const playedGames: Game[] = [];
   
   games.forEach((game) => {
-    if (seenTitles.has(game.title)) return;
-    if (game.type === 'vote' && (!game.options || game.options.length < 2)) return;
-    seenTitles.add(game.title);
+    if (!game.options || game.options.length < 2) return;
     
     const isPlayed = userPredictions[game.id] || submittedGames.has(game.id);
     if (isPlayed) {
