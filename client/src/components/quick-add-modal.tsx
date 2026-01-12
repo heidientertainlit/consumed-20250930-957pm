@@ -1090,13 +1090,13 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                       <button
                         type="button"
                         className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
-                          !['finished', 'currently', 'queue', 'dnf', ''].includes(selectedListId)
+                          !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
                             ? 'bg-purple-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                         data-testid="custom-list-dropdown"
                       >
-                        {!['finished', 'currently', 'queue', 'dnf', ''].includes(selectedListId) 
+                        {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId) 
                           ? userLists.find((l: any) => l.id === selectedListId)?.title || userLists.find((l: any) => l.id === selectedListId)?.name || 'Custom'
                           : 'Custom'
                         }
