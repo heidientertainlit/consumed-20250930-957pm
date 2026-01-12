@@ -8,6 +8,7 @@ import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
 import PlayFeedCard from "@/components/play-feed-card";
+import LeaderboardFeedCard from "@/components/leaderboard-feed-card";
 import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
@@ -3248,6 +3249,8 @@ export default function Feed() {
                 
                 // Points achievement at positions 5, 17, 29... (every 12 posts starting at 5)
                 const shouldShowPointsAchievements = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 12 === 0);
+                // Leaderboard at positions 6, 18, 30... (every 12 posts starting at 6)
+                const shouldShowLeaderboard = postIndex === 6 || (postIndex > 6 && (postIndex - 6) % 12 === 0);
                 // Media carousel at positions 9, 21, 33... (every 12 posts starting at 9)
                 const shouldShowMediaCarousel = postIndex === 9 || (postIndex > 9 && (postIndex - 9) % 12 === 0);
                 // Recommendations only at position 2 (early in feed)
@@ -3304,6 +3307,11 @@ export default function Feed() {
                     {shouldShowPointsAchievements && !isFilterActive && (
                       <div className="mb-4">
                         <PointsAchievementCard cardIndex={Math.floor((postIndex - 3) / 8)} />
+                      </div>
+                    )}
+                    {shouldShowLeaderboard && !isFilterActive && (
+                      <div className="mb-4">
+                        <LeaderboardFeedCard />
                       </div>
                     )}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
