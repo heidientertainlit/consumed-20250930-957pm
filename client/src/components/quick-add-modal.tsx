@@ -55,7 +55,8 @@ interface QuickAddModalProps {
   preSelectedMedia?: PreSelectedMedia | null;
 }
 
-type Stage = "search" | "details";
+type Stage = "search" | "composer";
+type PostType = "thought" | "hot_take" | "ask" | "poll" | "rank";
 
 export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddModalProps) {
   const { user, session } = useAuth();
@@ -89,6 +90,12 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   
   // Music-specific options
   const [musicFormat, setMusicFormat] = useState<"album" | "single" | "track">("album");
+  
+  // Post type for composer
+  const [postType, setPostType] = useState<PostType>("thought");
+  
+  // Poll-specific options
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
 
   const { data: listsData } = useQuery({
     queryKey: ['user-lists-metadata', user?.id],
@@ -189,7 +196,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
         external_id: preSelectedMedia.externalId,
         external_source: preSelectedMedia.externalSource,
       });
-      setStage("details");
+      setStage("composer");
     }
   }, [isOpen, preSelectedMedia]);
 
@@ -213,6 +220,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
     setTvSeason("");
     setTvEpisode("");
     setMusicFormat("album");
+    setPostType("thought");
+    setPollOptions(["", ""]);
   };
   
   const getSelectedListName = () => {
@@ -263,7 +272,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
 
   const handleSelectMedia = (media: any) => {
     setSelectedMedia(media);
-    setStage("details");
+    setStage("composer");
     setSearchQuery("");
     setSearchResults([]);
   };
@@ -280,6 +289,13 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
     setTvSeason("");
     setTvEpisode("");
     setMusicFormat("album");
+    setPostType("thought");
+    setPollOptions(["", ""]);
+  };
+  
+  const handleJustPost = () => {
+    setSelectedMedia(null);
+    setStage("composer");
   };
 
   const handleSubmit = async () => {
@@ -592,27 +608,36 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
               </div>
             </div>
             
-            {/* Search input */}
+            {/* Search input with Just post button */}
             <div className="p-4 pb-3">
-              <div className="relative">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search for a movie, show, book..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none"
-                  autoFocus
-                  data-testid="quick-add-search"
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
+              <div className="relative flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search for a movie, show, book..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none"
+                    autoFocus
+                    data-testid="quick-add-search"
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={handleJustPost}
+                  className="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-xl whitespace-nowrap transition-colors"
+                  data-testid="just-post-button"
+                >
+                  💭 Just post
+                </button>
               </div>
             </div>
             
@@ -682,12 +707,13 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
           </>
         ) : (
           <>
+            {/* Composer Header */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <button onClick={handleBack} className="text-gray-600 hover:text-gray-900">
                   <ArrowLeft size={20} />
                 </button>
-                <h2 className="text-lg font-bold text-gray-900">Add Media</h2>
+                <h2 className="text-lg font-bold text-gray-900">Say something</h2>
                 <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                   <X size={20} />
                 </button>
@@ -695,26 +721,39 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* Search bar */}
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search for a movie, show, book..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (e.target.value.trim()) {
-                      setStage("search");
-                    }
-                  }}
-                  className="pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400"
-                  data-testid="quick-add-search-details"
-                />
+              {/* Post type pills */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: 'thought', label: 'Thought' },
+                  { id: 'hot_take', label: 'Hot Take' },
+                  { id: 'ask', label: 'Ask' },
+                  { id: 'poll', label: 'Poll' },
+                  { id: 'rank', label: 'Rank' },
+                ].map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => setPostType(type.id as PostType)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      postType === type.id
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
               </div>
 
-              {/* Selected media card */}
-              {selectedMedia && (
+              {/* Attach media section (collapsed by default) */}
+              {!selectedMedia ? (
+                <button
+                  onClick={() => setStage("search")}
+                  className="w-full flex items-center gap-2 p-3 border border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-purple-400 hover:text-purple-600 transition-colors"
+                >
+                  <Search size={18} />
+                  <span>Attach media (optional)</span>
+                </button>
+              ) : (
                 <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
                   {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path) ? (
                     <img
@@ -735,10 +774,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     </div>
                   </div>
                   <button
-                    onClick={() => {
-                      setSelectedMedia(null);
-                      setStage("search");
-                    }}
+                    onClick={() => setSelectedMedia(null)}
                     className="text-gray-400 hover:text-gray-600"
                   >
                     <X size={18} />
@@ -746,35 +782,126 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                 </div>
               )}
 
-              {/* Rating */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Rating:</span>
-                {renderStars()}
-              </div>
-
-              {/* Review textarea */}
-              <Textarea
-                placeholder="Add a review (optional)..."
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                className="bg-white border-gray-200 resize-none min-h-[80px]"
-                rows={3}
-                data-testid="quick-add-review"
-              />
-
-              {reviewText.trim() && (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="spoilers"
-                    checked={containsSpoilers}
-                    onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+              {/* Dynamic content based on post type */}
+              {postType === 'thought' && (
+                <>
+                  <Textarea
+                    placeholder="What's on your mind?"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    className="bg-white border-gray-200 resize-none min-h-[100px]"
+                    rows={4}
+                    data-testid="thought-textarea"
                   />
-                  <label htmlFor="spoilers" className="text-sm text-gray-600 flex items-center gap-1">
-                    <AlertTriangle size={14} />
-                    Contains spoilers
-                  </label>
-                </div>
+                </>
               )}
+
+              {postType === 'hot_take' && (
+                <>
+                  <Textarea
+                    placeholder="Drop your hot take... 🔥"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    className="bg-white border-gray-200 resize-none min-h-[100px]"
+                    rows={4}
+                    data-testid="hot-take-textarea"
+                  />
+                  <p className="text-xs text-gray-500">Others will vote if your take is 🌶️ Spicy or ❄️ Cold</p>
+                </>
+              )}
+
+              {postType === 'ask' && (
+                <>
+                  <Textarea
+                    placeholder="What are you looking for? (e.g., 'Looking for a feel-good comedy...')"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    className="bg-white border-gray-200 resize-none min-h-[100px]"
+                    rows={4}
+                    data-testid="ask-textarea"
+                  />
+                  <p className="text-xs text-gray-500">Your friends will recommend media for you</p>
+                </>
+              )}
+
+              {postType === 'poll' && (
+                <>
+                  <Input
+                    placeholder="What's your poll question?"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    className="bg-white border-gray-200"
+                    data-testid="poll-question"
+                  />
+                  <div className="space-y-2">
+                    {pollOptions.map((option, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          placeholder={`Option ${index + 1}`}
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...pollOptions];
+                            newOptions[index] = e.target.value;
+                            setPollOptions(newOptions);
+                          }}
+                          className="bg-white border-gray-200 flex-1"
+                        />
+                        {pollOptions.length > 2 && (
+                          <button
+                            onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== index))}
+                            className="text-gray-400 hover:text-red-500"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {pollOptions.length < 6 && (
+                      <button
+                        onClick={() => setPollOptions([...pollOptions, ""])}
+                        className="text-sm text-purple-600 hover:text-purple-700"
+                      >
+                        + Add option
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {postType === 'rank' && (
+                <>
+                  <p className="text-sm text-gray-600">Select a ranked list to add this media to:</p>
+                  {userRanks.length > 0 ? (
+                    <div className="space-y-2">
+                      {userRanks.map((rank: any) => (
+                        <button
+                          key={rank.id}
+                          onClick={() => setSelectedRankId(rank.id)}
+                          className={`w-full p-3 rounded-xl text-left transition-colors ${
+                            selectedRankId === rank.id
+                              ? 'bg-purple-100 border-2 border-purple-500'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                        >
+                          <p className="font-medium text-gray-900">{rank.title}</p>
+                          <p className="text-sm text-gray-500">{rank.items_count || 0} items</p>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No ranked lists yet. Create one in Collections.</p>
+                  )}
+                </>
+              )}
+
+              {/* Show rating and list options when media is attached (for thought/hot_take) */}
+              {selectedMedia && (postType === 'thought' || postType === 'hot_take') && (
+                <>
+                  {/* Rating */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Rating:</span>
+                    {renderStars()}
+                  </div>
 
               {/* List selection - horizontal pills with custom list dropdown */}
               <div className="flex flex-wrap items-center gap-2">
@@ -961,22 +1088,24 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                   </div>
                 </div>
               )}
+                </>
+              )}
             </div>
             
             <div className="p-4 border-t border-gray-100">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !selectedMedia}
+                disabled={isSubmitting || (!reviewText.trim() && postType !== 'rank')}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
                 data-testid="quick-add-submit"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="animate-spin mr-2" size={16} />
-                    Adding...
+                    Posting...
                   </>
                 ) : (
-                  'Add Media'
+                  'Post'
                 )}
               </Button>
             </div>
